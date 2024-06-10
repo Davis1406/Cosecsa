@@ -1,0 +1,34 @@
+
+/********DATATABLE CUSTOMIZATION*******/
+
+  /* Style for active column visibility buttons */
+  .dt-button-collection .dt-button.active {
+    background-color: #a02626 !important;
+    color: white !important;
+  }
+  /* Style for Column Visibility button icon */
+  .buttons-colvis::before {
+    background-color: #a02626 !important;
+    color: white !important;
+    border-radius: 4px;
+    padding: 4px;
+    margin-right: 5px;
+  }
+  /* Ensuring the main button also follows the color scheme */
+  .buttons-colvis {
+    background-color: #a02626 !important;
+    color: white !important;
+  }
+  /* Custom styles for the popover */
+  .popover {
+    max-width: 150px;
+  }
+  .popover-body {
+    padding: 10px;
+    color: #5a6268; /* Text color */
+  }
+  .popover-body a {
+    display: block;
+    padding: 5px 0;
+    color: #5a6268; /* Link color */
+  }
