@@ -5,37 +5,34 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Trainee extends Model
+
+class Candidates extends Model
 {
     use HasFactory;
 
-    protected $table = 'trainees';
+    protected $table = 'candidates';
 
-    protected $fillable = [  
+    protected $fillable = [
         'user_id',
         'firstname',
         'middlename',
         'lastname',
         'personal_email',
         'gender',
-        'status',
-        'profile_image',
         'programme_id',
         'hospital_id',
         'country_id',
+        'repeat_paper_one',
+        'repeat_paper_two',
+        'mmed',
         'entry_number',
-        'admission_letter_status',
-        'invitation_letter_status',
         'admission_year',
         'exam_year',
-        'programme_period',
         'invoice_number',
         'invoice_date',
         'invoice_status',
         'sponsor',
-        'mode_of_payment',
         'amount_paid',
-        'payment_date',
     ];
 
     public function user()

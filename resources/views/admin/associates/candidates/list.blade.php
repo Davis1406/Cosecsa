@@ -14,8 +14,8 @@
                     <div class="col-sm-6">
                     </div>
                     <div class="col-sm-6" style="text-align: right">
-                        <a href="{{url('admin/associates/trainees/import')}}" class="btn btn-secondary" style="color:black; background-color: #FEC503; border-color: #FEC503;">Upload Trainees <span class="fas fa-upload"></span></a>
-                        <a href="{{url('admin/associates/trainees/add')}}" class="btn btn-primary" style="background-color: #a02626; border-color: #a02626;">Add New Trainee</a>
+                        <a href="{{url('admin/associates/candidates/import')}}" class="btn btn-secondary" style="color:black; background-color: #FEC503; border-color: #FEC503;">Upload Candidates <span class="fas fa-upload"></span></a>
+                        <a href="{{url('admin/associates/candidates/add')}}" class="btn btn-primary" style="background-color: #a02626; border-color: #a02626;">Add New Candidate</a>
                     </div>
                 </div>
             </div><!-- /.container-fluid -->
@@ -31,11 +31,11 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Trainees List</h3>
+                                <h3 class="card-title">Candidates List</h3>
                             </div>
                             <!-- /.card-header -->
                             <div class="card-body">
-                                <table id="traineestable" class="table table-bordered table-striped">
+                                <table id="candidatestable" class="table table-bordered table-striped">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -43,25 +43,22 @@
                                             <th>Gender</th>
                                             <th>Admission Number</th>
                                             <th>Email</th>
-                                            <th>Programme</th>
+                                            <th>Exam Type</th>
                                             <th>Hospital Name</th>
                                             <th>Country</th>
-                                            <th>Trainee Status</th>
+                                            <th>Mmed Qualification</th>
                                             <th>Action</th>
                                             <th>SFS Username</th>
                                             <th>SFS Password</th>
-                                            <th>Admission Letter Status</th>
-                                            <th>Invitation Letter Status</th>
+                                            <th>Repeat PI</th>
+                                            <th>Repeat P2</th>
                                             <th>Admission Year</th>
                                             <th>Exam Year</th>
-                                            <th>Programme Duration</th>
                                             <th>Invoice Number</th>
                                             <th>Invoice Date</th>
                                             <th>Invoice Status</th>
                                             <th>Sponsor</th>
-                                            <th>Mode of Payment</th>
                                             <th>Amount Paid</th>
-                                            <th>Date Paid</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -75,29 +72,26 @@
                                             <td>{{$value->programme_name}}</td>
                                             <td>{{$value->hospital_name}}</td>
                                             <td>{{$value->country_name}}</td>
-                                            <td>{{$value->status}}</td>
+                                            <td>{{$value->mmed}}</td>
                                             <td>
                                                 <a href="#" data-id="{{$value->id}}" data-name="{{$value->name}}" class="action-icon" data-toggle="popover" data-html="true" data-content='
-                                                    <a href="{{url('admin/associates/trainees/view/'.$value->trainee_id)}}"><i class="fa fa-eye action-icon"></i> View</a>
-                                                    <a href="{{url('admin/associates/trainees/edit/'.$value->trainee_id)}}"><i class="fa fa-edit action-icon"></i> Edit</a>
-                                                    <a href="{{url('admin/associates/trainees/delete/'.$value->t_id)}}"><i class="fa fa-trash action-icon"></i> Delete</a>'>
+                                                    <a href="{{url('admin/associates/candidates/view/'.$value->candidate_id)}}"><i class="fa fa-eye action-icon"></i> View</a>
+                                                    <a href="{{url('admin/associates/candidates/edit/'.$value->candidate_id)}}"><i class="fa fa-edit action-icon"></i> Edit</a>
+                                                    <a href="{{url('admin/associates/candidates/delete/'.$value->c_id)}}"><i class="fa fa-trash action-icon"></i> Delete</a>'>
                                                     <i class="fa fa-bars" aria-hidden="true" style="color: #5a6268"></i>
                                                 </a>
                                             </td>
                                             <td>{{$value->user_email}}</td>
                                             <td>{{$value->user_password}}</td>
-                                            <td>{{$value->admission_letter_status}}</td>
-                                            <td>{{$value->invitation_letter_status}}</td>
+                                            <td>{{$value->repeat_P1}}</td>
+                                            <td>{{$value->repeat_P2}}</td>
                                             <td>{{$value->admission_year}}</td>
                                             <td>{{$value->exam_year}}</td>
-                                            <td>{{$value->programme_period}}<span> Years</span></td>
                                             <td>{{$value->invoice_number}}</td>
                                             <td>{{$value->invoice_date}}</td>
                                             <td>{{$value->invoice_status}}</td>
                                             <td>{{$value->sponsor}}</td>
-                                            <td>{{$value->mode_of_payment}}</td>
                                             <td>{{$value->amount_paid}}</td>
-                                            <td>{{$value->payment_date}}</td>
                                         </tr>
                                         @endforeach
                                     </tbody>

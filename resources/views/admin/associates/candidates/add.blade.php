@@ -9,16 +9,16 @@
         <section class="content">
             <!-- Multi step form -->
             <section class="multi_step_form">
-                <form id="msform" method="POST" action="{{ url('admin/associates/trainees/add') }}">
+                <form id="msform" method="POST" action="{{ url('admin/associates/candidates/add') }}">
                     {{ csrf_field() }}
                     <!-- Tittle -->
                     <div class="tittle">
-                        <h2>Add New Trainee</h2>
+                        <h2>Add New Candidate</h2>
                     </div>
                     <!-- progressbar -->
                     <ul id="progressbar">
                         <li class="active">Personal Information</li>
-                        <li>Admission Details</li>
+                        <li>Exam Details</li>
                         <li>Payment Records</li>
                     </ul>
                     <!-- fieldsets -->
@@ -56,7 +56,7 @@
                             </div>
                        </div>
 
-                    <div class="form-row">
+                     <div class="form-row">
 
                         <div class="form-group col-md-6">
                             <label for="">Gender</label>
@@ -72,33 +72,34 @@
                             <select name="user_type" class="form-control" required>
                                 <option value="" disabled selected>Select Type...</option>
                                 <option value="2">Trainee</option>
-                                <option value="3">Programme Director</option>
-                                <option value="4">Trainer</option>
+                                <option value="3">Candidate</option>
+                                <option value="4">Programme Director</option>
+                                <option value="5">Trainer</option>
                             </select>
                         </div>
                       
                      </div>
 
-                    <div class="input-group col-md-">
+                     <div class="input-group col-md-6" hidden>
                         <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="upload" name="profile_image">
+                            <input type="file" class="custom-file-input" id="upload" name="profile_image" >
                             <label class="custom-file-label" for="upload">
                               <i class="ion-android-cloud-outline"></i>Upload Profile Image
                             </label>
                         </div>
-                    </div>
+                     </div>
                   
                     
                         <button type="button" class="action-button previous_button">Back</button>
                         <button type="button" class="next action-button">Continue</button>
-                    </fieldset>
+                </fieldset>
 
                     <fieldset>
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                <label>Programme Name</label>
+                                <label>Exam Type</label>
                                 <select name="programme_id" class="form-control" required>
-                                    <option value="" disabled selected>Select Programme</option>
+                                    <option value="" disabled selected>Select Exam</option>
                                     @foreach($getProgramme as $programme)
                                         <option value="{{ $programme->id }}">{{ $programme->name }}</option>
                                     @endforeach
@@ -139,18 +140,18 @@
                         <div class="form-row">
 
                             <div class="form-group col-md-6">
-                                <label>Admission Letter Status</label>
-                                <select name="admission_letter_status" class="form-control">
-                                    <option value="0">Pending</option>
-                                    <option value="1">Sent</option>
+                                <label>Repeat P1</label>
+                                <select name="repeat_P1" class="form-control">
+                                    <option value="No">No</option>
+                                    <option value="Yes">Yes</option>
                                 </select>
                             </div>
 
                             <div class="form-group col-md-6">
-                                <label>Invitation Letter Status</label>
-                                <select name="invitation_letter_status" class="form-control">
-                                    <option value="0">Pending</option>
-                                    <option value="1">Sent</option>
+                                <label>Repeat P2</label>
+                                <select name="repeat_P2" class="form-control">
+                                    <option value="No">No</option>
+                                    <option value="Yes">Yes</option>
                                 </select>
                             </div>
 
@@ -198,19 +199,12 @@
                                    
                         <div class="form-row">
 
-                            <div class="form-group col-md-6">
-                                <label>programme Duration</label>
-                                <select name="programme_period" class="form-control">
-                                    <option value="1">1 Year</option>
-                                    <option value="2">2 Years</option>
-                                    <option value="3">3 Years</option>
-                                    <option value="4">4 Years</option>
+                            <div class="form-group col-md-12">
+                                <label>Mmed Qualification</label>
+                                <select name="mmed" class="form-control">
+                                    <option value="No">No</option>
+                                    <option value="Yes">Yes</option>
                                 </select>
-                            </div>
-                        
-                            <div class="form-group col-md-6">
-                                <label>Trainee Status</label>
-                                <input type="text" name="status" class="form-control" placeholder="">
                             </div>
 
                         </div>
@@ -250,25 +244,11 @@
                             </div>
                        </div>
 
-                        <div class="form-group">
-                            <label>Mode of Payment</label>
-                            <select class="product_select" name="mode_of_payment">
-                                <option value="" disabled selected>Select Mode</option>
-                                <option value="Country Rep">Country Rep</option>
-                                <option value="Bank transfer">Bank transfer</option>
-                                <option value="Online Payment System">Online Payment System</option>
-                            </select>
-                        </div>
 
                         <div class="form-row">
-                            <div class="form-group col-md-6">
+                            <div class="form-group col-md-12">
                                 <label>Amount paid <span>USD</span></label>
                                 <input type="text" name="amount_paid" class="form-control" placeholder="">
-                            </div>
-
-                            <div class="form-group col-md-6">
-                                <label>Date Paid</label>
-                                <input type="date" name="payment_date" class="form-control" placeholder="">
                             </div>
                        </div>
                         
@@ -287,43 +267,13 @@
 <script>
     $(function () {
         bsCustomFileInput.init();
-
-        $('.next').click(function() {
-            var currentFieldset = $(this).closest('fieldset');
-            var isValid = true;
-            currentFieldset.find('input, select').each(function() {
-                if ($(this).prop('required') && !$(this).val()) {
-                    isValid = false;
-                    $(this).addClass('is-invalid');
-                } else {
-                    $(this).removeClass('is-invalid');
-                }
-            });
-            if (isValid) {
-                currentFieldset.hide();
-                currentFieldset.next().show();
-                updateProgressBar();
-            }
-        });
-
-        $('.previous').click(function() {
-            var currentFieldset = $(this).closest('fieldset');
-            currentFieldset.hide();
-            currentFieldset.prev().show();
-            updateProgressBar();
-        });
-
-        function updateProgressBar() {
-            var activeIndex = $('fieldset:visible').index();
-            $('#progressbar li').removeClass('active');
-            $('#progressbar li').eq(activeIndex).addClass('active');
-        }
-
-        $('fieldset:first').show();
-        $('fieldset').not(':first').hide();
     });
 
+    
 </script>
+
+
+
 
 @endsection
 

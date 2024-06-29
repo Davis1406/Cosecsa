@@ -16,6 +16,20 @@ class HospitalController extends Controller
         return view('admin.hospital.list', $data);
     }
 
+    public function view($id) {
+        $hospital = HospitalModel::select('hospitals.*', 'countries.country_name as country_name')
+            ->join('countries', 'countries.id', 'hospitals.country_id')
+            ->where('hospitals.id', $id)
+            ->first();
+    
+        if ($hospital) {
+            $header_title = 'Hospital Details'; 
+            return view('admin.hospital.view_hospital', compact('hospital', 'header_title'));
+        } else {
+            return redirect('admin/hospital/list')->with('error', 'Hospital not found');
+        }
+    }
+ 
 
     //Add New Hospital View
     public function add(){

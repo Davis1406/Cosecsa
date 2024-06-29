@@ -100,13 +100,13 @@
                   </a>
                   <ul class="nav nav-treeview">
                       <li class="nav-item">
-                          <a href="{{ url('admin/associates/trainees/trainees') }}" class="nav-link @if (Request::segment(2) == 'associates') active @endif">
+                          <a href="{{ url('admin/associates/trainees/trainees') }}" class="nav-link @if (Request::segment(3) == 'trainees') active @endif">
                               <i class="fas fa-user-md nav-icon"></i>
                               <p>Trainees</p>
                           </a>
                       </li>
                       <li class="nav-item">
-                          <a href="./index2.html" class="nav-link">
+                          <a href="{{url('admin/associates/candidates/list')}}" class="nav-link @if (Request::segment(3) == 'candidates') active @endif">
                               <i class="fas fa-graduation-cap nav-icon"></i>
                               <p>Candidates</p>
                           </a>
@@ -131,6 +131,15 @@
                       </li>
                   </ul>
               </li>
+
+              <li class="nav-item">
+                <a href="{{ url('profile/change_password') }}" class="nav-link @if (Request::segment(2) == 'change_password') active @endif">
+                    <i class="nav-icon fas fa-book-open"></i>
+                    <p>
+                        Examinations
+                    </p>
+                </a>
+            </li>
 
               <li class="nav-item">
                   <a href="{{ url('profile/change_password') }}" class="nav-link @if (Request::segment(2) == 'change_password') active @endif">

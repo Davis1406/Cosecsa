@@ -9,6 +9,7 @@ use App\Http\Controllers\ProgrammesController;
 use App\Http\Controllers\HospitalProgrammesController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TraineeController;
+use App\Http\Controllers\CandidatesController;
 
 
 /*
@@ -58,6 +59,7 @@ Route::group(['middleware' => 'admin'], function(){
     Route::get('admin/hospital/list ', [HospitalController::class,'hospital']);
     Route::get('admin/hospital/add ',  [HospitalController::class,'add']);
     Route::post('admin/hospital/add', [HospitalController::class,'insert']);
+    Route::get('admin/hospital/view_hospital/{id}', [HospitalController::class,'view']);
     Route::get('admin/hospital/edit_hospital/{id} ', [HospitalController::class,'edit']);
     Route::post('admin/hospital/edit_hospital/{id} ', [HospitalController::class,'update']);
     Route::get('admin/hospital/delete/{id} ', [HospitalController::class,'delete']);
@@ -87,9 +89,21 @@ Route::group(['middleware' => 'admin'], function(){
   Route::post('admin/associates/trainees/add', [TraineeController::class,'insert'])->name('admin.associates.trainees.add');
   Route::get('admin/associates/trainees/import',  [TraineeController::class,'import']);
   Route::post('admin/associates/trainees/import', [TraineeController::class, 'importData'])->name('trainees.import.data');
-  Route::get('admin/hospital/edit_hospital/{id} ', [HospitalController::class,'edit']);
-  Route::post('admin/hospital/edit_hospital/{id} ', [HospitalController::class,'update']);
-  Route::get('admin/hospital/delete/{id} ', [HospitalController::class,'delete']);
+  Route::get('admin/associates/trainees/view/{id}',  [TraineeController::class,'view'])->name('trainees.view');
+  Route::get('admin/associates/trainees/edit/{id} ', [TraineeController::class,'edit']);
+  Route::post('admin/associates/trainees/edit/{id} ', [TraineeController::class,'update']);
+  Route::get('admin/associates/trainees/delete/{id}', [TraineeController::class,'delete']);
+
+  //Candidates Route
+  Route::get('admin/associates/candidates/list', [CandidatesController::class,'list']);
+  Route::get('admin/associates/candidates/add',  [CandidatesController::class,'add']);
+  Route::post('admin/associates/candidates/add', [CandidatesController::class,'insert'])->name('admin.associates.candidates.add');
+  Route::get('admin/associates/candidates/import',  [CandidatesController::class,'import']);
+  Route::post('admin/associates/candidates/import', [CandidatesController::class, 'importData'])->name('candidates.import.data');
+  Route::get('admin/associates/candidates/view/{id}',  [CandidatesController::class,'view'])->name('candidates.view');
+  Route::get('admin/associates/candidates/edit/{id} ', [CandidatesController::class,'edit']);
+  Route::post('admin/associates/candidates/edit/{id} ', [CandidatesController::class,'update']);
+  Route::get('admin/associates/candidates/delete/{id}', [CandidatesController::class,'delete']);
 
 });
 

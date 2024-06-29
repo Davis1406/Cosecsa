@@ -62,12 +62,15 @@ class User extends Authenticatable
     }
 
     static public function getTrainee()
+    
     {
         $return = self::select(
                 'users.id as user_id',
                 'users.name as name',
                 'users.email as user_email',
                 'users.password as user_password',
+                'trainees.id as trainee_id',
+                'trainees.user_id as t_id',
                 'trainees.*',
                 'hospitals.name as hospital_name',
                 'programmes.name as programme_name',
@@ -80,22 +83,41 @@ class User extends Authenticatable
             ->where('users.user_type', '2')
             ->where('users.is_deleted', '=', '0');
 
-        if (!empty(Request::get('email'))) {
-            $return = $return->where('users.email', 'like', '%' . Request::get('email') . '%');
-        }
-
-        if (!empty(Request::get('name'))) {
-            $return = $return->where('users.name', 'like', '%' . Request::get('name') . '%');
-        }
-
-        if (!empty(Request::get('date'))) {
-            $return = $return->whereDate('users.created_at', 'like', '%' . Request::get('date') . '%');
-        }
-
-        $return = $return->orderBy('users.id', 'asc')->get();
+        $return = $return->orderBy('trainee_id', 'asc')->get();
         
         return $return;
     }
+
+    static public function getCandidates()    
+    {
+        $return = self::select(
+                'users.id as user_id',
+                'users.name as name',
+                'users.email as user_email',
+                'users.password as user_password',
+                'users.user_type as user_type',
+                'candidates.id as candidate_id',
+                'candidates.user_id as c_id',
+                'candidates.*',
+                'hospitals.name as hospital_name',
+                'programmes.name as programme_name',
+                'countries.country_name as country_name'
+            )
+            ->join('candidates', 'users.id', '=', 'candidates.user_id')
+            ->leftJoin('hospitals', 'candidates.hospital_id', '=', 'hospitals.id')
+            ->leftJoin('programmes', 'candidates.programme_id', '=', 'programmes.id')
+            ->leftJoin('countries', 'candidates.country_id', '=', 'countries.id')
+            ->whereIn('users.id', function($query) {
+                $query->select('user_id')
+                      ->from('candidates');
+            })
+            ->where('users.is_deleted', '=', '0');
+    
+        $return = $return->orderBy('candidate_id', 'asc')->get();
+        
+        return $return;
+    }
+    
 
     static public function getEmailSingle($email)
     {
