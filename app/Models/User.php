@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -29,15 +28,14 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-        // Override the setPasswordAttribute method
-        public function setPasswordAttribute($password)
-        {
-            if ($this->user_type == 1) {
-                $this->attributes['password'] = bcrypt($password);
-            } else {
-                $this->attributes['password'] = $password;
-            }
+    public function setPasswordAttribute($password)
+    {
+        if ($this->user_type == 1) {
+            $this->attributes['password'] = bcrypt($password);
+        } else {
+            $this->attributes['password'] = $password;
         }
+    }
 
     static public function getAdmin()
     {
@@ -62,7 +60,6 @@ class User extends Authenticatable
     }
 
     static public function getTrainee()
-    
     {
         $return = self::select(
                 'users.id as user_id',
@@ -117,7 +114,64 @@ class User extends Authenticatable
         
         return $return;
     }
+
+    static public function getTrainers()    
+    {
+        $return = self::select(
+                'users.id as user_id',
+                'users.name as name',
+                'users.email as user_email',
+                'users.password as user_password',
+                'users.user_type as user_type',
+                'trainers.id as trainer_id',
+                'trainers.user_id as tr_id',
+                'trainers.*',
+                'hospitals.name as hospital_name',
+                'countries.country_name as country_name'
+
+            )
+            ->join('trainers', 'users.id', '=', 'trainers.user_id')
+            ->leftJoin('hospitals', 'trainers.hospital_id', '=', 'hospitals.id')
+            ->leftJoin('countries', 'hospitals.country_id', '=', 'countries.id')
+            ->whereIn('users.id', function($query) {
+                $query->select('user_id')
+                      ->from('trainers');
+            })
+            ->where('users.is_deleted', '=', '0');
     
+        $return = $return->orderBy('trainer_id', 'asc')->get();
+        
+        return $return;
+    }
+
+
+    static public function getReps()    
+    {
+        $return = self::select(
+                'users.id as user_id',
+                'users.name as name',
+                'users.email as user_email',
+                'users.password as user_password',
+                'users.user_type as user_type',
+                'country_reps.id as reps_id',
+                'country_reps.user_id as cr_id',
+                'country_reps.*',
+                'countries.country_name as country_name'
+
+            )
+            ->join('country_reps', 'users.id', '=', 'country_reps.user_id')
+            ->leftJoin('countries', 'country_reps.country_id', '=', 'countries.id')
+            ->whereIn('users.id', function($query) {
+                $query->select('user_id')
+                      ->from('country_reps');
+            })
+            ->where('users.is_deleted', '=', '0');
+    
+        $return = $return->orderBy('reps_id', 'asc')->get();
+        
+        return $return;
+    }
+
 
     static public function getEmailSingle($email)
     {

@@ -14,7 +14,8 @@
                     <div class="col-sm-6">
                     </div>
                     <div class="col-sm-6" style="text-align: right">
-                        <a href="{{url('admin/hospital/add')}}" class="btn btn-primary">Add New Hospital</a>
+                        <a href="{{url('admin/associates/reps/import')}}" class="btn btn-secondary" style="color:black; background-color: #FEC503; border-color: #FEC503;">Upload CR's <span class="fas fa-upload"></span></a>
+                        <a href="{{url('admin/associates/reps/add')}}" class="btn btn-primary" style="background-color: #a02626; border-color: #a02626;">Add New CR</a>
                     </div>
                 </div>
             </div><!-- /.container-fluid -->
@@ -30,50 +31,36 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Accredited Hospitals</h3>
+                                <h3 class="card-title">Country Representatives </h3>
                             </div>
                             <!-- /.card-header -->
                             <div class="card-body">
-                                <table id="hospitalTable" class="table table-striped">
+                                <table id="crstable" class="table table-striped">
                                     <thead>
                                         <tr>
                                             <th>#</th>
-                                            <th>Hospital Name</th>
-                                            <th>Country</th>
-                                            <th>Hospital Type</th>
-                                            <th>Status</th>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Country</th>   
+                                            <th>Mobile Number</th>
+                                            <th>Cosecsa Email</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($getRecord as $value)
-                                        <tr>
+                                        <tr class="user-row" data-user-type="{{ $value->user_type == 5 ? 'country_rep' : 'trainer' }}">
                                             <td>{{$value->id}}</td>
                                             <td>{{$value->name}}</td>
+                                            <td>{{$value->user_email}}</td>
                                             <td>{{$value->country_name}}</td>
+                                            <td>{{$value->mobile_no}}</td>
+                                            <td>{{$value->cosecsa_email}}</td>
                                             <td>
-                                                @if($value->hospital_type == 1)
-                                                Government Hospital
-                                                @elseif($value->hospital_type == 2)
-                                                NGO / Faith based Hospital
-                                                @elseif($value->hospital_type == 3)
-                                                Private Hospital
-                                                @elseif($value->hospital_type == 4)
-                                                University Teaching Hospital
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @if($value->status == 0)
-                                                Active
-                                                @else
-                                                Inactive
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <a href="#" data-id="{{$value->id}}" data-name="{{$value->name}}" class="action-icon" data-toggle="popover" data-html="true" data-content='
-                                                    <a href="{{url('admin/hospital/view_hospital/'.$value->id)}}"><i class="fa fa-eye action-icon"></i> View</a>
-                                                    <a href="{{url('admin/hospital/edit_hospital/'.$value->id)}}"><i class="fa fa-edit action-icon"></i> Edit</a>
-                                                    <a href="{{url('admin/hospital/delete/'.$value->id)}}"><i class="fa fa-trash action-icon"></i> Delete</a>'>
+                                                <a href="#" data-id="{{$value->trainer_id}}" data-name="{{$value->name}}" class="action-icon" data-toggle="popover" data-html="true" data-content='
+                                                    <a href="{{url('admin/associates/reps/view/'.$value->reps_id)}}"><i class="fa fa-eye action-icon"></i> View</a>
+                                                    <a href="{{url('admin/associates/reps/edit/'.$value->reps_id)}}"><i class="fa fa-edit action-icon"></i> Edit</a>
+                                                    <a href="{{url('admin/associates/reps/delete/'.$value->cr_id)}}"><i class="fa fa-trash action-icon"></i> Delete</a>'>
                                                     <i class="fa fa-bars" aria-hidden="true" style="color: #5a6268"></i>
                                                 </a>
                                             </td>
@@ -99,4 +86,20 @@
 </div>
 <!-- ./wrapper -->
 
+@endsection
+
+@section('scripts')
+<script>
+    $(document).ready(function(){
+        $('.filter-button').click(function(){
+            var filter = $(this).attr('data-filter');
+            if (filter == 'all') {
+                $('.user-row').show();
+            } else {
+                $('.user-row').hide();
+                $('.user-row[data-user-type="' + filter + '"]').show();
+            }
+        });
+    });
+</script>
 @endsection

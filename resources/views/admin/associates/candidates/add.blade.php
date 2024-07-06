@@ -74,7 +74,7 @@
                                 <option value="2">Trainee</option>
                                 <option value="3">Candidate</option>
                                 <option value="4">Programme Director</option>
-                                <option value="5">Trainer</option>
+                                <option value="5">Country Representative</option>
                             </select>
                         </div>
                       

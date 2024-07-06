@@ -10,6 +10,8 @@ use App\Http\Controllers\HospitalProgrammesController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TraineeController;
 use App\Http\Controllers\CandidatesController;
+use App\Http\Controllers\TrainerController;
+use App\Http\Controllers\CountryRepsController;               
 
 
 /*
@@ -106,6 +108,31 @@ Route::group(['middleware' => 'admin'], function(){
   Route::get('admin/associates/candidates/delete/{id}', [CandidatesController::class,'delete']);
 
 });
+
+//Trainers Route
+Route::get('admin/associates/trainers/list', [TrainerController::class,'list']);
+Route::get('admin/associates/trainers/add',  [TrainerController::class,'add']);
+Route::post('admin/associates/trainers/add', [TrainerController::class,'insert'])->name('admin.associates.trainers.add');
+Route::get('admin/associates/trainers/import',  [TrainerController::class,'import']);
+Route::post('admin/associates/trainers/import', [TrainerController::class, 'importData'])->name('trainers.import.data');
+Route::get('admin/associates/trainers/view/{id}',  [TrainerController::class,'view'])->name('trainers.view');
+Route::get('admin/associates/trainers/edit/{id} ', [TrainerController::class,'edit']);
+Route::post('admin/associates/trainers/edit/{id} ', [TrainerController::class,'update']);
+Route::get('admin/associates/trainers/delete/{id}', [TrainerController::class,'delete']);
+
+
+//CR's Route
+Route::get('admin/associates/reps/list', [CountryRepsController::class,'list']);
+Route::get('admin/associates/reps/add',  [CountryRepsController::class,'add']);
+Route::post('admin/associates/reps/add', [CountryRepsController::class,'insert'])->name('admin.associates.reps.add');
+Route::get('admin/associates/reps/import',  [CountryRepsController::class,'import']);
+Route::post('admin/associates/reps/import', [CountryRepsController::class, 'importData'])->name('reps.import.data');
+Route::get('admin/associates/reps/view/{id}',  [CountryRepsController::class,'view'])->name('reps.view');
+Route::get('admin/associates/reps/edit/{id} ', [CountryRepsController::class,'edit']);
+Route::post('admin/associates/reps/edit/{id} ', [CountryRepsController::class,'update']);
+Route::get('admin/associates/reps/delete/{id}', [CountryRepsController::class,'delete']);
+
+
 
 Route::group(['middleware' => 'trainee'], function(){
 
