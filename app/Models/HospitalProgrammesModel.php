@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+
 
 class HospitalProgrammesModel extends Model
 {
@@ -15,6 +17,8 @@ class HospitalProgrammesModel extends Model
     protected $fillable = [
         'hospital_id',
         'programme_id',
+        'accredited_date',
+        'expiry_date',
         'status',
     ];
 
@@ -27,36 +31,46 @@ class HospitalProgrammesModel extends Model
     }
 
     static public function getHospitalProgrammes(Request $request){
-        $query = self::select('hospital_programmes.*', 'hospitals.name as hospital_name', 'programmes.name as programme_name')
+        $query = self::select('hospital_programmes.*', 
+                                'hospitals.name as hospital_name', 
+                                'programmes.name as programme_name',
+                                'countries.country_name as country_name'
+                                )
                     ->join('programmes', 'programmes.id', '=', 'hospital_programmes.programme_id')
-                    ->join('hospitals', 'hospitals.id', '=', 'hospital_programmes.hospital_id');
+                    ->join('hospitals', 'hospitals.id', '=', 'hospital_programmes.hospital_id')
+                    ->leftJoin('countries', 'hospitals.country_id', '=', 'countries.id');
  
-                    if($request->filled('programme_name')){
+        if($request->filled('programme_name')){
+            $query->where('programmes.name','like', '%'.$request->programme_name.'%');
+        }
 
-                        $query->where('programmes.name','like', '%'.$request->programme_name.'%');
-                    }
-    
-                    if($request->filled('hospital_name')){
-    
-                        $query->where('hospitals.name','like', '%'.$request->hospital_name.'%');
-                    }
+        if($request->filled('hospital_name')){
+            $query->where('hospitals.name','like', '%'.$request->hospital_name.'%');
+        }
 
-                    $query -> where('hospital_programmes.is_delete', '=', 0)
-                           ->orderBy('hospital_programmes.id', 'asc');
-                    
-                  return $query->paginate(10)->appends($request-> except('page'));
+        $query->where('hospital_programmes.is_delete', '=', 0)
+              ->orderBy('hospital_programmes.id', 'asc');
+        
+        return $query->get();
     }
 
-    static public function exists($hospital_id, $programme_id) {
+    static public function exists($hospital_id) {
         return self::where('hospital_id', '=', $hospital_id)
-                    ->where('programme_id', '=', $programme_id)
-                    ->first();
+                   ->pluck('programme_id')
+                   ->toArray();
     }
-
+    
 
     static public function getSingleId($id){
-
         return self::find($id);
-      
+    }
+
+    // Accessors for formatted dates
+    public function getAccreditedDateAttribute($value) {
+        return Carbon::parse($value)->format('F Y');
+    }
+
+    public function getExpiryDateAttribute($value) {
+        return Carbon::parse($value)->format('F Y');
     }
 }

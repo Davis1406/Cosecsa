@@ -25,14 +25,13 @@
             <!-- small box -->
             <div class="small-box bg-info">
               <div class="inner">
-                <h3>150</h3>
-
+                <h3>{{ $traineeCount }}</h3>
                 <p>New Trainees</p>
               </div>
               <div class="icon">
-                <i class="ion ion-bag"></i>
+                <i class="ion ion-person-add"></i>
               </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+              <a href="{{url('admin/associates/trainees/trainees')}}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
             </div>
           </div>
           <!-- ./col -->
@@ -40,13 +39,13 @@
             <!-- small box -->
             <div class="small-box bg-success">
               <div class="inner">
-                <h3>53<sup style="font-size: 20px">%</sup></h3>
-                <p>Registration Rate</p>
+                <h3>{{$accreditedHospitalCount}}</h3>
+                <p> Accredited Hospital</p>
               </div>
               <div class="icon">
-                <i class="ion ion-stats-bars"></i>
+                <i class="ion ion-medkit"></i>
               </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+              <a href="{{url('admin/hospital/list')}}" class="small-box-footer">More info<i class="fas fa-arrow-circle-right"></i></a>
             </div>
           </div>
           <!-- ./col -->
@@ -54,13 +53,13 @@
             <!-- small box -->
             <div class="small-box bg-warning">
               <div class="inner">
-                <h3>44</h3>
-                <p> Total Registered User</p>
+                <h3>{{$CandidateCount}}</h3>
+                <p>Candidates</p>
               </div>
               <div class="icon">
-                <i class="ion ion-person-add"></i>
+                <i class="ion ion-university"></i>
               </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+              <a href="{{url('admin/associates/candidates/list')}}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
             </div>
           </div>
           <!-- ./col -->
@@ -69,7 +68,7 @@
             <div class="small-box bg-danger">
               <div class="inner">
                 <h3>65</h3>
-                <p>Exams Candidates</p>
+                <p>Members & Fellows</p>
               </div>
               <div class="icon">
                 <i class="ion ion-pie-graph"></i>

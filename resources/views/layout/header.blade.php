@@ -148,7 +148,7 @@
                 </li>
   
                 <li class="nav-item">
-                    <a href="{{ url('profile/change_password') }}" class="nav-link @if (Request::segment(2) == 'change_password') active @endif">
+                    <a href="{{ url('admin/examinations/list') }}" class="nav-link @if (Request::segment(2) == 'examinations') active @endif">
                         <i class="nav-icon fas fa-book-open"></i>
                         <p>
                             Examinations

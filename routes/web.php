@@ -14,20 +14,7 @@ use App\Http\Controllers\TrainerController;
 use App\Http\Controllers\CountryRepsController;               
 
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
 
-// Route::get('/', function () {
-//     return view('welcome');
-// });
 Route::get('/', [AuthController::class,'login']);
 Route::post('login', [AuthController::class,'AuthLogin']);
 Route::get('logout', [AuthController::class,'logout']);
@@ -73,10 +60,12 @@ Route::group(['middleware' => 'admin'], function(){
    Route::get('admin/programmes/edit_programmes/{id}', [ProgrammesController::class, 'edit']);
    Route::get('admin/programmes/delete/{id} ', [ProgrammesController::class,'delete']);
 
-    //   HospitalProgrammes Routes
+ //HospitalProgrammes Routes
   Route::get('admin/hospitalprogrammes/list', [HospitalProgrammesController::class, 'list']);
   Route::get('admin/hospitalprogrammes/add', [HospitalProgrammesController::class, 'add']);
   Route::post('admin/hospitalprogrammes/add', [HospitalProgrammesController::class, 'insert']);
+  Route::get('admin/hospitalprogrammes/import',  [HospitalProgrammesController::class,'import']);
+  Route::post('admin/hospitalprogrammes/import', [HospitalProgrammesController::class, 'importData'])->name('hospitalprogrammes.import.data');
   Route::get('admin/hospitalprogrammes/edit/{id}', [HospitalProgrammesController::class, 'edit']);
   Route::post('admin/hospitalprogrammes/edit/{id} ', [HospitalProgrammesController::class,'update']);
   Route::get('admin/hospitalprogrammes/delete/{id} ', [HospitalProgrammesController::class,'delete']);

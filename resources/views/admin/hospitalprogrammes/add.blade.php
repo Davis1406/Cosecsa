@@ -93,24 +93,23 @@
                                                     </div>
                                                 @endforeach
                                             </div>
-                                            <div class="form-row">
 
+                                            <div class="form-row">
                                                 <div class="form-group col-md-6">
                                                     <label for="accredited_date">Accredited Date</label>
-                                                    <input type="date" name="accredited_date" class="form-control" id="accredited_date">
+                                                    <input type="month" name="accredited_date" class="form-control" id="accredited_date">
                                                 </div>
                                                 <div class="form-group col-md-6">
                                                     <label for="expiry_date">Expiry Date</label>
-                                                    <input type="date" name="expiry_date" class="form-control" id="expiry_date">
+                                                    <input type="month" name="expiry_date" class="form-control" id="expiry_date">
                                                 </div>
-    
                                             </div>
-
+                                            
                                             <div class="form-group">
                                                 <label>Status</label>
                                                 <select name="status" class="form-control">
-                                                    <option value="0">Active</option>
-                                                    <option value="1">Inactive</option>
+                                                    <option value="Active">Active</option>
+                                                    <option value="Expired">Expired</option>
                                                 </select>
                                             </div>
                                         </div>

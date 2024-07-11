@@ -123,7 +123,7 @@ class User extends Authenticatable
                 'users.email as user_email',
                 'users.password as user_password',
                 'users.user_type as user_type',
-                'trainers.id as trainer_id',
+                'trainers.id as trainer_id', 
                 'trainers.user_id as tr_id',
                 'trainers.*',
                 'hospitals.name as hospital_name',
