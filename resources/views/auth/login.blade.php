@@ -13,13 +13,31 @@
   <link rel="stylesheet" href="{{url('public/plugins/icheck-bootstrap/icheck-bootstrap.min.css')}}">
   <!-- Theme style -->
   <link rel="stylesheet" href="{{url('public/dist/css/adminlte.min.css')}}">
+  <style>
+    .logo-container {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logo-container img {
+      max-width: 100px; /* Adjust as needed */
+      height: auto;
+    }
+
+    .card.card-outline.card-primary {
+    border-color: #FEC503;
+}
+
+  </style>
 </head>
 <body class="hold-transition login-page">
 <div class="login-box">
   <!-- /.login-logo -->
   <div class="card card-outline card-primary">
     <div class="card-header text-center">
-      <a href="" class="h1"><b>COSECSA</b></a>
+      <div class="logo-container">
+        <img src="public/dist/img/Cosecsa_Logo.png" alt="COSECSA Logo">
+      </div>
+      <a href="" class="h1" style="color: #a02626"><b>COSECSA</b></a>
     </div>
     <div class="card-body">
       <p class="login-box-msg">Sign in to start your session</p>
@@ -55,14 +73,14 @@
           </div>
           <!-- /.col -->
           <div class="col-4">
-            <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+            <button type="submit" class="btn btn-primary btn-block" style="background-color: #a02626">Sign In</button>
           </div>
           <!-- /.col -->
         </div>
       </form>
 
       <p class="mb-1">
-        <a href="{{url('forget-password')}}">I forgot my password</a>
+        <a href="{{url('forget-password')}}" style="color: #a02626">I forgot my password</a>
     </div>
     <!-- /.card-body -->
   </div>
@@ -78,4 +96,3 @@
 <script type="{{url('public/dist/js/adminlte.min.js')}}"></script>
 </body>
 </html>
- 

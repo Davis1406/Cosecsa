@@ -12,7 +12,7 @@ use App\Http\Controllers\TraineeController;
 use App\Http\Controllers\CandidatesController;
 use App\Http\Controllers\TrainerController;
 use App\Http\Controllers\CountryRepsController;               
-
+use App\Http\Controllers\FellowsController;   
 
 
 Route::get('/', [AuthController::class,'login']);
@@ -120,6 +120,9 @@ Route::get('admin/associates/reps/view/{id}',  [CountryRepsController::class,'vi
 Route::get('admin/associates/reps/edit/{id} ', [CountryRepsController::class,'edit']);
 Route::post('admin/associates/reps/edit/{id} ', [CountryRepsController::class,'update']);
 Route::get('admin/associates/reps/delete/{id}', [CountryRepsController::class,'delete']);
+
+// Fellows Route
+Route::get('admin/associates/fellows_members/coming_soon', [FellowsController::class,'coming_soon']);
 
 
 

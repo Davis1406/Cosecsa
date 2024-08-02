@@ -112,13 +112,13 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="./index3.html" class="nav-link">
+                            <a href="#" class="nav-link">
                                 <i class="fas fa-user nav-icon"></i>
                                 <p>Members</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="./index3.html" class="nav-link">
+                            <a href="#" class="nav-link">
                                 <i class="fas fa-user nav-icon"></i>
                                 <p>Fellows</p>
                             </a>
@@ -148,7 +148,7 @@
                 </li>
   
                 <li class="nav-item">
-                    <a href="{{ url('admin/examinations/list') }}" class="nav-link @if (Request::segment(2) == 'examinations') active @endif">
+                    <a href="#" class="nav-link @if (Request::segment(2) == 'examinations') active @endif">
                         <i class="nav-icon fas fa-book-open"></i>
                         <p>
                             Examinations
