@@ -58,6 +58,7 @@ Route::group(['middleware' => 'admin'], function(){
    Route::get('admin/programmes/add_programmes', [ProgrammesController::class, 'add']);
    Route::post('admin/programmes/add_programmes', [ProgrammesController::class, 'insert']);
    Route::get('admin/programmes/edit_programmes/{id}', [ProgrammesController::class, 'edit']);
+   Route::post('admin/programmes/edit_programmes/{id}', [ProgrammesController::class, 'update']);
    Route::get('admin/programmes/delete/{id} ', [ProgrammesController::class,'delete']);
 
  //HospitalProgrammes Routes
