@@ -30,38 +30,26 @@ class AuthController extends Controller
           return view('auth.login');
         
     }
-          public function AuthLogin(Request $request)
-          
-          {
-            $remember =!empty($request->remember) ? true : false;
-
-            if (Auth::attempt(['email' => $request->email, 'password' => $request-> password], true)){
-
-                if (Auth::user()->user_type==1){
-
-                    return redirect('admin/dashboard');
-                }
+    public function AuthLogin(Request $request)
+    {
+        $remember = !empty($request->remember) ? true : false;
     
-                if (Auth::user()->user_type==2){
+        // Try to log in with email or name
+        if (Auth::attempt(['email' => $request->email, 'password' => $request->password], $remember) ||
+            Auth::attempt(['name' => $request->email, 'password' => $request->password], $remember)) {
     
-                    return redirect('trainee/dashboard');
-                }
-
-                    // return redirect('admin/dashboard');
-                
-            // dd($request->all());
-          }
-
-          else{
-
+            if (Auth::user()->user_type == 1) {
+                return redirect('admin/dashboard');
+            }
+    
+            if (Auth::user()->user_type == 2) {
+                return redirect('trainee/dashboard');
+            }
+        } else {
             return redirect()->back()->with('error', 'Please Enter correct Credentials');
-           }
-
-        // if (!empty(Auth::check())){
-        //     return redirect('admin/dashboard');
-        // }
+        }
     }
-
+    
     public function forgetpassword(){
 
         return view('auth.forget');
@@ -128,7 +116,7 @@ class AuthController extends Controller
 
         Auth::logout();
 
-        return redirect('');
+        return redirect()->route('login');
     }
 
 }

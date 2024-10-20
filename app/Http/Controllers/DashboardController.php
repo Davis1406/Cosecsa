@@ -22,8 +22,8 @@ class DashboardController extends Controller
             $data['CandidateCount'] = $CandidateCount;
 
             return view('admin.dashboard', $data);
-        } elseif (Auth::user()->user_type == 2) {
+         } elseif (Auth::user()->user_type == 2) {
             return view('trainee.dashboard', $data);
-        }
+      }
     }
 }

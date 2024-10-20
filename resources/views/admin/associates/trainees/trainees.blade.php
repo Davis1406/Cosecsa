@@ -11,7 +11,7 @@
         <section class="content-header">
             <div class="container-fluid">
                 <div class="row mb-2">
-                    <div class="col-sm-6">
+                  <div class="col-sm-6">
                     </div>
                     <div class="col-sm-6" style="text-align: right">
                         <a href="{{url('admin/associates/trainees/import')}}" class="btn btn-secondary" style="color:black; background-color: #FEC503; border-color: #FEC503;">Upload Trainees <span class="fas fa-upload"></span></a>
@@ -53,6 +53,7 @@
                                             <th>Admission Letter Status</th>
                                             <th>Invitation Letter Status</th>
                                             <th>Admission Year</th>
+                                            <th>Programme Year</th>
                                             <th>Exam Year</th>
                                             <th>Programme Duration</th>
                                             <th>Invoice Number</th>
@@ -89,6 +90,7 @@
                                             <td>{{$value->admission_letter_status}}</td>
                                             <td>{{$value->invitation_letter_status}}</td>
                                             <td>{{$value->admission_year}}</td>
+                                            <td>{{$value->programme_year}}</td>
                                             <td>{{$value->exam_year}}</td>
                                             <td>{{$value->programme_period}}<span> Years</span></td>
                                             <td>{{$value->invoice_number}}</td>

@@ -23,7 +23,7 @@
     <!-- Brand Logo -->
     <a href="" class="brand-link">
         <img src="{{ url('public/dist/img/Cosecsa_Logo.png') }}" alt="Cosecsa Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-        <span class="brand-text font-weight-light">COSECSA</span>
+        <span class="brand-text font-weight-light">COSECSA-MIS</span>
     </a>
   
     <!-- Sidebar -->
@@ -34,7 +34,7 @@
                 <img src="{{ url('public/dist/img/user2-160x160.jpg') }}" class="img-circle elevation-2" alt="User Image">
             </div>
             <div class="info">
-                <a href="#" class="d-block">{{ Auth::user()->name }}</a>
+                <a href="#" class="d-block">{{ Auth::check() ? Auth::user()->name : 'Guest' }}</a>
             </div>
         </div>
   
@@ -112,13 +112,13 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link">
+                            <a href="{{ url('admin/associates/members/list') }}" class="nav-link @if (Request::segment(3) == 'members') active @endif">
                                 <i class="fas fa-user nav-icon"></i>
                                 <p>Members</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link">
+                            <a href="{{ url('admin/associates/fellows/list') }}" class="nav-link @if (Request::segment(3) == 'fellows') active @endif">
                                 <i class="fas fa-user nav-icon"></i>
                                 <p>Fellows</p>
                             </a>
@@ -129,7 +129,6 @@
                                 <p>PD's & Country Reps<i class="right fas fa-angle-left"></i></p>
                             </a>
                             <ul class="nav nav-treeview">
-
                                 <li class="nav-item">
                                     <a href="{{ url('admin/associates/trainers/list') }}" class="nav-link @if (Request::segment(3) == 'trainers') active @endif">
                                         <i class="fas fa-chalkboard-teacher nav-icon"></i>
@@ -144,6 +143,29 @@
                                 </li>
                             </ul>
                         </li>
+                        <li class="nav-item @if (Request::segment(3) == 'promotion') menu-open @endif">
+                            <a href="#" class="nav-link">
+                                <i class="fas fa-tasks nav-icon"></i> 
+                                <p>Associate Promotions<i class="right fas fa-angle-left"></i></p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/associates/promotion/promote_trainees') }}" class="nav-link @if (Request::segment(4) == 'promote_trainees') active @endif">
+                                        <i class="fas fa-paper-plane nav-icon"></i>
+                                        <p>Promote Trainees</p>
+                                    </a>
+                                    <a href="{{ url('admin/associates/promotion/promote_candidates') }}" class="nav-link @if (Request::segment(4) == 'promote_candidates') active @endif">
+                                        <i class="fas fa-upload nav-icon"></i>
+                                        <p>Promote Candidates</p>
+                                    </a>
+                                    <a href="{{ url('admin/promotion/manage') }}" class="nav-link @if (Request::segment(3) == 'manage') active @endif">
+                                        <i class="fas fa-cogs nav-icon"></i>
+                                        <p>Manage Promotions</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+    
                     </ul>
                 </li>
   

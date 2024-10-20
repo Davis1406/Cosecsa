@@ -13,6 +13,7 @@ class Trainee extends Model
 
     protected $fillable = [  
         'user_id',
+        'category_id',
         'firstname',
         'middlename',
         'lastname',
@@ -28,6 +29,7 @@ class Trainee extends Model
         'invitation_letter_status',
         'admission_year',
         'exam_year',
+        'training_year',
         'programme_period',
         'invoice_number',
         'invoice_date',

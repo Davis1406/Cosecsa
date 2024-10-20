@@ -29,6 +29,7 @@ $(function () {
             { "visible": false },
             { "visible": false },
             { "visible": false },
+            { "visible": false },
             { "visible": false }
         ]
     }).buttons().container().appendTo('#traineestable_wrapper .col-md-6:eq(0)');
@@ -85,6 +86,43 @@ $(function () {
         ]
     }).buttons().container().appendTo('#trainerstable_wrapper .col-md-6:eq(0)');
 
+
+    var fellowstable = $("#fellowstable").DataTable({
+        "responsive": true,
+        "lengthChange": true,
+        "autoWidth": false,
+        "paging": true,
+        "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
+        "columns": [
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true }
+      
+        ]
+    }).buttons().container().appendTo('#fellowstable_wrapper .col-md-6:eq(0)');
+
+
+    var memberstable = $("#memberstable").DataTable({
+        "responsive": true,
+        "lengthChange": true,
+        "autoWidth": false,
+        "paging": true,
+        "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
+        "columns": [
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true }
+      
+        ]
+    }).buttons().container().appendTo('#memberstable_wrapper .col-md-6:eq(0)');
 
     var countryRepsTable = $("#crstable").DataTable({
         "responsive": true,
@@ -164,6 +202,13 @@ $(function () {
     hospitalTable.on('draw', function () {
         initPopovers();
     });
+    fellowstable.on('draw', function () {
+        initPopovers();
+    });
+
+    memberstable.on('draw', function () {
+        initPopovers();
+    });
 
     hospitalProgrammesTable.on('draw', function () {
         initPopovers();
@@ -191,4 +236,6 @@ $(function () {
             }
         });
     });
+
+    
 });

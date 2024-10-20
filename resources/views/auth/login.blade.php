@@ -37,7 +37,7 @@
       <div class="logo-container">
         <img src="public/dist/img/Cosecsa_Logo.png" alt="COSECSA Logo">
       </div>
-      <a href="" class="h1" style="color: #a02626"><b>COSECSA</b></a>
+      <a href="" class="h1" style="color: #a02626"><b>COSECSA-MIS</b></a>
     </div>
     <div class="card-body">
       <p class="login-box-msg">Sign in to start your session</p>
@@ -47,7 +47,7 @@
       <form action="{{url('login')}}" method="post">
         {{ csrf_field() }}
         <div class="input-group mb-3">
-          <input type="email" class="form-control" required name="email" placeholder="Email">
+          <input type="text" class="form-control" required name="email" placeholder="Email/name">
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-envelope"></span>

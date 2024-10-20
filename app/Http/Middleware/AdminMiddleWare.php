@@ -5,31 +5,38 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-Use Auth;
+use Auth;
 
 class AdminMiddleWare
 {
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if(!empty(Auth::check())){
+        // Check if the user is authenticated
+        if (Auth::check()) {
 
-            if(Auth::user()->user_type == 1){
-                return $next ($request);
+            // Check if the authenticated user is an admin (user_type == 1)
+            if (Auth::user()->user_type == 1) {
+                return $next($request);
             } 
-            else{
+            
+            // If user_type is not 1, log the user out and redirect
+            else {
                 Auth::logout();
-                return redirect('');
-            }          
-        }
-        else{
-
+                return redirect('login')->with('error', 'You are not authorized to access this page.');
+            }
+        } 
+        
+        // If not authenticated, log the user out and redirect to login with a session expiry message
+        else {
             Auth::logout();
-            return redirect('');
+            return redirect('login')->with('error', 'Session expired. Please log in again.');
         }
     }
 }

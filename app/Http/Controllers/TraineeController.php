@@ -30,7 +30,6 @@ class TraineeController extends Controller
         $header_title = "View Trainee";
         return view('admin.associates.trainees.view', compact('trainee', 'header_title'));
 
-        // dd($trainee);
     }
 
     
@@ -101,6 +100,7 @@ class TraineeController extends Controller
             'admission_letter_status' => $request->admission_letter_status,
             'invitation_letter_status' => $request->invitation_letter_status,
             'admission_year' => $request->admission_year,
+            'training_year' => $request->training_year,
             'exam_year' => $request->exam_year,
             'programme_period' => $request->programme_period,
             'invoice_number' => $request->invoice_number,

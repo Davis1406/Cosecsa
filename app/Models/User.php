@@ -71,11 +71,13 @@ class User extends Authenticatable
                 'trainees.*',
                 'hospitals.name as hospital_name',
                 'programmes.name as programme_name',
-                'countries.country_name as country_name'
+                'countries.country_name as country_name',
+                'study_year.name as programme_year'
             )
             ->join('trainees', 'users.id', '=', 'trainees.user_id')
             ->join('hospitals', 'trainees.hospital_id', '=', 'hospitals.id')
             ->join('programmes', 'trainees.programme_id', '=', 'programmes.id')
+            ->join('study_year', 'trainees.training_year', '=', 'study_year.id')
             ->join('countries', 'trainees.country_id', '=', 'countries.id')
             ->where('users.user_type', '2')
             ->where('users.is_deleted', '=', '0');
@@ -83,6 +85,67 @@ class User extends Authenticatable
         $return = $return->orderBy('trainee_id', 'asc')->get();
         
         return $return;
+    }
+
+
+    static public function getFellows()
+    {
+        $return = self::select(
+                'users.id as user_id',
+                'users.name as fellow_name',
+                'users.email as email',
+                'users.password as user_password',
+                'fellows.id as fellow_id',
+                'fellows.user_id as f_id',
+                'fellows.personal_email as personal_email',
+                'fellows.*',
+                'programmes.name as programme_name',
+                'countries.country_name as country_name',
+                'categories.category_name as fellowship_type'
+
+        )
+            ->join('fellows', 'users.id', '=', 'fellows.user_id')
+            ->leftJoin('programmes', 'fellows.programme_id', '=', 'programmes.id')
+            ->leftJoin('categories', 'fellows.category_id', '=', 'categories.id')
+            ->leftJoin('countries', 'fellows.country_id', '=', 'countries.id')
+            ->where('users.user_type', '7')
+            ->where('users.is_deleted', '=', '0');
+
+        $return = $return->orderBy('id', 'asc')->get();
+        
+        return $return;
+
+    }
+    
+
+
+    static public function getMembers()
+    {
+        $return = self::select(
+                'users.id as user_id',
+                'users.name as member_name',
+                'users.email as email',
+                'users.password as user_password',
+                'members.id as members_id',
+                'members.user_id as m_id',
+                'members.personal_email as personal_email',
+                'members.*',
+                // 'programmes.name as programme_name',
+                'countries.country_name as country_name',
+                'categories.category_name as membership_type'
+
+            )
+            ->join('members', 'users.id', '=', 'members.user_id')
+            // ->join('programmes', 'fellows.programme_id', '=', 'programmes.id')
+            ->leftJoin('categories', 'members.category_id', '=', 'categories.id')
+            ->leftJoin('countries', 'members.country_id', '=', 'countries.id')
+            ->where('users.user_type', '8')
+            ->where('users.is_deleted', '=', '0');
+
+        $return = $return->orderBy('id', 'asc')->get();
+        
+        return $return;
+
     }
 
     static public function getCandidates()    

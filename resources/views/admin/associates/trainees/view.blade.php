@@ -88,6 +88,12 @@
                                 <th>Admission Year</th>
                                 <td>{{ $trainee->admission_year }}</td>
                             </tr>
+
+                            <tr>
+                                <th>Study Year</th>
+                                <td>{{ $trainee->programme_year}}</td>
+                            </tr>
+
                             <tr>
                                 <th>Exam Year</th>
                                 <td>{{ $trainee->exam_year }}</td>

@@ -26,7 +26,7 @@
             <div class="small-box bg-info">
               <div class="inner">
                 <h3>{{ $traineeCount }}</h3>
-                <p>New Trainees</p>
+                <p>Trainees</p>
               </div>
               <div class="icon">
                 <i class="ion ion-person-add"></i>
@@ -40,12 +40,12 @@
             <div class="small-box bg-success">
               <div class="inner">
                 <h3>{{$accreditedHospitalCount}}</h3>
-                <p> Accredited Hospital</p>
+                <p>Accredited Hospital</p>
               </div>
               <div class="icon">
                 <i class="ion ion-medkit"></i>
               </div>
-              <a href="{{url('admin/hospital/list')}}" class="small-box-footer">More info<i class="fas fa-arrow-circle-right"></i></a>
+              <a href="{{url('admin/hospital/list')}}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
             </div>
           </div>
           <!-- ./col -->

@@ -13,9 +13,12 @@ use App\Http\Controllers\CandidatesController;
 use App\Http\Controllers\TrainerController;
 use App\Http\Controllers\CountryRepsController;               
 use App\Http\Controllers\FellowsController;   
+use App\Http\Controllers\PromotionController;  
+use App\Http\Controllers\MembersController; 
+use App\Http\Controllers\FellowsModel;
 
 
-Route::get('/', [AuthController::class,'login']);
+Route::get('/', [AuthController::class,'login'])->name('login');
 Route::post('login', [AuthController::class,'AuthLogin']);
 Route::get('logout', [AuthController::class,'logout']);
 Route::get('forget-password', [AuthController::class,'forgetpassword']);
@@ -122,9 +125,34 @@ Route::get('admin/associates/reps/edit/{id} ', [CountryRepsController::class,'ed
 Route::post('admin/associates/reps/edit/{id} ', [CountryRepsController::class,'update']);
 Route::get('admin/associates/reps/delete/{id}', [CountryRepsController::class,'delete']);
 
-// Fellows Route
-Route::get('admin/associates/fellows_members/coming_soon', [FellowsController::class,'coming_soon']);
 
+//Fellows's Route
+Route::get('admin/associates/fellows/list', [FellowsController::class,'list']);
+Route::get('admin/associates/fellows/add',  [FellowsController::class,'add']);
+Route::post('admin/associates/fellows/add', [FellowsController::class,'insert'])->name('admin.associates.fellows.add');
+Route::get('admin/associates/fellows/import_fellows', [FellowsController::class,'import']);
+Route::post('admin/associates/fellows/import', [FellowsController::class, 'importFellows'])->name('fellows.import.data');
+Route::get('admin/associates/fellows/view/{id}',  [FellowsController::class,'view'])->name('fellows.view');
+Route::get('admin/associates/fellows/edit/{id} ', [FellowsController::class,'edit']);
+Route::post('admin/associates/fellows/edit/{id} ', [FellowsController::class,'update']);
+Route::get('admin/associates/fellows/delete/{id}', [FellowsController::class,'delete']);
+
+
+//Members's Route
+Route::get('admin/associates/members/list', [MembersController::class,'list']);
+Route::get('admin/associates/members/add',  [MembersController::class,'add']);
+Route::post('admin/associates/members/add', [MembersController::class,'insert'])->name('admin.associates.members.add');
+Route::get('admin/associates/members/import_members', [MembersController::class,'import']);
+Route::post('admin/associates/members/import', [MembersController::class, 'importMembers'])->name('members.import.data');
+Route::get('admin/associates/members/view/{id}',  [MembersController::class,'view'])->name('members.view');
+Route::get('admin/associates/members/edit/{id}', [MembersController::class,'edit']);
+Route::post('admin/associates/members/edit/{id}', [MembersController::class,'update']);
+Route::get('admin/associates/members/delete/{id}', [MembersController::class,'delete']);
+
+//Promotion Route
+Route::get('admin/associates/promotion/promote_trainees', [PromotionController::class,'promotion']);
+Route::get('admin/associates/promotion/promote_candidates', [PromotionController::class,'cadidatesPromotion']);
+Route::post('admin/associates/promotion/promote_trainees', [PromotionController::class,'update']);
 
 
 Route::group(['middleware' => 'trainee'], function(){
