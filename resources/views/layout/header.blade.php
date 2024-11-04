@@ -31,7 +31,7 @@
         <!-- Sidebar user panel (optional) -->
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
             <div class="image">
-                <img src="{{ url('public/dist/img/user2-160x160.jpg') }}" class="img-circle elevation-2" alt="User Image">
+                <img src="{{ url('public/dist/img/user.png') }}" class="img-circle elevation-2" alt="User Image">
             </div>
             <div class="info">
                 <a href="#" class="d-block">{{ Auth::check() ? Auth::user()->name : 'Guest' }}</a>
@@ -168,16 +168,32 @@
     
                     </ul>
                 </li>
-  
-                <li class="nav-item">
-                    <a href="#" class="nav-link @if (Request::segment(2) == 'examinations') active @endif">
+
+                <li class="nav-item @if (Request::segment(2) == 'exams') menu-open @endif">
+                    <a href="#" class="nav-link  @if (Request::segment(2) == 'exams') active @endif">
                         <i class="nav-icon fas fa-book-open"></i>
                         <p>
                             Examinations
+                            <i class="right fas fa-angle-left"></i>
                         </p>
                     </a>
+                    <ul class="nav nav-treeview" style="padding-left: 20px;">
+                        <li class="nav-item">
+                            <a href="{{ url('admin/exams/examiners') }}" class="nav-link @if (Request::segment(2) == 'exams') active @endif">
+                                <i class="fas fa-chalkboard-teacher nav-icon"></i>
+                                <p>Examiners</p>
+                            </a>
+                        </li> 
+                        <li class="nav-item">
+                            <a href="{{ url('admin/exams/results') }}" class="nav-link @if (Request::segment(2) == 'results') active @endif">
+                                <i class="fas fa-chart-line nav-icon"></i>
+                                <p>Results</p>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
-  
+                
+                                 
                 <li class="nav-item">
                     <a href="{{ url('profile/change_password') }}" class="nav-link @if (Request::segment(2) == 'change_password') active @endif">
                         <i class="nav-icon fas fa-cog"></i>
@@ -202,6 +218,33 @@
                         <i class="nav-icon fas fa-user"></i>
                         <p>
                             Trainee
+                        </p>
+                    </a>
+                </li>
+
+                {{-- Examiner Section --}}
+
+                @elseif (Auth::user()->user_type == 9)
+
+                <li class="nav-item">
+                               <li class="nav-item">
+                            <a href="{{ url('examiner/examiner_form') }}" class="nav-link @if (Request::segment(2) == 'examiner_form') active @endif">
+                                <i class="fas fa-book-open nav-icon"></i>
+                                <p>Examination Form</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url('examiner/results') }}" class="nav-link @if (Request::segment(2) == 'results' || Request::segment(2) == 'view_results' || Request::segment(2) == 'resubmit') active @endif">
+                                <i class="fas fa-chart-line nav-icon"></i>
+                                <p>Results</p>
+                            </a>
+                        </li>
+                        
+                <li class="nav-item">
+                    <a href="{{ url('profile/change_password') }}" class="nav-link @if (Request::segment(2) == 'change_password') active @endif">
+                        <i class="nav-icon fas fa-cog"></i>
+                        <p>
+                            Settings
                         </p>
                     </a>
                 </li>

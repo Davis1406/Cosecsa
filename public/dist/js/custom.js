@@ -106,6 +106,24 @@ $(function () {
     }).buttons().container().appendTo('#fellowstable_wrapper .col-md-6:eq(0)');
 
 
+    var examinerstable = $("#examinerstable").DataTable({
+        "responsive": true,
+        "lengthChange": true,
+        "autoWidth": false,
+        "paging": true,
+        "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
+        "columns": [
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true }
+      
+        ]
+    }).buttons().container().appendTo('#examinerstable_wrapper .col-md-6:eq(0)');
+
     var memberstable = $("#memberstable").DataTable({
         "responsive": true,
         "lengthChange": true,
@@ -140,6 +158,47 @@ $(function () {
             { "visible": true }
         ]
     }).buttons().container().appendTo('#crstable_wrapper .col-md-6:eq(0)');
+
+    var resultstable = $("#resultstable").DataTable({
+        "responsive": true,
+        "lengthChange": true,
+        "autoWidth": false,
+        "paging": true,
+        "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
+        "columns": [
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true }
+        ]
+    }).buttons().container().appendTo('#resultstable_wrapper .col-md-6:eq(0)');
+
+
+    var resultstable = $("#examinerscandidatestable").DataTable({
+        "responsive": true,
+        "lengthChange": true,
+        "autoWidth": false,
+        "paging": true,
+        "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
+        "columns": [
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true }
+        ]
+    }).buttons().container().appendTo('#examinerscandidatestable_wrapper .col-md-6:eq(0)');
+
 
     var hospitalTable = $("#hospitalTable").DataTable({
         "responsive": true,
@@ -203,6 +262,18 @@ $(function () {
         initPopovers();
     });
     fellowstable.on('draw', function () {
+        initPopovers();
+    });
+
+    examinerstable.on('draw', function () {
+        initPopovers();
+    });
+
+    resultstable.on('draw', function () {
+        initPopovers();
+    });
+
+    examinerscandidatestable.on('draw', function () {
         initPopovers();
     });
 

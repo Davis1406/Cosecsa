@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\Auth;
 use Request;
 
 class User extends Authenticatable
@@ -148,6 +149,32 @@ class User extends Authenticatable
 
     }
 
+    static public function getExaminers()
+    {
+        $return = self::select(
+                'users.id as user_id',
+                'users.name as examiner_name',
+                'users.email as email',
+                'users.password as examiner_password',
+                'examiners.id as examin_id',
+                'examiners.user_id as ex_id',
+                'examiners.*',
+                'examiners_groups.group_name as group_name',
+                'countries.country_name as country_name'
+
+        )
+            ->join('examiners', 'users.id', '=', 'examiners.user_id')
+            ->leftJoin('examiners_groups', 'examiners.group_id', '=', 'examiners_groups.id')
+            ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
+            ->where('users.user_type', '9')
+            ->where('users.is_deleted', '=', '0');
+
+        $return = $return->orderBy('id', 'asc')->get();
+        
+        return $return;
+
+    }
+
     static public function getCandidates()    
     {
         $return = self::select(
@@ -156,15 +183,17 @@ class User extends Authenticatable
                 'users.email as user_email',
                 'users.password as user_password',
                 'users.user_type as user_type',
-                'candidates.id as candidate_id',
+                'candidates.id as candidates_id',
                 'candidates.user_id as c_id',
                 'candidates.*',
                 'hospitals.name as hospital_name',
                 'programmes.name as programme_name',
+                'examiners_groups.group_name as group_name',
                 'countries.country_name as country_name'
             )
             ->join('candidates', 'users.id', '=', 'candidates.user_id')
             ->leftJoin('hospitals', 'candidates.hospital_id', '=', 'hospitals.id')
+            ->leftJoin('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
             ->leftJoin('programmes', 'candidates.programme_id', '=', 'programmes.id')
             ->leftJoin('countries', 'candidates.country_id', '=', 'countries.id')
             ->whereIn('users.id', function($query) {
@@ -173,10 +202,91 @@ class User extends Authenticatable
             })
             ->where('users.is_deleted', '=', '0');
     
-        $return = $return->orderBy('candidate_id', 'asc')->get();
+        $return = $return->orderBy('candidates_id', 'asc')->get();
         
         return $return;
     }
+
+
+    //***************************This function is no Longer used.*************************
+    static public function getexaminerCandidates()
+{
+    $examinerGroupId = \DB::table('examiners')
+        ->where('user_id', Auth::id())
+        ->value('group_id');
+
+    // Fetch candidates with the same group_id as the examiner
+    $candidates = self::select(
+            'users.id as user_id',
+            'users.name as name',
+            'users.email as user_email',
+            'users.user_type as user_type',
+            'candidates.id as candidates_id',
+            'candidates.user_id as c_id',
+            'candidates.group_id as candidate_group_id',
+            'candidates.*',
+            'hospitals.name as hospital_name',
+            'programmes.name as programme_name',
+            'examiners_groups.group_name as group_name',
+            'countries.country_name as country_name'
+        )
+        ->join('candidates', 'users.id', '=', 'candidates.user_id')
+        ->leftJoin('hospitals', 'candidates.hospital_id', '=', 'hospitals.id')
+        ->leftJoin('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+        ->leftJoin('programmes', 'candidates.programme_id', '=', 'programmes.id')
+        ->leftJoin('countries', 'candidates.country_id', '=', 'countries.id')
+        ->where('candidates.group_id', '=', $examinerGroupId)
+        ->where('users.is_deleted', '=', '0')
+        ->orderBy('candidates_id', 'asc')
+        ->get();
+
+    return $candidates; // Returns a collection of candidates
+}
+
+
+static public function getCandidatesByGroup($groupId)
+{
+    return self::select(
+            'users.id as user_id',
+            'users.name as name',
+            'candidates.id as cand_id',
+            'candidates.candidate_id as c_id'
+        )
+        ->join('candidates', 'users.id', '=', 'candidates.user_id')
+        ->where('candidates.group_id', '=', $groupId)
+        ->where('users.is_deleted', '=', '0')
+        ->orderBy('candidates.candidate_id', 'asc')
+        ->get();
+}
+
+public static function getExaminationResults()
+{
+    // Retrieve the examiner ID linked to the logged-in user
+    $examinerId = \DB::table('examiners')
+        ->where('user_id', auth()->id())
+        ->value('id');
+    
+    if (!$examinerId) {
+        return collect(); 
+    }
+
+    return \DB::table('examination_form')
+        ->select(
+            'examination_form.*',
+            'candidates.id as candidate_id',
+            'candidates.candidate_id as candidate_name',
+            'candidates.group_id as g_id',
+            'examiners.id as examiner_id',
+            'examiners_groups.group_name as group_name'
+        )
+        ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
+        ->join('examiners', 'examination_form.examiner_id', '=', 'examiners.id')
+        ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+        ->where('examination_form.examiner_id', $examinerId)
+        ->orderBy('examination_form.id', 'asc')
+        ->get();
+}
+
 
     static public function getTrainers()    
     {

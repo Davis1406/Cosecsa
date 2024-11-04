@@ -9,6 +9,8 @@ use App\Models\HospitalModel;
 use App\Models\Programme;
 use App\Models\Country;
 use App\Models\Candidates;
+use Illuminate\Support\Facades\Auth;
+use App\Models\CandidatesFormModel;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\CandidatesImport;
@@ -22,10 +24,18 @@ class CandidatesController extends Controller
         return view('admin.associates.candidates.list', $data);
     
     }
+//Candidates List for examiners
+    public function examinerList()
+    {
+        $data['getRecord'] = User::getexaminerCandidates();
+        $data['header_title'] = "Candidates List";
+        return view('examiner.candidates_list', $data);
+    
+    }
 
     public function view($id)
     {
-        $candidate = User::getCandidates()->firstWhere('candidate_id', $id);
+        $candidate = User::getCandidates()->firstWhere('candidates_id', $id);
         if (!$candidate) {
             return redirect('admin/associates/candidates/list')->with('error', 'Candidate not found');
         }
@@ -81,7 +91,7 @@ class CandidatesController extends Controller
         ]);
 
         
-        // Create trainee
+        // Create Candidate
         $candidateData = [
             'user_id'=> $user->id,
             'firstname' => $request['firstname'],
@@ -93,6 +103,7 @@ class CandidatesController extends Controller
             'programme_id' => $request['programme_id'],
             'hospital_id' => $request['hospital_id'],
             'country_id' => $request['country_id'],
+            'group_id' => $request['candidate_id'],
             'repeat_P1'=> $request['repeat_P1'],
             'repeat_P2'=> $request['repeat_P2'],
             'mmed'=> $request['mmed'],
@@ -199,5 +210,137 @@ public function delete($id)
 
     return redirect('admin/associates/candidates/list')->with('success', 'Candidate information successfully deleted');
 }
+
+
+public function getCandidatesByGroup($groupId)
+{
+    $candidates = User::getCandidatesByGroup($groupId);
+    return response()->json($candidates);
+} 
+
+
+public function storeEvaluation(Request $request)
+{
+    // Get the logged-in user's ID
+    $loggedInUserId = Auth::id();
+
+    $examiner = \DB::table('examiners')->where('user_id', $loggedInUserId)->first();
+
+    if (!$examiner) {
+        return back()->with('error', 'Examiner data not found.');
+    }
+
+    $examinerId = $examiner->id; 
+    $examinerGroupId = $examiner->group_id;
+    $questionMarksJson = json_encode($request->input('question_marks'));
+
+    $evaluation = new CandidatesFormModel();
+    $evaluation->candidate_id = $request->input('candidate_id');
+    $evaluation->examiner_id = $examinerId; 
+    $evaluation->station_id = $request->input('station_id');
+    $evaluation->group_id = $examinerGroupId;
+    $evaluation->question_mark = $questionMarksJson;
+    $evaluation->total = $request->input('total_marks');
+    $grade = strtolower($request->input('grade'));
+    $evaluation->remarks = $request->input('remarks');
+
+    // dd($evaluation);
+    
+    $evaluation->save();
+
+    return redirect()->back()->with('success', 'Evaluation submitted successfully.');
+}
+
+
+//Candidates List for examiners
+public function results()
+{
+    $data['getRecord'] = User::getExaminationResults();
+    $data['header_title'] = "Candidates Results";
+    return view('examiner.results', $data);
+
+}
+
+public function viewCandidateResults($candidate_id)
+{
+    $data['header_title'] = "View Candidate";
+
+    $data['candidateResult'] = \DB::table('examination_form')
+        ->select(
+            'examination_form.*',
+            'candidates.id as candidate_id',
+            'candidates.candidate_id as candidate_name',
+            'candidates.group_id as g_id',
+            'examiners.id as examiner_id',
+            'examiners_groups.group_name as group_name'
+        )
+        ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
+        ->join('examiners', 'examination_form.examiner_id', '=', 'examiners.id')
+        ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+        ->where('candidates.id', $candidate_id)
+        ->first();
+
+    return view('examiner.view_results', $data);
+}
+
+
+public function resubmit($candidate_id)
+{
+    $data['header_title'] = "Resubmit Results";
+
+    $data['candidate'] = \DB::table('examination_form')
+        ->select(
+            'examination_form.*',
+            'candidates.id as candidates_id',
+            'candidates.candidate_id as candidate_name',
+            'candidates.group_id as g_id',
+            'examiners.id as examiner_id',
+            'examiners_groups.group_name as group_name'
+        )
+        ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
+        ->join('examiners', 'examination_form.examiner_id', '=', 'examiners.id')
+        ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+        ->where('candidates.id', $candidate_id)
+        ->first();
+
+    if (!$data['candidate']) {
+        return redirect()->back()->with('error', 'Candidate not found.');
+    }
+
+    if (isset($data['candidate']->question_mark)) {
+        $data['candidate']->question_mark = json_decode($data['candidate']->question_mark) ?? [];
+    } else {
+        $data['candidate']->question_mark = []; 
+    }
+
+        return view('examiner.resubmit', $data);
+}
+
+
+public function updateEvaluation(Request $request, $id)
+{
+ 
+    // Find the candidate evaluation entry
+    $evaluation = CandidatesFormModel::where('candidate_id', $id)->first();
+    if (!$evaluation) {
+        return redirect()->back()->with('error', 'Candidate evaluation not found');
+    }
+
+    // Update evaluation fields
+    $evaluation->group_id = $request->group_id;
+    $evaluation->station_id = $request->station_id;
+    $evaluation->question_mark = $request->question_marks;
+    $evaluation->total = $request->total_marks;
+    $evaluation->overall = $request->grade;
+    $evaluation->remarks = $request->remarks;
+
+    $evaluation->save();
+
+    return redirect('examiner/results')->with('success', 'Evaluation updated successfully');
+
+}
+
+
+
 
 }

@@ -46,6 +46,8 @@ class CandidatesImport implements ToModel, WithHeadingRow
             'entry_number' => $row['entry_number'],
             'hospital_id' => $row['hospital_id'],
             'programme_id' => $row['programme_id'],
+            'group_id' => $row['group_id'],
+            'candidate_id' => $row['candidate_id'],
             'gender' => $row['gender'],
             'country_id' => $row['country_id'],
             'repeat_paper_one'=> $row['repeat_paper_one'],

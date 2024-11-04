@@ -11,7 +11,7 @@
                     <div class="container-fluid">
                         <div class="row mb-2">
                             <div class="col-sm-6">
-                                <h1>Import Candidates</h1>
+                                <h1>Import Examiners</h1>
                             </div>
                         </div>
                     </div><!-- /.container-fluid -->
@@ -26,14 +26,14 @@
                                 <!-- general form elements -->
                                 <div class="card card-primary">
                                     <div class="card-header" style="background-color: darkred">
-                                        <h3 class="card-title">Upload Candidates Data (CSV/XLS/XLSX):
+                                        <h3 class="card-title">Upload Examiners Data (CSV/XLS/XLSX):
                                         </h3>
                                     </div>
                                     <!-- /.card-header -->
                                     <!-- form start -->
                                     <div class="col-md-6 offset-md-3">
 
-                                        <form method="POST" action="{{ route('candidates.import.data') }}" enctype="multipart/form-data">
+                                        <form method="POST" action="{{ route('exams.import.data') }}" enctype="multipart/form-data">
                                             {{ csrf_field() }}
                                             <div class="card-body">
                                                 <div class="form-group">

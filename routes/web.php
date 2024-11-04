@@ -16,6 +16,7 @@ use App\Http\Controllers\FellowsController;
 use App\Http\Controllers\PromotionController;  
 use App\Http\Controllers\MembersController; 
 use App\Http\Controllers\FellowsModel;
+use App\Http\Controllers\ExamsController;
 
 
 Route::get('/', [AuthController::class,'login'])->name('login');
@@ -25,15 +26,6 @@ Route::get('forget-password', [AuthController::class,'forgetpassword']);
 Route::post('forget-password', [AuthController::class,'PostForgetPassword']);
 Route::get('reset/{token}', [AuthController::class,'ResetPassword']);
 Route::post('reset/{token}', [AuthController::class,'PostReset']);
-
-
-// Route::get('admin/dashboard', function () {
-//     return view('admin.dashboard');
-// });
-
-// Route::get('admin/list', function () {
-//     return view('admin.list');
-// });
 
 
 // Admin Routes
@@ -100,8 +92,6 @@ Route::group(['middleware' => 'admin'], function(){
   Route::post('admin/associates/candidates/edit/{id} ', [CandidatesController::class,'update']);
   Route::get('admin/associates/candidates/delete/{id}', [CandidatesController::class,'delete']);
 
-});
-
 //Trainers Route
 Route::get('admin/associates/trainers/list', [TrainerController::class,'list']);
 Route::get('admin/associates/trainers/add',  [TrainerController::class,'add']);
@@ -149,10 +139,25 @@ Route::get('admin/associates/members/edit/{id}', [MembersController::class,'edit
 Route::post('admin/associates/members/edit/{id}', [MembersController::class,'update']);
 Route::get('admin/associates/members/delete/{id}', [MembersController::class,'delete']);
 
+//Examiners's Route
+Route::get('admin/exams/examiners', [ExamsController::class,'list']);
+Route::get('admin/exams/add_examiner',  [ExamsController::class,'add']);
+Route::post('admin/exams/add_examiner', [ExamsController::class,'insert'])->name('examiner.add');
+Route::post('admin/exams/import', [ExamsController::class, 'importExaminers'])->name('exams.import.data');;
+Route::get('admin/exams/import', [ExamsController::class, 'import']);
+Route::get('admin/exams/view_examiner/{id}',  [ExamsController::class,'view'])->name('examiner.view');
+Route::get('admin/exams/edit_examiner/{id}', [ExamsController::class,'edit']);
+Route::post('admin/exams/edit_examiner/{id}', [ExamsController::class,'update'])->name('examiner.update');
+Route::get('admin/exams/delete/{id}', [ExamsController::class,'delete']);
+
+
 //Promotion Route
 Route::get('admin/associates/promotion/promote_trainees', [PromotionController::class,'promotion']);
 Route::get('admin/associates/promotion/promote_candidates', [PromotionController::class,'cadidatesPromotion']);
 Route::post('admin/associates/promotion/promote_trainees', [PromotionController::class,'update']);
+
+
+});
 
 
 Route::group(['middleware' => 'trainee'], function(){
@@ -160,3 +165,21 @@ Route::group(['middleware' => 'trainee'], function(){
     Route::get('trainee/dashboard ', [DashboardController::class,'dashboard']);
 
 });
+
+//Examiner Routes 
+
+Route::group(['middleware' => 'examiner'], function(){
+
+  Route::get('examiner/examiner_form ', [DashboardController::class,'examinerform']);
+  Route::get('examiner/view_results/{id}',  [CandidatesController::class,'viewCandidateResults']);
+  Route::get('examiner/results', [CandidatesController::Class,'results']);
+  Route::get('examiner/resubmit/{id}', [CandidatesController::class, 'resubmit']);
+  Route::post('examiner/resubmit/{id}', [CandidatesController::class, 'updateEvaluation'])->name('candidateform.update');
+  Route::post('examiner/examiner_form', [CandidatesController::class, 'storeEvaluation'])->name('examiner.add');
+  Route::get('profile/change_password', [UserController::class, 'changePassword']);
+  Route::post('profile/change_password', [UserController::class, 'updatePassword']);
+  Route::get('/get-candidates/{groupId}', [CandidatesController::class, 'getCandidatesByGroup']);
+
+
+});
+

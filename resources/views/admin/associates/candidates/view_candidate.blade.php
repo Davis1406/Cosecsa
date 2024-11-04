@@ -9,7 +9,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6" style="text-align: left">
-                    <a href="{{url('admin/associates/candidates/list')}}" class="btn btn-primary"> <span class="fas fa-arrow-left"></span> Candidates List</a>
+                    <a href="{{url('admin/associates/candidates/list')}}" class="btn btn-primary" style="background-color: #a02626; border-color:#a02626"> <span class="fas fa-arrow-left"></span> Candidates List</a>
                 </div>
             </div>
         </div><!-- /.container-fluid -->
@@ -45,6 +45,17 @@
                             <tr>
                                 <th>Admission Number</th>
                                 <td>{{ $candidate->entry_number }}</td>
+                            </tr>
+
+                            <tr>
+                                <th>Candidate Number</th>
+                                <td>{{ $candidate->candidate_id }}</td>
+                            </tr>
+
+
+                            <tr>
+                                <th>Group Name</th>
+                                <td><span>Group </span>{{ $candidate->group_name }}</td>
                             </tr>
 
                             <tr>

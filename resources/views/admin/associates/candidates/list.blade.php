@@ -75,8 +75,8 @@
                                             <td>{{$value->mmed}}</td>
                                             <td>
                                                 <a href="#" data-id="{{$value->id}}" data-name="{{$value->name}}" class="action-icon" data-toggle="popover" data-html="true" data-content='
-                                                    <a href="{{url('admin/associates/candidates/view/'.$value->candidate_id)}}"><i class="fa fa-eye action-icon"></i> View</a>
-                                                    <a href="{{url('admin/associates/candidates/edit/'.$value->candidate_id)}}"><i class="fa fa-edit action-icon"></i> Edit</a>
+                                                    <a href="{{url('admin/associates/candidates/view/'.$value->candidates_id)}}"><i class="fa fa-eye action-icon"></i> View</a>
+                                                    <a href="{{url('admin/associates/candidates/edit/'.$value->candidates_id)}}"><i class="fa fa-edit action-icon"></i> Edit</a>
                                                     <a href="{{url('admin/associates/candidates/delete/'.$value->c_id)}}"><i class="fa fa-trash action-icon"></i> Delete</a>'>
                                                     <i class="fa fa-bars" aria-hidden="true" style="color: #5a6268"></i>
                                                 </a>

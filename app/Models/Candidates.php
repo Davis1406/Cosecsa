@@ -25,6 +25,8 @@ class Candidates extends Model
         'repeat_paper_one',
         'repeat_paper_two',
         'mmed',
+        'group_id',
+        'candidate_id',
         'entry_number',
         'admission_year',
         'exam_year',

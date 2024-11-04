@@ -25,6 +25,12 @@ class AuthController extends Controller
 
                 return redirect('trainee/dashboard');
             }
+
+            if (Auth::user()->user_type==9){
+
+                return redirect('examiner/examiner_form');
+            }
+            
         }
         // dd(Hash::make('admin@2023'));
           return view('auth.login');
@@ -44,6 +50,10 @@ class AuthController extends Controller
     
             if (Auth::user()->user_type == 2) {
                 return redirect('trainee/dashboard');
+            }
+
+            if (Auth::user()->user_type == 9) {
+                return redirect('examiner/examiner_form');
             }
         } else {
             return redirect()->back()->with('error', 'Please Enter correct Credentials');
