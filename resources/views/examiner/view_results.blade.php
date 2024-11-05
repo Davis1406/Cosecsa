@@ -52,7 +52,7 @@
                         @endif
                         <tr>
                             <th>Total Marks</th>
-                            <td>{{ $candidateResult->total }}</td>
+                            <td><b>{{ $candidateResult->total }}</b></td>
                         </tr>
                         <tr>
                             <th>Overall Grade</th>

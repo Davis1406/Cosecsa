@@ -5,7 +5,7 @@
     <div class="content-wrapper">
         <section class="content">
             <section class="multi_step_form">
-                <form id="msform" method="POST" action="{{ route('examiner.add') }}" enctype="multipart/form-data">
+                <form id="msform" method="POST" action="{{ route('examiners.add') }}" enctype="multipart/form-data">
                     {{ csrf_field() }}
                     
                     <div class="tittle">
@@ -68,11 +68,11 @@
                                 <label>Group Name</label>
                                 <select name="group_id" class="form-control">
                                     <option value="" disabled>Select Group...</option>
-                                    @for ($i = 1; $i <= 15; $i++)
-                                        <option value="{{ $i }}">Group {{ $i }}</option>
-                                    @endfor
+                                    @foreach($groups as $group)
+                                        <option value="{{ $group->id }}">Group {{ $group->group_name }}</option>
+                                    @endforeach
                                 </select>
-                            </div>                            
+                            </div>                        
                         </div>
 
                         <div class="form-row">

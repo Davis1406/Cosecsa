@@ -142,7 +142,7 @@ Route::get('admin/associates/members/delete/{id}', [MembersController::class,'de
 //Examiners's Route
 Route::get('admin/exams/examiners', [ExamsController::class,'list']);
 Route::get('admin/exams/add_examiner',  [ExamsController::class,'add']);
-Route::post('admin/exams/add_examiner', [ExamsController::class,'insert'])->name('examiner.add');
+Route::post('admin/exams/add_examiner', [ExamsController::class,'insert'])->name('examiners.add');
 Route::post('admin/exams/import', [ExamsController::class, 'importExaminers'])->name('exams.import.data');;
 Route::get('admin/exams/import', [ExamsController::class, 'import']);
 Route::get('admin/exams/view_examiner/{id}',  [ExamsController::class,'view'])->name('examiner.view');
@@ -176,10 +176,8 @@ Route::group(['middleware' => 'examiner'], function(){
   Route::get('examiner/resubmit/{id}', [CandidatesController::class, 'resubmit']);
   Route::post('examiner/resubmit/{id}', [CandidatesController::class, 'updateEvaluation'])->name('candidateform.update');
   Route::post('examiner/examiner_form', [CandidatesController::class, 'storeEvaluation'])->name('examiner.add');
-  Route::get('profile/change_password', [UserController::class, 'changePassword']);
-  Route::post('profile/change_password', [UserController::class, 'updatePassword']);
+  Route::get('examiner/change_password', [ExamsController::class, 'changePassword']);
+  Route::post('examiner/change_password', [ExamsController::class, 'updatePassword']);
   Route::get('/get-candidates/{groupId}', [CandidatesController::class, 'getCandidatesByGroup']);
-
-
 });
 

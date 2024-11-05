@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ExaminersImport;
 use App\Models\User;
+use Auth;
+use Hash;
 use App\Models\Country;
 use App\Models\ExamsModel;
 use Illuminate\Support\Facades\DB;
@@ -43,9 +45,10 @@ class ExamsController extends Controller
     {
         $data['getCountry'] = Country::getCountry();
         $data['header_title'] = "Add New Examiner";  
+        $data['groups'] = DB::table('examiners_groups')->select('id', 'group_name')->get();
         return view('admin.exams.add_examiner', $data);
     }
-
+    
     public function insert(Request $request)
     {
     
@@ -59,7 +62,7 @@ class ExamsController extends Controller
             'user_type' => $userType
         ]);
     
-        // Create Fellow
+        // Create Examiner
         ExamsModel::create([
             'user_id' => $user->id,
             'email' => $request->email,
@@ -164,5 +167,25 @@ class ExamsController extends Controller
       return redirect('admin/exams/examiners')->with('error', 'Failed to delete examiners information');
    }
 
+
+
+   public function changePassword(){
+    $data['header_title'] = "Change Password";
+    return view('examiner.change_password', $data);
+}
+
+public function updatePassword(Request $request){
+    
+    $user = User::getSingleId(Auth::user()->id);
+    if (Hash::check($request->old_password, $user->password)){
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+        return redirect()->back()->with('success', "Password successfully updated");
+    }
+    else{
+        return redirect()->back()->with('error', "Old Password is not correct");
+    }
+} 
 
 }

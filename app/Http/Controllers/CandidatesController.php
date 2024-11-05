@@ -263,6 +263,16 @@ public function results()
 
 public function viewCandidateResults($candidate_id)
 {
+    // Get the logged-in examiner's user ID and corresponding examiner ID
+    $loggedInUserId = Auth::id();
+    $examiner = \DB::table('examiners')->where('user_id', $loggedInUserId)->first();
+
+    if (!$examiner) {
+        return back()->with('error', 'Examiner data not found.');
+    }
+
+    $examinerId = $examiner->id;
+
     $data['header_title'] = "View Candidate";
 
     $data['candidateResult'] = \DB::table('examination_form')
@@ -278,14 +288,23 @@ public function viewCandidateResults($candidate_id)
         ->join('examiners', 'examination_form.examiner_id', '=', 'examiners.id')
         ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
         ->where('candidates.id', $candidate_id)
+        ->where('examiners.id', $examinerId) // Filter by examiner ID
         ->first();
 
     return view('examiner.view_results', $data);
 }
 
-
 public function resubmit($candidate_id)
 {
+    // Get the logged-in examiner's user ID and corresponding examiner ID
+    $loggedInUserId = Auth::id();
+    $examiner = \DB::table('examiners')->where('user_id', $loggedInUserId)->first();
+
+    if (!$examiner) {
+        return redirect()->back()->with('error', 'Examiner data not found.');
+    }
+
+    $examinerId = $examiner->id;
     $data['header_title'] = "Resubmit Results";
 
     $data['candidate'] = \DB::table('examination_form')
@@ -301,46 +320,54 @@ public function resubmit($candidate_id)
         ->join('examiners', 'examination_form.examiner_id', '=', 'examiners.id')
         ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
         ->where('candidates.id', $candidate_id)
+        ->where('examiners.id', $examinerId)
         ->first();
+
+    if ($data['candidate']) {
+        // Decode the question_mark JSON data before passing it to the view
+        $data['candidate']->question_mark = json_decode($data['candidate']->question_mark, true);
+    }
 
     if (!$data['candidate']) {
         return redirect()->back()->with('error', 'Candidate not found.');
     }
 
-    if (isset($data['candidate']->question_mark)) {
-        $data['candidate']->question_mark = json_decode($data['candidate']->question_mark) ?? [];
-    } else {
-        $data['candidate']->question_mark = []; 
-    }
-
-        return view('examiner.resubmit', $data);
+    // Pass data to the view
+    return view('examiner.resubmit', $data);  
 }
 
 
-public function updateEvaluation(Request $request, $id)
+public function updateEvaluation(Request $request, $evaluationId)
 {
- 
-    // Find the candidate evaluation entry
-    $evaluation = CandidatesFormModel::where('candidate_id', $id)->first();
+    $loggedInUserId = Auth::id();
+    $examiner = \DB::table('examiners')->where('user_id', $loggedInUserId)->first();
+
+    if (!$examiner) {
+        return redirect()->back()->with('error', 'Examiner data not found.');
+    }
+
+    $examinerId = $examiner->id;
+
+    $evaluation = CandidatesFormModel::where('id', $evaluationId)
+        ->where('examiner_id', $examinerId)
+        ->first();
+
+
     if (!$evaluation) {
         return redirect()->back()->with('error', 'Candidate evaluation not found');
     }
 
-    // Update evaluation fields
     $evaluation->group_id = $request->group_id;
     $evaluation->station_id = $request->station_id;
-    $evaluation->question_mark = $request->question_marks;
+    $evaluation->question_mark = json_encode($request->question_marks);
     $evaluation->total = $request->total_marks;
     $evaluation->overall = $request->grade;
     $evaluation->remarks = $request->remarks;
 
-    $evaluation->save();
+    $evaluation->save(); // Save the changes
 
     return redirect('examiner/results')->with('success', 'Evaluation updated successfully');
-
-}
-
-
+ }
 
 
 }

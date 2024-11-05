@@ -6,7 +6,7 @@
         <section class="content">
             @include('_message')
             <section class="multi_step_form">
-                <form id="msform" method="POST" action="{{ route('candidateform.update', ['id' => $candidate->candidates_id]) }}" enctype="multipart/form-data">
+                <form id="msform" method="POST" action="{{ route('candidateform.update', ['id' => $candidate->id]) }}" enctype="multipart/form-data" onsubmit="return validateTotalMarks()">
                     {{ csrf_field() }}
                     
                     <div class="tittle">
@@ -39,9 +39,9 @@
                     <!-- Dynamic Question Marks Fields -->
                     <div class="form-row justify-content-center" id="question-fields">
                         <div class="form-group col-md-9 col-sm-12">
-                             <label>Enter Marks for Questions,</label>
-                             @foreach($candidate->question_mark as $index => $mark)  <!-- Include index -->
-                                  <label for="question_marks_{{ $index }}">Question {{ $index + 1 }}:</label> <!-- Display index + 1 -->
+                             <label>Enter Marks for Questions</label>
+                             @foreach($candidate->question_mark as $index => $mark)
+                                  <label for="question_marks_{{ $index }}">Question {{ $index + 1 }}:</label>
                                   <div class="input-group mb-2">
                                       <input type="number" name="question_marks[]" id="question_marks_{{ $index }}" class="form-control question-mark" value="{{ $mark }}" placeholder="Enter mark for question" required oninput="updateTotalMarks()" step="0.01">
                                   </div>
@@ -84,44 +84,68 @@
     </div>
 </div>
     <style>
-
-    .form-row{
-    
-        margin:0 10px 0 10px !important;
+    .form-row {
+        margin: 0 10px 0 10px !important;
     }
     </style>
 
 <script>
-    function addQuestionField() {
-        const questionFields = document.getElementById('question-fields');
-        const currentCount = questionFields.querySelectorAll('input[name="question_marks[]"]').length; // Count current fields
-        const newField = document.createElement('div');
-        newField.classList.add('form-group', 'col-md-9', 'col-sm-12', 'mb-2');
-        newField.innerHTML = `
-            <label for="question_marks_${currentCount}">Question ${currentCount + 1}:</label>
-            <div class="input-group">
-                <input type="number" name="question_marks[]" id="question_marks_${currentCount}" class="form-control question-mark" placeholder="Enter mark for question" required oninput="updateTotalMarks()" step="0.01">
-                <div class="input-group-append">
-                    <button type="button" class="btn btn-danger" onclick="removeQuestionField(this)">X</button>
-                </div>
-            </div>
-        `;
-        questionFields.appendChild(newField);
+  function addQuestionField() {
+    const questionFields = document.getElementById('question-fields');
+    const currentCount = questionFields.querySelectorAll('input[name="question_marks[]"]').length;
+    const newField = document.createElement('div');
+    newField.classList.add('form-group', 'col-md-9', 'col-sm-12', 'mb-2');
+    
+    newField.innerHTML = `
+        <label for="question_marks_${currentCount}">Question ${currentCount + 1}:</label>
+        <div class="input-group">
+            <input type="number" name="question_marks[]" id="question_marks_${currentCount}" class="form-control question-mark" placeholder="Enter mark for question" required oninput="updateTotalMarks()" step="0.1" min="0">
+            ${currentCount > 0 ? `
+            <div class="input-group-append">
+                <button type="button" class="btn btn-danger" onclick="removeQuestionField(this)">X</button>
+            </div>` : ''}
+        </div>
+    `;
+    
+    questionFields.appendChild(newField);
+}
+
+function updateTotalMarks() {
+    let total = 0;
+    document.querySelectorAll('.question-mark').forEach(function(input) {
+       
+        if (!/^\d+(\.\d{0,1})?$/.test(input.value)) {
+            input.value = parseFloat(input.value).toFixed(1);
+        }
+        
+        total += parseFloat(input.value) || 0;
+    });
+    document.getElementById('total_marks').value = total.toFixed(1);
+
+    const submitButton = document.querySelector('.action-button');
+    if (total > 20) {
+        alert('The total marks should not exceed 20 per station.');
+        document.getElementById('total_marks').value = 0;
+        submitButton.disabled = true;
+    } else {
+        submitButton.disabled = false;
     }
+}
 
     function removeQuestionField(button) {
-        // Remove the parent div of the button
         const fieldGroup = button.closest('.form-group');
         fieldGroup.remove();
-        updateTotalMarks(); // Update the total marks after removal
+        updateTotalMarks();
     }
 
-    function updateTotalMarks() {
-        let total = 0;
-        document.querySelectorAll('.question-mark').forEach(function(input) {
-            total += parseFloat(input.value) || 0;
-        });
-        document.getElementById('total_marks').value = total;
+// Add event listener to prevent form submission if total marks exceed 20
+document.getElementById('msform').addEventListener('submit', function(event) {
+    const total = parseFloat(document.getElementById('total_marks').value) || 0;
+    if (total > 20) {
+        event.preventDefault(); // Prevent form submission
+        alert('Cannot submit form. The total marks should be less than or equal to 20 per station.');
     }
+});
+
 </script>
 @endsection

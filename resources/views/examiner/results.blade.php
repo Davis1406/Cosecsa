@@ -49,7 +49,7 @@
                                                 @for ($i = 0; $i < 5; $i++)
                                                     <td>{{ isset($marks[$i]) ? $marks[$i] : '-' }}</td> <!-- Display each mark -->
                                                 @endfor
-                                                <td>{{$value->total}}</td>
+                                                <td><b>{{$value->total}}</b></td>
                                                 <td>{{$value->overall}}</td>
                                                 <td>
                                                     <div class="btn-group">
