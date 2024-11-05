@@ -117,6 +117,13 @@ function addQuestionField() {
     questionFields.appendChild(newField);
 }
 
+
+function removeQuestionField(button) {
+        const fieldGroup = button.closest('.form-group');
+        fieldGroup.remove();
+        updateTotalMarks();
+    }
+
 function updateTotalMarks() {
     let total = 0;
     document.querySelectorAll('.question-mark').forEach(function(input) {
