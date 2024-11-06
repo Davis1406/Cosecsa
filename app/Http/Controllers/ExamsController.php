@@ -134,40 +134,72 @@ class ExamsController extends Controller
 
     public function delete($id)
     {
-      // Find the user by ID
       $user = User::find($id);
   
-      // Check if user exists
       if (!$user) {
           return redirect('admin/exams/examiners')->with('error', 'User not found');
       }
   
-      // Retrieve the associated member using the user_id
       $examiner = ExamsModel::where('user_id', $user->id)->first();
   
-      // Check if fellow exists
       if (!$examiner) {
           return redirect('admin/exams/examiners')->with('error', 'Examiner not found');
       }
   
-      // Verify that the user is of type 'examiner' (user_type 9)
       if ($user->user_type != 9) {
           return redirect('admin/exams/examiners')->with('error', 'User is not an Examiner');
       }
   
-      // Update the is_deleted status to 1 (mark as deleted/inactive)
       $user->is_deleted = 1;
   
-      // Save the changes to the user
       if ($user->save()) {
           return redirect('admin/exams/examiners')->with('success', 'Examimer successfully deleted');
       }
   
-      // Return an error message if the save operation fails
       return redirect('admin/exams/examiners')->with('error', 'Failed to delete examiners information');
    }
 
+   public function adminResults()
+   {
+       $data['header_title'] = 'Candidates Results';
+   
+       $getResults = User::getAdminExamsResults();
+      
+       $data['getResults'] = $getResults;
+       
+       
+       return view('admin.exams.exam_results', $data);
+   }
+   
+// Single Station Results
 
+public function viewCandidateStationResult($candidate_id, $station_id)
+{   
+    $header_title = 'Station Results';
+    $candidateResult = \DB::table('examination_form')
+        ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
+        ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+        ->join('examiners', 'examiners.id', '=', 'examination_form.examiner_id') // Join with examiners table
+        ->join('users', 'examiners.user_id', '=', 'users.id') // Join with users table
+        ->select(
+            'candidates.candidate_id as candidate_name',
+            'examiners_groups.group_name',
+            'examination_form.station_id',
+            'examination_form.total',
+            'examination_form.question_mark',
+            'examination_form.overall',
+            'examination_form.remarks',
+            'examiners.examiner_id as examin_id',
+            'users.name as examiner_name' // Retrieve examiner's name from users table
+        )
+        ->where('examination_form.candidate_id', $candidate_id)
+        ->where('examination_form.station_id', $station_id)
+        ->first();
+
+    return view('admin.exams.station_results', compact('candidateResult', 'header_title'));
+}
+
+//function to change password:
 
    public function changePassword(){
     $data['header_title'] = "Change Password";

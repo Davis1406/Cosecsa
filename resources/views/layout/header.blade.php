@@ -179,13 +179,13 @@
                     </a>
                     <ul class="nav nav-treeview" style="padding-left: 20px;">
                         <li class="nav-item">
-                            <a href="{{ url('admin/exams/examiners') }}" class="nav-link @if (Request::segment(2) == 'exams') active @endif">
+                            <a href="{{ url('admin/exams/examiners') }}" class="nav-link @if (Request::segment(3) == 'examiners') active @endif">
                                 <i class="fas fa-chalkboard-teacher nav-icon"></i>
                                 <p>Examiners</p>
                             </a>
                         </li> 
                         <li class="nav-item">
-                            <a href="{{ url('admin/exams/results') }}" class="nav-link @if (Request::segment(2) == 'results') active @endif">
+                            <a href="{{ url('admin/exams/exam_results') }}" class="nav-link @if (Request::segment(3) == 'exam_results' || Request::segment(3)== 'station_results' ) active @endif">
                                 <i class="fas fa-chart-line nav-icon"></i>
                                 <p>Results</p>
                             </a>

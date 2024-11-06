@@ -177,10 +177,10 @@ $(function () {
             { "visible": true },
             { "visible": true }
         ]
-    }).buttons().container().appendTo('#resultstable_wrapper .col-md-6:eq(0)');
+    }).buttons().container().appendTo('#results_wrapper .col-md-6:eq(0)');
 
 
-    var resultstable = $("#examinerscandidatestable").DataTable({
+    var adminresultstable = $("#adminresultstable").DataTable({
         "responsive": true,
         "lengthChange": true,
         "autoWidth": false,
@@ -195,9 +195,11 @@ $(function () {
             { "visible": true },
             { "visible": true },
             { "visible": true },
+            { "visible": true },
+            { "visible": true },
             { "visible": true }
         ]
-    }).buttons().container().appendTo('#examinerscandidatestable_wrapper .col-md-6:eq(0)');
+    }).buttons().container().appendTo('#adminresultstable_wrapper .col-md-6:eq(0)');
 
 
     var hospitalTable = $("#hospitalTable").DataTable({
@@ -270,6 +272,10 @@ $(function () {
     });
 
     resultstable.on('draw', function () {
+        initPopovers();
+    });
+
+    adminresultstable.on('draw', function () {
         initPopovers();
     });
 

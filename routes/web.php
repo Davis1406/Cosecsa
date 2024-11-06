@@ -149,6 +149,9 @@ Route::get('admin/exams/view_examiner/{id}',  [ExamsController::class,'view'])->
 Route::get('admin/exams/edit_examiner/{id}', [ExamsController::class,'edit']);
 Route::post('admin/exams/edit_examiner/{id}', [ExamsController::class,'update'])->name('examiner.update');
 Route::get('admin/exams/delete/{id}', [ExamsController::class,'delete']);
+Route::get('admin/exams/exam_results', [ExamsController::class,'adminResults']);
+Route::get('admin/exams/station_results/{candidate_id}/{station_id}', [ExamsController::class, 'viewCandidateStationResult']);
+
 
 
 //Promotion Route

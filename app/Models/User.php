@@ -287,6 +287,38 @@ public static function getExaminationResults()
         ->get();
 }
 
+public static function getAdminExamsResults()
+{
+    return \DB::table('examination_form')
+        ->select(
+            'examination_form.candidate_id as cand_id', // Use "cand_id" for consistency
+            'candidates.firstname',
+            'candidates.middlename',
+            'candidates.lastname',
+            'candidates.candidate_id as c_id', 
+            'examination_form.station_id',
+            'examination_form.total'
+        )
+        ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
+        ->orderBy('examination_form.candidate_id')
+        ->get()
+        ->groupBy('cand_id')
+        ->map(function ($group) {
+            $candidate = $group->first();
+            return (object) [
+                'candidate_id' => $candidate->c_id, // Use "c_id" as mapped in select clause
+                'cnd_id' => $candidate-> cand_id,
+                'fullname' => "{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}",
+                'stations' => $group->map(function ($row) {
+                    return [
+                        'station_id' => $row->station_id,
+                        'total' => $row->total
+                    ];
+                })->toArray(),
+            ];
+        });
+}
+
 
     static public function getTrainers()    
     {
