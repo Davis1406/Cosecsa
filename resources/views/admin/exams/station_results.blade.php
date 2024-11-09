@@ -7,7 +7,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6" style="text-align: left">
-                    <a href="{{ url('admin/exams/results') }}" class="btn btn-primary" style="background-color: #a02626; border-color:#a02626">
+                    <a href="{{ url('admin/exams/exam_results') }}" class="btn btn-primary" style="background-color: #a02626; border-color:#a02626">
                         <span class="fas fa-arrow-left"></span> Back to Results List
                     </a>
                 </div>
@@ -27,7 +27,7 @@
             </div>
             <div class="card-body">
                 @if ($candidateResult)
-                    <table class="table table-bordered" style="width: 100%; margin: 0 auto;">
+                    <table class="table table-bordered" style="width: 100%; m  argin: 0 auto;">
                         <tr>
                             <th>Candidate ID</th>
                             <td>{{ $candidateResult->candidate_name }}</td>

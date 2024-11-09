@@ -15,16 +15,21 @@ class DashboardController extends Controller
             // Fetch the count of trainees
             $traineeCount = User::getTrainee()->count();
             $CandidateCount = User::getCandidates()->count();
+            $FellowsCount= User::getFellows()->count();
             $accreditedHospitalCount = HospitalModel::where('status', 'active')->count();
 
             $data['traineeCount'] = $traineeCount;
             $data['accreditedHospitalCount'] = $accreditedHospitalCount;
             $data['CandidateCount'] = $CandidateCount;
+            $data['FellowsCount'] = $FellowsCount;
 
             return view('admin.dashboard', $data);
-         } elseif (Auth::user()->user_type == 2) {
+         } 
+         elseif (Auth::user()->user_type == 2) 
+         {
             return view('trainee.dashboard', $data);
-      }elseif (Auth::user()->user_type == 9) {
+      }
+      elseif (Auth::user()->user_type == 9) {
         return view('examiner.examiner_form', $data);
   }
     }

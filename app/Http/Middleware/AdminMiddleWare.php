@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Auth;
 
-class AdminMiddleWare
+class AdminMiddleware
 {
     /**
      * Handle an incoming request.
@@ -18,25 +18,17 @@ class AdminMiddleWare
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if the user is authenticated
         if (Auth::check()) {
-
             // Check if the authenticated user is an admin (user_type == 1)
             if (Auth::user()->user_type == 1) {
                 return $next($request);
-            } 
-            
-            // If user_type is not 1, log the user out and redirect
-            else {
+            } else {
                 Auth::logout();
-                return redirect('login')->with('error', 'You are not authorized to access this page.');
+                return redirect('')->with('error', 'You are not authorized to access this page.');
             }
-        } 
-        
-        // If not authenticated, log the user out and redirect to login with a session expiry message
-        else {
+        } else {
             Auth::logout();
-            return redirect('login')->with('error', 'Session expired. Please log in again.');
+            return redirect('')->with('error', 'Session expired. Please log in again.');
         }
     }
 }
