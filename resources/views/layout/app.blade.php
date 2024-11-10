@@ -29,14 +29,14 @@
  <!-- Favicon -->
  <link rel="icon" href="{{ url('public/dist/img/Cosecsa_Logo.png') }}">
 
-<!-- DataTables -->
-<link rel="stylesheet" href="{{url('public/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css')}}">
-<link rel="stylesheet" href="{{url('public/plugins/datatables-responsive/css/responsive.bootstrap4.min.css')}}">
-<link rel="stylesheet" href="{{url('public/plugins/datatables-buttons/css/buttons.bootstrap4.min.css')}}">
+ <!-- DataTables -->
+ <link rel="stylesheet" href="{{url('public/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css')}}">
+ <link rel="stylesheet" href="{{url('public/plugins/datatables-responsive/css/responsive.bootstrap4.min.css')}}">
+ <link rel="stylesheet" href="{{url('public/plugins/datatables-buttons/css/buttons.bootstrap4.min.css')}}">
   
-<link rel="stylesheet" href="{{url('public/dist/css/wizard.css')}}">
+ <link rel="stylesheet" href="{{url('public/dist/css/wizard.css')}}">
 
-<link rel="stylesheet" href="{{url('public/dist/css/custom.css')}}">
+ <link rel="stylesheet" href="{{url('public/dist/css/custom.css')}}">
   <!-- overlayScrollbars -->
   <link rel="stylesheet" href="{{url('public/plugins/overlayScrollbars/css/OverlayScrollbars.min.css')}}">
   <!-- Daterange picker -->
