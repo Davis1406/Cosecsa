@@ -21,11 +21,11 @@ class ExaminerMiddleware
                 return $next($request);
             } else {
                 Auth::logout();
-                return redirect('');
+                return redirect('')->with('error', 'You are not authorized to access this page.');
             }
         } else {
             Auth::logout();
-            return redirect('');
+            return redirect('')->with('error', 'Page expired. Please log in again.');
         }
     }
 }
