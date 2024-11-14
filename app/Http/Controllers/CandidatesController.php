@@ -241,7 +241,7 @@ public function storeEvaluation(Request $request)
     $evaluation->group_id = $examinerGroupId;
     $evaluation->question_mark = $questionMarksJson;
     $evaluation->total = $request->input('total_marks');
-    $grade = strtolower($request->input('grade'));
+    $evaluation->overall = strtolower($request->input('grade'));
     $evaluation->remarks = $request->input('remarks');
 
     // dd($evaluation);
