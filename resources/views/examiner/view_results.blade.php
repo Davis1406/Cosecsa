@@ -32,7 +32,7 @@
                             <td>Group {{ $candidateResult->group_name }}</td>
                         </tr>
                         <tr>
-                            <th>Station </th>
+                            <th>Station</th>
                             <td>Station {{ $candidateResult->station_id }}</td>
                         </tr>
                         @php
@@ -54,13 +54,19 @@
                             <th>Total Marks</th>
                             <td><b>{{ $candidateResult->total }}</b></td>
                         </tr>
-                        <tr>
-                            <th>Overall Grade</th>
-                            <td>{{ $candidateResult->overall }}</td>
-                        </tr>
+
+                        @if ($candidateResult->source_table === 'examination_form')
+                            <tr>
+                                <th>Overall Grade</th>
+                                <td>{{ $candidateResult->overall }}</td>
+                            </tr>
+                        @endif
+                        
                         <tr>
                             <th>Remarks</th>
-                            <td>{{ $candidateResult->remarks }}</td>
+                            <td style="word-wrap: break-word; white-space: normal; max-width: 200px;">
+                                {{ $candidateResult->remarks }}
+                            </td>
                         </tr>
                     </table>
                 @else

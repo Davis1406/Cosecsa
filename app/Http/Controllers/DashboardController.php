@@ -30,7 +30,7 @@ class DashboardController extends Controller
             return view('trainee.dashboard', $data);
       }
       elseif (Auth::user()->user_type == 9) {
-        return view('examiner.examiner_form', $data);
+        return view('examiner.dashboard', $data);
   }
     }
 
@@ -50,6 +50,6 @@ class DashboardController extends Controller
     $data['groups'] = $groups; 
     $data['examinerGroupId'] = $examinerGroupId;
 
-    return view('examiner.examiner_form', $data);
-}
+    return view('examiner.dashboard', $data);
+ }
 }

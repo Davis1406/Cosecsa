@@ -259,33 +259,120 @@ static public function getCandidatesByGroup($groupId)
         ->get();
 }
 
+// public static function getExaminationResults()
+// {
+//     // Retrieve the examiner ID linked to the logged-in user
+//     $examinerId = \DB::table('examiners')
+//         ->where('user_id', auth()->id())
+//         ->value('id');
+    
+//     if (!$examinerId) {
+//         return collect(); 
+//     }
+
+//     return \DB::table('examination_form')
+//         ->select(
+//             'examination_form.*',
+//             'candidates.id as candidate_id',
+//             'candidates.candidate_id as candidate_name',
+//             'candidates.group_id as g_id',
+//             'examiners.id as examiner_id',
+//             'examiners_groups.group_name as group_name'
+//         )
+//         ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
+//         ->join('examiners', 'examination_form.examiner_id', '=', 'examiners.id')
+//         ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+//         ->where('examination_form.examiner_id', $examinerId)
+//         ->orderBy('examination_form.id', 'asc')
+//         ->get();
+// }
+
 public static function getExaminationResults()
 {
     // Retrieve the examiner ID linked to the logged-in user
     $examinerId = \DB::table('examiners')
         ->where('user_id', auth()->id())
         ->value('id');
-    
+
     if (!$examinerId) {
         return collect(); 
     }
 
-    return \DB::table('examination_form')
+    // Fetch the most recent submission from `examination_form`
+    $lastExamFormSubmission = \DB::table('examination_form')
+        ->where('examiner_id', $examinerId)
+        ->latest('created_at')
+        ->first();
+
+    // Fetch the most recent submission from `gs_form`
+    $lastGsFormSubmission = \DB::table('gs_form')
+        ->where('examiner_id', $examinerId)
+        ->latest('created_at')
+        ->first();
+
+    // Determine the last submitted form
+    $lastSubmittedForm = null;
+
+    if ($lastExamFormSubmission && $lastGsFormSubmission) {
+        $lastSubmittedForm = $lastExamFormSubmission->created_at > $lastGsFormSubmission->created_at
+            ? 'examination_form'
+            : 'gs_form';
+    } elseif ($lastExamFormSubmission) {
+        $lastSubmittedForm = 'examination_form';
+    } elseif ($lastGsFormSubmission) {
+        $lastSubmittedForm = 'gs_form';
+    }
+
+    // Fetch records from `examination_form`
+    $examinationFormResults = \DB::table('examination_form')
         ->select(
             'examination_form.*',
-            'candidates.id as candidate_id',
+            'examination_form.id as record_id',
+            'examination_form.candidate_id',
+            'examination_form.station_id',
+            'examination_form.group_id',
+            'examination_form.total as total_marks',
+            'examination_form.overall as grade', // Column in `examination_form`
+            'examination_form.remarks',
             'candidates.candidate_id as candidate_name',
-            'candidates.group_id as g_id',
-            'examiners.id as examiner_id',
-            'examiners_groups.group_name as group_name'
+            'examiners_groups.group_name as group_name',
+            \DB::raw("'examination_form' as source_table") // Distinguish source
         )
         ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
-        ->join('examiners', 'examination_form.examiner_id', '=', 'examiners.id')
         ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
-        ->where('examination_form.examiner_id', $examinerId)
-        ->orderBy('examination_form.id', 'asc')
+        ->where('examination_form.examiner_id', $examinerId);
+
+    // Fetch records from `gs_form`
+    $gsFormResults = \DB::table('gs_form')
+        ->select(
+            'gs_form.*',
+            'gs_form.id as record_id',
+            'gs_form.candidate_id',
+            'gs_form.station_id',
+            'gs_form.group_id',
+            'gs_form.total as total_marks',
+            \DB::raw('NULL as grade'), // Placeholder for missing `overall` column
+            'gs_form.remarks',
+            'candidates.candidate_id as candidate_name',
+            'examiners_groups.group_name as group_name',
+            \DB::raw("'gs_form' as source_table") // Distinguish source
+        )
+        ->join('candidates', 'gs_form.candidate_id', '=', 'candidates.id')
+        ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+        ->where('gs_form.examiner_id', $examinerId);
+
+    // Combine results with UNION and order by ID
+    $combinedResults = $examinationFormResults
+        ->union($gsFormResults)
+        ->orderBy('record_id', 'asc')
         ->get();
+
+    return [
+        'lastSubmittedForm' => $lastSubmittedForm,
+        'records' => $combinedResults,
+    ];
 }
+
 
 public static function getAdminExamsResults()
 {
@@ -319,7 +406,41 @@ public static function getAdminExamsResults()
         });
 }
 
+// Get Results for GS
+public static function getGsResults()
+{
+    return \DB::table('gs_form')
+        ->select(
+            'gs_form.candidate_id as cand_id',
+            'candidates.firstname',
+            'candidates.middlename',
+            'candidates.lastname',
+            'candidates.candidate_id as c_id',
+            'gs_form.station_id',
+            \DB::raw('SUM(gs_form.total) as total_sum') // Sum totals grouped by station_id
+        )
+        ->join('candidates', 'gs_form.candidate_id', '=', 'candidates.id')
+        ->groupBy('gs_form.candidate_id', 'gs_form.station_id', 'candidates.firstname', 'candidates.middlename', 'candidates.lastname', 'candidates.candidate_id')
+        ->orderBy('gs_form.candidate_id')
+        ->get()
+        ->groupBy('cand_id')
+        ->map(function ($group) {
+            $candidate = $group->first();
+            return (object) [
+                'candidate_id' => $candidate->c_id,
+                'cnd_id' => $candidate->cand_id,
+                'fullname' => "{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}",
+                'stations' => $group->map(function ($row) {
+                    return [
+                        'station_id' => $row->station_id,
+                        'total_sum' => $row->total_sum // Return summed total for each station
+                    ];
+                })->toArray(),
+            ];
+        });
+}
 
+// Trainers Function
     static public function getTrainers()    
     {
         $return = self::select(

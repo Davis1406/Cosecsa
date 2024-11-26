@@ -161,7 +161,7 @@ class ExamsController extends Controller
 
    public function adminResults()
    {
-       $data['header_title'] = 'Candidates Results';
+       $data['header_title'] = 'MCS Results';
    
        $getResults = User::getAdminExamsResults();
       
@@ -170,9 +170,21 @@ class ExamsController extends Controller
        
        return view('admin.exams.exam_results', $data);
    }
+
+   public function gsResults()
+   {
+       $data['header_title'] = 'GS Results';
+   
+       $getResults = User::getGsResults();
+      
+       $data['getResults'] = $getResults;
+       
+       
+       return view('admin.exams.gs_results', $data);
+   }
+   
    
 // Single Station Results
-
 public function viewCandidateStationResult($candidate_id, $station_id)
 {   
     $header_title = 'Station Results';
@@ -198,6 +210,49 @@ public function viewCandidateStationResult($candidate_id, $station_id)
 
     return view('admin.exams.station_results', compact('candidateResult', 'header_title'));
 }
+
+public function viewGsStationResult($candidate_id, $station_id)
+{
+    $header_title = 'Station Results';
+
+    // Fetch the primary candidate result
+    $candidateResult = \DB::table('gs_form')
+        ->join('candidates', 'gs_form.candidate_id', '=', 'candidates.id')
+        ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+        ->join('examiners', 'gs_form.examiner_id', '=', 'examiners.id')
+        ->join('users', 'examiners.user_id', '=', 'users.id')
+        ->select(
+            'candidates.candidate_id as candidate_name',
+            'examiners_groups.group_name',
+            'gs_form.station_id',
+            'gs_form.total',
+            'gs_form.question_mark',
+            'gs_form.remarks',
+            'examiners.examiner_id as examin_id',
+            'users.name as examiner_name'
+        )
+        ->where('gs_form.candidate_id', $candidate_id)
+        ->where('gs_form.station_id', $station_id)
+        ->first();
+
+    // Fetch all results for the station by all examiners
+    $allResults = \DB::table('gs_form')
+        ->join('examiners', 'gs_form.examiner_id', '=', 'examiners.id')
+        ->join('users', 'examiners.user_id', '=', 'users.id')
+        ->select(
+            'gs_form.total',
+            'gs_form.question_mark',
+            'gs_form.remarks',
+            'examiners.examiner_id',
+            'users.name as examiner_name'
+        )
+        ->where('gs_form.candidate_id', $candidate_id)
+        ->where('gs_form.station_id', $station_id)
+        ->get();
+
+    return view('admin.exams.gs_station_results', compact('candidateResult', 'allResults', 'header_title'));
+}
+
 
 //function to change password:
 

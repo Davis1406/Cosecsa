@@ -6,11 +6,11 @@
             <section class="content">
                 @include('_message')
                 <section class="multi_step_form">
-                    <form id="msform" method="POST" action="{{ route('examiner.add') }}" enctype="multipart/form-data">
+                    <form id="msform" method="POST" action="{{ route('gs.add') }}" enctype="multipart/form-data">
                         {{ csrf_field() }}
 
                         <div class="tittle">
-                            <h2>Candidate Evaluation Form</h2>
+                            <h2>Candidate Evaluation Form GS</h2>
                         </div>
 
                         <!-- Group Selection Section -->
@@ -39,7 +39,7 @@
                                 <label>Select Station</label>
                                 <select name="station_id" class="form-control" required>
                                     <option value="">Choose a Station...</option>
-                                    @for ($i = 1; $i <= 8; $i++)
+                                    @for ($i = 1; $i <= 4; $i++)
                                         <option value="{{ $i }}">Station {{ $i }}</option>
                                     @endfor
                                 </select>
@@ -60,22 +60,17 @@
                             style="color:black; background-color: #FEC503; border-color: #FEC503;">+ Add Question</button>
 
                         <!-- Overall Marks and Grade Section -->
-                        <div class="form-row">
-                            <div class="form-group col-md-6 col-sm-12">
+                        <div class="form-row justify-content-center">
+                            <div class="form-group col-md-9 col-sm-12">
                                 <label>Overall Marks</label>
                                 <input type="number" name="total_marks" id="total_marks" class="form-control"
                                     placeholder="Total marks will be calculated automatically" readonly>
                             </div>
 
-                            <div class="form-group col-md-6 col-sm-12">
-                                <label>Grade</label>
-                                <select name="overall" class="form-control" required>
-                                    <option value="">Select Grade...</option>
-                                    <option value="pass">Pass</option>
-                                    <option value="borderline">Borderline</option>
-                                    <option value="fail">Fail</option>
-                                </select>
-                            </div>
+                            @if (isset($record->overall))
+                                <td>{{ $record->overall }}</td>
+                            @endif
+
                         </div>
 
                         <!-- Examiner Remarks Section -->
@@ -111,9 +106,9 @@
         <div class="input-group">
             <input type="number" name="question_marks[]" id="question_marks_${currentCount}" class="form-control question-mark" placeholder="Enter mark for question" required oninput="updateTotalMarks()" step="0.1" min="0">
             ${currentCount > 0 ? `
-                <div class="input-group-append">
-                    <button type="button" class="btn btn-danger" onclick="removeQuestionField(this)">X</button>
-                </div>` : ''}
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-danger" onclick="removeQuestionField(this)">X</button>
+                    </div>` : ''}
         </div>
     `;
 
@@ -161,7 +156,7 @@
 
         function fetchCandidates(groupId) {
             if (!groupId) return;
-            fetch(`/cosecsa/get-mcs-candidates/${groupId}`)
+            fetch(`/cosecsa/get-candidates/${groupId}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response is not ok ' + response.statusText);
@@ -178,5 +173,6 @@
                 })
                 .catch(error => console.error('Error fetching candidates:', error));
         }
+
     </script>
 @endsection

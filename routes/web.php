@@ -150,7 +150,9 @@ Route::get('admin/exams/edit_examiner/{id}', [ExamsController::class,'edit']);
 Route::post('admin/exams/edit_examiner/{id}', [ExamsController::class,'update'])->name('examiner.update');
 Route::get('admin/exams/delete/{id}', [ExamsController::class,'delete']);
 Route::get('admin/exams/exam_results', [ExamsController::class,'adminResults']);
+Route::get('admin/exams/gs_results', [ExamsController::class,'gsResults']);
 Route::get('admin/exams/station_results/{candidate_id}/{station_id}', [ExamsController::class, 'viewCandidateStationResult']);
+Route::get('admin/exams/gs_station_results/{candidate_id}/{station_id}', [ExamsController::class, 'viewGsStationResult']);
 
 
 
@@ -173,14 +175,19 @@ Route::group(['middleware' => 'trainee'], function(){
 
 Route::group(['middleware' => 'examiner'], function(){
 
-  Route::get('examiner/examiner_form ', [DashboardController::class,'examinerform']);
-  Route::get('examiner/view_results/{id}',  [CandidatesController::class,'viewCandidateResults']);
+  Route::get('examiner/dashboard ', [DashboardController::class,'examinerform'])->name('dashboard');
+  Route::get('examiner/examiner_form ', [CandidatesController::class,'mcsexaminerform']);
+  Route::get('examiner/general_surgery ', [CandidatesController::class,'gsexaminerform']);
+  Route::get('examiner/view_results/{candidate_id}/{station_id}', [CandidatesController::class, 'viewCandidateResults']);
   Route::get('examiner/results', [CandidatesController::Class,'results']);
-  Route::get('examiner/resubmit/{id}', [CandidatesController::class, 'resubmit']);
-  Route::post('examiner/resubmit/{id}', [CandidatesController::class, 'updateEvaluation'])->name('candidateform.update');
+  Route::get('examiner/resubmit/{candidate_id}/{station_id}', [CandidatesController::class, 'resubmit'])->name('examiner.resubmit');
+  Route::post('examiner/resubmit/{candidate_id}/{station_id}', [CandidatesController::class, 'updateEvaluation'])->name('candidateform.update');
   Route::post('examiner/examiner_form', [CandidatesController::class, 'storeEvaluation'])->name('examiner.add');
+  Route::post('examiner/general_surgery', [CandidatesController::class, 'storegsEvaluation'])->name('gs.add');
   Route::get('examiner/change_password', [ExamsController::class, 'changePassword']);
   Route::post('examiner/change_password', [ExamsController::class, 'updatePassword']);
-  Route::get('/get-candidates/{groupId}', [CandidatesController::class, 'getCandidatesByGroup']);
+  Route::get('/get-candidates/{groupId}', [CandidatesController::class, 'getGsCandidatesByGroup']);
+  Route::get('/get-mcs-candidates/{groupId}', [CandidatesController::class, 'getMcsCandidatesByGroup']);
+
 });
 

@@ -11,6 +11,7 @@ use App\Models\Country;
 use App\Models\Candidates;
 use Illuminate\Support\Facades\Auth;
 use App\Models\CandidatesFormModel;
+use App\Models\GeneralSurgery;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\CandidatesImport;
@@ -211,13 +212,68 @@ public function delete($id)
     return redirect('admin/associates/candidates/list')->with('success', 'Candidate information successfully deleted');
 }
 
-
-public function getCandidatesByGroup($groupId)
+////// EXAMINER ROUTES///////
+public function mcsexaminerform()
 {
-    $candidates = User::getCandidatesByGroup($groupId);
-    return response()->json($candidates);
-} 
+      $examinerGroupId = \DB::table('examiners')
+        ->where('user_id', Auth::id())
+        ->value('group_id');
 
+    // Fetch all groups from the examiners_groups table
+    $groups = \DB::table('examiners_groups')->get();
+
+    $data['header_title'] = 'MCS Form';
+    $data['getRecord'] = User::getexaminerCandidates();
+    $data['groups'] = $groups; 
+    $data['examinerGroupId'] = $examinerGroupId;
+
+    return view('examiner.examiner_form', $data);
+}
+
+// get Examiner GS Form
+public function gsexaminerform()
+{
+      $examinerGroupId = \DB::table('examiners')
+        ->where('user_id', Auth::id())
+        ->value('group_id');
+
+    // Fetch all groups from the examiners_groups table
+    $groups = \DB::table('examiners_groups')->get();
+
+    $data['header_title'] = 'GS Form';
+    $data['getRecord'] = User::getexaminerCandidates();
+    $data['groups'] = $groups; 
+    $data['examinerGroupId'] = $examinerGroupId;
+
+    return view('examiner.general_surgery', $data);
+}
+
+public function getGsCandidatesByGroup($groupId)
+{
+    // Fetch candidates belonging to the selected group, having programme_id = 2, sorted by candidate_id
+    $candidates = \DB::table('candidates')
+        ->where('group_id', $groupId)
+        ->where('programme_id', 2)
+        ->select('id as cand_id', 'candidate_id as c_id') // Use aliases for simpler frontend usage
+        ->orderBy('candidate_id', 'asc') // Sort by candidate_id in ascending order
+        ->get();
+
+    return response()->json($candidates);
+}
+
+
+public function getMcsCandidatesByGroup($groupId)
+{
+    // Fetch candidates belonging to the selected group and having programme_id = 10
+    $candidates = \DB::table('candidates')
+        ->where('group_id', $groupId)
+        ->where('programme_id', 10)
+        ->select('id as cand_id', 'candidate_id as c_id')
+        ->orderBy('candidate_id', 'asc')
+        ->get();
+
+    return response()->json($candidates);
+}
 
 public function storeEvaluation(Request $request)
 {
@@ -252,16 +308,77 @@ public function storeEvaluation(Request $request)
 }
 
 
-//Candidates List for examiners
-public function results()
+//GS Data SUBMIT.
+public function storegsEvaluation(Request $request)
 {
-    $data['getRecord'] = User::getExaminationResults();
-    $data['header_title'] = "Candidates Results";
-    return view('examiner.results', $data);
+    // Get the logged-in user's ID
+    $loggedInUserId = Auth::id();
 
+    $examiner = \DB::table('examiners')->where('user_id', $loggedInUserId)->first();
+
+    if (!$examiner) {
+        return back()->with('error', 'Examiner data not found.');
+    }
+
+    $examinerId = $examiner->id; 
+    $examinerGroupId = $examiner->group_id;
+    $questionMarksJson = json_encode($request->input('question_marks'));
+
+    $evaluation = new GeneralSurgery();
+    $evaluation->candidate_id = $request->input('candidate_id');
+    $evaluation->examiner_id = $examinerId; 
+    $evaluation->station_id = $request->input('station_id');
+    $evaluation->group_id = $examinerGroupId;
+    $evaluation->question_mark = $questionMarksJson;
+    $evaluation->total = $request->input('total_marks');
+    $evaluation->remarks = $request->input('remarks');
+    $evaluation->exam_year = date('Y'); 
+
+    // dd($evaluation);
+    
+    $evaluation->save();
+
+    return redirect()->back()->with('success', 'Evaluation submitted successfully.');
 }
 
-public function viewCandidateResults($candidate_id)
+
+public function results(Request $request)
+{
+    // Fetch examination results with the last submitted form
+    $results = User::getExaminationResults();
+
+    // Check if any records are found
+    if ($results['records']->isEmpty()) {
+        return redirect()->back()->with('error', 'No results found.');
+    }
+
+    // Get the last submitted form
+    $lastSource = $results['lastSubmittedForm'];
+
+    // Filter records to only include those from the last submitted form
+    $filteredRecords = $results['records']->filter(function ($record) use ($lastSource) {
+        return $record->source_table === $lastSource;
+    });
+
+    // Check if there are filtered records
+    if ($filteredRecords->isEmpty()) {
+        return redirect()->back()->with('error', 'No results found for the last submitted form.');
+    }
+
+    // Prepare data for the view
+    $data['getRecord'] = $filteredRecords;
+    $data['header_title'] = "Candidates Results";
+
+    // Render the correct view based on the last submitted form
+    if ($lastSource === 'gs_form') {
+        return view('examiner.gsresults', $data);
+    }
+
+    return view('examiner.results', $data);
+}
+
+//View Candidates Results
+public function viewCandidateResults($candidate_id, $station_id)
 {
     // Get the logged-in examiner's user ID and corresponding examiner ID
     $loggedInUserId = Auth::id();
@@ -273,28 +390,77 @@ public function viewCandidateResults($candidate_id)
 
     $examinerId = $examiner->id;
 
-    $data['header_title'] = "View Candidate";
-
-    $data['candidateResult'] = \DB::table('examination_form')
-        ->select(
-            'examination_form.*',
-            'candidates.id as candidate_id',
-            'candidates.candidate_id as candidate_name',
-            'candidates.group_id as g_id',
-            'examiners.id as examiner_id',
-            'examiners_groups.group_name as group_name'
+    // Fetch the last submitted form source
+    $lastSubmittedForm = \DB::table('examination_form')
+        ->select('created_at', \DB::raw("'examination_form' as source_table"))
+        ->where('examiner_id', $examinerId)
+        ->union(
+            \DB::table('gs_form')
+                ->select('created_at', \DB::raw("'gs_form' as source_table"))
+                ->where('examiner_id', $examinerId)
         )
-        ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
-        ->join('examiners', 'examination_form.examiner_id', '=', 'examiners.id')
-        ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
-        ->where('candidates.id', $candidate_id)
-        ->where('examiners.id', $examinerId) // Filter by examiner ID
+        ->orderBy('created_at', 'desc')
+        ->limit(1)
         ->first();
 
+    if (!$lastSubmittedForm) {
+        return back()->with('error', 'No submissions found for the examiner.');
+    }
+
+    // Fetch the results based on the last submitted form
+    $data['candidateResult'] = null;
+    if ($lastSubmittedForm->source_table === 'examination_form') {
+        $data['candidateResult'] = \DB::table('examination_form')
+            ->select(
+                'examination_form.*',
+                'candidates.id as candidate_id',
+                'candidates.candidate_id as candidate_name',
+                'candidates.group_id as g_id',
+                'examiners.id as examiner_id',
+                'examiners_groups.group_name as group_name',
+                \DB::raw("'examination_form' as source_table") // Make sure 'source_table' is here
+            )
+            ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
+            ->join('examiners', 'examination_form.examiner_id', '=', 'examiners.id')
+            ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+            ->where('candidates.id', $candidate_id)
+            ->where('examiners.id', $examinerId)
+            ->where('examination_form.station_id', $station_id)
+            ->first();
+    } elseif ($lastSubmittedForm->source_table === 'gs_form') {
+        $data['candidateResult'] = \DB::table('gs_form')
+            ->select(
+                'gs_form.*',
+                'candidates.id as candidate_id',
+                'candidates.candidate_id as candidate_name',
+                'candidates.group_id as g_id',
+                'examiners.id as examiner_id',
+                'examiners_groups.group_name as group_name',
+                \DB::raw("'gs_form' as source_table") // Make sure 'source_table' is here
+            )
+            ->join('candidates', 'gs_form.candidate_id', '=', 'candidates.id')
+            ->join('examiners', 'gs_form.examiner_id', '=', 'examiners.id')
+            ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+            ->where('candidates.id', $candidate_id)
+            ->where('examiners.id', $examinerId)
+            ->where('gs_form.station_id', $station_id)
+            ->first();
+    }
+
+    // Check if no result found
+    if (!$data['candidateResult']) {
+        return back()->with('error', 'No results found for the given candidate and station.');
+    }
+
+    // Set the page header title
+    $data['header_title'] = "View Candidate";
+
+    // Return the view with data
     return view('examiner.view_results', $data);
 }
 
-public function resubmit($candidate_id)
+
+public function resubmit($candidate_id, $station_id)
 {
     // Get the logged-in examiner's user ID and corresponding examiner ID
     $loggedInUserId = Auth::id();
@@ -307,37 +473,71 @@ public function resubmit($candidate_id)
     $examinerId = $examiner->id;
     $data['header_title'] = "Resubmit Results";
 
-    $data['candidate'] = \DB::table('examination_form')
+    // Fetch the candidate's record from `examination_form`
+    $candidateResult = \DB::table('examination_form')
         ->select(
             'examination_form.*',
             'candidates.id as candidates_id',
             'candidates.candidate_id as candidate_name',
             'candidates.group_id as g_id',
             'examiners.id as examiner_id',
-            'examiners_groups.group_name as group_name'
+            'examiners_groups.group_name as group_name',
+            \DB::raw("'examination_form' as source_table")
         )
         ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
         ->join('examiners', 'examination_form.examiner_id', '=', 'examiners.id')
         ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
-        ->where('candidates.id', $candidate_id)
+        ->where('examination_form.candidate_id', $candidate_id)
+        ->where('examination_form.station_id', $station_id)
         ->where('examiners.id', $examinerId)
         ->first();
 
-    if ($data['candidate']) {
-        // Decode the question_mark JSON data before passing it to the view
-        $data['candidate']->question_mark = json_decode($data['candidate']->question_mark, true);
+    // If not found in `examination_form`, fetch from `gs_form`
+    if (!$candidateResult) {
+        $candidateResult = \DB::table('gs_form')
+            ->select(
+                'gs_form.*',
+                'candidates.id as candidates_id',
+                'candidates.candidate_id as candidate_name',
+                'candidates.group_id as g_id',
+                'examiners.id as examiner_id',
+                'examiners_groups.group_name as group_name',
+                \DB::raw("'gs_form' as source_table")
+            )
+            ->join('candidates', 'gs_form.candidate_id', '=', 'candidates.id')
+            ->join('examiners', 'gs_form.examiner_id', '=', 'examiners.id')
+            ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+            ->where('gs_form.candidate_id', $candidate_id)
+            ->where('gs_form.station_id', $station_id)
+            ->where('examiners.id', $examinerId)
+            ->first();
     }
 
-    if (!$data['candidate']) {
+    // If no record is found in either table
+    if (!$candidateResult) {
         return redirect()->back()->with('error', 'Candidate not found.');
     }
 
-    // Pass data to the view
-    return view('examiner.resubmit', $data);  
+    // Decode `question_mark` if it exists
+    if (isset($candidateResult->question_mark)) {
+        $candidateResult->question_mark = json_decode($candidateResult->question_mark, true);
+    }
+
+    $data['candidate'] = $candidateResult;
+
+    // Dynamically choose the view based on the source table
+    if ($candidateResult->source_table === 'examination_form') {
+        return view('examiner.resubmit', $data);
+    } elseif ($candidateResult->source_table === 'gs_form') {
+        return view('examiner.gsresubmit', $data);
+    }
+
+    // Fallback in case of unexpected conditions
+    return redirect()->back()->with('error', 'Unable to determine the correct resubmit view.');
 }
 
 
-public function updateEvaluation(Request $request, $evaluationId)
+public function updateEvaluation(Request $request, $candidate_id, $station_id)
 {
     $loggedInUserId = Auth::id();
     $examiner = \DB::table('examiners')->where('user_id', $loggedInUserId)->first();
@@ -348,26 +548,51 @@ public function updateEvaluation(Request $request, $evaluationId)
 
     $examinerId = $examiner->id;
 
-    $evaluation = CandidatesFormModel::where('id', $evaluationId)
+    // Fetch the record from `examination_form` or `gs_form`
+    $evaluation = \DB::table('examination_form')
+        ->where('candidate_id', $candidate_id)
+        ->where('station_id', $station_id)
         ->where('examiner_id', $examinerId)
         ->first();
 
+    $sourceTable = 'examination_form';
 
     if (!$evaluation) {
-        return redirect()->back()->with('error', 'Candidate evaluation not found');
+        $evaluation = \DB::table('gs_form')
+            ->where('candidate_id', $candidate_id)
+            ->where('station_id', $station_id)
+            ->where('examiner_id', $examinerId)
+            ->first();
+
+        $sourceTable = 'gs_form';
     }
 
-    $evaluation->group_id = $request->group_id;
-    $evaluation->station_id = $request->station_id;
-    $evaluation->question_mark = json_encode($request->question_marks);
-    $evaluation->total = $request->total_marks;
-    $evaluation->overall = $request->grade;
-    $evaluation->remarks = $request->remarks;
+    if (!$evaluation) {
+        return redirect()->back()->with('error', 'Evaluation not found.');
+    }
 
-    $evaluation->save(); // Save the changes
+    // Prepare update data
+    $updateData = [
+        'group_id' => $request->group_id,
+        'station_id' => $request->station_id,
+        'question_mark' => json_encode($request->question_marks ?? []), // Ensure it's always an array
+        'total' => $request->total_marks,
+        'remarks' => $request->remarks,
+    ];
 
-    return redirect('examiner/results')->with('success', 'Evaluation updated successfully');
- }
+    // Include `overall` only if the source table is `examination_form`
+    if ($sourceTable === 'examination_form') {
+        $updateData['overall'] = $request->grade;
+    }
 
+    // Update the respective source table
+    \DB::table($sourceTable)
+        ->where('candidate_id', $candidate_id)
+        ->where('station_id', $station_id)
+        ->where('examiner_id', $examinerId)
+        ->update($updateData);
+
+    return redirect('examiner/results')->with('success', 'Evaluation updated successfully.');
+}
 
 }

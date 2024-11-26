@@ -28,7 +28,7 @@ class AuthController extends Controller
 
             if (Auth::user()->user_type==9){
 
-                return redirect('examiner/examiner_form');
+                return redirect('examiner/dashboard');
             }
             
         }
@@ -53,7 +53,7 @@ class AuthController extends Controller
             }
 
             if (Auth::user()->user_type == 9) {
-                return redirect('examiner/examiner_form');
+                return redirect('examiner/dashboard');
             }
         } else {
             return redirect()->back()->with('error', 'Please Enter correct Credentials');
