@@ -201,6 +201,23 @@ $(function () {
         ]
     }).buttons().container().appendTo('#adminresultstable_wrapper .col-md-6:eq(0)');
 
+    var gsresultstable = $("#gsresultstable").DataTable({
+        "responsive": true,
+        "lengthChange": true,
+        "autoWidth": false,
+        "paging": true,
+        "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
+        "columns": [
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true }
+        ]
+    }).buttons().container().appendTo('#gsresultstable_wrapper .col-md-6:eq(0)');
+
 
     var hospitalTable = $("#hospitalTable").DataTable({
         "responsive": true,
@@ -276,6 +293,10 @@ $(function () {
     });
 
     adminresultstable.on('draw', function () {
+        initPopovers();
+    });
+
+    gsresultstable.on('draw', function () {
         initPopovers();
     });
 

@@ -21,7 +21,7 @@
                             </div>
 
                             <div class="card-body">
-                                <table id="adminresultstable" class="table table-bordered table-striped">
+                                <table id="gsresultstable" class="table table-bordered table-striped">
                                     <thead>
                                         <tr>
                                             <th>Candidate ID</th>

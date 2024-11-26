@@ -202,7 +202,7 @@
                             </li>
                     
                             <!-- Results Section (Parent) -->
-                            <li class="nav-item @if (Request::segment(3) == 'exam_results' || Request::segment(3) == 'gs_results') menu-open @endif">
+                            <li class="nav-item @if (Request::segment(3) == 'exam_results' || Request::segment(3) == 'gs_results'|| Request::segment(3) == 'station_results'||Request::segment(3) == 'gs_station_results') menu-open @endif">
                                 <a href="#" class="nav-link">
                                     <i class="fas fa-chart-line nav-icon"></i>
                                     <p>
@@ -214,14 +214,14 @@
                                     <!-- Child Results Sections -->
                                     <li class="nav-item">
                                         <a href="{{ url('admin/exams/exam_results') }}"
-                                            class="nav-link @if (Request::segment(3) == 'exam_results') active @endif">
+                                            class="nav-link @if (Request::segment(3) == 'exam_results' || Request::segment(3) == 'station_results') active @endif">
                                             <i class="fas fa-hospital nav-icon"></i>
                                             <p>MCS Results</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">
                                         <a href="{{ url('admin/exams/gs_results') }}"
-                                            class="nav-link @if (Request::segment(3) == 'gs_results') active @endif">
+                                            class="nav-link @if (Request::segment(3) == 'gs_results' || Request::segment(3) == 'gs_station_results' ) active @endif">
                                             <i class="fas fa-heart nav-icon"></i>
                                             <p>FCS General Surgery</p>
                                         </a>
