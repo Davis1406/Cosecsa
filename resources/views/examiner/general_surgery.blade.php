@@ -94,85 +94,81 @@
         }
     </style>
 
-    <script>
-        function addQuestionField() {
-            const questionFields = document.getElementById('question-fields');
-            const currentCount = questionFields.querySelectorAll('input[name="question_marks[]"]').length;
-            const newField = document.createElement('div');
-            newField.classList.add('form-group', 'col-md-9', 'col-sm-12', 'mb-2');
+<script>
+    function addQuestionField() {
+        const questionFields = document.getElementById('question-fields');
+        const currentCount = questionFields.querySelectorAll('input[name="question_marks[]"]').length;
+        const newField = document.createElement('div');
+        newField.classList.add('form-group', 'col-md-9', 'col-sm-12', 'mb-2');
 
-            newField.innerHTML = `
-        <label for="question_marks_${currentCount}">Question ${currentCount + 1}:</label>
-        <div class="input-group">
-            <input type="number" name="question_marks[]" id="question_marks_${currentCount}" class="form-control question-mark" placeholder="Enter mark for question" required oninput="updateTotalMarks()" step="0.1" min="0">
-            ${currentCount > 0 ? `
-                    <div class="input-group-append">
-                        <button type="button" class="btn btn-danger" onclick="removeQuestionField(this)">X</button>
-                    </div>` : ''}
-        </div>
-    `;
+        newField.innerHTML = `
+            <label for="question_marks_${currentCount}">Question ${currentCount + 1}:</label>
+            <div class="input-group">
+                <input type="number" name="question_marks[]" id="question_marks_${currentCount}" class="form-control question-mark" placeholder="Enter mark for question" required oninput="updateTotalMarks()" step="0.1" min="0" max="8">
+                ${currentCount > 0 ? `
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-danger" onclick="removeQuestionField(this)">X</button>
+                        </div>` : ''}
+            </div>
+        `;
 
-            questionFields.appendChild(newField);
-        }
+        questionFields.appendChild(newField);
+    }
 
+    function removeQuestionField(button) {
+        const fieldGroup = button.closest('.form-group');
+        fieldGroup.remove();
+        updateTotalMarks();
+    }
 
-        function removeQuestionField(button) {
-            const fieldGroup = button.closest('.form-group');
-            fieldGroup.remove();
-            updateTotalMarks();
-        }
+    function updateTotalMarks() {
+        let total = 0;
+        let isInvalid = false;
 
-        function updateTotalMarks() {
-            let total = 0;
-            document.querySelectorAll('.question-mark').forEach(function(input) {
+        document.querySelectorAll('.question-mark').forEach(function(input) {
+            const value = parseFloat(input.value) || 0;
 
-                if (!/^\d+(\.\d{0,1})?$/.test(input.value)) {
-                    input.value = parseFloat(input.value).toFixed(1);
-                }
-
-                total += parseFloat(input.value) || 0;
-            });
-            document.getElementById('total_marks').value = total.toFixed(1);
-
-            const submitButton = document.querySelector('.action-button');
-            if (total > 20) {
-                alert('The total marks should not exceed 20 per station.');
-                document.getElementById('total_marks').value = 0;
-                submitButton.disabled = true;
-            } else {
-                submitButton.disabled = false;
+            if (value > 8) {
+                alert('Each question mark should not exceed 8.');
+                input.value = '';
+                isInvalid = true;
             }
-        }
 
-        // Add event listener to prevent form submission if total marks exceed 20
-        document.getElementById('msform').addEventListener('submit', function(event) {
-            const total = parseFloat(document.getElementById('total_marks').value) || 0;
-            if (total > 20) {
-                event.preventDefault(); // Prevent form submission
-                alert('Cannot submit form. The total marks should be less than or equal to 20 per station.');
-            }
+            total += value;
         });
 
+        document.getElementById('total_marks').value = total.toFixed(1);
 
-        function fetchCandidates(groupId) {
-            if (!groupId) return;
-            fetch(`/cosecsa/get-candidates/${groupId}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response is not ok ' + response.statusText);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    let candidateSelect = document.getElementById('candidate_id');
-                    candidateSelect.innerHTML = '<option value="">Choose a Candidate...</option>';
-                    data.forEach(candidate => {
-                        candidateSelect.innerHTML +=
-                            `<option value="${candidate.cand_id}">${candidate.c_id}</option>`;
-                    });
-                })
-                .catch(error => console.error('Error fetching candidates:', error));
+    }
+
+    document.getElementById('msform').addEventListener('submit', function(event) {
+        const total = parseFloat(document.getElementById('total_marks').value) || 0;
+
+        if (total > 32) {
+            event.preventDefault();
+            alert('Cannot submit form. The total marks should not exceed 32.');
         }
+    });
 
-    </script>
+    function fetchCandidates(groupId) {
+        if (!groupId) return;
+        fetch(`/cosecsa/get-candidates/${groupId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response is not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                let candidateSelect = document.getElementById('candidate_id');
+                candidateSelect.innerHTML = '<option value="">Choose a Candidate...</option>';
+                data.forEach(candidate => {
+                    candidateSelect.innerHTML +=
+                        `<option value="${candidate.cand_id}">${candidate.c_id}</option>`;
+                });
+            })
+            .catch(error => console.error('Error fetching candidates:', error));
+    }
+</script>
+
 @endsection
