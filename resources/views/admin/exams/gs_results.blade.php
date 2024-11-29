@@ -26,7 +26,7 @@
                                         <tr>
                                             <th>Candidate ID</th>
                                             <th>Name</th>
-                                            @for ($i = 1; $i <= 4; $i++)
+                                            @for ($i = 1; $i <= 8; $i++)
                                                 <th>Station {{ $i }}</th>
                                             @endfor
                                             <th>Total Marks</th>
@@ -37,7 +37,7 @@
                                         <tr>
                                             <td>{{ $value->candidate_id }}</td>
                                             <td>{{ $value->fullname }}</td>
-                                            @for ($i = 1; $i <= 4; $i++)
+                                            @for ($i = 1; $i <= 8; $i++)
                                                 <td>
                                                     @php
                                                         $station = collect($value->stations)->firstWhere('station_id', $i);

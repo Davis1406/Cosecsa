@@ -6,7 +6,9 @@
             <section class="content">
                 @include('_message')
                 <section class="multi_step_form">
-                    <form id="msform" method="POST"  action="{{ route('candidateform.update', ['candidate_id' => $candidate->candidates_id, 'station_id' => $candidate->station_id]) }}" enctype="multipart/form-data" onsubmit="return validateTotalMarks()">
+                    <form id="msform" method="POST"
+                        action="{{ route('candidateform.update', ['candidate_id' => $candidate->candidates_id, 'station_id' => $candidate->station_id]) }}"
+                        enctype="multipart/form-data" onsubmit="return validateTotalMarks()">
                         {{ csrf_field() }}
 
                         <div class="tittle">
@@ -18,7 +20,7 @@
                             <div class="form-group col-md-4 col-sm-12">
                                 <label>Group</label>
                                 <input type="text" name="group_id_display" class="form-control"
-                                    value="Group {{ $candidate->group_name ?? 'N/A' }}" readonly>
+                                    value="Group {{ $candidate->g_name ?? 'N/A' }}" readonly>
                                 <input type="hidden" name="group_id" value="{{ $candidate->g_id }}">
                             </div>
 
@@ -40,23 +42,65 @@
                         </div>
 
                         <!-- Dynamic Question Marks Fields -->
-                        <div class="form-row justify-content-center" id="question-fields">
-                            <div class="form-group col-md-9 col-sm-12">
-                                <label>Enter Marks for Questions</label>
+                        <div class="form-row"
+                            style="border: 1px solid #a02626; padding: 15px; border-radius: 5px; position: relative;">
+                            <!-- Left Column (Case 1) -->
+                            <div class="col-md-6" style="padding-right: 20px;">
+                                <h5 style="text-align: center; color: #a02626;">Case 1</h5>
                                 @foreach ($candidate->question_mark as $index => $mark)
-                                    <label for="question_marks_{{ $index }}">Question {{ $index + 1 }}:</label>
-                                    <div class="input-group mb-2">
-                                        <input type="number" name="question_marks[]"
-                                            id="question_marks_{{ $index }}" class="form-control question-mark"
-                                            value="{{ $mark }}" placeholder="Enter mark for question" required
-                                            oninput="updateTotalMarks()" step="0.01">
-                                    </div>
+                                    @if ($index < 4)
+                                        <!-- Displaying only first 4 questions for Case 1 -->
+                                        <div class="form-group">
+                                            <label for="question_marks_case1_{{ $index }}">Question
+                                                {{ $index + 1 }}:</label>
+                                            <div class="input-group">
+                                                <!-- Dropdown for selecting marks -->
+                                                <select name="question_marks[]"
+                                                    id="question_marks_case1_{{ $index }}"
+                                                    class="form-control question-mark" required
+                                                    oninput="updateTotalMarks()">
+                                                    <option value="2" {{ $mark == 2 ? 'selected' : '' }}>2</option>
+                                                    <option value="4" {{ $mark == 4 ? 'selected' : '' }}>4</option>
+                                                    <option value="6" {{ $mark == 6 ? 'selected' : '' }}>6</option>
+                                                    <option value="8" {{ $mark == 8 ? 'selected' : '' }}>8</option>
+                                                    <option value="10" {{ $mark == 10 ? 'selected' : '' }}>10</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+
+                            <!-- Separator -->
+                            <div class="separator-lg"></div>
+
+                            <!-- Right Column (Case 2) -->
+                            <div class="col-md-6" style="padding-left: 20px;">
+                                <h5 style="text-align: center; color: #a02626;">Case 2</h5>
+                                @foreach ($candidate->question_mark as $index => $mark)
+                                    @if ($index >= 4)
+                                        <!-- Displaying next 4 questions for Case 2 -->
+                                        <div class="form-group">
+                                            <label for="question_marks_case2_{{ $index }}">Question
+                                                {{ $index + 1 }}:</label>
+                                            <div class="input-group">
+                                                <!-- Dropdown for selecting marks -->
+                                                <select name="question_marks[]"
+                                                    id="question_marks_case2_{{ $index }}"
+                                                    class="form-control question-mark" required
+                                                    oninput="updateTotalMarks()">
+                                                    <option value="2" {{ $mark == 2 ? 'selected' : '' }}>2</option>
+                                                    <option value="4" {{ $mark == 4 ? 'selected' : '' }}>4</option>
+                                                    <option value="6" {{ $mark == 6 ? 'selected' : '' }}>6</option>
+                                                    <option value="8" {{ $mark == 8 ? 'selected' : '' }}>8</option>
+                                                    <option value="10" {{ $mark == 10 ? 'selected' : '' }}>10</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    @endif
                                 @endforeach
                             </div>
                         </div>
-
-                        <button type="button" class="btn btn-outline-secondary btn-sm mb-3" onclick="addQuestionField()"
-                            style="color:black; background-color: #FEC503; border-color: #FEC503;">+ Add Question</button>
 
                         <!-- Overall Marks and Grade Section -->
                         <div class="form-row justify-content-center">
@@ -82,67 +126,66 @@
             </section>
         </div>
     </div>
+
     <style>
         .form-row {
             margin: 0 10px 0 10px !important;
         }
-    </style>
 
-    <script>
-        function addQuestionField() {
-            const questionFields = document.getElementById('question-fields');
-            const currentCount = questionFields.querySelectorAll('input[name="question_marks[]"]').length;
-            const newField = document.createElement('div');
-            newField.classList.add('form-group', 'col-md-9', 'col-sm-12', 'mb-2');
-
-            newField.innerHTML = `
-        <label for="question_marks_${currentCount}">Question ${currentCount + 1}:</label>
-        <div class="input-group">
-            <input type="number" name="question_marks[]" id="question_marks_${currentCount}" class="form-control question-mark" placeholder="Enter mark for question" required oninput="updateTotalMarks()" step="0.1" min="0">
-            ${currentCount > 0 ? `
-                <div class="input-group-append">
-                    <button type="button" class="btn btn-danger" onclick="removeQuestionField(this)">X</button>
-                </div>` : ''}
-        </div>
-    `;
-
-            questionFields.appendChild(newField);
+        .separator-lg {
+            display: none;
+            border-left: 3px dotted #a02626;
+            height: 80%;
+            position: absolute;
+            left: 50%;
+            top: 12.5%;
         }
 
-        function updateTotalMarks() {
-            let total = 0;
-            document.querySelectorAll('.question-mark').forEach(function(input) {
-
-                if (!/^\d+(\.\d{0,1})?$/.test(input.value)) {
-                    input.value = parseFloat(input.value).toFixed(1);
-                }
-
-                total += parseFloat(input.value) || 0;
-            });
-            document.getElementById('total_marks').value = total.toFixed(1);
-
-            const submitButton = document.querySelector('.action-button');
-            if (total > 20) {
-                alert('The total marks should not exceed 20 per station.');
-                document.getElementById('total_marks').value = 0;
-                submitButton.disabled = true;
-            } else {
-                submitButton.disabled = false;
+        /* Show separator for screens larger than 992px */
+        @media (min-width: 768px) {
+            .separator-lg {
+                display: block;
             }
         }
 
-        function removeQuestionField(button) {
-            const fieldGroup = button.closest('.form-group');
-            fieldGroup.remove();
-            updateTotalMarks();
+        .form-group label {
+            font-weight: bold;
         }
 
-        // Add event listener to prevent form submission if total marks exceed 20
+        .select2-results__option:hover {
+            background-color: #a02626 !important;
+            color: #ffffff !important;
+        }
+    </style>
+
+    <script>
+function updateTotalMarks() {
+    let total = 0;
+    document.querySelectorAll('.question-mark').forEach(function(input) {
+        if (!/^\d+$/.test(input.value)) {
+            input.value = Math.round(parseFloat(input.value)) || 0; // Convert to integer if not already
+        }
+        total += parseInt(input.value) || 0; // Ensure addition is integer-based
+    });
+    
+    document.getElementById('total_marks').value = total; // Display as an integer
+
+    const submitButton = document.querySelector('.action-button');
+    if (total > 80) {
+        alert('The total marks should not exceed 80 per station.');
+        document.getElementById('total_marks').value = 0;
+        submitButton.disabled = true;
+    } else {
+        submitButton.disabled = false;
+    }
+}
+
+
         document.getElementById('msform').addEventListener('submit', function(event) {
             const total = parseFloat(document.getElementById('total_marks').value) || 0;
-            if (total > 20) {
+            if (total > 80) {
                 event.preventDefault(); // Prevent form submission
-                alert('Cannot submit form. The total marks should be less than or equal to 20 per station.');
+                alert('Cannot submit form. The total marks should be less than or equal to 80 per station.');
             }
         });
     </script>

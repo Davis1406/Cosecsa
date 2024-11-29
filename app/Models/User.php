@@ -259,34 +259,8 @@ static public function getCandidatesByGroup($groupId)
         ->get();
 }
 
-// public static function getExaminationResults()
-// {
-//     // Retrieve the examiner ID linked to the logged-in user
-//     $examinerId = \DB::table('examiners')
-//         ->where('user_id', auth()->id())
-//         ->value('id');
-    
-//     if (!$examinerId) {
-//         return collect(); 
-//     }
 
-//     return \DB::table('examination_form')
-//         ->select(
-//             'examination_form.*',
-//             'candidates.id as candidate_id',
-//             'candidates.candidate_id as candidate_name',
-//             'candidates.group_id as g_id',
-//             'examiners.id as examiner_id',
-//             'examiners_groups.group_name as group_name'
-//         )
-//         ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
-//         ->join('examiners', 'examination_form.examiner_id', '=', 'examiners.id')
-//         ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
-//         ->where('examination_form.examiner_id', $examinerId)
-//         ->orderBy('examination_form.id', 'asc')
-//         ->get();
-// }
-
+//Examination Results Examiners Sides -- for EXaminer Results PAGE
 public static function getExaminationResults()
 {
     // Retrieve the examiner ID linked to the logged-in user
@@ -349,7 +323,7 @@ public static function getExaminationResults()
             'gs_form.id as record_id',
             'gs_form.candidate_id',
             'gs_form.station_id',
-            'gs_form.group_id',
+            'gs_form.group_id as g_id',
             'gs_form.total as total_marks',
             \DB::raw('NULL as grade'), // Placeholder for missing `overall` column
             'gs_form.remarks',
@@ -358,7 +332,7 @@ public static function getExaminationResults()
             \DB::raw("'gs_form' as source_table") // Distinguish source
         )
         ->join('candidates', 'gs_form.candidate_id', '=', 'candidates.id')
-        ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+        ->join('examiners_groups', 'gs_form.group_id', '=', 'examiners_groups.id')
         ->where('gs_form.examiner_id', $examinerId);
 
     // Combine results with UNION and order by ID

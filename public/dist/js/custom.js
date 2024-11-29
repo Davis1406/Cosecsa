@@ -214,6 +214,10 @@ $(function () {
             { "visible": true },
             { "visible": true },
             { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
+            { "visible": true },
             { "visible": true }
         ]
     }).buttons().container().appendTo('#gsresultstable_wrapper .col-md-6:eq(0)');

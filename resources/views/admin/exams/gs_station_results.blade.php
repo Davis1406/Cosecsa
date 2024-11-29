@@ -36,6 +36,14 @@
                                     <td>{{ $result->examiner_id }}</td>
                                 </tr>
                                 <tr>
+                                    <th>Group ID</th>
+                                    <td> Group {{ $result->g_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Station ID</th>
+                                    <td> Station {{ $result->s_id }}</td>
+                                </tr>
+                                <tr>
                                     <th>Total Marks</th>
                                     <td>{{ $result->total }}</td>
                                 </tr>

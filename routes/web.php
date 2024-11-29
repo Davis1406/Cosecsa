@@ -179,14 +179,14 @@ Route::group(['middleware' => 'examiner'], function(){
   Route::get('examiner/examiner_form ', [CandidatesController::class,'mcsexaminerform']);
   Route::get('examiner/general_surgery ', [CandidatesController::class,'gsexaminerform']);
   Route::get('examiner/view_results/{candidate_id}/{station_id}', [CandidatesController::class, 'viewCandidateResults']);
-  Route::get('examiner/results', [CandidatesController::Class,'results']);
+  Route::get('examiner/results', [CandidatesController::class,'results']);
   Route::get('examiner/resubmit/{candidate_id}/{station_id}', [CandidatesController::class, 'resubmit'])->name('examiner.resubmit');
   Route::post('examiner/resubmit/{candidate_id}/{station_id}', [CandidatesController::class, 'updateEvaluation'])->name('candidateform.update');
   Route::post('examiner/examiner_form', [CandidatesController::class, 'storeEvaluation'])->name('examiner.add');
   Route::post('examiner/general_surgery', [CandidatesController::class, 'storegsEvaluation'])->name('gs.add');
   Route::get('examiner/change_password', [ExamsController::class, 'changePassword']);
   Route::post('examiner/change_password', [ExamsController::class, 'updatePassword']);
-  Route::get('/get-candidates/{groupId}', [CandidatesController::class, 'getGsCandidatesByGroup']);
+  Route::get('/get-candidates', [CandidatesController::class, 'getGsCandidatesByGroup']);
   Route::get('/get-mcs-candidates/{groupId}', [CandidatesController::class, 'getMcsCandidatesByGroup']);
 
 });

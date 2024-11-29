@@ -218,13 +218,13 @@ public function viewGsStationResult($candidate_id, $station_id)
     // Fetch the primary candidate result
     $candidateResult = \DB::table('gs_form')
         ->join('candidates', 'gs_form.candidate_id', '=', 'candidates.id')
-        ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+        ->join('examiners_groups', 'gs_form.group_id', '=', 'examiners_groups.id')
         ->join('examiners', 'gs_form.examiner_id', '=', 'examiners.id')
         ->join('users', 'examiners.user_id', '=', 'users.id')
         ->select(
             'candidates.candidate_id as candidate_name',
-            'examiners_groups.group_name',
-            'gs_form.station_id',
+            'examiners_groups.group_name as g_name',
+            'gs_form.station_id as s_id',
             'gs_form.total',
             'gs_form.question_mark',
             'gs_form.remarks',
@@ -238,10 +238,13 @@ public function viewGsStationResult($candidate_id, $station_id)
     // Fetch all results for the station by all examiners
     $allResults = \DB::table('gs_form')
         ->join('examiners', 'gs_form.examiner_id', '=', 'examiners.id')
+        ->join('examiners_groups', 'gs_form.group_id', '=', 'examiners_groups.id')
         ->join('users', 'examiners.user_id', '=', 'users.id')
         ->select(
             'gs_form.total',
             'gs_form.question_mark',
+            'gs_form.station_id as s_id',
+            'examiners_groups.group_name as g_name',
             'gs_form.remarks',
             'examiners.examiner_id',
             'users.name as examiner_name'
