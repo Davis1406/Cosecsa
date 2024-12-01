@@ -52,7 +52,7 @@
                             <!-- Left Column (Case 1) -->
                             <div class="col-md-6" style="padding-right: 20px;">
                                 <h5 style="text-align: center; color: #a02626;">Case 1</h5>
-                                @for ($i = 1; $i <= 4; $i++)
+                                @for ($i = 1; $i <= 3; $i++)
                                     <div class="form-group">
                                         <label for="question_marks_case1_{{ $i }}">Question {{ $i }}:</label>
                                         <select name="question_marks[]" id="question_marks_case1_{{ $i }}"
@@ -74,7 +74,7 @@
                             <!-- Right Column (Case 2) -->
                             <div class="col-md-6" style="padding-left: 20px;">
                                 <h5 style="text-align: center; color: #a02626;">Case 2</h5>
-                                @for ($i = 1; $i <= 4; $i++)
+                                @for ($i = 1; $i <= 3; $i++)
                                     <div class="form-group">
                                         <label for="question_marks_case2_{{ $i }}">Question {{ $i }}:</label>
                                         <select name="question_marks[]" id="question_marks_case2_{{ $i }}"
@@ -137,7 +137,7 @@
         .separator-lg {
             display: none;
             border-left: 3px dotted #a02626;
-            height: 80%;
+            height: 75%;
             position: absolute;
             left: 50%;
             top: 12.5%;

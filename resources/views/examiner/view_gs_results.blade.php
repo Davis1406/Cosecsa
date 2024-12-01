@@ -50,8 +50,8 @@
                     @php
                         // Decode the marks array from JSON and split into two parts
                         $marks = json_decode($candidateResult->question_mark, true);
-                        $case1Marks = array_slice($marks, 0, 4); // First 4 marks for Case 1
-                        $case2Marks = array_slice($marks, 4);    // Remaining marks for Case 2
+                        $case1Marks = array_slice($marks, 0, 3); // First 3 marks for Case 1
+                        $case2Marks = array_slice($marks, 3);    // Remaining marks for Case 2
                     @endphp
 
                     <h4 class="mt-4">Detailed Results</h4>

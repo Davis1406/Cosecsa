@@ -48,7 +48,7 @@
                             <div class="col-md-6" style="padding-right: 20px;">
                                 <h5 style="text-align: center; color: #a02626;">Case 1</h5>
                                 @foreach ($candidate->question_mark as $index => $mark)
-                                    @if ($index < 4)
+                                    @if ($index < 3)
                                         <!-- Displaying only first 4 questions for Case 1 -->
                                         <div class="form-group">
                                             <label for="question_marks_case1_{{ $index }}">Question
@@ -78,7 +78,7 @@
                             <div class="col-md-6" style="padding-left: 20px;">
                                 <h5 style="text-align: center; color: #a02626;">Case 2</h5>
                                 @foreach ($candidate->question_mark as $index => $mark)
-                                    @if ($index >= 4)
+                                    @if ($index >= 3)
                                         <!-- Displaying next 4 questions for Case 2 -->
                                         <div class="form-group">
                                             <label for="question_marks_case2_{{ $index }}">Question
@@ -135,7 +135,7 @@
         .separator-lg {
             display: none;
             border-left: 3px dotted #a02626;
-            height: 80%;
+            height: 75%;
             position: absolute;
             left: 50%;
             top: 12.5%;
