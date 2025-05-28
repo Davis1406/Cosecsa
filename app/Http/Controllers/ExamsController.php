@@ -11,6 +11,8 @@ use Hash;
 use App\Models\Country;
 use App\Models\ExamsModel;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+
 
 
 class ExamsController extends Controller
@@ -118,6 +120,17 @@ class ExamsController extends Controller
         }
         $user->save();
     
+         // Handle file uploads
+    if ($request->hasFile('curriculum_vitae')) {
+        $cvPath = $request->file('curriculum_vitae')->store('documents/cvs', 'public');
+        $examiner->curriculum_vitae = $cvPath;
+    }
+
+    if ($request->hasFile('passport_image')) {
+        $passportPath = $request->file('passport_image')->store('documents/passports', 'public');
+        $examiner->passport_image = $passportPath;
+    }
+        
         $examiner->examiner_id = $request->examiner_id;
         $examiner->country_id = $request->country_id;
         $examiner->group_id = $request->group_id;

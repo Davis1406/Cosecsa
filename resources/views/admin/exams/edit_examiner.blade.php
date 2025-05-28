@@ -47,7 +47,7 @@
                         <div class="form-row">
                             <div class="input-group col-md-12 col-sm-12">
                                 <div class="custom-file">
-                                    <input type="file" class="custom-file-input" id="upload" name="profile_image">
+                                    <input type="file" class="custom-file-input" id="upload" name="passport_image">
                                     <label class="custom-file-label" for="upload">
                                         <i class="ion-android-cloud-outline"></i> Upload Profile Image
                                     </label>

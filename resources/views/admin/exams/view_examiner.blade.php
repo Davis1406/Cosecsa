@@ -29,8 +29,9 @@
                         @if ($examiner)
                             <div class="col-md-3">
                                 <div class="text-center">
-                                    <img src="{{ url('public/dist/img/user.png') }}" alt="Profile Image"
-                                        class="img-fluid img-thumbnail" style="width: 50%; height:50%">
+                                    <img src="{{ asset('storage/' . $examiner->passport_image) }}"
+                                         alt="{{ $examiner->examiner_name }}" 
+                                         class="img-fluid img-thumbnail" style="width: 50%; height: 50%;">
                                     <h5 class="mt-2">{{ $examiner->examiner_name }}</h5>
                                 </div>
                             </div>
@@ -71,10 +72,16 @@
                                         <th>Current Specialty</th>
                                         <td>{{ $examiner->specialty }}</td>
                                     </tr>
-
-
+                                    <tr>
+                                        <th>Sub Specialty</th>
+                                        <td>{{ $examiner->sub_specialty }}</td>
+                                    </tr>
                                     <tr>
                                         <th>Shift</th>
+                                        <td>{{ $examiner->shift }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Curicullum Vitae</th>
                                         <td>{{ $examiner->shift }}</td>
                                     </tr>
                                 </table>

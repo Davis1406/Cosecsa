@@ -19,6 +19,9 @@ class ExamsModel extends Model
         'group_id',
         'mobile',
         'specialty',
-        'shift'
+        'sub_specialty',
+        'shift',
+        'curriculum_vitae',
+        'passport_image'
     ];
 }
