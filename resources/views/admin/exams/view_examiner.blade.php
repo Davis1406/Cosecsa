@@ -29,7 +29,7 @@
                         @if ($examiner)
                             <div class="col-md-3">
                                 <div class="text-center">
-                                    <img src="{{ asset('storage/' . $examiner->passport_image) }}"
+                                    <img src="{{ asset('storage/app/public/' . $examiner->passport_image) }}"
                                          alt="{{ $examiner->examiner_name }}" 
                                          class="img-fluid img-thumbnail" style="width: 50%; height: 50%;">
                                     <h5 class="mt-2">{{ $examiner->examiner_name }}</h5>
