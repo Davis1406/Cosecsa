@@ -9,6 +9,8 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Auth;
 use Request;
 
+
+
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -37,6 +39,15 @@ class User extends Authenticatable
             $this->attributes['password'] = $password;
         }
     }
+
+    // Helper method to get current year ID
+    static public function getCurrentYearId()
+    {
+        return \DB::table('years')
+            ->where('year_name', date('Y'))
+            ->value('id');
+    }
+
 
     static public function getAdmin()
     {
@@ -88,7 +99,6 @@ class User extends Authenticatable
         return $return;
     }
 
-
     static public function getFellows()
     {
         $return = self::select(
@@ -115,10 +125,7 @@ class User extends Authenticatable
         $return = $return->orderBy('id', 'asc')->get();
         
         return $return;
-
     }
-    
-
 
     static public function getMembers()
     {
@@ -131,13 +138,11 @@ class User extends Authenticatable
                 'members.user_id as m_id',
                 'members.personal_email as personal_email',
                 'members.*',
-                // 'programmes.name as programme_name',
                 'countries.country_name as country_name',
                 'categories.category_name as membership_type'
 
             )
             ->join('members', 'users.id', '=', 'members.user_id')
-            // ->join('programmes', 'fellows.programme_id', '=', 'programmes.id')
             ->leftJoin('categories', 'members.category_id', '=', 'categories.id')
             ->leftJoin('countries', 'members.country_id', '=', 'countries.id')
             ->where('users.user_type', '8')
@@ -146,34 +151,196 @@ class User extends Authenticatable
         $return = $return->orderBy('id', 'asc')->get();
         
         return $return;
-
     }
 
-    static public function getExaminers()
-    {
-        $return = self::select(
-                'users.id as user_id',
-                'users.name as examiner_name',
-                'users.email as email',
-                'users.password as examiner_password',
-                'examiners.id as examin_id',
-                'examiners.user_id as ex_id',
-                'examiners.*',
-                'examiners_groups.group_name as group_name',
-                'countries.country_name as country_name'
+// Updated getSingleExaminer method
+static public function getSingleExaminer($userId, $yearId = null)
+{
+    // Use current year if no year specified
+    if (!$yearId) {
+        $yearId = self::getCurrentYearId();
+    }
 
+    $examiner = self::select(
+            'users.id as user_id',
+            'users.name as examiner_name',
+            'users.email as email',
+            'users.password as examiner_password',
+            'examiners.id as examin_id',
+            'examiners.user_id as ex_id',
+            'examiners.*',
+            'countries.country_name as country_name',
+            'examiners_roles.role as examiner_role'
         )
-            ->join('examiners', 'users.id', '=', 'examiners.user_id')
-            ->leftJoin('examiners_groups', 'examiners.group_id', '=', 'examiners_groups.id')
-            ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
-            ->where('users.user_type', '9')
-            ->where('users.is_deleted', '=', '0');
+        ->join('examiners', 'users.id', '=', 'examiners.user_id')
+        ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
+        ->leftJoin('examiners_roles', 'examiners.role_id', '=', 'examiners_roles.id')
+        ->where('users.id', $userId)
+        ->where('users.user_type', '9')
+        ->where('users.is_deleted', '=', '0')
+        ->first();
 
-        $return = $return->orderBy('id', 'asc')->get();
-        
-        return $return;
+    if (!$examiner) {
+        return null;
+    }
+
+    // Get groups for this examiner for the current year only
+    $groups = \DB::table('exams_groups')
+        ->join('examiners_groups', 'exams_groups.group_id', '=', 'examiners_groups.id')
+        ->where('exams_groups.exm_id', $examiner->examin_id)
+        ->where('exams_groups.year_id', $yearId)
+        ->select('examiners_groups.id as group_id', 'examiners_groups.group_name', 'exams_groups.year_id')
+        ->get();
+
+    // Get shifts for this examiner for the current year only
+    $shifts = \DB::table('exams_shifts')
+        ->where('exm_id', $examiner->examin_id)
+        ->where('year_id', $yearId)
+        ->select('shift', 'year_id')
+        ->get();
+
+    // Get examiner history
+    $history = \App\Models\ExaminerHistory::where('exm_id', $examiner->examin_id)->first();
+
+    // Add groups, shifts, and history data to examiner object
+    $examiner->groups = $groups;
+    $examiner->shifts = $shifts;
+    $examiner->history = $history;
+    
+    // Add convenience properties for the view
+    $examiner->group_name = $groups->isNotEmpty() ? $groups->first()->group_name : null;
+    $examiner->group_id = $groups->isNotEmpty() ? $groups->first()->group_id : null;
+    
+    // Convert shift ID to readable name
+    $examiner->shift_id = $shifts->isNotEmpty() ? $shifts->first()->shift : null;
+    $examiner->shift = $shifts->isNotEmpty() ? self::getShiftName($shifts->first()->shift) : null;
+    
+    // Add history convenience properties
+    if ($history) {
+        $examiner->virtual_mcs_participated = $history->virtual_mcs_participated;
+        $examiner->fcs_participated = $history->fcs_participated;
+        $examiner->participation_type = $history->role ? $history->role->role : null;
+        $examiner->hospital_type = $history->hospital_type;
+        $examiner->hospital_name = $history->hospital_name;
+        $examiner->examination_years = $history->examination_years;
+        $examiner->exam_availability = $history->exam_availability;
 
     }
+    
+    // If multiple groups/shifts, concatenate them
+    if ($groups->count() > 1) {
+        $examiner->group_name = $groups->pluck('group_name')->implode(', ');
+    }
+    
+    if ($shifts->count() > 1) {
+        // Store both ID and readable names for multiple shifts
+        $examiner->shift_id = $shifts->pluck('shift')->implode(', ');
+        $examiner->shift = $shifts->map(function($shift) {
+            return self::getShiftName($shift->shift);
+        })->implode(', ');
+    }
+
+    return $examiner;
+}
+
+// Updated getExaminers method with current year filtering
+static public function getExaminers($yearId = null)
+{
+    // Use current year if no year specified
+    if (!$yearId) {
+        $yearId = self::getCurrentYearId();
+    }
+
+    $query = self::select(
+            'users.id as user_id',
+            'users.name as examiner_name',
+            'users.email as email',
+            'users.password as examiner_password',
+            'examiners.id as examin_id',
+            'examiners.user_id as ex_id',
+            'examiners.*',
+            'countries.country_name as country_name',
+            'examiners_roles.role as examiner_role'
+    )
+        ->join('examiners', 'users.id', '=', 'examiners.user_id')
+        ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
+        ->leftJoin('examiners_roles', 'examiners.role_id', '=', 'examiners_roles.id')
+        ->where('users.user_type', '9')
+        ->where('users.is_deleted', '=', '0');
+
+    $examiners = $query->orderBy('users.id', 'asc')->get();
+
+    // Add groups, shifts, and history for each examiner for the current year only
+    $examiners->each(function ($examiner) use ($yearId) {
+        // Get groups for this examiner for the current year
+        $groups = \DB::table('exams_groups')
+            ->join('examiners_groups', 'exams_groups.group_id', '=', 'examiners_groups.id')
+            ->where('exams_groups.exm_id', $examiner->examin_id)
+            ->where('exams_groups.year_id', $yearId)
+            ->select('examiners_groups.id as group_id', 'examiners_groups.group_name', 'exams_groups.year_id')
+            ->get();
+
+        // Get shifts for this examiner for the current year
+        $shifts = \DB::table('exams_shifts')
+            ->where('exm_id', $examiner->examin_id)
+            ->where('year_id', $yearId)
+            ->select('shift', 'year_id')
+            ->get();
+
+        // Get examiner history
+        $history = \App\Models\ExaminerHistory::where('exm_id', $examiner->examin_id)->first();
+
+        // Add to examiner object
+        $examiner->groups = $groups;
+        $examiner->shifts = $shifts;
+        $examiner->history = $history;
+        
+        // Add convenience properties
+        $examiner->group_name = $groups->isNotEmpty() ? $groups->first()->group_name : null;
+        $examiner->group_id = $groups->isNotEmpty() ? $groups->first()->group_id : null;
+        
+        // Convert shift ID to readable name
+        $examiner->shift_id = $shifts->isNotEmpty() ? $shifts->first()->shift : null;
+        $examiner->shift = $shifts->isNotEmpty() ? self::getShiftName($shifts->first()->shift) : null;
+        
+        // Add history convenience properties
+        if ($history) {
+            $examiner->virtual_mcs_participated = $history->virtual_mcs_participated;
+            $examiner->fcs_participated = $history->fcs_participated;
+            // $examiner->participation_type = $history->role ? $history->role->role : null;
+            $examiner->hospital_type = $history->hospital_type;
+            $examiner->hospital_name = $history->hospital_name;
+            $examiner->examination_years = $history->examination_years;
+        }
+        
+        // Handle multiple groups/shifts
+        if ($groups->count() > 1) {
+            $examiner->group_name = $groups->pluck('group_name')->implode(', ');
+        }
+        
+        if ($shifts->count() > 1) {
+            // Store both ID and readable names for multiple shifts
+            $examiner->shift_id = $shifts->pluck('shift')->implode(', ');
+            $examiner->shift = $shifts->map(function($shift) {
+                return self::getShiftName($shift->shift);
+            })->implode(', ');
+        }
+    });
+
+    return $examiners;
+}
+
+// Updated getShiftName method to match your select options
+public static function getShiftName($shiftId)
+{
+    $shiftNames = [
+        1 => 'Morning',
+        2 => 'Morning & Afternoon', 
+        3 => 'Afternoon',
+    ];
+         
+    return $shiftNames[$shiftId] ?? 'Unknown Shift';
+}
 
     static public function getCandidates()    
     {
@@ -207,214 +374,262 @@ class User extends Authenticatable
         return $return;
     }
 
+    // Get examiner candidates based on current groups and year
+    static public function getExaminerCandidates($userId = null, $yearId = null)
+    {
+        $userId = $userId ?? Auth::id();
+        
+        // Use current year if no year specified
+        if (!$yearId) {
+            $yearId = self::getCurrentYearId();
+        }
+        
+        // Get examiner's current group IDs for the specified year
+        $groupIds = \DB::table('examiners')
+            ->join('exams_groups', 'examiners.id', '=', 'exams_groups.exm_id')
+            ->where('examiners.user_id', $userId)
+            ->where('exams_groups.year_id', $yearId)
+            ->pluck('exams_groups.group_id')
+            ->toArray();
 
-    //***************************This function is no Longer used.*************************
-    static public function getexaminerCandidates()
-{
-    $examinerGroupId = \DB::table('examiners')
-        ->where('user_id', Auth::id())
-        ->value('group_id');
+        if (empty($groupIds)) {
+            return collect();
+        }
 
-    // Fetch candidates with the same group_id as the examiner
-    $candidates = self::select(
-            'users.id as user_id',
-            'users.name as name',
-            'users.email as user_email',
-            'users.user_type as user_type',
-            'candidates.id as candidates_id',
-            'candidates.user_id as c_id',
-            'candidates.group_id as candidate_group_id',
-            'candidates.*',
-            'hospitals.name as hospital_name',
-            'programmes.name as programme_name',
-            'examiners_groups.group_name as group_name',
-            'countries.country_name as country_name'
-        )
-        ->join('candidates', 'users.id', '=', 'candidates.user_id')
-        ->leftJoin('hospitals', 'candidates.hospital_id', '=', 'hospitals.id')
-        ->leftJoin('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
-        ->leftJoin('programmes', 'candidates.programme_id', '=', 'programmes.id')
-        ->leftJoin('countries', 'candidates.country_id', '=', 'countries.id')
-        ->where('candidates.group_id', '=', $examinerGroupId)
-        ->where('users.is_deleted', '=', '0')
-        ->orderBy('candidates_id', 'asc')
-        ->get();
+        // Fetch candidates with matching group_ids
+        $candidates = self::select(
+                'users.id as user_id',
+                'users.name as name',
+                'users.email as user_email',
+                'users.user_type as user_type',
+                'candidates.id as candidates_id',
+                'candidates.user_id as c_id',
+                'candidates.group_id as candidate_group_id',
+                'candidates.*',
+                'hospitals.name as hospital_name',
+                'programmes.name as programme_name',
+                'examiners_groups.group_name as group_name',
+                'countries.country_name as country_name'
+            )
+            ->join('candidates', 'users.id', '=', 'candidates.user_id')
+            ->leftJoin('hospitals', 'candidates.hospital_id', '=', 'hospitals.id')
+            ->leftJoin('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+            ->leftJoin('programmes', 'candidates.programme_id', '=', 'programmes.id')
+            ->leftJoin('countries', 'candidates.country_id', '=', 'countries.id')
+            ->whereIn('candidates.group_id', $groupIds)
+            ->where('users.is_deleted', '=', '0')
+            ->orderBy('candidates.id', 'asc')
+            ->get();
 
-    return $candidates; // Returns a collection of candidates
-}
-
-
-static public function getCandidatesByGroup($groupId)
-{
-    return self::select(
-            'users.id as user_id',
-            'users.name as name',
-            'candidates.id as cand_id',
-            'candidates.candidate_id as c_id'
-        )
-        ->join('candidates', 'users.id', '=', 'candidates.user_id')
-        ->where('candidates.group_id', '=', $groupId)
-        ->where('users.is_deleted', '=', '0')
-        ->orderBy('candidates.candidate_id', 'asc')
-        ->get();
-}
-
-
-//Examination Results Examiners Sides -- for EXaminer Results PAGE
-public static function getExaminationResults()
-{
-    // Retrieve the examiner ID linked to the logged-in user
-    $examinerId = \DB::table('examiners')
-        ->where('user_id', auth()->id())
-        ->value('id');
-
-    if (!$examinerId) {
-        return collect(); 
+        return $candidates;
     }
 
-    // Fetch the most recent submission from `examination_form`
-    $lastExamFormSubmission = \DB::table('examination_form')
-        ->where('examiner_id', $examinerId)
-        ->latest('created_at')
-        ->first();
+    // Get candidates by specific group and year
+    static public function getCandidatesByGroupAndYear($groupId, $yearId = null)
+    {
+        $query = self::select(
+                'users.id as user_id',
+                'users.name as name',
+                'candidates.id as cand_id',
+                'candidates.candidate_id as c_id',
+                'candidates.group_id',
+                'examiners_groups.group_name'
+            )
+            ->join('candidates', 'users.id', '=', 'candidates.user_id')
+            ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+            ->where('candidates.group_id', '=', $groupId)
+            ->where('users.is_deleted', '=', '0');
 
-    // Fetch the most recent submission from `gs_form`
-    $lastGsFormSubmission = \DB::table('gs_form')
-        ->where('examiner_id', $examinerId)
-        ->latest('created_at')
-        ->first();
-
-    // Determine the last submitted form
-    $lastSubmittedForm = null;
-
-    if ($lastExamFormSubmission && $lastGsFormSubmission) {
-        $lastSubmittedForm = $lastExamFormSubmission->created_at > $lastGsFormSubmission->created_at
-            ? 'examination_form'
-            : 'gs_form';
-    } elseif ($lastExamFormSubmission) {
-        $lastSubmittedForm = 'examination_form';
-    } elseif ($lastGsFormSubmission) {
-        $lastSubmittedForm = 'gs_form';
+        return $query->orderBy('candidates.candidate_id', 'asc')->get();
     }
 
-    // Fetch records from `examination_form`
-    $examinationFormResults = \DB::table('examination_form')
-        ->select(
-            'examination_form.*',
-            'examination_form.id as record_id',
-            'examination_form.candidate_id',
-            'examination_form.station_id',
-            'examination_form.group_id',
-            'examination_form.total as total_marks',
-            'examination_form.overall as grade', // Column in `examination_form`
-            'examination_form.remarks',
-            'candidates.candidate_id as candidate_name',
-            'examiners_groups.group_name as group_name',
-            \DB::raw("'examination_form' as source_table") // Distinguish source
-        )
-        ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
-        ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
-        ->where('examination_form.examiner_id', $examinerId);
+    // Get examiner's groups for a specific year
+    static public function getExaminerGroups($userId, $yearId = null)
+    {
+        // Use current year if no year specified
+        if (!$yearId) {
+            $yearId = self::getCurrentYearId();
+        }
 
-    // Fetch records from `gs_form`
-    $gsFormResults = \DB::table('gs_form')
-        ->select(
-            'gs_form.*',
-            'gs_form.id as record_id',
-            'gs_form.candidate_id',
-            'gs_form.station_id',
-            'gs_form.group_id as g_id',
-            'gs_form.total as total_marks',
-            \DB::raw('NULL as grade'), // Placeholder for missing `overall` column
-            'gs_form.remarks',
-            'candidates.candidate_id as candidate_name',
-            'examiners_groups.group_name as group_name',
-            \DB::raw("'gs_form' as source_table") // Distinguish source
-        )
-        ->join('candidates', 'gs_form.candidate_id', '=', 'candidates.id')
-        ->join('examiners_groups', 'gs_form.group_id', '=', 'examiners_groups.id')
-        ->where('gs_form.examiner_id', $examinerId);
+        return \DB::table('examiners')
+            ->join('exams_groups', 'examiners.id', '=', 'exams_groups.exm_id')
+            ->join('examiners_groups', 'exams_groups.group_id', '=', 'examiners_groups.id')
+            ->where('examiners.user_id', $userId)
+            ->where('exams_groups.year_id', $yearId)
+            ->select('examiners_groups.id', 'examiners_groups.group_name', 'exams_groups.year_id')
+            ->get();
+    }
 
-    // Combine results with UNION and order by ID
-    $combinedResults = $examinationFormResults
-        ->union($gsFormResults)
-        ->orderBy('record_id', 'asc')
-        ->get();
+    // Get examiner's shifts for a specific year
+    static public function getExaminerShifts($userId, $yearId = null)
+    {
+        // Use current year if no year specified
+        if (!$yearId) {
+            $yearId = self::getCurrentYearId();
+        }
 
-    return [
-        'lastSubmittedForm' => $lastSubmittedForm,
-        'records' => $combinedResults,
-    ];
-}
+        return \DB::table('examiners')
+            ->join('exams_shifts', 'examiners.id', '=', 'exams_shifts.exm_id')
+            ->where('examiners.user_id', $userId)
+            ->where('exams_shifts.year_id', $yearId)
+            ->select('exams_shifts.shift', 'exams_shifts.year_id')
+            ->get();
+    }
 
+    //Examination Results Examiners Sides -- for EXaminer Results PAGE
+    public static function getExaminationResults()
+    {
+        // Retrieve the examiner ID linked to the logged-in user
+        $examinerId = \DB::table('examiners')
+            ->where('user_id', auth()->id())
+            ->value('id');
 
-public static function getAdminExamsResults()
-{
-    return \DB::table('examination_form')
-        ->select(
-            'examination_form.candidate_id as cand_id', // Use "cand_id" for consistency
-            'candidates.firstname',
-            'candidates.middlename',
-            'candidates.lastname',
-            'candidates.candidate_id as c_id', 
-            'examination_form.station_id',
-            'examination_form.total'
-        )
-        ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
-        ->orderBy('examination_form.candidate_id')
-        ->get()
-        ->groupBy('cand_id')
-        ->map(function ($group) {
-            $candidate = $group->first();
-            return (object) [
-                'candidate_id' => $candidate->c_id, // Use "c_id" as mapped in select clause
-                'cnd_id' => $candidate-> cand_id,
-                'fullname' => "{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}",
-                'stations' => $group->map(function ($row) {
-                    return [
-                        'station_id' => $row->station_id,
-                        'total' => $row->total
-                    ];
-                })->toArray(),
-            ];
-        });
-}
+        if (!$examinerId) {
+            return collect(); 
+        }
 
-// Get Results for GS
-public static function getGsResults()
-{
-    return \DB::table('gs_form')
-        ->select(
-            'gs_form.candidate_id as cand_id',
-            'candidates.firstname',
-            'candidates.middlename',
-            'candidates.lastname',
-            'candidates.candidate_id as c_id',
-            'gs_form.station_id',
-            \DB::raw('SUM(gs_form.total) as total_sum') // Sum totals grouped by station_id
-        )
-        ->join('candidates', 'gs_form.candidate_id', '=', 'candidates.id')
-        ->groupBy('gs_form.candidate_id', 'gs_form.station_id', 'candidates.firstname', 'candidates.middlename', 'candidates.lastname', 'candidates.candidate_id')
-        ->orderBy('gs_form.candidate_id')
-        ->get()
-        ->groupBy('cand_id')
-        ->map(function ($group) {
-            $candidate = $group->first();
-            return (object) [
-                'candidate_id' => $candidate->c_id,
-                'cnd_id' => $candidate->cand_id,
-                'fullname' => "{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}",
-                'stations' => $group->map(function ($row) {
-                    return [
-                        'station_id' => $row->station_id,
-                        'total_sum' => $row->total_sum // Return summed total for each station
-                    ];
-                })->toArray(),
-            ];
-        });
-}
+        // Fetch the most recent submission from `mcs_results`
+        $lastExamFormSubmission = \DB::table('mcs_results')
+            ->where('examiner_id', $examinerId)
+            ->latest('created_at')
+            ->first();
 
-// Trainers Function
+        // Fetch the most recent submission from `gs_results`
+        $lastGsFormSubmission = \DB::table('gs_results')
+            ->where('examiner_id', $examinerId)
+            ->latest('created_at')
+            ->first();
+
+        // Determine the last submitted form
+        $lastSubmittedForm = null;
+
+        if ($lastExamFormSubmission && $lastGsFormSubmission) {
+            $lastSubmittedForm = $lastExamFormSubmission->created_at > $lastGsFormSubmission->created_at
+                ? 'mcs_results'
+                : 'gs_results';
+        } elseif ($lastExamFormSubmission) {
+            $lastSubmittedForm = 'mcs_results';
+        } elseif ($lastGsFormSubmission) {
+            $lastSubmittedForm = 'gs_results';
+        }
+
+        // Fetch records from `mcs_results`
+        $examinationFormResults = \DB::table('mcs_results')
+            ->select(
+                'mcs_results.*',
+                'mcs_results.id as record_id',
+                'mcs_results.candidate_id',
+                'mcs_results.station_id',
+                'mcs_results.group_id',
+                'mcs_results.total as total_marks',
+                'mcs_results.overall as grade',
+                'mcs_results.remarks',
+                'candidates.candidate_id as candidate_name',
+                'examiners_groups.group_name as group_name',
+                \DB::raw("'mcs_results' as source_table")
+            )
+            ->join('candidates', 'mcs_results.candidate_id', '=', 'candidates.id')
+            ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+            ->where('mcs_results.examiner_id', $examinerId);
+
+        // Fetch records from `gs_results`
+        $gsFormResults = \DB::table('gs_results')
+            ->select(
+                'gs_results.*',
+                'gs_results.id as record_id',
+                'gs_results.candidate_id',
+                'gs_results.station_id',
+                'gs_results.group_id as g_id',
+                'gs_results.total as total_marks',
+                \DB::raw('NULL as grade'),
+                'gs_results.remarks',
+                'candidates.candidate_id as candidate_name',
+                'examiners_groups.group_name as group_name',
+                \DB::raw("'gs_results' as source_table")
+            )
+            ->join('candidates', 'gs_results.candidate_id', '=', 'candidates.id')
+            ->join('examiners_groups', 'gs_results.group_id', '=', 'examiners_groups.id')
+            ->where('gs_results.examiner_id', $examinerId);
+
+        // Combine results with UNION and order by ID
+        $combinedResults = $examinationFormResults
+            ->union($gsFormResults)
+            ->orderBy('record_id', 'asc')
+            ->get();
+
+        return [
+            'lastSubmittedForm' => $lastSubmittedForm,
+            'records' => $combinedResults,
+        ];
+    }
+
+    public static function getAdminExamsResults()
+    {
+        return \DB::table('mcs_results')
+            ->select(
+                'mcs_results.candidate_id as cand_id',
+                'candidates.firstname',
+                'candidates.middlename',
+                'candidates.lastname',
+                'candidates.candidate_id as c_id', 
+                'mcs_results.station_id',
+                'mcs_results.total'
+            )
+            ->join('candidates', 'mcs_results.candidate_id', '=', 'candidates.id')
+            ->orderBy('mcs_results.candidate_id')
+            ->get()
+            ->groupBy('cand_id')
+            ->map(function ($group) {
+                $candidate = $group->first();
+                return (object) [
+                    'candidate_id' => $candidate->c_id,
+                    'cnd_id' => $candidate-> cand_id,
+                    'fullname' => "{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}",
+                    'stations' => $group->map(function ($row) {
+                        return [
+                            'station_id' => $row->station_id,
+                            'total' => $row->total
+                        ];
+                    })->toArray(),
+                ];
+            });
+    }
+
+    // Get Results for GS
+    public static function getGsResults()
+    {
+        return \DB::table('gs_results')
+            ->select(
+                'gs_results.candidate_id as cand_id',
+                'candidates.firstname',
+                'candidates.middlename',
+                'candidates.lastname',
+                'candidates.candidate_id as c_id',
+                'gs_results.station_id',
+                \DB::raw('SUM(gs_results.total) as total_sum')
+            )
+            ->join('candidates', 'gs_results.candidate_id', '=', 'candidates.id')
+            ->groupBy('gs_results.candidate_id', 'gs_results.station_id', 'candidates.firstname', 'candidates.middlename', 'candidates.lastname', 'candidates.candidate_id')
+            ->orderBy('gs_results.candidate_id')
+            ->get()
+            ->groupBy('cand_id')
+            ->map(function ($group) {
+                $candidate = $group->first();
+                return (object) [
+                    'candidate_id' => $candidate->c_id,
+                    'cnd_id' => $candidate->cand_id,
+                    'fullname' => "{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}",
+                    'stations' => $group->map(function ($row) {
+                        return [
+                            'station_id' => $row->station_id,
+                            'total_sum' => $row->total_sum
+                        ];
+                    })->toArray(),
+                ];
+            });
+    }
+
+    // Trainers Function
     static public function getTrainers()    
     {
         $return = self::select(
@@ -444,7 +659,6 @@ public static function getGsResults()
         return $return;
     }
 
-
     static public function getReps()    
     {
         $return = self::select(
@@ -471,7 +685,6 @@ public static function getGsResults()
         
         return $return;
     }
-
 
     static public function getEmailSingle($email)
     {

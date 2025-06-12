@@ -16,6 +16,20 @@ class ExaminerMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Define routes that should bypass examiner authentication (for QR code access)
+        $publicRoutes = [
+            'examiner/confirm-attendance/*',
+            'examiner/confirm-attendance-registration/*'
+        ];
+
+        // Check if current route should bypass authentication
+        foreach ($publicRoutes as $route) {
+            if ($request->is($route)) {
+                return $next($request);
+            }
+        }
+
+        // Regular examiner authentication check
         if (Auth::check()) {
             if (Auth::user()->user_type == 9) {
                 return $next($request);

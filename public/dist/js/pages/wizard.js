@@ -109,12 +109,11 @@
     });
 
     //* Add Phone no select
-    function phoneNoselect(){
-        if ( $('#msform').length ){   
-            $("#phone").intlTelInput(); 
-            $("#phone").intlTelInput("setNumber", "+880"); 
-        };
-    }; 
+    // function phoneNoselect(){
+    //     if ( $('#msform').length ){   
+    //         $("#phone").intlTelInput("setNumber", "+880"); 
+    //     };
+    // }; 
 
     //* Select js
     function nice_Select(){
@@ -125,6 +124,6 @@
 
     /*Function Calls*/  
     verificationForm ();
-    phoneNoselect ();
+    // phoneNoselect ();
     nice_Select ();
 })(jQuery);

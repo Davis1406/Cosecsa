@@ -15,7 +15,6 @@ use App\Http\Controllers\CountryRepsController;
 use App\Http\Controllers\FellowsController;   
 use App\Http\Controllers\PromotionController;  
 use App\Http\Controllers\MembersController; 
-use App\Http\Controllers\FellowsModel;
 use App\Http\Controllers\ExamsController;
 
 
@@ -153,6 +152,10 @@ Route::get('admin/exams/exam_results', [ExamsController::class,'adminResults']);
 Route::get('admin/exams/gs_results', [ExamsController::class,'gsResults']);
 Route::get('admin/exams/station_results/{candidate_id}/{station_id}', [ExamsController::class, 'viewCandidateStationResult']);
 Route::get('admin/exams/gs_station_results/{candidate_id}/{station_id}', [ExamsController::class, 'viewGsStationResult']);
+// Show attendance confirmation page (GET)
+Route::get('admin/exams/confirm-attendance/{examiner_id}', [ExamsController::class, 'showAttendanceConfirmation'])->name('exams.confirm.attendance');
+// Register attendance via Form (POST) - with CSRF protection
+Route::post('admin/exams/confirm-attendance-registration/{examiner_id}', [ExamsController::class, 'confirmAttendanceRegistration'])->name('exams.register.attendance');
 
 
 
@@ -184,11 +187,18 @@ Route::group(['middleware' => 'examiner'], function(){
   Route::post('examiner/resubmit/{candidate_id}/{station_id}', [CandidatesController::class, 'updateEvaluation'])->name('candidateform.update');
   Route::post('examiner/examiner_form', [CandidatesController::class, 'storeEvaluation'])->name('examiner.add');
   Route::post('examiner/general_surgery', [CandidatesController::class, 'storegsEvaluation'])->name('gs.add');
-  Route::get('examiner/change_password', [ExamsController::class, 'changePassword']);
-  Route::post('examiner/change_password', [ExamsController::class, 'updatePassword']);
+  Route::get('examiner/profile_settings', [ExamsController::class, 'examinerProfile'])->name('examiner.profile');
+  Route::post('examiner/profile_settings/update', [ExamsController::class, 'updateExaminerProfile'])->name('examiner.profile.update');
+  Route::post('examiner/password/update', [ExamsController::class, 'examinerChangePassword'])->name('examiner.password.update');
   Route::get('/get-candidates', [CandidatesController::class, 'getGsCandidatesByGroup']);
   Route::get('/get-mcs-candidates/{groupId}', [CandidatesController::class, 'getMcsCandidatesByGroup']);
+  // Add these new routes for examiner edit
+  Route::get('examiner/edit_info/{id}', [ExamsController::class, 'examinerEdit'])->name('examiner.edit');
+  Route::post('examiner/edit_info/{id}', [ExamsController::class, 'examinerUpdate'])->name('examiner.update');
+  Route::get('examiner/badge', [ExamsController::class, 'examinerBadge'])->name('examiner.badge');
 
 });
 
+Route::get('examiner/confirm-attendance/{examiner_id}', [ExamsController::class, 'showExaminerAttendanceConfirmation'])->name('examiner.confirm.attendance');
+Route::post('examiner/confirm-attendance-registration/{examiner_id}', [ExamsController::class, 'confirmExaminerAttendanceRegistration'])->name('examiner.register.attendance');
 

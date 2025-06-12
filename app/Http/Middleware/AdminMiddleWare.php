@@ -18,6 +18,20 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Define routes that should bypass admin authentication (for QR code access)
+        $publicRoutes = [
+            'admin/exams/confirm-attendance/*',
+            'admin/exams/confirm-attendance-registration/*'
+        ];
+
+        // Check if current route should bypass authentication
+        foreach ($publicRoutes as $route) {
+            if ($request->is($route)) {
+                return $next($request);
+            }
+        }
+
+        // Regular admin authentication check
         if (Auth::check()) {
             // Check if the authenticated user is an admin (user_type == 1)
             if (Auth::user()->user_type == 1) {

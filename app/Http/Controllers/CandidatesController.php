@@ -370,7 +370,7 @@ public function results(Request $request)
     $data['header_title'] = "Candidates Results";
 
     // Render the correct view based on the last submitted form
-    if ($lastSource === 'gs_form') {
+    if ($lastSource === 'gs_results') {
         return view('examiner.gsresults', $data);
     }
 
@@ -390,12 +390,12 @@ public function viewCandidateResults($candidate_id, $station_id)
     $examinerId = $examiner->id;
 
     // Fetch the last submitted form source
-    $lastSubmittedForm = \DB::table('examination_form')
-        ->select('created_at', \DB::raw("'examination_form' as source_table"))
+    $lastSubmittedForm = \DB::table('mcs_results')
+        ->select('created_at', \DB::raw("'mcs_results' as source_table"))
         ->where('examiner_id', $examinerId)
         ->union(
-            \DB::table('gs_form')
-                ->select('created_at', \DB::raw("'gs_form' as source_table"))
+            \DB::table('gs_results')
+                ->select('created_at', \DB::raw("'gs_results' as source_table"))
                 ->where('examiner_id', $examinerId)
         )
         ->orderBy('created_at', 'desc')
@@ -410,44 +410,44 @@ public function viewCandidateResults($candidate_id, $station_id)
     $data['candidateResult'] = null;
     $viewName = '';
 
-    if ($lastSubmittedForm->source_table === 'examination_form') {
-        $data['candidateResult'] = \DB::table('examination_form')
+    if ($lastSubmittedForm->source_table === 'mcs_results') {
+        $data['candidateResult'] = \DB::table('mcs_results')
             ->select(
-                'examination_form.*',
+                'mcs_results.*',
                 'candidates.id as candidate_id',
                 'candidates.candidate_id as candidate_name',
                 'candidates.group_id as g_id',
                 'examiners.id as examiner_id',
                 'examiners_groups.group_name as group_name',
-                \DB::raw("'examination_form' as source_table") // Ensure source_table is included
+                \DB::raw("'mcs_results' as source_table") // Ensure source_table is included
             )
-            ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
-            ->join('examiners', 'examination_form.examiner_id', '=', 'examiners.id')
+            ->join('candidates', 'mcs_results.candidate_id', '=', 'candidates.id')
+            ->join('examiners', 'mcs_results.examiner_id', '=', 'examiners.id')
             ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
             ->where('candidates.id', $candidate_id)
             ->where('examiners.id', $examinerId)
-            ->where('examination_form.station_id', $station_id)
+            ->where('mcs_results.station_id', $station_id)
             ->first();
 
         $viewName = 'examiner.view_results';
-    } elseif ($lastSubmittedForm->source_table === 'gs_form') {
-        $data['candidateResult'] = \DB::table('gs_form')
+    } elseif ($lastSubmittedForm->source_table === 'gs_results') {
+        $data['candidateResult'] = \DB::table('gs_results')
             ->select(
-                'gs_form.*',
+                'gs_results.*',
                 'candidates.id as candidate_id',
                 'candidates.candidate_id as candidate_name',
                 'candidates.group_id as g_id',
-                'gs_form.station_id as s_id',
+                'gs_results.station_id as s_id',
                 'examiners.id as examiner_id',
                 'examiners_groups.group_name as g_name',
-                \DB::raw("'gs_form' as source_table") // Ensure source_table is included
+                \DB::raw("'gs_results' as source_table") // Ensure source_table is included
             )
-            ->join('candidates', 'gs_form.candidate_id', '=', 'candidates.id')
-            ->join('examiners', 'gs_form.examiner_id', '=', 'examiners.id')
-            ->join('examiners_groups', 'gs_form.group_id', '=', 'examiners_groups.id')
+            ->join('candidates', 'gs_results.candidate_id', '=', 'candidates.id')
+            ->join('examiners', 'gs_results.examiner_id', '=', 'examiners.id')
+            ->join('examiners_groups', 'gs_results.group_id', '=', 'examiners_groups.id')
             ->where('candidates.id', $candidate_id)
             ->where('examiners.id', $examinerId)
-            ->where('gs_form.station_id', $station_id)
+            ->where('gs_results.station_id', $station_id)
             ->first();
 
         $viewName = 'examiner.view_gs_results';
@@ -478,42 +478,42 @@ public function resubmit($candidate_id, $station_id)
     $examinerId = $examiner->id;
     $data['header_title'] = "Resubmit Results";
 
-    // Fetch the candidate's record from `examination_form`
-    $candidateResult = \DB::table('examination_form')
+    // Fetch the candidate's record from `mcs_results`
+    $candidateResult = \DB::table('mcs_results')
         ->select(
-            'examination_form.*',
+            'mcs_results.*',
             'candidates.id as candidates_id',
             'candidates.candidate_id as candidate_name',
             'candidates.group_id as g_id',
             'examiners.id as examiner_id',
             'examiners_groups.group_name as group_name',
-            \DB::raw("'examination_form' as source_table")
+            \DB::raw("'mcs_results' as source_table")
         )
-        ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
-        ->join('examiners', 'examination_form.examiner_id', '=', 'examiners.id')
+        ->join('candidates', 'mcs_results.candidate_id', '=', 'candidates.id')
+        ->join('examiners', 'mcs_results.examiner_id', '=', 'examiners.id')
         ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
-        ->where('examination_form.candidate_id', $candidate_id)
-        ->where('examination_form.station_id', $station_id)
+        ->where('mcs_results.candidate_id', $candidate_id)
+        ->where('mcs_results.station_id', $station_id)
         ->where('examiners.id', $examinerId)
         ->first();
 
-    // If not found in `examination_form`, fetch from `gs_form`
+    // If not found in `mcs_results`, fetch from `gs_results`
     if (!$candidateResult) {
-        $candidateResult = \DB::table('gs_form')
+        $candidateResult = \DB::table('gs_results')
             ->select(
-                'gs_form.*',
+                'gs_results.*',
                 'candidates.id as candidates_id',
                 'candidates.candidate_id as candidate_name',
-                'gs_form.group_id as g_id',
+                'gs_results.group_id as g_id',
                 'examiners.id as examiner_id',
                 'examiners_groups.group_name as g_name',
-                \DB::raw("'gs_form' as source_table")
+                \DB::raw("'gs_results' as source_table")
             )
-            ->join('candidates', 'gs_form.candidate_id', '=', 'candidates.id')
-            ->join('examiners', 'gs_form.examiner_id', '=', 'examiners.id')
-            ->join('examiners_groups', 'gs_form.group_id', '=', 'examiners_groups.id')
-            ->where('gs_form.candidate_id', $candidate_id)
-            ->where('gs_form.station_id', $station_id)
+            ->join('candidates', 'gs_results.candidate_id', '=', 'candidates.id')
+            ->join('examiners', 'gs_results.examiner_id', '=', 'examiners.id')
+            ->join('examiners_groups', 'gs_results.group_id', '=', 'examiners_groups.id')
+            ->where('gs_results.candidate_id', $candidate_id)
+            ->where('gs_results.station_id', $station_id)
             ->where('examiners.id', $examinerId)
             ->first();
     }
@@ -531,12 +531,12 @@ public function resubmit($candidate_id, $station_id)
     $data['candidate'] = $candidateResult;
 
     // Dynamically choose the view based on the source table
-    if ($candidateResult->source_table === 'examination_form') {
+    if ($candidateResult->source_table === 'mcs_results') {
         // Pass the data with $getRecord as the variable to match the Blade template
         $data['getRecord'] = [$candidateResult];  // Wrap in array to maintain compatibility
         return view('examiner.resubmit', $data);
-    } elseif ($candidateResult->source_table === 'gs_form') {
-        // Similarly for gs_form
+    } elseif ($candidateResult->source_table === 'gs_results') {
+        // Similarly for gs_results
         $data['getRecord'] = [$candidateResult];  // Wrap in array
         return view('examiner.gsresubmit', $data);
     }
@@ -558,23 +558,23 @@ public function updateEvaluation(Request $request, $candidate_id, $station_id)
 
     $examinerId = $examiner->id;
 
-    // Fetch the record from `examination_form` or `gs_form`
-    $evaluation = \DB::table('examination_form')
+    // Fetch the record from `mcs_results` or `gs_results`
+    $evaluation = \DB::table('mcs_results')
         ->where('candidate_id', $candidate_id)
         ->where('station_id', $station_id)
         ->where('examiner_id', $examinerId)
         ->first();
 
-    $sourceTable = 'examination_form';
+    $sourceTable = 'mcs_results';
 
     if (!$evaluation) {
-        $evaluation = \DB::table('gs_form')
+        $evaluation = \DB::table('gs_results')
             ->where('candidate_id', $candidate_id)
             ->where('station_id', $station_id)
             ->where('examiner_id', $examinerId)
             ->first();
 
-        $sourceTable = 'gs_form';
+        $sourceTable = 'gs_results';
     }
 
     if (!$evaluation) {
@@ -590,8 +590,8 @@ public function updateEvaluation(Request $request, $candidate_id, $station_id)
         'remarks' => $request->remarks,
     ];
 
-    // Include `overall` only if the source table is `examination_form`
-    if ($sourceTable === 'examination_form') {
+    // Include `overall` only if the source table is `mcs_results`
+    if ($sourceTable === 'mcs_results') {
         $updateData['overall'] = $request->grade;
     }
 
