@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class GeneralSurgery extends Model
 {
-    protected $table = 'gs_form';
+    protected $table = 'gs_results';
 
     protected $fillable = [
         'candidate_id',

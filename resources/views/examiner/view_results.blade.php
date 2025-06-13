@@ -55,7 +55,7 @@
                             <td><b>{{ $candidateResult->total }}</b></td>
                         </tr>
 
-                        @if ($candidateResult->source_table === 'examination_form')
+                        @if ($candidateResult->source_table === 'mcs_results')
                             <tr>
                                 <th>Overall Grade</th>
                                 <td>{{ $candidateResult->overall }}</td>

@@ -9,7 +9,7 @@ class CandidatesFormModel extends Model
 {
     use HasFactory;
 
-    protected $table = 'examination_form';
+    protected $table = 'mcs_results';
 
     protected $fillable = [
         'candidate_id',

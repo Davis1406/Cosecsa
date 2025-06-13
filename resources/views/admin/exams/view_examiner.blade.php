@@ -112,11 +112,7 @@
                                     </tr>
                                     <tr>
                                         <th>Sub Specialty</th>
-                                        <td>{{ $examiner->sub_specialty ?? 'Not specified' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Year Assigned</th>
-                                        <td>{{ date('Y') }} <small class="text-muted">(Current Year)</small></td>
+                                        <td>{{ $examiner->subspecialty ?? 'Not specified' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Curriculum Vitae</th>
@@ -136,6 +132,16 @@
                                             @else
                                                 <span class="text-muted">No CV uploaded</span>
                                             @endif
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Participation History</th>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-info" data-toggle="modal"
+                                                data-target="#examinerHistoryModal"
+                                                style="background-color: #a02626; border-color: #a02626;">
+                                                <i class="fas fa-history"></i> View History
+                                            </button>
                                         </td>
                                     </tr>
                                 </table>
@@ -169,7 +175,7 @@
                         <div>
                             <!-- Logo -->
                             <div class="mb-3">
-                                <img src="{{ asset('/public/dist/img/cosecsa_Logo.png') }}" alt="COSECSA Logo"
+                                <img src="{{ asset('/public/dist/img/Cosecsa_Logo.png') }}" alt="COSECSA Logo"
                                     style="width: 100px; height: auto;">
                             </div>
 
@@ -213,6 +219,212 @@
                     <div class="text-center mt-2">
                         <button class="btn btn-sm btn-outline-secondary" onclick="printBadge()">Print</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+       <!-- Examiner History Modal -->
+    <div class="modal fade" id="examinerHistoryModal" tabindex="-1" role="dialog"
+        aria-labelledby="examinerHistoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header"
+                    style="background: linear-gradient(135deg, #a02626 0%, #d63031 100%); color: white;">
+                    <h5 class="modal-title" id="examinerHistoryModalLabel">
+                        <i class="fas fa-history"></i> Examiner Participation History
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Participation Summary -->
+                        <div class="col-12 mb-4">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-user-check text-primary"></i> Participation
+                                        Overview</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="icon-circle bg-success text-white mr-3">
+                                                    <i class="fas fa-laptop"></i>
+                                                </div>
+                                                <div>
+                                                    <small class="text-muted">Virtual MCS Participation</small>
+                                                    <div class="font-weight-bold">
+                                                        @if ($examiner->virtual_mcs_participated == 'Yes')
+                                                            <span class="badge badge-success">Yes</span>
+                                                        @else
+                                                            <span class="badge badge-secondary">No</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="icon-circle bg-info text-white mr-3">
+                                                    <i class="fas fa-stethoscope"></i>
+                                                </div>
+                                                <div>
+                                                    <small class="text-muted">FCS Participation</small>
+                                                    <div class="font-weight-bold">
+                                                        @if ($examiner->fcs_participated == 'Yes')
+                                                            <span class="badge badge-info">Yes</span>
+                                                        @else
+                                                            <span class="badge badge-secondary">No</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Role and Hospital Information -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-user-md text-warning"></i> Role & Institution</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <small class="text-muted">Participation Type</small>
+                                        <div class="font-weight-bold">
+                                            <i class="fas fa-user-tie text-primary mr-1"></i>
+                                            {{ $examiner->role_id == 1 ? 'Examiner' : 'Observer' }}
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted">Hospital Type</small>
+                                        <div class="font-weight-bold">
+                                            <i class="fas fa-hospital text-success mr-1"></i>
+                                            {{ $examiner->hospital_type ?: 'Not specified' }}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">Hospital Name</small>
+                                        <div class="font-weight-bold">
+                                            <i class="fas fa-building text-info mr-1"></i>
+                                            {{ $examiner->hospital_name ?: 'Not specified' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Examination Years -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-calendar-alt text-danger"></i> Examination Years
+                                        (2020-2024)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="examination-years">
+                                        @php
+                                            $selectedYears = [];
+                                            if ($examiner->examination_years) {
+                                                if (is_string($examiner->examination_years)) {
+                                                    $selectedYears =
+                                                        json_decode($examiner->examination_years, true) ?: [];
+                                                } elseif (is_array($examiner->examination_years)) {
+                                                    $selectedYears = $examiner->examination_years;
+                                                }
+                                            }
+                                        @endphp
+
+                                        <div class="year-badge-container">
+                                            @if (!empty($selectedYears))
+                                                @foreach ($selectedYears as $year)
+                                                    <span
+                                                        class="badge badge-primary mr-2 mb-2 px-3 py-2">{{ $year }}</span>
+                                                @endforeach
+                                            @else
+                                                <span class="text-muted">No examination years recorded</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2025 Exam Availability -->
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-calendar-check text-success"></i> 2025 Exam
+                                        Availability</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="availability-items">
+                                                @php
+                                                    $selectedAvailability = [];
+                                                    if (
+                                                        isset($examiner->history) &&
+                                                        $examiner->history->exam_availability
+                                                    ) {
+                                                        if (is_string($examiner->history->exam_availability)) {
+                                                            $selectedAvailability =
+                                                                json_decode(
+                                                                    $examiner->history->exam_availability,
+                                                                    true,
+                                                                ) ?:
+                                                                [];
+                                                        } elseif (is_array($examiner->history->exam_availability)) {
+                                                            $selectedAvailability =
+                                                                $examiner->history->exam_availability;
+                                                        }
+                                                    }
+                                                @endphp
+
+                                                @if (in_array('MCS', $selectedAvailability))
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <i class="fas fa-check-circle text-success mr-2"></i>
+                                                        <span class="font-weight-bold">MCS (12-13 Nov)</span>
+                                                    </div>
+                                                @endif
+
+                                                @if (in_array('FCS', $selectedAvailability))
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <i class="fas fa-check-circle text-success mr-2"></i>
+                                                        <span class="font-weight-bold">FCS (1–2 December)</span>
+                                                    </div>
+                                                @endif
+
+                                                @if (empty($selectedAvailability))
+                                                    <span class="text-muted">No availability recorded</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="shift-info">
+                                                <small class="text-muted">MCS Shift Preference</small>
+                                                <div class="font-weight-bold">
+                                                    <i class="fas fa-clock text-warning mr-1"></i>
+                                                    {{ isset($examiner->shift_id) ? App\Models\User::getShiftName($examiner->shift_id) : 'Not specified' }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Close
+                    </button>
                 </div>
             </div>
         </div>

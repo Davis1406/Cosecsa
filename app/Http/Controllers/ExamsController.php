@@ -98,11 +98,16 @@ public function view($id)
     // Generate QR code with the confirmation URL
     $qrCode = \QrCode::size(70)->generate($confirmationUrl);
 
-    $header_title = "View Examiner";
+    $data = [
+        'header_title' => 'View Examiner',
+        'examiner' => $examiner,
+        'getCountry' => Country::getCountry(),
+        'groups' => DB::table('examiners_groups')->select('id', 'group_name')->get(),
+        'qrCode' => $qrCode
+    ];
 
-    return view('admin.exams.view_examiner', compact('examiner', 'header_title', 'qrCode'));
+    return view('admin.exams.view_examiner', $data);
 }
-
     /**
      * Show attendance confirmation page after QR scan
      */
@@ -282,24 +287,24 @@ public function view($id)
     public function viewCandidateStationResult($candidate_id, $station_id)
     {   
         $header_title = 'Station Results';
-        $candidateResult = \DB::table('examination_form')
-            ->join('candidates', 'examination_form.candidate_id', '=', 'candidates.id')
+        $candidateResult = \DB::table('mcs_results')
+            ->join('candidates', 'mcs_results.candidate_id', '=', 'candidates.id')
             ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
-            ->join('examiners', 'examiners.id', '=', 'examination_form.examiner_id')
+            ->join('examiners', 'examiners.id', '=', 'mcs_results.examiner_id')
             ->join('users', 'examiners.user_id', '=', 'users.id')
             ->select(
                 'candidates.candidate_id as candidate_name',
                 'examiners_groups.group_name',
-                'examination_form.station_id',
-                'examination_form.total',
-                'examination_form.question_mark',
-                'examination_form.overall',
-                'examination_form.remarks',
+                'mcs_results.station_id',
+                'mcs_results.total',
+                'mcs_results.question_mark',
+                'mcs_results.overall',
+                'mcs_results.remarks',
                 'examiners.examiner_id as examin_id',
                 'users.name as examiner_name'
             )
-            ->where('examination_form.candidate_id', $candidate_id)
-            ->where('examination_form.station_id', $station_id)
+            ->where('mcs_results.candidate_id', $candidate_id)
+            ->where('mcs_results.station_id', $station_id)
             ->first();
 
         return view('admin.exams.station_results', compact('candidateResult', 'header_title'));
@@ -310,41 +315,41 @@ public function view($id)
         $header_title = 'Station Results';
 
         // Fetch the primary candidate result
-        $candidateResult = \DB::table('gs_form')
-            ->join('candidates', 'gs_form.candidate_id', '=', 'candidates.id')
-            ->join('examiners_groups', 'gs_form.group_id', '=', 'examiners_groups.id')
-            ->join('examiners', 'gs_form.examiner_id', '=', 'examiners.id')
+        $candidateResult = \DB::table('gs_results')
+            ->join('candidates', 'gs_results.candidate_id', '=', 'candidates.id')
+            ->join('examiners_groups', 'gs_results.group_id', '=', 'examiners_groups.id')
+            ->join('examiners', 'gs_results.examiner_id', '=', 'examiners.id')
             ->join('users', 'examiners.user_id', '=', 'users.id')
             ->select(
                 'candidates.candidate_id as candidate_name',
                 'examiners_groups.group_name as g_name',
-                'gs_form.station_id as s_id',
-                'gs_form.total',
-                'gs_form.question_mark',
-                'gs_form.remarks',
+                'gs_results.station_id as s_id',
+                'gs_results.total',
+                'gs_results.question_mark',
+                'gs_results.remarks',
                 'examiners.examiner_id as examin_id',
                 'users.name as examiner_name'
             )
-            ->where('gs_form.candidate_id', $candidate_id)
-            ->where('gs_form.station_id', $station_id)
+            ->where('gs_results.candidate_id', $candidate_id)
+            ->where('gs_results.station_id', $station_id)
             ->first();
 
         // Fetch all results for the station by all examiners
-        $allResults = \DB::table('gs_form')
-            ->join('examiners', 'gs_form.examiner_id', '=', 'examiners.id')
-            ->join('examiners_groups', 'gs_form.group_id', '=', 'examiners_groups.id')
+        $allResults = \DB::table('gs_results')
+            ->join('examiners', 'gs_results.examiner_id', '=', 'examiners.id')
+            ->join('examiners_groups', 'gs_results.group_id', '=', 'examiners_groups.id')
             ->join('users', 'examiners.user_id', '=', 'users.id')
             ->select(
-                'gs_form.total',
-                'gs_form.question_mark',
-                'gs_form.station_id as s_id',
+                'gs_results.total',
+                'gs_results.question_mark',
+                'gs_results.station_id as s_id',
                 'examiners_groups.group_name as g_name',
-                'gs_form.remarks',
+                'gs_results.remarks',
                 'examiners.examiner_id',
                 'users.name as examiner_name'
             )
-            ->where('gs_form.candidate_id', $candidate_id)
-            ->where('gs_form.station_id', $station_id)
+            ->where('gs_results.candidate_id', $candidate_id)
+            ->where('gs_results.station_id', $station_id)
             ->get();
 
         return view('admin.exams.gs_station_results', compact('candidateResult', 'allResults', 'header_title'));
