@@ -53,19 +53,19 @@
                                     </tr>
                                     <tr>
                                         <th>Country</th>
-                                        <td>{{ $examiner->country_name ?? 'Not specified' }}</td>
+                                        <td>{{ $examiner->country_name ?? '-' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Gender</th>
-                                        <td>{{ $examiner->gender ?? 'Not specified' }}</td>
+                                        <td>{{ $examiner->gender ?? '-' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Mobile Number</th>
-                                        <td>{{ $examiner->mobile ?? 'Not specified' }}</td>
+                                        <td>{{ $examiner->mobile ?? '-' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Examiner ID</th>
-                                        <td>{{ $examiner->examiner_id ?? 'Not assigned' }}</td>
+                                        <td>{{ $examiner->examiner_id ?? '-' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Assigned Groups</th>
@@ -84,7 +84,7 @@
                                                     @endif
                                                 </span>
                                             @else
-                                                <span class="text-muted">No groups assigned</span>
+                                                <span class="text-muted">-</span>
                                             @endif
                                         </td>
                                     </tr>
@@ -104,15 +104,15 @@
                                     </tr>
                                     <tr>
                                         <th>Examiner Role</th>
-                                        <td>{{ $examiner->examiner_role ?? 'Not specified' }}</td>
+                                        <td>{{ $examiner->role_id == 1 ? 'Examiner' : 'Observer' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Current Specialty</th>
-                                        <td>{{ $examiner->specialty ?? 'Not specified' }}</td>
+                                        <td>{{ $examiner->specialty ?? '-' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Sub Specialty</th>
-                                        <td>{{ $examiner->subspecialty ?? 'Not specified' }}</td>
+                                        <td>{{ $examiner->subspecialty ?? '-' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Curriculum Vitae</th>

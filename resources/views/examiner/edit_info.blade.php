@@ -33,7 +33,7 @@
                         </div>
                     </div>
 
-                    <form id="examinerForm" method="POST" action="{{ route('examiner.update', ['id' => $examiner->id]) }}"
+                    <form id="examinerForm" method="POST" action="{{ route('examiner.selfUpdate', ['id' => $examiner->id]) }}"
                         enctype="multipart/form-data">
                         @csrf
                         <div class="form-content">
@@ -99,11 +99,14 @@
                                                 <input type="file" id="passport_upload" name="passport_image"
                                                     accept="image/*">
                                             </label>
+
                                             @if ($examiner->passport_image)
-                                                <small class="text-muted">Current:
-                                                    {{ basename($examiner->passport_image) }}</small>
+                                                <small class="text-muted">
+                                                    Current: {{ basename($examiner->passport_image) }}
+                                                </small>
                                             @endif
                                         </div>
+
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">

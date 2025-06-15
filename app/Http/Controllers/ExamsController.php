@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class ExamsController extends Controller
 {
@@ -191,54 +192,6 @@ public function view($id)
         return view('admin.exams.edit_examiner', $data);
     }
     
-    public function update(Request $request, $id)
-    {
-        $examiner = ExamsModel::find($id);
-        if (!$examiner) {
-            return redirect('admin/exams/examiners')->with('error', 'Examiner not found');
-        }
-    
-        $user = User::find($examiner->user_id);
-    
-        $user->name = $request->name;
-        $user->email = $request->email;
-        if (!empty($request->password)) {
-            $user->password = $request->password;
-        }
-        $user->save();
-    
-        // Handle file uploads
-        if ($request->hasFile('curriculum_vitae')) {
-            $file = $request->file('curriculum_vitae');
-            
-            // Generate a unique filename for storage
-            $uniqueName = uniqid() . '.' . $file->getClientOriginalExtension();
-            
-            // Store the file (saves to storage/app/public/documents/cvs/)
-            $path = $file->storeAs('documents/cvs', $uniqueName, 'public');
-            
-            // Save BOTH paths in the database
-            $examiner->curriculum_vitae = $path;          // Unique storage path
-            $examiner->curriculum_vitae = $file->getClientOriginalName(); // Original name
-        }
-
-        if ($request->hasFile('passport_image')) {
-            $passportPath = $request->file('passport_image')->store('documents/passports', 'public');
-            $examiner->passport_image = $passportPath;
-        }
-        
-        $examiner->examiner_id = $request->examiner_id;
-        $examiner->country_id = $request->country_id;
-        $examiner->group_id = $request->group_id;
-        $examiner->mobile = $request->mobile;
-        $examiner->gender = $request->gender;
-        $examiner->specialty = $request->specialty;
-        $examiner->shift = $request->shift;
-    
-        $examiner->save();
-    
-        return redirect('admin/exams/examiners')->with('success', 'Examiner updated successfully');
-    }
 
     public function delete($id)
     {
@@ -387,8 +340,8 @@ public function view($id)
     }
 
     // Generate QR code for the examiner using examiner-specific route
-    // $baseUrl = request()->getSchemeAndHttpHost();
-    $baseUrl = 'http://localhost/cosecsa';
+    $baseUrl = request()->getSchemeAndHttpHost();
+    // $baseUrl = 'http://localhost/cosecsa';
 
     $confirmationUrl = $baseUrl . '/examiner/confirm-attendance/' . $examiner->examin_id;
     
@@ -502,80 +455,6 @@ public function confirmExaminerAttendanceRegistration(Request $request, $examine
     }
 }
 
-public function updateExaminerProfile(Request $request)
-{
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|max:255',
-        'country_id' => 'required|integer',
-        'mobile' => 'nullable|string|max:20',
-        'gender' => 'nullable|in:Male,Female',
-        'specialty' => 'nullable|string|max:255',
-        'shift' => 'nullable|in:Morning,Afternoon,Morning & Afternoon',
-        'passport_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        'curriculum_vitae' => 'nullable|mimes:pdf,doc,docx|max:10240',
-        'password' => 'nullable|min:6'
-    ]);
-
-    $user = Auth::user();
-    $examinerModel = ExamsModel::where('user_id', $user->id)->first();
-    
-    if (!$examinerModel) {
-        return redirect()->back()->with('error', 'Examiner profile not found');
-    }
-
-    // Update user table
-    $user->name = $request->name;
-    $user->email = $request->email;
-    
-    // Only update password if provided
-    if (!empty($request->password)) {
-        $user->password = Hash::make($request->password);
-    }
-    $user->save();
-
-    // Handle file uploads
-    if ($request->hasFile('curriculum_vitae')) {
-        // Delete old CV if exists
-        if ($examinerModel->curriculum_vitae && Storage::disk('public')->exists($examinerModel->curriculum_vitae)) {
-            Storage::disk('public')->delete($examinerModel->curriculum_vitae);
-        }
-        
-        $file = $request->file('curriculum_vitae');
-        // Generate a unique filename for storage
-        $uniqueName = uniqid() . '_cv.' . $file->getClientOriginalExtension();
-        // Store the file
-        $path = $file->storeAs('documents/cvs', $uniqueName, 'public');
-        // Save path in the database
-        $examinerModel->curriculum_vitae = $path;
-    }
-
-    if ($request->hasFile('passport_image')) {
-        // Delete old passport image if exists
-        if ($examinerModel->passport_image && Storage::disk('public')->exists($examinerModel->passport_image)) {
-            Storage::disk('public')->delete($examinerModel->passport_image);
-        }
-        
-        $file = $request->file('passport_image');
-        $uniqueName = uniqid() . '_passport.' . $file->getClientOriginalExtension();
-        $passportPath = $file->storeAs('documents/passports', $uniqueName, 'public');
-        $examinerModel->passport_image = $passportPath;
-    }
-    
-    // Update examiner details
-    $examinerModel->country_id = $request->country_id;
-    $examinerModel->mobile = $request->mobile;
-    $examinerModel->gender = $request->gender;
-    $examinerModel->specialty = $request->specialty;
-    $examinerModel->shift = $request->shift;
-    $examinerModel->email = $request->email;
-    
-    $examinerModel->save();
-
-    return redirect()->back()->with('success', 'Profile updated successfully');
-}
-
-
 public function examinerChangePassword(Request $request)
 {
     $request->validate([
@@ -620,32 +499,24 @@ public function examinerEdit($id)
 
 public function examinerUpdate(Request $request, $id)
 {
-    // Get the current logged-in examiner
     $currentExaminer = Auth::user();
-    
-    // Find the examiner record
     $examiner = ExamsModel::find($id);
 
     if (!$examiner) {
         return redirect('examiner/profile_settings')->with('error', 'Examiner not found');
     }
 
-    // Security check: make sure examiner can only update their own profile
     if ($examiner->user_id != $currentExaminer->id) {
         return redirect('examiner/profile_settings')->with('error', 'Unauthorized access');
     }
 
-    // Validation rules
     $validated = $request->validate([
-        // Step 1: Personal Information
         'name' => 'required|string|max:255',
         'email' => 'required|email|unique:users,email,' . $currentExaminer->id,
         'password' => 'nullable|min:6',
         'gender' => 'nullable|in:Male,Female',
         'curriculum_vitae' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
         'passport_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        
-        // Step 2: Examiner Details
         'examiner_id' => 'nullable|string|max:255',
         'group_id' => 'nullable|integer',
         'specialty' => 'nullable|string|max:255',
@@ -655,8 +526,6 @@ public function examinerUpdate(Request $request, $id)
         'exam_availability' => 'nullable|array',
         'exam_availability.*' => 'in:MCS,FCS',
         'shift' => 'nullable|in:1,2,3',
-        
-        // Step 3: Examiner History
         'virtual_mcs_participated' => 'nullable|in:Yes,No',
         'fcs_participated' => 'nullable|in:Yes,No',
         'participation_type' => 'nullable|in:Examiner,Observer',
@@ -669,7 +538,6 @@ public function examinerUpdate(Request $request, $id)
     try {
         \DB::beginTransaction();
 
-        // 1. Update user information (Step 1)
         $user = User::find($examiner->user_id);
         if ($user) {
             $user->name = $validated['name'];
@@ -681,30 +549,38 @@ public function examinerUpdate(Request $request, $id)
             $user->save();
         }
 
-        // 2. Handle file uploads (Step 1)
+        // ✅ Upload CV with user ID prefix
         if ($request->hasFile('curriculum_vitae')) {
-            // Delete old CV if exists
             if ($examiner->curriculum_vitae && Storage::disk('public')->exists($examiner->curriculum_vitae)) {
                 Storage::disk('public')->delete($examiner->curriculum_vitae);
             }
-            
+
             $file = $request->file('curriculum_vitae');
-            $uniqueName = uniqid() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('documents/cvs', $uniqueName, 'public');
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $sanitizedName = Str::slug($originalName);
+            $extension = $file->getClientOriginalExtension();
+            $finalName = $currentExaminer->id . '-' . $sanitizedName . '.' . $extension;
+
+            $path = $file->storeAs('documents/cvs', $finalName, 'public');
             $examiner->curriculum_vitae = $path;
         }
 
+        // ✅ Upload passport image with user ID prefix
         if ($request->hasFile('passport_image')) {
-            // Delete old image if exists
             if ($examiner->passport_image && Storage::disk('public')->exists($examiner->passport_image)) {
                 Storage::disk('public')->delete($examiner->passport_image);
             }
-            
-            $passportPath = $request->file('passport_image')->store('documents/passports', 'public');
+
+            $file = $request->file('passport_image');
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $sanitizedName = Str::slug($originalName);
+            $extension = $file->getClientOriginalExtension();
+            $finalName = $currentExaminer->id . '-' . $sanitizedName . '.' . $extension;
+
+            $passportPath = $file->storeAs('documents/passports', $finalName, 'public');
             $examiner->passport_image = $passportPath;
         }
 
-        // 3. Update examiner information in examiners table
         $examiner->gender = $validated['gender'] ?? $examiner->gender;
         $examiner->examiner_id = $validated['examiner_id'] ?? $examiner->examiner_id;
         $examiner->country_id = $validated['country_id'];
@@ -712,47 +588,39 @@ public function examinerUpdate(Request $request, $id)
         $examiner->specialty = $validated['specialty'] ?? $examiner->specialty;
         $examiner->subspecialty = $validated['subspecialty'] ?? $examiner->subspecialty;
 
-        // Handle role_id based on participation_type
         if (isset($validated['participation_type'])) {
-            if ($validated['participation_type'] === 'Examiner') {
-                $examiner->role_id = 1;
-            } elseif ($validated['participation_type'] === 'Observer') {
-                $examiner->role_id = 2;
-            }
+            $examiner->role_id = $validated['participation_type'] === 'Examiner' ? 1 : 2;
         }
 
-        // Save the examiner record to examiners table
         $examiner->save();
 
-        // 4. Handle examiner history in separate table (examiners_history)
+        // Examiner history
         $historyData = [];
-        
-        // Handle exam availability as JSON
+
         if ($request->has('exam_availability') && is_array($request->exam_availability)) {
             $historyData['exam_availability'] = json_encode($request->exam_availability);
         }
-        
+
         if (isset($validated['virtual_mcs_participated'])) {
             $historyData['virtual_mcs_participated'] = $validated['virtual_mcs_participated'];
         }
-        
+
         if (isset($validated['fcs_participated'])) {
             $historyData['fcs_participated'] = $validated['fcs_participated'];
         }
-        
+
         if (isset($validated['hospital_type'])) {
             $historyData['hospital_type'] = $validated['hospital_type'];
         }
-        
+
         if (isset($validated['hospital_name'])) {
             $historyData['hospital_name'] = $validated['hospital_name'];
         }
-        
+
         if (isset($validated['examination_years'])) {
             $historyData['examination_years'] = json_encode($validated['examination_years']);
         }
 
-        // Update or create history record
         if (!empty($historyData)) {
             \App\Models\ExaminerHistory::updateOrCreate(
                 ['exm_id' => $examiner->id],
@@ -760,17 +628,14 @@ public function examinerUpdate(Request $request, $id)
             );
         }
 
-        // 5. Handle group assignment in exams_groups table
+        $currentYear = User::getCurrentYearId();
+
         if (isset($validated['group_id'])) {
-            $currentYear = User::getCurrentYearId();
-            
-            // Remove existing group assignments for current year
             \DB::table('exams_groups')
                 ->where('exm_id', $examiner->id)
                 ->where('year_id', $currentYear)
                 ->delete();
-            
-            // Add new group assignment
+
             \DB::table('exams_groups')->insert([
                 'exm_id' => $examiner->id,
                 'group_id' => $validated['group_id'],
@@ -780,17 +645,12 @@ public function examinerUpdate(Request $request, $id)
             ]);
         }
 
-        // 6. Handle shift assignment in exams_shifts table
         if (isset($validated['shift'])) {
-            $currentYear = User::getCurrentYearId();
-            
-            // Remove existing shift assignments for current year
             \DB::table('exams_shifts')
                 ->where('exm_id', $examiner->id)
                 ->where('year_id', $currentYear)
                 ->delete();
-            
-            // Add new shift assignment
+
             \DB::table('exams_shifts')->insert([
                 'exm_id' => $examiner->id,
                 'shift' => $validated['shift'],
@@ -801,20 +661,188 @@ public function examinerUpdate(Request $request, $id)
         }
 
         \DB::commit();
-
         return redirect('examiner/profile_settings')->with('success', 'Profile updated successfully');
-        
+
     } catch (\Exception $e) {
         \DB::rollback();
-        
-        // Log the error for debugging
         \Log::error('Examiner update failed: ' . $e->getMessage());
-        \Log::error('Stack trace: ' . $e->getTraceAsString());
-        
         return redirect()->back()
             ->withInput()
             ->with('error', 'An error occurred while updating the profile. Please try again. Error: ' . $e->getMessage());
     }
 }
+
+public function update(Request $request, $id)
+{
+    $examiner = ExamsModel::find($id);
+
+    if (!$examiner) {
+        return redirect('admin/exams/examiners')->with('error', 'Examiner not found');
+    }
+
+    $user = User::find($examiner->user_id);
+
+    if (!$user || $user->user_type != 9) {
+        return redirect('admin/exams/examiners')->with('error', 'Invalid examiner user');
+    }
+
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email,' . $user->id,
+        'password' => 'nullable|min:6',
+        'gender' => 'nullable|in:Male,Female',
+        'curriculum_vitae' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+        'passport_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        'examiner_id' => 'nullable|string|max:255',
+        'group_id' => 'nullable|integer',
+        'specialty' => 'nullable|string|max:255',
+        'subspecialty' => 'nullable|string|max:255',
+        'country_id' => 'required|exists:countries,id',
+        'mobile' => 'nullable|string|max:20',
+        'exam_availability' => 'nullable|array',
+        'exam_availability.*' => 'in:MCS,FCS',
+        'shift' => 'nullable|in:1,2,3',
+        'virtual_mcs_participated' => 'nullable|in:Yes,No',
+        'fcs_participated' => 'nullable|in:Yes,No',
+        'participation_type' => 'nullable|in:Examiner,Observer',
+        'hospital_type' => 'nullable|in:Teaching Hospital,Non Teaching',
+        'hospital_name' => 'nullable|string|max:255',
+        'examination_years' => 'nullable|array',
+        'examination_years.*' => 'in:2020,2021,2022,2023,2024',
+    ]);
+
+    try {
+        \DB::beginTransaction();
+
+        // ✅ Update user details
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+        $user->save();
+
+        // ✅ Upload CV
+        if ($request->hasFile('curriculum_vitae')) {
+            if ($examiner->curriculum_vitae && Storage::disk('public')->exists($examiner->curriculum_vitae)) {
+                Storage::disk('public')->delete($examiner->curriculum_vitae);
+            }
+
+            $file = $request->file('curriculum_vitae');
+            $sanitizedName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+            $extension = $file->getClientOriginalExtension();
+            $finalName = $user->id . '-' . $sanitizedName . '.' . $extension;
+            $path = $file->storeAs('documents/cvs', $finalName, 'public');
+            $examiner->curriculum_vitae = $path;
+        }
+
+        // ✅ Upload passport image
+        if ($request->hasFile('passport_image')) {
+            if ($examiner->passport_image && Storage::disk('public')->exists($examiner->passport_image)) {
+                Storage::disk('public')->delete($examiner->passport_image);
+            }
+
+            $file = $request->file('passport_image');
+            $sanitizedName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+            $extension = $file->getClientOriginalExtension();
+            $finalName = $user->id . '-' . $sanitizedName . '.' . $extension;
+            $passportPath = $file->storeAs('documents/passports', $finalName, 'public');
+            $examiner->passport_image = $passportPath;
+        }
+
+        // ✅ Examiner fields
+        $examiner->gender = $validated['gender'] ?? $examiner->gender;
+        $examiner->examiner_id = $validated['examiner_id'] ?? $examiner->examiner_id;
+        $examiner->country_id = $validated['country_id'];
+        $examiner->mobile = $validated['mobile'] ?? $examiner->mobile;
+        $examiner->specialty = $validated['specialty'] ?? $examiner->specialty;
+        $examiner->subspecialty = $validated['subspecialty'] ?? $examiner->subspecialty;
+
+        if (isset($validated['participation_type'])) {
+            $examiner->role_id = $validated['participation_type'] === 'Examiner' ? 1 : 2;
+        }
+
+        $examiner->save();
+
+        // ✅ Examiner History
+        $historyData = [];
+
+        if ($request->has('exam_availability') && is_array($request->exam_availability)) {
+            $historyData['exam_availability'] = json_encode($request->exam_availability);
+        }
+
+        if (isset($validated['virtual_mcs_participated'])) {
+            $historyData['virtual_mcs_participated'] = $validated['virtual_mcs_participated'];
+        }
+
+        if (isset($validated['fcs_participated'])) {
+            $historyData['fcs_participated'] = $validated['fcs_participated'];
+        }
+
+        if (isset($validated['hospital_type'])) {
+            $historyData['hospital_type'] = $validated['hospital_type'];
+        }
+
+        if (isset($validated['hospital_name'])) {
+            $historyData['hospital_name'] = $validated['hospital_name'];
+        }
+
+        if (isset($validated['examination_years'])) {
+            $historyData['examination_years'] = json_encode($validated['examination_years']);
+        }
+
+        if (!empty($historyData)) {
+            \App\Models\ExaminerHistory::updateOrCreate(
+                ['exm_id' => $examiner->id],
+                $historyData
+            );
+        }
+
+        // ✅ Group & Shift
+        $currentYear = User::getCurrentYearId();
+
+        if (isset($validated['group_id'])) {
+            \DB::table('exams_groups')
+                ->where('exm_id', $examiner->id)
+                ->where('year_id', $currentYear)
+                ->delete();
+
+            \DB::table('exams_groups')->insert([
+                'exm_id' => $examiner->id,
+                'group_id' => $validated['group_id'],
+                'year_id' => $currentYear,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+
+        if (isset($validated['shift'])) {
+            \DB::table('exams_shifts')
+                ->where('exm_id', $examiner->id)
+                ->where('year_id', $currentYear)
+                ->delete();
+
+            \DB::table('exams_shifts')->insert([
+                'exm_id' => $examiner->id,
+                'shift' => $validated['shift'],
+                'year_id' => $currentYear,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+
+        \DB::commit();
+        return redirect('admin/exams/examiners')->with('success', 'Examiner profile updated successfully');
+
+    } catch (\Exception $e) {
+        \DB::rollback();
+        \Log::error('Admin examiner update failed: ' . $e->getMessage());
+        return redirect()->back()
+            ->withInput()
+            ->with('error', 'An error occurred while updating the profile. Please try again. Error: ' . $e->getMessage());
+    }
+ }
+
+
 
 }

@@ -1,5 +1,17 @@
+<!-- Inline script to prevent flash of light mode -->
+<script>
+    // Apply dark mode immediately if it was previously selected
+    (function() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+            document.body.classList.add('dark-mode');
+        }
+    })();
+</script>
+
 <!-- Navbar -->
-<nav class="main-header navbar navbar-expand navbar-white navbar-light">
+<nav class="main-header navbar navbar-expand navbar-white navbar-light" id="main-navbar">
     <!-- Left navbar links -->
     <ul class="navbar-nav">
         <li class="nav-item">
@@ -9,6 +21,12 @@
 
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
+        <!-- Dark Mode Toggle Button -->
+        <li class="nav-item">
+            <a class="nav-link" href="#" role="button" id="darkModeToggle" title="Toggle Dark Mode">
+                <i class="fas fa-moon" id="darkModeIcon"></i>
+            </a>
+        </li>
         <li class="nav-item">
             <a class="nav-link" data-widget="fullscreen" href="#" role="button">
                 <i class="fas fa-expand-arrows-alt"></i>
@@ -19,7 +37,7 @@
 <!-- /.navbar -->
 
 <!-- Main Sidebar Container -->
-<aside class="main-sidebar sidebar-dark-primary elevation-4">
+<aside class="main-sidebar sidebar-dark-primary elevation-4" id="main-sidebar">
     <!-- Brand Logo -->
     <a href="" class="brand-link">
         <img src="{{ url('public/dist/img/Cosecsa_Logo.png') }}" alt="Cosecsa Logo"
@@ -196,7 +214,7 @@
                                 <!-- Examiners Section -->
                                 <li class="nav-item">
                                     <a href="{{ url('admin/exams/examiners') }}"
-                                        class="nav-link @if (Request::segment(3) == 'examiners') active @endif">
+                                        class="nav-link @if (Request::segment(3) == 'examiners' || Request::segment(3) == 'view_examiner' ||Request::segment(3)=='edit_examiner') active @endif">
                                         <i class="fas fa-chalkboard-teacher nav-icon"></i>
                                         <p>Examiners</p>
                                     </a>
@@ -367,4 +385,266 @@
     .nav-treeview .nav-item .nav-treeview {
         padding-left: 20px;
     }
+
+    /* Dark Mode Styles */
+    body.dark-mode,
+    html.dark-mode {
+        background-color: #1a1a1a !important;
+        color: #e0e0e0 !important;
+    }
+
+    /* Dark mode navbar */
+    body.dark-mode .navbar-white,
+    body.dark-mode .navbar-light,
+    html.dark-mode .navbar-white,
+    html.dark-mode .navbar-light {
+        background-color: #2d3748 !important;
+        border-color: #4a5568 !important;
+    }
+
+    body.dark-mode .navbar-nav .nav-link,
+    html.dark-mode .navbar-nav .nav-link {
+        color: #e0e0e0 !important;
+    }
+
+    body.dark-mode .navbar-nav .nav-link:hover,
+    html.dark-mode .navbar-nav .nav-link:hover {
+        color: #ffffff !important;
+    }
+
+    /* Dark mode sidebar adjustments */
+    body.dark-mode .main-sidebar,
+    html.dark-mode .main-sidebar {
+        background-color: #1a202c !important;
+    }
+
+    body.dark-mode .brand-link,
+    html.dark-mode .brand-link {
+        background-color: #2d3748 !important;
+        border-bottom-color: #4a5568 !important;
+    }
+
+    body.dark-mode .brand-text,
+    html.dark-mode .brand-text {
+        color: #e0e0e0 !important;
+    }
+
+    /* Dark mode content wrapper */
+    body.dark-mode .content-wrapper {
+        background-color: #1a1a1a !important;
+        color: #e0e0e0;
+    }
+
+    /* Dark mode cards and boxes */
+    body.dark-mode .card {
+        background-color: #2d3748 !important;
+        border-color: #4a5568;
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .card-header {
+        background-color: #374151 !important;
+        border-bottom-color: #4a5568;
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .card-body {
+        background-color: #2d3748 !important;
+        color: #e0e0e0;
+    }
+
+    /* Dark mode tables */
+    body.dark-mode .table {
+        background-color: #2d3748;
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .table th,
+    body.dark-mode .table td {
+        border-color: #4a5568;
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #374151;
+    }
+
+    body.dark-mode .table-hover tbody tr:hover {
+        background-color: #4a5568;
+    }
+
+    /* Dark mode buttons */
+    body.dark-mode .btn-secondary {
+        background-color: #4a5568;
+        border-color: #4a5568;
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .btn-secondary:hover {
+        background-color: #5a6578;
+        border-color: #5a6578;
+    }
+
+    /* Dark mode forms */
+    body.dark-mode .form-control {
+        background-color: #374151;
+        border-color: #4a5568;
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .form-control:focus {
+        background-color: #374151;
+        border-color: #6366f1;
+        color: #e0e0e0;
+        box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+    }
+
+    body.dark-mode .form-control::placeholder {
+        color: #9ca3af;
+    }
+
+    /* Dark mode select */
+    body.dark-mode select.form-control option {
+        background-color: #374151;
+        color: #e0e0e0;
+    }
+
+    /* Dark mode modal */
+    body.dark-mode .modal-content {
+        background-color: #2d3748;
+        color: #e0e0e0;
+        border-color: #4a5568;
+    }
+
+    body.dark-mode .modal-header {
+        background-color: #374151;
+        border-bottom-color: #4a5568;
+    }
+
+    body.dark-mode .modal-footer {
+        background-color: #374151;
+        border-top-color: #4a5568;
+    }
+
+    /* Dark mode breadcrumbs */
+    body.dark-mode .breadcrumb {
+        background-color: #374151;
+    }
+
+    body.dark-mode .breadcrumb-item a {
+        color: #93c5fd;
+    }
+
+    body.dark-mode .breadcrumb-item.active {
+        color: #e0e0e0;
+    }
+
+    /* Dark mode alerts */
+    body.dark-mode .alert-info {
+        background-color: #1e3a8a;
+        border-color: #3b82f6;
+        color: #dbeafe;
+    }
+
+    body.dark-mode .alert-success {
+        background-color: #166534;
+        border-color: #22c55e;
+        color: #dcfce7;
+    }
+
+    body.dark-mode .alert-warning {
+        background-color: #92400e;
+        border-color: #f59e0b;
+        color: #fef3c7;
+    }
+
+    body.dark-mode .alert-danger {
+        background-color: #991b1b;
+        border-color: #ef4444;
+        color: #fee2e2;
+    }
+
+    /* Dark mode pagination */
+    body.dark-mode .page-link {
+        background-color: #374151;
+        border-color: #4a5568;
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .page-link:hover {
+        background-color: #4a5568;
+        border-color: #6b7280;
+        color: #ffffff;
+    }
+
+    body.dark-mode .page-item.active .page-link {
+        background-color: #a02626;
+        border-color: #a02626;
+    }
+
+    /* Dark mode toggle button styling */
+    #darkModeToggle {
+        transition: all 0.3s ease;
+    }
+
+    #darkModeToggle:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+
+    body.dark-mode #darkModeToggle:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Transition for smooth mode switching */
+    body {
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .navbar, .main-sidebar, .content-wrapper, .card, .form-control {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    const body = document.body;
+    const html = document.documentElement;
+
+    // Check for saved theme preference or default to light mode
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    
+    // Apply the saved theme and set the correct icon
+    if (currentTheme === 'dark') {
+        body.classList.add('dark-mode');
+        html.classList.add('dark-mode');
+        darkModeIcon.classList.remove('fa-moon');
+        darkModeIcon.classList.add('fa-sun');
+        darkModeToggle.setAttribute('title', 'Switch to Light Mode');
+    }
+
+    // Toggle dark mode
+    darkModeToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        body.classList.toggle('dark-mode');
+        html.classList.toggle('dark-mode');
+        
+        if (body.classList.contains('dark-mode')) {
+            // Switch to dark mode
+            darkModeIcon.classList.remove('fa-moon');
+            darkModeIcon.classList.add('fa-sun');
+            darkModeToggle.setAttribute('title', 'Switch to Light Mode');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            // Switch to light mode
+            darkModeIcon.classList.remove('fa-sun');
+            darkModeIcon.classList.add('fa-moon');
+            darkModeToggle.setAttribute('title', 'Toggle Dark Mode');
+            localStorage.setItem('theme', 'light');
+        }
+    });
+});
+</script>

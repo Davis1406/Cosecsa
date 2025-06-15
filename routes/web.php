@@ -188,13 +188,13 @@ Route::group(['middleware' => 'examiner'], function(){
   Route::post('examiner/examiner_form', [CandidatesController::class, 'storeEvaluation'])->name('examiner.add');
   Route::post('examiner/general_surgery', [CandidatesController::class, 'storegsEvaluation'])->name('gs.add');
   Route::get('examiner/profile_settings', [ExamsController::class, 'examinerProfile'])->name('examiner.profile');
-  Route::post('examiner/profile_settings/update', [ExamsController::class, 'updateExaminerProfile'])->name('examiner.profile.update');
+  // Route::post('examiner/profile_settings/update', [ExamsController::class, 'updateExaminerProfile'])->name('examiner.profile.update');
   Route::post('examiner/password/update', [ExamsController::class, 'examinerChangePassword'])->name('examiner.password.update');
   Route::get('/get-candidates', [CandidatesController::class, 'getGsCandidatesByGroup']);
   Route::get('/get-mcs-candidates/{groupId}', [CandidatesController::class, 'getMcsCandidatesByGroup']);
   // Add these new routes for examiner edit
   Route::get('examiner/edit_info/{id}', [ExamsController::class, 'examinerEdit'])->name('examiner.edit');
-  Route::post('examiner/edit_info/{id}', [ExamsController::class, 'examinerUpdate'])->name('examiner.update');
+  Route::post('examiner/edit_info/{id}', [ExamsController::class, 'examinerUpdate'])->name('examiner.selfUpdate');
   Route::get('examiner/badge', [ExamsController::class, 'examinerBadge'])->name('examiner.badge');
 
 });

@@ -42,7 +42,7 @@ class ExamsModel extends Model
     // Many-to-many relationship with groups through pivot table
     public function groups()
     {
-        return $this->belongsToMany(ExaminerGroup::class, 'exams_groups', 'examiner_id', 'group_id')
+        return $this->belongsToMany(ExaminerGroup::class, 'exams_groups', 'exm_id', 'group_id')
                     ->withPivot('year_id')
                     ->withTimestamps();
     }

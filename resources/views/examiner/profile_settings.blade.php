@@ -118,6 +118,7 @@
                                                     @endif
                                                 </td>
                                             </tr>
+
                                             <tr>
                                                 <th>Participation History</th>
                                                 <td>
@@ -277,14 +278,14 @@
                                         <small class="text-muted">Hospital Type</small>
                                         <div class="font-weight-bold">
                                             <i class="fas fa-hospital text-success mr-1"></i>
-                                            {{ $examiner->hospital_type ?: 'Not specified' }}
+                                            {{ $examiner->hospital_type ?: '-' }}
                                         </div>
                                     </div>
                                     <div>
                                         <small class="text-muted">Hospital Name</small>
                                         <div class="font-weight-bold">
                                             <i class="fas fa-building text-info mr-1"></i>
-                                            {{ $examiner->hospital_name ?: 'Not specified' }}
+                                            {{ $examiner->hospital_name ?: '-' }}
                                         </div>
                                     </div>
                                 </div>

@@ -33,7 +33,8 @@ public function model(array $row)
         'specialty' => $row['specialty'] ?? null,
         'subspecialty' => $row['subspecialty'] ?? null,
         'gender' => $row['gender'] ?? null,
-        'role_id' => ($row['participation_type'] === 'Examiner') ? 1 : (($row['participation_type'] === 'Observer') ? 2 : null),
+        'role_id' => $row['role_id'],
+
     ]);
 
     // 3. Attach group (pivot table: exams_groups)
