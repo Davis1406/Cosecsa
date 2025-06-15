@@ -63,7 +63,7 @@
                                         <div class="form-group">
                                             <label for="password">Password</label>
                                             <input type="password" name="password" id="password" class="form-control"
-                                                placeholder="Leave blank if not changing">
+                                                placeholder="Will be able to update this during exams" disabled>
                                             <div class="error-message">Password must be at least 6 characters</div>
                                         </div>
                                     </div>
@@ -140,14 +140,14 @@
                                         <div class="form-group">
                                             <label for="examiner_id">Examiner ID</label>
                                             <input type="text" name="examiner_id" id="examiner_id"
-                                                class="form-control" value="{{ $examiner->examiner_id }}">
+                                                class="form-control" value="{{ $examiner->examiner_id }}" disabled>
                                             <div class="error-message">Please enter examiner ID</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="group_id">Group Name</label>
-                                            <select name="group_id" id="group_id" class="form-control">
+                                            <select name="group_id" id="group_id" class="form-control" disabled>
                                                 @for ($i = 1; $i <= 15; $i++)
                                                     <option value="{{ $i }}"
                                                         {{ $examiner->group_id == $i ? 'selected' : '' }}>

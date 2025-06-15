@@ -329,7 +329,8 @@
                         <li class="nav-item">
 
                         <li class="nav-item">
-                            <a href="{{ url('examiner/results') }}"
+                            {{-- <a href="{{ url('examiner/results') }}" --}}
+                             <a href="#"
                                 class="nav-link @if (Request::segment(2) == 'results' || Request::segment(2) == 'view_results' || Request::segment(2) == 'resubmit') active @endif">
                                 <i class="fas fa-chart-line nav-icon"></i>
                                 <p>Results</p>
