@@ -326,6 +326,12 @@
                                                         {{ $examiner->role_id == 2 ? 'checked' : '' }}>
                                                     <label class="form-check-label" for="observer">Observer</label>
                                                 </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio"
+                                                        name="participation_type" id="none" value="None"
+                                                        {{ $examiner->role_id == 3 ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="none">None</label>
+                                                </div>
                                             </div>
                                             <div class="error-message">Please select participation type</div>
                                         </div>
@@ -862,6 +868,54 @@
 
             .form-check-label {
                 font-size: 15px;
+            }
+        }
+
+
+        /* Add this to your existing styles section */
+
+        /* File upload alert styles */
+        .file-alert {
+            font-size: 13px;
+            border: none;
+            margin-bottom: 0;
+            animation: slideDown 0.3s ease;
+        }
+
+        .alert-danger {
+            background-color: #fff5f5;
+            color: #a02626;
+            border-left: 4px solid #a02626;
+        }
+
+        .alert-success {
+            background-color: #f0f9f0;
+            color: #28a745;
+            border-left: 4px solid #28a745;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Make file upload containers more spacious for alerts */
+        .custom-file-upload+.file-alert {
+            margin-top: 8px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1080px) {
+            .file-alert {
+                font-size: 12px;
+                padding: 8px 12px;
             }
         }
     </style>

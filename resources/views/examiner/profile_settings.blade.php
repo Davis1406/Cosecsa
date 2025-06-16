@@ -271,7 +271,13 @@
                                         <small class="text-muted">Participation Type</small>
                                         <div class="font-weight-bold">
                                             <i class="fas fa-user-tie text-primary mr-1"></i>
-                                            {{ $examiner->role_id == 1 ? 'Examiner' : 'Observer' }}
+                                            @if ($examiner->role_id == 1)
+                                                Examiner
+                                            @elseif($examiner->role_id == 2)
+                                                Observer
+                                            @else
+                                                None
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="mb-3">

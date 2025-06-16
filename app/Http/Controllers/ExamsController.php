@@ -510,30 +510,38 @@ public function examinerUpdate(Request $request, $id)
         return redirect('examiner/profile_settings')->with('error', 'Unauthorized access');
     }
 
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email,' . $currentExaminer->id,
-        'password' => 'nullable|min:6',
-        'gender' => 'nullable|in:Male,Female',
-        'curriculum_vitae' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
-        'passport_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        'examiner_id' => 'nullable|string|max:255',
-        'group_id' => 'nullable|integer',
-        'specialty' => 'nullable|string|max:255',
-        'subspecialty' => 'nullable|string|max:255',
-        'country_id' => 'required|exists:countries,id',
-        'mobile' => 'nullable|string|max:20',
-        'exam_availability' => 'nullable|array',
-        'exam_availability.*' => 'in:MCS,FCS',
-        'shift' => 'nullable|in:1,2,3',
-        'virtual_mcs_participated' => 'nullable|in:Yes,No',
-        'fcs_participated' => 'nullable|in:Yes,No',
-        'participation_type' => 'nullable|in:Examiner,Observer',
-        'hospital_type' => 'nullable|in:Teaching Hospital,Non Teaching',
-        'hospital_name' => 'nullable|string|max:255',
-        'examination_years' => 'nullable|array',
-        'examination_years.*' => 'in:2020,2021,2022,2023,2024',
-    ]);
+$validated = $request->validate([
+    'name' => 'required|string|max:255',
+    'email' => 'required|email|unique:users,email,' . $currentExaminer->id,
+    'password' => 'nullable|min:6',
+    'gender' => 'nullable|in:Male,Female',
+    'curriculum_vitae' => 'nullable|file|mimes:pdf,doc,docx|max:3072', // 3MB = 3072 KB
+    'passport_image' => 'nullable|image|mimes:jpeg,png,jpg|max:1024', // 1MB = 1024 KB
+    'examiner_id' => 'nullable|string|max:255',
+    'group_id' => 'nullable|integer',
+    'specialty' => 'nullable|string|max:255',
+    'subspecialty' => 'nullable|string|max:255',
+    'country_id' => 'required|exists:countries,id',
+    'mobile' => 'nullable|string|max:20',
+    'exam_availability' => 'nullable|array',
+    'exam_availability.*' => 'in:MCS,FCS',
+    'shift' => 'nullable|in:1,2,3',
+    'virtual_mcs_participated' => 'nullable|in:Yes,No',
+    'fcs_participated' => 'nullable|in:Yes,No',
+    'participation_type' => 'nullable|in:Examiner,Observer,None',
+    'hospital_type' => 'nullable|in:Teaching Hospital,Non Teaching',
+    'hospital_name' => 'nullable|string|max:255',
+    'examination_years' => 'nullable|array',
+    'examination_years.*' => 'in:2020,2021,2022,2023,2024',
+], [
+    // Custom error messages
+    'curriculum_vitae.max' => 'The CV file must not be larger than 3MB.',
+    'passport_image.max' => 'The profile image must not be larger than 1MB.',
+    'curriculum_vitae.mimes' => 'The CV must be a PDF, DOC, or DOCX file.',
+    'passport_image.mimes' => 'The profile image must be a JPEG, PNG, or JPG file.',
+]);
+
+dd(request()->all());
 
     try {
         \DB::beginTransaction();
@@ -587,10 +595,16 @@ public function examinerUpdate(Request $request, $id)
         $examiner->mobile = $validated['mobile'] ?? $examiner->mobile;
         $examiner->specialty = $validated['specialty'] ?? $examiner->specialty;
         $examiner->subspecialty = $validated['subspecialty'] ?? $examiner->subspecialty;
-
+      
         if (isset($validated['participation_type'])) {
-            $examiner->role_id = $validated['participation_type'] === 'Examiner' ? 1 : 2;
+        if ($validated['participation_type'] === 'Examiner') {
+        $examiner->role_id = 1;
+        } elseif ($validated['participation_type'] === 'Observer') {
+        $examiner->role_id = 2;
+        } else { 
+        $examiner->role_id = 3;
         }
+      }
 
         $examiner->save();
 
