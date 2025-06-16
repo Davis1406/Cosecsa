@@ -541,7 +541,7 @@ $validated = $request->validate([
     'passport_image.mimes' => 'The profile image must be a JPEG, PNG, or JPG file.',
 ]);
 
-dd(request()->all());
+// dd(request()->all());
 
     try {
         \DB::beginTransaction();
