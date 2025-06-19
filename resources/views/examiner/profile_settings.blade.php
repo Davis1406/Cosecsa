@@ -105,7 +105,7 @@
                                                     @if ($examiner->curriculum_vitae)
                                                         @php
                                                             $fileName = basename($examiner->curriculum_vitae);
-                                                            $filePath = asset('storage/' . $examiner->curriculum_vitae);
+                                                            $filePath = asset('storage/app/public/' . $examiner->curriculum_vitae);
                                                         @endphp
                                                         <a href="{{ $filePath }}" target="_blank"
                                                             class="btn btn-sm btn-primary"
@@ -338,8 +338,7 @@
                         <div class="col-12">
                             <div class="card border-0 shadow-sm">
                                 <div class="card-header bg-light">
-                                    <h6 class="mb-0"><i class="fas fa-calendar-check text-success"></i> 2025 Exam
-                                        Availability</h6>
+                                    <h6 class="mb-0"><i class="fas fa-calendar-check text-success"></i> 2025 Exam Availability</h6>
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
