@@ -249,10 +249,35 @@ class ExamsController extends Controller
         return redirect('admin/exams/examiners')->with('error', 'Failed to delete examiners information');
     }
 
+// Debug version to see what's happening
+// public function ExaminerconfirmationView()
+// {
+//     // First, let's see what data exists
+//     $debugQuery = DB::table('examiners')
+//         ->leftJoin('examiners_history', 'examiners.id', '=', 'examiners_history.exm_id')
+//         ->leftJoin('user_roles', 'examiners.user_id', '=', 'user_roles.user_id')
+//         ->select(
+//             'examiners.id',
+//             'examiners.created_at as examiner_created',
+//             'examiners.updated_at as examiner_updated',
+//             'examiners_history.id as history_id',
+//             'examiners_history.created_at as history_created',
+//             'examiners_history.updated_at as history_updated',
+//             DB::raw('TIMESTAMPDIFF(SECOND, examiners_history.created_at, examiners_history.updated_at) as history_time_diff')
+//         )
+//         ->where('user_roles.role_type', 9)
+//         ->limit(10)
+//         ->get();
+
+//     // Log or dd this to see what's happening
+//     dd($debugQuery);
+// }
+
+
 public function ExaminerconfirmationView()
 {
     $getExaminers = DB::table('examiners')
-        ->leftJoin('examiners_history', 'examiners.id', '=', 'examiners_history.exm_id')
+        ->join('examiners_history', 'examiners.id', '=', 'examiners_history.exm_id')
         ->leftJoin('users', 'examiners.user_id', '=', 'users.id')
         ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
         ->leftJoin('exams_groups', 'examiners.id', '=', 'exams_groups.exm_id')
@@ -260,38 +285,55 @@ public function ExaminerconfirmationView()
         ->leftJoin('user_roles', 'examiners.user_id', '=', 'user_roles.user_id')
         ->leftJoin('exams_shifts', 'examiners.id', '=', 'exams_shifts.exm_id')
         ->select(
-            'examiners.*',
+            'examiners.id',
+            DB::raw('MAX(examiners.examiner_id) as examiner_id'),
+            DB::raw('MAX(examiners.mobile) as mobile'),
+            DB::raw('MAX(examiners.gender) as gender'),
+            DB::raw('MAX(examiners.country_id) as country_id'),
+            DB::raw('MAX(examiners.user_id) as user_id'),
+            DB::raw('MAX(examiners.specialty) as specialty'),
+            DB::raw('MAX(examiners.subspecialty) as subspecialty'),
+            DB::raw('MAX(examiners.curriculum_vitae) as curriculum_vitae'),
+            DB::raw('MAX(examiners.passport_image) as passport_image'),
+            DB::raw('MAX(examiners.role_id) as role_id'),
             DB::raw("CASE 
-                    WHEN examiners.role_id = 1 THEN 'Examiner'
-                    WHEN examiners.role_id = 2 THEN 'Observer'
-                    WHEN examiners.role_id = 3 THEN 'None'
-                    ELSE 'Unknown'
-                END as participation_type"),
-            'users.name as examiner_name',
-            'users.email as email',
-            'examiners_history.exam_availability',
-            'examiners_history.virtual_mcs_participated',
-            'examiners_history.fcs_participated',
-            'examiners_history.hospital_type',
-            'examiners_history.hospital_name',
-            'countries.country_name',
-            'examiners_groups.group_name',
-            'exams_shifts.shift'
+                WHEN MAX(examiners.role_id) = 1 THEN 'Examiner'
+                WHEN MAX(examiners.role_id) = 2 THEN 'Observer'
+                WHEN MAX(examiners.role_id) = 3 THEN 'None'
+                ELSE 'Unknown'
+            END as participation_type"),
+            DB::raw('MAX(users.name) as examiner_name'),
+            DB::raw('MAX(users.email) as email'),
+            DB::raw('MAX(examiners_history.exam_availability) as exam_availability'),
+            DB::raw('MAX(examiners_history.virtual_mcs_participated) as virtual_mcs_participated'),
+            DB::raw('MAX(examiners_history.fcs_participated) as fcs_participated'),
+            DB::raw('MAX(examiners_history.hospital_type) as hospital_type'),
+            DB::raw('MAX(examiners_history.hospital_name) as hospital_name'),
+            DB::raw('MAX(countries.country_name) as country_name'),
+            DB::raw('GROUP_CONCAT(DISTINCT examiners_groups.group_name ORDER BY examiners_groups.group_name SEPARATOR ", ") as group_names'),
+            DB::raw('MAX(exams_shifts.shift) as shift'),
+            DB::raw('MAX(examiners_history.created_at) as history_created_at'),
+            DB::raw('MAX(examiners_history.updated_at) as history_updated_at'),
+            DB::raw('TIMESTAMPDIFF(SECOND, MAX(examiners_history.created_at), MAX(examiners_history.updated_at)) as history_time_diff_seconds'),
+            DB::raw('TIMESTAMPDIFF(MINUTE, MAX(examiners_history.created_at), MAX(examiners_history.updated_at)) as history_time_diff_minutes')
         )
-        ->where('user_roles.role_type', 9)
+        ->where(function ($query) {
+            $query->where('user_roles.role_type', 9)
+                  ->orWhereNull('user_roles.role_type');
+        })
+        ->whereRaw('TIMESTAMPDIFF(MINUTE, examiners_history.created_at, examiners_history.updated_at) > 1')
+        ->groupBy('examiners.id')
         ->orderBy('examiners.id', 'desc')
         ->get();
-
-    // Debug: Check what exam_availability contains
-    foreach ($getExaminers as $examiner) {
-        \Log::info('Examiner ID: ' . $examiner->id . ' - Exam Availability: ' . $examiner->exam_availability);
-    }
 
     $data['getExaminers'] = $getExaminers;
     $data['header_title'] = 'Examiner Confirmation';
 
     return view('admin.exams.examiner_confirmation', $data);
 }
+
+
+
     /**
      * Show attendance confirmation page after QR scan
      */
