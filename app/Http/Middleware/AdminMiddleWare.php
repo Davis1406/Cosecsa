@@ -32,9 +32,9 @@ class AdminMiddleware
         }
 
         // Regular admin authentication check
-        if (Auth::check()) {
-            // Check if the authenticated user is an admin (user_type == 1)
-            if (Auth::user()->user_type == 1) {
+          if (Auth::check()) {
+            $user = Auth::user();
+            if ($user->hasRole(1) && $user->getActiveRole() == 1) {
                 return $next($request);
             } else {
                 Auth::logout();

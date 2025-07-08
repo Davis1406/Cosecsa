@@ -122,7 +122,27 @@ $(function () {
             { "visible": true }
       
         ]
-    }).buttons().container().appendTo('#examinerstable_wrapper .col-md-6:eq(0)');
+    }).buttons().container().appendTo('#examinerconfirmationtable_wrapper .col-md-6:eq(0)');
+
+    var examinerconfirmationtable = $("#examinerconfirmationtable").DataTable({
+    "responsive": true,
+    "lengthChange": true,
+    "autoWidth": false,
+    "paging": true,
+    "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
+    "columns": [
+        { "visible": true }, // #
+        { "visible": true }, // Name
+        { "visible": true }, // Email
+        { "visible": true }, // Country
+        { "visible": true }, // Specialty
+        { "visible": true }, // Availability
+        { "visible": true }, // MCS Shift
+        { "visible": true }, // Participation
+        { "visible": true }, // Hospital
+        { "visible": true } // Action
+    ]
+}).buttons().container().appendTo('#examinerconfirmationtable_wrapper .col-md-6:eq(0)');
 
     var memberstable = $("#memberstable").DataTable({
         "responsive": true,
@@ -307,6 +327,11 @@ $(function () {
     examinerscandidatestable.on('draw', function () {
         initPopovers();
     });
+
+    examinerconfirmationtable.on('draw', function () {
+        initPopovers();
+    });
+
 
     memberstable.on('draw', function () {
         initPopovers();

@@ -700,4 +700,26 @@ public static function getShiftName($shiftId)
     {
         return self::find($id);
     }
+
+    public function roles()
+    {
+        return $this->hasMany(UserRole::class);
+    }
+
+    public function hasRole($roleType)
+    {
+        return $this->roles()->where('role_type', $roleType)->where('is_active', 1)->exists();
+    }
+
+    public function getRoles()
+    {
+        return $this->roles()->where('is_active', 1)->pluck('role_type')->toArray();
+    }
+
+    public function getActiveRole()
+    {
+        // Return the role from session or default to first role
+        return session('active_role', $this->roles()->where('is_active', 1)->first()->role_type ?? null);
+    }
+
 }

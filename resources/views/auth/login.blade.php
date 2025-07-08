@@ -3,30 +3,22 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>COSECSA | Log in </title>
-
-    <!-- Google Font: Source Sans Pro -->
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    <!-- Font Awesome -->
+    <title>Login | COSECSA MIS</title>
     <link rel="stylesheet" href="{{ url('public/plugins/fontawesome-free/css/all.min.css') }}">
-    <!-- icheck bootstrap -->
-    <link rel="stylesheet" href="{{ url('public/plugins/icheck-bootstrap/icheck-bootstrap.min.css') }}">
-    <!-- Theme style -->
     <link rel="stylesheet" href="{{ url('public/dist/css/adminlte.min.css') }}">
-    <!-- Favicon -->
     <link rel="icon" href="{{ url('public/dist/img/Cosecsa_Logo.png') }}">
+
     <style>
-        .logo-container {
-            text-align: center;
-            margin-bottom: 20px;
+        .btn-custom {
+            background-color: #a02626;
+            border-color: #a02626;
+            color: #fff;
         }
 
-        .logo-container img {
-            max-width: 100px;
-            /* Adjust as needed */
-            height: auto;
+        .btn-custom:hover {
+            background-color: #870f0f;
+            border-color: #870f0f;
+            color: #FEC503;
         }
 
         .card.card-outline.card-primary {
@@ -37,70 +29,69 @@
 
 <body class="hold-transition login-page">
     <div class="login-box">
-        <!-- /.login-logo -->
         <div class="card card-outline card-primary">
             <div class="card-header text-center">
-                <div class="logo-container">
-                    <img src="public/dist/img/Cosecsa_Logo.png" alt="COSECSA Logo">
-                </div>
-                <a href="" class="h1" style="color: #a02626"><b>COSECSA-MIS</b></a>
+                <img src="{{ url('public/dist/img/Cosecsa_Logo.png') }}" style="max-width:80px;" alt="Logo">
+                <br>
+                <a href="#" class="h1" style="color: #a02626;"><b>COSECSA-MIS</b></a>
             </div>
             <div class="card-body">
-                <p class="login-box-msg">Sign in to start your session</p>
-
                 @include('_message')
 
-                <form action="{{ url('login') }}" method="post">
-                    {{ csrf_field() }}
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" required name="email" placeholder="Email/name">
-                        <div class="input-group-append">
-                            <div class="input-group-text">
-                                <span class="fas fa-envelope"></span>
-                            </div>
-                        </div>
+                @php
+                    $roleId = session('pending_role');
+                    $roleNames = [
+                        1 => 'Admin',
+                        2 => 'Trainee',
+                        3 => 'Candidate',
+                        4 => 'Trainer',
+                        5 => 'Country Representative',
+                        7 => 'Fellow',
+                        8 => 'Member',
+                        9 => 'Examiner / Observer',
+                    ];
+                    $roleName = $roleNames[$roleId] ?? 'Unknown Role';
+                @endphp
+
+                <p class="login-box-msg">Login as <strong>{{ $roleName }}</strong></p>
+
+                <form method="POST" action="{{ url('login') }}">
+                    @csrf
+                    <input type="hidden" name="role" value="{{ $roleId }}">
+
+                    <div class="mb-3">
+                        <input type="text" class="form-control" name="email" placeholder="Email or Username"
+                            required>
                     </div>
-                    <div class="input-group mb-3">
-                        <input type="password" class="form-control" name ="password" placeholder="Password">
-                        <div class="input-group-append">
-                            <div class="input-group-text">
-                                <span class="fas fa-lock"></span>
-                            </div>
-                        </div>
+
+                    <div class="mb-3">
+                        <input type="password" class="form-control" name="password" placeholder="Password" required>
                     </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="remember" class="form-check-input" id="remember">
+                        <label class="form-check-label" for="remember">Remember Me</label>
+                    </div>
+                    
                     <div class="row">
-                        <div class="col-8">
-                            <div class="icheck-primary">
-                                <input type="checkbox" id="remember" name="remember">
-                                <label for="remember">
-                                    Remember Me
-                                </label>
-                            </div>
+                        <div class="col-6">
+                            <a href="{{ url('forget-password') }}"
+                                class="btn btn-secondary btn-block d-flex align-items-center justify-content-center"
+                                style="height: 38px; font-size: 14px;">
+                                <i class="fas fa-unlock-alt mr-1"></i>Forget Password
+                            </a>
                         </div>
-                        <!-- /.col -->
-                        <div class="col-4">
+                        <div class="col-6">
                             <button type="submit" class="btn btn-primary btn-block"
-                                style="background-color: #a02626; border-color:#a02626">Sign In</button>
+                                style="background-color: #a02626; border-color:#a02626; height: 38px; font-size: 14px;">
+                                Login
+                            </button>
                         </div>
-                        <!-- /.col -->
                     </div>
                 </form>
-
-                <p class="mb-1">
-                    <a href="{{ url('forget-password') }}" style="color: #a02626">I forgot my password</a>
             </div>
-            <!-- /.card-body -->
         </div>
-        <!-- /.card -->
     </div>
-    <!-- /.login-box -->
-
-    <!-- jQuery -->
-    <script src="{{ url('public/plugins/jquery/jquery.min.js') }}"></script>
-    <!-- Bootstrap 4 -->
-    <script src="{{ url('public/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <!-- AdminLTE App -->
-    <script type="{{url('public/dist/js/adminlte.min.js')}}"></script>
 </body>
 
 </html>

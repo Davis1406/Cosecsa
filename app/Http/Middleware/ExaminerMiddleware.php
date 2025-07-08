@@ -30,8 +30,9 @@ class ExaminerMiddleware
         }
 
         // Regular examiner authentication check
-        if (Auth::check()) {
-            if (Auth::user()->user_type == 9) {
+if (Auth::check()) {
+            $user = Auth::user();
+            if ($user->hasRole(9) && $user->getActiveRole() == 9) {
                 return $next($request);
             } else {
                 Auth::logout();

@@ -47,7 +47,7 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
-        @if(Auth::check())
+        @if (Auth::check())
             <!-- Sidebar user panel (optional) -->
             <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                 <div class="image">
@@ -214,14 +214,29 @@
                                 <!-- Examiners Section -->
                                 <li class="nav-item">
                                     <a href="{{ url('admin/exams/examiners') }}"
-                                        class="nav-link @if (Request::segment(3) == 'examiners' || Request::segment(3) == 'view_examiner' ||Request::segment(3)=='edit_examiner') active @endif">
+                                        class="nav-link @if (Request::segment(3) == 'examiners' ||
+                                                Request::segment(3) == 'view_examiner' ||
+                                                Request::segment(3) == 'edit_examiner') active @endif">
                                         <i class="fas fa-chalkboard-teacher nav-icon"></i>
                                         <p>Examiners</p>
                                     </a>
                                 </li>
-                        
+
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/exams/examiner-confirmation') }}"
+                                        class="nav-link @if (Request::segment(3) == 'examiner-confirmation' ||
+                                                Request::segment(3) == 'view_examiner' ||
+                                                Request::segment(3) == 'edit_examiner') active @endif">
+                                        <i class="fas fa-check nav-icon"></i>
+                                        <p>Examiner Confirmation</p>
+                                    </a>
+                                </li>
+
                                 <!-- Results Section (Parent) -->
-                                <li class="nav-item @if (Request::segment(3) == 'exam_results' || Request::segment(3) == 'gs_results'|| Request::segment(3) == 'station_results'||Request::segment(3) == 'gs_station_results') menu-open @endif">
+                                <li class="nav-item @if (Request::segment(3) == 'exam_results' ||
+                                        Request::segment(3) == 'gs_results' ||
+                                        Request::segment(3) == 'station_results' ||
+                                        Request::segment(3) == 'gs_station_results') menu-open @endif">
                                     <a href="#" class="nav-link">
                                         <i class="fas fa-chart-line nav-icon"></i>
                                         <p>
@@ -240,7 +255,7 @@
                                         </li>
                                         <li class="nav-item">
                                             <a href="{{ url('admin/exams/gs_results') }}"
-                                                class="nav-link @if (Request::segment(3) == 'gs_results' || Request::segment(3) == 'gs_station_results' ) active @endif">
+                                                class="nav-link @if (Request::segment(3) == 'gs_results' || Request::segment(3) == 'gs_station_results') active @endif">
                                                 <i class="fas fa-heart nav-icon"></i>
                                                 <p>FCS General Surgery</p>
                                             </a>
@@ -284,7 +299,7 @@
                                 </li>
                             </ul>
                         </li>
-                        
+
                         <li class="nav-item">
                             <a href="{{ url('profile/change_password') }}"
                                 class="nav-link @if (Request::segment(2) == 'change_password') active @endif">
@@ -318,7 +333,9 @@
                     @elseif (Auth::user()->user_type == 9)
                         <li class="nav-item">
                             <a href="{{ url('examiner/dashboard') }}"
-                                class="nav-link @if (Request::segment(2) == 'dashboard' || Request::segment(2) == 'examiner_form' || Request::segment(2) == 'general_surgery') active @endif">
+                                class="nav-link @if (Request::segment(2) == 'dashboard' ||
+                                        Request::segment(2) == 'examiner_form' ||
+                                        Request::segment(2) == 'general_surgery') active @endif">
                                 <i class="nav-icon fas fa-tachometer-alt"></i>
                                 <p>
                                     Dashboard
@@ -330,8 +347,7 @@
 
                         <li class="nav-item">
                             {{-- <a href="{{ url('examiner/results') }}" --}}
-                             <a href="#"
-                                class="nav-link @if (Request::segment(2) == 'results' || Request::segment(2) == 'view_results' || Request::segment(2) == 'resubmit') active @endif">
+                            <a href="#" class="nav-link @if (Request::segment(2) == 'results' || Request::segment(2) == 'view_results' || Request::segment(2) == 'resubmit') active @endif">
                                 <i class="fas fa-chart-line nav-icon"></i>
                                 <p>Results</p>
                             </a>
@@ -339,7 +355,7 @@
 
                         <li class="nav-item">
                             <a href="{{ url('examiner/profile_settings') }}"
-                                class="nav-link @if (Request::segment(2) == 'profile_settings'|| Request::segment(2)=='edit_info') active @endif">
+                                class="nav-link @if (Request::segment(2) == 'profile_settings' || Request::segment(2) == 'edit_info') active @endif">
                                 <i class="nav-icon fas fa-cog"></i>
                                 <p>
                                     Profile Settings
@@ -602,50 +618,54 @@
         transition: background-color 0.3s ease, color 0.3s ease;
     }
 
-    .navbar, .main-sidebar, .content-wrapper, .card, .form-control {
+    .navbar,
+    .main-sidebar,
+    .content-wrapper,
+    .card,
+    .form-control {
         transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    const darkModeIcon = document.getElementById('darkModeIcon');
-    const body = document.body;
-    const html = document.documentElement;
+    document.addEventListener('DOMContentLoaded', function() {
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        const body = document.body;
+        const html = document.documentElement;
 
-    // Check for saved theme preference or default to light mode
-    const currentTheme = localStorage.getItem('theme') || 'light';
-    
-    // Apply the saved theme and set the correct icon
-    if (currentTheme === 'dark') {
-        body.classList.add('dark-mode');
-        html.classList.add('dark-mode');
-        darkModeIcon.classList.remove('fa-moon');
-        darkModeIcon.classList.add('fa-sun');
-        darkModeToggle.setAttribute('title', 'Switch to Light Mode');
-    }
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
 
-    // Toggle dark mode
-    darkModeToggle.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        body.classList.toggle('dark-mode');
-        html.classList.toggle('dark-mode');
-        
-        if (body.classList.contains('dark-mode')) {
-            // Switch to dark mode
+        // Apply the saved theme and set the correct icon
+        if (currentTheme === 'dark') {
+            body.classList.add('dark-mode');
+            html.classList.add('dark-mode');
             darkModeIcon.classList.remove('fa-moon');
             darkModeIcon.classList.add('fa-sun');
             darkModeToggle.setAttribute('title', 'Switch to Light Mode');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            // Switch to light mode
-            darkModeIcon.classList.remove('fa-sun');
-            darkModeIcon.classList.add('fa-moon');
-            darkModeToggle.setAttribute('title', 'Toggle Dark Mode');
-            localStorage.setItem('theme', 'light');
         }
+
+        // Toggle dark mode
+        darkModeToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            body.classList.toggle('dark-mode');
+            html.classList.toggle('dark-mode');
+
+            if (body.classList.contains('dark-mode')) {
+                // Switch to dark mode
+                darkModeIcon.classList.remove('fa-moon');
+                darkModeIcon.classList.add('fa-sun');
+                darkModeToggle.setAttribute('title', 'Switch to Light Mode');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                // Switch to light mode
+                darkModeIcon.classList.remove('fa-sun');
+                darkModeIcon.classList.add('fa-moon');
+                darkModeToggle.setAttribute('title', 'Toggle Dark Mode');
+                localStorage.setItem('theme', 'light');
+            }
+        });
     });
-});
 </script>

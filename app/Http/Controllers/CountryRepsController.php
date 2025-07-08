@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\HospitalModel;
 use App\Models\Programme;
 use App\Models\Country;
+use App\Models\UserRole;
 use App\Models\CountryRepsModel;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\RepsImport;
@@ -32,9 +33,9 @@ class CountryRepsController extends Controller
 
     public function add()
     {
-    
+
         $data['getCountry'] = Country::getCountry();
-        $data['header_title'] = "Add New CR's";  
+        $data['header_title'] = "Add New CR's";
         return view('admin.associates.reps.add', $data);
     }
 
@@ -55,34 +56,38 @@ class CountryRepsController extends Controller
 
         return redirect('admin/associates/reps/list')->with('success', 'Reps imported successfully');
     }
-
     public function insert(Request $request)
     {
-
-                // Handle profile image upload
-                $profileImagePath = null;
-                if ($request->hasFile('profile_image')) {
-                    $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
-                }
+        // Handle profile image upload
+        $profileImagePath = null;
+        if ($request->hasFile('profile_image')) {
+            $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
+        }
 
         $userType = 4; // '4' represents trainers
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => $request->password,
+            'password' => bcrypt($request->password), // Hash the password
             'user_type' => $userType
         ]);
 
+        // Assign role in user_roles table
+        UserRole::create([
+            'user_id' => $user->id,
+            'role_type' => $userType,
+            'is_active' => 1
+        ]);
 
         $repData = [
-            'user_id'=> $user->id,
+            'user_id' => $user->id,
             'country_id' => $request['country_id'],
             'profile_image' => $profileImagePath,
             'cosecsa_email' => $request['cosecsa_email'],
             'mobile_no' => $request['mobile_no'],
         ];
-        
+
         CountryRepsModel::create($repData);
 
         return redirect('admin/associates/reps/list')->with('success', 'CR added successfully');
@@ -103,32 +108,50 @@ class CountryRepsController extends Controller
         if (!$countryRep) {
             return redirect('admin/associates/trainers/list')->with('error', 'Trainer not found');
         }
-    
+
         $user = User::find($countryRep->user_id);
-    
+
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
             $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
         } else {
             $profileImagePath = $countryRep->profile_image; // keep the old image if no new one is uploaded
         }
-    
+
         $user->name = $request->name;
         $user->email = $request->email;
         if (!empty($request->password)) {
-            $user->password = $request->password;
+            $user->password = bcrypt($request->password); // Hash the password
         }
         $user->save();
-    
+
+        // Update user role if needed (ensure it exists and is active)
+        $userRole = UserRole::where('user_id', $user->id)
+            ->where('role_type', $user->user_type)
+            ->first();
+
+        if (!$userRole) {
+            // Create user role if it doesn't exist
+            UserRole::create([
+                'user_id' => $user->id,
+                'role_type' => $user->user_type,
+                'is_active' => 1
+            ]);
+        } else {
+            // Ensure the role is active
+            $userRole->is_active = 1;
+            $userRole->save();
+        }
+
         $countryRep->country_id = $request->country_id;
         $countryRep->profile_image = $profileImagePath;
         $countryRep->cosecsa_email = $request->cosecsa_email;
         $countryRep->mobile_no = $request->mobile_no;
         $countryRep->save();
-    
+
         return redirect('admin/associates/reps/list')->with('success', 'CR updated successfully');
     }
-    
+
 
     public function delete($id)
     {

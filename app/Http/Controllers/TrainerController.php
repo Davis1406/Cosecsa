@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Trainer;
+use App\Models\UserRole;
 use App\Models\HospitalModel;
 use App\Models\Programme;
 use App\Models\Country;
@@ -35,7 +36,7 @@ class TrainerController extends Controller
         $data['getHospital'] = HospitalModel::getHospital();
         $data['getProgramme'] = Programme::getProgramme();
         $data['getCountry'] = Country::getCountry();
-        $data['header_title'] = "Add New Trainer";  
+        $data['header_title'] = "Add New Trainer";
         return view('admin.associates.trainers.add', $data);
     }
 
@@ -59,24 +60,30 @@ class TrainerController extends Controller
 
     public function insert(Request $request)
     {
-
-                // Handle profile image upload
-                $profileImagePath = null;
-                if ($request->hasFile('profile_image')) {
-                    $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
-                }
+        // Handle profile image upload
+        $profileImagePath = null;
+        if ($request->hasFile('profile_image')) {
+            $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
+        }
 
         $userType = 4; // '4' represents trainers
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => $request->password,
+            'password' => bcrypt($request->password), // Hash the password
             'user_type' => $userType
         ]);
 
+        // Assign role in user_roles table
+        UserRole::create([
+            'user_id' => $user->id,
+            'role_type' => $userType,
+            'is_active' => 1
+        ]);
+
         $trainerData = [
-            'user_id'=> $user->id,
+            'user_id' => $user->id,
             'phone_number' => $request['phone_number'],
             'hospital_id' => $request['hospital_id'],
             'profile_image' => $profileImagePath,
@@ -89,7 +96,6 @@ class TrainerController extends Controller
 
         return redirect('admin/associates/trainers/list')->with('success', 'Trainer added successfully');
     }
-
     public function edit($id)
     {
         $trainer = User::getTrainers()->firstWhere('trainer_id', $id);
@@ -107,23 +113,41 @@ class TrainerController extends Controller
         if (!$trainer) {
             return redirect('admin/associates/trainers/list')->with('error', 'Trainer not found');
         }
-    
+
         $user = User::find($trainer->user_id);
-    
+
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
             $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
         } else {
             $profileImagePath = $trainer->profile_image; // keep the old image if no new one is uploaded
         }
-    
+
         $user->name = $request->name;
         $user->email = $request->email;
         if (!empty($request->password)) {
-            $user->password = $request->password;
+            $user->password = bcrypt($request->password); // Hash the password
         }
         $user->save();
-    
+
+        // Update user role if needed (ensure it exists and is active)
+        $userRole = UserRole::where('user_id', $user->id)
+            ->where('role_type', $user->user_type)
+            ->first();
+
+        if (!$userRole) {
+            // Create user role if it doesn't exist
+            UserRole::create([
+                'user_id' => $user->id,
+                'role_type' => $user->user_type,
+                'is_active' => 1
+            ]);
+        } else {
+            // Ensure the role is active
+            $userRole->is_active = 1;
+            $userRole->save();
+        }
+
         $trainer->phone_number = $request->phone_number;
         $trainer->hospital_id = $request->hospital_id;
         $trainer->profile_image = $profileImagePath;
@@ -132,10 +156,9 @@ class TrainerController extends Controller
         $trainer->mobile_no = $request->mobile_no;
 
         $trainer->save();
-    
+
         return redirect('admin/associates/trainers/list')->with('success', 'Trainer updated successfully');
     }
-    
 
     public function delete($id)
     {

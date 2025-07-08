@@ -18,6 +18,10 @@ use App\Http\Controllers\MembersController;
 use App\Http\Controllers\ExamsController;
 
 
+// Route::get('/', [AuthController::class,'login'])->name('login');
+// Route::post('login', [AuthController::class,'AuthLogin']);
+// Route::get('logout', [AuthController::class,'logout']);
+
 Route::get('/', [AuthController::class,'login'])->name('login');
 Route::post('login', [AuthController::class,'AuthLogin']);
 Route::get('logout', [AuthController::class,'logout']);
@@ -25,6 +29,14 @@ Route::get('forget-password', [AuthController::class,'forgetpassword']);
 Route::post('forget-password', [AuthController::class,'PostForgetPassword']);
 Route::get('reset/{token}', [AuthController::class,'ResetPassword']);
 Route::post('reset/{token}', [AuthController::class,'PostReset']);
+
+// ADD THESE NEW ROUTES:
+// Route::get('select-role', [AuthController::class, 'showRoleSelection'])->middleware('auth')->name('select.role');
+// Route::post('select-role', [AuthController::class, 'selectRole'])->middleware('auth');
+// Route::post('switch-role', [AuthController::class, 'switchRole'])->middleware('auth')->name('switch.role');
+
+Route::get('select-role', [AuthController::class, 'showRoleSelection'])->name('select.role');
+Route::post('select-role', [AuthController::class, 'selectRole']);
 
 
 // Admin Routes
@@ -147,6 +159,7 @@ Route::get('admin/exams/import', [ExamsController::class, 'import']);
 Route::get('admin/exams/view_examiner/{id}',  [ExamsController::class,'view'])->name('examiner.view');
 Route::get('admin/exams/edit_examiner/{id}', [ExamsController::class,'edit']);
 Route::post('admin/exams/edit_examiner/{id}', [ExamsController::class,'update'])->name('examiner.update');
+Route::get('admin/exams/examiner-confirmation', [ExamsController::class, 'ExaminerconfirmationView'])->name('examiner.examiner_confirmation');
 Route::get('admin/exams/delete/{id}', [ExamsController::class,'delete']);
 Route::get('admin/exams/exam_results', [ExamsController::class,'adminResults']);
 Route::get('admin/exams/gs_results', [ExamsController::class,'gsResults']);

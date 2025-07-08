@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\UserRole;
 use App\Models\HospitalModel;
 use App\Models\YearModel;
 use App\Models\ExaminerGroup;
@@ -14,26 +15,38 @@ class DashboardController extends Controller
 public function dashboard()
     {
         $data['header_title'] = 'Dashboard';
+        
+        $activeRole = Auth::user()->getActiveRole();
+        $data['userRoles'] = Auth::user()->getRoles();
+        $data['activeRole'] = $activeRole;
 
-        if (Auth::user()->user_type == 1) {
-            // Admin dashboard - same as before
-            $traineeCount = User::getTrainee()->count();
-            $CandidateCount = User::getCandidates()->count();
-            $FellowsCount = User::getFellows()->count();
-            $accreditedHospitalCount = HospitalModel::where('status', 'active')->count();
-
-            $data['traineeCount'] = $traineeCount;
-            $data['accreditedHospitalCount'] = $accreditedHospitalCount;
-            $data['CandidateCount'] = $CandidateCount;
-            $data['FellowsCount'] = $FellowsCount;
-
-            return view('admin.dashboard', $data);
-        } 
-        elseif (Auth::user()->user_type == 2) {
-            return view('trainee.dashboard', $data);
-        }
-        elseif (Auth::user()->user_type == 9) {
-            return view('examiner.dashboard', $data);
+        switch ($activeRole) {
+            case 1:
+                // Admin dashboard logic
+                $traineeCount = User::getTrainee()->count();
+                $CandidateCount = User::getCandidates()->count();
+                $FellowsCount = User::getFellows()->count();
+                $accreditedHospitalCount = HospitalModel::where('status', 'active')->count();
+                
+                $data['traineeCount'] = $traineeCount;
+                $data['accreditedHospitalCount'] = $accreditedHospitalCount;
+                $data['CandidateCount'] = $CandidateCount;
+                $data['FellowsCount'] = $FellowsCount;
+                
+                return view('admin.dashboard', $data);
+                
+            case 2:
+                return view('trainee.dashboard', $data);
+                
+            case 7:
+                return view('fellow.dashboard', $data);
+                
+            case 9:
+                return view('examiner.dashboard', $data);
+                
+            default:
+                Auth::logout();
+                return redirect('login')->with('error', 'Invalid role');
         }
     }
 
