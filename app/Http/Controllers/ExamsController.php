@@ -321,7 +321,10 @@ public function ExaminerconfirmationView()
             $query->where('user_roles.role_type', 9)
                   ->orWhereNull('user_roles.role_type');
         })
-        ->whereRaw('TIMESTAMPDIFF(MINUTE, examiners_history.created_at, examiners_history.updated_at) > 1')
+        ->where(function ($query) {
+            $query->whereRaw('TIMESTAMPDIFF(MINUTE, examiners_history.created_at, examiners_history.updated_at) > 1')
+                  ->orWhereNotNull('examiners_history.exam_availability');
+        })
         ->groupBy('examiners.id')
         ->orderBy('examiners.id', 'desc')
         ->get();
