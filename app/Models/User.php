@@ -48,71 +48,76 @@ class User extends Authenticatable
             ->value('id');
     }
 
-
     static public function getAdmin()
     {
         $return = self::select('users.*')
-            ->where('user_type', '1')
-            ->where('is_deleted', '=', '0');
-        
+            ->join('user_roles', 'users.id', '=', 'user_roles.user_id')
+            ->where('users.user_type', '1')
+            ->where('users.is_deleted', '=', '0')
+            ->where('user_roles.is_active', 1);
+
         if (!empty(Request::get('email'))) {
-            $return = $return->where('email', 'like', '%' . Request::get('email') . '%');
+            $return = $return->where('users.email', 'like', '%' . Request::get('email') . '%');
         }
 
         if (!empty(Request::get('name'))) {
-            $return = $return->where('name', 'like', '%' . Request::get('name') . '%');
+            $return = $return->where('users.name', 'like', '%' . Request::get('name') . '%');
         }
 
         if (!empty(Request::get('date'))) {
-            $return = $return->whereDate('created_at', 'like', '%' . Request::get('date') . '%');
+            $return = $return->whereDate('users.created_at', 'like', '%' . Request::get('date') . '%');
         }
 
-        $return = $return->orderBy('id', 'asc')->paginate(10);
-        return $return;
+        return $return->orderBy('users.id', 'asc')->paginate(10);
     }
+
 
     static public function getTrainee()
     {
         $return = self::select(
-                'users.id as user_id',
-                'users.name as name',
-                'users.email as user_email',
-                'users.password as user_password',
-                'trainees.id as trainee_id',
-                'trainees.user_id as t_id',
-                'trainees.*',
-                'hospitals.name as hospital_name',
-                'programmes.name as programme_name',
-                'countries.country_name as country_name',
-                'study_year.name as programme_year'
-            )
+            'users.id as user_id',
+            'users.name as name',
+            'users.email as user_email',
+            'users.password as user_password',
+            'trainees.id as trainee_id',
+            'trainees.user_id as t_id',
+            'trainees.*',
+            'hospitals.name as hospital_name',
+            'programmes.name as programme_name',
+            'countries.country_name as country_name',
+            'study_year.name as programme_year'
+        )
             ->join('trainees', 'users.id', '=', 'trainees.user_id')
             ->join('hospitals', 'trainees.hospital_id', '=', 'hospitals.id')
             ->join('programmes', 'trainees.programme_id', '=', 'programmes.id')
             ->join('study_year', 'trainees.training_year', '=', 'study_year.id')
             ->join('countries', 'trainees.country_id', '=', 'countries.id')
+            ->join('user_roles', function ($join) {
+                $join->on('user_roles.user_id', '=', 'users.id')
+                    ->where('user_roles.is_active', '=', 1);
+            })
             ->where('users.user_type', '2')
-            ->where('users.is_deleted', '=', '0');
+            ->orderBy('trainee_id', 'asc')
+            ->get();
 
-        $return = $return->orderBy('trainee_id', 'asc')->get();
-        
         return $return;
     }
+
 
     static public function getFellows()
     {
         $return = self::select(
-                'users.id as user_id',
-                'users.name as fellow_name',
-                'users.email as email',
-                'users.password as user_password',
-                'fellows.id as fellow_id',
-                'fellows.user_id as f_id',
-                'fellows.personal_email as personal_email',
-                'fellows.*',
-                'programmes.name as programme_name',
-                'countries.country_name as country_name',
-                'categories.category_name as fellowship_type'
+            'users.id as user_id',
+            'users.name as fellow_name',
+            'users.email as email',
+            'users.password as user_password',
+            'fellows.id as fellow_id',
+            'fellows.user_id as f_id',
+            'fellows.personal_email as personal_email',
+            'fellows.*',
+            'programmes.name as programme_name',
+            'countries.country_name as country_name',
+            'categories.category_name as fellowship_type'
 
         )
             ->join('fellows', 'users.id', '=', 'fellows.user_id')
@@ -123,25 +128,25 @@ class User extends Authenticatable
             ->where('users.is_deleted', '=', '0');
 
         $return = $return->orderBy('id', 'asc')->get();
-        
+
         return $return;
     }
 
     static public function getMembers()
     {
         $return = self::select(
-                'users.id as user_id',
-                'users.name as member_name',
-                'users.email as email',
-                'users.password as user_password',
-                'members.id as members_id',
-                'members.user_id as m_id',
-                'members.personal_email as personal_email',
-                'members.*',
-                'countries.country_name as country_name',
-                'categories.category_name as membership_type'
+            'users.id as user_id',
+            'users.name as member_name',
+            'users.email as email',
+            'users.password as user_password',
+            'members.id as members_id',
+            'members.user_id as m_id',
+            'members.personal_email as personal_email',
+            'members.*',
+            'countries.country_name as country_name',
+            'categories.category_name as membership_type'
 
-            )
+        )
             ->join('members', 'users.id', '=', 'members.user_id')
             ->leftJoin('categories', 'members.category_id', '=', 'categories.id')
             ->leftJoin('countries', 'members.country_id', '=', 'countries.id')
@@ -149,19 +154,19 @@ class User extends Authenticatable
             ->where('users.is_deleted', '=', '0');
 
         $return = $return->orderBy('id', 'asc')->get();
-        
+
         return $return;
     }
 
-// Updated getSingleExaminer method
-static public function getSingleExaminer($userId, $yearId = null)
-{
-    // Use current year if no year specified
-    if (!$yearId) {
-        $yearId = self::getCurrentYearId();
-    }
+    // Updated getSingleExaminer method
+    static public function getSingleExaminer($userId, $yearId = null)
+    {
+        // Use current year if no year specified
+        if (!$yearId) {
+            $yearId = self::getCurrentYearId();
+        }
 
-    $examiner = self::select(
+        $examiner = self::select(
             'users.id as user_id',
             'users.name as examiner_name',
             'users.email as email',
@@ -172,107 +177,19 @@ static public function getSingleExaminer($userId, $yearId = null)
             'countries.country_name as country_name',
             'examiners_roles.role as examiner_role'
         )
-        ->join('examiners', 'users.id', '=', 'examiners.user_id')
-        ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
-        ->leftJoin('examiners_roles', 'examiners.role_id', '=', 'examiners_roles.id')
-        ->where('users.id', $userId)
-        ->where('users.user_type', '9')
-        ->where('users.is_deleted', '=', '0')
-        ->first();
+            ->join('examiners', 'users.id', '=', 'examiners.user_id')
+            ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
+            ->leftJoin('examiners_roles', 'examiners.role_id', '=', 'examiners_roles.id')
+            ->where('users.id', $userId)
+            ->where('users.user_type', '9')
+            ->where('users.is_deleted', '=', '0')
+            ->first();
 
-    if (!$examiner) {
-        return null;
-    }
+        if (!$examiner) {
+            return null;
+        }
 
-    // Get groups for this examiner for the current year only
-    $groups = \DB::table('exams_groups')
-        ->join('examiners_groups', 'exams_groups.group_id', '=', 'examiners_groups.id')
-        ->where('exams_groups.exm_id', $examiner->examin_id)
-        ->where('exams_groups.year_id', $yearId)
-        ->select('examiners_groups.id as group_id', 'examiners_groups.group_name', 'exams_groups.year_id')
-        ->get();
-
-    // Get shifts for this examiner for the current year only
-    $shifts = \DB::table('exams_shifts')
-        ->where('exm_id', $examiner->examin_id)
-        ->where('year_id', $yearId)
-        ->select('shift', 'year_id')
-        ->get();
-
-    // Get examiner history
-    $history = \App\Models\ExaminerHistory::where('exm_id', $examiner->examin_id)->first();
-
-    // Add groups, shifts, and history data to examiner object
-    $examiner->groups = $groups;
-    $examiner->shifts = $shifts;
-    $examiner->history = $history;
-    
-    // Add convenience properties for the view
-    $examiner->group_name = $groups->isNotEmpty() ? $groups->first()->group_name : null;
-    $examiner->group_id = $groups->isNotEmpty() ? $groups->first()->group_id : null;
-    
-    // Convert shift ID to readable name
-    $examiner->shift_id = $shifts->isNotEmpty() ? $shifts->first()->shift : null;
-    $examiner->shift = $shifts->isNotEmpty() ? self::getShiftName($shifts->first()->shift) : null;
-    
-    // Add history convenience properties
-    if ($history) {
-        $examiner->virtual_mcs_participated = $history->virtual_mcs_participated;
-        $examiner->fcs_participated = $history->fcs_participated;
-        $examiner->participation_type = $history->role ? $history->role->role : null;
-        $examiner->hospital_type = $history->hospital_type;
-        $examiner->hospital_name = $history->hospital_name;
-        $examiner->examination_years = $history->examination_years;
-        $examiner->exam_availability = $history->exam_availability;
-
-    }
-    
-    // If multiple groups/shifts, concatenate them
-    if ($groups->count() > 1) {
-        $examiner->group_name = $groups->pluck('group_name')->implode(', ');
-    }
-    
-    if ($shifts->count() > 1) {
-        // Store both ID and readable names for multiple shifts
-        $examiner->shift_id = $shifts->pluck('shift')->implode(', ');
-        $examiner->shift = $shifts->map(function($shift) {
-            return self::getShiftName($shift->shift);
-        })->implode(', ');
-    }
-
-    return $examiner;
-}
-
-// Updated getExaminers method with current year filtering
-static public function getExaminers($yearId = null)
-{
-    // Use current year if no year specified
-    if (!$yearId) {
-        $yearId = self::getCurrentYearId();
-    }
-
-    $query = self::select(
-            'users.id as user_id',
-            'users.name as examiner_name',
-            'users.email as email',
-            'users.password as examiner_password',
-            'examiners.id as examin_id',
-            'examiners.user_id as ex_id',
-            'examiners.*',
-            'countries.country_name as country_name',
-            'examiners_roles.role as examiner_role'
-    )
-        ->join('examiners', 'users.id', '=', 'examiners.user_id')
-        ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
-        ->leftJoin('examiners_roles', 'examiners.role_id', '=', 'examiners_roles.id')
-        ->where('users.user_type', '9')
-        ->where('users.is_deleted', '=', '0');
-
-    $examiners = $query->orderBy('users.id', 'asc')->get();
-
-    // Add groups, shifts, and history for each examiner for the current year only
-    $examiners->each(function ($examiner) use ($yearId) {
-        // Get groups for this examiner for the current year
+        // Get groups for this examiner for the current year only
         $groups = \DB::table('exams_groups')
             ->join('examiners_groups', 'exams_groups.group_id', '=', 'examiners_groups.id')
             ->where('exams_groups.exm_id', $examiner->examin_id)
@@ -280,7 +197,7 @@ static public function getExaminers($yearId = null)
             ->select('examiners_groups.id as group_id', 'examiners_groups.group_name', 'exams_groups.year_id')
             ->get();
 
-        // Get shifts for this examiner for the current year
+        // Get shifts for this examiner for the current year only
         $shifts = \DB::table('exams_shifts')
             ->where('exm_id', $examiner->examin_id)
             ->where('year_id', $yearId)
@@ -290,100 +207,188 @@ static public function getExaminers($yearId = null)
         // Get examiner history
         $history = \App\Models\ExaminerHistory::where('exm_id', $examiner->examin_id)->first();
 
-        // Add to examiner object
+        // Add groups, shifts, and history data to examiner object
         $examiner->groups = $groups;
         $examiner->shifts = $shifts;
         $examiner->history = $history;
-        
-        // Add convenience properties
+
+        // Add convenience properties for the view
         $examiner->group_name = $groups->isNotEmpty() ? $groups->first()->group_name : null;
         $examiner->group_id = $groups->isNotEmpty() ? $groups->first()->group_id : null;
-        
+
         // Convert shift ID to readable name
         $examiner->shift_id = $shifts->isNotEmpty() ? $shifts->first()->shift : null;
         $examiner->shift = $shifts->isNotEmpty() ? self::getShiftName($shifts->first()->shift) : null;
-        
+
         // Add history convenience properties
         if ($history) {
             $examiner->virtual_mcs_participated = $history->virtual_mcs_participated;
             $examiner->fcs_participated = $history->fcs_participated;
-            // $examiner->participation_type = $history->role ? $history->role->role : null;
+            $examiner->participation_type = $history->role ? $history->role->role : null;
             $examiner->hospital_type = $history->hospital_type;
             $examiner->hospital_name = $history->hospital_name;
             $examiner->examination_years = $history->examination_years;
+            $examiner->exam_availability = $history->exam_availability;
         }
-        
-        // Handle multiple groups/shifts
+
+        // If multiple groups/shifts, concatenate them
         if ($groups->count() > 1) {
             $examiner->group_name = $groups->pluck('group_name')->implode(', ');
         }
-        
+
         if ($shifts->count() > 1) {
             // Store both ID and readable names for multiple shifts
             $examiner->shift_id = $shifts->pluck('shift')->implode(', ');
-            $examiner->shift = $shifts->map(function($shift) {
+            $examiner->shift = $shifts->map(function ($shift) {
                 return self::getShiftName($shift->shift);
             })->implode(', ');
         }
-    });
 
-    return $examiners;
-}
+        return $examiner;
+    }
 
-// Updated getShiftName method to match your select options
-public static function getShiftName($shiftId)
-{
-    $shiftNames = [
-        1 => 'Morning',
-        2 => 'Morning & Afternoon', 
-        3 => 'Afternoon',
-    ];
-         
-    return $shiftNames[$shiftId] ?? 'Unknown Shift';
-}
+    // Updated getExaminers method with current year filtering
+    static public function getExaminers($yearId = null)
+    {
+        // Use current year if no year specified
+        if (!$yearId) {
+            $yearId = self::getCurrentYearId();
+        }
 
-    static public function getCandidates()    
+        $query = self::select(
+            'users.id as user_id',
+            'users.name as examiner_name',
+            'users.email as email',
+            'users.password as examiner_password',
+            'examiners.id as examin_id',
+            'examiners.user_id as ex_id',
+            'examiners.*',
+            'countries.country_name as country_name',
+            'examiners_roles.role as examiner_role'
+        )
+            ->join('examiners', 'users.id', '=', 'examiners.user_id')
+            ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
+            ->leftJoin('examiners_roles', 'examiners.role_id', '=', 'examiners_roles.id')
+            ->where('users.user_type', '9')
+            ->where('users.is_deleted', '=', '0');
+
+        $examiners = $query->orderBy('users.id', 'asc')->get();
+
+        // Add groups, shifts, and history for each examiner for the current year only
+        $examiners->each(function ($examiner) use ($yearId) {
+            // Get groups for this examiner for the current year
+            $groups = \DB::table('exams_groups')
+                ->join('examiners_groups', 'exams_groups.group_id', '=', 'examiners_groups.id')
+                ->where('exams_groups.exm_id', $examiner->examin_id)
+                ->where('exams_groups.year_id', $yearId)
+                ->select('examiners_groups.id as group_id', 'examiners_groups.group_name', 'exams_groups.year_id')
+                ->get();
+
+            // Get shifts for this examiner for the current year
+            $shifts = \DB::table('exams_shifts')
+                ->where('exm_id', $examiner->examin_id)
+                ->where('year_id', $yearId)
+                ->select('shift', 'year_id')
+                ->get();
+
+            // Get examiner history
+            $history = \App\Models\ExaminerHistory::where('exm_id', $examiner->examin_id)->first();
+
+            // Add to examiner object
+            $examiner->groups = $groups;
+            $examiner->shifts = $shifts;
+            $examiner->history = $history;
+
+            // Add convenience properties
+            $examiner->group_name = $groups->isNotEmpty() ? $groups->first()->group_name : null;
+            $examiner->group_id = $groups->isNotEmpty() ? $groups->first()->group_id : null;
+
+            // Convert shift ID to readable name
+            $examiner->shift_id = $shifts->isNotEmpty() ? $shifts->first()->shift : null;
+            $examiner->shift = $shifts->isNotEmpty() ? self::getShiftName($shifts->first()->shift) : null;
+
+            // Add history convenience properties
+            if ($history) {
+                $examiner->virtual_mcs_participated = $history->virtual_mcs_participated;
+                $examiner->fcs_participated = $history->fcs_participated;
+                // $examiner->participation_type = $history->role ? $history->role->role : null;
+                $examiner->hospital_type = $history->hospital_type;
+                $examiner->hospital_name = $history->hospital_name;
+                $examiner->examination_years = $history->examination_years;
+            }
+
+            // Handle multiple groups/shifts
+            if ($groups->count() > 1) {
+                $examiner->group_name = $groups->pluck('group_name')->implode(', ');
+            }
+
+            if ($shifts->count() > 1) {
+                // Store both ID and readable names for multiple shifts
+                $examiner->shift_id = $shifts->pluck('shift')->implode(', ');
+                $examiner->shift = $shifts->map(function ($shift) {
+                    return self::getShiftName($shift->shift);
+                })->implode(', ');
+            }
+        });
+
+        return $examiners;
+    }
+
+    // Updated getShiftName method to match your select options
+    public static function getShiftName($shiftId)
+    {
+        $shiftNames = [
+            1 => 'Morning',
+            2 => 'Morning & Afternoon',
+            3 => 'Afternoon',
+        ];
+
+        return $shiftNames[$shiftId] ?? 'Unknown Shift';
+    }
+
+    static public function getCandidates()
     {
         $return = self::select(
-                'users.id as user_id',
-                'users.name as name',
-                'users.email as user_email',
-                'users.password as user_password',
-                'users.user_type as user_type',
-                'candidates.id as candidates_id',
-                'candidates.user_id as c_id',
-                'candidates.*',
-                'hospitals.name as hospital_name',
-                'programmes.name as programme_name',
-                'examiners_groups.group_name as group_name',
-                'countries.country_name as country_name'
-            )
+            'users.id as user_id',
+            'users.name as name',
+            'users.email as user_email',
+            'users.password as user_password',
+            'users.user_type as user_type',
+            'candidates.id as candidates_id',
+            'candidates.user_id as c_id',
+            'candidates.*',
+            'hospitals.name as hospital_name',
+            'programmes.name as programme_name',
+            'examiners_groups.group_name as group_name',
+            'countries.country_name as country_name',
+            'user_roles.role_type as role_type'
+        )
             ->join('candidates', 'users.id', '=', 'candidates.user_id')
             ->leftJoin('hospitals', 'candidates.hospital_id', '=', 'hospitals.id')
             ->leftJoin('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
             ->leftJoin('programmes', 'candidates.programme_id', '=', 'programmes.id')
             ->leftJoin('countries', 'candidates.country_id', '=', 'countries.id')
-            ->whereIn('users.id', function($query) {
-                $query->select('user_id')
-                      ->from('candidates');
+            ->join('user_roles', function ($join) {
+                $join->on('user_roles.user_id', '=', 'users.id')
+                    ->where('user_roles.is_active', '=', 1);
             })
+            ->where('users.user_type', '3') // Candidate user_type
             ->where('users.is_deleted', '=', '0');
-    
-        $return = $return->orderBy('candidates_id', 'asc')->get();
-        
-        return $return;
+
+        return $return->orderBy('candidates_id', 'asc')->get();
     }
+
 
     // Get examiner candidates based on current groups and year
     static public function getExaminerCandidates($userId = null, $yearId = null)
     {
         $userId = $userId ?? Auth::id();
-        
+
         // Use current year if no year specified
         if (!$yearId) {
             $yearId = self::getCurrentYearId();
         }
-        
+
         // Get examiner's current group IDs for the specified year
         $groupIds = \DB::table('examiners')
             ->join('exams_groups', 'examiners.id', '=', 'exams_groups.exm_id')
@@ -398,19 +403,19 @@ public static function getShiftName($shiftId)
 
         // Fetch candidates with matching group_ids
         $candidates = self::select(
-                'users.id as user_id',
-                'users.name as name',
-                'users.email as user_email',
-                'users.user_type as user_type',
-                'candidates.id as candidates_id',
-                'candidates.user_id as c_id',
-                'candidates.group_id as candidate_group_id',
-                'candidates.*',
-                'hospitals.name as hospital_name',
-                'programmes.name as programme_name',
-                'examiners_groups.group_name as group_name',
-                'countries.country_name as country_name'
-            )
+            'users.id as user_id',
+            'users.name as name',
+            'users.email as user_email',
+            'users.user_type as user_type',
+            'candidates.id as candidates_id',
+            'candidates.user_id as c_id',
+            'candidates.group_id as candidate_group_id',
+            'candidates.*',
+            'hospitals.name as hospital_name',
+            'programmes.name as programme_name',
+            'examiners_groups.group_name as group_name',
+            'countries.country_name as country_name'
+        )
             ->join('candidates', 'users.id', '=', 'candidates.user_id')
             ->leftJoin('hospitals', 'candidates.hospital_id', '=', 'hospitals.id')
             ->leftJoin('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
@@ -428,13 +433,13 @@ public static function getShiftName($shiftId)
     static public function getCandidatesByGroupAndYear($groupId, $yearId = null)
     {
         $query = self::select(
-                'users.id as user_id',
-                'users.name as name',
-                'candidates.id as cand_id',
-                'candidates.candidate_id as c_id',
-                'candidates.group_id',
-                'examiners_groups.group_name'
-            )
+            'users.id as user_id',
+            'users.name as name',
+            'candidates.id as cand_id',
+            'candidates.candidate_id as c_id',
+            'candidates.group_id',
+            'examiners_groups.group_name'
+        )
             ->join('candidates', 'users.id', '=', 'candidates.user_id')
             ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
             ->where('candidates.group_id', '=', $groupId)
@@ -485,7 +490,7 @@ public static function getShiftName($shiftId)
             ->value('id');
 
         if (!$examinerId) {
-            return collect(); 
+            return collect();
         }
 
         // Fetch the most recent submission from `mcs_results`
@@ -571,7 +576,7 @@ public static function getShiftName($shiftId)
                 'candidates.firstname',
                 'candidates.middlename',
                 'candidates.lastname',
-                'candidates.candidate_id as c_id', 
+                'candidates.candidate_id as c_id',
                 'mcs_results.station_id',
                 'mcs_results.total'
             )
@@ -583,7 +588,7 @@ public static function getShiftName($shiftId)
                 $candidate = $group->first();
                 return (object) [
                     'candidate_id' => $candidate->c_id,
-                    'cnd_id' => $candidate-> cand_id,
+                    'cnd_id' => $candidate->cand_id,
                     'fullname' => "{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}",
                     'stations' => $group->map(function ($row) {
                         return [
@@ -630,61 +635,55 @@ public static function getShiftName($shiftId)
     }
 
     // Trainers Function
-    static public function getTrainers()    
+    static public function getTrainers()
     {
         $return = self::select(
-                'users.id as user_id',
-                'users.name as name',
-                'users.email as user_email',
-                'users.password as user_password',
-                'users.user_type as user_type',
-                'trainers.id as trainer_id', 
-                'trainers.user_id as tr_id',
-                'trainers.*',
-                'hospitals.name as hospital_name',
-                'countries.country_name as country_name'
-
-            )
+            'users.id as user_id',
+            'users.name as name',
+            'users.email as user_email',
+            'users.password as user_password',
+            'trainers.id as trainer_id',
+            'trainers.user_id as tr_id',
+            'trainers.*',
+            'hospitals.name as hospital_name',
+            'countries.country_name as country_name'
+        )
             ->join('trainers', 'users.id', '=', 'trainers.user_id')
+            ->join('user_roles', 'users.id', '=', 'user_roles.user_id')
             ->leftJoin('hospitals', 'trainers.hospital_id', '=', 'hospitals.id')
             ->leftJoin('countries', 'hospitals.country_id', '=', 'countries.id')
-            ->whereIn('users.id', function($query) {
-                $query->select('user_id')
-                      ->from('trainers');
-            })
-            ->where('users.is_deleted', '=', '0');
-    
-        $return = $return->orderBy('trainer_id', 'asc')->get();
-        
+            ->where('user_roles.role_type', 4) // Ensure it's a trainer role
+            ->where('user_roles.is_active', 1)
+            ->orderBy('trainer_id', 'asc')
+            ->get();
+
         return $return;
     }
 
-    static public function getReps()    
+
+    static public function getReps()
     {
         $return = self::select(
-                'users.id as user_id',
-                'users.name as name',
-                'users.email as user_email',
-                'users.password as user_password',
-                'users.user_type as user_type',
-                'country_reps.id as reps_id',
-                'country_reps.user_id as cr_id',
-                'country_reps.*',
-                'countries.country_name as country_name'
-
-            )
+            'users.id as user_id',
+            'users.name as name',
+            'users.email as user_email',
+            'users.password as user_password',
+            'country_reps.id as reps_id',
+            'country_reps.user_id as cr_id',
+            'country_reps.*',
+            'countries.country_name as country_name'
+        )
             ->join('country_reps', 'users.id', '=', 'country_reps.user_id')
+            ->join('user_roles', 'users.id', '=', 'user_roles.user_id')
             ->leftJoin('countries', 'country_reps.country_id', '=', 'countries.id')
-            ->whereIn('users.id', function($query) {
-                $query->select('user_id')
-                      ->from('country_reps');
-            })
-            ->where('users.is_deleted', '=', '0');
-    
-        $return = $return->orderBy('reps_id', 'asc')->get();
-        
+            ->where('user_roles.role_type', 5) // 5 = Country Rep
+            ->where('user_roles.is_active', 1)
+            ->orderBy('reps_id', 'asc')
+            ->get();
+
         return $return;
     }
+
 
     static public function getEmailSingle($email)
     {
@@ -721,5 +720,4 @@ public static function getShiftName($shiftId)
         // Return the role from session or default to first role
         return session('active_role', $this->roles()->where('is_active', 1)->first()->role_type ?? null);
     }
-
 }

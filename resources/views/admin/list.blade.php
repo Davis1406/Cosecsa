@@ -72,7 +72,7 @@
                     <tbody>
                       @foreach ($getRecord as $value)
                         <tr>
-                          <td>{{ $value->id }}</td>
+                          <td>{{ $loop->iteration }}</td>
                           <td>{{ $value->name }}</td>
                           <td>{{ $value->email }}</td>
                           <td>{{ date('d-m-y H:i A', strtotime($value->created_at)) }}</td>

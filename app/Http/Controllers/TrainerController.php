@@ -174,12 +174,10 @@ class TrainerController extends Controller
             return redirect('admin/associates/trainers/list')->with('error', 'Trainer not found');
         }
 
-        if ($user->user_type != 4) {
-            return redirect('admin/associates/trainers/list')->with('error', 'User is not a trainer');
-        }
-
-        $user->is_deleted = 1;
-        $user->save();
+        // ✅ Deactivate the user from user_roles table
+        \DB::table('user_roles')
+            ->where('user_id', $user->id)
+            ->update(['is_active' => 0, 'updated_at' => now()]);
 
         return redirect('admin/associates/trainers/list')->with('success', 'Trainer information successfully deleted');
     }
