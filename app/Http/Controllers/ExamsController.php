@@ -100,6 +100,12 @@ class ExamsController extends Controller
                 'updated_at' => now()
             ]);
 
+            // New logic: prioritize "Not Available"
+            $availability = $request->exam_availability ?? [];
+            if (in_array('Not Available', $availability)) {
+                $availability = ['Not Available'];
+            }
+
             ExaminerHistory::create([
                 'exm_id' => $examiner->id,
                 'virtual_mcs_participated' => $request->virtual_mcs_participated ?? null,
@@ -107,7 +113,7 @@ class ExamsController extends Controller
                 'participation_type' => $request->participation_type,
                 'hospital_type' => $request->hospital_type ?? null,
                 'hospital_name' => $request->hospital_name ?? null,
-                'exam_availability' => isset($request->exam_availability) ? json_encode($request->exam_availability) : null,
+                'exam_availability' => json_encode($availability),
                 'examination_years' => isset($request->examination_years) ? json_encode($request->examination_years) : null,
             ]);
 
@@ -183,6 +189,12 @@ class ExamsController extends Controller
                 'year_id' => User::getCurrentYearId()
             ]);
 
+            // New logic to handle "Not Available"
+            $availability = $request->exam_availability ?? [];
+            if (in_array('Not Available', $availability)) {
+                $availability = ['Not Available'];
+            }
+
             // update history
             ExaminerHistory::updateOrCreate(
                 ['exm_id' => $examiner->id],
@@ -192,7 +204,8 @@ class ExamsController extends Controller
                     'participation_type' => $request->participation_type,
                     'hospital_type' => $request->hospital_type ?? null,
                     'hospital_name' => $request->hospital_name ?? null,
-                    'exam_availability' => isset($request->exam_availability) ? json_encode($request->exam_availability) : null,
+                    'exam_availability' => json_encode($availability),
+                    // 'exam_availability' => isset($request->exam_availability) ? json_encode($request->exam_availability) : null,
                     'examination_years' => isset($request->examination_years) ? json_encode($request->examination_years) : null,
                 ]
             );
@@ -205,22 +218,47 @@ class ExamsController extends Controller
         }
     }
 
-    public function view($id)
-    {
-        $examiner = User::getExaminers()->firstWhere('examin_id', $id);
-        if (!$examiner) return redirect()->back()->with('error', 'Examiner not found');
+    // public function view($id)
+    // {
+    //     $examiner = User::getExaminers()->firstWhere('examin_id', $id);
+    //     if (!$examiner) return redirect()->back()->with('error', 'Examiner not found');
 
-        $qrCode = QrCode::size(70)
-            ->generate(url("/admin/exams/confirm-attendance/{$examiner->examin_id}"));
+    //     $qrCode = QrCode::size(70)
+    //         ->generate(url("/admin/exams/confirm-attendance/{$examiner->examin_id}"));
 
-        return view('admin.exams.view_examiner', [
-            'header_title' => 'View Examiner',
-            'examiner' => $examiner,
-            'getCountry' => Country::getCountry(),
-            'groups' => DB::table('examiners_groups')->select('id', 'group_name')->get(),
-            'qrCode' => $qrCode
-        ]);
-    }
+    //     return view('admin.exams.view_examiner', [
+    //         'header_title' => 'View Examiner',
+    //         'examiner' => $examiner,
+    //         'getCountry' => Country::getCountry(),
+    //         'groups' => DB::table('examiners_groups')->select('id', 'group_name')->get(),
+    //         'qrCode' => $qrCode
+    //     ]);
+    // }
+
+
+
+public function view($id, Request $request)
+{
+    $examiner = User::getExaminers()->firstWhere('examin_id', $id);
+    if (!$examiner) return redirect()->back()->with('error', 'Examiner not found');
+
+    $from = $request->input('from', 'admin/exams/examiners');
+    $query = $request->except(['from', '_token']);
+
+    $backUrl = url($from) . (count($query) ? '?' . http_build_query($query) : '');
+
+    $qrCode = QrCode::size(70)
+        ->generate(url("/admin/exams/confirm-attendance/{$examiner->examin_id}"));
+
+    return view('admin.exams.view_examiner', [
+        'header_title' => 'View Examiner',
+        'examiner' => $examiner,
+        'getCountry' => Country::getCountry(),
+        'groups' => DB::table('examiners_groups')->select('id', 'group_name')->get(),
+        'qrCode' => $qrCode,
+        'backUrl' => $backUrl,
+    ]);
+}
 
     public function delete($id)
     {
@@ -249,93 +287,69 @@ class ExamsController extends Controller
         return redirect('admin/exams/examiners')->with('error', 'Failed to delete examiners information');
     }
 
-// Debug version to see what's happening
-// public function ExaminerconfirmationView()
-// {
-//     // First, let's see what data exists
-//     $debugQuery = DB::table('examiners')
-//         ->leftJoin('examiners_history', 'examiners.id', '=', 'examiners_history.exm_id')
-//         ->leftJoin('user_roles', 'examiners.user_id', '=', 'user_roles.user_id')
-//         ->select(
-//             'examiners.id',
-//             'examiners.created_at as examiner_created',
-//             'examiners.updated_at as examiner_updated',
-//             'examiners_history.id as history_id',
-//             'examiners_history.created_at as history_created',
-//             'examiners_history.updated_at as history_updated',
-//             DB::raw('TIMESTAMPDIFF(SECOND, examiners_history.created_at, examiners_history.updated_at) as history_time_diff')
-//         )
-//         ->where('user_roles.role_type', 9)
-//         ->limit(10)
-//         ->get();
 
-//     // Log or dd this to see what's happening
-//     dd($debugQuery);
-// }
+    //Examiner Confirmation View
 
-
-public function ExaminerconfirmationView()
-{
-    $getExaminers = DB::table('examiners')
-        ->join('examiners_history', 'examiners.id', '=', 'examiners_history.exm_id')
-        ->leftJoin('users', 'examiners.user_id', '=', 'users.id')
-        ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
-        ->leftJoin('exams_groups', 'examiners.id', '=', 'exams_groups.exm_id')
-        ->leftJoin('examiners_groups', 'exams_groups.group_id', '=', 'examiners_groups.id')
-        ->leftJoin('user_roles', 'examiners.user_id', '=', 'user_roles.user_id')
-        ->leftJoin('exams_shifts', 'examiners.id', '=', 'exams_shifts.exm_id')
-        ->select(
-            'examiners.id',
-            DB::raw('MAX(examiners.examiner_id) as examiner_id'),
-            DB::raw('MAX(examiners.mobile) as mobile'),
-            DB::raw('MAX(examiners.gender) as gender'),
-            DB::raw('MAX(examiners.country_id) as country_id'),
-            DB::raw('MAX(examiners.user_id) as user_id'),
-            DB::raw('MAX(examiners.specialty) as specialty'),
-            DB::raw('MAX(examiners.subspecialty) as subspecialty'),
-            DB::raw('MAX(examiners.curriculum_vitae) as curriculum_vitae'),
-            DB::raw('MAX(examiners.passport_image) as passport_image'),
-            DB::raw('MAX(examiners.role_id) as role_id'),
-            DB::raw("CASE 
+    public function ExaminerconfirmationView()
+    {
+        $getExaminers = DB::table('examiners')
+            ->join('examiners_history', 'examiners.id', '=', 'examiners_history.exm_id')
+            ->leftJoin('users', 'examiners.user_id', '=', 'users.id')
+            ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
+            ->leftJoin('exams_groups', 'examiners.id', '=', 'exams_groups.exm_id')
+            ->leftJoin('examiners_groups', 'exams_groups.group_id', '=', 'examiners_groups.id')
+            ->leftJoin('user_roles', 'examiners.user_id', '=', 'user_roles.user_id')
+            ->leftJoin('exams_shifts', 'examiners.id', '=', 'exams_shifts.exm_id')
+            ->select(
+                'examiners.id',
+                DB::raw('MAX(examiners.examiner_id) as examiner_id'),
+                DB::raw('MAX(examiners.mobile) as mobile'),
+                DB::raw('MAX(examiners.gender) as gender'),
+                DB::raw('MAX(examiners.country_id) as country_id'),
+                DB::raw('MAX(examiners.user_id) as user_id'),
+                DB::raw('MAX(examiners.specialty) as specialty'),
+                DB::raw('MAX(examiners.subspecialty) as subspecialty'),
+                DB::raw('MAX(examiners.curriculum_vitae) as curriculum_vitae'),
+                DB::raw('MAX(examiners.passport_image) as passport_image'),
+                DB::raw('MAX(examiners.role_id) as role_id'),
+                DB::raw("CASE 
                 WHEN MAX(examiners.role_id) = 1 THEN 'Examiner'
                 WHEN MAX(examiners.role_id) = 2 THEN 'Observer'
                 WHEN MAX(examiners.role_id) = 3 THEN 'None'
                 ELSE 'Unknown'
             END as participation_type"),
-            DB::raw('MAX(users.name) as examiner_name'),
-            DB::raw('MAX(users.email) as email'),
-            DB::raw('MAX(examiners_history.exam_availability) as exam_availability'),
-            DB::raw('MAX(examiners_history.virtual_mcs_participated) as virtual_mcs_participated'),
-            DB::raw('MAX(examiners_history.fcs_participated) as fcs_participated'),
-            DB::raw('MAX(examiners_history.hospital_type) as hospital_type'),
-            DB::raw('MAX(examiners_history.hospital_name) as hospital_name'),
-            DB::raw('MAX(countries.country_name) as country_name'),
-            DB::raw('GROUP_CONCAT(DISTINCT examiners_groups.group_name ORDER BY examiners_groups.group_name SEPARATOR ", ") as group_names'),
-            DB::raw('MAX(exams_shifts.shift) as shift'),
-            DB::raw('MAX(examiners_history.created_at) as history_created_at'),
-            DB::raw('MAX(examiners_history.updated_at) as history_updated_at'),
-            DB::raw('TIMESTAMPDIFF(SECOND, MAX(examiners_history.created_at), MAX(examiners_history.updated_at)) as history_time_diff_seconds'),
-            DB::raw('TIMESTAMPDIFF(MINUTE, MAX(examiners_history.created_at), MAX(examiners_history.updated_at)) as history_time_diff_minutes')
-        )
-        ->where(function ($query) {
-            $query->where('user_roles.role_type', 9)
-                  ->orWhereNull('user_roles.role_type');
-        })
-        ->where(function ($query) {
-            $query->whereRaw('TIMESTAMPDIFF(MINUTE, examiners_history.created_at, examiners_history.updated_at) > 1')
-                  ->orWhereNotNull('examiners_history.exam_availability');
-        })
-        ->groupBy('examiners.id')
-        ->orderBy('examiners.id', 'desc')
-        ->get();
+                DB::raw('MAX(users.name) as examiner_name'),
+                DB::raw('MAX(users.email) as email'),
+                DB::raw('MAX(examiners_history.exam_availability) as exam_availability'),
+                DB::raw('MAX(examiners_history.virtual_mcs_participated) as virtual_mcs_participated'),
+                DB::raw('MAX(examiners_history.fcs_participated) as fcs_participated'),
+                DB::raw('MAX(examiners_history.hospital_type) as hospital_type'),
+                DB::raw('MAX(examiners_history.hospital_name) as hospital_name'),
+                DB::raw('MAX(countries.country_name) as country_name'),
+                DB::raw('GROUP_CONCAT(DISTINCT examiners_groups.group_name ORDER BY examiners_groups.group_name SEPARATOR ", ") as group_names'),
+                DB::raw('MAX(exams_shifts.shift) as shift'),
+                DB::raw('MAX(examiners_history.created_at) as history_created_at'),
+                DB::raw('MAX(examiners_history.updated_at) as history_updated_at'),
+                DB::raw('TIMESTAMPDIFF(SECOND, MAX(examiners_history.created_at), MAX(examiners_history.updated_at)) as history_time_diff_seconds'),
+                DB::raw('TIMESTAMPDIFF(MINUTE, MAX(examiners_history.created_at), MAX(examiners_history.updated_at)) as history_time_diff_minutes')
+            )
+            ->where(function ($query) {
+                $query->where('user_roles.role_type', 9)
+                    ->orWhereNull('user_roles.role_type');
+            })
+            ->where(function ($query) {
+                $query->whereRaw('TIMESTAMPDIFF(MINUTE, examiners_history.created_at, examiners_history.updated_at) > 1')
+                    ->orWhereNotNull('examiners_history.exam_availability');
+            })
+            ->groupBy('examiners.id')
+            ->orderBy('examiners.id', 'desc')
+            ->get();
 
-    $data['getExaminers'] = $getExaminers;
-    $data['header_title'] = 'Examiner Confirmation';
+        $data['getExaminers'] = $getExaminers;
+        $data['header_title'] = 'Examiner Confirmation';
 
-    return view('admin.exams.examiner_confirmation', $data);
-}
-
-
+        return view('admin.exams.examiner_confirmation', $data);
+    }
 
     /**
      * Show attendance confirmation page after QR scan
@@ -717,7 +731,7 @@ public function ExaminerconfirmationView()
             'country_id' => 'required|exists:countries,id',
             'mobile' => 'nullable|string|max:20',
             'exam_availability' => 'nullable|array',
-            'exam_availability.*' => 'in:MCS,FCS',
+            'exam_availability.*' => 'in:MCS,FCS,Not Available',
             'shift' => 'nullable|in:1,2,3',
             'virtual_mcs_participated' => 'nullable|in:Yes,No',
             'fcs_participated' => 'nullable|in:Yes,No',
@@ -805,7 +819,14 @@ public function ExaminerconfirmationView()
             $historyData = [];
 
             if ($request->has('exam_availability') && is_array($request->exam_availability)) {
-                $historyData['exam_availability'] = json_encode($request->exam_availability);
+                $availability = $request->exam_availability;
+
+                // If "Not Available" is selected, ignore all others
+                if (in_array('Not Available', $availability)) {
+                    $availability = ['Not Available'];
+                }
+
+                $historyData['exam_availability'] = json_encode($availability);
             }
 
             if (isset($validated['virtual_mcs_participated'])) {

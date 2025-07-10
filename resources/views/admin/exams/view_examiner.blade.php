@@ -8,9 +8,9 @@
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6" style="text-align: left">
-                        <a href="{{ url('admin/exams/examiners') }}" class="btn btn-primary"
+                        <a href="{{ $backUrl ?? url('admin/exams/examiners') }}" class="btn btn-primary"
                             style="background-color: #a02626; border-color:#a02626">
-                            <span class="fas fa-arrow-left"></span> Examiners List
+                            <span class="fas fa-arrow-left"></span> Back
                         </a>
                     </div>
                 </div>
@@ -120,9 +120,7 @@
                                             @if ($examiner->curriculum_vitae)
                                                 @php
                                                     $fileName = basename($examiner->curriculum_vitae);
-                                                    $filePath = asset(
-                                                        'storage/app/public/' . $examiner->curriculum_vitae,
-                                                    );
+                                                    $filePath = asset('storage/app/public/' . $examiner->curriculum_vitae);
                                                 @endphp
                                                 <a href="{{ $filePath }}" target="_blank"
                                                     class="btn btn-sm btn-primary"
@@ -224,7 +222,7 @@
         </div>
     </div>
 
-       <!-- Examiner History Modal -->
+    <!-- Examiner History Modal -->
     <div class="modal fade" id="examinerHistoryModal" tabindex="-1" role="dialog"
         aria-labelledby="examinerHistoryModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
@@ -385,20 +383,33 @@
                                                                 $examiner->history->exam_availability;
                                                         }
                                                     }
+
+                                                    $hasMCS = in_array('MCS', $selectedAvailability);
+                                                    $hasFCS = in_array('FCS', $selectedAvailability);
+                                                    $notAvailable = in_array('Not Available', $selectedAvailability);
                                                 @endphp
 
-                                                @if (in_array('MCS', $selectedAvailability))
+                                                @if ($notAvailable)
                                                     <div class="d-flex align-items-center mb-2">
-                                                        <i class="fas fa-check-circle text-success mr-2"></i>
-                                                        <span class="font-weight-bold">MCS (12-13 Nov)</span>
+                                                        <i class="fas fa-times-circle text-danger mr-2"></i>
+                                                        <span class="font-weight-bold text-danger">Not Available</span>
                                                     </div>
                                                 @endif
 
-                                                @if (in_array('FCS', $selectedAvailability))
-                                                    <div class="d-flex align-items-center mb-2">
-                                                        <i class="fas fa-check-circle text-success mr-2"></i>
-                                                        <span class="font-weight-bold">FCS (1–2 December)</span>
-                                                    </div>
+                                                @if (!$notAvailable && ($hasMCS || $hasFCS))
+                                                    @if ($hasMCS)
+                                                        <div class="d-flex align-items-center mb-2">
+                                                            <i class="fas fa-check-circle text-success mr-2"></i>
+                                                            <span class="font-weight-bold">MCS (12–13 Nov)</span>
+                                                        </div>
+                                                    @endif
+
+                                                    @if ($hasFCS)
+                                                        <div class="d-flex align-items-center mb-2">
+                                                            <i class="fas fa-check-circle text-success mr-2"></i>
+                                                            <span class="font-weight-bold">FCS (1–2 December)</span>
+                                                        </div>
+                                                    @endif
                                                 @endif
 
                                                 @if (empty($selectedAvailability))
@@ -470,39 +481,56 @@
         </script>
     @endpush
 
-    @push('styles')
-        <style>
+@push('styles')
+    <style>
+        .id-badge-template {
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .badge {
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        /* ✅ Fix: Make icons round on screen too */
+        .icon-circle {
+            width: 45px;
+            height: 45px;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .icon-circle + div {
+            margin-left: 10px;
+        }
+
+        @media print {
+            body {
+                margin: 20px !important;
+                background: white !important;
+            }
+
             .id-badge-template {
-                background-color: #fff;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                position: relative;
+                width: 100% !important;
+                height: auto !important;
+                margin: 0 auto !important;
+                page-break-after: always;
+                border: none !important;
+                box-shadow: none !important;
             }
 
-            .badge {
-                margin-right: 5px;
-                margin-bottom: 5px;
+            .modal-content {
+                border: none !important;
+                box-shadow: none !important;
             }
+        }
+    </style>
+@endpush
 
-            @media print {
-                body {
-                    margin: 20px !important;
-                    background: white !important;
-                }
-
-                .id-badge-template {
-                    position: relative;
-                    width: 100% !important;
-                    height: auto !important;
-                    margin: 0 auto !important;
-                    page-break-after: always;
-                    border: none !important;
-                    box-shadow: none !important;
-                }
-
-                .modal-content {
-                    border: none !important;
-                    box-shadow: none !important;
-                }
-            }
-        </style>
-    @endpush
 @endsection

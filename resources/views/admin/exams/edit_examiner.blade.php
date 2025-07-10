@@ -211,7 +211,6 @@
                                         <label>2025 Exam Availability</label>
                                         <div class="checkbox-group exam-availability-group">
                                             @php
-                                                // Convert exam_availability from database to array
                                                 $selectedAvailability = [];
                                                 if ($examiner->history && $examiner->history->exam_availability) {
                                                     if (is_string($examiner->history->exam_availability)) {
@@ -225,19 +224,26 @@
                                             @endphp
 
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox"
+                                                <input class="form-check-input exam-option" type="checkbox"
                                                     name="exam_availability[]" id="mcs_2025" value="MCS"
                                                     {{ in_array('MCS', $selectedAvailability) ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="mcs_2025">
-                                                    MCS (12-13 Nov)
+                                                    MCS (12–13 Nov)
                                                 </label>
                                             </div>
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox"
+                                                <input class="form-check-input exam-option" type="checkbox"
                                                     name="exam_availability[]" id="fcs_2025" value="FCS"
                                                     {{ in_array('FCS', $selectedAvailability) ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="fcs_2025">
                                                     FCS (1–2 December)
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="not_available_2025">
+                                                <label class="form-check-label" for="not_available_2025"
+                                                    style="color: #a02626;">
+                                                    <strong>Not Available</strong>
                                                 </label>
                                             </div>
                                         </div>
@@ -922,177 +928,166 @@
 @endpush
 
 @push('scripts')
-    <script>
-        $(document).ready(function() {
-            let currentStep = 1;
-            const totalSteps = 3;
+  <script>
+    $(document).ready(function () {
+        let currentStep = 1;
+        const totalSteps = 3;
 
-            // Initialize
-            updateUI();
+        // Initialize
+        updateUI();
 
-            // File upload handlers
-            $('#passport_upload').on('change', function() {
-                const fileName = this.files[0]?.name || 'Upload Profile Image (JPG/PNG)';
-                $('#passportLabel').text(fileName);
-                $(this).parent().toggleClass('has-file', this.files.length > 0);
-            });
+        // === NEW: Exam Availability Logic ===
+        function toggleExamOptions() {
+            const isChecked = $('#not_available_2025').is(':checked');
+            $('.exam-option').prop('disabled', isChecked).prop('checked', false);
+        }
 
-            $('#cv_upload').on('change', function() {
-                const fileName = this.files[0]?.name || 'Upload CV (PDF/DOC)';
-                $('#cvLabel').text(fileName);
-                $(this).parent().toggleClass('has-file', this.files.length > 0);
-            });
+        $('#not_available_2025').on('change', toggleExamOptions);
 
-            // Next button
-            $(document).on('click', '#nextBtn', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Next button clicked, current step:', currentStep);
+        // On load: auto-check Not Available if no exam options are selected
+        if (!$('.exam-option:checked').length) {
+            $('#not_available_2025').prop('checked', true);
+            toggleExamOptions();
+        }
 
-                if (validateCurrentStep()) {
-                    if (currentStep < totalSteps) {
-                        currentStep++;
-                        updateUI();
-                        console.log('Moved to step:', currentStep);
-                    }
-                } else {
-                    console.log('Validation failed for step:', currentStep);
-                }
-            });
+        // File upload handlers
+        $('#passport_upload').on('change', function () {
+            const fileName = this.files[0]?.name || 'Upload Profile Image (JPG/PNG)';
+            $('#passportLabel').text(fileName);
+            $(this).parent().toggleClass('has-file', this.files.length > 0);
+        });
 
-            // Previous button
-            $(document).on('click', '#prevBtn', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Previous button clicked, current step:', currentStep);
+        $('#cv_upload').on('change', function () {
+            const fileName = this.files[0]?.name || 'Upload CV (PDF/DOC)';
+            $('#cvLabel').text(fileName);
+            $(this).parent().toggleClass('has-file', this.files.length > 0);
+        });
 
-                if (currentStep > 1) {
-                    currentStep--;
+        // Next button
+        $(document).on('click', '#nextBtn', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (validateCurrentStep()) {
+                if (currentStep < totalSteps) {
+                    currentStep++;
                     updateUI();
-                    console.log('Moved to step:', currentStep);
                 }
-            });
+            }
+        });
 
-            // Form submission
-            $('#examinerForm').on('submit', function(e) {
-                e.preventDefault();
+        // Previous button
+        $(document).on('click', '#prevBtn', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
 
-                if (validateCurrentStep()) {
-                    $('#submitBtn').prop('disabled', true).html(
-                        '<i class="fas fa-spinner fa-spin"></i> Updating...');
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+            }
+        });
 
-                    // Submit the form normally after a brief delay
-                    setTimeout(() => {
-                        this.submit();
-                    }, 500);
-                }
-            });
+        // Form submission
+        $('#examinerForm').on('submit', function (e) {
+            e.preventDefault();
 
-            function updateUI() {
-                console.log('Updating UI for step:', currentStep);
-
-                // Hide all steps first
-                $('.form-step').removeClass('active').hide();
-
-                // Show current step with slight delay for animation
+            if (validateCurrentStep()) {
+                $('#submitBtn').prop('disabled', true).html(
+                    '<i class="fas fa-spinner fa-spin"></i> Updating...');
                 setTimeout(() => {
-                    $(`.form-step[data-step="${currentStep}"]`).addClass('active').show();
-                }, 50);
+                    this.submit();
+                }, 500);
+            }
+        });
 
-                // Update progress bar
-                const progressPercent = ((currentStep - 1) / (totalSteps - 1)) * 100;
-                $('#progressFill').css('width', progressPercent + '%');
+        function updateUI() {
+            $('.form-step').removeClass('active').hide();
+            setTimeout(() => {
+                $(`.form-step[data-step="${currentStep}"]`).addClass('active').show();
+            }, 50);
 
-                // Update progress steps
-                $('.progress-step, .step-label').removeClass('active completed');
+            const progressPercent = ((currentStep - 1) / (totalSteps - 1)) * 100;
+            $('#progressFill').css('width', progressPercent + '%');
 
-                for (let i = 1; i <= totalSteps; i++) {
-                    const step = $(`.progress-step[data-step="${i}"]`);
-                    const label = step.find('.step-label');
+            $('.progress-step, .step-label').removeClass('active completed');
 
-                    if (i < currentStep) {
-                        step.addClass('completed');
-                        step.find('i').removeClass().addClass('fas fa-check');
-                    } else if (i === currentStep) {
-                        step.addClass('active');
-                        label.addClass('active');
-                        if (i === 1) step.find('i').removeClass().addClass('fas fa-user');
-                        if (i === 2) step.find('i').removeClass().addClass('fas fa-id-card');
-                        if (i === 3) step.find('i').removeClass().addClass('fas fa-history');
+            for (let i = 1; i <= totalSteps; i++) {
+                const step = $(`.progress-step[data-step="${i}"]`);
+                const label = step.find('.step-label');
 
-                    } else {
-                        if (i === 1) step.find('i').removeClass().addClass('fas fa-user');
-                        if (i === 2) step.find('i').removeClass().addClass('fas fa-id-card');
-                        if (i === 3) step.find('i').removeClass().addClass('fas fa-history');
-
-                    }
+                if (i < currentStep) {
+                    step.addClass('completed');
+                    step.find('i').removeClass().addClass('fas fa-check');
+                } else if (i === currentStep) {
+                    step.addClass('active');
+                    label.addClass('active');
+                    step.find('i').removeClass().addClass(getStepIcon(i));
+                } else {
+                    step.find('i').removeClass().addClass(getStepIcon(i));
                 }
-
-                // Update buttons
-                $('#prevBtn').toggle(currentStep > 1);
-                $('#nextBtn').toggle(currentStep < totalSteps);
-                $('#submitBtn').toggle(currentStep === totalSteps);
-
-                console.log('UI updated - Prev button visible:', currentStep > 1, 'Next button visible:',
-                    currentStep < totalSteps);
             }
 
-            function validateCurrentStep() {
-                let isValid = true;
-                const currentStepElement = $(`.form-step[data-step="${currentStep}"]`);
+            $('#prevBtn').toggle(currentStep > 1);
+            $('#nextBtn').toggle(currentStep < totalSteps);
+            $('#submitBtn').toggle(currentStep === totalSteps);
+        }
 
-                // Clear previous errors
-                currentStepElement.find('.form-control').removeClass('error');
-                currentStepElement.find('.error-message').hide();
+        function getStepIcon(step) {
+            return step === 1 ? 'fas fa-user' :
+                   step === 2 ? 'fas fa-id-card' :
+                   'fas fa-history';
+        }
 
-                // Validate required fields
-                currentStepElement.find('input[required], select[required]').each(function() {
-                    const field = $(this);
-                    const value = field.val() ? field.val().trim() : '';
+        function validateCurrentStep() {
+            let isValid = true;
+            const currentStepElement = $(`.form-step[data-step="${currentStep}"]`);
 
-                    if (!value) {
-                        showFieldError(field, 'This field is required');
-                        isValid = false;
-                    }
-                });
+            currentStepElement.find('.form-control').removeClass('error');
+            currentStepElement.find('.error-message').hide();
 
-                // Validate email if provided
-                const email = currentStepElement.find('input[type="email"]');
-                if (email.length && email.val()) {
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (!emailRegex.test(email.val())) {
-                        showFieldError(email, 'Please enter a valid email address');
-                        isValid = false;
-                    }
-                }
+            currentStepElement.find('input[required], select[required]').each(function () {
+                const field = $(this);
+                const value = field.val() ? field.val().trim() : '';
 
-                // Validate password if provided
-                const password = currentStepElement.find('input[type="password"]');
-                if (password.length && password.val() && password.val().length < 6) {
-                    showFieldError(password, 'Password must be at least 6 characters');
+                if (!value) {
+                    showFieldError(field, 'This field is required');
                     isValid = false;
                 }
-
-                console.log('Validation result for step', currentStep, ':', isValid);
-                return isValid;
-            }
-
-            function showFieldError(field, message) {
-                field.addClass('error');
-                field.siblings('.error-message').text(message).show();
-            }
-
-            // Real-time validation
-            $('input, select').on('blur', function() {
-                const field = $(this);
-                field.removeClass('error');
-                field.siblings('.error-message').hide();
-
-                if (field.prop('required') && !field.val().trim()) {
-                    showFieldError(field, 'This field is required');
-                }
             });
 
+            const email = currentStepElement.find('input[type="email"]');
+            if (email.length && email.val()) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email.val())) {
+                    showFieldError(email, 'Please enter a valid email address');
+                    isValid = false;
+                }
+            }
+
+            const password = currentStepElement.find('input[type="password"]');
+            if (password.length && password.val() && password.val().length < 6) {
+                showFieldError(password, 'Password must be at least 6 characters');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function showFieldError(field, message) {
+            field.addClass('error');
+            field.siblings('.error-message').text(message).show();
+        }
+
+        $('input, select').on('blur', function () {
+            const field = $(this);
+            field.removeClass('error');
+            field.siblings('.error-message').hide();
+
+            if (field.prop('required') && !field.val().trim()) {
+                showFieldError(field, 'This field is required');
+            }
         });
-    </script>
+    });
+</script>
+
 @endpush

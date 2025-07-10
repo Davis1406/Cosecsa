@@ -21,6 +21,20 @@
             color: #FEC503;
         }
 
+        .btn-login {
+            background-color: #a02626;
+            border-color: #a02626;
+            color: #fff;
+            height: 38px;
+            font-size: 14px;
+        }
+
+        .btn-login:hover {
+            background-color: #870f0f;
+            border-color: #870f0f;
+            color: #FEC503;
+        }
+
         .card.card-outline.card-primary {
             border-color: #FEC503;
         }
@@ -60,8 +74,7 @@
                     <input type="hidden" name="role" value="{{ $roleId }}">
 
                     <div class="mb-3">
-                        <input type="text" class="form-control" name="email" placeholder="Email or Username"
-                            required>
+                        <input type="text" class="form-control" name="email" placeholder="Email or Username" required>
                     </div>
 
                     <div class="mb-3">
@@ -72,7 +85,7 @@
                         <input type="checkbox" name="remember" class="form-check-input" id="remember">
                         <label class="form-check-label" for="remember">Remember Me</label>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-6">
                             <a href="{{ url('forget-password') }}"
@@ -82,8 +95,7 @@
                             </a>
                         </div>
                         <div class="col-6">
-                            <button type="submit" class="btn btn-primary btn-block"
-                                style="background-color: #a02626; border-color:#a02626; height: 38px; font-size: 14px;">
+                            <button type="submit" class="btn btn-login btn-block">
                                 Login
                             </button>
                         </div>

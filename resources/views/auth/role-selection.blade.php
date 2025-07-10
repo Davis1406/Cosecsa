@@ -72,7 +72,7 @@
                 <div class="row mt-4">
                     <div class="col-6">
                         <a href="{{ url('logout') }}" class="btn btn-secondary btn-block">
-                            <i class="fas fa-sign-out-alt"></i> Logout
+                            <i class="fas fa-sign-out-alt"></i> Reset Role
                         </a>
                     </div>
                     <div class="col-6">

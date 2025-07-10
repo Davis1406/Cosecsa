@@ -111,6 +111,7 @@ $(function () {
         "lengthChange": true,
         "autoWidth": false,
         "paging": true,
+        "stateSave": true,
         "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
         "columns": [
             { "visible": true },
@@ -128,6 +129,7 @@ $(function () {
     "responsive": true,
     "lengthChange": true,
     "autoWidth": false,
+    "stateSave": true,
     "paging": true,
     "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
     "columns": [

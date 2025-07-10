@@ -33,8 +33,8 @@
                         </div>
                     </div>
 
-                    <form id="examinerForm" method="POST" action="{{ route('examiner.selfUpdate', ['id' => $examiner->id]) }}"
-                        enctype="multipart/form-data">
+                    <form id="examinerForm" method="POST"
+                        action="{{ route('examiner.selfUpdate', ['id' => $examiner->id]) }}" enctype="multipart/form-data">
                         @csrf
                         <div class="form-content">
                             <!-- Step 1: Personal Information -->
@@ -211,7 +211,6 @@
                                         <label>2025 Exam Availability</label>
                                         <div class="checkbox-group exam-availability-group">
                                             @php
-                                                // Convert exam_availability from database to array
                                                 $selectedAvailability = [];
                                                 if ($examiner->history && $examiner->history->exam_availability) {
                                                     if (is_string($examiner->history->exam_availability)) {
@@ -225,23 +224,32 @@
                                             @endphp
 
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox"
+                                                <input class="form-check-input exam-option" type="checkbox"
                                                     name="exam_availability[]" id="mcs_2025" value="MCS"
                                                     {{ in_array('MCS', $selectedAvailability) ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="mcs_2025">
-                                                    MCS (12-13 Nov)
+                                                    MCS (12–13 Nov)
                                                 </label>
                                             </div>
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox"
+                                                <input class="form-check-input exam-option" type="checkbox"
                                                     name="exam_availability[]" id="fcs_2025" value="FCS"
                                                     {{ in_array('FCS', $selectedAvailability) ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="fcs_2025">
                                                     FCS (1–2 December)
                                                 </label>
                                             </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    name="exam_availability[]" id="not_available" value="Not Available"
+                                                    {{ in_array('Not Available', $selectedAvailability) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="not_available">
+                                                    Not Available
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
+
                                     <div class="form-group col-md-6 col-sm-12">
                                         <label>Shift (For MCS)</label>
                                         <select name="shift" class="form-control">
@@ -326,7 +334,7 @@
                                                         {{ $examiner->role_id == 2 ? 'checked' : '' }}>
                                                     <label class="form-check-label" for="observer">Observer</label>
                                                 </div>
-                                                    <div class="form-check form-check-inline">
+                                                <div class="form-check form-check-inline">
                                                     <input class="form-check-input" type="radio"
                                                         name="participation_type" id="none" value="None"
                                                         {{ $examiner->role_id == 3 ? 'checked' : '' }}>
@@ -1049,153 +1057,171 @@
 
         // Add this to your existing script section in the blade file
 
-// File size validation function
-function validateFileSize(file, maxSizeMB, fileType) {
-    const maxSize = maxSizeMB * 1024 * 1024; // Convert MB to bytes
-    
-    if (file.size > maxSize) {
-        return {
-            valid: false,
-            message: `${fileType} file size must be less than ${maxSizeMB}MB. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`
-        };
-    }
-    
-    return { valid: true, message: '' };
-}
+        // File size validation function
+        function validateFileSize(file, maxSizeMB, fileType) {
+            const maxSize = maxSizeMB * 1024 * 1024; // Convert MB to bytes
 
-// Show alert function
-function showFileAlert(message, type = 'error') {
-    // Remove existing alerts
-    $('.file-alert').remove();
-    
-    const alertClass = type === 'error' ? 'alert-danger' : 'alert-success';
-    const iconClass = type === 'error' ? 'fa-exclamation-triangle' : 'fa-check-circle';
-    
-    const alertHtml = `
+            if (file.size > maxSize) {
+                return {
+                    valid: false,
+                    message: `${fileType} file size must be less than ${maxSizeMB}MB. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`
+                };
+            }
+
+            return {
+                valid: true,
+                message: ''
+            };
+        }
+
+        // Show alert function
+        function showFileAlert(message, type = 'error') {
+            // Remove existing alerts
+            $('.file-alert').remove();
+
+            const alertClass = type === 'error' ? 'alert-danger' : 'alert-success';
+            const iconClass = type === 'error' ? 'fa-exclamation-triangle' : 'fa-check-circle';
+
+            const alertHtml = `
         <div class="alert ${alertClass} file-alert" style="margin-top: 10px; padding: 10px 15px; border-radius: 5px; display: flex; align-items: center;">
             <i class="fas ${iconClass}" style="margin-right: 10px;"></i>
             <span>${message}</span>
         </div>
     `;
-    
-    // Find the closest form-group and append the alert
-    return alertHtml;
-}
-
-// Update the file upload handlers in your existing script
-$('#passport_upload').on('change', function() {
-    const file = this.files[0];
-    const $formGroup = $(this).closest('.form-group');
-    
-    // Remove previous alerts
-    $formGroup.find('.file-alert').remove();
-    
-    if (file) {
-        // Validate file size (1MB for images)
-        const validation = validateFileSize(file, 1, 'Image');
-        
-        if (!validation.valid) {
-            // Show error alert
-            $formGroup.append(showFileAlert(validation.message, 'error'));
-            
-            // Reset the file input
-            $(this).val('');
-            $('#passportLabel').text('Upload Profile Image (JPG/PNG)');
-            $(this).parent().removeClass('has-file');
-            return;
+            // Find the closest form-group and append the alert
+            return alertHtml;
         }
-        
-        // Validate file type
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-        if (!allowedTypes.includes(file.type)) {
-            $formGroup.append(showFileAlert('Please select a valid image file (JPG, JPEG, PNG)', 'error'));
-            $(this).val('');
-            $('#passportLabel').text('Upload Profile Image (JPG/PNG)');
-            $(this).parent().removeClass('has-file');
-            return;
-        }
-        
-        // File is valid
-        const fileName = file.name;
-        $('#passportLabel').text(fileName);
-        $(this).parent().addClass('has-file');
-        $formGroup.append(showFileAlert('Image uploaded successfully!', 'success'));
-    } else {
-        $('#passportLabel').text('Upload Profile Image (JPG/PNG)');
-        $(this).parent().removeClass('has-file');
-    }
-});
 
-$('#cv_upload').on('change', function() {
-    const file = this.files[0];
-    const $formGroup = $(this).closest('.form-group');
-    
-    // Remove previous alerts
-    $formGroup.find('.file-alert').remove();
-    
-    if (file) {
-        // Validate file size (3MB for CV)
-        const validation = validateFileSize(file, 3, 'CV');
-        
-        if (!validation.valid) {
-            // Show error alert
-            $formGroup.append(showFileAlert(validation.message, 'error'));
-            
-            // Reset the file input
-            $(this).val('');
-            $('#cvLabel').text('Upload CV (PDF/DOC)');
-            $(this).parent().removeClass('has-file');
-            return;
-        }
-        
-        // Validate file type
-        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-        if (!allowedTypes.includes(file.type)) {
-            $formGroup.append(showFileAlert('Please select a valid CV file (PDF, DOC, DOCX)', 'error'));
-            $(this).val('');
-            $('#cvLabel').text('Upload CV (PDF/DOC)');
-            $(this).parent().removeClass('has-file');
-            return;
-        }
-        
-        // File is valid
-        const fileName = file.name;
-        $('#cvLabel').text(fileName);
-        $(this).parent().addClass('has-file');
-        $formGroup.append(showFileAlert('CV uploaded successfully!', 'success'));
-    } else {
-        $('#cvLabel').text('Upload CV (PDF/DOC)');
-        $(this).parent().removeClass('has-file');
-    }
-});
+        // Update the file upload handlers in your existing script
+        $('#passport_upload').on('change', function() {
+            const file = this.files[0];
+            const $formGroup = $(this).closest('.form-group');
 
-// Add validation before form submission
-$('#examinerForm').on('submit', function(e) {
-    let hasFileErrors = false;
-    
-    // Check if there are any file error alerts
-    $('.file-alert.alert-danger').each(function() {
-        hasFileErrors = true;
-    });
-    
-    if (hasFileErrors) {
-        e.preventDefault();
-        alert('Please fix the file upload errors before submitting the form.');
-        return false;
-    }
-    
-    // Continue with your existing form submission logic
-    if (validateCurrentStep()) {
-        $('#submitBtn').prop('disabled', true).html(
-            '<i class="fas fa-spinner fa-spin"></i> Updating...');
+            // Remove previous alerts
+            $formGroup.find('.file-alert').remove();
 
-        // Submit the form normally after a brief delay
-        setTimeout(() => {
-            this.submit();
-        }, 500);
-    } else {
-        e.preventDefault();
-    }
-});
+            if (file) {
+                // Validate file size (1MB for images)
+                const validation = validateFileSize(file, 1, 'Image');
+
+                if (!validation.valid) {
+                    // Show error alert
+                    $formGroup.append(showFileAlert(validation.message, 'error'));
+
+                    // Reset the file input
+                    $(this).val('');
+                    $('#passportLabel').text('Upload Profile Image (JPG/PNG)');
+                    $(this).parent().removeClass('has-file');
+                    return;
+                }
+
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                if (!allowedTypes.includes(file.type)) {
+                    $formGroup.append(showFileAlert('Please select a valid image file (JPG, JPEG, PNG)', 'error'));
+                    $(this).val('');
+                    $('#passportLabel').text('Upload Profile Image (JPG/PNG)');
+                    $(this).parent().removeClass('has-file');
+                    return;
+                }
+
+                // File is valid
+                const fileName = file.name;
+                $('#passportLabel').text(fileName);
+                $(this).parent().addClass('has-file');
+                $formGroup.append(showFileAlert('Image uploaded successfully!', 'success'));
+            } else {
+                $('#passportLabel').text('Upload Profile Image (JPG/PNG)');
+                $(this).parent().removeClass('has-file');
+            }
+        });
+
+        $('#cv_upload').on('change', function() {
+            const file = this.files[0];
+            const $formGroup = $(this).closest('.form-group');
+
+            // Remove previous alerts
+            $formGroup.find('.file-alert').remove();
+
+            if (file) {
+                // Validate file size (3MB for CV)
+                const validation = validateFileSize(file, 3, 'CV');
+
+                if (!validation.valid) {
+                    // Show error alert
+                    $formGroup.append(showFileAlert(validation.message, 'error'));
+
+                    // Reset the file input
+                    $(this).val('');
+                    $('#cvLabel').text('Upload CV (PDF/DOC)');
+                    $(this).parent().removeClass('has-file');
+                    return;
+                }
+
+                // Validate file type
+                const allowedTypes = ['application/pdf', 'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                ];
+                if (!allowedTypes.includes(file.type)) {
+                    $formGroup.append(showFileAlert('Please select a valid CV file (PDF, DOC, DOCX)', 'error'));
+                    $(this).val('');
+                    $('#cvLabel').text('Upload CV (PDF/DOC)');
+                    $(this).parent().removeClass('has-file');
+                    return;
+                }
+
+                // File is valid
+                const fileName = file.name;
+                $('#cvLabel').text(fileName);
+                $(this).parent().addClass('has-file');
+                $formGroup.append(showFileAlert('CV uploaded successfully!', 'success'));
+            } else {
+                $('#cvLabel').text('Upload CV (PDF/DOC)');
+                $(this).parent().removeClass('has-file');
+            }
+        });
+
+        // Add validation before form submission
+        $('#examinerForm').on('submit', function(e) {
+            let hasFileErrors = false;
+
+            // Check if there are any file error alerts
+            $('.file-alert.alert-danger').each(function() {
+                hasFileErrors = true;
+            });
+
+            if (hasFileErrors) {
+                e.preventDefault();
+                alert('Please fix the file upload errors before submitting the form.');
+                return false;
+            }
+
+            // Continue with your existing form submission logic
+            if (validateCurrentStep()) {
+                $('#submitBtn').prop('disabled', true).html(
+                    '<i class="fas fa-spinner fa-spin"></i> Updating...');
+
+                // Submit the form normally after a brief delay
+                setTimeout(() => {
+                    this.submit();
+                }, 500);
+            } else {
+                e.preventDefault();
+            }
+        });
+
+        // Handle mutually exclusive selection with "Not Available"
+        function toggleExamAvailabilityLogic() {
+            const notAvailableChecked = $('#not_available').is(':checked');
+            $('.exam-option').prop('disabled', notAvailableChecked);
+        }
+
+        $(document).ready(function() {
+            toggleExamAvailabilityLogic();
+
+            $('#not_available').on('change', function() {
+                toggleExamAvailabilityLogic();
+            });
+        });
     </script>
 @endpush

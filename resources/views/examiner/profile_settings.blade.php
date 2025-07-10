@@ -105,7 +105,9 @@
                                                     @if ($examiner->curriculum_vitae)
                                                         @php
                                                             $fileName = basename($examiner->curriculum_vitae);
-                                                            $filePath = asset('storage/app/public/' . $examiner->curriculum_vitae);
+                                                            $filePath = asset(
+                                                                'storage/app/public/' . $examiner->curriculum_vitae,
+                                                            );
                                                         @endphp
                                                         <a href="{{ $filePath }}" target="_blank"
                                                             class="btn btn-sm btn-primary"
@@ -338,7 +340,8 @@
                         <div class="col-12">
                             <div class="card border-0 shadow-sm">
                                 <div class="card-header bg-light">
-                                    <h6 class="mb-0"><i class="fas fa-calendar-check text-success"></i> 2025 Exam Availability</h6>
+                                    <h6 class="mb-0"><i class="fas fa-calendar-check text-success"></i> 2025 Exam
+                                        Availability</h6>
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
@@ -362,20 +365,33 @@
                                                                 $examiner->history->exam_availability;
                                                         }
                                                     }
+
+                                                    $hasMCS = in_array('MCS', $selectedAvailability);
+                                                    $hasFCS = in_array('FCS', $selectedAvailability);
+                                                    $notAvailable = in_array('Not Available', $selectedAvailability);
                                                 @endphp
 
-                                                @if (in_array('MCS', $selectedAvailability))
+                                                @if ($notAvailable)
                                                     <div class="d-flex align-items-center mb-2">
-                                                        <i class="fas fa-check-circle text-success mr-2"></i>
-                                                        <span class="font-weight-bold">MCS (12-13 Nov)</span>
+                                                        <i class="fas fa-times-circle text-danger mr-2"></i>
+                                                        <span class="font-weight-bold text-danger">Not Available</span>
                                                     </div>
                                                 @endif
 
-                                                @if (in_array('FCS', $selectedAvailability))
-                                                    <div class="d-flex align-items-center mb-2">
-                                                        <i class="fas fa-check-circle text-success mr-2"></i>
-                                                        <span class="font-weight-bold">FCS (1–2 December)</span>
-                                                    </div>
+                                                @if (!$notAvailable && ($hasMCS || $hasFCS))
+                                                    @if ($hasMCS)
+                                                        <div class="d-flex align-items-center mb-2">
+                                                            <i class="fas fa-check-circle text-success mr-2"></i>
+                                                            <span class="font-weight-bold">MCS (12–13 Nov)</span>
+                                                        </div>
+                                                    @endif
+
+                                                    @if ($hasFCS)
+                                                        <div class="d-flex align-items-center mb-2">
+                                                            <i class="fas fa-check-circle text-success mr-2"></i>
+                                                            <span class="font-weight-bold">FCS (1–2 December)</span>
+                                                        </div>
+                                                    @endif
                                                 @endif
 
                                                 @if (empty($selectedAvailability))

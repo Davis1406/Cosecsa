@@ -156,7 +156,9 @@ Route::get('admin/exams/add_examiner',  [ExamsController::class,'add']);
 Route::post('admin/exams/add_examiner', [ExamsController::class,'insert'])->name('examiners.add');
 Route::post('admin/exams/import', [ExamsController::class, 'importExaminers'])->name('exams.import.data');;
 Route::get('admin/exams/import', [ExamsController::class, 'import']);
-Route::get('admin/exams/view_examiner/{id}',  [ExamsController::class,'view'])->name('examiner.view');
+Route::post('admin/exams/view_examiner/{id}', [ExamsController::class, 'view']);
+
+// Route::get('admin/exams/view_examiner/{id}',  [ExamsController::class,'view'])->name('examiner.view');
 Route::get('admin/exams/edit_examiner/{id}', [ExamsController::class,'edit']);
 Route::post('admin/exams/edit_examiner/{id}', [ExamsController::class,'update'])->name('examiner.update');
 Route::get('admin/exams/examiner-confirmation', [ExamsController::class, 'ExaminerconfirmationView'])->name('examiner.examiner_confirmation');
