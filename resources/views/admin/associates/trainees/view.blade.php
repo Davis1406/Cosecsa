@@ -9,7 +9,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6" style="text-align: left">
-                    <a href="{{url('admin/associates/trainees/trainees')}}" class="btn btn-primary"> <span class="fas fa-arrow-left"></span> Trainees List</a>
+                    <a href="{{url('admin/associates/trainees/trainees')}}" class="btn btn-primary" style="background-color: #a02626; border:#a02626"> <span class="fas fa-arrow-left"></span> Trainees List</a>
                 </div>
             </div>
         </div><!-- /.container-fluid -->

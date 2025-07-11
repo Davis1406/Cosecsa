@@ -118,18 +118,18 @@ class User extends Authenticatable
             'programmes.name as programme_name',
             'countries.country_name as country_name',
             'categories.category_name as fellowship_type'
-
         )
             ->join('fellows', 'users.id', '=', 'fellows.user_id')
             ->leftJoin('programmes', 'fellows.programme_id', '=', 'programmes.id')
             ->leftJoin('categories', 'fellows.category_id', '=', 'categories.id')
             ->leftJoin('countries', 'fellows.country_id', '=', 'countries.id')
-            ->where('users.user_type', '7')
-            ->where('users.is_deleted', '=', '0');
+            ->join('user_roles', function ($join) {
+                $join->on('user_roles.user_id', '=', 'users.id')
+                    ->where('user_roles.is_active', '=', 1);
+            })
+            ->where('users.user_type', '7');
 
-        $return = $return->orderBy('id', 'asc')->get();
-
-        return $return;
+        return $return->orderBy('id', 'asc')->get();
     }
 
     static public function getMembers()
@@ -145,23 +145,22 @@ class User extends Authenticatable
             'members.*',
             'countries.country_name as country_name',
             'categories.category_name as membership_type'
-
         )
             ->join('members', 'users.id', '=', 'members.user_id')
             ->leftJoin('categories', 'members.category_id', '=', 'categories.id')
             ->leftJoin('countries', 'members.country_id', '=', 'countries.id')
-            ->where('users.user_type', '8')
-            ->where('users.is_deleted', '=', '0');
+            ->join('user_roles', function ($join) {
+                $join->on('user_roles.user_id', '=', 'users.id')
+                    ->where('user_roles.is_active', '=', 1);
+            })
+            ->where('users.user_type', '8');
 
-        $return = $return->orderBy('id', 'asc')->get();
-
-        return $return;
+        return $return->orderBy('id', 'asc')->get();
     }
 
-    // Updated getSingleExaminer method
+
     static public function getSingleExaminer($userId, $yearId = null)
     {
-        // Use current year if no year specified
         if (!$yearId) {
             $yearId = self::getCurrentYearId();
         }
@@ -180,16 +179,18 @@ class User extends Authenticatable
             ->join('examiners', 'users.id', '=', 'examiners.user_id')
             ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
             ->leftJoin('examiners_roles', 'examiners.role_id', '=', 'examiners_roles.id')
+            ->join('user_roles', function ($join) {
+                $join->on('user_roles.user_id', '=', 'users.id')
+                    ->where('user_roles.is_active', '=', 1);
+            })
             ->where('users.id', $userId)
             ->where('users.user_type', '9')
-            ->where('users.is_deleted', '=', '0')
             ->first();
 
         if (!$examiner) {
             return null;
         }
 
-        // Get groups for this examiner for the current year only
         $groups = \DB::table('exams_groups')
             ->join('examiners_groups', 'exams_groups.group_id', '=', 'examiners_groups.id')
             ->where('exams_groups.exm_id', $examiner->examin_id)
@@ -197,30 +198,24 @@ class User extends Authenticatable
             ->select('examiners_groups.id as group_id', 'examiners_groups.group_name', 'exams_groups.year_id')
             ->get();
 
-        // Get shifts for this examiner for the current year only
         $shifts = \DB::table('exams_shifts')
             ->where('exm_id', $examiner->examin_id)
             ->where('year_id', $yearId)
             ->select('shift', 'year_id')
             ->get();
 
-        // Get examiner history
         $history = \App\Models\ExaminerHistory::where('exm_id', $examiner->examin_id)->first();
 
-        // Add groups, shifts, and history data to examiner object
         $examiner->groups = $groups;
         $examiner->shifts = $shifts;
         $examiner->history = $history;
 
-        // Add convenience properties for the view
         $examiner->group_name = $groups->isNotEmpty() ? $groups->first()->group_name : null;
         $examiner->group_id = $groups->isNotEmpty() ? $groups->first()->group_id : null;
 
-        // Convert shift ID to readable name
         $examiner->shift_id = $shifts->isNotEmpty() ? $shifts->first()->shift : null;
         $examiner->shift = $shifts->isNotEmpty() ? self::getShiftName($shifts->first()->shift) : null;
 
-        // Add history convenience properties
         if ($history) {
             $examiner->virtual_mcs_participated = $history->virtual_mcs_participated;
             $examiner->fcs_participated = $history->fcs_participated;
@@ -231,13 +226,11 @@ class User extends Authenticatable
             $examiner->exam_availability = $history->exam_availability;
         }
 
-        // If multiple groups/shifts, concatenate them
         if ($groups->count() > 1) {
             $examiner->group_name = $groups->pluck('group_name')->implode(', ');
         }
 
         if ($shifts->count() > 1) {
-            // Store both ID and readable names for multiple shifts
             $examiner->shift_id = $shifts->pluck('shift')->implode(', ');
             $examiner->shift = $shifts->map(function ($shift) {
                 return self::getShiftName($shift->shift);
@@ -247,10 +240,9 @@ class User extends Authenticatable
         return $examiner;
     }
 
-    // Updated getExaminers method with current year filtering
+
     static public function getExaminers($yearId = null)
     {
-        // Use current year if no year specified
         if (!$yearId) {
             $yearId = self::getCurrentYearId();
         }
@@ -269,14 +261,15 @@ class User extends Authenticatable
             ->join('examiners', 'users.id', '=', 'examiners.user_id')
             ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
             ->leftJoin('examiners_roles', 'examiners.role_id', '=', 'examiners_roles.id')
-            ->where('users.user_type', '9')
-            ->where('users.is_deleted', '=', '0');
+            ->join('user_roles', function ($join) {
+                $join->on('user_roles.user_id', '=', 'users.id')
+                    ->where('user_roles.is_active', '=', 1);
+            })
+            ->where('users.user_type', '9');
 
         $examiners = $query->orderBy('users.id', 'asc')->get();
 
-        // Add groups, shifts, and history for each examiner for the current year only
         $examiners->each(function ($examiner) use ($yearId) {
-            // Get groups for this examiner for the current year
             $groups = \DB::table('exams_groups')
                 ->join('examiners_groups', 'exams_groups.group_id', '=', 'examiners_groups.id')
                 ->where('exams_groups.exm_id', $examiner->examin_id)
@@ -284,46 +277,38 @@ class User extends Authenticatable
                 ->select('examiners_groups.id as group_id', 'examiners_groups.group_name', 'exams_groups.year_id')
                 ->get();
 
-            // Get shifts for this examiner for the current year
             $shifts = \DB::table('exams_shifts')
                 ->where('exm_id', $examiner->examin_id)
                 ->where('year_id', $yearId)
                 ->select('shift', 'year_id')
                 ->get();
 
-            // Get examiner history
             $history = \App\Models\ExaminerHistory::where('exm_id', $examiner->examin_id)->first();
 
-            // Add to examiner object
             $examiner->groups = $groups;
             $examiner->shifts = $shifts;
             $examiner->history = $history;
 
-            // Add convenience properties
             $examiner->group_name = $groups->isNotEmpty() ? $groups->first()->group_name : null;
             $examiner->group_id = $groups->isNotEmpty() ? $groups->first()->group_id : null;
 
-            // Convert shift ID to readable name
             $examiner->shift_id = $shifts->isNotEmpty() ? $shifts->first()->shift : null;
             $examiner->shift = $shifts->isNotEmpty() ? self::getShiftName($shifts->first()->shift) : null;
 
-            // Add history convenience properties
             if ($history) {
                 $examiner->virtual_mcs_participated = $history->virtual_mcs_participated;
                 $examiner->fcs_participated = $history->fcs_participated;
-                // $examiner->participation_type = $history->role ? $history->role->role : null;
+                $examiner->participation_type = $history->role ? $history->role->role : null;
                 $examiner->hospital_type = $history->hospital_type;
                 $examiner->hospital_name = $history->hospital_name;
                 $examiner->examination_years = $history->examination_years;
             }
 
-            // Handle multiple groups/shifts
             if ($groups->count() > 1) {
                 $examiner->group_name = $groups->pluck('group_name')->implode(', ');
             }
 
             if ($shifts->count() > 1) {
-                // Store both ID and readable names for multiple shifts
                 $examiner->shift_id = $shifts->pluck('shift')->implode(', ');
                 $examiner->shift = $shifts->map(function ($shift) {
                     return self::getShiftName($shift->shift);
@@ -333,6 +318,7 @@ class User extends Authenticatable
 
         return $examiners;
     }
+
 
     // Updated getShiftName method to match your select options
     public static function getShiftName($shiftId)

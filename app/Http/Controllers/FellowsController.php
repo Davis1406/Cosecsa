@@ -166,28 +166,33 @@ class FellowsController extends Controller
 
         return redirect('admin/associates/fellows/list')->with('success', 'Fellow updated successfully');
     }
-
-    public function delete($id)
-    {
-        $user = User::find($id);
-        if (!$user) {
-            return redirect('admin/associates/fellows/list')->with('error', 'User not found');
-        }
-
-        $fellow = FellowsModel::where('user_id', $user->id)->first();
-        if (!$fellow) {
-            return redirect('admin/associates/fellows/list')->with('error', 'Fellow not found');
-        }
-
-        if ($user->user_type != 7) {
-            return redirect('admin/associates/fellows/list')->with('error', 'User is not a fellow');
-        }
-
-        $user->is_deleted = 1;
-        if ($user->save()) {
-            return redirect('admin/associates/fellows/list')->with('success', 'Fellow successfully deleted');
-        }
-
-        return redirect('admin/associates/fellows/list')->with('error', 'Failed to delete fellow');
+public function delete($id)
+{
+    $user = User::find($id);
+    if (!$user) {
+        return redirect('admin/associates/fellows/list')->with('error', 'User not found');
     }
+
+    $fellow = FellowsModel::where('user_id', $user->id)->first();
+    if (!$fellow) {
+        return redirect('admin/associates/fellows/list')->with('error', 'Fellow not found');
+    }
+
+    if ($user->user_type != 7) {
+        return redirect('admin/associates/fellows/list')->with('error', 'User is not a fellow');
+    }
+
+    // Soft deactivate roles
+    \DB::table('user_roles')
+        ->where('user_id', $user->id)
+        ->where('role_type', 7) // Fellow role
+        ->update([
+            'is_active' => 0,
+            'updated_at' => now()
+        ]);
+
+    return redirect('admin/associates/fellows/list')->with('success', 'Fellow successfully Deleted');
+}
+
+
 }

@@ -152,7 +152,6 @@ class CountryRepsController extends Controller
         return redirect('admin/associates/reps/list')->with('success', 'CR updated successfully');
     }
 
-
     public function delete($id)
     {
         $user = User::find($id);
@@ -171,8 +170,11 @@ class CountryRepsController extends Controller
             return redirect('admin/associates/reps/list')->with('error', 'User is not a CR');
         }
 
-        $user->is_deleted = 1;
-        $user->save();
+        // Soft delete via user_roles table
+        \DB::table('user_roles')
+            ->where('user_id', $user->id)
+            ->where('role_type', 5) // CR role type
+            ->update(['is_active' => 0]);
 
         return redirect('admin/associates/reps/list')->with('success', 'CR information successfully deleted');
     }

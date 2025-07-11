@@ -133,6 +133,24 @@
     .dropdown-menu .dropdown-item:hover i {
         color: #a02626;
     }
+
+
+    .paginate_button.active>.page-link {
+        background-color: #a02626 !important;
+        border-color: #a02626 !important;
+        color: white;
+    }
+
+    .paginate_button>.page-link {
+        color: #a02626;
+    }
+
+    .paginate_button>.page-link:focus,
+    .paginate_button.active>.page-link:focus {
+        box-shadow: none !important;
+        outline: none !important;
+    }
+
 </style>
 @endpush
 
