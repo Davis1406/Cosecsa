@@ -125,16 +125,143 @@ class ExamsController extends Controller
         }
     }
 
-    public function edit($id)
+    // public function edit($id, Request $request)
+    // {
+    //     $examiner = User::getExaminers()->firstWhere('examin_id', $id);
+    //     if (!$examiner) return redirect()->back()->with('error', 'Examiner not found');
+
+    //     // Get the `from` URL (fallback to examiners list if missing)
+    //     $from = $request->input('from', 'admin/exams/examiners');
+    //     $query = $request->except(['from', '_token']);
+    //     $backUrl = url($from) . (count($query) ? '?' . http_build_query($query) : '');
+
+    //     return view('admin.exams.edit_examiner', [
+    //         'header_title' => 'Edit Examiner',
+    //         'examiner' => $examiner,
+    //         'getCountry' => Country::getCountry(),
+    //         'groups' => DB::table('examiners_groups')->select('id', 'group_name')->get(),
+    //         'backUrl' => $backUrl,
+    //     ]);
+    // }
+
+
+    // public function update(Request $request, $id)
+    // {
+    //     DB::beginTransaction();
+
+    //     try {
+    //         $examiner = ExamsModel::findOrFail($id);
+    //         $user = User::findOrFail($examiner->user_id);
+
+    //         // Update basic user info
+    //         $user->update([
+    //             'name' => $request->name,
+    //             'email' => $request->email,
+    //             'password' => $request->password ? bcrypt($request->password) : $user->password
+    //         ]);
+
+    //         // Update examiner info
+    //         $examiner->update([
+    //             'gender' => $request->gender,
+    //             'examiner_id' => $request->examiner_id,
+    //             'country_id' => $request->country_id,
+    //             'mobile' => $request->mobile,
+    //             'specialty' => $request->specialty,
+    //             'subspecialty' => $request->subspecialty,
+    //             'role_id' => $request->participation_type === 'Examiner' ? 1 : ($request->participation_type === 'Observer' ? 2 : 3)
+    //         ]);
+
+    //         // Update user_roles
+    //         DB::table('user_roles')
+    //             ->where('user_id', $user->id)
+    //             ->where('role_type', 9)
+    //             ->update([
+    //                 'updated_at' => now(),
+    //                 'is_active' => 1,
+    //             ]);
+
+    //         // Update group
+    //         DB::table('exams_groups')->where('exm_id', $examiner->id)->delete();
+    //         DB::table('exams_groups')->insert([
+    //             'exm_id' => $examiner->id,
+    //             'group_id' => $request->group_id,
+    //             'year_id' => User::getCurrentYearId(),
+    //             'created_at' => now(),
+    //             'updated_at' => now(),
+    //         ]);
+
+    //         // Update shift
+    //         ExamsShift::where('exm_id', $examiner->id)
+    //             ->where('year_id', User::getCurrentYearId())->delete();
+
+    //         ExamsShift::create([
+    //             'exm_id' => $examiner->id,
+    //             'shift' => $request->shift,
+    //             'year_id' => User::getCurrentYearId()
+    //         ]);
+
+    //         // Handle Not Available logic
+    //         $availability = $request->exam_availability ?? [];
+    //         if (in_array('Not Available', $availability)) {
+    //             $availability = ['Not Available'];
+    //         }
+
+    //         ExaminerHistory::updateOrCreate(
+    //             ['exm_id' => $examiner->id],
+    //             [
+    //                 'virtual_mcs_participated' => $request->virtual_mcs_participated ?? null,
+    //                 'fcs_participated' => $request->fcs_participated ?? null,
+    //                 'participation_type' => $request->participation_type,
+    //                 'hospital_type' => $request->hospital_type ?? null,
+    //                 'hospital_name' => $request->hospital_name ?? null,
+    //                 'exam_availability' => json_encode($availability),
+    //                 'examination_years' => isset($request->examination_years) ? json_encode($request->examination_years) : null,
+    //             ]
+    //         );
+
+    //         DB::commit();
+
+    //         // ✅ Redirect back to the original page
+    //         $redirectUrl = $request->input('back_url') ?: 'admin/exams/examiners';
+    //         return redirect($redirectUrl)->with('success', 'Examiner updated successfully');
+
+    //     } catch (\Throwable $e) {
+    //         DB::rollback();
+    //         return back()->with('error', 'Update failed: ' . $e->getMessage());
+    //     }
+    // }
+
+
+    public function edit($id, Request $request)
     {
         $examiner = User::getExaminers()->firstWhere('examin_id', $id);
         if (!$examiner) return redirect()->back()->with('error', 'Examiner not found');
+
+        // Get the referring URL or fallback to examiners list
+        $from = $request->input('from');
+        $backUrl = null;
+
+        if ($from) {
+            // If 'from' parameter exists, use it
+            $query = $request->except(['from', '_token']);
+            $backUrl = url($from) . (count($query) ? '?' . http_build_query($query) : '');
+        } else {
+            // If no 'from' parameter, try to get from HTTP_REFERER
+            $referer = $request->header('referer');
+            if ($referer && str_contains($referer, url('/'))) {
+                $backUrl = $referer;
+            } else {
+                // Default fallback
+                $backUrl = url('admin/exams/examiners');
+            }
+        }
 
         return view('admin.exams.edit_examiner', [
             'header_title' => 'Edit Examiner',
             'examiner' => $examiner,
             'getCountry' => Country::getCountry(),
-            'groups' => DB::table('examiners_groups')->select('id', 'group_name')->get()
+            'groups' => DB::table('examiners_groups')->select('id', 'group_name')->get(),
+            'backUrl' => $backUrl,
         ]);
     }
 
@@ -146,12 +273,14 @@ class ExamsController extends Controller
             $examiner = ExamsModel::findOrFail($id);
             $user = User::findOrFail($examiner->user_id);
 
+            // Update basic user info
             $user->update([
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => $request->password ? bcrypt($request->password) : $user->password
             ]);
 
+            // Update examiner info
             $examiner->update([
                 'gender' => $request->gender,
                 'examiner_id' => $request->examiner_id,
@@ -162,15 +291,16 @@ class ExamsController extends Controller
                 'role_id' => $request->participation_type === 'Examiner' ? 1 : ($request->participation_type === 'Observer' ? 2 : 3)
             ]);
 
-            // Add this directly after
+            // Update user_roles
             DB::table('user_roles')
                 ->where('user_id', $user->id)
+                ->where('role_type', 9)
                 ->update([
-                    'role_type' => $request->participation_type === 'Examiner' ? 1 : ($request->participation_type === 'Observer' ? 2 : 3),
                     'updated_at' => now(),
+                    'is_active' => 1,
                 ]);
 
-            // update groups & shifts
+            // Update group
             DB::table('exams_groups')->where('exm_id', $examiner->id)->delete();
             DB::table('exams_groups')->insert([
                 'exm_id' => $examiner->id,
@@ -180,6 +310,7 @@ class ExamsController extends Controller
                 'updated_at' => now(),
             ]);
 
+            // Update shift
             ExamsShift::where('exm_id', $examiner->id)
                 ->where('year_id', User::getCurrentYearId())->delete();
 
@@ -189,76 +320,65 @@ class ExamsController extends Controller
                 'year_id' => User::getCurrentYearId()
             ]);
 
-            // New logic to handle "Not Available"
+            // Handle Not Available logic
             $availability = $request->exam_availability ?? [];
             if (in_array('Not Available', $availability)) {
                 $availability = ['Not Available'];
             }
 
-            // update history
             ExaminerHistory::updateOrCreate(
                 ['exm_id' => $examiner->id],
                 [
-                    'virtual_mcs_participated' => $request->virtual_mcs_PARTICIPATED ?? null,
-                    'fcs_participated' => $request->fcs_PARTICIPATED ?? null,
+                    'virtual_mcs_participated' => $request->virtual_mcs_participated ?? null,
+                    'fcs_participated' => $request->fcs_participated ?? null,
                     'participation_type' => $request->participation_type,
                     'hospital_type' => $request->hospital_type ?? null,
                     'hospital_name' => $request->hospital_name ?? null,
                     'exam_availability' => json_encode($availability),
-                    // 'exam_availability' => isset($request->exam_availability) ? json_encode($request->exam_availability) : null,
                     'examination_years' => isset($request->examination_years) ? json_encode($request->examination_years) : null,
                 ]
             );
 
             DB::commit();
-            return redirect('admin/exams/examiners')->with('success', 'Examiner updated successfully');
+
+            // Get the back URL from the form submission
+            $backUrl = $request->input('back_url');
+
+            // Validate the back URL to ensure it's from your domain
+            if ($backUrl && str_contains($backUrl, url('/'))) {
+                return redirect($backUrl)->with('success', 'Examiner updated successfully');
+            } else {
+                // Fallback to default page if back_url is invalid or missing
+                return redirect('admin/exams/examiners')->with('success', 'Examiner updated successfully');
+            }
         } catch (\Throwable $e) {
             DB::rollback();
             return back()->with('error', 'Update failed: ' . $e->getMessage());
         }
     }
 
-    // public function view($id)
-    // {
-    //     $examiner = User::getExaminers()->firstWhere('examin_id', $id);
-    //     if (!$examiner) return redirect()->back()->with('error', 'Examiner not found');
+    public function view($id, Request $request)
+    {
+        $examiner = User::getExaminers()->firstWhere('examin_id', $id);
+        if (!$examiner) return redirect()->back()->with('error', 'Examiner not found');
 
-    //     $qrCode = QrCode::size(70)
-    //         ->generate(url("/admin/exams/confirm-attendance/{$examiner->examin_id}"));
+        $from = $request->input('from', 'admin/exams/examiners');
+        $query = $request->except(['from', '_token']);
 
-    //     return view('admin.exams.view_examiner', [
-    //         'header_title' => 'View Examiner',
-    //         'examiner' => $examiner,
-    //         'getCountry' => Country::getCountry(),
-    //         'groups' => DB::table('examiners_groups')->select('id', 'group_name')->get(),
-    //         'qrCode' => $qrCode
-    //     ]);
-    // }
+        $backUrl = url($from) . (count($query) ? '?' . http_build_query($query) : '');
 
+        $qrCode = QrCode::size(70)
+            ->generate(url("/admin/exams/confirm-attendance/{$examiner->examin_id}"));
 
-
-public function view($id, Request $request)
-{
-    $examiner = User::getExaminers()->firstWhere('examin_id', $id);
-    if (!$examiner) return redirect()->back()->with('error', 'Examiner not found');
-
-    $from = $request->input('from', 'admin/exams/examiners');
-    $query = $request->except(['from', '_token']);
-
-    $backUrl = url($from) . (count($query) ? '?' . http_build_query($query) : '');
-
-    $qrCode = QrCode::size(70)
-        ->generate(url("/admin/exams/confirm-attendance/{$examiner->examin_id}"));
-
-    return view('admin.exams.view_examiner', [
-        'header_title' => 'View Examiner',
-        'examiner' => $examiner,
-        'getCountry' => Country::getCountry(),
-        'groups' => DB::table('examiners_groups')->select('id', 'group_name')->get(),
-        'qrCode' => $qrCode,
-        'backUrl' => $backUrl,
-    ]);
-}
+        return view('admin.exams.view_examiner', [
+            'header_title' => 'View Examiner',
+            'examiner' => $examiner,
+            'getCountry' => Country::getCountry(),
+            'groups' => DB::table('examiners_groups')->select('id', 'group_name')->get(),
+            'qrCode' => $qrCode,
+            'backUrl' => $backUrl,
+        ]);
+    }
 
     public function delete($id)
     {

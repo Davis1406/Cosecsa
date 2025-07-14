@@ -32,10 +32,10 @@
                             </div>
                         </div>
                     </div>
-
                     <form id="examinerForm" method="POST" action="{{ route('examiner.update', ['id' => $examiner->id]) }}"
                         enctype="multipart/form-data">
                         @csrf
+                        <input type="hidden" name="back_url" value="{{ $backUrl ?? '' }}">
                         <div class="form-content">
                             <!-- Step 1: Personal Information -->
                             <div class="form-step active" data-step="1">
@@ -240,10 +240,11 @@
                                                 </label>
                                             </div>
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="not_available_2025">
-                                                <label class="form-check-label" for="not_available_2025"
-                                                    style="color: #a02626;">
-                                                    <strong>Not Available</strong>
+                                                <input class="form-check-input" type="checkbox"
+                                                    name="exam_availability[]" id="not_available" value="Not Available"
+                                                    {{ in_array('Not Available', $selectedAvailability) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="not_available">
+                                                    Not Available
                                                 </label>
                                             </div>
                                         </div>
@@ -928,166 +929,165 @@
 @endpush
 
 @push('scripts')
-  <script>
-    $(document).ready(function () {
-        let currentStep = 1;
-        const totalSteps = 3;
+    <script>
+        $(document).ready(function() {
+            let currentStep = 1;
+            const totalSteps = 3;
 
-        // Initialize
-        updateUI();
+            // Initialize
+            updateUI();
 
-        // === NEW: Exam Availability Logic ===
-        function toggleExamOptions() {
-            const isChecked = $('#not_available_2025').is(':checked');
-            $('.exam-option').prop('disabled', isChecked).prop('checked', false);
-        }
-
-        $('#not_available_2025').on('change', toggleExamOptions);
-
-        // On load: auto-check Not Available if no exam options are selected
-        if (!$('.exam-option:checked').length) {
-            $('#not_available_2025').prop('checked', true);
-            toggleExamOptions();
-        }
-
-        // File upload handlers
-        $('#passport_upload').on('change', function () {
-            const fileName = this.files[0]?.name || 'Upload Profile Image (JPG/PNG)';
-            $('#passportLabel').text(fileName);
-            $(this).parent().toggleClass('has-file', this.files.length > 0);
-        });
-
-        $('#cv_upload').on('change', function () {
-            const fileName = this.files[0]?.name || 'Upload CV (PDF/DOC)';
-            $('#cvLabel').text(fileName);
-            $(this).parent().toggleClass('has-file', this.files.length > 0);
-        });
-
-        // Next button
-        $(document).on('click', '#nextBtn', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            if (validateCurrentStep()) {
-                if (currentStep < totalSteps) {
-                    currentStep++;
-                    updateUI();
-                }
-            }
-        });
-
-        // Previous button
-        $(document).on('click', '#prevBtn', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            if (currentStep > 1) {
-                currentStep--;
-                updateUI();
-            }
-        });
-
-        // Form submission
-        $('#examinerForm').on('submit', function (e) {
-            e.preventDefault();
-
-            if (validateCurrentStep()) {
-                $('#submitBtn').prop('disabled', true).html(
-                    '<i class="fas fa-spinner fa-spin"></i> Updating...');
-                setTimeout(() => {
-                    this.submit();
-                }, 500);
-            }
-        });
-
-        function updateUI() {
-            $('.form-step').removeClass('active').hide();
-            setTimeout(() => {
-                $(`.form-step[data-step="${currentStep}"]`).addClass('active').show();
-            }, 50);
-
-            const progressPercent = ((currentStep - 1) / (totalSteps - 1)) * 100;
-            $('#progressFill').css('width', progressPercent + '%');
-
-            $('.progress-step, .step-label').removeClass('active completed');
-
-            for (let i = 1; i <= totalSteps; i++) {
-                const step = $(`.progress-step[data-step="${i}"]`);
-                const label = step.find('.step-label');
-
-                if (i < currentStep) {
-                    step.addClass('completed');
-                    step.find('i').removeClass().addClass('fas fa-check');
-                } else if (i === currentStep) {
-                    step.addClass('active');
-                    label.addClass('active');
-                    step.find('i').removeClass().addClass(getStepIcon(i));
-                } else {
-                    step.find('i').removeClass().addClass(getStepIcon(i));
-                }
+            // === NEW: Exam Availability Logic ===
+            function toggleExamOptions() {
+                const isChecked = $('#not_available_2025').is(':checked');
+                $('.exam-option').prop('disabled', isChecked).prop('checked', false);
             }
 
-            $('#prevBtn').toggle(currentStep > 1);
-            $('#nextBtn').toggle(currentStep < totalSteps);
-            $('#submitBtn').toggle(currentStep === totalSteps);
-        }
+            $('#not_available_2025').on('change', toggleExamOptions);
 
-        function getStepIcon(step) {
-            return step === 1 ? 'fas fa-user' :
-                   step === 2 ? 'fas fa-id-card' :
-                   'fas fa-history';
-        }
+            // On load: auto-check Not Available if no exam options are selected
+            if (!$('.exam-option:checked').length) {
+                $('#not_available_2025').prop('checked', true);
+                toggleExamOptions();
+            }
 
-        function validateCurrentStep() {
-            let isValid = true;
-            const currentStepElement = $(`.form-step[data-step="${currentStep}"]`);
+            // File upload handlers
+            $('#passport_upload').on('change', function() {
+                const fileName = this.files[0]?.name || 'Upload Profile Image (JPG/PNG)';
+                $('#passportLabel').text(fileName);
+                $(this).parent().toggleClass('has-file', this.files.length > 0);
+            });
 
-            currentStepElement.find('.form-control').removeClass('error');
-            currentStepElement.find('.error-message').hide();
+            $('#cv_upload').on('change', function() {
+                const fileName = this.files[0]?.name || 'Upload CV (PDF/DOC)';
+                $('#cvLabel').text(fileName);
+                $(this).parent().toggleClass('has-file', this.files.length > 0);
+            });
 
-            currentStepElement.find('input[required], select[required]').each(function () {
-                const field = $(this);
-                const value = field.val() ? field.val().trim() : '';
+            // Next button
+            $(document).on('click', '#nextBtn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
 
-                if (!value) {
-                    showFieldError(field, 'This field is required');
-                    isValid = false;
+                if (validateCurrentStep()) {
+                    if (currentStep < totalSteps) {
+                        currentStep++;
+                        updateUI();
+                    }
                 }
             });
 
-            const email = currentStepElement.find('input[type="email"]');
-            if (email.length && email.val()) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email.val())) {
-                    showFieldError(email, 'Please enter a valid email address');
+            // Previous button
+            $(document).on('click', '#prevBtn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (currentStep > 1) {
+                    currentStep--;
+                    updateUI();
+                }
+            });
+
+            // Form submission
+            $('#examinerForm').on('submit', function(e) {
+                e.preventDefault();
+
+                if (validateCurrentStep()) {
+                    $('#submitBtn').prop('disabled', true).html(
+                        '<i class="fas fa-spinner fa-spin"></i> Updating...');
+                    setTimeout(() => {
+                        this.submit();
+                    }, 500);
+                }
+            });
+
+            function updateUI() {
+                $('.form-step').removeClass('active').hide();
+                setTimeout(() => {
+                    $(`.form-step[data-step="${currentStep}"]`).addClass('active').show();
+                }, 50);
+
+                const progressPercent = ((currentStep - 1) / (totalSteps - 1)) * 100;
+                $('#progressFill').css('width', progressPercent + '%');
+
+                $('.progress-step, .step-label').removeClass('active completed');
+
+                for (let i = 1; i <= totalSteps; i++) {
+                    const step = $(`.progress-step[data-step="${i}"]`);
+                    const label = step.find('.step-label');
+
+                    if (i < currentStep) {
+                        step.addClass('completed');
+                        step.find('i').removeClass().addClass('fas fa-check');
+                    } else if (i === currentStep) {
+                        step.addClass('active');
+                        label.addClass('active');
+                        step.find('i').removeClass().addClass(getStepIcon(i));
+                    } else {
+                        step.find('i').removeClass().addClass(getStepIcon(i));
+                    }
+                }
+
+                $('#prevBtn').toggle(currentStep > 1);
+                $('#nextBtn').toggle(currentStep < totalSteps);
+                $('#submitBtn').toggle(currentStep === totalSteps);
+            }
+
+            function getStepIcon(step) {
+                return step === 1 ? 'fas fa-user' :
+                    step === 2 ? 'fas fa-id-card' :
+                    'fas fa-history';
+            }
+
+            function validateCurrentStep() {
+                let isValid = true;
+                const currentStepElement = $(`.form-step[data-step="${currentStep}"]`);
+
+                currentStepElement.find('.form-control').removeClass('error');
+                currentStepElement.find('.error-message').hide();
+
+                currentStepElement.find('input[required], select[required]').each(function() {
+                    const field = $(this);
+                    const value = field.val() ? field.val().trim() : '';
+
+                    if (!value) {
+                        showFieldError(field, 'This field is required');
+                        isValid = false;
+                    }
+                });
+
+                const email = currentStepElement.find('input[type="email"]');
+                if (email.length && email.val()) {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(email.val())) {
+                        showFieldError(email, 'Please enter a valid email address');
+                        isValid = false;
+                    }
+                }
+
+                const password = currentStepElement.find('input[type="password"]');
+                if (password.length && password.val() && password.val().length < 6) {
+                    showFieldError(password, 'Password must be at least 6 characters');
                     isValid = false;
                 }
+
+                return isValid;
             }
 
-            const password = currentStepElement.find('input[type="password"]');
-            if (password.length && password.val() && password.val().length < 6) {
-                showFieldError(password, 'Password must be at least 6 characters');
-                isValid = false;
+            function showFieldError(field, message) {
+                field.addClass('error');
+                field.siblings('.error-message').text(message).show();
             }
 
-            return isValid;
-        }
+            $('input, select').on('blur', function() {
+                const field = $(this);
+                field.removeClass('error');
+                field.siblings('.error-message').hide();
 
-        function showFieldError(field, message) {
-            field.addClass('error');
-            field.siblings('.error-message').text(message).show();
-        }
-
-        $('input, select').on('blur', function () {
-            const field = $(this);
-            field.removeClass('error');
-            field.siblings('.error-message').hide();
-
-            if (field.prop('required') && !field.val().trim()) {
-                showFieldError(field, 'This field is required');
-            }
+                if (field.prop('required') && !field.val().trim()) {
+                    showFieldError(field, 'This field is required');
+                }
+            });
         });
-    });
-</script>
-
+    </script>
 @endpush
