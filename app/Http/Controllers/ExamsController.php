@@ -316,7 +316,7 @@ class ExamsController extends Controller
 
             ExamsShift::create([
                 'exm_id' => $examiner->id,
-                'shift' => $request->shift,
+                'shift' => $request->filled('shift') ? $request->shift : null,
                 'year_id' => User::getCurrentYearId()
             ]);
 
@@ -379,40 +379,66 @@ class ExamsController extends Controller
             'backUrl' => $backUrl,
         ]);
     }
+public function delete($id)
+{
+    $user = User::find($id);
 
-    public function delete($id)
-    {
-        $user = User::find($id);
-
-        if (!$user) {
-            return redirect('admin/exams/examiners')->with('error', 'User not found');
-        }
-
-        $examiner = ExamsModel::where('user_id', $user->id)->first();
-
-        if (!$examiner) {
-            return redirect('admin/exams/examiners')->with('error', 'Examiner not found');
-        }
-
-        if ($user->user_type != 9) {
-            return redirect('admin/exams/examiners')->with('error', 'User is not an Examiner');
-        }
-
-        $user->is_deleted = 1;
-
-        if ($user->save()) {
-            return redirect('admin/exams/examiners')->with('success', 'Examimer successfully deleted');
-        }
-
-        return redirect('admin/exams/examiners')->with('error', 'Failed to delete examiners information');
+    if (!$user) {
+        return redirect('admin/exams/examiners')->with('error', 'User not found');
     }
 
+    $examiner = ExamsModel::where('user_id', $user->id)->first();
 
-    //Examiner Confirmation View
+    if (!$examiner) {
+        return redirect('admin/exams/examiners')->with('error', 'Examiner not found');
+    }
 
-    public function ExaminerconfirmationView()
+    if ($user->user_type != 9) {
+        return redirect('admin/exams/examiners')->with('error', 'User is not an Examiner');
+    }
+
+    $updated = DB::table('user_roles')
+        ->where('user_id', $user->id)
+        ->where('role_type', 9)
+        ->update(['is_active' => 0, 'updated_at' => now()]);
+
+    if ($updated) {
+        return redirect('admin/exams/examiners')->with('success', 'Examiner successfully deactivated');
+    }
+
+    return redirect('admin/exams/examiners')->with('error', 'Failed to deactivate examiner');
+}
+
+
+    /**
+     * Generate visual report for examiner confirmations
+     */
+    public function generateVisualReport()
     {
-        $getExaminers = DB::table('examiners')
+        $getExaminers = $this->getExaminersData();
+
+        // Process availability data
+        $availabilityData = $this->processAvailabilityData($getExaminers);
+
+        // Process participation data
+        $participationData = $this->processParticipationData($getExaminers);
+
+        // Process country data
+        $countryData = $this->processCountryData($getExaminers);
+
+        $data = [
+            'availabilityData' => $availabilityData,
+            'participationData' => $participationData,
+            'countryData' => $countryData,
+            'header_title' => 'Examiner Confirmation Visual Report'
+        ];
+
+        return view('admin.exams.visual_report', $data);
+    }
+
+    private function getExaminersData()
+    {
+        return DB::table('examiners')
             ->join('examiners_history', 'examiners.id', '=', 'examiners_history.exm_id')
             ->leftJoin('users', 'examiners.user_id', '=', 'users.id')
             ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
@@ -464,6 +490,77 @@ class ExamsController extends Controller
             ->groupBy('examiners.id')
             ->orderBy('examiners.id', 'desc')
             ->get();
+    }
+
+    private function processAvailabilityData($examiners)
+    {
+        $availabilityCount = [
+            'FCS' => 0,
+            'MCS' => 0,
+            'FCS and MCS' => 0,
+            'Not Available' => 0
+        ];
+
+        foreach ($examiners as $examiner) {
+            $availability = [];
+
+            if (!empty($examiner->exam_availability)) {
+                $decoded = json_decode($examiner->exam_availability, true);
+
+                if (is_string($decoded)) {
+                    $availability = json_decode($decoded, true) ?: [];
+                } elseif (is_array($decoded)) {
+                    $availability = $decoded;
+                } else {
+                    $cleaned = str_replace('\\"', '"', $examiner->exam_availability);
+                    $availability = json_decode($cleaned, true) ?: [];
+                }
+            }
+
+            if (in_array('Not Available', $availability)) {
+                $availabilityCount['Not Available']++;
+            } elseif (in_array('FCS', $availability) && in_array('MCS', $availability)) {
+                $availabilityCount['FCS and MCS']++;
+            } elseif (in_array('FCS', $availability)) {
+                $availabilityCount['FCS']++;
+            } elseif (in_array('MCS', $availability)) {
+                $availabilityCount['MCS']++;
+            }
+        }
+
+        return $availabilityCount;
+    }
+
+    private function processParticipationData($examiners)
+    {
+        $participationCount = [];
+
+        foreach ($examiners as $examiner) {
+            $type = $examiner->participation_type ?? 'Unknown';
+            $participationCount[$type] = ($participationCount[$type] ?? 0) + 1;
+        }
+
+        return $participationCount;
+    }
+
+    private function processCountryData($examiners)
+    {
+        $countryCount = [];
+
+        foreach ($examiners as $examiner) {
+            $country = $examiner->country_name ?? 'Unknown';
+            $countryCount[$country] = ($countryCount[$country] ?? 0) + 1;
+        }
+
+        // Sort by count descending and take top 10
+        arsort($countryCount);
+        return array_slice($countryCount, 0, 10, true);
+    }
+
+    // Update your existing ExaminerconfirmationView method
+    public function ExaminerconfirmationView()
+    {
+        $getExaminers = $this->getExaminersData();
 
         $data['getExaminers'] = $getExaminers;
         $data['header_title'] = 'Examiner Confirmation';
@@ -1001,8 +1098,8 @@ class ExamsController extends Controller
 
                 \DB::table('exams_shifts')->insert([
                     'exm_id' => $examiner->id,
-                    'shift' => $validated['shift'],
                     'year_id' => $currentYear,
+                    'shift' => $request->filled('shift') ? $validated['shift'] : null,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);

@@ -171,6 +171,9 @@ Route::get('admin/exams/gs_station_results/{candidate_id}/{station_id}', [ExamsC
 Route::get('admin/exams/confirm-attendance/{examiner_id}', [ExamsController::class, 'showAttendanceConfirmation'])->name('exams.confirm.attendance');
 // Register attendance via Form (POST) - with CSRF protection
 Route::post('admin/exams/confirm-attendance-registration/{examiner_id}', [ExamsController::class, 'confirmAttendanceRegistration'])->name('exams.register.attendance');
+// Add these routes to your routes/web.php file (or wherever your admin routes are defined)
+Route::get('admin/exams/visual_report', [ExamsController::class, 'generateVisualReport'])->name('admin.exams.visual_report');
+Route::get('admin/exams/export_report_csv', [ExamsController::class, 'exportReportCSV'])->name('admin.exams.export_report_csv');
 
 
 

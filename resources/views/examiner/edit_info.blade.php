@@ -253,7 +253,7 @@
                                     <div class="form-group col-md-6 col-sm-12">
                                         <label>Shift (For MCS)</label>
                                         <select name="shift" class="form-control">
-                                            <option value="" disabled {{ !$examiner->shift_id ? 'selected' : '' }}>
+                                            <option value="" {{ is_null($examiner->shift_id) ? 'selected' : '' }}>
                                                 Select Shift...
                                             </option>
                                             <option value="1" {{ $examiner->shift_id == 1 ? 'selected' : '' }}>

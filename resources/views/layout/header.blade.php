@@ -224,9 +224,15 @@
 
                                 <li class="nav-item">
                                     <a href="{{ url('admin/exams/examiner-confirmation') }}"
-                                        class="nav-link @if (Request::segment(3) == 'examiner-confirmation' ||
+                                        class="nav-link
+                                            @if (
+                                                Request::segment(3) == 'examiner-confirmation' ||
                                                 (Request::segment(3) == 'view_examiner' && request('from') == 'admin/exams/examiner-confirmation') ||
-                                                (Request::segment(3) == 'edit_examiner' && request('from') == 'admin/exams/examiner-confirmation')) active @endif">
+                                                (Request::segment(3) == 'edit_examiner' && request('from') == 'admin/exams/examiner-confirmation') ||
+                                                Request::segment(3) == 'visual_report'
+                                            )
+                                                active
+                                            @endif">
                                         <i class="fas fa-check nav-icon"></i>
                                         <p>Examiner Confirmation</p>
                                     </a>

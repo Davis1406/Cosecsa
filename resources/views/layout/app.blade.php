@@ -93,7 +93,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <!-- ChartJS -->
-    <script src="{{ url('public/plugins/chart.js/Chart.min.js') }}"></script>
+    {{-- <script src="{{ url('public/plugins/chart.js/Chart.min.js') }}"></script> --}}
     <!-- Sparkline -->
     <script src="{{ url('public/plugins/sparklines/sparkline.js') }}"></script>
     <!-- JQVMap -->
@@ -115,6 +115,9 @@
 
     <!-- ChartJS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
 
     <!-- DateTimePicker -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tempus-dominus/5.39.0/js/tempus-dominus.min.js"></script>

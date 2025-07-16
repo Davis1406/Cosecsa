@@ -18,6 +18,40 @@
         .popover {
             min-width: 100px;
         }
+
+        .report-buttons {
+            margin-bottom: 20px;
+        }
+
+        .report-btn {
+            background-color: #a02626;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        .report-btn:hover {
+            background-color: #8b1f1f;
+            color: white;
+            text-decoration: none;
+        }
+
+        .report-btn i {
+            margin-right: 5px;
+        }
+
+        .export-btn {
+            background-color: #28a745;
+        }
+
+        .export-btn:hover {
+            background-color: #218838;
+        }
     </style>
 @endpush
 
@@ -46,6 +80,13 @@
                                 </div>
                                 <!-- /.card-header -->
                                 <div class="card-body">
+                                    <!-- Report Buttons -->
+                                    <div class="report-buttons">
+                                        <a href="{{ url('admin/exams/visual_report') }}" class="report-btn">
+                                            <i class="fa fa-chart-bar"></i> Visual Report
+                                        </a>
+                                    </div>
+
                                     <table id="examinerconfirmationtable" class="table table-bordered table-striped">
                                         <thead>
                                             <tr>

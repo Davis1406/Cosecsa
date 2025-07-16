@@ -205,8 +205,8 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="row">
+                                    <!-- Exam Availability -->
                                     <div class="form-group col-md-6 col-sm-12">
                                         <label>2025 Exam Availability</label>
                                         <div class="checkbox-group exam-availability-group">
@@ -227,43 +227,35 @@
                                                 <input class="form-check-input exam-option" type="checkbox"
                                                     name="exam_availability[]" id="mcs_2025" value="MCS"
                                                     {{ in_array('MCS', $selectedAvailability) ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="mcs_2025">
-                                                    MCS (12–13 Nov)
-                                                </label>
+                                                <label class="form-check-label" for="mcs_2025">MCS (12–13 Nov)</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input exam-option" type="checkbox"
                                                     name="exam_availability[]" id="fcs_2025" value="FCS"
                                                     {{ in_array('FCS', $selectedAvailability) ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="fcs_2025">
-                                                    FCS (1–2 December)
-                                                </label>
+                                                <label class="form-check-label" for="fcs_2025">FCS (1–2 December)</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
                                                     name="exam_availability[]" id="not_available" value="Not Available"
                                                     {{ in_array('Not Available', $selectedAvailability) ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="not_available">
-                                                    Not Available
-                                                </label>
+                                                <label class="form-check-label" for="not_available">Not Available</label>
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Shift -->
                                     <div class="form-group col-md-6 col-sm-12">
                                         <label>Shift (For MCS)</label>
                                         <select name="shift" class="form-control">
-                                            <option value="" disabled {{ !$examiner->shift_id ? 'selected' : '' }}>
-                                                Select Shift...
-                                            </option>
+                                            <option value="" {{ is_null($examiner->shift_id) ? 'selected' : '' }}>
+                                                Select Shift...</option>
                                             <option value="1" {{ $examiner->shift_id == 1 ? 'selected' : '' }}>
-                                                Morning
-                                            </option>
+                                                Morning</option>
                                             <option value="2" {{ $examiner->shift_id == 2 ? 'selected' : '' }}>
-                                                Morning & Afternoon
-                                            </option>
+                                                Morning & Afternoon</option>
                                             <option value="3" {{ $examiner->shift_id == 3 ? 'selected' : '' }}>
-                                                Afternoon
-                                            </option>
+                                                Afternoon</option>
                                         </select>
                                     </div>
                                 </div>
