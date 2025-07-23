@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ExaminersImport;
 use App\Models\User;
-use Auth;
 use Hash;
 use App\Models\Country;
 use App\Models\ExamsModel;
@@ -18,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class ExamsController extends Controller
 {
@@ -936,7 +936,7 @@ public function delete($id)
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $currentExaminer->id,
+            'email' => 'required|email',
             'password' => 'nullable|min:6',
             'gender' => 'nullable|in:Male,Female',
             'curriculum_vitae' => 'nullable|file|mimes:pdf,doc,docx|max:3072', // 3MB = 3072 KB
