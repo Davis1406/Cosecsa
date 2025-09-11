@@ -99,6 +99,8 @@
                                                 <th>MCS Shift</th>
                                                 <th>Participation</th>
                                                 <th>Hospital</th>
+                                                <th>Mobile Number</th>
+                                                <th>Updated Date</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -151,6 +153,8 @@
                                                     </td>
                                                     <td>{{ $value->participation_type ?? '-' }}</td>
                                                     <td>{{ $value->hospital_name ?? '-' }}</td>
+                                                    <td>{{ $value->mobile ?? '-' }}</td>
+                                                    <td>{{ $value->history_updated_at ?? '-'}}</td>
                                                     <td>
                                                         <div class="dropdown">
                                                             <button class="btn btn-sm btn-light dropdown-toggle"

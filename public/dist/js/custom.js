@@ -6,32 +6,81 @@ $(function () {
         "stateSave": true,
         "paging": true,
         "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false }
+        "columns": [{
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            }
         ]
     }).buttons().container().appendTo('#traineestable_wrapper .col-md-6:eq(0)');
 
@@ -42,28 +91,69 @@ $(function () {
         "stateSave": true,
         "paging": true,
         "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false },
-            { "visible": false }
+        "columns": [{
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": false
+            }
         ]
     }).buttons().container().appendTo('#candidatestable_wrapper .col-md-6:eq(0)');
 
@@ -75,17 +165,36 @@ $(function () {
         "paging": true,
         "stateSave": true,
         "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": false },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true }
+        "columns": [{
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": false
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            }
         ]
     }).buttons().container().appendTo('#trainerstable_wrapper .col-md-6:eq(0)');
 
@@ -97,15 +206,28 @@ $(function () {
         "paging": true,
         "stateSave": true,
         "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true }
-      
+        "columns": [{
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            }
+
         ]
     }).buttons().container().appendTo('#fellowstable_wrapper .col-md-6:eq(0)');
 
@@ -117,38 +239,51 @@ $(function () {
         "paging": true,
         "stateSave": true,
         "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true }
-      
+        "columns": [{
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            }
+
         ]
     }).buttons().container().appendTo('#examinerconfirmationtable_wrapper .col-md-6:eq(0)');
 
+
+
     var examinerconfirmationtable = $("#examinerconfirmationtable").DataTable({
-    "responsive": true,
-    "lengthChange": true,
-    "autoWidth": false,
-    "stateSave": true,
-    "paging": true,
-    "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-    "columns": [
-        { "visible": true }, // #
-        { "visible": true }, // Name
-        { "visible": true }, // Email
-        { "visible": true }, // Country
-        { "visible": true }, // Specialty
-        { "visible": true }, // Availability
-        { "visible": true }, // MCS Shift
-        { "visible": true }, // Participation
-        { "visible": true }, // Hospital
-        { "visible": true } // Action
-    ]
-}).buttons().container().appendTo('#examinerconfirmationtable_wrapper .col-md-6:eq(0)');
+        "responsive": true,
+        "lengthChange": true,
+        "autoWidth": false,
+        "stateSave": true,
+        "paging": true,
+        "processing": true,
+        "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
+        "columnDefs": [{
+                "targets": [9, 10], // Hide Mobile Number and Updated Date columns
+                "visible": false
+            },
+            {
+                "targets": [11], // Make Action column non-orderable
+                "orderable": false
+            }
+        ]
+    }).buttons().container().appendTo('#examinerconfirmationtable_wrapper .col-md-6:eq(0)');
 
     var memberstable = $("#memberstable").DataTable({
         "responsive": true,
@@ -157,15 +292,28 @@ $(function () {
         "stateSave": true,
         "paging": true,
         "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true }
-      
+        "columns": [{
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            }
+
         ]
     }).buttons().container().appendTo('#memberstable_wrapper .col-md-6:eq(0)');
 
@@ -176,14 +324,27 @@ $(function () {
         "stateSave": true,
         "paging": true,
         "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true }
+        "columns": [{
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            }
         ]
     }).buttons().container().appendTo('#crstable_wrapper .col-md-6:eq(0)');
 
@@ -194,17 +355,36 @@ $(function () {
         "stateSave": true,
         "paging": true,
         "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true }
+        "columns": [{
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            }
         ]
     }).buttons().container().appendTo('#results_wrapper .col-md-6:eq(0)');
 
@@ -216,18 +396,39 @@ $(function () {
         "stateSave": true,
         "paging": true,
         "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true }
+        "columns": [{
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            }
         ]
     }).buttons().container().appendTo('#adminresultstable_wrapper .col-md-6:eq(0)');
 
@@ -238,18 +439,39 @@ $(function () {
         "stateSave": true,
         "paging": true,
         "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true }
+        "columns": [{
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            }
         ]
     }).buttons().container().appendTo('#gsresultstable_wrapper .col-md-6:eq(0)');
 
@@ -261,13 +483,24 @@ $(function () {
         "stateSave": true,
         "paging": true,
         "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true },
-            { "visible": true }
+        "columns": [{
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            }
         ]
     }).buttons().container().appendTo('#hospitalTable_wrapper .col-md-6:eq(0)');
 
@@ -354,10 +587,10 @@ $(function () {
         initPopovers();
     });
 
-    
-    document.addEventListener('DOMContentLoaded', function() {
+
+    document.addEventListener('DOMContentLoaded', function () {
         // Ensure the values are formatted as yyyy-mm on form submission
-        document.querySelector('form').addEventListener('submit', function(event) {
+        document.querySelector('form').addEventListener('submit', function (event) {
             const accreditedDateInput = document.getElementById('accredited_date');
             const expiryDateInput = document.getElementById('expiry_date');
 
