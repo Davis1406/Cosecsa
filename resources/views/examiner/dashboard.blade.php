@@ -27,10 +27,10 @@
                                 <select id="exam_type" name="exam_type" class="form-control" style="border-color: #FEC503;"
                                     onchange="navigateToExamPage(this.value)">
                                     <option value="">-- Select Exam Type --</option>
-                                    {{-- <option value="{{ url('examiner/examiner_form') }}">MCS</option>
-                                    <option value="{{ url('examiner/general_surgery') }}">FCS General Surgery</option> --}}
-                                     <option value="">MCS</option>
-                                    <option value="">FCS General Surgery</option>
+                                    <option value="{{ url('examiner/examiner_form') }}">MCS</option>
+                                    <option value="{{ url('examiner/general_surgery') }}">FCS General Surgery</option>
+                                     {{-- <option value="">MCS</option>
+                                    <option value="">FCS General Surgery</option> --}}
                                     <option value="">FCS Cardiothoracic</option>
                                     <option value="">FCS Urology</option>
                                     <option value="">FCS Paediatric</option>

@@ -21,15 +21,15 @@ class HospitalController extends Controller
             ->join('countries', 'countries.id', 'hospitals.country_id')
             ->where('hospitals.id', $id)
             ->first();
-    
+
         if ($hospital) {
-            $header_title = 'Hospital Details'; 
+            $header_title = 'Hospital Details';
             return view('admin.hospital.view_hospital', compact('hospital', 'header_title'));
         } else {
             return redirect('admin/hospital/list')->with('error', 'Hospital not found');
         }
     }
- 
+
 
     //Add New Hospital View
     public function add(){
@@ -50,22 +50,22 @@ class HospitalController extends Controller
         $save->save();
         return redirect('admin/hospital/list')->with('success',"Hospital successfully created");
     }
-    
+
     //edit Hospital
     public function edit($id){
-      
+
         $data['getRecord'] = HospitalModel::getSingleId($id);
         $data['countries'] = Country::all();
         if(!empty($data['getRecord'])){
 
             $data['header_title'] = "Edit Hospital";
             return view('admin.hospital.edit_hospital',$data);
-            
+
         }else{
 
             abort(404);
         }
-    
+
     }
 
        // Update Hospital
@@ -81,7 +81,7 @@ class HospitalController extends Controller
 
 
        public function delete($id){
-      
+
         $data = HospitalModel::getSingleId($id);
         $data->is_deleted = 1;
         $data->save();

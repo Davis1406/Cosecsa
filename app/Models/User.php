@@ -7,7 +7,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Auth;
-use Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Request;
 
 
 
@@ -365,55 +366,69 @@ class User extends Authenticatable
     }
 
 
-    // Get examiner candidates based on current groups and year
-    static public function getExaminerCandidates($userId = null, $yearId = null)
-    {
-        $userId = $userId ?? Auth::id();
-
-        // Use current year if no year specified
-        if (!$yearId) {
-            $yearId = self::getCurrentYearId();
-        }
-
-        // Get examiner's current group IDs for the specified year
-        $groupIds = \DB::table('examiners')
-            ->join('exams_groups', 'examiners.id', '=', 'exams_groups.exm_id')
-            ->where('examiners.user_id', $userId)
-            ->where('exams_groups.year_id', $yearId)
-            ->pluck('exams_groups.group_id')
-            ->toArray();
-
-        if (empty($groupIds)) {
-            return collect();
-        }
-
-        // Fetch candidates with matching group_ids
-        $candidates = self::select(
-            'users.id as user_id',
-            'users.name as name',
-            'users.email as user_email',
-            'users.user_type as user_type',
-            'candidates.id as candidates_id',
-            'candidates.user_id as c_id',
-            'candidates.group_id as candidate_group_id',
-            'candidates.*',
-            'hospitals.name as hospital_name',
-            'programmes.name as programme_name',
-            'examiners_groups.group_name as group_name',
-            'countries.country_name as country_name'
-        )
-            ->join('candidates', 'users.id', '=', 'candidates.user_id')
-            ->leftJoin('hospitals', 'candidates.hospital_id', '=', 'hospitals.id')
-            ->leftJoin('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
-            ->leftJoin('programmes', 'candidates.programme_id', '=', 'programmes.id')
-            ->leftJoin('countries', 'candidates.country_id', '=', 'countries.id')
-            ->whereIn('candidates.group_id', $groupIds)
-            ->where('users.is_deleted', '=', '0')
-            ->orderBy('candidates.id', 'asc')
-            ->get();
-
-        return $candidates;
+static public function getExaminerCandidates($userId = null, $yearId = null)
+{
+    $userId = $userId ?? Auth::id();
+    
+    // Use current year if no year specified
+    if (!$yearId) {
+        $yearId = self::getCurrentYearId();
     }
+    
+    // Get the actual year value (e.g., '2025') from years table
+    $currentYear = DB::table('years')
+        ->where('id', $yearId)
+        ->value('year_name'); 
+    
+    // Get examiner ID first
+    $examinerId = DB::table('examiners')
+        ->where('user_id', $userId)
+        ->value('id');
+    
+    if (!$examinerId) {
+        return collect();
+    }
+    
+    // Get examiner's group IDs for the specified year
+    $groupIds = \DB::table('exams_groups')
+        ->where('exm_id', $examinerId)
+        ->where('year_id', $yearId)
+        ->pluck('group_id')
+        ->toArray();
+    
+    if (empty($groupIds)) {
+        return collect();
+    }
+    
+    // Fetch candidates with matching group_ids AND exam_year
+    $candidates = self::select(
+        'users.id as user_id',
+        'users.name as name',
+        'users.email as user_email',
+        'users.user_type as user_type',
+        'candidates.id as candidates_id',
+        'candidates.user_id as c_id',
+        'candidates.group_id as candidate_group_id',
+        'candidates.exam_year',
+        'candidates.*',
+        'hospitals.name as hospital_name',
+        'programmes.name as programme_name',
+        'examiners_groups.group_name as group_name',
+        'countries.country_name as country_name'
+    )
+        ->join('candidates', 'users.id', '=', 'candidates.user_id')
+        ->leftJoin('hospitals', 'candidates.hospital_id', '=', 'hospitals.id')
+        ->leftJoin('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+        ->leftJoin('programmes', 'candidates.programme_id', '=', 'programmes.id')
+        ->leftJoin('countries', 'candidates.country_id', '=', 'countries.id')
+        ->whereIn('candidates.group_id', $groupIds)
+        ->where('candidates.exam_year', $currentYear) // Filter by exam year
+        ->where('users.is_deleted', '=', '0')
+        ->orderBy('candidates.id', 'asc')
+        ->get();
+    
+    return $candidates;
+}
 
     // Get candidates by specific group and year
     static public function getCandidatesByGroupAndYear($groupId, $yearId = null)

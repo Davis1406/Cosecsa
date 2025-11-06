@@ -153,7 +153,7 @@
         document.getElementById('msform').addEventListener('submit', function(event) {
             const total = parseFloat(document.getElementById('total_marks').value) || 0;
             if (total > 20) {
-                event.preventDefault(); // Prevent form submission
+                event.preventDefault();
                 alert('Cannot submit form. The total marks should be less than or equal to 20 per station.');
             }
         });
@@ -161,6 +161,9 @@
 
         function fetchCandidates(groupId) {
             if (!groupId) return;
+            
+            console.log('Fetching candidates for group:', groupId);
+            
             fetch(`/cosecsa/get-mcs-candidates/${groupId}`)
                 .then(response => {
                     if (!response.ok) {
@@ -169,14 +172,25 @@
                     return response.json();
                 })
                 .then(data => {
+                    console.log('Received candidates:', data);
+                    
                     let candidateSelect = document.getElementById('candidate_id');
                     candidateSelect.innerHTML = '<option value="">Choose a Candidate...</option>';
+                    
+                    if (data.length === 0) {
+                        candidateSelect.innerHTML += '<option value="">No candidates found</option>';
+                        return;
+                    }
+                    
                     data.forEach(candidate => {
                         candidateSelect.innerHTML +=
-                            `<option value="${candidate.cand_id}">${candidate.c_id}</option>`;
+                            `<option value="${candidate.candidates_id}">${candidate.candidate_id || candidate.name}</option>`;
                     });
                 })
-                .catch(error => console.error('Error fetching candidates:', error));
+                .catch(error => {
+                    console.error('Error fetching candidates:', error);
+                    alert('Error loading candidates. Please try again.');
+                });
         }
     </script>
 @endsection
