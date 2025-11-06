@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Carbon\Carbon;
 
-class CandidatesImport implements ToModel, WithHeadingRow 
+class CandidatesImport implements ToModel, WithHeadingRow
 {
 
   public function model(array $row)
@@ -58,10 +58,11 @@ class CandidatesImport implements ToModel, WithHeadingRow
         'invoice_date' => $invoiceDate,
         'amount_paid' => $row['amount_paid'],
         'invoice_status' => $row['invoice_status'],
-        'admission_year' => $row['admission_year'],
-        'exam_year' => $row['exam_year'],
+        'admission_year' => !empty($row['admission_year']) ? (int) $row['admission_year'] : null,
+        'exam_year' => !empty($row['exam_year']) ? strval($row['exam_year']) : null,
         'sponsor' => $row['sponsor'],
     ]);
+
 }
 
     private function convertDateFormat($date)

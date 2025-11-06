@@ -335,6 +335,8 @@ class User extends Authenticatable
 
     static public function getCandidates()
     {
+        $currentYear = date('Y'); // 2025
+
         $return = self::select(
             'users.id as user_id',
             'users.name as name',
@@ -350,7 +352,7 @@ class User extends Authenticatable
             'countries.country_name as country_name',
             'user_roles.role_type as role_type'
         )
-            ->join('candidates', 'users.id', '=', 'candidates.user_id')
+            ->leftJoin('candidates', 'users.id', '=', 'candidates.user_id') // ✅ changed to LEFT JOIN
             ->leftJoin('hospitals', 'candidates.hospital_id', '=', 'hospitals.id')
             ->leftJoin('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
             ->leftJoin('programmes', 'candidates.programme_id', '=', 'programmes.id')
@@ -359,47 +361,49 @@ class User extends Authenticatable
                 $join->on('user_roles.user_id', '=', 'users.id')
                     ->where('user_roles.is_active', '=', 1);
             })
-            ->where('users.user_type', '3') // Candidate user_type
-            ->where('users.is_deleted', '=', '0');
+            ->where('users.is_deleted', '=', '0')
+            ->where('candidates.exam_year', '=', strval($currentYear)); // cast to string for ENUM
 
         return $return->orderBy('candidates_id', 'asc')->get();
+
     }
 
 
-static public function getExaminerCandidates($userId = null, $yearId = null)
+
+    static public function getExaminerCandidates($userId = null, $yearId = null)
 {
     $userId = $userId ?? Auth::id();
-    
+
     // Use current year if no year specified
     if (!$yearId) {
         $yearId = self::getCurrentYearId();
     }
-    
+
     // Get the actual year value (e.g., '2025') from years table
     $currentYear = DB::table('years')
         ->where('id', $yearId)
-        ->value('year_name'); 
-    
+        ->value('year_name');
+
     // Get examiner ID first
     $examinerId = DB::table('examiners')
         ->where('user_id', $userId)
         ->value('id');
-    
+
     if (!$examinerId) {
         return collect();
     }
-    
+
     // Get examiner's group IDs for the specified year
     $groupIds = \DB::table('exams_groups')
         ->where('exm_id', $examinerId)
         ->where('year_id', $yearId)
         ->pluck('group_id')
         ->toArray();
-    
+
     if (empty($groupIds)) {
         return collect();
     }
-    
+
     // Fetch candidates with matching group_ids AND exam_year
     $candidates = self::select(
         'users.id as user_id',
@@ -426,7 +430,7 @@ static public function getExaminerCandidates($userId = null, $yearId = null)
         ->where('users.is_deleted', '=', '0')
         ->orderBy('candidates.id', 'asc')
         ->get();
-    
+
     return $candidates;
 }
 
@@ -494,15 +498,20 @@ static public function getExaminerCandidates($userId = null, $yearId = null)
             return collect();
         }
 
-        // Fetch the most recent submission from `mcs_results`
+        // Define the current exam year ID (you can set dynamically if needed)
+        $currentExamYearId = 6; // Example for 2025
+
+        // Fetch the most recent submission from `mcs_results` for current exam year
         $lastExamFormSubmission = \DB::table('mcs_results')
             ->where('examiner_id', $examinerId)
+            ->where('exam_year', $currentExamYearId)
             ->latest('created_at')
             ->first();
 
-        // Fetch the most recent submission from `gs_results`
+        // Fetch the most recent submission from `gs_results` for current exam year
         $lastGsFormSubmission = \DB::table('gs_results')
             ->where('examiner_id', $examinerId)
+            ->where('exam_year', $currentExamYearId)
             ->latest('created_at')
             ->first();
 
@@ -519,7 +528,7 @@ static public function getExaminerCandidates($userId = null, $yearId = null)
             $lastSubmittedForm = 'gs_results';
         }
 
-        // Fetch records from `mcs_results`
+        // Fetch MCS results for current exam year
         $examinationFormResults = \DB::table('mcs_results')
             ->select(
                 'mcs_results.*',
@@ -535,10 +544,11 @@ static public function getExaminerCandidates($userId = null, $yearId = null)
                 \DB::raw("'mcs_results' as source_table")
             )
             ->join('candidates', 'mcs_results.candidate_id', '=', 'candidates.id')
-            ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
-            ->where('mcs_results.examiner_id', $examinerId);
+            ->join('examiners_groups', 'mcs_results.group_id', '=', 'examiners_groups.id')
+            ->where('mcs_results.examiner_id', $examinerId)
+            ->where('mcs_results.exam_year', $currentExamYearId); // ✅ filter by current exam year
 
-        // Fetch records from `gs_results`
+        // Fetch GS results for current exam year
         $gsFormResults = \DB::table('gs_results')
             ->select(
                 'gs_results.*',
@@ -555,9 +565,10 @@ static public function getExaminerCandidates($userId = null, $yearId = null)
             )
             ->join('candidates', 'gs_results.candidate_id', '=', 'candidates.id')
             ->join('examiners_groups', 'gs_results.group_id', '=', 'examiners_groups.id')
-            ->where('gs_results.examiner_id', $examinerId);
+            ->where('gs_results.examiner_id', $examinerId)
+            ->where('gs_results.exam_year', $currentExamYearId); // ✅ filter by current exam year
 
-        // Combine results with UNION and order by ID
+        // Combine results with UNION and order by record ID
         $combinedResults = $examinationFormResults
             ->union($gsFormResults)
             ->orderBy('record_id', 'asc')
@@ -568,6 +579,7 @@ static public function getExaminerCandidates($userId = null, $yearId = null)
             'records' => $combinedResults,
         ];
     }
+
 
     public static function getAdminExamsResults()
     {

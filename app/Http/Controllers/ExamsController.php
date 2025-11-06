@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ExaminersImport;
 use App\Models\User;
-use Hash;
+use Illuminate\Support\Facades\Hash;
 use App\Models\Country;
 use App\Models\ExamsModel;
 use App\Models\Attendance;
@@ -458,7 +458,7 @@ public function delete($id)
                 DB::raw('MAX(examiners.curriculum_vitae) as curriculum_vitae'),
                 DB::raw('MAX(examiners.passport_image) as passport_image'),
                 DB::raw('MAX(examiners.role_id) as role_id'),
-                DB::raw("CASE 
+                DB::raw("CASE
                 WHEN MAX(examiners.role_id) = 1 THEN 'Examiner'
                 WHEN MAX(examiners.role_id) = 2 THEN 'Observer'
                 WHEN MAX(examiners.role_id) = 3 THEN 'None'

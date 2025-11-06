@@ -302,33 +302,68 @@ class CandidatesController extends Controller
 
         return response()->json($candidates);
     }
-    
+
+//    public function storeEvaluation(Request $request)
+//    {
+//        // Get the logged-in user's ID
+//        $loggedInUserId = Auth::id();
+//
+//        $examiner = DB::table('examiners')->where('user_id', $loggedInUserId)->first();
+//
+//        if (!$examiner) {
+//            return back()->with('error', 'Examiner data not found.');
+//        }
+//
+//        $examinerId = $examiner->id;
+//        $examinerGroupId = $examiner->group_id;
+//        $questionMarksJson = json_encode($request->input('question_marks'));
+//
+//        $evaluation = new CandidatesFormModel();
+//        $evaluation->candidate_id = $request->input('candidate_id');
+//        $evaluation->examiner_id = $examinerId;
+//        $evaluation->station_id = $request->input('station_id');
+//        $evaluation->group_id = $examinerGroupId;
+//        $evaluation->question_mark = $questionMarksJson;
+//        $evaluation->total = $request->input('total_marks');
+//        $evaluation->overall = strtolower($request->input('overall'));
+//        $evaluation->remarks = $request->input('remarks');
+//
+//        // dd($evaluation);
+//
+//        $evaluation->save();
+//
+//        return redirect()->back()->with('success', 'Evaluation submitted successfully.');
+//    }
+
+    private function getExaminerGroupIds($examinerId, $examYear)
+    {
+        return DB::table('exams_groups')
+            ->where('exm_id', $examinerId)
+            ->where('year_id', $examYear)
+            ->pluck('group_id')
+            ->toArray();
+    }
+
     public function storeEvaluation(Request $request)
     {
-        // Get the logged-in user's ID
-        $loggedInUserId = Auth::id();
+        $examiner = DB::table('examiners')->where('user_id', Auth::id())->first();
+        if (!$examiner) return back()->with('error', 'Examiner data not found.');
 
-        $examiner = DB::table('examiners')->where('user_id', $loggedInUserId)->first();
+        $currentYearId = User::getCurrentYearId(); // get current exam year ID
+        $examinerGroupIds = $this->getExaminerGroupIds($examiner->id, $currentYearId);
 
-        if (!$examiner) {
-            return back()->with('error', 'Examiner data not found.');
-        }
-
-        $examinerId = $examiner->id;
-        $examinerGroupId = $examiner->group_id;
-        $questionMarksJson = json_encode($request->input('question_marks'));
-
+        // Use the group_id from request (must match one of examiner's groups)
+        $groupId = $request->group_id;
         $evaluation = new CandidatesFormModel();
-        $evaluation->candidate_id = $request->input('candidate_id');
-        $evaluation->examiner_id = $examinerId;
-        $evaluation->station_id = $request->input('station_id');
-        $evaluation->group_id = $examinerGroupId;
-        $evaluation->question_mark = $questionMarksJson;
-        $evaluation->total = $request->input('total_marks');
-        $evaluation->overall = strtolower($request->input('overall'));
-        $evaluation->remarks = $request->input('remarks');
-
-        // dd($evaluation);
+        $evaluation->candidate_id = $request->candidate_id;
+        $evaluation->examiner_id = $examiner->id;
+        $evaluation->station_id = $request->station_id;
+        $evaluation->group_id = $groupId;
+        $evaluation->question_mark = json_encode($request->question_marks);
+        $evaluation->total = $request->total_marks;
+        $evaluation->overall = strtolower($request->overall);
+        $evaluation->remarks = $request->remarks;
+        $evaluation->exam_year = $currentYearId;
 
         $evaluation->save();
 

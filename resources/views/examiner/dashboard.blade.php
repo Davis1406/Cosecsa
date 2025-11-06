@@ -28,9 +28,7 @@
                                     onchange="navigateToExamPage(this.value)">
                                     <option value="">-- Select Exam Type --</option>
                                     <option value="{{ url('examiner/examiner_form') }}">MCS</option>
-                                    <option value="{{ url('examiner/general_surgery') }}">FCS General Surgery</option>
-                                     {{-- <option value="">MCS</option>
-                                    <option value="">FCS General Surgery</option> --}}
+{{--                                <option value="{{ url('examiner/general_surgery') }}">FCS General Surgery</option>--}}
                                     <option value="">FCS Cardiothoracic</option>
                                     <option value="">FCS Urology</option>
                                     <option value="">FCS Paediatric</option>
@@ -44,7 +42,7 @@
                                 <button type="button" class="btn"
                                     style="background-color: #FEC503; color: black; border-color: #FEC503;"
                                     onclick="proceedToNextPage()">
-                                      Proceed <span class="fas fa-arrow-right"></span> 
+                                      Proceed <span class="fas fa-arrow-right"></span>
                                 </button>
                             </div>
 
