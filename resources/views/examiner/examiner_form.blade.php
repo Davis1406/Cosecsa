@@ -161,10 +161,10 @@
 
         function fetchCandidates(groupId) {
             if (!groupId) return;
-            
+
             console.log('Fetching candidates for group:', groupId);
-            
-            fetch(`/cosecsa/get-mcs-candidates/${groupId}`)
+
+            fetch(`{{ url('/get-mcs-candidates') }}/${groupId}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response is not ok ' + response.statusText);
@@ -173,15 +173,15 @@
                 })
                 .then(data => {
                     console.log('Received candidates:', data);
-                    
+
                     let candidateSelect = document.getElementById('candidate_id');
                     candidateSelect.innerHTML = '<option value="">Choose a Candidate...</option>';
-                    
+
                     if (data.length === 0) {
                         candidateSelect.innerHTML += '<option value="">No candidates found</option>';
                         return;
                     }
-                    
+
                     data.forEach(candidate => {
                         candidateSelect.innerHTML +=
                             `<option value="${candidate.candidates_id}">${candidate.candidate_id || candidate.name}</option>`;
@@ -192,5 +192,6 @@
                     alert('Error loading candidates. Please try again.');
                 });
         }
+
     </script>
 @endsection
