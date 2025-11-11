@@ -62,7 +62,7 @@
                         5 => 'Country Representative',
                         7 => 'Fellow',
                         8 => 'Member',
-                        9 => 'Examiner / Observer',
+                        9 => 'Examiner',
                     ];
                     $roleName = $roleNames[$roleId] ?? 'Unknown Role';
                 @endphp

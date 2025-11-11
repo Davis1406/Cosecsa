@@ -335,7 +335,7 @@ class User extends Authenticatable
 
     static public function getCandidates()
     {
-        $currentYear = date('Y'); // 2025
+        $currentYear = date('Y');
 
         $return = self::select(
             'users.id as user_id',
@@ -580,12 +580,15 @@ class User extends Authenticatable
         ];
     }
 
-
+//MCS Results on the admin side.
     public static function getAdminExamsResults()
     {
+        $examYearId = 6; // ✅ Fixed exam year ID
+
         return \DB::table('mcs_results')
             ->select(
                 'mcs_results.candidate_id as cand_id',
+                'mcs_results.exam_year', // ✅ include exam year column
                 'candidates.firstname',
                 'candidates.middlename',
                 'candidates.lastname',
@@ -594,15 +597,17 @@ class User extends Authenticatable
                 'mcs_results.total'
             )
             ->join('candidates', 'mcs_results.candidate_id', '=', 'candidates.id')
+            ->where('mcs_results.exam_year', $examYearId) // ✅ filter by year ID = 6
             ->orderBy('mcs_results.candidate_id')
             ->get()
             ->groupBy('cand_id')
             ->map(function ($group) {
                 $candidate = $group->first();
                 return (object) [
+                    'exam_year' => $candidate->exam_year, // ✅ show year ID
                     'candidate_id' => $candidate->c_id,
                     'cnd_id' => $candidate->cand_id,
-                    'fullname' => "{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}",
+                    'fullname' => trim("{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}"),
                     'stations' => $group->map(function ($row) {
                         return [
                             'station_id' => $row->station_id,
@@ -612,6 +617,7 @@ class User extends Authenticatable
                 ];
             });
     }
+
 
     // Get Results for GS
     public static function getGsResults()

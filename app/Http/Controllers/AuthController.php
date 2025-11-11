@@ -85,12 +85,12 @@ class AuthController extends Controller
         }
 
         $roleNames = [
+            9 => 'Examiner',
             1 => 'Admin',
             4 => 'Trainer',
             5 => 'Country Representative',
             7 => 'Fellow',
-            8 => 'Member',
-            9 => 'Examiner/Observer'
+            8 => 'Member'
         ];
 
         $availableRoles = collect($roleNames)->map(function ($name, $id) {
