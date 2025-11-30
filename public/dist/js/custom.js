@@ -482,42 +482,12 @@ $(function () {
         "autoWidth": false,
         "stateSave": true,
         "paging": true,
+        "pageLength": 25,
         "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [{
-            "visible": true
-        },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            }
-        ]
+        "columns": Array(22).fill({"visible": true}) // 22 columns in your table
     }).buttons().container().appendTo('#fcsresultstable_wrapper .col-md-6:eq(0)');
+
+
 
     var hospitalTable = $("#hospitalTable").DataTable({
         "responsive": true,

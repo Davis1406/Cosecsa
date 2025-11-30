@@ -95,15 +95,3 @@
     </div>
 
 @endsection
-
-@section('scripts')
-    <script>
-        $(document).ready(function(){
-            $('#fcsresultstable').DataTable({
-                "responsive": true,
-                "autoWidth": false,
-                "pageLength": 25
-            });
-        });
-    </script>
-@endsection

@@ -44,34 +44,55 @@
                                     <thead>
                                     <tr>
                                         <th>Station ID</th>
-                                        <th>Question Marks</th>
-                                        <th>Total</th>
-                                        <th>Remarks</th>
+                                        <th>Question</th>
+                                        <th>Marks</th>
                                     </tr>
                                     </thead>
                                     <tbody>
                                     @foreach($candidateResult->clinical_records as $rec)
                                         @php
                                             $marks = json_decode($rec->question_mark, true) ?? [];
+                                            $questionLabels = [
+                                                0 => 'Overall Professional Capacity and Patient Care',
+                                                1 => 'Knowledge and Judgement',
+                                                2 => 'Quality of Response',
+                                                3 => 'Bedside Manner'
+                                            ];
                                         @endphp
                                         <tr>
-                                            <td>{{ $rec->station_id }}</td>
-                                            <td>
-                                                @foreach($marks as $i => $m)
-                                                    Q{{ $i+1 }}: {{ $m }}<br>
-                                                @endforeach
-                                            </td>
-                                            <td><b>{{ $rec->total }}</b></td>
-                                            <td style="word-wrap: break-word; white-space: normal; max-width: 150px;">
-                                                {{ $rec->remarks ?? '-' }}
+                                            <td rowspan="{{ count($marks) + 2 }}" style="vertical-align: middle;">
+                                                <b>{{ $rec->station_id }}</b>
                                             </td>
                                         </tr>
+                                        @foreach($marks as $i => $m)
+                                            <tr>
+                                                <td>
+                                                    @if(isset($questionLabels[$i]))
+                                                        {{ $questionLabels[$i] }}
+                                                    @else
+                                                        Question {{ $i + 1 }}
+                                                    @endif
+                                                </td>
+                                                <td><b>{{ $m }}</b></td>
+                                            </tr>
+                                        @endforeach
+                                        <tr style="background-color: #f8f9fa;">
+                                            <td><b>Total</b></td>
+                                            <td><b>{{ $rec->total }}</b></td>
+                                        </tr>
+                                        @if($rec->remarks)
+                                            <tr>
+                                                <td colspan="3">
+                                                    <b>Remarks:</b> {{ $rec->remarks }}
+                                                </td>
+                                            </tr>
+                                        @endif
                                     @endforeach
                                     </tbody>
-                                    <tfoot>
+                                    <tfoot style="background-color: #a02626; color: white;">
                                     <tr>
                                         <th colspan="2">Clinical Total</th>
-                                        <th colspan="2"><b>{{ $candidateResult->clinical_total }}</b></th>
+                                        <th><b>{{ $candidateResult->clinical_total }}</b></th>
                                     </tr>
                                     </tfoot>
                                 </table>
@@ -84,9 +105,8 @@
                                     <thead>
                                     <tr>
                                         <th>Station ID</th>
-                                        <th>Question Marks</th>
-                                        <th>Total</th>
-                                        <th>Remarks</th>
+                                        <th>Question</th>
+                                        <th>Marks</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -95,23 +115,33 @@
                                             $marks = json_decode($rec->question_mark, true) ?? [];
                                         @endphp
                                         <tr>
-                                            <td>{{ $rec->station_id }}</td>
-                                            <td>
-                                                @foreach($marks as $i => $m)
-                                                    Q{{ $i+1 }}: {{ $m }}<br>
-                                                @endforeach
-                                            </td>
-                                            <td><b>{{ $rec->total }}</b></td>
-                                            <td style="word-wrap: break-word; white-space: normal; max-width: 150px;">
-                                                {{ $rec->remarks ?? '-' }}
+                                            <td rowspan="{{ count($marks) + 2 }}" style="vertical-align: middle;">
+                                                <b>{{ $rec->station_id }}</b>
                                             </td>
                                         </tr>
+                                        @foreach($marks as $i => $m)
+                                            <tr>
+                                                <td>Question {{ $i + 1 }}</td>
+                                                <td><b>{{ $m }}</b></td>
+                                            </tr>
+                                        @endforeach
+                                        <tr style="background-color: #f8f9fa;">
+                                            <td><b>Total</b></td>
+                                            <td><b>{{ $rec->total }}</b></td>
+                                        </tr>
+                                        @if($rec->remarks)
+                                            <tr>
+                                                <td colspan="3">
+                                                    <b>Remarks:</b> {{ $rec->remarks }}
+                                                </td>
+                                            </tr>
+                                        @endif
                                     @endforeach
                                     </tbody>
-                                    <tfoot>
+                                    <tfoot style="background-color: #a02626; color: white;">
                                     <tr>
                                         <th colspan="2">Viva Total</th>
-                                        <th colspan="2"><b>{{ $candidateResult->viva_total }}</b></th>
+                                        <th><b>{{ $candidateResult->viva_total }}</b></th>
                                     </tr>
                                     </tfoot>
                                 </table>
@@ -130,4 +160,14 @@
             </div>
         </section>
     </div>
+
+    <style>
+        .table td, .table th {
+            vertical-align: middle;
+        }
+
+        .table-bordered td, .table-bordered th {
+            border: 1px solid #dee2e6;
+        }
+    </style>
 @endsection

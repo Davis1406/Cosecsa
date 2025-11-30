@@ -43,6 +43,15 @@
                         <!-- ================= CASE MARKING SECTION ================= -->
                         <div class="form-row" style="border: 1px solid #a02626; padding: 15px; border-radius: 5px; position: relative;">
 
+                            @php
+                                $clinicalLabels = [
+                                    'Overall Professional Capacity and Patient Care:',
+                                    'Knowledge and Judgement:',
+                                    'Quality of Response:',
+                                    'Bedside Manner:'
+                                ];
+                            @endphp
+
                             @for ($case = 1; $case <= $cases_count; $case++)
                                 <div class="col-md-{{ $cases_count == 2 ? '6' : ($cases_count == 4 ? '3' : '12') }}"
                                      style="padding: {{ $cases_count > 2 ? '10px' : '0 20px' }};">
@@ -52,81 +61,36 @@
                                     </h5>
 
                                     <div id="case-container-{{ $case }}">
-                                        @if($cases_count == 1)
-                                            {{-- For single case: show ALL questions in this one case --}}
-                                            @foreach($candidate->question_mark as $index => $mark)
-                                                <div class="form-group question-block">
-                                                    <label>
-                                                        @if($form_type == 'clinical')
-                                                            @if($index == 0)
-                                                                Overall Professional Capacity and Patient Care:
-                                                            @elseif($index == 1)
-                                                                Knowledge and Judgement:
-                                                            @elseif($index == 2)
-                                                                Quality of Response:
-                                                            @elseif($index == 3)
-                                                                Bedside Manner:
-                                                            @else
-                                                                Question {{ $index + 1 }}:
-                                                            @endif
-                                                        @else
-                                                            Question {{ $index + 1 }}:
-                                                        @endif
-                                                    </label>
-                                                    <div class="input-group">
-                                                        <select name="question_marks_case{{ $case }}[]"
-                                                                class="form-control question-mark"
-                                                                required onchange="updateTotalMarks()">
-                                                            <option value="">Select Mark</option>
-                                                            <option value="2" {{ $mark == 2 ? 'selected' : '' }}>2</option>
-                                                            <option value="4" {{ $mark == 4 ? 'selected' : '' }}>4</option>
-                                                            <option value="6" {{ $mark == 6 ? 'selected' : '' }}>6</option>
-                                                            <option value="8" {{ $mark == 8 ? 'selected' : '' }}>8</option>
-                                                            <option value="10" {{ $mark == 10 ? 'selected' : '' }}>10</option>
-                                                        </select>
-                                                        @if($index >= 3)
-                                                            {{-- Show delete button for questions added beyond default 3 --}}
-                                                            <div class="input-group-append">
-                                                                <button type="button" class="btn btn-danger" onclick="removeQuestion(this, {{ $case }})">X</button>
-                                                            </div>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        @else
-                                            {{-- For multiple cases: distribute questions evenly --}}
-                                            @php
-                                                $questionsPerCase = ceil(count($candidate->question_mark) / $cases_count);
-                                                $startIndex = ($case - 1) * $questionsPerCase;
-                                                $endIndex = min($startIndex + $questionsPerCase, count($candidate->question_mark));
-                                            @endphp
-                                            @for($i = $startIndex; $i < $endIndex; $i++)
+                                        @foreach($candidate->question_mark as $index => $mark)
+                                            <div class="form-group question-block">
                                                 @php
-                                                    $mark = $candidate->question_mark[$i] ?? '';
-                                                    $questionNum = ($i - $startIndex) + 1;
+                                                    // Determine label for single-case clinical
+                                                    if ($form_type == 'clinical' && $cases_count == 1) {
+                                                        $label = $clinicalLabels[$index] ?? "Question " . ($index + 1) . ":";
+                                                    } else {
+                                                        $label = "Question " . ($index + 1) . ":";
+                                                    }
                                                 @endphp
-                                                <div class="form-group question-block">
-                                                    <label>Question {{ $questionNum }}:</label>
-                                                    <div class="input-group">
-                                                        <select name="question_marks_case{{ $case }}[]"
-                                                                class="form-control question-mark"
-                                                                required onchange="updateTotalMarks()">
-                                                            <option value="">Select Mark</option>
-                                                            <option value="2" {{ $mark == 2 ? 'selected' : '' }}>2</option>
-                                                            <option value="4" {{ $mark == 4 ? 'selected' : '' }}>4</option>
-                                                            <option value="6" {{ $mark == 6 ? 'selected' : '' }}>6</option>
-                                                            <option value="8" {{ $mark == 8 ? 'selected' : '' }}>8</option>
-                                                            <option value="10" {{ $mark == 10 ? 'selected' : '' }}>10</option>
-                                                        </select>
-                                                        @if($questionNum > 3)
-                                                            <div class="input-group-append">
-                                                                <button type="button" class="btn btn-danger" onclick="removeQuestion(this)">X</button>
-                                                            </div>
-                                                        @endif
-                                                    </div>
+                                                <label>{{ $label }}</label>
+                                                <div class="input-group">
+                                                    <select name="question_marks_case{{ $case }}[]"
+                                                            class="form-control question-mark"
+                                                            required onchange="updateTotalMarks()">
+                                                        <option value="">Select Mark</option>
+                                                        <option value="2" {{ $mark == 2 ? 'selected' : '' }}>2</option>
+                                                        <option value="4" {{ $mark == 4 ? 'selected' : '' }}>4</option>
+                                                        <option value="6" {{ $mark == 6 ? 'selected' : '' }}>6</option>
+                                                        <option value="8" {{ $mark == 8 ? 'selected' : '' }}>8</option>
+                                                        <option value="10" {{ $mark == 10 ? 'selected' : '' }}>10</option>
+                                                    </select>
+                                                    @if($index >= 3)
+                                                        <div class="input-group-append">
+                                                            <button type="button" class="btn btn-danger" onclick="removeQuestion(this, {{ $case }})">X</button>
+                                                        </div>
+                                                    @endif
                                                 </div>
-                                            @endfor
-                                        @endif
+                                            </div>
+                                        @endforeach
                                     </div>
 
                                     <button type="button"
@@ -199,44 +163,77 @@
 
     <!-- ================= JS ================= -->
     <script>
-        // Initialize total marks on page load
+        const casesCount = {{ $cases_count }};
+        const formType = '{{ $form_type }}';
+        const isSingleCaseClinical = (casesCount === 1 && formType === 'clinical');
+        const clinicalLabels = [
+            'Overall Professional Capacity and Patient Care:',
+            'Knowledge and Judgement:',
+            'Quality of Response:',
+            'Bedside Manner:'
+        ];
+
         document.addEventListener('DOMContentLoaded', function() {
             updateTotalMarks();
         });
 
         function addCaseQuestion(caseNumber) {
             const container = document.getElementById(`case-container-${caseNumber}`);
-            const count = container.querySelectorAll(".question-block").length + 1;
+            const count = container.querySelectorAll(".question-block").length;
+
+            if (isSingleCaseClinical && count >= 4) return;
+
+            const questionNumber = count + 1;
+            let labelText = `Question ${questionNumber}:`;
+            if (isSingleCaseClinical && questionNumber <= 4) {
+                labelText = clinicalLabels[questionNumber - 1];
+            }
 
             let newField = document.createElement("div");
             newField.classList.add("form-group", "question-block", "mt-2");
 
             newField.innerHTML = `
-                <label>Question ${count}:</label>
-                <div class="input-group">
-                    <select name="question_marks_case${caseNumber}[]" class="form-control question-mark"
-                            required onchange="updateTotalMarks()">
-                        <option value="">Select Mark</option>
-                        <option value="2">2</option>
-                        <option value="4">4</option>
-                        <option value="6">6</option>
-                        <option value="8">8</option>
-                        <option value="10">10</option>
-                    </select>
-
-                    <div class="input-group-append">
-                        <button type="button" class="btn btn-danger" onclick="removeQuestion(this)">X</button>
-                    </div>
+            <label>${labelText}</label>
+            <div class="input-group">
+                <select name="question_marks_case${caseNumber}[]" class="form-control question-mark"
+                        required onchange="updateTotalMarks()">
+                    <option value="">Select Mark</option>
+                    <option value="2">2</option>
+                    <option value="4">4</option>
+                    <option value="6">6</option>
+                    <option value="8">8</option>
+                    <option value="10">10</option>
+                </select>
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-danger" onclick="removeQuestion(this, ${caseNumber})">X</button>
                 </div>
-            `;
+            </div>
+        `;
 
             container.appendChild(newField);
+
+            // Hide add button if limit reached
+            if (isSingleCaseClinical && questionNumber >= 4) {
+                const addButton = container.nextElementSibling;
+                if (addButton && addButton.classList.contains('add-question-btn')) {
+                    addButton.style.display = 'none';
+                }
+            }
         }
 
-        function removeQuestion(button) {
+        function removeQuestion(button, caseNumber) {
             const questionBlock = button.closest('.question-block');
             questionBlock.remove();
             updateTotalMarks();
+
+            if (isSingleCaseClinical) {
+                const container = document.getElementById(`case-container-${caseNumber}`);
+                const count = container.querySelectorAll(".question-block").length;
+                const addButton = container.nextElementSibling;
+                if (count < 4 && addButton && addButton.classList.contains('add-question-btn')) {
+                    addButton.style.display = 'inline-block';
+                }
+            }
         }
 
         function updateTotalMarks() {
