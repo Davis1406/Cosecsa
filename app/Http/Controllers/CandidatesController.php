@@ -1375,7 +1375,7 @@ class CandidatesController extends Controller
 
     public function urologyClinicalForm()
     {
-        return $this->loadExamForm('urology', 'clinical', 9, 1);
+        return $this->loadExamForm('urology', 'clinical', 9, 2);
     }
 
 // Viva form methods

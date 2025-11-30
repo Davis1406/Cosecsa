@@ -75,7 +75,7 @@
                                         @for ($q = 1; $q <= $defaultQuestions; $q++)
                                             <div class="form-group question-block">
                                                 <label>
-                                                    @if($form_type == 'clinical' && $cases_count == 1)
+                                                    @if($form_type == 'clinical')
                                                         @if($q == 1)
                                                             Overall Professional Capacity and Patient Care:
                                                         @elseif($q == 2)
@@ -148,10 +148,10 @@
 
     <!-- ================= JS ================= -->
     <script>
-        // Check if this is a single-case clinical exam
+        // Check if this is a clinical exam
         const casesCount = {{ $cases_count }};
         const formType = '{{ $form_type }}';
-        const isSingleCaseClinical = (casesCount === 1 && formType === 'clinical');
+        const isClinical = (formType === 'clinical');
 
         // Question labels for clinical exams
         const clinicalQuestionLabels = [
@@ -161,15 +161,14 @@
             'Bedside Manner:'
         ];
 
-        // Update case numbers based on selected station
+        // Update case numbers based on selected station (only for single-case clinical)
         function updateCaseNumbers() {
-            if (!isSingleCaseClinical) return; // Only apply to single-case clinical exams
+            if (casesCount !== 1 || !isClinical) return;
 
             const stationSelect = document.getElementById('station_id');
             const selectedStation = stationSelect.value;
 
             if (selectedStation) {
-                // Update all case headings
                 document.querySelectorAll('.case-heading').forEach(function(heading) {
                     heading.textContent = 'Case ' + selectedStation;
                 });
@@ -180,8 +179,8 @@
             const container = document.getElementById(`case-container-${caseNumber}`);
             const count = container.querySelectorAll(".question-block").length;
 
-            // Limit to 4 questions for single-case clinical exams
-            if (isSingleCaseClinical && count >= 4) {
+            // Limit to 4 questions for clinical exams
+            if (isClinical && count >= 4) {
                 alert('Maximum of 4 questions allowed for clinical exams.');
                 return;
             }
@@ -192,7 +191,7 @@
 
             // Determine label
             let labelText = `Question ${questionNumber}:`;
-            if (isSingleCaseClinical && questionNumber <= 4) {
+            if (isClinical && questionNumber <= 4) {
                 labelText = clinicalQuestionLabels[questionNumber - 1];
             }
 
@@ -218,7 +217,7 @@
             container.appendChild(newField);
 
             // Hide add button if we've reached the limit
-            if (isSingleCaseClinical && questionNumber >= 4) {
+            if (isClinical && questionNumber >= 4) {
                 const addButton = container.nextElementSibling;
                 if (addButton && addButton.classList.contains('add-question-btn')) {
                     addButton.style.display = 'none';
@@ -232,7 +231,7 @@
             updateTotalMarks();
 
             // Show add button again if we're below the limit
-            if (isSingleCaseClinical) {
+            if (isClinical) {
                 const container = document.getElementById(`case-container-${caseNumber}`);
                 const count = container.querySelectorAll(".question-block").length;
                 if (count < 4) {
