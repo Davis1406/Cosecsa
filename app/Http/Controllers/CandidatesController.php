@@ -467,7 +467,7 @@ class CandidatesController extends Controller
         $gsTable = 'gs_results';
         $fcsGroupedTables = [
             'cardiothoracic_results',
-            'ortho_results',
+            'orthopaedic_results',
             'ent_results',
             'urology_results',
             'neurosurgery_results',
@@ -826,7 +826,7 @@ class CandidatesController extends Controller
             'plastic_surgery_results',
             'neurosurgery_results',
             'paediatric_orthopaedics_results',
-            'ortho_results',
+            'orthopaedic_results',
             'fcs_results'
         ];
 
@@ -1040,7 +1040,7 @@ class CandidatesController extends Controller
             'plastic_surgery_results',
             'neurosurgery_results',
             'paediatric_orthopaedics_results',
-            'ortho_results',
+            'orthopaedic_results',
             'fcs_results',
         ];
 
@@ -1528,7 +1528,7 @@ class CandidatesController extends Controller
             'urology' => 'urology_results',
             'paediatric' => 'paediatric_results',
             'ent' => 'ent_results',
-            'orthopaedic' => 'ortho_results',
+            'orthopaedic' => 'orthopaedic_results',
             'plastic_surgery' => 'plastic_surgery_results',
             'neurosurgery' => 'neurosurgery_results',
             'paediatric_orthopaedics' => 'paediatric_orthopaedics_results'
