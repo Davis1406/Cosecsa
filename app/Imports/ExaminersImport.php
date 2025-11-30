@@ -37,6 +37,7 @@ class ExaminersImport implements ToModel, WithHeadingRow
         $examiner = ExamsModel::create([
             'user_id' => $user->id,
             'examiner_id' => $row['examiner_id'] ?? null,
+            'current_year_examiner_id' => $row['current_year_examiner_id'] ?? null,
             'country_id' => $row['country_id'],
             'mobile' => $row['mobile'] ?? null,
             'specialty' => $row['specialty'] ?? null,
@@ -75,11 +76,11 @@ class ExaminersImport implements ToModel, WithHeadingRow
             'participation_type' => $row['participation_type'] ?? null,
             'hospital_type' => $row['hospital_type'] ?? null,
             'hospital_name' => $row['hospital_name'] ?? null,
-            'exam_availability' => isset($row['exam_availability']) 
-                ? json_encode(explode(',', $row['exam_availability'])) 
+            'exam_availability' => isset($row['exam_availability'])
+                ? json_encode(explode(',', $row['exam_availability']))
                 : null,
-            'examination_years' => isset($row['examination_years']) 
-                ? json_encode(explode(',', $row['examination_years'])) 
+            'examination_years' => isset($row['examination_years'])
+                ? json_encode(explode(',', $row['examination_years']))
                 : null,
             'created_at' => now(),
             'updated_at' => now(),
