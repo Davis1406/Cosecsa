@@ -56,7 +56,15 @@
                                      style="padding: {{ $cases_count > 2 ? '10px' : '0 20px' }};">
 
                                     <h5 class="case-heading" style="text-align: center; color: #a02626;" data-case-index="{{ $case }}">
-                                        Case {{ $case }}
+                                        @if($form_type == 'viva' && $cases_count == 2)
+                                            @if($case == 1)
+                                                Knowledge & Judgement
+                                            @else
+                                                Quality of Response
+                                            @endif
+                                        @else
+                                            Case {{ $case }}
+                                        @endif
                                     </h5>
 
                                     @php
@@ -66,7 +74,21 @@
                                     <div id="case-container-{{ $case }}">
                                         @for ($q = 1; $q <= $defaultQuestions; $q++)
                                             <div class="form-group question-block">
-                                                <label>Question {{ $q }}:</label>
+                                                <label>
+                                                    @if($form_type == 'clinical' && $cases_count == 1)
+                                                        @if($q == 1)
+                                                            Overall Professional Capacity and Patient Care:
+                                                        @elseif($q == 2)
+                                                            Knowledge and Judgement:
+                                                        @elseif($q == 3)
+                                                            Quality of Response:
+                                                        @elseif($q == 4)
+                                                            Bedside Manner:
+                                                        @endif
+                                                    @else
+                                                        Question {{ $q }}:
+                                                    @endif
+                                                </label>
                                                 <select name="question_marks_case{{ $case }}[]"
                                                         class="form-control question-mark"
                                                         required onchange="updateTotalMarks()">
@@ -82,7 +104,7 @@
                                     </div>
 
                                     <button type="button"
-                                            class="btn btn-outline-secondary btn-sm mb-3"
+                                            class="btn btn-outline-secondary btn-sm mb-3 add-question-btn"
                                             onclick="addCaseQuestion({{ $case }})"
                                             style="color:black; background-color: #FEC503; border-color: #FEC503;">
                                         + Add Question
@@ -131,6 +153,14 @@
         const formType = '{{ $form_type }}';
         const isSingleCaseClinical = (casesCount === 1 && formType === 'clinical');
 
+        // Question labels for clinical exams
+        const clinicalQuestionLabels = [
+            'Overall Professional Capacity and Patient Care:',
+            'Knowledge and Judgement:',
+            'Quality of Response:',
+            'Bedside Manner:'
+        ];
+
         // Update case numbers based on selected station
         function updateCaseNumbers() {
             if (!isSingleCaseClinical) return; // Only apply to single-case clinical exams
@@ -148,13 +178,26 @@
 
         function addCaseQuestion(caseNumber) {
             const container = document.getElementById(`case-container-${caseNumber}`);
-            const count = container.querySelectorAll(".question-block").length + 1;
+            const count = container.querySelectorAll(".question-block").length;
 
+            // Limit to 4 questions for single-case clinical exams
+            if (isSingleCaseClinical && count >= 4) {
+                alert('Maximum of 4 questions allowed for clinical exams.');
+                return;
+            }
+
+            const questionNumber = count + 1;
             let newField = document.createElement("div");
             newField.classList.add("form-group", "question-block", "mt-2");
 
+            // Determine label
+            let labelText = `Question ${questionNumber}:`;
+            if (isSingleCaseClinical && questionNumber <= 4) {
+                labelText = clinicalQuestionLabels[questionNumber - 1];
+            }
+
             newField.innerHTML = `
-                <label>Question ${count}:</label>
+                <label>${labelText}</label>
                 <div class="input-group">
                     <select name="question_marks_case${caseNumber}[]" class="form-control question-mark"
                             required onchange="updateTotalMarks()">
@@ -167,18 +210,38 @@
                     </select>
 
                     <div class="input-group-append">
-                        <button type="button" class="btn btn-danger" onclick="removeQuestion(this)">X</button>
+                        <button type="button" class="btn btn-danger" onclick="removeQuestion(this, ${caseNumber})">X</button>
                     </div>
                 </div>
             `;
 
             container.appendChild(newField);
+
+            // Hide add button if we've reached the limit
+            if (isSingleCaseClinical && questionNumber >= 4) {
+                const addButton = container.nextElementSibling;
+                if (addButton && addButton.classList.contains('add-question-btn')) {
+                    addButton.style.display = 'none';
+                }
+            }
         }
 
-        function removeQuestion(button) {
+        function removeQuestion(button, caseNumber) {
             const questionBlock = button.closest('.question-block');
             questionBlock.remove();
             updateTotalMarks();
+
+            // Show add button again if we're below the limit
+            if (isSingleCaseClinical) {
+                const container = document.getElementById(`case-container-${caseNumber}`);
+                const count = container.querySelectorAll(".question-block").length;
+                if (count < 4) {
+                    const addButton = container.nextElementSibling;
+                    if (addButton && addButton.classList.contains('add-question-btn')) {
+                        addButton.style.display = 'inline-block';
+                    }
+                }
+            }
         }
 
         function updateTotalMarks() {

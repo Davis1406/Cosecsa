@@ -476,6 +476,49 @@ $(function () {
     }).buttons().container().appendTo('#gsresultstable_wrapper .col-md-6:eq(0)');
 
 
+    var fcsresultstable = $("#fcsresultstable").DataTable({
+        "responsive": true,
+        "lengthChange": true,
+        "autoWidth": false,
+        "stateSave": true,
+        "paging": true,
+        "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
+        "columns": [{
+            "visible": true
+        },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            },
+            {
+                "visible": true
+            }
+        ]
+    }).buttons().container().appendTo('#fcsresultstable_wrapper .col-md-6:eq(0)');
+
     var hospitalTable = $("#hospitalTable").DataTable({
         "responsive": true,
         "lengthChange": true,
@@ -567,6 +610,10 @@ $(function () {
     });
 
     gsresultstable.on('draw', function () {
+        initPopovers();
+    });
+
+    fcsresultstable.on('draw', function () {
         initPopovers();
     });
 

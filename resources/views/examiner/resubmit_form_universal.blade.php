@@ -48,11 +48,7 @@
                                      style="padding: {{ $cases_count > 2 ? '10px' : '0 20px' }};">
 
                                     <h5 class="case-heading" style="text-align: center; color: #a02626;" data-station="{{ $candidate->station_id }}">
-                                        @if($cases_count == 1 && $form_type == 'clinical')
-                                            Case {{ $candidate->station_id }}
-                                        @else
-                                            Case {{ $case }}
-                                        @endif
+                                        Case {{ $cases_count == 1 ? $candidate->station_id : $case }}
                                     </h5>
 
                                     <div id="case-container-{{ $case }}">
@@ -60,7 +56,23 @@
                                             {{-- For single case: show ALL questions in this one case --}}
                                             @foreach($candidate->question_mark as $index => $mark)
                                                 <div class="form-group question-block">
-                                                    <label>Question {{ $index + 1 }}:</label>
+                                                    <label>
+                                                        @if($form_type == 'clinical')
+                                                            @if($index == 0)
+                                                                Overall Professional Capacity and Patient Care:
+                                                            @elseif($index == 1)
+                                                                Knowledge and Judgement:
+                                                            @elseif($index == 2)
+                                                                Quality of Response:
+                                                            @elseif($index == 3)
+                                                                Bedside Manner:
+                                                            @else
+                                                                Question {{ $index + 1 }}:
+                                                            @endif
+                                                        @else
+                                                            Question {{ $index + 1 }}:
+                                                        @endif
+                                                    </label>
                                                     <div class="input-group">
                                                         <select name="question_marks_case{{ $case }}[]"
                                                                 class="form-control question-mark"
@@ -75,7 +87,7 @@
                                                         @if($index >= 3)
                                                             {{-- Show delete button for questions added beyond default 3 --}}
                                                             <div class="input-group-append">
-                                                                <button type="button" class="btn btn-danger" onclick="removeQuestion(this)">X</button>
+                                                                <button type="button" class="btn btn-danger" onclick="removeQuestion(this, {{ $case }})">X</button>
                                                             </div>
                                                         @endif
                                                     </div>
@@ -118,9 +130,9 @@
                                     </div>
 
                                     <button type="button"
-                                            class="btn btn-outline-secondary btn-sm mb-3"
+                                            class="btn btn-outline-secondary btn-sm mb-3 add-question-btn"
                                             onclick="addCaseQuestion({{ $case }})"
-                                            style="color:black; background-color: #FEC503; border-color: #FEC503;">
+                                            style="color:black; background-color: #FEC503; border-color: #FEC503; {{ ($cases_count == 1 && $form_type == 'clinical' && count($candidate->question_mark) >= 4) ? 'display: none;' : '' }}">
                                         + Add Question
                                     </button>
 
@@ -187,10 +199,6 @@
 
     <!-- ================= JS ================= -->
     <script>
-        const casesCount = {{ $cases_count }};
-        const formType = '{{ $form_type }}';
-        const isSingleCaseClinical = (casesCount === 1 && formType === 'clinical');
-
         // Initialize total marks on page load
         document.addEventListener('DOMContentLoaded', function() {
             updateTotalMarks();

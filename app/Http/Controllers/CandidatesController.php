@@ -1365,7 +1365,7 @@ class CandidatesController extends Controller
 // Viva form methods
     public function cardiothoracicVivaForm()
     {
-        return $this->loadExamForm('cardiothoracic', 'viva', 1, 4);
+        return $this->loadExamForm('cardiothoracic', 'viva', 1, 2);
     }
 
     public function neurosurgeryVivaForm()
