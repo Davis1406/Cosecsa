@@ -397,11 +397,21 @@ class CandidatesController extends Controller
         $examiner = DB::table('examiners')->where('user_id', Auth::id())->first();
         if (!$examiner) return back()->with('error', 'Examiner data not found.');
 
-        $currentYearId = User::getCurrentYearId(); // get current exam year ID
-        $examinerGroupIds = $this->getExaminerGroupIds($examiner->id, $currentYearId);
-
-        // Use the group_id from request (must match one of examiner's groups)
+        $currentYearId = User::getCurrentYearId();
         $groupId = $request->group_id;
+
+        // ✅ CHECK FOR EXISTING SUBMISSION
+        $existingSubmission = DB::table('mcs_results')
+            ->where('candidate_id', $request->candidate_id)
+            ->where('examiner_id', $examiner->id)
+            ->where('station_id', $request->station_id)
+            ->where('exam_year', $currentYearId)
+            ->first();
+
+        if ($existingSubmission) {
+            return back()->with('error', 'Candidate marks already submitted for this station. Please use Resubmit to edit.');
+        }
+
         $evaluation = new CandidatesFormModel();
         $evaluation->candidate_id = $request->candidate_id;
         $evaluation->examiner_id = $examiner->id;
@@ -428,29 +438,35 @@ class CandidatesController extends Controller
             return back()->with('error', 'Examiner data not found.');
         }
 
-        $currentYearId = User::getCurrentYearId(); // get current exam year ID
-
-        // Get examiner's group IDs for validation (optional but recommended)
-        $examinerGroupIds = $this->getExaminerGroupIds($examiner->id, $currentYearId);
-
-        // Use the group_id from request
+        $currentYearId = User::getCurrentYearId();
         $groupId = $request->group_id;
+
+        // ✅ CHECK FOR EXISTING SUBMISSION
+        $existingSubmission = DB::table('gs_results')
+            ->where('candidate_id', $request->candidate_id)
+            ->where('examiner_id', $examiner->id)
+            ->where('station_id', $request->station_id)
+            ->where('exam_year', $currentYearId)
+            ->first();
+
+        if ($existingSubmission) {
+            return back()->with('error', 'Candidate marks already submitted for this station. Please use Resubmit to edit.');
+        }
 
         $evaluation = new GeneralSurgery();
         $evaluation->candidate_id = $request->candidate_id;
         $evaluation->examiner_id = $examiner->id;
         $evaluation->station_id = $request->station_id;
-        $evaluation->group_id = $groupId;  // Use group_id from request
+        $evaluation->group_id = $groupId;
         $evaluation->question_mark = json_encode($request->question_marks);
         $evaluation->total = $request->total_marks;
         $evaluation->remarks = $request->remarks;
-        $evaluation->exam_year = $currentYearId;  // Store year ID instead of date('Y')
+        $evaluation->exam_year = $currentYearId;
 
         $evaluation->save();
 
         return redirect()->back()->with('success', 'GS Evaluation submitted successfully.');
     }
-
 
    //Results functions
     public function results()
@@ -1540,6 +1556,19 @@ class CandidatesController extends Controller
             return back()->with('error', 'Invalid exam type.');
         }
 
+        // ✅ CHECK FOR EXISTING SUBMISSION
+        $existingSubmission = DB::table($tableName)
+            ->where('candidate_id', $request->candidate_id)
+            ->where('examiner_id', $examiner->id)
+            ->where('station_id', $request->station_id)
+            ->where('exam_format', $request->form_type)
+            ->where('exam_year', $currentYearId)
+            ->first();
+
+        if ($existingSubmission) {
+            return back()->with('error', 'Candidate marks already submitted for this station and format. Please use Resubmit to edit.');
+        }
+
         $questionMarks = [];
 
         foreach ($request->all() as $key => $value) {
@@ -1564,6 +1593,5 @@ class CandidatesController extends Controller
 
         return redirect()->back()->with('success', ucfirst($request->exam_type) . ' evaluation submitted successfully.');
     }
-
 
 }

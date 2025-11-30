@@ -52,11 +52,16 @@
                                 @php
                                     // GS always has 6 questions, first 3 go to Case 1
                                     $case1Questions = array_slice($candidate->question_mark, 0, 3);
+                                    $case1Labels = [
+                                        'Overall Professional Capacity and Patient Care:',
+                                        'Knowledge and Judgement:',
+                                        'Quality of Response:'
+                                    ];
                                 @endphp
 
                                 @foreach ($case1Questions as $index => $mark)
                                     <div class="form-group question-block">
-                                        <label for="question_marks_case1_{{ $index }}">Question {{ $index + 1 }}:</label>
+                                        <label for="question_marks_case1_{{ $index }}">{{ $case1Labels[$index] }}</label>
                                         <div class="input-group">
                                             <select name="question_marks[]"
                                                     id="question_marks_case1_{{ $index }}"
@@ -84,11 +89,16 @@
                                 @php
                                     // Last 3 questions go to Case 2
                                     $case2Questions = array_slice($candidate->question_mark, 3, 3);
+                                    $case2Labels = [
+                                        'Overall Professional Capacity and Patient Care:',
+                                        'Knowledge and Judgement:',
+                                        'Quality of Response:'
+                                    ];
                                 @endphp
 
                                 @foreach ($case2Questions as $index => $mark)
                                     <div class="form-group question-block">
-                                        <label for="question_marks_case2_{{ $index }}">Question {{ $index + 1 }}:</label>
+                                        <label for="question_marks_case2_{{ $index }}">{{ $case2Labels[$index] }}</label>
                                         <div class="input-group">
                                             <select name="question_marks[]"
                                                     id="question_marks_case2_{{ $index }}"

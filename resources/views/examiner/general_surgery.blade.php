@@ -20,20 +20,17 @@
                                 <select name="group_id" id="group_id" class="form-control" required onchange="fetchCandidates(this.value)">
                                     <option value="">Select Group...</option>
                                     @foreach ($groups as $group)
-                                        @if ($group->id <= 11) <!-- Limit groups to those with id <= 11 -->
+                                        @if ($group->id <= 11)
                                             <option value="{{ $group->id }}">Group {{ $group->group_name }}</option>
                                         @endif
                                     @endforeach
                                 </select>
                             </div>
 
-
-                            <!-- Candidate Selection based on Group -->
                             <div class="form-group col-md-4 col-sm-12">
                                 <label>Select Candidate</label>
                                 <select name="candidate_id" id="candidate_id" class="form-control select2" required>
                                     <option value="">Choose a Candidate...</option>
-                                    <!-- Options populated dynamically by fetchCandidates -->
                                 </select>
                             </div>
 
@@ -52,9 +49,18 @@
                             <!-- Left Column (Case 1) -->
                             <div class="col-md-6" style="padding-right: 20px;">
                                 <h5 style="text-align: center; color: #a02626;">Case 1</h5>
-                                @for ($i = 1; $i <= 3; $i++)
+
+                                @php
+                                    $case1Labels = [
+                                        'Overall Professional Capacity and Patient Care:',
+                                        'Knowledge and Judgement:',
+                                        'Quality of Response:'
+                                    ];
+                                @endphp
+
+                                @for ($i = 0; $i < 3; $i++)
                                     <div class="form-group">
-                                        <label for="question_marks_case1_{{ $i }}">Question {{ $i }}:</label>
+                                        <label for="question_marks_case1_{{ $i }}">{{ $case1Labels[$i] }}</label>
                                         <select name="question_marks[]" id="question_marks_case1_{{ $i }}"
                                                 class="form-control question-mark" required onchange="updateTotalMarks()">
                                             <option value="">Select Mark</option>
@@ -74,9 +80,18 @@
                             <!-- Right Column (Case 2) -->
                             <div class="col-md-6" style="padding-left: 20px;">
                                 <h5 style="text-align: center; color: #a02626;">Case 2</h5>
-                                @for ($i = 1; $i <= 3; $i++)
+
+                                @php
+                                    $case2Labels = [
+                                        'Overall Professional Capacity and Patient Care:',
+                                        'Knowledge and Judgement:',
+                                        'Quality of Response:'
+                                    ];
+                                @endphp
+
+                                @for ($i = 0; $i < 3; $i++)
                                     <div class="form-group">
-                                        <label for="question_marks_case2_{{ $i }}">Question {{ $i }}:</label>
+                                        <label for="question_marks_case2_{{ $i }}">{{ $case2Labels[$i] }}</label>
                                         <select name="question_marks[]" id="question_marks_case2_{{ $i }}"
                                                 class="form-control question-mark" required onchange="updateTotalMarks()">
                                             <option value="">Select Mark</option>
@@ -91,18 +106,13 @@
                             </div>
                         </div>
 
-                        <!-- Overall Marks and Grade Section -->
+                        <!-- Overall Marks Section -->
                         <div class="form-row justify-content-center">
                             <div class="form-group col-md-9 col-sm-12">
                                 <label>Overall Marks</label>
                                 <input type="number" name="total_marks" id="total_marks" class="form-control"
-                                    placeholder="Total marks will be calculated automatically" readonly>
+                                       placeholder="Total marks will be calculated automatically" readonly>
                             </div>
-
-                            @if (isset($record->overall))
-                                <td>{{ $record->overall }}</td>
-                            @endif
-
                         </div>
 
                         <!-- Examiner Remarks Section -->
@@ -143,84 +153,66 @@
             top: 12.5%;
         }
 
-        /* Show separator for screens larger than 992px */
         @media (min-width: 768px) {
             .separator-lg {
                 display: block;
             }
         }
 
-        /* Change the hover color of dropdown items */
         .select2-results__option:hover {
             background-color: #a02626 !important;
-            /* Set the desired hover background color */
             color: #ffffff !important;
-            /* Optional: Change the text color to white for better visibility */
         }
 
-        /* Change the selected item background color */
         .select2-results__option[aria-selected="true"] {
             background-color: #841818 !important;
-            /* Darker color when item is selected */
             color: #ffffff !important;
-            /* Ensure text remains visible */
         }
 
-        /* Change the placeholder text color to black */
         .select2-selection__placeholder {
             color: black !important;
         }
     </style>
 
     <script>
-
-function updateTotalMarks() {
-    let total = 0;
-
-    // Loop through all dropdowns with the class 'question-mark'
-    document.querySelectorAll('.question-mark').forEach(function(select) {
-        // Parse the value or default to 0 if the field is not selected
-        let value = parseInt(select.value) || 0;
-
-        // Add the parsed value to the total if it exists
-        if (select.value !== "") {
-            total += value;
+        function updateTotalMarks() {
+            let total = 0;
+            document.querySelectorAll('.question-mark').forEach(function(select) {
+                let value = parseInt(select.value) || 0;
+                if (select.value !== "") {
+                    total += value;
+                }
+            });
+            document.getElementById('total_marks').value = total;
         }
-    });
 
-    // Update the total marks input field
-    document.getElementById('total_marks').value = total;
-}
+        function fetchCandidates(groupId) {
+            if (!groupId) return;
 
-function fetchCandidates(groupId) {
-    if (!groupId) return;
+            fetch(`{{ url('/get-gs-candidates') }}/${groupId}`)
+                .then(response => response.json())
+                .then(data => {
+                    let candidateSelect = document.getElementById('candidate_id');
+                    candidateSelect.innerHTML = '<option value="">Choose a Candidate...</option>';
+                    if (data.length === 0) {
+                        candidateSelect.innerHTML += '<option value="">No candidates found</option>';
+                        return;
+                    }
 
-     fetch(`{{ url('/get-gs-candidates') }}/${groupId}`)
-        .then(response => response.json())
-        .then(data => {
-            let candidateSelect = document.getElementById('candidate_id');
-            candidateSelect.innerHTML = '<option value="">Choose a Candidate...</option>';
-            if (data.length === 0) {
-                candidateSelect.innerHTML += '<option value="">No candidates found</option>';
-                return;
-            }
+                    data.forEach(candidate => {
+                        candidateSelect.innerHTML +=
+                            `<option value="${candidate.candidates_id}">${candidate.candidate_id || candidate.name}</option>`;
+                    });
 
-            data.forEach(candidate => {
-                candidateSelect.innerHTML +=
-                    `<option value="${candidate.candidates_id}">${candidate.candidate_id || candidate.name}</option>`;
-            });
-
-            // Reinitialize select2
-            $('#candidate_id').select2({
-                placeholder: "Choose a Candidate...",
-                allowClear: true
-            });
-        })
-        .catch(error => {
-            console.error('Error fetching candidates:', error);
-            alert('Error loading candidates. Please try again.');
-        });
- }
-
+                    $('#candidate_id').select2({
+                        placeholder: "Choose a Candidate...",
+                        allowClear: true
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching candidates:', error);
+                    alert('Error loading candidates. Please try again.');
+                });
+        }
     </script>
 @endsection
