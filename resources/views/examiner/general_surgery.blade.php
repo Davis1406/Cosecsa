@@ -26,7 +26,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            
+
 
                             <!-- Candidate Selection based on Group -->
                             <div class="form-group col-md-4 col-sm-12">
@@ -67,10 +67,10 @@
                                     </div>
                                 @endfor
                             </div>
-                        
+
                             <!-- Separator -->
                             <div class="separator-lg"></div>
-                        
+
                             <!-- Right Column (Case 2) -->
                             <div class="col-md-6" style="padding-left: 20px;">
                                 <h5 style="text-align: center; color: #a02626;">Case 2</h5>
@@ -90,7 +90,7 @@
                                 @endfor
                             </div>
                         </div>
-                        
+
                         <!-- Overall Marks and Grade Section -->
                         <div class="form-row justify-content-center">
                             <div class="form-group col-md-9 col-sm-12">
@@ -180,7 +180,7 @@ function updateTotalMarks() {
     // Loop through all dropdowns with the class 'question-mark'
     document.querySelectorAll('.question-mark').forEach(function(select) {
         // Parse the value or default to 0 if the field is not selected
-        let value = parseInt(select.value) || 0; 
+        let value = parseInt(select.value) || 0;
 
         // Add the parsed value to the total if it exists
         if (select.value !== "") {
@@ -192,26 +192,35 @@ function updateTotalMarks() {
     document.getElementById('total_marks').value = total;
 }
 
-        function fetchCandidates() {
-            fetch('/cosecsa/get-candidates')
-                .then(response => response.json())
-                .then(data => {
-                    let candidateSelect = document.getElementById('candidate_id');
-                    candidateSelect.innerHTML = '<option value="">Choose a Candidate...</option>';
+function fetchCandidates(groupId) {
+    if (!groupId) return;
 
-                    // Populate the dropdown options dynamically
-                    data.forEach(candidate => {
-                        candidateSelect.innerHTML +=
-                            `<option value="${candidate.cand_id}">${candidate.c_id}</option>`;
-                    });
+     fetch(`{{ url('/get-gs-candidates') }}/${groupId}`)
+        .then(response => response.json())
+        .then(data => {
+            let candidateSelect = document.getElementById('candidate_id');
+            candidateSelect.innerHTML = '<option value="">Choose a Candidate...</option>';
+            if (data.length === 0) {
+                candidateSelect.innerHTML += '<option value="">No candidates found</option>';
+                return;
+            }
 
-                    // Reinitialize Select2 after populating the options
-                    $('#candidate_id').select2({
-                        placeholder: "Select a candidate",
-                        allowClear: true
-                    });
-                })
-                .catch(error => console.error('Error fetching candidates:', error));
-        }
+            data.forEach(candidate => {
+                candidateSelect.innerHTML +=
+                    `<option value="${candidate.candidates_id}">${candidate.candidate_id || candidate.name}</option>`;
+            });
+
+            // Reinitialize select2
+            $('#candidate_id').select2({
+                placeholder: "Choose a Candidate...",
+                allowClear: true
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching candidates:', error);
+            alert('Error loading candidates. Please try again.');
+        });
+ }
+
     </script>
 @endsection

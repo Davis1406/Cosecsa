@@ -240,9 +240,18 @@
 
                                 <!-- Results Section (Parent) -->
                                 <li class="nav-item @if (Request::segment(3) == 'exam_results' ||
-                                        Request::segment(3) == 'gs_results' ||
-                                        Request::segment(3) == 'station_results' ||
-                                        Request::segment(3) == 'gs_station_results') menu-open @endif">
+                        Request::segment(3) == 'gs_results' ||
+                        Request::segment(3) == 'station_results' ||
+                        Request::segment(3) == 'gs_station_results' ||
+                        Request::segment(3) == 'fcs_cardiothoracic_results' ||
+                        Request::segment(3) == 'fcs_urology_results' ||
+                        Request::segment(3) == 'fcs_paediatric_results' ||
+                        Request::segment(3) == 'fcs_orthopaedics_results' ||
+                        Request::segment(3) == 'fcs_paediatric_ortho_results' ||
+                        Request::segment(3) == 'fcs_ent_results' ||
+                        Request::segment(3) == 'fcs_plastic_surgery_results' ||
+                        Request::segment(3) == 'fcs_neurosurgery_results' ||
+                        Request::segment(3) == 'fcs-station-results') menu-open @endif">
                                     <a href="#" class="nav-link">
                                         <i class="fas fa-chart-line nav-icon"></i>
                                         <p>
@@ -251,61 +260,97 @@
                                         </p>
                                     </a>
                                     <ul class="nav nav-treeview" style="padding-left: 20px;">
-                                        <!-- Child Results Sections -->
+                                        <!-- MCS Results -->
                                         <li class="nav-item">
                                             <a href="{{ url('admin/exams/exam_results') }}"
-                                                class="nav-link @if (Request::segment(3) == 'exam_results' || Request::segment(3) == 'station_results') active @endif">
-                                                <i class="fas fa-hospital nav-icon"></i>
+                                               class="nav-link @if (Request::segment(3) == 'exam_results' || Request::segment(3) == 'station_results') active @endif">
+                                                <i class="fas fa-microscope nav-icon"></i>
                                                 <p>MCS Results</p>
                                             </a>
                                         </li>
+
+                                        <!-- FCS General Surgery Results -->
                                         <li class="nav-item">
                                             <a href="{{ url('admin/exams/gs_results') }}"
-                                                class="nav-link @if (Request::segment(3) == 'gs_results' || Request::segment(3) == 'gs_station_results') active @endif">
-                                                <i class="fas fa-heart nav-icon"></i>
+                                               class="nav-link @if (Request::segment(3) == 'gs_results' || Request::segment(3) == 'gs_station_results') active @endif">
+                                                <i class="fas fa-user-md nav-icon"></i>
                                                 <p>FCS General Surgery</p>
                                             </a>
                                         </li>
+
+                                        <!-- FCS Cardiothoracic Results -->
                                         <li class="nav-item">
-                                            <a href=""
-                                                class="nav-link @if (Request::segment(3) == 'fcs-cardiothoracic') active @endif">
+                                            <a href="{{ url('admin/exams/fcs_cardiothoracic_results') }}"
+                                               class="nav-link @if (Request::segment(3) == 'fcs_cardiothoracic_results' || (Request::segment(3) == 'fcs-station-results' && Request::segment(6) == 'cardiothoracic_results')) active @endif">
                                                 <i class="fas fa-heartbeat nav-icon"></i>
                                                 <p>FCS Cardiothoracic</p>
                                             </a>
                                         </li>
+
+                                        <!-- FCS Urology Results -->
                                         <li class="nav-item">
-                                            <a href=""
-                                                class="nav-link @if (Request::segment(3) == 'fcs-urology') active @endif">
-                                                <i class="fas fa-diagnoses nav-icon"></i>
+                                            <a href="{{ url('admin/exams/fcs_urology_results') }}"
+                                               class="nav-link @if (Request::segment(3) == 'fcs_urology_results' || (Request::segment(3) == 'fcs-station-results' && Request::segment(6) == 'urology_results')) active @endif">
+                                                <i class="fas fa-procedures nav-icon"></i>
                                                 <p>FCS Urology</p>
                                             </a>
                                         </li>
+
+                                        <!-- FCS Paediatric Surgery Results -->
                                         <li class="nav-item">
-                                            <a href=""
-                                                class="nav-link @if (Request::segment(3) == 'fcs-paediatric') active @endif">
+                                            <a href="{{ url('admin/exams/fcs_paediatric_results') }}"
+                                               class="nav-link @if (Request::segment(3) == 'fcs_paediatric_results' || (Request::segment(3) == 'fcs-station-results' && Request::segment(6) == 'paediatric_results')) active @endif">
                                                 <i class="fas fa-baby nav-icon"></i>
-                                                <p>FCS Paediatric</p>
+                                                <p>FCS Paediatric Surgery</p>
                                             </a>
                                         </li>
+
+                                        <!-- FCS Orthopaedics Results -->
                                         <li class="nav-item">
-                                            <a href=""
-                                                class="nav-link @if (Request::segment(3) == 'fcs-ent') active @endif">
-                                                <i class="fas fa-headphones nav-icon"></i>
+                                            <a href="{{ url('admin/exams/fcs_orthopaedics_results') }}"
+                                               class="nav-link @if (Request::segment(3) == 'fcs_orthopaedics_results' || (Request::segment(3) == 'fcs-station-results' && Request::segment(6) == 'ortho_results')) active @endif">
+                                                <i class="fas fa-bone nav-icon"></i>
+                                                <p>FCS Orthopaedics</p>
+                                            </a>
+                                        </li>
+
+                                        <!-- FCS Paediatric Orthopaedics Results -->
+                                        <li class="nav-item">
+                                            <a href="{{ url('admin/exams/fcs_paediatric_ortho_results') }}"
+                                               class="nav-link @if (Request::segment(3) == 'fcs_paediatric_ortho_results' || (Request::segment(3) == 'fcs-station-results' && Request::segment(6) == 'paediatric_orthopaedics_results')) active @endif">
+                                                <i class="fas fa-child nav-icon"></i>
+                                                <p>FCS Paediatric Ortho</p>
+                                            </a>
+                                        </li>
+
+                                        <!-- FCS ENT Results -->
+                                        <li class="nav-item">
+                                            <a href="{{ url('admin/exams/fcs_ent_results') }}"
+                                               class="nav-link @if (Request::segment(3) == 'fcs_ent_results' || (Request::segment(3) == 'fcs-station-results' && Request::segment(6) == 'ent_results')) active @endif">
+                                                <i class="fas fa-head-side-virus nav-icon"></i>
                                                 <p>FCS ENT</p>
                                             </a>
                                         </li>
+
+                                        <!-- FCS Plastic Surgery Results -->
                                         <li class="nav-item">
-                                            <a href=""
-                                                class="nav-link @if (Request::segment(3) == 'fcs-plastic-surgery') active @endif">
-                                                <i class="fas fa-user-md nav-icon"></i>
+                                            <a href="{{ url('admin/exams/fcs_plastic_surgery_results') }}"
+                                               class="nav-link @if (Request::segment(3) == 'fcs_plastic_surgery_results' || (Request::segment(3) == 'fcs-station-results' && Request::segment(6) == 'plastic_surgery_results')) active @endif">
+                                                <i class="fas fa-hand-holding-medical nav-icon"></i>
                                                 <p>FCS Plastic Surgery</p>
+                                            </a>
+                                        </li>
+
+                                        <!-- FCS Neurosurgery Results -->
+                                        <li class="nav-item">
+                                            <a href="{{ url('admin/exams/fcs_neurosurgery_results') }}"
+                                               class="nav-link @if (Request::segment(3) == 'fcs_neurosurgery_results' || (Request::segment(3) == 'fcs-station-results' && Request::segment(6) == 'neurosurgery_results')) active @endif">
+                                                <i class="fas fa-brain nav-icon"></i>
+                                                <p>FCS Neurosurgery</p>
                                             </a>
                                         </li>
                                     </ul>
                                 </li>
-                            </ul>
-                        </li>
-
                         <li class="nav-item">
                             <a href="{{ url('profile/change_password') }}"
                                 class="nav-link @if (Request::segment(2) == 'change_password') active @endif">
@@ -353,7 +398,7 @@
 
                         <li class="nav-item">
                             {{-- <a href="{{ url('examiner/results') }}" --}}
-                            <a href="{{ url('examiner/results') }}" class="nav-link @if (Request::segment(2) == 'results' || Request::segment(2) == 'view_results' || Request::segment(2) == 'resubmit') active @endif">
+                            <a href="{{ url('examiner/results') }}" class="nav-link @if (Request::segment(2) == 'results' || Request::segment(2) == 'view_results' || Request::segment(2) == 'resubmit'||Request::segment(2) == 'view_fcs_results'||Request::segment(2) == 'fcs-resubmit') active @endif">
                                 <i class="fas fa-chart-line nav-icon"></i>
                                 <p>Results</p>
                             </a>
@@ -362,7 +407,7 @@
                         <li class="nav-item">
                             <a href="{{ url('examiner/profile_settings') }}"
                                 class="nav-link @if (Request::segment(2) == 'profile_settings' || Request::segment(2) == 'edit_info') active @endif">
-                                <i class="nav-icon fas fa-cog"></i>
+                                <i class="nav-icon fas fa-cog "></i>
                                 <p>
                                     Profile Settings
                                 </p>

@@ -11,10 +11,10 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\TraineeController;
 use App\Http\Controllers\CandidatesController;
 use App\Http\Controllers\TrainerController;
-use App\Http\Controllers\CountryRepsController;               
-use App\Http\Controllers\FellowsController;   
-use App\Http\Controllers\PromotionController;  
-use App\Http\Controllers\MembersController; 
+use App\Http\Controllers\CountryRepsController;
+use App\Http\Controllers\FellowsController;
+use App\Http\Controllers\PromotionController;
+use App\Http\Controllers\MembersController;
 use App\Http\Controllers\ExamsController;
 
 
@@ -58,7 +58,7 @@ Route::group(['middleware' => 'admin'], function(){
     Route::get('admin/hospital/edit_hospital/{id} ', [HospitalController::class,'edit']);
     Route::post('admin/hospital/edit_hospital/{id} ', [HospitalController::class,'update']);
     Route::get('admin/hospital/delete/{id} ', [HospitalController::class,'delete']);
-    
+
    //Programmes Routes
    Route::get('admin/programmes/list', [ProgrammesController::class, 'list']);
    Route::get('admin/programmes/add_programmes', [ProgrammesController::class, 'add']);
@@ -167,6 +167,20 @@ Route::get('admin/exams/exam_results', [ExamsController::class,'adminResults']);
 Route::get('admin/exams/gs_results', [ExamsController::class,'gsResults']);
 Route::get('admin/exams/station_results/{candidate_id}/{station_id}', [ExamsController::class, 'viewCandidateStationResult']);
 Route::get('admin/exams/gs_station_results/{candidate_id}/{station_id}', [ExamsController::class, 'viewGsStationResult']);
+// FCS Programme Results
+    Route::get('admin/exams/fcs_cardiothoracic_results', [ExamsController::class, 'cardiothoracicResults']);
+    Route::get('admin/exams/fcs_urology_results', [ExamsController::class, 'urologyResults']);
+    Route::get('admin/exams/fcs_paediatric_results', [ExamsController::class, 'paediatricResults']);
+    Route::get('admin/exams/fcs_ent_results', [ExamsController::class, 'entResults']);
+    Route::get('admin/exams/fcs_plastic_surgery_results', [ExamsController::class, 'plasticSurgeryResults']);
+    Route::get('admin/exams/fcs_neurosurgery_results', [ExamsController::class, 'neurosurgeryResults']);
+    Route::get('admin/exams/fcs_orthopaedics_results', [ExamsController::class, 'orthopaedicsResults']);
+    Route::get('admin/exams/fcs_paediatric_ortho_results', [ExamsController::class, 'paediatricOrthopaedicsResults']);
+
+// FCS Station Results
+    Route::get('admin/exams/fcs-station-results/{candidate_id}/{station_id}/{exam_format}/{table}', [ExamsController::class, 'viewFcsStationResults']);
+
+
 // Show attendance confirmation page (GET)
 Route::get('admin/exams/confirm-attendance/{examiner_id}', [ExamsController::class, 'showAttendanceConfirmation'])->name('exams.confirm.attendance');
 // Register attendance via Form (POST) - with CSRF protection
@@ -192,28 +206,74 @@ Route::group(['middleware' => 'trainee'], function(){
 
 });
 
-//Examiner Routes 
-
+//Examiner Routes
 Route::group(['middleware' => 'examiner'], function(){
 
-  Route::get('examiner/dashboard ', [DashboardController::class,'examinerform'])->name('dashboard');
-  Route::get('examiner/examiner_form ', [CandidatesController::class,'mcsexaminerform']);
-  Route::get('examiner/general_surgery ', [CandidatesController::class,'gsexaminerform']);
-  Route::get('examiner/view_results/{candidate_id}/{station_id}', [CandidatesController::class, 'viewCandidateResults']);
-  Route::get('examiner/results', [CandidatesController::class,'results']);
-  Route::get('examiner/resubmit/{candidate_id}/{station_id}', [CandidatesController::class, 'resubmit'])->name('examiner.resubmit');
-  Route::post('examiner/resubmit/{candidate_id}/{station_id}', [CandidatesController::class, 'updateEvaluation'])->name('candidateform.update');
-  Route::post('examiner/examiner_form', [CandidatesController::class, 'storeEvaluation'])->name('examiner.add');
-  Route::post('examiner/general_surgery', [CandidatesController::class, 'storegsEvaluation'])->name('gs.add');
-  Route::get('examiner/profile_settings', [ExamsController::class, 'examinerProfile'])->name('examiner.profile');
-  // Route::post('examiner/profile_settings/update', [ExamsController::class, 'updateExaminerProfile'])->name('examiner.profile.update');
-  Route::post('examiner/password/update', [ExamsController::class, 'examinerChangePassword'])->name('examiner.password.update');
-  Route::get('/get-candidates', [CandidatesController::class, 'getGsCandidatesByGroup']);
-  Route::get('/get-mcs-candidates/{groupId}', [CandidatesController::class, 'getMcsCandidatesByGroup']);
-  // Add these new routes for examiner edit
-  Route::get('examiner/edit_info/{id}', [ExamsController::class, 'examinerEdit'])->name('examiner.edit');
-  Route::post('examiner/edit_info/{id}', [ExamsController::class, 'examinerUpdate'])->name('examiner.selfUpdate');
-  Route::get('examiner/badge', [ExamsController::class, 'examinerBadge'])->name('examiner.badge');
+    Route::get('examiner/dashboard ', [DashboardController::class,'examinerform'])->name('dashboard');
+    Route::get('examiner/examiner_form ', [CandidatesController::class,'mcsexaminerform']);
+    Route::get('examiner/general_surgery ', [CandidatesController::class,'gsexaminerform']);
+
+    // Separate routes for question-based and FCS results viewing
+    Route::get('examiner/view_results/{candidate_id}/{station_id}', [CandidatesController::class, 'viewCandidateResults'])->name('examiner.view.results');
+    Route::get('examiner/view_fcs_results/{candidate_id}', [CandidatesController::class, 'viewFcsResults'])->name('examiner.view.fcs.results');
+
+    Route::get('examiner/results', [CandidatesController::class,'results']);
+
+    // Separate resubmit routes for question-based and FCS
+    Route::get('examiner/resubmit/{candidate_id}/{station_id}', [CandidatesController::class, 'resubmit'])->name('examiner.resubmit');
+    Route::post('examiner/resubmit/{candidate_id}/{station_id}', [CandidatesController::class, 'updateEvaluation'])->name('candidateform.update');
+
+    Route::post('examiner/examiner_form', [CandidatesController::class, 'storeEvaluation'])->name('examiner.add');
+    Route::post('examiner/general_surgery', [CandidatesController::class, 'storegsEvaluation'])->name('gs.add');
+    Route::get('examiner/profile_settings', [ExamsController::class, 'examinerProfile'])->name('examiner.profile');
+    Route::post('examiner/password/update', [ExamsController::class, 'examinerChangePassword'])->name('examiner.password.update');
+    Route::get('/get-candidates', [CandidatesController::class, 'getGsCandidatesByGroup']);
+    Route::get('/get-mcs-candidates/{groupId}', [CandidatesController::class, 'getMcsCandidatesByGroup']);
+    Route::get('/get-gs-candidates/{groupId}', [CandidatesController::class, 'getGsCandidatesByGroup']);
+    Route::get('examiner/edit_info/{id}', [ExamsController::class, 'examinerEdit'])->name('examiner.edit');
+    Route::post('examiner/edit_info/{id}', [ExamsController::class, 'examinerUpdate'])->name('examiner.selfUpdate');
+    Route::get('examiner/badge', [ExamsController::class, 'examinerBadge'])->name('examiner.badge');
+
+    // Exam type selection pages
+    Route::get('examiner/cardiothoracic', [CandidatesController::class, 'cardiothoracicSelection'])->name('examiner.cardiothoracic');
+    Route::get('examiner/urology', [CandidatesController::class, 'urologySelection'])->name('examiner.urology');
+    Route::get('examiner/paediatric', [CandidatesController::class, 'paediatricSelection'])->name('examiner.paediatric');
+    Route::get('examiner/orthopaedic', [CandidatesController::class, 'orthopaedicSelection'])->name('examiner.orthopaedic');
+    Route::get('examiner/ent', [CandidatesController::class, 'entSelection'])->name('examiner.ent');
+    Route::get('examiner/plastic_surgery', [CandidatesController::class, 'plasticSurgerySelection'])->name('examiner.plastic_surgery');
+    Route::get('examiner/neurosurgery', [CandidatesController::class, 'neurosurgerySelection'])->name('examiner.neurosurgery');
+    Route::get('examiner/paediatric_orthopaedics', [CandidatesController::class, 'paediatricOrthopaedicsSelection'])->name('examiner.paediatric_orthopaedics');
+
+    // Exam forms - Clinical
+    Route::get('examiner/cardiothoracic/clinical', [CandidatesController::class, 'cardiothoracicClinicalForm'])->name('examiner.cardiothoracic.clinical');
+    Route::get('examiner/urology/clinical', [CandidatesController::class, 'urologyClinicalForm'])->name('examiner.urology.clinical');
+    Route::get('examiner/paediatric/clinical', [CandidatesController::class, 'paediatricClinicalForm'])->name('examiner.paediatric.clinical');
+    Route::get('examiner/ent/clinical', [CandidatesController::class, 'entClinicalForm'])->name('examiner.ent.clinical');
+    Route::get('examiner/plastic_surgery/clinical', [CandidatesController::class, 'plasticSurgeryClinicalForm'])->name('examiner.plastic_surgery.clinical');
+    Route::get('examiner/neurosurgery/clinical', [CandidatesController::class, 'neurosurgeryClinicalForm'])->name('examiner.neurosurgery.clinical');
+    Route::get('examiner/orthopaedic/clinical', [CandidatesController::class, 'orthopaedicClinicalForm'])->name('examiner.orthopaedic.clinical');
+    Route::get('examiner/paediatric_orthopaedics/clinical', [CandidatesController::class, 'paediatricOrthopaedicsClinicalForm'])->name('examiner.paediatric_orthopaedics.clinical');
+
+    // Exam forms - Viva
+    Route::get('examiner/cardiothoracic/viva', [CandidatesController::class, 'cardiothoracicVivaForm'])->name('examiner.cardiothoracic.viva');
+    Route::get('examiner/urology/viva', [CandidatesController::class, 'urologyVivaForm'])->name('examiner.urology.viva');
+    Route::get('examiner/paediatric/viva', [CandidatesController::class, 'paediatricVivaForm'])->name('examiner.paediatric.viva');
+    Route::get('examiner/ent/viva', [CandidatesController::class, 'entVivaForm'])->name('examiner.ent.viva');
+    Route::get('examiner/plastic_surgery/viva', [CandidatesController::class, 'plasticSurgeryVivaForm'])->name('examiner.plastic_surgery.viva');
+    Route::get('examiner/orthopaedic/viva', [CandidatesController::class, 'orthopaedicVivaForm'])->name('examiner.orthopaedic.viva');
+    Route::get('examiner/neurosurgery/viva', [CandidatesController::class, 'neurosurgeryVivaForm'])->name('examiner.neurosurgery.viva');
+    Route::get('examiner/paediatric_orthopaedics/viva', [CandidatesController::class, 'paediatricOrthopaedicsVivaForm'])->name('examiner.paediatric_orthopaedics.viva');
+
+    // FCS Resubmit routes
+    Route::get('examiner/fcs-resubmit/{candidate_id}', [CandidatesController::class, 'showFcsResubmitSelection'])->name('examiner.fcs.resubmit.selection');
+    Route::get('examiner/fcs-resubmit/{candidate_id}/{exam_format}', [CandidatesController::class, 'showFcsResubmitForm'])->name('examiner.fcs.resubmit.form');
+    Route::post('examiner/fcs-resubmit/{candidate_id}', [CandidatesController::class, 'updateEvaluationFcs'])->name('examiner.update_evaluation.fcs');
+
+    // Form submission routes
+    Route::post('examiner/submit-exam', [CandidatesController::class, 'submitExamEvaluation'])->name('examiner.submit.exam');
+
+    // Get candidates by group for specific exam
+    Route::get('get-exam-candidates/{examType}/{groupId}', [CandidatesController::class, 'getExamCandidatesByGroup']);
 
 });
 

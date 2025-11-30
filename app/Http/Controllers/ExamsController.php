@@ -658,6 +658,196 @@ public function delete($id)
         return view('admin.exams.gs_results', $data);
     }
 
+    // Add this helper method to get FCS results
+    // Better version - properly aggregates multiple examiner results per station
+    private function getFcsResults($programmeId, $tableName)
+    {
+        // First, get all raw results
+        $rawResults = DB::table($tableName)
+            ->join('candidates', "$tableName.candidate_id", '=', 'candidates.id')
+            ->join('users', 'candidates.user_id', '=', 'users.id')
+            ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+            ->select(
+                'candidates.id as cnd_id',
+                'candidates.candidate_id',
+                'users.name as fullname',
+                'examiners_groups.group_name',
+                "$tableName.exam_format",
+                "$tableName.station_id",
+                "$tableName.total"
+            )
+            ->where('candidates.programme_id', $programmeId)
+            ->orderBy('candidates.candidate_id')
+            ->get();
+
+        // Group and aggregate by candidate
+        return $rawResults
+            ->groupBy('cnd_id')
+            ->map(function ($candidateRecords) {
+                // Separate clinical and viva
+                $clinical = $candidateRecords->where('exam_format', 'clinical');
+                $viva = $candidateRecords->where('exam_format', 'viva');
+
+                // Aggregate clinical stations (sum all examiners per station)
+                $clinicalStations = [];
+                foreach ($clinical as $record) {
+                    $stationId = $record->station_id;
+                    if (!isset($clinicalStations[$stationId])) {
+                        $clinicalStations[$stationId] = 0;
+                    }
+                    $clinicalStations[$stationId] += $record->total;
+                }
+
+                // Aggregate viva stations (sum all examiners per station)
+                $vivaStations = [];
+                foreach ($viva as $record) {
+                    $stationId = $record->station_id;
+                    if (!isset($vivaStations[$stationId])) {
+                        $vivaStations[$stationId] = 0;
+                    }
+                    $vivaStations[$stationId] += $record->total;
+                }
+
+                return (object)[
+                    'cnd_id' => $candidateRecords->first()->cnd_id,
+                    'candidate_id' => $candidateRecords->first()->candidate_id,
+                    'fullname' => $candidateRecords->first()->fullname,
+                    'group_name' => $candidateRecords->first()->group_name,
+                    'clinical_total' => array_sum($clinicalStations),
+                    'viva_total' => array_sum($vivaStations),
+                    'overall_total' => array_sum($clinicalStations) + array_sum($vivaStations),
+                    'clinical_stations' => $clinicalStations,
+                    'viva_stations' => $vivaStations,
+                ];
+            })
+            ->values();
+    }
+
+// Cardiothoracic Results
+    public function cardiothoracicResults()
+    {
+        $data['header_title'] = 'FCS Cardiothoracic Results';
+        $data['getResults'] = $this->getFcsResults(1, 'cardiothoracic_results');
+        $data['programmeName'] = 'Cardiothoracic Surgery';
+        return view('admin.exams.fcs_cardiothoracic_results', $data);
+    }
+
+// Urology Results
+    public function urologyResults()
+    {
+        $data['header_title'] = 'FCS Urology Results';
+        $data['getResults'] = $this->getFcsResults(9, 'urology_results');
+        $data['programmeName'] = 'Urology';
+        return view('admin.exams.fcs_urology_results', $data);
+    }
+
+// Paediatric Surgery Results
+    public function paediatricResults()
+    {
+        $data['header_title'] = 'FCS Paediatric Surgery Results';
+        $data['getResults'] = $this->getFcsResults(7, 'paediatric_results');
+        $data['programmeName'] = 'Paediatric Surgery';
+        return view('admin.exams.fcs_paediatric_results', $data);
+    }
+
+// ENT Results
+    public function entResults()
+    {
+        $data['header_title'] = 'FCS ENT Results';
+        $data['getResults'] = $this->getFcsResults(5, 'ent_results');
+        $data['programmeName'] = 'ENT Surgery';
+        return view('admin.exams.fcs_ent_results', $data);
+    }
+
+// Plastic Surgery Results
+    public function plasticSurgeryResults()
+    {
+        $data['header_title'] = 'FCS Plastic Surgery Results';
+        $data['getResults'] = $this->getFcsResults(8, 'plastic_surgery_results');
+        $data['programmeName'] = 'Plastic Surgery';
+        return view('admin.exams.fcs_plastic_surgery_results', $data);
+    }
+
+// Neurosurgery Results
+    public function neurosurgeryResults()
+    {
+        $data['header_title'] = 'FCS Neurosurgery Results';
+        $data['getResults'] = $this->getFcsResults(3, 'neurosurgery_results');
+        $data['programmeName'] = 'Neurosurgery';
+        return view('admin.exams.fcs_neurosurgery_results', $data);
+    }
+
+// Orthopaedics Results
+    public function orthopaedicsResults()
+    {
+        $data['header_title'] = 'FCS Orthopaedics Results';
+        $data['getResults'] = $this->getFcsResults(4, 'orthopaedic_results');
+        $data['programmeName'] = 'Orthopaedics';
+        return view('admin.exams.fcs_orthopaedics_results', $data);
+    }
+
+// Paediatric Orthopaedics Results
+    public function paediatricOrthopaedicsResults()
+    {
+        $data['header_title'] = 'FCS Paediatric Orthopaedics Results';
+        $data['getResults'] = $this->getFcsResults(6, 'paediatric_orthopaedics_results');
+        $data['programmeName'] = 'Paediatric Orthopaedics';
+        return view('admin.exams.fcs_paediatric_ortho_results', $data);
+    }
+
+// View detailed station results for FCS programmes
+// View detailed station results for FCS programmes (supports multiple examiners)
+    public function viewFcsStationResults($candidate_id, $station_id, $exam_format, $table)
+    {
+        $header_title = ucfirst($exam_format) . ' Station Results';
+
+        // Get the primary candidate result (first examiner)
+        $candidateResult = DB::table($table)
+            ->join('candidates', "$table.candidate_id", '=', 'candidates.id')
+            ->join('users', 'candidates.user_id', '=', 'users.id')
+            ->join('examiners_groups', "$table.group_id", '=', 'examiners_groups.id')
+            ->join('examiners', "$table.examiner_id", '=', 'examiners.id')
+            ->join('users as examiner_users', 'examiners.user_id', '=', 'examiner_users.id')
+            ->select(
+                'candidates.candidate_id as candidate_name',
+                'users.name as fullname',
+                'examiners_groups.group_name as g_name',
+                "$table.station_id as s_id",
+                "$table.total",
+                "$table.question_mark",
+                "$table.remarks",
+                "$table.exam_format",
+                'examiners.examiner_id as examin_id',
+                'examiner_users.name as examiner_name'
+            )
+            ->where("$table.candidate_id", $candidate_id)
+            ->where("$table.station_id", $station_id)
+            ->where("$table.exam_format", $exam_format)
+            ->first();
+
+        // Get ALL results for this station from all examiners
+        $allResults = DB::table($table)
+            ->join('examiners', "$table.examiner_id", '=', 'examiners.id')
+            ->join('examiners_groups', "$table.group_id", '=', 'examiners_groups.id')
+            ->join('users as examiner_users', 'examiners.user_id', '=', 'examiner_users.id')
+            ->select(
+                "$table.total",
+                "$table.question_mark",
+                "$table.station_id as s_id",
+                "$table.exam_format",
+                'examiners_groups.group_name as g_name',
+                "$table.remarks",
+                'examiners.examiner_id',
+                'examiner_users.name as examiner_name'
+            )
+            ->where("$table.candidate_id", $candidate_id)
+            ->where("$table.station_id", $station_id)
+            ->where("$table.exam_format", $exam_format)
+            ->get();
+
+        return view('admin.exams.fcs_station_results', compact('candidateResult', 'allResults', 'header_title'));
+    }
+
     // Single Station Results
     public function viewCandidateStationResult($candidate_id, $station_id)
     {

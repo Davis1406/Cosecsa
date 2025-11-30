@@ -371,7 +371,7 @@ class User extends Authenticatable
 
 
     static public function getExaminerCandidates($userId = null, $yearId = null)
-{
+    {
     $userId = $userId ?? Auth::id();
 
     // Use current year if no year specified
@@ -489,96 +489,105 @@ class User extends Authenticatable
     //Examination Results Examiners Sides -- for EXaminer Results PAGE
     public static function getExaminationResults()
     {
-        // Retrieve the examiner ID linked to the logged-in user
+        // 1. Get examiner ID
         $examinerId = \DB::table('examiners')
             ->where('user_id', auth()->id())
             ->value('id');
 
         if (!$examinerId) {
-            return collect();
+            return [
+                'lastSubmittedForm' => null,
+                'records' => collect()
+            ];
         }
 
-        // Define the current exam year ID (you can set dynamically if needed)
-        $currentExamYearId = 6; // Example for 2025
+        // 2. Get current exam year (adjust dynamically if needed)
+        $currentExamYearId = User::getCurrentYearId(); // Example dynamic helper
 
-        // Fetch the most recent submission from `mcs_results` for current exam year
-        $lastExamFormSubmission = \DB::table('mcs_results')
-            ->where('examiner_id', $examinerId)
-            ->where('exam_year', $currentExamYearId)
-            ->latest('created_at')
-            ->first();
+        // 3. List all programme result tables
+        // IMPORTANT: Add any new programme here
+        $programmeTables = [
+            'mcs_results' => [
+                'grade_field' => 'overall',
+                'grade_is_null' => false
+            ],
+            'gs_results' => [
+                'grade_field' => null, // GS has no grade
+                'grade_is_null' => true
+            ],
 
-        // Fetch the most recent submission from `gs_results` for current exam year
-        $lastGsFormSubmission = \DB::table('gs_results')
-            ->where('examiner_id', $examinerId)
-            ->where('exam_year', $currentExamYearId)
-            ->latest('created_at')
-            ->first();
+            'cardiothoracic_results' => [
+                'grade_field' => null, // GS has no grade
+                'grade_is_null' => true
+            ],
+            // ADD OTHER PROGRAMMES BELOW
+            'fcs_results' => [
+                'grade_field' => 'grade',
+                'grade_is_null' => false
+            ],
+            'ortho_results' => [
+                'grade_field' => 'grade',
+                'grade_is_null' => false
+            ],
+        ];
 
-        // Determine the last submitted form
+        // 4. Store all results combined
+        $allResults = collect();
         $lastSubmittedForm = null;
+        $lastTimestamp = null;
 
-        if ($lastExamFormSubmission && $lastGsFormSubmission) {
-            $lastSubmittedForm = $lastExamFormSubmission->created_at > $lastGsFormSubmission->created_at
-                ? 'mcs_results'
-                : 'gs_results';
-        } elseif ($lastExamFormSubmission) {
-            $lastSubmittedForm = 'mcs_results';
-        } elseif ($lastGsFormSubmission) {
-            $lastSubmittedForm = 'gs_results';
+        // 5. Loop through each programme dynamically
+        foreach ($programmeTables as $table => $settings) {
+
+            if (!\Schema::hasTable($table)) {
+                continue; // Skip if table does not exist
+            }
+
+            // Fetch latest submission timestamp for this programme
+            $latestSubmission = \DB::table($table)
+                ->where('examiner_id', $examinerId)
+                ->where('exam_year', $currentExamYearId)
+                ->latest('created_at')
+                ->first();
+
+            if ($latestSubmission && (!$lastTimestamp || $latestSubmission->created_at > $lastTimestamp)) {
+                $lastTimestamp = $latestSubmission->created_at;
+                $lastSubmittedForm = $table;
+            }
+
+            // Build base query for this programme
+            $query = \DB::table($table)
+                ->select(
+                    "$table.*",
+                    "$table.id as record_id",
+                    "$table.candidate_id",
+                    "$table.station_id",
+                    "$table.group_id",
+                    "$table.total as total_marks",
+                    \DB::raw($settings['grade_is_null'] ? "NULL as grade" : "{$settings['grade_field']} as grade"),
+                    "$table.remarks",
+                    "candidates.candidate_id as candidate_name",
+                    "examiners_groups.group_name as group_name",
+                    \DB::raw("'$table' as source_table")
+                )
+                ->join('candidates', "$table.candidate_id", '=', 'candidates.id')
+                ->join('examiners_groups', "$table.group_id", '=', 'examiners_groups.id')
+                ->where("$table.examiner_id", $examinerId)
+                ->where("$table.exam_year", $currentExamYearId);
+
+            // Add into combined results
+            $allResults = $allResults->merge($query->get());
         }
 
-        // Fetch MCS results for current exam year
-        $examinationFormResults = \DB::table('mcs_results')
-            ->select(
-                'mcs_results.*',
-                'mcs_results.id as record_id',
-                'mcs_results.candidate_id',
-                'mcs_results.station_id',
-                'mcs_results.group_id',
-                'mcs_results.total as total_marks',
-                'mcs_results.overall as grade',
-                'mcs_results.remarks',
-                'candidates.candidate_id as candidate_name',
-                'examiners_groups.group_name as group_name',
-                \DB::raw("'mcs_results' as source_table")
-            )
-            ->join('candidates', 'mcs_results.candidate_id', '=', 'candidates.id')
-            ->join('examiners_groups', 'mcs_results.group_id', '=', 'examiners_groups.id')
-            ->where('mcs_results.examiner_id', $examinerId)
-            ->where('mcs_results.exam_year', $currentExamYearId); // ✅ filter by current exam year
-
-        // Fetch GS results for current exam year
-        $gsFormResults = \DB::table('gs_results')
-            ->select(
-                'gs_results.*',
-                'gs_results.id as record_id',
-                'gs_results.candidate_id',
-                'gs_results.station_id',
-                'gs_results.group_id as g_id',
-                'gs_results.total as total_marks',
-                \DB::raw('NULL as grade'),
-                'gs_results.remarks',
-                'candidates.candidate_id as candidate_name',
-                'examiners_groups.group_name as group_name',
-                \DB::raw("'gs_results' as source_table")
-            )
-            ->join('candidates', 'gs_results.candidate_id', '=', 'candidates.id')
-            ->join('examiners_groups', 'gs_results.group_id', '=', 'examiners_groups.id')
-            ->where('gs_results.examiner_id', $examinerId)
-            ->where('gs_results.exam_year', $currentExamYearId); // ✅ filter by current exam year
-
-        // Combine results with UNION and order by record ID
-        $combinedResults = $examinationFormResults
-            ->union($gsFormResults)
-            ->orderBy('record_id', 'asc')
-            ->get();
+        // Final sorting by record id
+        $allResults = $allResults->sortBy('record_id')->values();
 
         return [
             'lastSubmittedForm' => $lastSubmittedForm,
-            'records' => $combinedResults,
+            'records' => $allResults,
         ];
     }
+
 
 //MCS Results on the admin side.
     public static function getAdminExamsResults()
@@ -622,9 +631,12 @@ class User extends Authenticatable
     // Get Results for GS
     public static function getGsResults()
     {
+        $examYearId = 6; // ✅ Fixed exam year ID
+
         return \DB::table('gs_results')
             ->select(
                 'gs_results.candidate_id as cand_id',
+                'gs_results.exam_year', // ✅ include exam year column
                 'candidates.firstname',
                 'candidates.middlename',
                 'candidates.lastname',
@@ -633,16 +645,26 @@ class User extends Authenticatable
                 \DB::raw('SUM(gs_results.total) as total_sum')
             )
             ->join('candidates', 'gs_results.candidate_id', '=', 'candidates.id')
-            ->groupBy('gs_results.candidate_id', 'gs_results.station_id', 'candidates.firstname', 'candidates.middlename', 'candidates.lastname', 'candidates.candidate_id')
+            ->where('gs_results.exam_year', $examYearId) // ✅ filter by year ID = 6
+            ->groupBy(
+                'gs_results.candidate_id',
+                'gs_results.station_id',
+                'gs_results.exam_year', // ✅ add to groupBy
+                'candidates.firstname',
+                'candidates.middlename',
+                'candidates.lastname',
+                'candidates.candidate_id'
+            )
             ->orderBy('gs_results.candidate_id')
             ->get()
             ->groupBy('cand_id')
             ->map(function ($group) {
                 $candidate = $group->first();
                 return (object) [
+                    'exam_year' => $candidate->exam_year, // ✅ show year ID
                     'candidate_id' => $candidate->c_id,
                     'cnd_id' => $candidate->cand_id,
-                    'fullname' => "{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}",
+                    'fullname' => trim("{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}"),
                     'stations' => $group->map(function ($row) {
                         return [
                             'station_id' => $row->station_id,
