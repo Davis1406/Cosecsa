@@ -1,4 +1,4 @@
-\\\@extends('layout.app')
+@extends('layout.app')
 
 @section('content')
     <div class="wrapper">
@@ -69,6 +69,7 @@
 
                                     @php
                                         $defaultQuestions = 3;
+                                        $allowEmpty = ($exam_type == 'urology' && $form_type == 'viva');
                                     @endphp
 
                                     <div id="case-container-{{ $case }}">
@@ -91,9 +92,10 @@
                                                 </label>
                                                 <select name="question_marks_case{{ $case }}[]"
                                                         class="form-control question-mark"
-                                                        required onchange="updateTotalMarks()">
+                                                        @if(!$allowEmpty) required @endif
+                                                        onchange="updateTotalMarks()">
                                                     <option value="">Select Mark</option>
-                                                    @if($exam_type == 'urology' && $form_type == 'viva')
+                                                    @if($allowEmpty)
                                                         <option value="0">0</option>
                                                     @endif
                                                     <option value="2">2</option>
@@ -151,14 +153,12 @@
 
     <!-- ================= JS ================= -->
     <script>
-        // Check if this is a clinical exam
         const casesCount = {{ $cases_count }};
         const formType = '{{ $form_type }}';
         const examType = '{{ $exam_type }}';
         const isClinical = (formType === 'clinical');
-        const isUrologyViva = (examType === 'urology' && formType === 'viva');
+        const allowEmpty = (examType === 'urology' && formType === 'viva');
 
-        // Question labels for clinical exams
         const clinicalQuestionLabels = [
             'Overall Professional Capacity and Patient Care:',
             'Knowledge and Judgement:',
@@ -166,12 +166,10 @@
             'Bedside Manner:'
         ];
 
-        // Update case numbers based on selected station (only for single-case clinical)
         function updateCaseNumbers() {
             if (casesCount !== 1 || !isClinical) return;
 
-            const stationSelect = document.getElementById('station_id');
-            const selectedStation = stationSelect.value;
+            const selectedStation = document.getElementById('station_id').value;
 
             if (selectedStation) {
                 document.querySelectorAll('.case-heading').forEach(function(heading) {
@@ -184,27 +182,22 @@
             const container = document.getElementById(`case-container-${caseNumber}`);
             const count = container.querySelectorAll(".question-block").length;
 
-            // Limit to 4 questions for clinical exams
             if (isClinical && count >= 4) {
                 alert('Maximum of 4 questions allowed for clinical exams.');
                 return;
             }
 
             const questionNumber = count + 1;
-            let newField = document.createElement("div");
-            newField.classList.add("form-group", "question-block", "mt-2");
 
-            // Determine label
             let labelText = `Question ${questionNumber}:`;
             if (isClinical && questionNumber <= 4) {
                 labelText = clinicalQuestionLabels[questionNumber - 1];
             }
 
-            // Build mark options - add 0 for urology viva
+            let requiredAttr = allowEmpty ? "" : "required";
+
             let markOptions = '<option value="">Select Mark</option>';
-            if (isUrologyViva) {
-                markOptions += '<option value="0">0</option>';
-            }
+            if (allowEmpty) markOptions += '<option value="0">0</option>';
             markOptions += `
                 <option value="2">2</option>
                 <option value="4">4</option>
@@ -213,14 +206,15 @@
                 <option value="10">10</option>
             `;
 
+            const newField = document.createElement("div");
+            newField.classList.add("form-group", "question-block", "mt-2");
             newField.innerHTML = `
                 <label>${labelText}</label>
                 <div class="input-group">
                     <select name="question_marks_case${caseNumber}[]" class="form-control question-mark"
-                            required onchange="updateTotalMarks()">
+                            ${requiredAttr} onchange="updateTotalMarks()">
                         ${markOptions}
                     </select>
-
                     <div class="input-group-append">
                         <button type="button" class="btn btn-danger" onclick="removeQuestion(this, ${caseNumber})">X</button>
                     </div>
@@ -228,40 +222,21 @@
             `;
 
             container.appendChild(newField);
-
-            // Hide add button if we've reached the limit
-            if (isClinical && questionNumber >= 4) {
-                const addButton = container.nextElementSibling;
-                if (addButton && addButton.classList.contains('add-question-btn')) {
-                    addButton.style.display = 'none';
-                }
-            }
         }
 
         function removeQuestion(button, caseNumber) {
-            const questionBlock = button.closest('.question-block');
-            questionBlock.remove();
+            button.closest('.question-block').remove();
             updateTotalMarks();
-
-            // Show add button again if we're below the limit
-            if (isClinical) {
-                const container = document.getElementById(`case-container-${caseNumber}`);
-                const count = container.querySelectorAll(".question-block").length;
-                if (count < 4) {
-                    const addButton = container.nextElementSibling;
-                    if (addButton && addButton.classList.contains('add-question-btn')) {
-                        addButton.style.display = 'inline-block';
-                    }
-                }
-            }
         }
 
         function updateTotalMarks() {
             let total = 0;
+
             document.querySelectorAll('.question-mark').forEach(function(select) {
                 let value = parseInt(select.value) || 0;
                 if (select.value !== "") total += value;
             });
+
             document.getElementById('total_marks').value = total;
         }
 
@@ -295,9 +270,7 @@
                         allowClear: true
                     });
                 })
-                .catch(error => {
-                    alert('Error loading candidates. Please try again.');
-                });
+                .catch(() => alert('Error loading candidates. Please try again.'));
         }
     </script>
 @endsection
