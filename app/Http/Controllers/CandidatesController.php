@@ -673,7 +673,7 @@ class CandidatesController extends Controller
             'neurosurgery_results' => ['grade_field' => 'grade'],
             'plastics_results' => ['grade_field' => 'grade'],
             'paediatrics_results' => ['grade_field' => 'grade'],
-            'ortho_results' => ['grade_field' => 'grade'],
+            'orthopaedic_results' => ['grade_field' => 'grade'],
         ];
     }
 
