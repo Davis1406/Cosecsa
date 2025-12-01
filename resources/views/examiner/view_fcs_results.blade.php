@@ -52,32 +52,63 @@
                                     @foreach($candidateResult->clinical_records as $rec)
                                         @php
                                             $marks = json_decode($rec->question_mark, true) ?? [];
-                                            $questionLabels = [
-                                                0 => 'Overall Professional Capacity and Patient Care',
-                                                1 => 'Knowledge and Judgement',
-                                                2 => 'Quality of Response',
-                                                3 => 'Bedside Manner'
+                                            $casesCount = count($marks) <= 4 ? 1 : 2; // Determine if single or multiple cases
+                                            $questionsPerCase = $casesCount == 1 ? count($marks) : (count($marks) / $casesCount);
+
+                                            $clinicalLabels = [
+                                                'Overall Professional Capacity and Patient Care',
+                                                'Knowledge and Judgement',
+                                                'Quality of Response',
+                                                'Bedside Manner'
                                             ];
                                         @endphp
-                                        <tr>
-                                            <td rowspan="{{ count($marks) + 2 }}" style="vertical-align: middle;">
-                                                <b>{{ $rec->station_id }}</b>
-                                            </td>
-                                        </tr>
-                                        @foreach($marks as $i => $m)
+
+                                        @if($casesCount == 1)
+                                            <!-- Single Case Display -->
                                             <tr>
-                                                <td>
-                                                    @if(isset($questionLabels[$i]))
-                                                        {{ $questionLabels[$i] }}
-                                                    @else
-                                                        Question {{ $i + 1 }}
-                                                    @endif
+                                                <td rowspan="{{ count($marks) + 2 }}" style="vertical-align: middle;">
+                                                    <b>{{ $rec->station_id }}</b>
                                                 </td>
-                                                <td><b>{{ $m }}</b></td>
                                             </tr>
-                                        @endforeach
+                                            @foreach($marks as $i => $m)
+                                                <tr>
+                                                    <td>
+                                                        @if(isset($clinicalLabels[$i]))
+                                                            {{ $clinicalLabels[$i] }}
+                                                        @else
+                                                            Question {{ $i + 1 }}
+                                                        @endif
+                                                    </td>
+                                                    <td><b>{{ $m }}</b></td>
+                                                </tr>
+                                            @endforeach
+                                        @else
+                                            <!-- Two Cases Display -->
+                                            @for($case = 1; $case <= $casesCount; $case++)
+                                                @php
+                                                    $startIndex = ($case - 1) * $questionsPerCase;
+                                                @endphp
+                                                <tr>
+                                                    <td rowspan="{{ $questionsPerCase + 1 }}" style="vertical-align: middle;">
+                                                        <b>{{ $rec->station_id }}</b><br>
+                                                        <small>Case {{ $case }}</small>
+                                                    </td>
+                                                </tr>
+                                                @for($i = 0; $i < $questionsPerCase; $i++)
+                                                    @php
+                                                        $questionIndex = $startIndex + $i;
+                                                        if ($questionIndex >= count($marks)) break;
+                                                    @endphp
+                                                    <tr>
+                                                        <td>Question {{ $i + 1 }}</td>
+                                                        <td><b>{{ $marks[$questionIndex] }}</b></td>
+                                                    </tr>
+                                                @endfor
+                                            @endfor
+                                        @endif
+
                                         <tr style="background-color: #f8f9fa;">
-                                            <td><b>Total</b></td>
+                                            <td colspan="2"><b>Total</b></td>
                                             <td><b>{{ $rec->total }}</b></td>
                                         </tr>
                                         @if($rec->remarks)
@@ -113,20 +144,55 @@
                                     @foreach($candidateResult->viva_records as $rec)
                                         @php
                                             $marks = json_decode($rec->question_mark, true) ?? [];
+                                            $casesCount = count($marks) <= 4 ? 1 : 2; // Determine if single or multiple cases
+                                            $questionsPerCase = $casesCount == 1 ? count($marks) : (count($marks) / $casesCount);
                                         @endphp
-                                        <tr>
-                                            <td rowspan="{{ count($marks) + 2 }}" style="vertical-align: middle;">
-                                                <b>{{ $rec->station_id }}</b>
-                                            </td>
-                                        </tr>
-                                        @foreach($marks as $i => $m)
+
+                                        @if($casesCount == 1)
+                                            <!-- Single Case Display -->
                                             <tr>
-                                                <td>Question {{ $i + 1 }}</td>
-                                                <td><b>{{ $m }}</b></td>
+                                                <td rowspan="{{ count($marks) + 2 }}" style="vertical-align: middle;">
+                                                    <b>{{ $rec->station_id }}</b>
+                                                </td>
                                             </tr>
-                                        @endforeach
+                                            @foreach($marks as $i => $m)
+                                                <tr>
+                                                    <td>Question {{ $i + 1 }}</td>
+                                                    <td><b>{{ $m }}</b></td>
+                                                </tr>
+                                            @endforeach
+                                        @else
+                                            <!-- Two Cases Display -->
+                                            @for($case = 1; $case <= $casesCount; $case++)
+                                                @php
+                                                    $startIndex = ($case - 1) * $questionsPerCase;
+                                                $caseHeadings = [
+                                                    1 => 'Knowledge & Judgement',
+                                                    2 => 'Quality of Response'
+                                                ];
+                                                $caseHeading = $caseHeadings[$case] ?? "Case $case";
+                                                @endphp
+                                                <tr>
+                                                    <td rowspan="{{ $questionsPerCase + 1 }}" style="vertical-align: middle;">
+                                                        <b>{{ $rec->station_id }}</b><br>
+                                                        <small>{{ $caseHeading }}</small>
+                                                    </td>
+                                                </tr>
+                                                @for($i = 0; $i < $questionsPerCase; $i++)
+                                                    @php
+                                                        $questionIndex = $startIndex + $i;
+                                                        if ($questionIndex >= count($marks)) break;
+                                                    @endphp
+                                                    <tr>
+                                                        <td>Question {{ $i + 1 }}</td>
+                                                        <td><b>{{ $marks[$questionIndex] }}</b></td>
+                                                    </tr>
+                                                @endfor
+                                            @endfor
+                                        @endif
+
                                         <tr style="background-color: #f8f9fa;">
-                                            <td><b>Total</b></td>
+                                            <td colspan="2"><b>Total</b></td>
                                             <td><b>{{ $rec->total }}</b></td>
                                         </tr>
                                         @if($rec->remarks)
@@ -168,6 +234,11 @@
 
         .table-bordered td, .table-bordered th {
             border: 1px solid #dee2e6;
+        }
+
+        small {
+            font-size: 0.8em;
+            color: #6c757d;
         }
     </style>
 @endsection

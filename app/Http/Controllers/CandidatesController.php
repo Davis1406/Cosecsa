@@ -1197,7 +1197,7 @@ class CandidatesController extends Controller
 
         $currentYearId = User::getCurrentYearId();
 
-        // Only FCS tables with exam_format column
+        // FCS tables with exam_format column
         $fcsTablesWithFormat = [
             'cardiothoracic_results' => ['grade_field' => 'grade'],
             'urology_results' => ['grade_field' => 'grade'],
@@ -1206,22 +1206,18 @@ class CandidatesController extends Controller
             'plastic_surgery_results' => ['grade_field' => 'grade'],
             'neurosurgery_results' => ['grade_field' => 'grade'],
             'paediatric_orthopaedics_results' => ['grade_field' => 'grade'],
+            'orthopaedic_results' => ['grade_field' => 'grade'],
             'fcs_results' => ['grade_field' => 'grade'],
         ];
 
         $updated = false;
 
-        // Collect all question marks from different cases
-        $allQuestionMarks = [];
-        foreach ($request->all() as $key => $value) {
-            if (strpos($key, 'question_marks_case') === 0 && is_array($value)) {
-                $allQuestionMarks = array_merge($allQuestionMarks, $value);
-            }
-        }
+        // Get question marks directly from the request
+        $questionMarks = $request->question_marks ?? [];
 
-        // If no case-based marks, try regular question_marks array
-        if (empty($allQuestionMarks) && $request->has('question_marks')) {
-            $allQuestionMarks = $request->question_marks;
+        // Validate that we have question marks
+        if (empty($questionMarks)) {
+            return redirect()->back()->with('error', 'No question marks provided.');
         }
 
         foreach ($fcsTablesWithFormat as $table => $settings) {
@@ -1240,8 +1236,8 @@ class CandidatesController extends Controller
             $updateData = [
                 'group_id' => $request->group_id ?? $record->group_id,
                 'station_id' => $request->station_id ?? $record->station_id,
-                'question_mark' => json_encode($allQuestionMarks),
-                'total' => $request->total_marks ?? $record->total,
+                'question_mark' => json_encode($questionMarks),
+                'total' => $request->total_marks ?? array_sum($questionMarks),
                 'remarks' => $request->remarks ?? $record->remarks,
                 'updated_at' => now(),
             ];
@@ -1257,6 +1253,15 @@ class CandidatesController extends Controller
                 ->update($updateData);
 
             $updated = true;
+
+            \Log::info('FCS Evaluation Updated', [
+                'table' => $table,
+                'candidate_id' => $candidate_id,
+                'question_marks' => $questionMarks,
+                'total_marks' => $request->total_marks ?? array_sum($questionMarks),
+                'record_id' => $record->id
+            ]);
+
             break; // Only update one record
         }
 
@@ -1266,7 +1271,6 @@ class CandidatesController extends Controller
 
         return redirect('examiner/results')->with('success', 'Evaluation updated successfully.');
     }
-
     //Exams With VIVA:::
 
 // Selection pages for each exam type
