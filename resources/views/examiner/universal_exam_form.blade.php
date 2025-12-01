@@ -68,8 +68,19 @@
                                     </h5>
 
                                     @php
-                                        $defaultQuestions = 3;
-                                        $allowEmpty = ($exam_type == 'urology' && $form_type == 'viva');
+                                        // Determine how many default questions to show
+                                        if ($form_type == 'viva') {
+                                            if ($exam_type == 'paediatric') {
+                                                $defaultQuestions = 2; // Paediatrics viva has only 2 questions
+                                            } else {
+                                                $defaultQuestions = 3; // Other vivas have 3 questions
+                                            }
+                                        } else {
+                                            $defaultQuestions = 3; // Clinical exams have 3 questions
+                                        }
+
+                                        $isUrologyViva = ($exam_type == 'urology' && $form_type == 'viva');
+                                        $isPaediatricViva = ($exam_type == 'paediatric' && $form_type == 'viva');
                                     @endphp
 
                                     <div id="case-container-{{ $case }}">
@@ -92,10 +103,9 @@
                                                 </label>
                                                 <select name="question_marks_case{{ $case }}[]"
                                                         class="form-control question-mark"
-                                                        @if(!$allowEmpty) required @endif
-                                                        onchange="updateTotalMarks()">
+                                                        required onchange="updateTotalMarks()">
                                                     <option value="">Select Mark</option>
-                                                    @if($allowEmpty)
+                                                    @if($isUrologyViva || $isPaediatricViva)
                                                         <option value="0">0</option>
                                                     @endif
                                                     <option value="2">2</option>
@@ -108,12 +118,15 @@
                                         @endfor
                                     </div>
 
-                                    <button type="button"
-                                            class="btn btn-outline-secondary btn-sm mb-3 add-question-btn"
-                                            onclick="addCaseQuestion({{ $case }})"
-                                            style="color:black; background-color: #FEC503; border-color: #FEC503;">
-                                        + Add Question
-                                    </button>
+                                    @if(!($exam_type == 'paediatric' && $form_type == 'viva'))
+                                        <!-- Hide "Add Question" button for Paediatrics viva since it only has 2 questions -->
+                                        <button type="button"
+                                                class="btn btn-outline-secondary btn-sm mb-3 add-question-btn"
+                                                onclick="addCaseQuestion({{ $case }})"
+                                                style="color:black; background-color: #FEC503; border-color: #FEC503;">
+                                            + Add Question
+                                        </button>
+                                    @endif
 
                                 </div>
                             @endfor
@@ -153,12 +166,26 @@
 
     <!-- ================= JS ================= -->
     <script>
+        // Check if this is a clinical exam
         const casesCount = {{ $cases_count }};
         const formType = '{{ $form_type }}';
         const examType = '{{ $exam_type }}';
         const isClinical = (formType === 'clinical');
-        const allowEmpty = (examType === 'urology' && formType === 'viva');
+        const isUrologyViva = (examType === 'urology' && formType === 'viva');
+        const isPaediatricViva = (examType === 'paediatric' && formType === 'viva');
+        const isSpecialViva = (isUrologyViva || isPaediatricViva); // Combined check for special viva rules
 
+        // Determine default questions based on exam type
+        let defaultQuestions = 3;
+        if (formType === 'viva') {
+            if (examType === 'paediatric') {
+                defaultQuestions = 2; // Paediatrics viva has only 2 questions
+            } else {
+                defaultQuestions = 3; // Other vivas have 3 questions
+            }
+        }
+
+        // Question labels for clinical exams
         const clinicalQuestionLabels = [
             'Overall Professional Capacity and Patient Care:',
             'Knowledge and Judgement:',
@@ -166,10 +193,12 @@
             'Bedside Manner:'
         ];
 
+        // Update case numbers based on selected station (only for single-case clinical)
         function updateCaseNumbers() {
             if (casesCount !== 1 || !isClinical) return;
 
-            const selectedStation = document.getElementById('station_id').value;
+            const stationSelect = document.getElementById('station_id');
+            const selectedStation = stationSelect.value;
 
             if (selectedStation) {
                 document.querySelectorAll('.case-heading').forEach(function(heading) {
@@ -180,24 +209,36 @@
 
         function addCaseQuestion(caseNumber) {
             const container = document.getElementById(`case-container-${caseNumber}`);
-            const count = container.querySelectorAll(".question-block").length;
+            const questionBlocks = container.querySelectorAll(".question-block");
+            const count = questionBlocks.length;
 
+            // Limit to 4 questions for clinical exams
             if (isClinical && count >= 4) {
                 alert('Maximum of 4 questions allowed for clinical exams.');
                 return;
             }
 
-            const questionNumber = count + 1;
+            // For Paediatrics viva, don't allow adding more questions (only 2 allowed)
+            if (isPaediatricViva) {
+                alert('Paediatrics viva only has 2 questions. Cannot add more.');
+                return;
+            }
 
+            const questionNumber = count + 1;
+            let newField = document.createElement("div");
+            newField.classList.add("form-group", "question-block", "mt-2");
+
+            // Determine label
             let labelText = `Question ${questionNumber}:`;
             if (isClinical && questionNumber <= 4) {
                 labelText = clinicalQuestionLabels[questionNumber - 1];
             }
 
-            let requiredAttr = allowEmpty ? "" : "required";
-
+            // Build mark options - add 0 for urology and paediatric viva
             let markOptions = '<option value="">Select Mark</option>';
-            if (allowEmpty) markOptions += '<option value="0">0</option>';
+            if (isSpecialViva) {
+                markOptions += '<option value="0">0</option>';
+            }
             markOptions += `
                 <option value="2">2</option>
                 <option value="4">4</option>
@@ -206,15 +247,14 @@
                 <option value="10">10</option>
             `;
 
-            const newField = document.createElement("div");
-            newField.classList.add("form-group", "question-block", "mt-2");
             newField.innerHTML = `
                 <label>${labelText}</label>
                 <div class="input-group">
                     <select name="question_marks_case${caseNumber}[]" class="form-control question-mark"
-                            ${requiredAttr} onchange="updateTotalMarks()">
+                            required onchange="updateTotalMarks()">
                         ${markOptions}
                     </select>
+
                     <div class="input-group-append">
                         <button type="button" class="btn btn-danger" onclick="removeQuestion(this, ${caseNumber})">X</button>
                     </div>
@@ -222,21 +262,48 @@
             `;
 
             container.appendChild(newField);
+
+            // Hide add button if we've reached the limit
+            if (isClinical && questionNumber >= 4) {
+                const addButton = container.nextElementSibling;
+                if (addButton && addButton.classList.contains('add-question-btn')) {
+                    addButton.style.display = 'none';
+                }
+            }
         }
 
         function removeQuestion(button, caseNumber) {
-            button.closest('.question-block').remove();
+            const questionBlock = button.closest('.question-block');
+            const container = document.getElementById(`case-container-${caseNumber}`);
+            const count = container.querySelectorAll(".question-block").length;
+
+            // Don't allow removing if we're at the minimum number of questions
+            if (isPaediatricViva && count <= 2) {
+                alert('Paediatrics viva must have at least 2 questions.');
+                return;
+            }
+
+            questionBlock.remove();
             updateTotalMarks();
+
+            // Show add button again if we're below the limit
+            if (isClinical) {
+                const currentCount = container.querySelectorAll(".question-block").length;
+                if (currentCount < 4) {
+                    const addButton = container.nextElementSibling;
+                    if (addButton && addButton.classList.contains('add-question-btn')) {
+                        addButton.style.display = 'inline-block';
+                    }
+                }
+            }
         }
 
         function updateTotalMarks() {
             let total = 0;
-
             document.querySelectorAll('.question-mark').forEach(function(select) {
                 let value = parseInt(select.value) || 0;
                 if (select.value !== "") total += value;
             });
-
             document.getElementById('total_marks').value = total;
         }
 
@@ -270,7 +337,22 @@
                         allowClear: true
                     });
                 })
-                .catch(() => alert('Error loading candidates. Please try again.'));
+                .catch(error => {
+                    alert('Error loading candidates. Please try again.');
+                });
         }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update total marks on page load
+            updateTotalMarks();
+
+            // For Paediatrics viva, hide any existing "Add Question" buttons
+            if (isPaediatricViva) {
+                document.querySelectorAll('.add-question-btn').forEach(function(button) {
+                    button.style.display = 'none';
+                });
+            }
+        });
     </script>
 @endsection

@@ -1573,11 +1573,39 @@ class CandidatesController extends Controller
             return back()->with('error', 'Candidate marks already submitted for this station and format. Please use Resubmit to edit.');
         }
 
+        // ✅ ADD VALIDATION FOR UROLOGY AND PAEDIATRICS VIVA MARKS
         $questionMarks = [];
-
         foreach ($request->all() as $key => $value) {
             if (strpos($key, 'question_marks_case') === 0 && is_array($value)) {
-                $questionMarks = array_merge($questionMarks, $value);
+                foreach ($value as $index => $mark) {
+                    // Skip empty values (for optional questions)
+                    if ($mark === "" || $mark === null) {
+                        // For Urology and Paediatrics viva, question 3 can be empty
+                        // For other exams or required questions, this should not happen
+                        if (!(($request->exam_type == 'urology' || $request->exam_type == 'paediatric')
+                            && $request->form_type == 'viva'
+                            && $key == 'question_marks_case2[]'
+                            && $index == 2)) { // 3rd question (0-indexed)
+                            return back()->with('error', 'All marks are required except question 3 for Urology/Paediatrics viva.');
+                        }
+                        $questionMarks[] = 0; // Store 0 for empty optional questions
+                        continue;
+                    }
+
+                    // For Urology and Paediatrics viva, ensure 0 is an accepted value
+                    if (($request->exam_type == 'urology' || $request->exam_type == 'paediatric') && $request->form_type == 'viva') {
+                        // Validate that the mark is either 0 or even numbers between 2-10
+                        if ($mark != 0 && $mark != 2 && $mark != 4 && $mark != 6 && $mark != 8 && $mark != 10) {
+                            return back()->with('error', 'Invalid mark value. For ' . ucfirst($request->exam_type) . ' viva, marks must be 0, 2, 4, 6, 8, or 10.');
+                        }
+                    } else {
+                        // For other exams, validate 2-10 only
+                        if (!in_array($mark, [2, 4, 6, 8, 10])) {
+                            return back()->with('error', 'Invalid mark value. Marks must be 2, 4, 6, 8, or 10.');
+                        }
+                    }
+                    $questionMarks[] = $mark;
+                }
             }
         }
 
