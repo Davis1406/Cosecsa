@@ -1,4 +1,4 @@
-@extends('layout.app')
+\\\@extends('layout.app')
 
 @section('content')
     <div class="wrapper">
@@ -93,6 +93,9 @@
                                                         class="form-control question-mark"
                                                         required onchange="updateTotalMarks()">
                                                     <option value="">Select Mark</option>
+                                                    @if($exam_type == 'urology' && $form_type == 'viva')
+                                                        <option value="0">0</option>
+                                                    @endif
                                                     <option value="2">2</option>
                                                     <option value="4">4</option>
                                                     <option value="6">6</option>
@@ -151,7 +154,9 @@
         // Check if this is a clinical exam
         const casesCount = {{ $cases_count }};
         const formType = '{{ $form_type }}';
+        const examType = '{{ $exam_type }}';
         const isClinical = (formType === 'clinical');
+        const isUrologyViva = (examType === 'urology' && formType === 'viva');
 
         // Question labels for clinical exams
         const clinicalQuestionLabels = [
@@ -195,17 +200,25 @@
                 labelText = clinicalQuestionLabels[questionNumber - 1];
             }
 
+            // Build mark options - add 0 for urology viva
+            let markOptions = '<option value="">Select Mark</option>';
+            if (isUrologyViva) {
+                markOptions += '<option value="0">0</option>';
+            }
+            markOptions += `
+                <option value="2">2</option>
+                <option value="4">4</option>
+                <option value="6">6</option>
+                <option value="8">8</option>
+                <option value="10">10</option>
+            `;
+
             newField.innerHTML = `
                 <label>${labelText}</label>
                 <div class="input-group">
                     <select name="question_marks_case${caseNumber}[]" class="form-control question-mark"
                             required onchange="updateTotalMarks()">
-                        <option value="">Select Mark</option>
-                        <option value="2">2</option>
-                        <option value="4">4</option>
-                        <option value="6">6</option>
-                        <option value="8">8</option>
-                        <option value="10">10</option>
+                        ${markOptions}
                     </select>
 
                     <div class="input-group-append">

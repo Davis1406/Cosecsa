@@ -101,6 +101,9 @@
                                                             class="form-control question-mark"
                                                             required onchange="updateTotalMarks()">
                                                         <option value="">Select Mark</option>
+                                                        @if($exam_type == 'urology' && $form_type == 'viva')
+                                                            <option value="0" {{ $candidate->question_mark[$questionIndex] == 0 ? 'selected' : '' }}>0</option>
+                                                        @endif
                                                         <option value="2" {{ $candidate->question_mark[$questionIndex] == 2 ? 'selected' : '' }}>2</option>
                                                         <option value="4" {{ $candidate->question_mark[$questionIndex] == 4 ? 'selected' : '' }}>4</option>
                                                         <option value="6" {{ $candidate->question_mark[$questionIndex] == 6 ? 'selected' : '' }}>6</option>
@@ -190,7 +193,9 @@
     <script>
         const casesCount = {{ $cases_count }};
         const formType = '{{ $form_type }}';
+        const examType = '{{ $exam_type }}';
         const isClinical = formType === 'clinical';
+        const isUrologyViva = (examType === 'urology' && formType === 'viva');
         const clinicalLabels = [
             'Overall Professional Capacity and Patient Care:',
             'Knowledge and Judgement:',
@@ -229,6 +234,19 @@
                 labelText = `Question ${questionNumber}:`;
             }
 
+            // Build mark options - add 0 for urology viva
+            let markOptions = '<option value="">Select Mark</option>';
+            if (isUrologyViva) {
+                markOptions += '<option value="0">0</option>';
+            }
+            markOptions += `
+                <option value="2">2</option>
+                <option value="4">4</option>
+                <option value="6">6</option>
+                <option value="8">8</option>
+                <option value="10">10</option>
+            `;
+
             let newField = document.createElement("div");
             newField.classList.add("form-group", "question-block", "mt-2");
 
@@ -237,12 +255,7 @@
             <div class="input-group">
                 <select name="question_marks[]" class="form-control question-mark"
                         required onchange="updateTotalMarks()">
-                    <option value="">Select Mark</option>
-                    <option value="2">2</option>
-                    <option value="4">4</option>
-                    <option value="6">6</option>
-                    <option value="8">8</option>
-                    <option value="10">10</option>
+                    ${markOptions}
                 </select>
                 <div class="input-group-append">
                     <button type="button" class="btn btn-danger" onclick="removeQuestion(this, ${caseNumber})">X</button>
