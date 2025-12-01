@@ -525,7 +525,7 @@ class User extends Authenticatable
                 'grade_field' => 'grade',
                 'grade_is_null' => false
             ],
-            'ortho_results' => [
+            'orthopaedic_results' => [
                 'grade_field' => 'grade',
                 'grade_is_null' => false
             ],
