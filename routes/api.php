@@ -2,18 +2,35 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ExamController;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| API Routes — COSECSA Examiner Mobile App
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// ── Public ────────────────────────────────────────────────────────────────────
+Route::post('/examiner/login',  [AuthController::class, 'login']);
+
+// ── Authenticated (Sanctum token) ─────────────────────────────────────────────
+Route::middleware('auth:sanctum')->group(function () {
+
+    // Auth
+    Route::get('/examiner/me',     [AuthController::class, 'me']);
+    Route::post('/examiner/logout', [AuthController::class, 'logout']);
+
+    // Exam data
+    Route::get('/exam/groups',                              [ExamController::class, 'getGroups']);
+    Route::get('/exam/candidates/{examType}/{groupId}',     [ExamController::class, 'getCandidates']);
+
+    // Mark submission
+    Route::post('/exam/submit',  [ExamController::class, 'submitMarks']);
+
+    // Offline batch sync
+    Route::post('/exam/sync',    [ExamController::class, 'syncBatch']);
+
+    // Results
+    Route::get('/exam/my-results', [ExamController::class, 'getMyResults']);
 });

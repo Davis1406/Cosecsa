@@ -62,7 +62,7 @@
             <nav class="mt-2">
                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
                     data-accordion="false">
-                    <!-- Add icons to the links using the .nav-icon class with font-awesome or any other icon font library -->
+                    <li class="nav-header">Navigation</li>
 
                     @if (Auth::user()->user_type == 1)
                         <li class="nav-item">
@@ -351,6 +351,10 @@
                                         </li>
                                     </ul>
                                 </li>
+                            </ul>
+                        </li>
+                        <!-- /.Examinations -->
+
                         <li class="nav-item">
                             <a href="{{ url('profile/change_password') }}"
                                 class="nav-link @if (Request::segment(2) == 'change_password') active @endif">
@@ -381,6 +385,24 @@
                         </li>
 
                         {{-- Examiner Section --}}
+                    @elseif (Auth::user()->user_type == 7)
+                        {{-- ── Fellow Navigation ── --}}
+                        <li class="nav-item">
+                            <a href="{{ url('fellow/dashboard') }}"
+                               class="nav-link @if (Request::segment(1) == 'fellow') active @endif">
+                                <i class="nav-icon fas fa-tachometer-alt"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url('fellow/dashboard') }}#tab-account"
+                               class="nav-link"
+                               onclick="localStorage.setItem('fellowActiveTab','#tab-account');">
+                                <i class="nav-icon fas fa-cog"></i>
+                                <p>Profile Settings</p>
+                            </a>
+                        </li>
+
                     @elseif (Auth::user()->user_type == 9)
                         <li class="nav-item">
                             <a href="{{ url('examiner/dashboard') }}"
@@ -415,6 +437,7 @@
                         </li>
                     @endif
 
+                                <li class="nav-header">Account</li>
                                 <li class="nav-item">
                                     <a href="{{ url('logout') }}" class="nav-link">
                                         <i class="nav-icon fas fa-sign-out-alt"></i>
@@ -438,19 +461,134 @@
 </aside>
 
 <style>
-    .nav-pills .nav-link.active,
-    .nav-pills .show>.nav-link {
-        color: #fff;
-        background-color: #a02626 !important;
+    /* ── Modern Minimal Sidebar ── */
+    .main-sidebar {
+        background-color: #363840 !important;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.18) !important;
     }
 
-    .nav-treeview .nav-link.active {
+    .brand-link {
+        background-color: #2e3035 !important;
+        border-bottom: 1px solid rgba(255,255,255,0.09) !important;
+        padding: 13px 16px !important;
+    }
+
+    .brand-text {
+        font-size: .88rem !important;
+        font-weight: 700 !important;
+        letter-spacing: .4px;
         color: #fff !important;
-        background-color: #495057 !important;
+    }
+
+    .brand-image {
+        border-radius: 6px !important;
+        width: 28px !important;
+        height: 28px !important;
+        margin-top: 0 !important;
+    }
+
+    /* User panel */
+    .user-panel {
+        border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+        margin: 0 !important;
+        padding: 10px 16px !important;
+    }
+
+    .user-panel .image img {
+        width: 38px !important;
+        height: 38px !important;
+        border: 2px solid rgba(160,38,38,0.55) !important;
+        border-radius: 50% !important;
+    }
+
+    .user-panel .info a {
+        font-size: .88rem !important;
+        font-weight: 600 !important;
+        color: rgba(255,255,255,0.85) !important;
+    }
+
+    /* Section header labels */
+    .nav-sidebar > .nav-header {
+        font-size: .58rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 1.3px !important;
+        color: rgba(255,255,255,0.28) !important;
+        padding: 14px 16px 4px !important;
+        text-transform: uppercase !important;
+    }
+
+    /* Nav links — default */
+    .nav-sidebar .nav-link {
+        color: rgba(255,255,255,0.72) !important;
+        border-radius: 0 !important;
+        padding: 9px 16px !important;
+        font-size: .875rem !important;
+        font-weight: 500 !important;
+        border-left: 3px solid transparent !important;
+        transition: all .15s ease !important;
+    }
+
+    .nav-sidebar .nav-link .nav-icon {
+        color: rgba(255,255,255,0.48) !important;
+        font-size: .9rem !important;
+        width: 1.4rem !important;
+        margin-right: 8px !important;
+    }
+
+    .nav-sidebar .nav-link:hover {
+        background: rgba(255,255,255,0.05) !important;
+        color: #fff !important;
+        border-left-color: rgba(160,38,38,0.45) !important;
+    }
+
+    .nav-sidebar .nav-link:hover .nav-icon {
+        color: rgba(255,255,255,0.65) !important;
+    }
+
+    /* Active top-level link */
+    .nav-pills .nav-link.active,
+    .nav-pills .show > .nav-link {
+        background: rgba(160,38,38,0.16) !important;
+        color: #fff !important;
+        border-left: 3px solid #a02626 !important;
+        font-weight: 600 !important;
+    }
+
+    .nav-pills .nav-link.active .nav-icon,
+    .nav-pills .show > .nav-link .nav-icon {
+        color: #d96060 !important;
+    }
+
+    /* Active sub-item */
+    .nav-treeview .nav-link.active {
+        background: rgba(160,38,38,0.13) !important;
+        color: #fff !important;
+        border-left: 3px solid #a02626 !important;
+        font-weight: 600 !important;
+    }
+
+    .nav-treeview .nav-link.active .nav-icon {
+        color: #d96060 !important;
+    }
+
+    /* Treeview indent */
+    .nav-treeview .nav-link {
+        padding-left: 2.4rem !important;
+        font-size: .84rem !important;
+    }
+
+    .nav-treeview .nav-item .nav-treeview .nav-link {
+        padding-left: 3.2rem !important;
     }
 
     .nav-treeview .nav-item .nav-treeview {
-        padding-left: 20px;
+        padding-left: 0 !important;
+    }
+
+    /* Sidebar thin scrollbar */
+    .sidebar {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,0.08) transparent;
     }
 
     /* Dark Mode Styles */

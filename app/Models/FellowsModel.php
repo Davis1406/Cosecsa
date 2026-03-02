@@ -18,6 +18,7 @@ class FellowsModel extends Model
         'middlename',
         'lastname',
         'personal_email',
+        'second_email',
         'gender',
         'status',
         'profile_image',
@@ -29,20 +30,35 @@ class FellowsModel extends Model
         'current_specialty',
         'organization',
         'admission_year',
-        'fellowship_year'
+        'fellowship_year',
+        // Extended fields
+        'candidate_number',
+        'supervised_by',
+        'registered_by',
+        'secretariat_registration_date',
+        'prog_entry_fee_year',
+        'prog_entry_mode_payment',
+        'exam_fee_year',
+        'exam_fee_date_paid',
+        'exam_fee_mode_payment',
+        'exam_fee_amount_paid',
+        'exam_fee_payment_verified',
+        'sponsored_by',
+        'mcs_qualification_year',
+        'country_mcs_training',
+        'exam_year_upcoming',
+        'exam_year_previous',
+        'cosecsa_region',
     ];
+
+    public function labels()
+    {
+        return $this->belongsToMany(FellowLabel::class, 'fellow_label_assignments', 'fellow_id', 'label_id');
+    }
 
     static public function getFellows()
     {
-        $return = self::select(
-                'fellows.*',
-
-                // 'programmes.name as category',
-                // 'study_year.id as study_year_id',
-                // 'study_year.name as programme_year'
-            )
-            // ->join('study_year', 'programmes.id', '=', 'study_year.programme_id')
-            // ->orderBy('programmes.id', 'asc')
+        $return = self::select('fellows.*')
             ->get();
 
         return $return;

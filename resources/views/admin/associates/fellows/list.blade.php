@@ -8,11 +8,15 @@
                 <div class="row mb-2">
                     <div class="col-sm-6"></div>
                     <div class="col-sm-6 text-right">
-                        <a href="{{ url('admin/associates/fellows/import_fellows') }}" class="btn btn-secondary" style="color:black; background-color: #FEC503; border-color: #FEC503;">
-                            Upload Fellows <span class="fas fa-upload"></span>
+                        <a href="{{ url('admin/associates/fellows/import_fellows') }}"
+                           class="btn btn-secondary mr-2"
+                           style="color:#333; background-color:#FEC503; border-color:#FEC503;">
+                            <span class="fas fa-upload mr-1"></span> Upload Fellows
                         </a>
-                        <a href="{{ url('admin/associates/fellows/add') }}" class="btn btn-primary" style="background-color: #a02626; border-color: #a02626;">
-                            Add New Fellows
+                        <a href="{{ url('admin/associates/fellows/add') }}"
+                           class="btn btn-primary"
+                           style="background-color:#a02626; border-color:#a02626;">
+                            <span class="fas fa-user-plus mr-1"></span> Add New Fellow
                         </a>
                     </div>
                 </div>

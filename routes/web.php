@@ -16,6 +16,7 @@ use App\Http\Controllers\FellowsController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\MembersController;
 use App\Http\Controllers\ExamsController;
+use App\Http\Controllers\FellowLabelController;
 
 
 // Route::get('/', [AuthController::class,'login'])->name('login');
@@ -132,11 +133,25 @@ Route::get('admin/associates/fellows/list', [FellowsController::class,'list']);
 Route::get('admin/associates/fellows/add',  [FellowsController::class,'add']);
 Route::post('admin/associates/fellows/add', [FellowsController::class,'insert'])->name('admin.associates.fellows.add');
 Route::get('admin/associates/fellows/import_fellows', [FellowsController::class,'import']);
+Route::get('admin/associates/fellows/import/template', [FellowsController::class,'downloadTemplate'])->name('fellows.import.template');
 Route::post('admin/associates/fellows/import', [FellowsController::class, 'importFellows'])->name('fellows.import.data');
 Route::get('admin/associates/fellows/view/{id}',  [FellowsController::class,'view'])->name('fellows.view');
-Route::get('admin/associates/fellows/edit/{id} ', [FellowsController::class,'edit']);
-Route::post('admin/associates/fellows/edit/{id} ', [FellowsController::class,'update']);
+Route::get('admin/associates/fellows/edit/{id}', [FellowsController::class,'edit']);
+Route::post('admin/associates/fellows/edit/{id}', [FellowsController::class,'update']);
+Route::put('admin/associates/fellows/labels/{id}', [FellowsController::class,'updateLabels'])->name('fellows.labels.update');
 Route::get('admin/associates/fellows/delete/{id}', [FellowsController::class,'delete']);
+
+// Subscription management (more-specific routes before wildcard)
+Route::put('admin/associates/fellows/subscriptions/update/{sub_id}',    [FellowsController::class,'updateSubscription'])->name('fellows.subscriptions.update');
+Route::delete('admin/associates/fellows/subscriptions/delete/{sub_id}', [FellowsController::class,'deleteSubscription'])->name('fellows.subscriptions.delete');
+Route::get('admin/associates/fellows/subscriptions/{id}',  [FellowsController::class,'subscriptions'])->name('fellows.subscriptions');
+Route::post('admin/associates/fellows/subscriptions/{id}', [FellowsController::class,'storeSubscription'])->name('fellows.subscriptions.store');
+
+// Fellow Labels Settings (Admin)
+Route::get('admin/settings/fellow-labels',          [FellowLabelController::class,'index'])->name('admin.settings.fellow-labels');
+Route::post('admin/settings/fellow-labels',         [FellowLabelController::class,'store']);
+Route::put('admin/settings/fellow-labels/{id}',     [FellowLabelController::class,'update']);
+Route::delete('admin/settings/fellow-labels/{id}',  [FellowLabelController::class,'destroy']);
 
 
 //Members's Route
@@ -279,4 +294,11 @@ Route::group(['middleware' => 'examiner'], function(){
 
 Route::get('examiner/confirm-attendance/{examiner_id}', [ExamsController::class, 'showExaminerAttendanceConfirmation'])->name('examiner.confirm.attendance');
 Route::post('examiner/confirm-attendance-registration/{examiner_id}', [ExamsController::class, 'confirmExaminerAttendanceRegistration'])->name('examiner.register.attendance');
+
+// Fellow Routes
+Route::group(['middleware' => 'fellow'], function () {
+    Route::get('fellow/dashboard', [DashboardController::class, 'dashboard'])->name('fellow.dashboard');
+    Route::get('fellow/change_password', [UserController::class, 'changePassword']);
+    Route::post('fellow/change_password', [UserController::class, 'updatePassword']);
+});
 
