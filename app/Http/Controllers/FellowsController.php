@@ -91,7 +91,7 @@ class FellowsController extends Controller
             'is_active' => 1
         ]);
 
-        FellowsModel::create([
+        $fellow = FellowsModel::create([
             'user_id'                       => $user->id,
             'firstname'                     => $request->firstname,
             'middlename'                    => $request->middlename,
