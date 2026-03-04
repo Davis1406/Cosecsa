@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('fellow_label_assignments', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('fellow_id');
+            $table->unsignedInteger('fellow_id');
             $table->unsignedBigInteger('label_id');
             $table->timestamps();
             $table->foreign('fellow_id')->references('id')->on('fellows')->onDelete('cascade');

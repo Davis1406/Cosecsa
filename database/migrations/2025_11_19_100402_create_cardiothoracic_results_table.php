@@ -9,6 +9,9 @@ return new class extends Migration
 {
     public function up()
     {
+        if (Schema::hasTable('cardiothoracic_results')) {
+            return;
+        }
         Schema::create('cardiothoracic_results', function (Blueprint $table) {
             $table->id();
             $table->integer('candidate_id');

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('fellow_subscriptions', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('fellow_id');
+            $table->unsignedInteger('fellow_id');
             $table->string('year', 10);
             $table->enum('status', ['Paid', 'Unpaid', 'Partial', 'Waived'])->default('Unpaid');
             $table->decimal('amount_due', 10, 2)->default(0);
