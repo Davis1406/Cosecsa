@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\PromotionModel;
-use App\Models\Trainee; // Assuming you have a Trainee model
+use App\Models\Trainee;
+use App\Models\Candidates;
+use Illuminate\Support\Facades\DB;
 
 class PromotionController extends Controller
 {
@@ -62,5 +64,78 @@ class PromotionController extends Controller
 
     return redirect()->back()->with('success', 'Trainees promoted successfully.');
 }
+
+    // ── Promote final-year trainees to exam candidates ─────────────────────
+    public function promoteToCandidate()
+    {
+        $examYear   = date('Y');
+        $studyYears = DB::table('study_year as sy')
+            ->join('programmes as p', 'p.id', '=', 'sy.programme_id')
+            ->select('sy.id', 'sy.name as sy_name', 'p.id as prog_id', 'p.name as prog_name', 'p.duration')
+            ->orderBy('p.id')->orderBy('sy.id')->get();
+
+        // Pre-count trainees per study_year
+        $countMap = DB::table('trainees')
+            ->select('training_year', DB::raw('COUNT(*) as cnt'))
+            ->whereNotNull('training_year')
+            ->groupBy('training_year')
+            ->pluck('cnt', 'training_year');
+
+        $data['studyYears']  = $studyYears;
+        $data['countMap']    = $countMap;
+        $data['examYear']    = $examYear;
+        $data['header_title']= 'Promote Trainees to Candidates';
+        return view('admin.associates.promotion.promote_to_candidates', $data);
+    }
+
+    public function promoteToCandidate_post(Request $request)
+    {
+        $studyYearId = $request->input('study_year_id');
+        $examYear    = date('Y');
+
+        $trainees = DB::table('trainees as t')
+            ->join('users as u', 'u.id', '=', 't.user_id')
+            ->where('t.training_year', $studyYearId)
+            ->select('t.*', 'u.name as full_name')
+            ->get();
+
+        if ($trainees->isEmpty()) {
+            return redirect()->back()->with('error', 'No trainees found in the selected study year.');
+        }
+
+        $promoted = 0; $skipped = 0;
+        foreach ($trainees as $t) {
+            // Skip if already a candidate for this exam year
+            $exists = DB::table('candidates')
+                ->where('user_id', $t->user_id)
+                ->where('exam_year', $examYear)
+                ->exists();
+
+            if ($exists) { $skipped++; continue; }
+
+            DB::table('candidates')->insert([
+                'user_id'        => $t->user_id,
+                'firstname'      => $t->firstname  ?? '',
+                'middlename'     => $t->middlename ?? '',
+                'lastname'       => $t->lastname   ?? '',
+                'personal_email' => $t->personal_email ?? '',
+                'gender'         => $t->gender      ?? null,
+                'programme_id'   => $t->programme_id,
+                'hospital_id'    => $t->hospital_id ?? null,
+                'country_id'     => $t->country_id  ?? null,
+                'entry_number'   => $t->entry_number ?? null,
+                'admission_year' => $t->admission_year ?? null,
+                'exam_year'      => $examYear,
+                'invoice_status' => 'Pending',
+                'fee_paid'       => 'No',
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ]);
+            $promoted++;
+        }
+
+        return redirect()->back()->with('success',
+            "Promoted $promoted trainee(s) to $examYear candidates. ($skipped already registered — skipped)");
+    }
 
 }

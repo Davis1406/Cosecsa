@@ -91,7 +91,7 @@ class User extends Authenticatable
             ->join('trainees', 'users.id', '=', 'trainees.user_id')
             ->join('hospitals', 'trainees.hospital_id', '=', 'hospitals.id')
             ->join('programmes', 'trainees.programme_id', '=', 'programmes.id')
-            ->join('study_year', 'trainees.training_year', '=', 'study_year.id')
+            ->leftJoin('study_year', 'trainees.training_year', '=', 'study_year.id')
             ->join('countries', 'trainees.country_id', '=', 'countries.id')
             ->join('user_roles', function ($join) {
                 $join->on('user_roles.user_id', '=', 'users.id')
@@ -126,9 +126,9 @@ class User extends Authenticatable
             ->leftJoin('countries', 'fellows.country_id', '=', 'countries.id')
             ->join('user_roles', function ($join) {
                 $join->on('user_roles.user_id', '=', 'users.id')
+                    ->where('user_roles.role_type', '=', 7)
                     ->where('user_roles.is_active', '=', 1);
-            })
-            ->where('users.user_type', '7');
+            });
 
         return $return->orderBy('id', 'asc')->get();
     }
@@ -357,9 +357,10 @@ class User extends Authenticatable
             ->leftJoin('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
             ->leftJoin('programmes', 'candidates.programme_id', '=', 'programmes.id')
             ->leftJoin('countries', 'candidates.country_id', '=', 'countries.id')
-            ->join('user_roles', function ($join) {
+            ->leftJoin('user_roles', function ($join) {
                 $join->on('user_roles.user_id', '=', 'users.id')
-                    ->where('user_roles.is_active', '=', 1);
+                    ->where('user_roles.is_active', '=', 1)
+                    ->where('user_roles.role_type', '=', 3); // role_type=3 only — prevents duplicate rows for users with multiple active roles
             })
             ->where('users.is_deleted', '=', '0')
             ->where('candidates.exam_year', '=', strval($currentYear)); // cast to string for ENUM

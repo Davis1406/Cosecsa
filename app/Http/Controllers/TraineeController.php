@@ -9,6 +9,7 @@ use App\Models\HospitalModel;
 use App\Models\Programme;
 use App\Models\Country;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\TraineesImport;
 
@@ -121,11 +122,12 @@ class TraineeController extends Controller
     if (!$trainee) {
         return redirect('admin/associates/trainees/trainees')->with('error', 'Trainee not found');
     }
-    $data['getHospital'] = HospitalModel::getHospital();
-    $data['getProgramme'] = Programme::getProgramme();
-    $data['getCountry'] = Country::getCountry();
-    $data['header_title'] = "Edit Trainee";
-    $data['trainee'] = $trainee;
+    $data['getHospital']   = HospitalModel::getHospital();
+    $data['getProgramme']  = Programme::getProgramme();
+    $data['getCountry']    = Country::getCountry();
+    $data['getStudyYear']  = DB::table('study_year')->orderBy('programme_id')->orderBy('id')->get();
+    $data['header_title']  = "Edit Trainee";
+    $data['trainee']       = $trainee;
     return view('admin.associates.trainees.edit_trainee', $data);
 }
 
@@ -140,9 +142,11 @@ public function update(Request $request, $id)
 
     // Update User
     $fullName = trim("{$request->firstname} {$request->middlename} {$request->lastname}");
-    $user->name = $fullName;
+    $user->name  = $fullName;
     $user->email = $request->email;
-    $user->password = $request->password; // This will trigger the setPasswordAttribute
+    if ($request->filled('password')) {
+        $user->password = $request->password;
+    }
     $user->save();
 
     // Handle profile image upload
@@ -152,34 +156,126 @@ public function update(Request $request, $id)
     }
 
     // Update Trainee
-    $trainee->firstname = $request->firstname;
-    $trainee->middlename = $request->middlename;
-    $trainee->lastname = $request->lastname;
-    $trainee->personal_email = $request->personal_email;
-    $trainee->gender = $request->gender;
-    $trainee->status = $request->status;
-    $trainee->programme_id = $request->programme_id;
-    $trainee->hospital_id = $request->hospital_id;
-    $trainee->country_id = $request->country_id;
-    $trainee->entry_number = $request->entry_number;
+    $trainee->firstname               = $request->firstname;
+    $trainee->middlename              = $request->middlename;
+    $trainee->lastname                = $request->lastname;
+    $trainee->personal_email          = $request->personal_email;
+    $trainee->gender                  = $request->gender;
+    $trainee->status                  = $request->status;
+    $trainee->programme_id            = $request->programme_id;
+    $trainee->hospital_id             = $request->hospital_id;
+    $trainee->country_id              = $request->country_id;
+    $trainee->entry_number            = $request->entry_number;
     $trainee->admission_letter_status = $request->admission_letter_status;
-    $trainee->invitation_letter_status = $request->invitation_letter_status;
-    $trainee->admission_year = $request->admission_year;
-    $trainee->exam_year = $request->exam_year;
-    $trainee->programme_period = $request->programme_period;
-    $trainee->invoice_number = $request->invoice_number;
-    $trainee->invoice_date = $request->invoice_date;
-    $trainee->invoice_status = $request->invoice_status;
-    $trainee->sponsor = $request->sponsor;
-    $trainee->mode_of_payment = $request->mode_of_payment;
-    $trainee->amount_paid = $request->amount_paid;
-    $trainee->payment_date = $request->payment_date;
+    $trainee->invitation_letter_status= $request->invitation_letter_status;
+    $trainee->admission_year          = $request->admission_year ?: null;
+    $trainee->exam_year               = $request->exam_year ?: 0;
+    $trainee->training_year           = $request->training_year ?: null;
+    $trainee->programme_period        = $request->programme_period;
+    $trainee->invoice_number          = $request->invoice_number;
+    $trainee->invoice_date            = $request->invoice_date ?: null;
+    $trainee->invoice_status          = $request->invoice_status;
+    $trainee->sponsor                 = $request->sponsor;
+    $trainee->mode_of_payment         = $request->mode_of_payment ?? '';
+    $trainee->amount_paid             = $request->amount_paid ?? 0;
+    $trainee->payment_date            = $request->payment_date ?: null;
     $trainee->save();
 
     return redirect('admin/associates/trainees/trainees')->with('success', 'Trainee updated successfully');
 }
 
-public function delete($id)
+    public function reports()
+    {
+        return view('admin.associates.trainees.reports', ['header_title' => 'Trainees Analytics']);
+    }
+
+    public function reportsData()
+    {
+        // KPIs
+        $total  = DB::table('trainees')->join('users','users.id','=','trainees.user_id')->where('users.user_type',2)->count();
+        $active = DB::table('trainees')->join('users','users.id','=','trainees.user_id')->where('users.user_type',2)->where('trainees.status','Active')->count();
+        $male   = DB::table('trainees')->join('users','users.id','=','trainees.user_id')->where('users.user_type',2)->where('trainees.gender','Male')->count();
+        $female = DB::table('trainees')->join('users','users.id','=','trainees.user_id')->where('users.user_type',2)->where('trainees.gender','Female')->count();
+
+        // By Country (top 15)
+        $byCountry = DB::table('trainees')
+            ->join('users','users.id','=','trainees.user_id')
+            ->join('countries','countries.id','=','trainees.country_id')
+            ->where('users.user_type',2)
+            ->selectRaw('countries.country_name as label, count(*) as value')
+            ->groupBy('countries.country_name')
+            ->orderByDesc('value')->limit(15)->get();
+
+        // By Programme
+        $byProgramme = DB::table('trainees')
+            ->join('users','users.id','=','trainees.user_id')
+            ->join('programmes','programmes.id','=','trainees.programme_id')
+            ->where('users.user_type',2)
+            ->selectRaw('programmes.name as label, count(*) as value')
+            ->groupBy('programmes.name')->orderByDesc('value')->get();
+
+        // By Status
+        $byStatus = DB::table('trainees')
+            ->join('users','users.id','=','trainees.user_id')
+            ->where('users.user_type',2)
+            ->selectRaw('COALESCE(status,"Unknown") as label, count(*) as value')
+            ->groupBy('status')->orderByDesc('value')->get();
+
+        // By Gender
+        $byGender = DB::table('trainees')
+            ->join('users','users.id','=','trainees.user_id')
+            ->where('users.user_type',2)
+            ->selectRaw('COALESCE(gender,"Unknown") as label, count(*) as value')
+            ->groupBy('gender')->get();
+
+        // By Admission Year trend (2015+)
+        $byYear = DB::table('trainees')
+            ->join('users','users.id','=','trainees.user_id')
+            ->where('users.user_type',2)
+            ->whereNotNull('trainees.admission_year')
+            ->where('trainees.admission_year','>=',2015)
+            ->where('trainees.admission_year','<=',2026)
+            ->selectRaw('admission_year as label, count(*) as value')
+            ->groupBy('admission_year')->orderBy('admission_year')->get();
+
+        // By Study Year
+        $byStudyYear = DB::table('trainees')
+            ->join('users','users.id','=','trainees.user_id')
+            ->join('study_year','study_year.id','=','trainees.training_year')
+            ->where('users.user_type',2)
+            ->selectRaw('study_year.name as label, count(*) as value')
+            ->groupBy('study_year.name')->orderByDesc('value')->limit(12)->get();
+
+        // Invoice/Payment status
+        $byInvoice = DB::table('trainees')
+            ->join('users','users.id','=','trainees.user_id')
+            ->where('users.user_type',2)
+            ->selectRaw('COALESCE(invoice_status,"Pending") as label, count(*) as value')
+            ->groupBy('invoice_status')->get();
+
+        // Country summary table (top 20)
+        $countryTable = DB::table('trainees')
+            ->join('users','users.id','=','trainees.user_id')
+            ->join('countries','countries.id','=','trainees.country_id')
+            ->where('users.user_type',2)
+            ->selectRaw('
+                countries.country_name,
+                count(*) as total,
+                sum(case when trainees.gender="Male"   then 1 else 0 end) as male,
+                sum(case when trainees.gender="Female" then 1 else 0 end) as female,
+                sum(case when trainees.status="Active" then 1 else 0 end) as active
+            ')
+            ->groupBy('countries.country_name')
+            ->orderByDesc('total')->limit(20)->get();
+
+        return response()->json(compact(
+            'total','active','male','female',
+            'byCountry','byProgramme','byStatus','byGender',
+            'byYear','byStudyYear','byInvoice','countryTable'
+        ));
+    }
+
+    public function delete($id)
 {
     $user = User::find($id);
 

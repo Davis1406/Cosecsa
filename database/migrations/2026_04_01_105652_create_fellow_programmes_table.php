@@ -11,18 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('fellow_subscriptions', function (Blueprint $table) {
+        Schema::create('fellow_programmes', function (Blueprint $table) {
             $table->id();
             $table->integer('fellow_id');
-            $table->string('year', 10);
-            $table->enum('status', ['Paid', 'Unpaid', 'Partial', 'Waived'])->default('Unpaid');
-            $table->decimal('amount_due', 10, 2)->default(0);
-            $table->decimal('amount_paid', 10, 2)->default(0);
-            $table->date('date_paid')->nullable();
-            $table->string('mode_of_payment', 50)->nullable();
+            $table->integer('programme_id');
+            $table->string('fellowship_year', 10)->nullable();
+            $table->string('source', 50)->default('import');
             $table->timestamps();
 
+            $table->unique(['fellow_id', 'programme_id']);
             $table->foreign('fellow_id')->references('id')->on('fellows')->onDelete('cascade');
+            $table->foreign('programme_id')->references('id')->on('programmes')->onDelete('cascade');
         });
     }
 
@@ -31,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fellow_subscriptions');
+        Schema::dropIfExists('fellow_programmes');
     }
 };

@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ !empty('$header_title') ? $header_title : '' }}-Cosecsa</title>
+    <title>{{ $header_title ?? '' }}-Cosecsa</title>
 
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet"
@@ -124,7 +124,7 @@
 
     <script src="{{ url('public/dist/js/pages/dashboard.js') }}"></script>
     <script src="{{ url('public/dist/js/pages/wizard.js') }}"></script>
-    <script src="{{ url('public/dist/js/custom.js') }}"></script>
+    <script src="{{ url('public/dist/js/custom.js') }}?v={{ filemtime(public_path('dist/js/custom.js')) }}"></script>
 
     <!-- DataTables  & Plugins -->
     <script src="{{ url('public/plugins/datatables/jquery.dataTables.min.js') }}"></script>

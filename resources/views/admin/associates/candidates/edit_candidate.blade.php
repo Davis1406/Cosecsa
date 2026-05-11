@@ -186,6 +186,7 @@
                     </fieldset>
 
                     <fieldset>
+                        {{-- Invoice Info --}}
                         <div class="form-row">
                             <div class="form-group col-md-6">
                                 <label>Invoice Number</label>
@@ -199,37 +200,66 @@
 
                         <div class="form-row">
                             <div class="form-group col-md-6">
+                                <label>Invoice Amount (USD)</label>
+                                <input type="number" name="invoice_amount" class="form-control" step="0.01" min="0"
+                                       value="{{ $candidate->invoice_amount }}">
+                            </div>
+                            <div class="form-group col-md-6">
                                 <label>Invoice Status</label>
-                                <select class="product_select" name="invoice_status">
+                                <select name="invoice_status" class="form-control">
                                     <option value="" disabled>Select Status</option>
-                                    <option value="Pending" {{ $candidate->invoice_status == 'Pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="Sent" {{ $candidate->invoice_status == 'Sent' ? 'selected' : '' }}>Sent</option>
+                                    <option value="Pending" {{ ($candidate->invoice_status ?? '') == 'Pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="Sent"    {{ ($candidate->invoice_status ?? '') == 'Sent'    ? 'selected' : '' }}>Sent</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <div class="form-row">
                             <div class="form-group col-md-6">
                                 <label>Sponsor</label>
                                 <input type="text" name="sponsor" class="form-control" value="{{ $candidate->sponsor }}">
                             </div>
+                            <div class="form-group col-md-6">
+                                <label>Fee Paid</label>
+                                <select name="fee_paid" class="form-control">
+                                    <option value="No"  {{ ($candidate->fee_paid ?? 'No') == 'No'  ? 'selected' : '' }}>No</option>
+                                    <option value="Yes" {{ ($candidate->fee_paid ?? 'No') == 'Yes' ? 'selected' : '' }}>Yes</option>
+                                </select>
+                            </div>
                         </div>
 
-                        {{-- <div class="form-group">
-                            <label>Mode of Payment</label>
-                            <select class="product_select" name="mode_of_payment">
-                                <option value="" disabled>Select Mode</option>
-                                <option value="Country Rep" {{ $trainee->mode_of_payment == 'Country Rep' ? 'selected' : '' }}>Country Rep</option>
-                                <option value="Bank transfer" {{ $trainee->mode_of_payment == 'Bank transfer' ? 'selected' : '' }}>Bank transfer</option>
-                                <option value="Online Payment" {{ $trainee->mode_of_payment == 'Online Payment' ? 'selected' : '' }}>Online Payment</option>
-                            </select>
-                        </div> --}}
-
+                        {{-- Payment Details --}}
                         <div class="form-row">
                             <div class="form-group col-md-6">
                                 <label>Amount Paid (USD)</label>
-                                <input type="text" name="amount_paid" class="form-control" value="{{ $candidate->amount_paid }}">
+                                <input type="number" name="amount_paid" class="form-control" step="0.01" min="0"
+                                       value="{{ $candidate->amount_paid }}">
                             </div>
                             <div class="form-group col-md-6">
                                 <label>Date Paid</label>
                                 <input type="date" name="payment_date" class="form-control" value="{{ $candidate->payment_date }}">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <label>Mode of Payment</label>
+                                <select name="mode_of_payment" class="form-control">
+                                    <option value="">— Select Mode —</option>
+                                    <option value="Country Rep"     {{ ($candidate->mode_of_payment ?? '') == 'Country Rep'     ? 'selected' : '' }}>Country Rep</option>
+                                    <option value="Bank Transfer"   {{ ($candidate->mode_of_payment ?? '') == 'Bank Transfer'   ? 'selected' : '' }}>Bank Transfer</option>
+                                    <option value="Online Payment"  {{ ($candidate->mode_of_payment ?? '') == 'Online Payment'  ? 'selected' : '' }}>Online Payment</option>
+                                    <option value="Sponsor"         {{ ($candidate->mode_of_payment ?? '') == 'Sponsor'         ? 'selected' : '' }}>Sponsor</option>
+                                    <option value="Other"           {{ ($candidate->mode_of_payment ?? '') == 'Other'           ? 'selected' : '' }}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <label>Remarks / Notes</label>
+                                <textarea name="remarks" class="form-control" rows="3"
+                                          placeholder="Any additional notes…">{{ $candidate->remarks }}</textarea>
                             </div>
                         </div>
 

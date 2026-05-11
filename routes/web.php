@@ -83,15 +83,17 @@ Route::group(['middleware' => 'admin'], function(){
   Route::post('profile/change_password', [UserController::class, 'updatePassword']);
 
   //Trainees Route
-  Route::get('admin/associates/trainees/trainees', [TraineeController::class,'list']);
-  Route::get('admin/associates/trainees/add',  [TraineeController::class,'add']);
-  Route::post('admin/associates/trainees/add', [TraineeController::class,'insert'])->name('admin.associates.trainees.add');
-  Route::get('admin/associates/trainees/import',  [TraineeController::class,'import']);
-  Route::post('admin/associates/trainees/import', [TraineeController::class, 'importData'])->name('trainees.import.data');
-  Route::get('admin/associates/trainees/view/{id}',  [TraineeController::class,'view'])->name('trainees.view');
-  Route::get('admin/associates/trainees/edit/{id} ', [TraineeController::class,'edit']);
-  Route::post('admin/associates/trainees/edit/{id} ', [TraineeController::class,'update']);
-  Route::get('admin/associates/trainees/delete/{id}', [TraineeController::class,'delete']);
+  Route::get('admin/associates/trainees/trainees',      [TraineeController::class,'list']);
+  Route::get('admin/associates/trainees/reports',       [TraineeController::class,'reports'])->name('trainees.reports');
+  Route::get('admin/associates/trainees/reports/data',  [TraineeController::class,'reportsData'])->name('trainees.reports.data');
+  Route::get('admin/associates/trainees/add',           [TraineeController::class,'add']);
+  Route::post('admin/associates/trainees/add',          [TraineeController::class,'insert'])->name('admin.associates.trainees.add');
+  Route::get('admin/associates/trainees/import',        [TraineeController::class,'import']);
+  Route::post('admin/associates/trainees/import',       [TraineeController::class,'importData'])->name('trainees.import.data');
+  Route::get('admin/associates/trainees/view/{id}',     [TraineeController::class,'view'])->name('trainees.view');
+  Route::get('admin/associates/trainees/edit/{id}',     [TraineeController::class,'edit']);
+  Route::post('admin/associates/trainees/edit/{id}',    [TraineeController::class,'update']);
+  Route::get('admin/associates/trainees/delete/{id}',   [TraineeController::class,'delete']);
 
   //Candidates Route
   Route::get('admin/associates/candidates/list', [CandidatesController::class,'list']);
@@ -103,6 +105,8 @@ Route::group(['middleware' => 'admin'], function(){
   Route::get('admin/associates/candidates/edit/{id} ', [CandidatesController::class,'edit']);
   Route::post('admin/associates/candidates/edit/{id} ', [CandidatesController::class,'update']);
   Route::get('admin/associates/candidates/delete/{id}', [CandidatesController::class,'delete']);
+  Route::get('admin/associates/candidates/reports',      [CandidatesController::class,'reports'])->name('candidates.reports');
+  Route::get('admin/associates/candidates/reports/data', [CandidatesController::class,'reportsData'])->name('candidates.reports.data');
 
 //Trainers Route
 Route::get('admin/associates/trainers/list', [TrainerController::class,'list']);
@@ -130,6 +134,7 @@ Route::get('admin/associates/reps/delete/{id}', [CountryRepsController::class,'d
 
 //Fellows's Route
 Route::get('admin/associates/fellows/list', [FellowsController::class,'list']);
+
 Route::get('admin/associates/fellows/add',  [FellowsController::class,'add']);
 Route::post('admin/associates/fellows/add', [FellowsController::class,'insert'])->name('admin.associates.fellows.add');
 Route::get('admin/associates/fellows/import_fellows', [FellowsController::class,'import']);
@@ -140,6 +145,8 @@ Route::get('admin/associates/fellows/edit/{id}', [FellowsController::class,'edit
 Route::post('admin/associates/fellows/edit/{id}', [FellowsController::class,'update']);
 Route::put('admin/associates/fellows/labels/{id}', [FellowsController::class,'updateLabels'])->name('fellows.labels.update');
 Route::get('admin/associates/fellows/delete/{id}', [FellowsController::class,'delete']);
+Route::get('admin/associates/fellows/reports', [FellowsController::class,'reports'])->name('fellows.reports');
+Route::get('admin/associates/fellows/reports/data', [FellowsController::class,'reportsData'])->name('fellows.reports.data');
 
 // Subscription management (more-specific routes before wildcard)
 Route::put('admin/associates/fellows/subscriptions/update/{sub_id}',    [FellowsController::class,'updateSubscription'])->name('fellows.subscriptions.update');
@@ -207,9 +214,11 @@ Route::get('admin/exams/export_report_csv', [ExamsController::class, 'exportRepo
 
 
 //Promotion Route
-Route::get('admin/associates/promotion/promote_trainees', [PromotionController::class,'promotion']);
-Route::get('admin/associates/promotion/promote_candidates', [PromotionController::class,'cadidatesPromotion']);
-Route::post('admin/associates/promotion/promote_trainees', [PromotionController::class,'update']);
+Route::get('admin/associates/promotion/promote_trainees',     [PromotionController::class,'promotion']);
+Route::get('admin/associates/promotion/promote_candidates',   [PromotionController::class,'cadidatesPromotion']);
+Route::post('admin/associates/promotion/promote_trainees',    [PromotionController::class,'update']);
+Route::get('admin/associates/promotion/promote-to-candidates',[PromotionController::class,'promoteToCandidate']);
+Route::post('admin/associates/promotion/promote-to-candidates',[PromotionController::class,'promoteToCandidate_post']);
 
 
 });

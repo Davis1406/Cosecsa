@@ -8,13 +8,16 @@
                     <div class="row mb-2">
                         <div class="col-sm-6"></div>
                         <div class="col-sm-6 text-right">
-                            <a href="{{ url('admin/associates/trainees/import') }}" class="btn btn-secondary"
+                            <a href="{{ url('admin/associates/trainees/reports') }}" class="btn btn-info mr-2">
+                                <span class="fas fa-chart-bar mr-1"></span> Analytics
+                            </a>
+                            <a href="{{ url('admin/associates/trainees/import') }}" class="btn btn-secondary mr-2"
                                 style="color:black; background-color: #FEC503; border-color: #FEC503;">
-                                Upload Trainees <span class="fas fa-upload"></span>
+                                <span class="fas fa-upload mr-1"></span> Upload Trainees
                             </a>
                             <a href="{{ url('admin/associates/trainees/add') }}" class="btn btn-primary"
                                 style="background-color: #a02626; border-color: #a02626;">
-                                Add New Trainee
+                                <span class="fas fa-user-plus mr-1"></span> Add New Trainee
                             </a>
                         </div>
                     </div>
@@ -67,7 +70,7 @@
                                         <tbody>
                                             @foreach ($getRecord as $value)
                                                 <tr>
-                                                    <td>{{ $value->id }}</td>
+                                                    <td class="row-num"></td>
                                                     <td>{{ $value->name }}</td>
                                                     <td>{{ $value->gender }}</td>
                                                     <td>{{ $value->entry_number }}</td>

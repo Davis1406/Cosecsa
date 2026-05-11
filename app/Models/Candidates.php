@@ -35,6 +35,11 @@ class Candidates extends Model
         'invoice_status',
         'sponsor',
         'amount_paid',
+        'invoice_amount',
+        'fee_paid',
+        'payment_date',
+        'mode_of_payment',
+        'remarks',
     ];
 
     public function user()

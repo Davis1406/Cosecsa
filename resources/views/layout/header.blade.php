@@ -133,7 +133,7 @@
                                 </li>
                                 <li class="nav-item">
                                     <a href="{{ url('admin/associates/candidates/list') }}"
-                                        class="nav-link @if (Request::segment(3) == 'candidates') active @endif">
+                                       class="nav-link @if (Request::segment(3) == 'candidates') active @endif">
                                         <i class="fas fa-graduation-cap nav-icon"></i>
                                         <p>Candidates</p>
                                     </a>
@@ -186,15 +186,19 @@
                                                 <i class="fas fa-paper-plane nav-icon"></i>
                                                 <p>Promote Trainees</p>
                                             </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ url('admin/associates/promotion/promote-to-candidates') }}"
+                                                class="nav-link @if (Request::segment(4) == 'promote-to-candidates') active @endif">
+                                                <i class="fas fa-graduation-cap nav-icon"></i>
+                                                <p>Trainees → Candidates</p>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
                                             <a href="{{ url('admin/associates/promotion/promote_candidates') }}"
                                                 class="nav-link @if (Request::segment(4) == 'promote_candidates') active @endif">
                                                 <i class="fas fa-upload nav-icon"></i>
                                                 <p>Promote Candidates</p>
-                                            </a>
-                                            <a href="{{ url('admin/promotion/manage') }}"
-                                                class="nav-link @if (Request::segment(3) == 'manage') active @endif">
-                                                <i class="fas fa-cogs nav-icon"></i>
-                                                <p>Manage Promotions</p>
                                             </a>
                                         </li>
                                     </ul>

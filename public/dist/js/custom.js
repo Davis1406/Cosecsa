@@ -1,161 +1,103 @@
 $(function () {
-    var traineeTable = $("#traineestable").DataTable({
-        "responsive": true,
-        "lengthChange": true,
-        "autoWidth": false,
-        "stateSave": true,
-        "paging": true,
-        "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [{
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
+    var traineeTable = (function () {
+        if (!$("#traineestable").length) return { on: function () {} };
+        var t = $("#traineestable").DataTable({
+            "responsive": true,
+            "lengthChange": true,
+            "autoWidth": false,
+            "stateSave": false,
+            "paging": true,
+            "pageLength": 25,
+            "order": [[1, "asc"]],
+            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
+            "buttons": [
+                { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel', className: "btn btn-success btn-sm", title: "Trainees List", exportOptions: { columns: [0,1,2,3,4,5,6,7,8] } },
+                { extend: "pdfHtml5",   text: '<i class="fas fa-file-pdf mr-1"></i> PDF',   className: "btn btn-danger btn-sm",  title: "Trainees List", orientation: "landscape", pageSize: "A4", exportOptions: { columns: [0,1,2,3,4,5,6,7,8] } },
+                { extend: "print",      text: '<i class="fas fa-print mr-1"></i> Print',    className: "btn btn-secondary btn-sm", exportOptions: { columns: [0,1,2,3,4,5,6,7,8] } },
+                { extend: "colvis",     text: '<i class="fas fa-columns mr-1"></i> Columns', className: "btn btn-outline-secondary btn-sm" }
+            ],
+            "columns": [
+                { "visible": true,  "orderable": false, "searchable": false }, // #
+                { "visible": true },  // Name
+                { "visible": true },  // Gender
+                { "visible": true },  // Admission Number
+                { "visible": true },  // Email
+                { "visible": true },  // Programme
+                { "visible": true },  // Hospital
+                { "visible": true },  // Country
+                { "visible": true },  // Status
+                { "visible": true,  "orderable": false, "searchable": false }, // Action
+                { "visible": false }, // SFS Username
+                { "visible": false }, // SFS Password
+                { "visible": false }, // Admission Letter Status
+                { "visible": false }, // Invitation Letter Status
+                { "visible": false }, // Admission Year
+                { "visible": false }, // Programme Year
+                { "visible": false }, // Exam Year
+                { "visible": false }, // Programme Duration
+                { "visible": false }, // Invoice Number
+                { "visible": false }, // Invoice Date
+                { "visible": false }, // Invoice Status
+                { "visible": false }, // Sponsor
+                { "visible": false }, // Mode of Payment
+                { "visible": false }, // Amount Paid
+                { "visible": false }  // Date Paid
+            ],
+            "drawCallback": function () {
+                this.api().column(0, { search: "applied", order: "applied" })
+                    .nodes().each(function (cell, i) {
+                        cell.innerHTML = i + 1;
+                    });
             }
-        ]
-    }).buttons().container().appendTo('#traineestable_wrapper .col-md-6:eq(0)');
+        });
+        return t;
+    }());
 
+    if ($("#candidatestable").length) {
     var candidateTable = $("#candidatestable").DataTable({
         "responsive": true,
         "lengthChange": true,
         "autoWidth": false,
-        "stateSave": true,
+        "stateSave": false,
         "paging": true,
-        "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [{
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            },
-            {
-                "visible": false
-            }
-        ]
-    }).buttons().container().appendTo('#candidatestable_wrapper .col-md-6:eq(0)');
+        "pageLength": 25,
+        "order": [[1, "asc"]],
+        "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
+        "buttons": [
+            { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel', className: "btn btn-success btn-sm", title: "Candidates List",
+              exportOptions: { columns: [0,1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17] } },
+            { extend: "pdfHtml5",   text: '<i class="fas fa-file-pdf mr-1"></i> PDF',   className: "btn btn-danger btn-sm",  title: "Candidates List", orientation: "landscape", pageSize: "A4",
+              exportOptions: { columns: [0,1,2,3,4,5,6,7,8,9] } },
+            { extend: "print",      text: '<i class="fas fa-print mr-1"></i> Print',    className: "btn btn-secondary btn-sm",
+              exportOptions: { columns: [0,1,2,3,4,5,6,7,8,9] } },
+            { extend: "colvis",     text: '<i class="fas fa-columns mr-1"></i> Columns', className: "btn btn-outline-secondary btn-sm" }
+        ],
+        "columns": [
+            { "visible": true,  "orderable": false, "searchable": false }, // #
+            { "visible": true },  // Name
+            { "visible": true },  // PEN
+            { "visible": true },  // Exam Type
+            { "visible": true },  // Hospital
+            { "visible": true },  // Country
+            { "visible": true },  // Gender
+            { "visible": true },  // Fee Paid
+            { "visible": true },  // Invoice #
+            { "visible": true },  // Amount
+            { "visible": true,  "orderable": false, "searchable": false }, // Action
+            { "visible": false }, // Email
+            { "visible": false }, // Repeat P1
+            { "visible": false }, // Repeat P2
+            { "visible": false }, // MMed
+            { "visible": false }, // Sponsor
+            { "visible": false }, // Exam Year
+            { "visible": false }  // Mode of Payment
+        ],
+        "drawCallback": function () {
+            this.api().column(0, { search: "applied", order: "applied" })
+                .nodes().each(function (cell, i) { cell.innerHTML = i + 1; });
+        }
+    });
+    }
 
 
     var trainersTable = $("#trainerstable").DataTable({
@@ -199,37 +141,40 @@ $(function () {
     }).buttons().container().appendTo('#trainerstable_wrapper .col-md-6:eq(0)');
 
 
-    var fellowstable = $("#fellowstable").DataTable({
-        "responsive": true,
-        "lengthChange": true,
-        "autoWidth": false,
-        "paging": true,
-        "stateSave": true,
-        "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-        "columns": [{
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
-            },
-            {
-                "visible": true
+    if ($("#fellowstable").length) {
+        var fellowstable = $("#fellowstable").DataTable({
+            "responsive": true,
+            "lengthChange": true,
+            "autoWidth": false,
+            "paging": true,
+            "pageLength": 25,
+            "stateSave": false,
+            "order": [[1, "asc"]],
+            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
+            "buttons": [
+                { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel', className: "btn btn-success btn-sm", title: "Fellows List", exportOptions: { columns: [0,1,2,3,4,5,6] } },
+                { extend: "pdfHtml5",   text: '<i class="fas fa-file-pdf mr-1"></i> PDF',   className: "btn btn-danger btn-sm",  title: "Fellows List", orientation: "landscape", pageSize: "A4", exportOptions: { columns: [0,1,2,3,4,5,6] } },
+                { extend: "print",      text: '<i class="fas fa-print mr-1"></i> Print',    className: "btn btn-secondary btn-sm", exportOptions: { columns: [0,1,2,3,4,5,6] } },
+                { extend: "colvis",     text: '<i class="fas fa-columns mr-1"></i> Columns', className: "btn btn-outline-secondary btn-sm" }
+            ],
+            "columns": [
+                { "visible": true,  "orderable": false, "searchable": false },
+                { "visible": true },
+                { "visible": true },
+                { "visible": true },
+                { "visible": true },
+                { "visible": true },
+                { "visible": true },
+                { "visible": true, "orderable": false, "searchable": false }
+            ],
+            "drawCallback": function () {
+                this.api().column(0, { search: "applied", order: "applied" })
+                    .nodes().each(function (cell, i) {
+                        cell.innerHTML = i + 1;
+                    });
             }
-
-        ]
-    }).buttons().container().appendTo('#fellowstable_wrapper .col-md-6:eq(0)');
+        });
+    }
 
 
     var examinerstable = $("#examinerstable").DataTable({
@@ -548,9 +493,11 @@ $(function () {
     traineeTable.on('draw', function () {
         initPopovers();
     });
-    candidateTable.on('draw', function () {
-        initPopovers();
-    });
+    if (typeof candidateTable !== 'undefined') {
+        candidateTable.on('draw', function () {
+            initPopovers();
+        });
+    }
 
     trainersTable.on('draw', function () {
         initPopovers();

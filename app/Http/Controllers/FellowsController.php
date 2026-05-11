@@ -9,6 +9,7 @@ use App\Models\FellowLabel;
 use App\Models\Country;
 use App\Models\UserRole;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\FellowshipImport;
 
@@ -17,8 +18,145 @@ class FellowsController extends Controller
     public function list()
     {
         $data['header_title'] = 'Fellows';
-        $data['getFellows'] = User::getFellows();
+        $data['getFellows']        = User::getFellows();
+        $data['filterCountries']   = DB::table('fellows as f')
+            ->join('countries as c', 'c.id', '=', 'f.country_id')
+            ->select('c.country_name')->groupBy('c.country_name')->orderBy('c.country_name')->pluck('c.country_name');
+        $data['filterTypes']       = DB::table('fellows as f')
+            ->join('categories as c', 'c.id', '=', 'f.category_id')
+            ->select('c.category_name')->groupBy('c.category_name')->orderBy('c.category_name')->pluck('c.category_name');
+        $data['filterProgrammes']  = DB::table('fellows as f')
+            ->join('programmes as p', 'p.id', '=', 'f.programme_id')
+            ->select('p.name')->groupBy('p.name')->orderBy('p.name')->pluck('p.name');
+        $data['filterYears']       = DB::table('fellows')
+            ->whereRaw("fellowship_year REGEXP '^[0-9]{4}$'")->select('fellowship_year')
+            ->groupBy('fellowship_year')->orderByDesc('fellowship_year')->pluck('fellowship_year');
         return view('admin.associates.fellows.list', $data);
+    }
+
+    // ── Analytics / Visual Reports ────────────────────────────────────────────
+    public function reports()
+    {
+        $data['header_title']     = 'Fellows Analytics';
+        $data['filterCountries']  = DB::table('fellows as f')
+            ->join('countries as c', 'c.id', '=', 'f.country_id')
+            ->select('c.id', 'c.country_name')->groupBy('c.id', 'c.country_name')->orderBy('c.country_name')->get();
+        $data['filterTypes']      = DB::table('fellows as f')
+            ->join('categories as c', 'c.id', '=', 'f.category_id')
+            ->select('c.id', 'c.category_name')->groupBy('c.id', 'c.category_name')->orderBy('c.category_name')->get();
+        $data['filterYears']      = DB::table('fellows')
+            ->whereRaw("fellowship_year REGEXP '^[0-9]{4}$'")->select('fellowship_year')
+            ->groupBy('fellowship_year')->orderByDesc('fellowship_year')->pluck('fellowship_year');
+        return view('admin.associates.fellows.reports', $data);
+    }
+
+    public function reportsData()
+    {
+        $countryId  = request('country_id');
+        $categoryId = request('category_id');
+        $year       = request('year');
+        $gender     = request('gender');
+        $isAlumni   = request('is_alumni');
+
+        // Helper: apply filters to a query with a given table prefix
+        $applyF = function ($q, $pfx = 'fellows') use ($countryId, $categoryId, $year, $gender, $isAlumni) {
+            if ($countryId)  $q->where("{$pfx}.country_id",  $countryId);
+            if ($categoryId) $q->where("{$pfx}.category_id", $categoryId);
+            if ($year !== null && $year !== '') $q->where("{$pfx}.fellowship_year", $year);
+            if ($gender)     $q->where("{$pfx}.gender",       $gender);
+            if ($isAlumni !== null && $isAlumni !== '') $q->where("{$pfx}.is_alumni", (int) $isAlumni);
+        };
+
+        // KPIs
+        $q = DB::table('fellows'); $applyF($q);
+        $total  = (clone $q)->count();
+        $active = (clone $q)->where('status', 'Active')->count();
+        $male   = (clone $q)->where('gender', 'Male')->count();
+        $female = (clone $q)->where('gender', 'Female')->count();
+
+        // Fellows by country (top 15)
+        $byCountry = tap(DB::table('fellows as f')->join('countries as c', 'c.id', '=', 'f.country_id'), fn($q) => $applyF($q, 'f'))
+            ->select('c.country_name as label', DB::raw('COUNT(*) as value'))
+            ->groupBy('c.country_name')->orderByDesc('value')->limit(15)->get();
+
+        // Fellowship type breakdown
+        $byType = tap(DB::table('fellows as f')->join('categories as c', 'c.id', '=', 'f.category_id'), fn($q) => $applyF($q, 'f'))
+            ->select('c.category_name as label', DB::raw('COUNT(*) as value'))
+            ->groupBy('c.category_name')->orderByDesc('value')->get();
+
+        // Gender breakdown
+        $byGender = tap(DB::table('fellows'), fn($q) => $applyF($q))
+            ->select(DB::raw("COALESCE(NULLIF(gender,''),'Unknown') as label"), DB::raw('COUNT(*) as value'))
+            ->groupBy('label')->get();
+
+        // Fellowship year trend (2010–present)
+        $byYear = tap(DB::table('fellows'), fn($q) => $applyF($q))
+            ->select('fellowship_year as label', DB::raw('COUNT(*) as value'))
+            ->whereRaw("fellowship_year REGEXP '^[0-9]{4}$'")
+            ->whereRaw("CAST(fellowship_year AS UNSIGNED) >= 2010")
+            ->groupBy('fellowship_year')->orderBy('fellowship_year')->get();
+
+        // Top specialties (top 10)
+        $rawSpec = tap(DB::table('fellows'), fn($q) => $applyF($q))
+            ->select('current_specialty as label', DB::raw('COUNT(*) as value'))
+            ->whereNotNull('current_specialty')->where('current_specialty', '!=', '')
+            ->groupBy('current_specialty')->orderByDesc('value')->limit(10)->get();
+
+        // Annual subscriptions status by year (2015–2026)
+        $subYears = range(2015, 2026);
+        $subData  = [];
+        foreach ($subYears as $yr) {
+            $row = DB::table('fellow_subscriptions')
+                ->where('year', $yr)
+                ->select('status', DB::raw('COUNT(*) as cnt'))
+                ->groupBy('status')
+                ->get()
+                ->keyBy('status');
+            $subData[] = [
+                'year'    => $yr,
+                'Paid'    => $row->get('Paid')?->cnt   ?? 0,
+                'Unpaid'  => $row->get('Unpaid')?->cnt ?? 0,
+                'Waived'  => $row->get('Waived')?->cnt ?? 0,
+            ];
+        }
+
+        // Exam pass/fail by year & part
+        $examStats = DB::table('fellow_exam_results')
+            ->select('year', 'part', 'result', DB::raw('COUNT(*) as cnt'))
+            ->whereIn('year', [2021, 2022, 2023, 2024])
+            ->whereNotNull('result')
+            ->where('result', '!=', '')
+            ->groupBy('year', 'part', 'result')
+            ->orderBy('year')->orderBy('part')
+            ->get();
+
+        // Country representative table (top 20)
+        $countryTable = tap(
+            DB::table('fellows as f')
+                ->join('countries as c', 'c.id', '=', 'f.country_id')
+                ->join('categories as cat', 'cat.id', '=', 'f.category_id'),
+            fn($q) => $applyF($q, 'f')
+        )
+            ->select(
+                'c.country_name',
+                DB::raw('COUNT(*) as total'),
+                DB::raw("SUM(CASE WHEN f.gender='Male' THEN 1 ELSE 0 END) as male"),
+                DB::raw("SUM(CASE WHEN f.gender='Female' THEN 1 ELSE 0 END) as female"),
+                DB::raw("SUM(CASE WHEN f.status='Active' THEN 1 ELSE 0 END) as active")
+            )
+            ->groupBy('c.country_name')->orderByDesc('total')->limit(20)->get();
+
+        return response()->json([
+            'kpi'          => compact('total', 'active', 'male', 'female'),
+            'byCountry'    => $byCountry,
+            'byType'       => $byType,
+            'byGender'     => $byGender,
+            'byYear'       => $byYear,
+            'bySpecialty'  => $rawSpec,
+            'subscriptions'=> $subData,
+            'examStats'    => $examStats,
+            'countryTable' => $countryTable,
+        ]);
     }
 
     public function view($id)
@@ -401,7 +539,12 @@ class FellowsController extends Controller
             return redirect('admin/associates/fellows/list')->with('error', 'Fellow not found');
         }
 
-        if ($user->user_type != 7) {
+        $isFellow = \DB::table('user_roles')
+            ->where('user_id', $user->id)
+            ->where('role_type', 7)
+            ->where('is_active', 1)
+            ->exists();
+        if (!$isFellow) {
             return redirect('admin/associates/fellows/list')->with('error', 'User is not a fellow');
         }
 

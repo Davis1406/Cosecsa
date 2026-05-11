@@ -19,10 +19,125 @@ use App\Imports\CandidatesImport;
 
 class CandidatesController extends Controller
 {
+    // ── Analytics / Visual Reports ────────────────────────────────────────────
+    public function reports()
+    {
+        $data['header_title']    = 'Candidates Analytics';
+        $data['filterCountries'] = DB::table('candidates as c')
+            ->join('countries as co', 'co.id', '=', 'c.country_id')
+            ->select('co.id', 'co.country_name')
+            ->groupBy('co.id', 'co.country_name')->orderBy('co.country_name')->get();
+        $data['filterProgrammes'] = DB::table('candidates as c')
+            ->join('programmes as p', 'p.id', '=', 'c.programme_id')
+            ->select('p.id', 'p.name')
+            ->groupBy('p.id', 'p.name')->orderBy('p.name')->get();
+        $data['filterYears'] = DB::table('candidates')
+            ->whereNotNull('exam_year')->where('exam_year', '!=', '')
+            ->select('exam_year')->groupBy('exam_year')->orderByDesc('exam_year')->pluck('exam_year');
+        return view('admin.associates.candidates.reports', $data);
+    }
+
+    public function reportsData()
+    {
+        $countryId   = request('country_id');
+        $programmeId = request('programme_id');
+        // Default to the current exam year so the KPIs match the candidates list
+        $year        = request('year', date('Y'));
+        $gender      = request('gender');
+        $feePaid     = request('fee_paid');
+
+        $applyF = function ($q, $pfx = 'candidates') use ($countryId, $programmeId, $year, $gender, $feePaid) {
+            if ($countryId)   $q->where("{$pfx}.country_id",   $countryId);
+            if ($programmeId) $q->where("{$pfx}.programme_id", $programmeId);
+            if ($year !== null && $year !== '') $q->where("{$pfx}.exam_year", $year);
+            if ($gender)      $q->where("{$pfx}.gender",       $gender);
+            if ($feePaid !== null && $feePaid !== '') $q->where("{$pfx}.fee_paid", $feePaid);
+        };
+
+        // ── KPIs ─────────────────────────────────────────────────────────────
+        $q = DB::table('candidates'); $applyF($q);
+        $total    = (clone $q)->count();
+        $feePaidC = (clone $q)->where('fee_paid', 'Yes')->count();
+        $male     = (clone $q)->where('gender', 'Male')->count();
+        $female   = (clone $q)->where('gender', 'Female')->count();
+
+        // ── By Country (top 15) ───────────────────────────────────────────────
+        $byCountry = tap(
+            DB::table('candidates as c')->join('countries as co', 'co.id', '=', 'c.country_id'),
+            fn($q) => $applyF($q, 'c')
+        )->select('co.country_name as label', DB::raw('COUNT(*) as value'))
+         ->groupBy('co.country_name')->orderByDesc('value')->limit(15)->get();
+
+        // ── By Programme ──────────────────────────────────────────────────────
+        $byProgramme = tap(
+            DB::table('candidates as c')->join('programmes as p', 'p.id', '=', 'c.programme_id'),
+            fn($q) => $applyF($q, 'c')
+        )->select('p.name as label', DB::raw('COUNT(*) as value'))
+         ->groupBy('p.name')->orderByDesc('value')->get();
+
+        // ── By Gender ─────────────────────────────────────────────────────────
+        $byGender = tap(DB::table('candidates'), fn($q) => $applyF($q))
+            ->select(DB::raw("COALESCE(NULLIF(gender,''),'Unknown') as label"), DB::raw('COUNT(*) as value'))
+            ->groupBy('label')->get();
+
+        // ── By Exam Year ──────────────────────────────────────────────────────
+        $byYear = tap(DB::table('candidates'), fn($q) => $applyF($q))
+            ->select('exam_year as label', DB::raw('COUNT(*) as value'))
+            ->whereNotNull('exam_year')->where('exam_year', '!=', '')
+            ->groupBy('exam_year')->orderBy('exam_year')->get();
+
+        // ── Fee Paid breakdown ────────────────────────────────────────────────
+        $byFeePaid = tap(DB::table('candidates'), fn($q) => $applyF($q))
+            ->select(DB::raw("COALESCE(NULLIF(fee_paid,''),'Pending') as label"), DB::raw('COUNT(*) as value'))
+            ->groupBy('label')->get();
+
+        // ── Repeat status ─────────────────────────────────────────────────────
+        $repeatStats = tap(DB::table('candidates'), fn($q) => $applyF($q))
+            ->selectRaw("
+                SUM(CASE WHEN repeat_paper_one='Yes' THEN 1 ELSE 0 END) as repeat_p1,
+                SUM(CASE WHEN repeat_paper_two='Yes' THEN 1 ELSE 0 END) as repeat_p2,
+                SUM(CASE WHEN mmed='Yes' THEN 1 ELSE 0 END) as mmed_qualified
+            ")->first();
+
+        // ── Country summary table (top 20) ────────────────────────────────────
+        $countryTable = tap(
+            DB::table('candidates as c')->join('countries as co', 'co.id', '=', 'c.country_id'),
+            fn($q) => $applyF($q, 'c')
+        )->select(
+            'co.country_name',
+            DB::raw('COUNT(*) as total'),
+            DB::raw("SUM(CASE WHEN c.gender='Male' THEN 1 ELSE 0 END) as male"),
+            DB::raw("SUM(CASE WHEN c.gender='Female' THEN 1 ELSE 0 END) as female"),
+            DB::raw("SUM(CASE WHEN c.fee_paid='Yes' THEN 1 ELSE 0 END) as fee_paid")
+        )->groupBy('co.country_name')->orderByDesc('total')->limit(20)->get();
+
+        return response()->json([
+            'kpi'          => compact('total', 'feePaidC', 'male', 'female'),
+            'byCountry'    => $byCountry,
+            'byProgramme'  => $byProgramme,
+            'byGender'     => $byGender,
+            'byYear'       => $byYear,
+            'byFeePaid'    => $byFeePaid,
+            'repeatStats'  => $repeatStats,
+            'countryTable' => $countryTable,
+        ]);
+    }
+
     public function list()
     {
-        $data['getRecord'] = User::getCandidates();
-        $data['header_title'] = "Candidates List";
+        $data['getRecord']       = User::getCandidates();
+        $data['header_title']    = "Candidates List";
+        $data['filterCountries'] = DB::table('candidates as c')
+            ->join('countries as co', 'co.id', '=', 'c.country_id')
+            ->select('co.country_name')->groupBy('co.country_name')->orderBy('co.country_name')
+            ->where('c.exam_year', date('Y'))->pluck('co.country_name');
+        $data['filterProgrammes'] = DB::table('candidates as c')
+            ->join('programmes as p', 'p.id', '=', 'c.programme_id')
+            ->select('p.name')->groupBy('p.name')->orderBy('p.name')
+            ->where('c.exam_year', date('Y'))->pluck('p.name');
+        $data['filterYears'] = DB::table('candidates')
+            ->whereNotNull('exam_year')->where('exam_year', '!=', '')
+            ->select('exam_year')->groupBy('exam_year')->orderByDesc('exam_year')->pluck('exam_year');
         return view('admin.associates.candidates.list', $data);
     }
     //Candidates List for examiners
@@ -64,14 +179,29 @@ class CandidatesController extends Controller
 
     public function importData(Request $request)
     {
+        // Large imports can exceed the default 30s PHP limit
+        set_time_limit(300);
+        ini_set('max_execution_time', 300);
+
         $request->validate([
             'file' => 'required|mimes:csv,xlsx,xls|max:2048',
         ]);
 
         $file = $request->file('file');
-        Excel::import(new CandidatesImport, $file);
 
-        return redirect('admin/associates/candidates/list')->with('success', 'Candidates imported successfully');
+        try {
+            $import = new CandidatesImport;
+            Excel::import($import, $file);
+
+            $imported = $import->getImportedCount();
+            $skipped  = $import->getSkippedCount();
+            $msg = "Import complete: {$imported} candidate(s) saved";
+            if ($skipped > 0) $msg .= ", {$skipped} updated (already existed)";
+            return redirect('admin/associates/candidates/list')->with('success', $msg);
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Import failed: ' . $e->getMessage());
+        }
     }
 
     public function insert(Request $request)
@@ -171,8 +301,13 @@ class CandidatesController extends Controller
             'invoice_number' => $request->invoice_number,
             'invoice_date' => $request->invoice_date,
             'invoice_status' => $request->invoice_status,
+            'invoice_amount' => $request->invoice_amount ?: null,
             'sponsor' => $request->sponsor,
-            'amount_paid' => $request->amount_paid,
+            'fee_paid' => $request->fee_paid ?? 'No',
+            'amount_paid' => $request->amount_paid ?: null,
+            'payment_date' => $request->payment_date ?: null,
+            'mode_of_payment' => $request->mode_of_payment ?: null,
+            'remarks' => $request->remarks ?: null,
         ]);
 
         return redirect('admin/associates/candidates/list')->with('success', 'Candidate updated successfully');
