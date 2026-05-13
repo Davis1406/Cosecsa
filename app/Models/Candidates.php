@@ -28,6 +28,7 @@ class Candidates extends Model
         'group_id',
         'candidate_id',
         'entry_number',
+        'exam_number',
         'admission_year',
         'exam_year',
         'invoice_number',

@@ -64,37 +64,49 @@ $(function () {
         "order": [[1, "asc"]],
         "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
         "buttons": [
+            // Excel: all meaningful columns (skip # at 0 and Action at 9, include hidden cols)
             { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel', className: "btn btn-success btn-sm", title: "Candidates List",
-              exportOptions: { columns: [0,1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17] } },
+              exportOptions: { columns: [1,2,3,4,5,6,7,8,10,11,12,13,14,15,16] } },
+            // PDF / Print: visible columns only (skip # and Action)
             { extend: "pdfHtml5",   text: '<i class="fas fa-file-pdf mr-1"></i> PDF',   className: "btn btn-danger btn-sm",  title: "Candidates List", orientation: "landscape", pageSize: "A4",
-              exportOptions: { columns: [0,1,2,3,4,5,6,7,8,9] } },
+              exportOptions: { columns: [1,2,3,4,5,6,7,8] } },
             { extend: "print",      text: '<i class="fas fa-print mr-1"></i> Print',    className: "btn btn-secondary btn-sm",
-              exportOptions: { columns: [0,1,2,3,4,5,6,7,8,9] } },
+              exportOptions: { columns: [1,2,3,4,5,6,7,8] } },
             { extend: "colvis",     text: '<i class="fas fa-columns mr-1"></i> Columns', className: "btn btn-outline-secondary btn-sm" }
         ],
         "columns": [
-            { "visible": true,  "orderable": false, "searchable": false }, // #
-            { "visible": true },  // Name
-            { "visible": true },  // PEN
-            { "visible": true },  // Exam Type
-            { "visible": true },  // Hospital
-            { "visible": true },  // Country
-            { "visible": true },  // Gender
-            { "visible": true },  // Fee Paid
-            { "visible": true },  // Invoice #
-            { "visible": true },  // Amount
-            { "visible": true,  "orderable": false, "searchable": false }, // Action
-            { "visible": false }, // Email
-            { "visible": false }, // Repeat P1
-            { "visible": false }, // Repeat P2
-            { "visible": false }, // MMed
-            { "visible": false }, // Sponsor
-            { "visible": false }, // Exam Year
-            { "visible": false }  // Mode of Payment
+            { "visible": true,  "orderable": false, "searchable": false }, // 0  #
+            { "visible": true },                                            // 1  Name
+            { "visible": true },                                            // 2  PEN
+            { "visible": true },                                            // 3  Cand. No.
+            { "visible": true },                                            // 4  Exam Type
+            { "visible": true },                                            // 5  Hospital
+            { "visible": true },                                            // 6  Country
+            { "visible": true },                                            // 7  Gender
+            { "visible": true },                                            // 8  Fee Paid
+            { "visible": true,  "orderable": false, "searchable": false }, // 9  Action (dropdown)
+            { "visible": false },                                           // 10 Email
+            { "visible": false },                                           // 11 Repeat P1
+            { "visible": false },                                           // 12 Repeat P2
+            { "visible": false },                                           // 13 MMed
+            { "visible": false },                                           // 14 Sponsor
+            { "visible": false },                                           // 15 Exam Year
+            { "visible": false }                                            // 16 Mode of Payment
         ],
         "drawCallback": function () {
+            // Re-number rows
             this.api().column(0, { search: "applied", order: "applied" })
                 .nodes().each(function (cell, i) { cell.innerHTML = i + 1; });
+            // Bootstrap dropdowns must be re-enabled after every DataTable redraw
+            $(this).find('[data-toggle="dropdown"]').dropdown();
+        }
+    });
+
+    // Close open dropdowns when clicking outside
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('.dropdown').length) {
+            $('#candidatestable .dropdown-menu.show').removeClass('show');
+            $('#candidatestable .dropdown-toggle[aria-expanded="true"]').attr('aria-expanded', false);
         }
     });
     }
@@ -493,11 +505,7 @@ $(function () {
     traineeTable.on('draw', function () {
         initPopovers();
     });
-    if (typeof candidateTable !== 'undefined') {
-        candidateTable.on('draw', function () {
-            initPopovers();
-        });
-    }
+    // candidateTable uses Bootstrap dropdowns — re-init handled inside drawCallback above
 
     trainersTable.on('draw', function () {
         initPopovers();

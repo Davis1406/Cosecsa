@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\TraineesImport;
+use App\Imports\TraineesApplicationImport;
 
 class TraineeController extends Controller
 {
@@ -45,22 +46,33 @@ class TraineeController extends Controller
 
     public function import()
     {
-    
         $data['header_title'] = "Import Trainees";
+        $data['report']       = session('import_report');
         return view('admin.associates.trainees.import', $data);
     }
-    
 
     public function importData(Request $request)
     {
+        set_time_limit(300);
+        ini_set('max_execution_time', 300);
+
         $request->validate([
-            'file' => 'required|mimes:csv,xlsx,xls|max:2048',
+            'file' => 'required|mimes:csv,xlsx,xls|max:10240',
         ]);
 
-        $file = $request->file('file');
-        Excel::import(new TraineesImport, $file);
+        try {
+            $import = new TraineesApplicationImport;
+            Excel::import($import, $request->file('file'));
 
-        return redirect('admin/associates/trainees/trainees')->with('success', 'Trainees imported successfully');
+            $report = $import->getReport();
+            session(['import_report' => $report]);
+
+            return redirect('admin/associates/trainees/import')
+                ->with('import_done', true);
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Import failed: ' . $e->getMessage());
+        }
     }
 
     public function insert(Request $request)

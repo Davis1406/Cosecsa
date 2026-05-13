@@ -103,13 +103,12 @@
                                             <th>#</th>
                                             <th>Name</th>
                                             <th>PEN</th>
+                                            <th>Cand. No.</th>
                                             <th>Exam Type</th>
                                             <th>Hospital</th>
                                             <th>Country</th>
                                             <th>Gender</th>
                                             <th>Fee Paid</th>
-                                            <th>Invoice #</th>
-                                            <th>Amount</th>
                                             <th>Action</th>
                                             {{-- Hidden columns for export / search --}}
                                             <th>Email</th>
@@ -123,20 +122,29 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($getRecord as $value)
+                                        @php $cid = $value->candidates_id ?? 0; @endphp
                                         <tr data-country="{{ $value->country_name ?? '' }}"
                                             data-programme="{{ $value->programme_name ?? '' }}"
                                             data-gender="{{ $value->gender ?? '' }}"
                                             data-year="{{ $value->exam_year ?? '' }}"
                                             data-feepaid="{{ $value->fee_paid ?? 'No' }}">
                                             <td class="row-num"></td>
-                                            <td>{{ $value->name ?? '-' }}</td>
+                                            {{-- Clickable name → view --}}
+                                            <td>
+                                                <a href="{{ url('admin/associates/candidates/view/' . $cid) }}"
+                                                   class="candidate-name-link font-weight-500">
+                                                    {{ $value->name ?? '-' }}
+                                                </a>
+                                            </td>
                                             <td>{{ $value->entry_number ?? '-' }}</td>
                                             <td>
-                                                @php $prog = $value->programme_name ?? '-'; @endphp
-                                                <span>
-                                                    {{ $prog }}
-                                                </span>
+                                                @if(!empty($value->candidate_id))
+                                                    <span class="badge badge-secondary" style="font-size:.78rem;letter-spacing:.5px;">{{ $value->candidate_id }}</span>
+                                                @else
+                                                    <span class="text-muted" style="font-size:.78rem;">—</span>
+                                                @endif
                                             </td>
+                                            <td>{{ $value->programme_name ?? '-' }}</td>
                                             <td>{{ $value->hospital_name ?? '-' }}</td>
                                             <td>{{ $value->country_name ?? '-' }}</td>
                                             <td>
@@ -154,29 +162,33 @@
                                                     <span class="badge badge-danger">Unpaid</span>
                                                 @endif
                                             </td>
-                                            <td style="font-size:.8rem;">{{ $value->invoice_number ?? '-' }}</td>
-                                            <td>
-                                                @if(!empty($value->invoice_amount))
-                                                    ${{ number_format($value->invoice_amount) }}
-                                                @elseif(!empty($value->amount_paid))
-                                                    ${{ number_format($value->amount_paid) }}
-                                                @else -
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <a href="#" class="action-icon" data-toggle="popover" data-html="true" data-content='
-                                                    <a href="{{ url("admin/associates/candidates/view/" . ($value->candidates_id ?? 0)) }}">
-                                                        <i class="fa fa-eye action-icon"></i> View
-                                                    </a>
-                                                    <a href="{{ url("admin/associates/candidates/edit/" . ($value->candidates_id ?? 0)) }}">
-                                                        <i class="fa fa-edit action-icon"></i> Edit
-                                                    </a>
-                                                    <a href="{{ url("admin/associates/candidates/delete/" . ($value->c_id ?? 0)) }}"
-                                                       onclick="return confirm(&quot;Delete this candidate?&quot;)">
-                                                        <i class="fa fa-trash action-icon"></i> Delete
-                                                    </a>'>
-                                                    <i class="fa fa-bars" style="color:#5a6268"></i>
-                                                </a>
+                                            {{-- Dropdown action button --}}
+                                            <td class="text-center" style="white-space:nowrap;">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
+                                                            type="button"
+                                                            data-toggle="dropdown"
+                                                            aria-haspopup="true"
+                                                            aria-expanded="false">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                                        <a class="dropdown-item"
+                                                           href="{{ url('admin/associates/candidates/view/' . $cid) }}">
+                                                            <i class="fas fa-eye text-info mr-2"></i> View
+                                                        </a>
+                                                        <a class="dropdown-item"
+                                                           href="{{ url('admin/associates/candidates/edit/' . $cid) }}">
+                                                            <i class="fas fa-edit text-warning mr-2"></i> Edit
+                                                        </a>
+                                                        <div class="dropdown-divider"></div>
+                                                        <a class="dropdown-item text-danger"
+                                                           href="{{ url('admin/associates/candidates/delete/' . ($value->c_id ?? 0)) }}"
+                                                           onclick="return confirm('Delete this candidate?')">
+                                                            <i class="fas fa-trash mr-2"></i> Delete
+                                                        </a>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td>{{ $value->personal_email ?? '-' }}</td>
                                             <td>{{ $value->repeat_paper_one ?? 'No' }}</td>
@@ -202,22 +214,28 @@
 
 @push('styles')
 <style>
-    .popover-content a, .popover-body a {
-        display: block; padding: 5px 10px; color: #5a6268;
-        text-decoration: none; border-radius: 3px; margin-bottom: 2px; transition: all 0.3s ease;
+    #candidatestable td { vertical-align: middle; }
+    .candidate-name-link {
+        color: #333;
+        text-decoration: none;
+        font-weight: 500;
     }
-    .popover-content a:hover, .popover-body a:hover {
-        background-color: #a02626 !important; color: #fff !important;
+    .candidate-name-link:hover {
+        color: #a02626;
+        text-decoration: underline;
     }
-    .popover-content a i, .popover-body a i { margin-right: 6px; color: inherit; }
-    .popover-content a:hover i, .popover-body a:hover i { color: #fff !important; }
-    .popover-header { background-color: #a02626; color: #fff; border-bottom-color: #a02626; }
-    .action-icon { cursor: pointer; transition: color 0.3s ease; }
-    .action-icon:hover { color: #a02626 !important; }
+    .action-btn {
+        padding: 2px 8px;
+        line-height: 1.4;
+        border-radius: 4px;
+    }
+    .action-btn:hover { background-color: #f0f0f0; }
+    .dropdown-menu { min-width: 130px; font-size: .875rem; }
+    .dropdown-item { padding: 6px 14px; }
+    .dropdown-item:hover { background-color: #f8f0f0; }
     .paginate_button.active>.page-link { background-color: #a02626 !important; border-color: #a02626 !important; color: white; }
     .paginate_button>.page-link { color: #a02626; }
     .paginate_button>.page-link:focus, .paginate_button.active>.page-link:focus { box-shadow: none !important; outline: none !important; }
-    #candidatestable td { vertical-align: middle; }
     .badge-pill { padding: .35em .65em; font-size: .7rem; }
 </style>
 @endpush
@@ -256,14 +274,7 @@ $(document).ready(function () {
         $('#filteredCount').text('');
     });
 
-    // Re-init popovers after draw
-    $(document).on('draw.dt', '#candidatestable', function () {
-        $('[data-toggle="popover"]').each(function () {
-            if (!$(this).data('bs.popover')) {
-                $(this).popover({ trigger: 'focus', html: true });
-            }
-        });
-    });
+    // Dropdown init + outside-click handling is managed in custom.js
 });
 </script>
 @endpush

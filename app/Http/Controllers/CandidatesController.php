@@ -206,60 +206,78 @@ class CandidatesController extends Controller
 
     public function insert(Request $request)
     {
-        $fullName = trim("{$request->firstname} {$request->middlename} {$request->lastname}");
-        $userType = 3; // Candidate
-
-        $user = User::create([
-            'name' => $fullName,
-            'email' => $request->email,
-            'password' => $request->password,
-            'user_type' => $userType
+        $request->validate([
+            'firstname'      => 'required|string|max:255',
+            'lastname'       => 'required|string|max:255',
+            'personal_email' => 'required|email|max:255',
+            'programme_id'   => 'required|integer',
+            'hospital_id'    => 'required|integer',
+            'country_id'     => 'required|integer',
+            'entry_number'   => 'required|string|max:255',
         ]);
 
-        // ✅ Insert into user_roles
+        $fullName = trim($request->firstname . ' ' . ($request->middlename ?? '') . ' ' . $request->lastname);
+        $userType = 3; // Candidate
+
+        // Build login email: use provided email field, fall back to personal_email
+        $loginEmail = $request->email ?: $request->personal_email;
+
+        $user = User::create([
+            'name'      => $fullName,
+            'email'     => $loginEmail,
+            'password'  => bcrypt($request->password ?: \Illuminate\Support\Str::random(12)),
+            'user_type' => $userType,
+        ]);
+
         DB::table('user_roles')->insert([
-            'user_id' => $user->id,
-            'role_type' => $userType,
-            'is_active' => 1,
+            'user_id'    => $user->id,
+            'role_type'  => $userType,
+            'is_active'  => 1,
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         Candidates::create([
-            'user_id' => $user->id,
-            'firstname' => $request['firstname'],
-            'middlename' => $request['middlename'],
-            'lastname' => $request['lastname'],
-            'personal_email' => $request['personal_email'],
-            'gender' => $request['gender'],
-            'status' => $request['status'],
-            'programme_id' => $request['programme_id'],
-            'hospital_id' => $request['hospital_id'],
-            'country_id' => $request['country_id'],
-            'group_id' => $request['candidate_id'],
-            'repeat_P1' => $request['repeat_P1'],
-            'repeat_P2' => $request['repeat_P2'],
-            'mmed' => $request['mmed'],
-            'entry_number' => $request['entry_number'],
-            'admission_year' => $request['admission_year'],
-            'exam_year' => $request['exam_year'],
-            'invoice_number' => $request['invoice_number'],
-            'invoice_date' => $request['invoice_date'],
-            'invoice_status' => $request['invoice_status'],
-            'sponsor' => $request['sponsor'],
-            'amount_paid' => $request['amount_paid'],
+            'user_id'          => $user->id,
+            'firstname'        => $request->firstname,
+            'middlename'       => $request->middlename,
+            'lastname'         => $request->lastname,
+            'personal_email'   => $request->personal_email,
+            'gender'           => $request->gender,
+            'programme_id'     => $request->programme_id,
+            'hospital_id'      => $request->hospital_id,
+            'country_id'       => $request->country_id,
+            'entry_number'     => $request->entry_number,
+            'exam_number'      => $request->exam_number,
+            'repeat_paper_one' => $request->repeat_paper_one ?? 'No',
+            'repeat_paper_two' => $request->repeat_paper_two ?? 'No',
+            'mmed'             => $request->mmed ?? 'No',
+            'admission_year'   => $request->admission_year,
+            'exam_year'        => $request->exam_year,
+            'sponsor'          => $request->sponsor,
+            'remarks'          => $request->remarks,
+            'invoice_number'   => $request->invoice_number,
+            'invoice_date'     => $request->invoice_date ?: null,
+            'invoice_amount'   => $request->invoice_amount ?: null,
+            'invoice_status'   => $request->invoice_status ?? 'Pending',
+            'fee_paid'         => $request->fee_paid ?? 'No',
+            'amount_paid'      => $request->amount_paid ?: null,
+            'payment_date'     => $request->payment_date ?: null,
+            'mode_of_payment'  => $request->mode_of_payment,
+            'created_at'       => now(),
+            'updated_at'       => now(),
         ]);
 
-        return redirect('admin/associates/candidates/list')->with('success', 'Candidate added successfully');
+        return redirect('admin/associates/candidates/list')->with('success', 'Candidate added successfully.');
     }
 
 
     public function edit($id)
     {
-        $candidate = User::getCandidates()->firstWhere('candidate_id', $id);
-        // if (!$candidate) {
-        //     return redirect('admin/associates/candidates/list')->with('error', 'Candidate not found');
-        // }
+        $candidate = User::getCandidates()->firstWhere('candidates_id', $id);
+        if (!$candidate) {
+            return redirect('admin/associates/candidates/list')->with('error', 'Candidate not found');
+        }
         $data['getHospital'] = HospitalModel::getHospital();
         $data['getProgramme'] = Programme::getProgramme();
         $data['getCountry'] = Country::getCountry();
@@ -284,30 +302,32 @@ class CandidatesController extends Controller
         $user->save();
 
         $candidate->update([
-            'firstname' => $request->firstname,
-            'middlename' => $request->middlename,
-            'lastname' => $request->lastname,
-            'personal_email' => $request->personal_email,
-            'gender' => $request->gender,
-            'programme_id' => $request->programme_id,
-            'hospital_id' => $request->hospital_id,
-            'country_id' => $request->country_id,
-            'entry_number' => $request->entry_number,
-            'repeat_paper_one' => $request->repeat_paper_one,
-            'repeat_paper_two' => $request->repeat_paper_two,
-            'admission_year' => $request->admission_year,
-            'exam_year' => $request->exam_year,
-            'mmed' => $request->mmed,
-            'invoice_number' => $request->invoice_number,
-            'invoice_date' => $request->invoice_date,
-            'invoice_status' => $request->invoice_status,
-            'invoice_amount' => $request->invoice_amount ?: null,
-            'sponsor' => $request->sponsor,
-            'fee_paid' => $request->fee_paid ?? 'No',
-            'amount_paid' => $request->amount_paid ?: null,
-            'payment_date' => $request->payment_date ?: null,
-            'mode_of_payment' => $request->mode_of_payment ?: null,
-            'remarks' => $request->remarks ?: null,
+            'firstname'        => $request->firstname,
+            'middlename'       => $request->middlename,
+            'lastname'         => $request->lastname,
+            'personal_email'   => $request->personal_email,
+            'gender'           => $request->gender,
+            'programme_id'     => $request->programme_id,
+            'hospital_id'      => $request->hospital_id,
+            'country_id'       => $request->country_id,
+            'entry_number'     => $request->entry_number,
+            'candidate_id'     => $request->candidate_id ?: null,
+            'exam_number'      => $request->exam_number ?: null,
+            'repeat_paper_one' => $request->repeat_paper_one ?? 'No',
+            'repeat_paper_two' => $request->repeat_paper_two ?? 'No',
+            'admission_year'   => $request->admission_year,
+            'exam_year'        => $request->exam_year,
+            'mmed'             => $request->mmed ?? 'No',
+            'invoice_number'   => $request->invoice_number,
+            'invoice_date'     => $request->invoice_date ?: null,
+            'invoice_status'   => $request->invoice_status,
+            'invoice_amount'   => $request->invoice_amount ?: null,
+            'sponsor'          => $request->sponsor,
+            'fee_paid'         => $request->fee_paid ?? 'No',
+            'amount_paid'      => $request->amount_paid ?: null,
+            'payment_date'     => $request->payment_date ?: null,
+            'mode_of_payment'  => $request->mode_of_payment ?: null,
+            'remarks'          => $request->remarks ?: null,
         ]);
 
         return redirect('admin/associates/candidates/list')->with('success', 'Candidate updated successfully');

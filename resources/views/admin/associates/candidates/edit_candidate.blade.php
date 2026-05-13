@@ -1,23 +1,32 @@
 @extends('layout.app')
 
+@push('styles')
+<style>
+  .multi_step_form #msform fieldset textarea.form-control {
+    height: auto; min-height: 80px; line-height: 1.5; padding-top: 10px; padding-bottom: 10px;
+  }
+  .multi_step_form #msform #progressbar li:nth-child(1):before { content: "1"; font-family: inherit; font-size: 20px; font-weight: 700; }
+  .multi_step_form #msform #progressbar li:nth-child(2):before { content: "2"; font-family: inherit; font-size: 20px; font-weight: 700; }
+  .multi_step_form #msform #progressbar li:nth-child(3):before { content: "3"; font-family: inherit; font-size: 20px; font-weight: 700; }
+</style>
+@endpush
+
 @section('content')
 <div class="wrapper">
     <div class="content-wrapper">
         <section class="content">
             <section class="multi_step_form">
-                <form id="msform" method="POST" action="{{ url('admin/associates/candidates/edit/'.$candidate->candidate_id) }}" enctype="multipart/form-data">
+                <form id="msform" method="POST" action="{{ url('admin/associates/candidates/edit/'.$candidate->candidates_id) }}" enctype="multipart/form-data">
                     {{ csrf_field() }}
-                    <!-- Tittle -->
                     <div class="tittle">
                         <h2>Edit Candidate</h2>
                     </div>
-                    <!-- progressbar -->
                     <ul id="progressbar">
                         <li class="active">Personal Information</li>
-                        <li> Candidate Details</li>
+                        <li>Candidate Details</li>
                         <li>Payment Records</li>
                     </ul>
-                    <!-- fieldsets -->
+                    <!-- Step 1 -->
                     <fieldset>
                         <div class="form-row">
                             <div class="form-group col-md-6">
@@ -79,10 +88,11 @@
                             </div>
                         </div>
 
-                        <button type="button" class="action-button previous_button">Back</button>
-                        <button type="button" class="next action-button">Continue</button>
+                        {{-- No Back on step 1 --}}
+                        <button type="button" class="next action-button">Continue &rarr;</button>
                     </fieldset>
 
+                    <!-- Step 2 -->
                     <fieldset>
                         <div class="form-row">
                             <div class="form-group col-md-6">
@@ -123,19 +133,39 @@
 
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                <label>Repeating Paper One</label>
-                                <select name="repeat_paper_one" class="form-control">
-                                    <option value="" disabled>Select Status...</option>
-                                    <option value="No" {{ $candidate->repeat_paper_one == 'No' ? 'selected' : '' }}>No</option>
-                                    <option value="Yes" {{ $candidate->repeat_paper_one == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                </select>
+                                <label>Candidate Number</label>
+                                <input type="text" name="candidate_id" class="form-control"
+                                       value="{{ $candidate->candidate_id }}"
+                                       placeholder="e.g. MCS077 (set by Examination Officer)">
                             </div>
                             <div class="form-group col-md-6">
-                                <label>Repeating Paper Two</label>
+                                <label>Exam Number</label>
+                                <input type="text" name="exam_number" class="form-control"
+                                       value="{{ $candidate->exam_number }}"
+                                       placeholder="Exam number (if assigned)">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label>Repeating Paper I</label>
+                                <select name="repeat_paper_one" class="form-control">
+                                    <option value="No"  {{ ($candidate->repeat_paper_one ?? 'No') == 'No'  ? 'selected' : '' }}>No</option>
+                                    <option value="Yes" {{ ($candidate->repeat_paper_one ?? 'No') == 'Yes' ? 'selected' : '' }}>Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Repeating Paper II</label>
                                 <select name="repeat_paper_two" class="form-control">
-                                    <option value="" disabled>Select Status...</option>
-                                    <option value="No" {{ $candidate->repeat_paper_two == 'No' ? 'selected' : '' }}></option>
-                                    <option value="Yes" {{ $candidate->repeat_paper_two == 'Yes' ? 'selected' : '' }}>Yes</option>
+                                    <option value="No"  {{ ($candidate->repeat_paper_two ?? 'No') == 'No'  ? 'selected' : '' }}>No</option>
+                                    <option value="Yes" {{ ($candidate->repeat_paper_two ?? 'No') == 'Yes' ? 'selected' : '' }}>Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>MMed Qualification</label>
+                                <select name="mmed" class="form-control">
+                                    <option value="No"  {{ ($candidate->mmed ?? 'No') == 'No'  ? 'selected' : '' }}>No</option>
+                                    <option value="Yes" {{ ($candidate->mmed ?? 'No') == 'Yes' ? 'selected' : '' }}>Yes</option>
                                 </select>
                             </div>
                         </div>
@@ -144,45 +174,23 @@
                             <div class="form-group col-md-6">
                                 <label>Admission Year</label>
                                 <select name="admission_year" class="form-control">
-                                    <option value="2012" {{ $candidate->admission_year == 2012 ? 'selected' : '' }}>2012</option>
-                                    <option value="2013" {{ $candidate->admission_year == 2013 ? 'selected' : '' }}>2013</option>
-                                    <option value="2014" {{ $candidate->admission_year == 2014 ? 'selected' : '' }}>2014</option>
-                                    <option value="2015" {{ $candidate->admission_year == 2015 ? 'selected' : '' }}>2015</option>
-                                    <option value="2016" {{ $candidate->admission_year == 2016 ? 'selected' : '' }}>2016</option>
-                                    <option value="2017" {{ $candidate->admission_year == 2017 ? 'selected' : '' }}>2017</option>
-                                    <option value="2018" {{ $candidate->admission_year == 2018 ? 'selected' : '' }}>2018</option>
-                                    <option value="2019" {{ $candidate->admission_year == 2019 ? 'selected' : '' }}>2019</option>
-                                    <option value="2020" {{ $candidate->admission_year == 2020 ? 'selected' : '' }}>2020</option>
-                                    <option value="2021" {{ $candidate->admission_year == 2021 ? 'selected' : '' }}>2021</option>
-                                    <option value="2022" {{ $candidate->admission_year == 2022 ? 'selected' : '' }}>2022</option>
-                                    <option value="2023" {{ $candidate->admission_year == 2023 ? 'selected' : '' }}>2023</option>
-                                    <option value="2024" {{ $candidate->admission_year == 2024 ? 'selected' : '' }}>2024</option>
-                                    <option value="2025" {{ $candidate->admission_year == 2025 ? 'selected' : '' }}>2025</option>
+                                    @for($y = 2010; $y <= date('Y') + 1; $y++)
+                                    <option value="{{ $y }}" {{ $candidate->admission_year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                    @endfor
                                 </select>
                             </div>
                             <div class="form-group col-md-6">
                                 <label>Exam Year</label>
                                 <select name="exam_year" class="form-control">
-                                    <option value="2024" {{ $candidate->exam_year == 2024 ? 'selected' : '' }}>2024</option>
-                                    <option value="2025" {{ $candidate->exam_year == 2025 ? 'selected' : '' }}>2025</option>
-                                    <option value="2026" {{ $candidate->exam_year == 2026 ? 'selected' : '' }}>2026</option>
+                                    @for($y = 2024; $y <= date('Y') + 2; $y++)
+                                    <option value="{{ $y }}" {{ $candidate->exam_year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                    @endfor
                                 </select>
                             </div>
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-group col-md-12">
-                                <label>Mmed Qualification</label>
-                                <select name="mmed" class="form-control">
-                                    <option value="" disabled>Select Status...</option>
-                                    <option value="No" {{ $candidate->mmed == 'No' ? 'selected' : '' }}>No</option>
-                                    <option value="Yes" {{ $candidate->mmed == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <button type="button" class="action-button previous previous_button">Back</button>
-                        <button type="button" class="next action-button">Continue</button>
+                        <button type="button" class="previous action-button previous_button">&larr; Back</button>
+                        <button type="button" class="next action-button">Continue &rarr;</button>
                     </fieldset>
 
                     <fieldset>
@@ -207,9 +215,9 @@
                             <div class="form-group col-md-6">
                                 <label>Invoice Status</label>
                                 <select name="invoice_status" class="form-control">
-                                    <option value="" disabled>Select Status</option>
-                                    <option value="Pending" {{ ($candidate->invoice_status ?? '') == 'Pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="Sent"    {{ ($candidate->invoice_status ?? '') == 'Sent'    ? 'selected' : '' }}>Sent</option>
+                                    <option value="Pending"  {{ ($candidate->invoice_status ?? '') == 'Pending'  ? 'selected' : '' }}>Pending</option>
+                                    <option value="Sent"     {{ ($candidate->invoice_status ?? '') == 'Sent'     ? 'selected' : '' }}>Sent</option>
+                                    <option value="Complete" {{ ($candidate->invoice_status ?? '') == 'Complete' ? 'selected' : '' }}>Complete</option>
                                 </select>
                             </div>
                         </div>
@@ -263,19 +271,12 @@
                             </div>
                         </div>
 
-                        <button type="button" class="action-button previous previous_button">Back</button>
-                        <button type="submit" class="action-button">Submit</button>
+                        <button type="button" class="previous action-button previous_button">&larr; Back</button>
+                        <button type="submit" class="action-button"><i class="fas fa-save mr-1"></i> Save Changes</button>
                     </fieldset>
                 </form>
             </section>
         </section>
     </div>
 </div>
-
-<script>
-    $(function () {
-        bsCustomFileInput.init();
-    });
-</script>
-
 @endsection

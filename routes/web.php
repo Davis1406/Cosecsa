@@ -219,6 +219,7 @@ Route::get('admin/associates/promotion/promote_candidates',   [PromotionControll
 Route::post('admin/associates/promotion/promote_trainees',    [PromotionController::class,'update']);
 Route::get('admin/associates/promotion/promote-to-candidates',[PromotionController::class,'promoteToCandidate']);
 Route::post('admin/associates/promotion/promote-to-candidates',[PromotionController::class,'promoteToCandidate_post']);
+Route::get('admin/associates/promotion/trainees-preview',      [PromotionController::class,'traineesPreview']);
 
 
 });

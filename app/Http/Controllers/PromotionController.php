@@ -88,24 +88,66 @@ class PromotionController extends Controller
         return view('admin.associates.promotion.promote_to_candidates', $data);
     }
 
-    public function promoteToCandidate_post(Request $request)
+    // AJAX: fetch trainee list for a given study_year_id
+    public function traineesPreview()
     {
-        $studyYearId = $request->input('study_year_id');
+        $studyYearId = request('study_year_id');
         $examYear    = date('Y');
 
+        if (!$studyYearId) {
+            return response()->json([]);
+        }
+
         $trainees = DB::table('trainees as t')
-            ->join('users as u', 'u.id', '=', 't.user_id')
+            ->leftJoin('users as u',      'u.id',  '=', 't.user_id')
+            ->leftJoin('hospitals as h',  'h.id',  '=', 't.hospital_id')
+            ->leftJoin('countries as co', 'co.id', '=', 't.country_id')
+            ->leftJoin('programmes as p', 'p.id',  '=', 't.programme_id')
             ->where('t.training_year', $studyYearId)
+            ->select(
+                't.id as trainee_id',
+                't.user_id',
+                't.firstname', 't.middlename', 't.lastname',
+                't.entry_number',
+                't.gender',
+                'p.name as programme_name',
+                'h.name as hospital_name',
+                'co.country_name'
+            )
+            ->orderBy('t.lastname')->orderBy('t.firstname')
+            ->get()
+            ->map(function ($row) use ($examYear) {
+                $row->already_candidate = DB::table('candidates')
+                    ->where('user_id', $row->user_id)
+                    ->where('exam_year', $examYear)
+                    ->exists();
+                return $row;
+            });
+
+        return response()->json($trainees);
+    }
+
+    public function promoteToCandidate_post(Request $request)
+    {
+        $examYear    = date('Y');
+        $traineeIds  = $request->input('trainee_ids', []);   // array of trainee.id values
+
+        if (empty($traineeIds)) {
+            return redirect()->back()->with('error', 'No trainees selected for promotion.');
+        }
+
+        $trainees = DB::table('trainees as t')
+            ->leftJoin('users as u', 'u.id', '=', 't.user_id')
+            ->whereIn('t.id', $traineeIds)
             ->select('t.*', 'u.name as full_name')
             ->get();
 
         if ($trainees->isEmpty()) {
-            return redirect()->back()->with('error', 'No trainees found in the selected study year.');
+            return redirect()->back()->with('error', 'No trainees found for the selected IDs.');
         }
 
         $promoted = 0; $skipped = 0;
         foreach ($trainees as $t) {
-            // Skip if already a candidate for this exam year
             $exists = DB::table('candidates')
                 ->where('user_id', $t->user_id)
                 ->where('exam_year', $examYear)
@@ -115,16 +157,16 @@ class PromotionController extends Controller
 
             DB::table('candidates')->insert([
                 'user_id'        => $t->user_id,
-                'firstname'      => $t->firstname  ?? '',
-                'middlename'     => $t->middlename ?? '',
-                'lastname'       => $t->lastname   ?? '',
-                'personal_email' => $t->personal_email ?? '',
-                'gender'         => $t->gender      ?? null,
+                'firstname'      => $t->firstname       ?? '',
+                'middlename'     => $t->middlename      ?? '',
+                'lastname'       => $t->lastname        ?? '',
+                'personal_email' => $t->personal_email  ?? '',
+                'gender'         => $t->gender           ?? null,
                 'programme_id'   => $t->programme_id,
-                'hospital_id'    => $t->hospital_id ?? null,
-                'country_id'     => $t->country_id  ?? null,
-                'entry_number'   => $t->entry_number ?? null,
-                'admission_year' => $t->admission_year ?? null,
+                'hospital_id'    => $t->hospital_id      ?? null,
+                'country_id'     => $t->country_id       ?? null,
+                'entry_number'   => $t->entry_number     ?? null,
+                'admission_year' => $t->admission_year   ?? null,
                 'exam_year'      => $examYear,
                 'invoice_status' => 'Pending',
                 'fee_paid'       => 'No',
@@ -134,8 +176,12 @@ class PromotionController extends Controller
             $promoted++;
         }
 
-        return redirect()->back()->with('success',
-            "Promoted $promoted trainee(s) to $examYear candidates. ($skipped already registered — skipped)");
+        $msg = "Successfully promoted <strong>{$promoted}</strong> trainee(s) to <strong>{$examYear}</strong> candidates.";
+        if ($skipped > 0) {
+            $msg .= " ({$skipped} already registered as {$examYear} candidates — skipped)";
+        }
+
+        return redirect()->back()->with('success', $msg);
     }
 
 }

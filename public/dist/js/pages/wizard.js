@@ -1,129 +1,86 @@
-(function($) {
-    "use strict";  
-    
-    //* Form js
-    function verificationForm(){
-        //jQuery time
-        var current_fs, next_fs, previous_fs; //fieldsets
-        var left, opacity, scale; //fieldset properties which we will animate
-        var animating; //flag to prevent quick multi-click glitches
+(function ($) {
+    "use strict";
 
-        $(".next").click(function () {
-            if (animating) return false;
-            animating = true;
+    // ── Only run stepper logic when the multi-step form is present ──────────
+    if (!$('#msform').length) return;
 
-            current_fs = $(this).parent();
-            next_fs = $(this).parent().next();
+    // ── Register easeInOutBack if jQuery UI didn't ship with it ─────────────
+    if ($.easing && !$.easing.easeInOutBack) {
+        $.easing.easeInOutBack = function (x, t, b, c, d, s) {
+            if (s === undefined) s = 1.70158;
+            if ((t /= d / 2) < 1) return c / 2 * (t * t * (((s *= 1.525) + 1) * t - s)) + b;
+            return c / 2 * ((t -= 2) * t * (((s *= 1.525) + 1) * t + s) + 2) + b;
+        };
+    }
 
-            //activate next step on progressbar using the index of next_fs
-            $("#progressbar li").eq($("fieldset").index(next_fs)).addClass("active");
+    var animating = false;
 
-            //show the next fieldset
-            next_fs.show();
-            //hide the current fieldset with style
-            current_fs.animate({
-                opacity: 0
-            }, {
-                step: function (now, mx) {
-                    //as the opacity of current_fs reduces to 0 - stored in "now"
-                    //1. scale current_fs down to 80%
-                    scale = 1 - (1 - now) * 0.2;
-                    //2. bring next_fs from the right(50%)
-                    left = (now * 50) + "%";
-                    //3. increase opacity of next_fs to 1 as it moves in
-                    opacity = 1 - now;
-                    current_fs.css({
-                        'transform': 'scale(' + scale + ')',
-                        'position': 'absolute'
-                    });
-                    next_fs.css({
-                        'left': left,
-                        'opacity': opacity
-                    });
-                },
-                duration: 800,
-                complete: function () {
-                    current_fs.hide();
-                    animating = false;
-                },
-                //this comes from the custom easing plugin
-                easing: 'easeInOutBack'
-            });
+    // ── NEXT ─────────────────────────────────────────────────────────────────
+    $(document).on('click', '#msform .next', function () {
+        if (animating) return false;
+
+        var current_fs = $(this).closest('fieldset');
+        var next_fs    = current_fs.next('fieldset');
+        if (!next_fs.length) return false;
+
+        animating = true;
+        $("#progressbar li").eq($("fieldset").index(next_fs)).addClass("active");
+
+        next_fs.show();
+        current_fs.animate({ opacity: 0 }, {
+            step: function (now) {
+                var scale   = 1 - (1 - now) * 0.2;
+                var left    = (now * 50) + "%";
+                var opacity = 1 - now;
+                current_fs.css({ transform: 'scale(' + scale + ')', position: 'absolute' });
+                next_fs.css({ left: left, opacity: opacity });
+            },
+            duration: 600,
+            complete: function () {
+                current_fs.hide();
+                animating = false;
+            },
+            easing: $.easing.easeInOutBack ? 'easeInOutBack' : 'swing'
         });
-
-        $(".previous").click(function () {
-            if (animating) return false;
-            animating = true;
-
-            current_fs = $(this).parent();
-            previous_fs = $(this).parent().prev();
-
-            //de-activate current step on progressbar
-            $("#progressbar li").eq($("fieldset").index(current_fs)).removeClass("active");
-
-            //show the previous fieldset
-            previous_fs.show();
-            //hide the current fieldset with style
-            current_fs.animate({
-                opacity: 0
-            }, {
-                step: function (now, mx) {
-                    //as the opacity of current_fs reduces to 0 - stored in "now"
-                    //1. scale previous_fs from 80% to 100%
-                    scale = 0.8 + (1 - now) * 0.2;
-                    //2. take current_fs to the right(50%) - from 0%
-                    left = ((1 - now) * 50) + "%";
-                    //3. increase opacity of previous_fs to 1 as it moves in
-                    opacity = 1 - now;
-                    current_fs.css({
-                        'left': left
-                    });
-                    previous_fs.css({
-                        'transform': 'scale(' + scale + ')',
-                        'opacity': opacity
-                    });
-                },
-                duration: 800,
-                complete: function () {
-                    current_fs.hide();
-                    animating = false;
-                },
-                //this comes from the custom easing plugin
-                easing: 'easeInOutBack'
-            });
-        });
-
-        // Handle final form submission
-        $(".submit").click(function () {
-            // Your final form submission code here
-            $("#msform").submit(); // Submit the form
-            return false; // Prevent default form submission
-        });
-    }; 
-
-    // Event listener to show file name in custom file input
-    document.querySelector('.custom-file-input').addEventListener('change', function (e) {
-        var fileName = document.getElementById("upload").files[0].name;
-        var nextSibling = e.target.nextElementSibling
-        nextSibling.innerText = fileName;
     });
 
-    //* Add Phone no select
-    // function phoneNoselect(){
-    //     if ( $('#msform').length ){   
-    //         $("#phone").intlTelInput("setNumber", "+880"); 
-    //     };
-    // }; 
+    // ── PREVIOUS ─────────────────────────────────────────────────────────────
+    $(document).on('click', '#msform .previous', function () {
+        if (animating) return false;
 
-    //* Select js
-    function nice_Select(){
-        if ( $('.product_select').length ){ 
-            $('select').niceSelect();
-        };
-    }; 
+        var current_fs  = $(this).closest('fieldset');
+        var previous_fs = current_fs.prev('fieldset');
+        if (!previous_fs.length) return false;
 
-    /*Function Calls*/  
-    verificationForm ();
-    // phoneNoselect ();
-    nice_Select ();
+        animating = true;
+        $("#progressbar li").eq($("fieldset").index(current_fs)).removeClass("active");
+
+        previous_fs.show();
+        current_fs.animate({ opacity: 0 }, {
+            step: function (now) {
+                var scale   = 0.8 + (1 - now) * 0.2;
+                var left    = ((1 - now) * 50) + "%";
+                var opacity = 1 - now;
+                current_fs.css({ left: left });
+                previous_fs.css({ transform: 'scale(' + scale + ')', opacity: opacity });
+            },
+            duration: 600,
+            complete: function () {
+                current_fs.hide();
+                animating = false;
+            },
+            easing: $.easing.easeInOutBack ? 'easeInOutBack' : 'swing'
+        });
+    });
+
+    // ── Custom file input label update (guard against missing element) ───────
+    var fileInput = document.querySelector('#msform .custom-file-input');
+    if (fileInput) {
+        fileInput.addEventListener('change', function (e) {
+            var file = e.target.files && e.target.files[0];
+            var label = e.target.nextElementSibling;
+            if (label && file) label.innerText = file.name;
+        });
+    }
+
 })(jQuery);
