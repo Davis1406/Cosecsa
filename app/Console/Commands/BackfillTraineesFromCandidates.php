@@ -56,6 +56,13 @@ class BackfillTraineesFromCandidates extends Command
         'mode_of_payment',
     ];
 
+    /**
+     * FK columns that must have a positive integer value to be safe to sync.
+     * A value of 0 or null in candidates means "unset" — don't overwrite a
+     * potentially valid trainee FK with an invalid reference.
+     */
+    private const FK_FIELDS = ['hospital_id', 'programme_id', 'country_id'];
+
     public function handle(): int
     {
         $dryRun = $this->option('dry-run');
@@ -91,6 +98,11 @@ class BackfillTraineesFromCandidates extends Command
                 // Normalise mode_of_payment to the trainees ENUM before comparing
                 if ($field === 'mode_of_payment') {
                     $candidateVal = $this->normaliseMOP($candidateVal);
+                }
+
+                // FK columns: skip if the candidate value is 0 / null (means unset)
+                if (in_array($field, self::FK_FIELDS, true) && empty((int) $candidateVal)) {
+                    continue;
                 }
 
                 // Only update if the candidate value is non-empty and differs

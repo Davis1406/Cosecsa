@@ -1796,15 +1796,12 @@ class CandidatesController extends Controller
             return;
         }
 
-        $trainee->update([
+        $payload = [
             'firstname'       => $candidate->firstname,
             'middlename'      => $candidate->middlename,
             'lastname'        => $candidate->lastname,
             'personal_email'  => $candidate->personal_email,
             'gender'          => $candidate->gender,
-            'programme_id'    => $candidate->programme_id,
-            'hospital_id'     => $candidate->hospital_id,
-            'country_id'      => $candidate->country_id,
             'entry_number'    => $candidate->entry_number,
             'sponsor'         => $candidate->sponsor,
             'exam_year'       => $candidate->exam_year ?: 0,
@@ -1814,7 +1811,20 @@ class CandidatesController extends Controller
             'amount_paid'     => $candidate->amount_paid ?: 0,
             'payment_date'    => $candidate->payment_date,
             'mode_of_payment' => $this->normaliseMOP($candidate->mode_of_payment),
-        ]);
+        ];
+
+        // Only sync FK columns if the candidate has a valid (non-zero) value
+        if (!empty((int) $candidate->programme_id)) {
+            $payload['programme_id'] = $candidate->programme_id;
+        }
+        if (!empty((int) $candidate->hospital_id)) {
+            $payload['hospital_id'] = $candidate->hospital_id;
+        }
+        if (!empty((int) $candidate->country_id)) {
+            $payload['country_id'] = $candidate->country_id;
+        }
+
+        $trainee->update($payload);
     }
 
     /**
