@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\TraineesImport;
 use App\Imports\TraineesApplicationImport;
+use App\Models\Candidates;
 
 class TraineeController extends Controller
 {
@@ -193,6 +194,9 @@ public function update(Request $request, $id)
     $trainee->payment_date            = $request->payment_date ?: null;
     $trainee->save();
 
+    // Keep matching candidate record in sync
+    $this->syncToCandidate($trainee);
+
     return redirect('admin/associates/trainees/trainees')->with('success', 'Trainee updated successfully');
 }
 
@@ -309,6 +313,36 @@ public function update(Request $request, $id)
     return redirect('admin/associates/trainees/trainees')->with('success', 'Trainee information successfully deleted');
 }
 
+    // ── Bidirectional sync helper ─────────────────────────────────────────────
+    /**
+     * After a trainee is updated, push shared fields to the matching candidate
+     * record (matched by user_id). Only fires if a candidate row exists.
+     */
+    private function syncToCandidate(Trainee $trainee): void
+    {
+        $candidate = Candidates::where('user_id', $trainee->user_id)->first();
+        if (!$candidate) {
+            return;
+        }
 
-
+        $candidate->update([
+            'firstname'       => $trainee->firstname,
+            'middlename'      => $trainee->middlename,
+            'lastname'        => $trainee->lastname,
+            'personal_email'  => $trainee->personal_email,
+            'gender'          => $trainee->gender,
+            'programme_id'    => $trainee->programme_id,
+            'hospital_id'     => $trainee->hospital_id,
+            'country_id'      => $trainee->country_id,
+            'entry_number'    => $trainee->entry_number,
+            'sponsor'         => $trainee->sponsor,
+            'exam_year'       => $trainee->exam_year ?: null,
+            'invoice_number'  => $trainee->invoice_number,
+            'invoice_date'    => $trainee->invoice_date,
+            'invoice_status'  => $trainee->invoice_status,
+            'amount_paid'     => $trainee->amount_paid ?: null,
+            'payment_date'    => $trainee->payment_date,
+            'mode_of_payment' => $trainee->mode_of_payment ?: null,
+        ]);
+    }
 }

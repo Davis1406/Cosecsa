@@ -330,6 +330,9 @@ class CandidatesController extends Controller
             'remarks'          => $request->remarks ?: null,
         ]);
 
+        // Keep matching trainee record in sync
+        $this->syncToTrainee($candidate);
+
         return redirect('admin/associates/candidates/list')->with('success', 'Candidate updated successfully');
     }
 
@@ -1779,6 +1782,62 @@ class CandidatesController extends Controller
         ]);
 
         return redirect()->back()->with('success', ucfirst($request->exam_type) . ' evaluation submitted successfully.');
+    }
+
+    // ── Bidirectional sync helper ─────────────────────────────────────────────
+    /**
+     * After a candidate is updated, push shared fields to the matching trainee
+     * record (matched by user_id). Only fires if a trainee row exists.
+     */
+    private function syncToTrainee(Candidates $candidate): void
+    {
+        $trainee = Trainee::where('user_id', $candidate->user_id)->first();
+        if (!$trainee) {
+            return;
+        }
+
+        $trainee->update([
+            'firstname'       => $candidate->firstname,
+            'middlename'      => $candidate->middlename,
+            'lastname'        => $candidate->lastname,
+            'personal_email'  => $candidate->personal_email,
+            'gender'          => $candidate->gender,
+            'programme_id'    => $candidate->programme_id,
+            'hospital_id'     => $candidate->hospital_id,
+            'country_id'      => $candidate->country_id,
+            'entry_number'    => $candidate->entry_number,
+            'sponsor'         => $candidate->sponsor,
+            'exam_year'       => $candidate->exam_year ?: 0,
+            'invoice_number'  => $candidate->invoice_number,
+            'invoice_date'    => $candidate->invoice_date,
+            'invoice_status'  => $candidate->invoice_status,
+            'amount_paid'     => $candidate->amount_paid ?: 0,
+            'payment_date'    => $candidate->payment_date,
+            'mode_of_payment' => $this->normaliseMOP($candidate->mode_of_payment),
+        ]);
+    }
+
+    /**
+     * Normalise candidates.mode_of_payment (varchar) to the ENUM values
+     * allowed by trainees.mode_of_payment.
+     * Allowed: 'Country Rep', 'Bank transfer', 'Online Payment System', ''
+     */
+    private function normaliseMOP(?string $raw): string
+    {
+        if (empty($raw)) {
+            return '';
+        }
+        $lower = strtolower(trim($raw));
+        if (str_contains($lower, 'online')) {
+            return 'Online Payment System';
+        }
+        if (str_contains($lower, 'bank')) {
+            return 'Bank transfer';
+        }
+        if (str_contains($lower, 'country') || str_contains($lower, 'rep')) {
+            return 'Country Rep';
+        }
+        return '';
     }
 
 }
