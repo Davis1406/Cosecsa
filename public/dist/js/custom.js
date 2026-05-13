@@ -87,8 +87,11 @@ $(function () {
     }
 
     function hideLoader(id) {
+        // Fade out the skeleton overlay
         $('#' + id).closest('.card-body').find('.dt-loader-overlay')
             .stop(true).fadeOut(380, function () { $(this).remove(); });
+        // Reveal the table (CSS transition handles the ease)
+        $('#' + id).css('opacity', 1);
     }
 
     // ── Dropdown re-init after every draw ────────────────────────────────────────
@@ -180,6 +183,43 @@ $(function () {
                 { "visible": true,  "orderable": false, "searchable": false }  // 16 Action
             ],
             "initComplete": function () { hideLoader("candidatestable"); },
+            "drawCallback": function () {
+                this.api().column(0, { search: "applied", order: "applied" })
+                    .nodes().each(function (cell, i) { cell.innerHTML = i + 1; });
+                reinitDropdowns(this);
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // Alumni — #(0) Name(1) Email(2) Country(3) Specialty(4) Type(5) Year(6) Action(7)
+    // ═══════════════════════════════════════════════════════════════════════════════
+    if ($("#alumnitable").length) {
+        showLoader("alumnitable");
+        $("#alumnitable").DataTable({
+            "responsive": true, "lengthChange": true, "autoWidth": false,
+            "paging": true, "pageLength": 25, "stateSave": true,
+            "order": [[6, "desc"], [1, "asc"]],
+            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
+            "buttons": [
+                { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
+                  className: "btn btn-success btn-sm", title: "Alumni List",
+                  exportOptions: { columns: [1,2,3,4,5,6] } },
+                { extend: "pdfHtml5", text: '<i class="fas fa-file-pdf mr-1"></i> PDF',
+                  className: "btn btn-danger btn-sm", title: "Alumni List",
+                  orientation: "landscape", pageSize: "A4", exportOptions: { columns: [1,2,3,4,5,6] } },
+                { extend: "print", text: '<i class="fas fa-print mr-1"></i> Print',
+                  className: "btn btn-secondary btn-sm", exportOptions: { columns: [1,2,3,4,5,6] } },
+                { extend: "colvis", text: '<i class="fas fa-columns mr-1"></i> Columns',
+                  className: "btn btn-outline-secondary btn-sm" }
+            ],
+            "columns": [
+                { "visible": true,  "orderable": false, "searchable": false },
+                { "visible": true  }, { "visible": true  }, { "visible": true  },
+                { "visible": true  }, { "visible": true  }, { "visible": true  },
+                { "visible": true,  "orderable": false, "searchable": false }
+            ],
+            "initComplete": function () { hideLoader("alumnitable"); },
             "drawCallback": function () {
                 this.api().column(0, { search: "applied", order: "applied" })
                     .nodes().each(function (cell, i) { cell.innerHTML = i + 1; });

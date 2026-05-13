@@ -1,6 +1,28 @@
 
 /********DATATABLE CUSTOMIZATION*******/
 
+/* Hide all managed DataTables before JS initialises them.
+   CSS loads in <head> so the raw table is never visible.
+   custom.js sets opacity:1 (with transition) inside initComplete. */
+#traineestable,
+#candidatestable,
+#fellowstable,
+#alumnitable,
+#trainerstable,
+#examinerstable,
+#examinerconfirmationtable,
+#memberstable,
+#crstable,
+#hospitalTable,
+#resultstable,
+#adminresultstable,
+#gsresultstable,
+#fcsresultstable,
+#hospitalProgrammesTable {
+    opacity: 0;
+    transition: opacity 0.38s ease;
+}
+
   /* Style for active column visibility buttons */
   .dt-button-collection .dt-button.active, .buttons-colvis {
     background-color: #a02626 !important;

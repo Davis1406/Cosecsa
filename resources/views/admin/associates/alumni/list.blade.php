@@ -99,42 +99,4 @@
 </style>
 @endpush
 
-@push('scripts')
-<script>
-$(function () {
-    if (!$('#alumnitable').length) return;
-    var t = $('#alumnitable').DataTable({
-        responsive: true,
-        lengthChange: true,
-        autoWidth: false,
-        stateSave: true,
-        paging: true,
-        pageLength: 25,
-        order: [[6, 'desc'], [1, 'asc']],
-        dom: '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
-        buttons: [
-            { extend: 'excelHtml5', text: '<i class="fas fa-file-excel mr-1"></i> Excel', className: 'btn btn-success btn-sm', title: 'Alumni List', exportOptions: { columns: [0,1,2,3,4,5,6] } },
-            { extend: 'pdfHtml5',   text: '<i class="fas fa-file-pdf mr-1"></i> PDF',   className: 'btn btn-danger btn-sm',  title: 'Alumni List', orientation: 'landscape', pageSize: 'A4', exportOptions: { columns: [0,1,2,3,4,5,6] } },
-            { extend: 'print',      text: '<i class="fas fa-print mr-1"></i> Print',    className: 'btn btn-secondary btn-sm', exportOptions: { columns: [0,1,2,3,4,5,6] } },
-            { extend: 'colvis',     text: '<i class="fas fa-columns mr-1"></i> Columns', className: 'btn btn-outline-secondary btn-sm' }
-        ],
-        columns: [
-            { visible: true,  orderable: false, searchable: false }, // #
-            { visible: true },
-            { visible: true },
-            { visible: true },
-            { visible: true },
-            { visible: true },
-            { visible: true },
-            { visible: true, orderable: false, searchable: false }  // Action
-        ],
-        drawCallback: function () {
-            this.api().column(0, { search: 'applied', order: 'applied' }).nodes().each(function (cell, i) {
-                cell.innerHTML = i + 1;
-            });
-            $(this).find('[data-toggle="dropdown"]').dropdown();
-        }
-    });
-});
-</script>
-@endpush
+{{-- DataTable initialised in custom.js (includes skeleton loader + stateSave) --}}
