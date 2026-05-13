@@ -52,16 +52,24 @@
                                             <td>{{ $a->current_specialty ?: ($a->programme_name ? preg_replace('/^FCS\s+/i','', $a->programme_name) : '-') }}</td>
                                             <td>{{ $a->fellowship_type ?? '-' }}</td>
                                             <td>{{ $a->fellowship_year ?? '-' }}</td>
-                                            <td>
-                                                <a href="#" class="action-icon" data-toggle="popover" data-html="true" data-content='
-                                                    <a href="{{ url("admin/associates/fellows/view/" . ($a->fellow_id ?? 0)) }}">
-                                                        <i class="fa fa-eye"></i> View
-                                                    </a>
-                                                    <a href="{{ url("admin/associates/fellows/edit/" . ($a->fellow_id ?? 0)) }}">
-                                                        <i class="fa fa-edit"></i> Edit
-                                                    </a>'>
-                                                    <i class="fa fa-bars" style="color:#5a6268"></i>
-                                                </a>
+                                            <td class="text-center" style="white-space:nowrap;">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
+                                                            type="button" data-toggle="dropdown"
+                                                            aria-haspopup="true" aria-expanded="false">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                                        <a class="dropdown-item"
+                                                           href="{{ url('admin/associates/fellows/view/' . ($a->fellow_id ?? 0)) }}">
+                                                            <i class="fas fa-eye text-info mr-2"></i> View
+                                                        </a>
+                                                        <a class="dropdown-item"
+                                                           href="{{ url('admin/associates/fellows/edit/' . ($a->fellow_id ?? 0)) }}">
+                                                            <i class="fas fa-edit text-warning mr-2"></i> Edit
+                                                        </a>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                         @endforeach
@@ -79,12 +87,12 @@
 
 @push('styles')
 <style>
-    .popover-content a,.popover-body a{display:block;padding:5px 10px;color:#5a6268;text-decoration:none;border-radius:3px;margin-bottom:2px;transition:all .3s ease}
-    .popover-content a:hover,.popover-body a:hover{background-color:#a02626!important;color:#fff!important;text-decoration:none}
-    .popover-content a i,.popover-body a i{margin-right:6px;color:inherit}
-    .popover-content a:hover i,.popover-body a:hover i{color:#fff!important}
-    .action-icon{cursor:pointer;transition:color .3s ease}
-    .action-icon:hover{color:#a02626!important}
+    #alumnitable td { vertical-align: middle; }
+    .action-btn { padding: 2px 8px; line-height: 1.4; border-radius: 4px; }
+    .action-btn:hover { background-color: #f0f0f0; }
+    .dropdown-menu { min-width: 130px; font-size: .875rem; }
+    .dropdown-item { padding: 6px 14px; }
+    .dropdown-item:hover { background-color: #f8f0f0; }
     .paginate_button.active>.page-link{background-color:#a02626!important;border-color:#a02626!important;color:white}
     .paginate_button>.page-link{color:#a02626}
     .paginate_button>.page-link:focus,.paginate_button.active>.page-link:focus{box-shadow:none!important;outline:none!important}
@@ -99,7 +107,7 @@ $(function () {
         responsive: true,
         lengthChange: true,
         autoWidth: false,
-        stateSave: false,
+        stateSave: true,
         paging: true,
         pageLength: 25,
         order: [[6, 'desc'], [1, 'asc']],
@@ -124,17 +132,8 @@ $(function () {
             this.api().column(0, { search: 'applied', order: 'applied' }).nodes().each(function (cell, i) {
                 cell.innerHTML = i + 1;
             });
+            $(this).find('[data-toggle="dropdown"]').dropdown();
         }
-    });
-
-    // popovers
-    t.on('draw', function () {
-        $('[data-toggle="popover"]').each(function () {
-            if (!$(this).data('bs.popover')) $(this).popover({ trigger: 'focus', html: true });
-        });
-    });
-    $('[data-toggle="popover"]').each(function () {
-        if (!$(this).data('bs.popover')) $(this).popover({ trigger: 'focus', html: true });
     });
 });
 </script>

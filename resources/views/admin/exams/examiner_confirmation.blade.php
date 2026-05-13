@@ -157,11 +157,12 @@
                                                     <td>{{ $value->history_updated_at ?? '-'}}</td>
                                                     <td>
                                                         <div class="dropdown">
-                                                            <button class="btn btn-sm btn-light dropdown-toggle"
-                                                                type="button" data-toggle="dropdown">
-                                                                <i class="fa fa-bars" style="color: #5a6268;"></i>
+                                                            <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
+                                                                type="button" data-toggle="dropdown"
+                                                                aria-haspopup="true" aria-expanded="false">
+                                                                <i class="fas fa-ellipsis-v"></i>
                                                             </button>
-                                                            <div class="dropdown-menu">
+                                                            <div class="dropdown-menu dropdown-menu-right shadow-sm">
                                                                 <!-- View form -->
                                                                 <form
                                                                     action="{{ url("admin/exams/view_examiner/{$value->id}") }}"

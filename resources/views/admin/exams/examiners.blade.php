@@ -60,11 +60,12 @@
                                                     <td>{{ $value->group_name }}</td>
                                                     <td>
                                                         <div class="dropdown">
-                                                            <button class="btn btn-sm btn-light dropdown-toggle"
-                                                                type="button" data-toggle="dropdown">
-                                                                <i class="fa fa-bars" style="color: #5a6268;"></i>
+                                                            <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
+                                                                type="button" data-toggle="dropdown"
+                                                                aria-haspopup="true" aria-expanded="false">
+                                                                <i class="fas fa-ellipsis-v"></i>
                                                             </button>
-                                                            <div class="dropdown-menu">
+                                                            <div class="dropdown-menu dropdown-menu-right shadow-sm">
                                                                 <!-- View form -->
                                                                 <form
                                                                     action="{{ url("admin/exams/view_examiner/{$value->examin_id}") }}"
@@ -120,37 +121,15 @@
 
 @push('styles')
 <style>
-    .dropdown-menu .dropdown-item:hover {
-        background-color: #f8f9fa;
-        color: #a02626;
-    }
-
-    .dropdown-menu .dropdown-item i {
-        color: #5a6268;
-        margin-right: 6px;
-    }
-
-    .dropdown-menu .dropdown-item:hover i {
-        color: #a02626;
-    }
-
-
-    .paginate_button.active>.page-link {
-        background-color: #a02626 !important;
-        border-color: #a02626 !important;
-        color: white;
-    }
-
-    .paginate_button>.page-link {
-        color: #a02626;
-    }
-
-    .paginate_button>.page-link:focus,
-    .paginate_button.active>.page-link:focus {
-        box-shadow: none !important;
-        outline: none !important;
-    }
-
+    #examinerstable td { vertical-align: middle; }
+    .action-btn { padding: 2px 8px; line-height: 1.4; border-radius: 4px; }
+    .action-btn:hover { background-color: #f0f0f0; }
+    .dropdown-menu { min-width: 130px; font-size: .875rem; }
+    .dropdown-item { padding: 6px 14px; }
+    .dropdown-item:hover { background-color: #f8f0f0; }
+    .paginate_button.active>.page-link { background-color: #a02626 !important; border-color: #a02626 !important; color: white; }
+    .paginate_button>.page-link { color: #a02626; }
+    .paginate_button>.page-link:focus, .paginate_button.active>.page-link:focus { box-shadow: none !important; outline: none !important; }
 </style>
 @endpush
 

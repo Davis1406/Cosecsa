@@ -109,7 +109,6 @@
                                             <th>Country</th>
                                             <th>Gender</th>
                                             <th>Fee Paid</th>
-                                            <th>Action</th>
                                             {{-- Hidden columns for export / search --}}
                                             <th>Email</th>
                                             <th>Repeat P1</th>
@@ -118,6 +117,7 @@
                                             <th>Sponsor</th>
                                             <th>Exam Year</th>
                                             <th>Mode of Payment</th>
+                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -162,6 +162,14 @@
                                                     <span class="badge badge-danger">Unpaid</span>
                                                 @endif
                                             </td>
+                                            {{-- Hidden columns for export / search --}}
+                                            <td>{{ $value->personal_email ?? '-' }}</td>
+                                            <td>{{ $value->repeat_paper_one ?? 'No' }}</td>
+                                            <td>{{ $value->repeat_paper_two ?? 'No' }}</td>
+                                            <td>{{ $value->mmed ?? 'No' }}</td>
+                                            <td>{{ $value->sponsor ?? '-' }}</td>
+                                            <td>{{ $value->exam_year ?? '-' }}</td>
+                                            <td>{{ $value->mode_of_payment ?? '-' }}</td>
                                             {{-- Dropdown action button --}}
                                             <td class="text-center" style="white-space:nowrap;">
                                                 <div class="dropdown">
@@ -190,13 +198,6 @@
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td>{{ $value->personal_email ?? '-' }}</td>
-                                            <td>{{ $value->repeat_paper_one ?? 'No' }}</td>
-                                            <td>{{ $value->repeat_paper_two ?? 'No' }}</td>
-                                            <td>{{ $value->mmed ?? 'No' }}</td>
-                                            <td>{{ $value->sponsor ?? '-' }}</td>
-                                            <td>{{ $value->exam_year ?? '-' }}</td>
-                                            <td>{{ $value->mode_of_payment ?? '-' }}</td>
                                         </tr>
                                         @endforeach
                                     </tbody>

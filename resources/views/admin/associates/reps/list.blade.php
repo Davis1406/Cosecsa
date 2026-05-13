@@ -56,13 +56,28 @@
                                             <td>{{$value->country_name}}</td>
                                             <td>{{$value->mobile_no}}</td>
                                             <td>{{$value->cosecsa_email}}</td>
-                                            <td>
-                                                <a href="#" data-id="{{$value->trainer_id}}" data-name="{{$value->name}}" class="action-icon" data-toggle="popover" data-html="true" data-content='
-                                                    <a href="{{url('admin/associates/reps/view/'.$value->reps_id)}}"><i class="fa fa-eye action-icon"></i> View</a>
-                                                    <a href="{{url('admin/associates/reps/edit/'.$value->reps_id)}}"><i class="fa fa-edit action-icon"></i> Edit</a>
-                                                    <a href="{{url('admin/associates/reps/delete/'.$value->cr_id)}}"><i class="fa fa-trash action-icon"></i> Delete</a>'>
-                                                    <i class="fa fa-bars" aria-hidden="true" style="color: #5a6268"></i>
-                                                </a>
+                                            <td class="text-center" style="white-space:nowrap;">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
+                                                            type="button" data-toggle="dropdown"
+                                                            aria-haspopup="true" aria-expanded="false">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                                        <a class="dropdown-item" href="{{ url('admin/associates/reps/view/' . $value->reps_id) }}">
+                                                            <i class="fas fa-eye text-info mr-2"></i> View
+                                                        </a>
+                                                        <a class="dropdown-item" href="{{ url('admin/associates/reps/edit/' . $value->reps_id) }}">
+                                                            <i class="fas fa-edit text-warning mr-2"></i> Edit
+                                                        </a>
+                                                        <div class="dropdown-divider"></div>
+                                                        <a class="dropdown-item text-danger"
+                                                           href="{{ url('admin/associates/reps/delete/' . $value->cr_id) }}"
+                                                           onclick="return confirm('Delete this Country Representative?')">
+                                                            <i class="fas fa-trash mr-2"></i> Delete
+                                                        </a>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                         @endforeach
@@ -88,67 +103,17 @@
 
 @endsection
 @push('styles')
-    <style>
-        .popover-content a,
-        .popover-body a {
-            display: block;
-            padding: 5px 10px;
-            color: #5a6268;
-            text-decoration: none;
-            border-radius: 3px;
-            margin-bottom: 2px;
-            transition: all 0.3s ease;
-        }
-
-        .popover-content a:hover,
-        .popover-body a:hover {
-            background-color: #a02626 !important;
-            color: #fff !important;
-            text-decoration: none;
-        }
-
-        .popover-content a i,
-        .popover-body a i {
-            margin-right: 6px;
-            color: inherit;
-        }
-
-        .popover-content a:hover i,
-        .popover-body a:hover i {
-            color: #fff !important;
-        }
-
-        .popover-header {
-            background-color: #a02626;
-            color: #fff;
-            border-bottom-color: #a02626;
-        }
-
-        .action-icon {
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-
-        .action-icon:hover {
-            color: #a02626 !important;
-        }
-
-        .paginate_button.active>.page-link {
-            background-color: #a02626 !important;
-            border-color: #a02626 !important;
-            color: white;
-        }
-
-        .paginate_button>.page-link {
-            color: #a02626;
-        }
-
-        .paginate_button>.page-link:focus,
-        .paginate_button.active>.page-link:focus {
-            box-shadow: none !important;
-            outline: none !important;
-        }
-    </style>
+<style>
+    #crstable td { vertical-align: middle; }
+    .action-btn { padding: 2px 8px; line-height: 1.4; border-radius: 4px; }
+    .action-btn:hover { background-color: #f0f0f0; }
+    .dropdown-menu { min-width: 130px; font-size: .875rem; }
+    .dropdown-item { padding: 6px 14px; }
+    .dropdown-item:hover { background-color: #f8f0f0; }
+    .paginate_button.active>.page-link { background-color: #a02626 !important; border-color: #a02626 !important; color: white; }
+    .paginate_button>.page-link { color: #a02626; }
+    .paginate_button>.page-link:focus, .paginate_button.active>.page-link:focus { box-shadow: none !important; outline: none !important; }
+</style>
 @endpush
 
 @section('scripts')

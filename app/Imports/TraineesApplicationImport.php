@@ -247,7 +247,7 @@ class TraineesApplicationImport implements ToCollection, WithHeadingRow, WithChu
                 'programme_period'         => $this->parseProgrammePeriod($row['programme_period'] ?? ''),
                 'invoice_number'           => trim($row['invoice'] ?? '') ?: null,
                 'invoice_date'             => $this->parseDate($row['invoice_date'] ?? null),
-                'invoice_status'           => trim($row['status'] ?? '') ?: null,
+                'invoice_status'           => $this->normaliseInvoiceStatus($row['status'] ?? ''),
                 'sponsor'                  => trim($row['sponsor'] ?? '') ?: null,
                 'mode_of_payment'          => $this->normaliseModeOfPayment($row['mode_of_payment'] ?? ''),
                 'amount_paid'              => !empty($row['amount_paid']) ? (float) $row['amount_paid'] : $this->defaultAmountPaid($row['cosecsa_programme'] ?? $row['programme'] ?? ''),
@@ -297,7 +297,7 @@ class TraineesApplicationImport implements ToCollection, WithHeadingRow, WithChu
             'sponsor'        => trim($row['sponsor'] ?? '') ?: null,
             'invoice_number' => trim($row['invoice'] ?? '') ?: null,
             'invoice_date'   => $this->parseDate($row['invoice_date'] ?? null),
-            'invoice_status' => trim($row['status'] ?? '') ?: 'Complete',
+            'invoice_status' => $this->normaliseInvoiceStatus($row['status'] ?? ''),
             'amount_paid'    => !empty($row['amount_paid']) ? (int) $row['amount_paid'] : $this->defaultAmountPaid($row['cosecsa_programme'] ?? $row['programme'] ?? ''),
             'payment_date'   => $this->parseDate($row['date_paid'] ?? null),
             'mode_of_payment'=> $this->normaliseModeOfPayment($row['mode_of_payment'] ?? ''),
@@ -329,7 +329,7 @@ class TraineesApplicationImport implements ToCollection, WithHeadingRow, WithChu
             'admission_letter_status'  => $this->normaliseLetterStatus($row['admission_letter_sent'] ?? ''),
             'invitation_letter_status' => $this->normaliseLetterStatus($row['invitation_letter_sent'] ?? ''),
             'invoice_number'           => trim($row['invoice'] ?? ''),
-            'invoice_status'           => trim($row['status'] ?? ''),         // "Status" col = payment status
+            'invoice_status'           => $this->normaliseInvoiceStatus($row['status'] ?? ''), // "Status" col = payment status
             'status'                   => trim($row['application_status'] ?? ''), // "Application Status" col
             'sponsor'                  => trim($row['sponsor'] ?? ''),
             'mode_of_payment'          => $this->normaliseModeOfPayment($row['mode_of_payment'] ?? ''),
@@ -563,6 +563,16 @@ class TraineesApplicationImport implements ToCollection, WithHeadingRow, WithChu
     {
         if (preg_match('/\b(20\d{2})\b/', (string) $value, $m)) return (int) $m[1];
         return null;
+    }
+
+    /**
+     * Normalise invoice/payment status to ENUM('Pending','Sent').
+     * 'Complete'/'Paid'/'Sent' → 'Sent' | anything else (blank, 'Invoiced', etc.) → 'Pending'
+     */
+    private function normaliseInvoiceStatus(string $raw): string
+    {
+        $v = strtolower(trim($raw));
+        return in_array($v, ['complete', 'paid', 'sent'], true) ? 'Sent' : 'Pending';
     }
 
     /**
