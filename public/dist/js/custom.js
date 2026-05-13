@@ -5,48 +5,64 @@ $(function () {
         var s = document.createElement('style');
         s.id = 'dt-loader-style';
         s.textContent = [
-            /* overlay */
+            /* overlay — sits on top of hidden table */
             '.dt-loader-overlay{position:absolute;inset:0;background:#fff;z-index:50;',
             'display:flex;flex-direction:column;overflow:hidden;border-radius:0 0 4px 4px;}',
 
-            /* animated top bar */
+            /* animated progress bar */
             '.dt-bar-track{height:3px;background:#fbe8e8;width:100%;flex-shrink:0;}',
             '.dt-bar{height:100%;background:linear-gradient(90deg,#c0392b,#a02626);',
             'animation:dt-bar-anim 1.8s ease-in-out infinite;}',
             '@keyframes dt-bar-anim{',
-            '0%{width:0%;opacity:1}60%{width:80%;opacity:1}',
-            '90%{width:97%;opacity:.7}100%{width:0%;opacity:0}}',
+            '0%{width:0%;opacity:1}55%{width:75%;opacity:1}',
+            '88%{width:96%;opacity:.7}100%{width:0%;opacity:0}}',
 
-            /* skeleton body */
-            '.dt-skeleton{padding:16px 20px;flex:1;display:flex;flex-direction:column;gap:0;}',
+            /* skeleton table wrapper */
+            '.dt-sk-wrap{flex:1;overflow:hidden;}',
+            '.dt-sk-table{width:100%;border-collapse:collapse;table-layout:fixed;}',
 
-            /* header row — slightly darker */
-            '.dt-sk-hdr{display:flex;gap:10px;padding-bottom:13px;margin-bottom:13px;',
-            'border-bottom:2px solid #f0f0f0;}',
+            /* header: real column names, styled like Bootstrap thead */
+            '.dt-sk-table thead th{',
+            'padding:9px 10px;font-size:13px;font-weight:600;color:#495057;',
+            'background:#f8f9fa;border:1px solid #dee2e6;',
+            'border-bottom:2px solid #dee2e6;white-space:nowrap;',
+            'overflow:hidden;text-overflow:ellipsis;}',
 
-            /* data rows */
-            '.dt-sk-row{display:flex;gap:10px;margin-bottom:11px;align-items:center;}',
+            /* body cells */
+            '.dt-sk-table tbody td{',
+            'padding:9px 10px;border:1px solid #dee2e6;vertical-align:middle;}',
+            '.dt-sk-table tbody tr:nth-child(even) td{background:#f9f9f9;}',
+            '.dt-sk-table tbody tr:nth-child(odd)  td{background:#fff;}',
 
-            /* cells */
-            '.dt-sk-c{border-radius:6px;background:linear-gradient(',
-            '90deg,#f2f2f2 25%,#e6e6e6 50%,#f2f2f2 75%);',
-            'background-size:400% 100%;animation:dt-shimmer 1.6s ease infinite;flex-shrink:0;}',
+            /* shimmer pill inside each cell */
+            '.dt-sk-c{',
+            'height:13px;border-radius:6px;display:block;',
+            'background:linear-gradient(90deg,#efefef 25%,#e3e3e3 50%,#efefef 75%);',
+            'background-size:400% 100%;',
+            'animation:dt-shimmer 1.55s ease infinite;}',
 
-            '.dt-sk-hdr .dt-sk-c{height:14px;',
-            'background:linear-gradient(90deg,#eaeaea 25%,#dedede 50%,#eaeaea 75%);',
-            'background-size:400% 100%;}',
+            /* stagger rows */
+            '.dt-sk-table tbody tr:nth-child(1) .dt-sk-c{animation-delay:0s}',
+            '.dt-sk-table tbody tr:nth-child(2) .dt-sk-c{animation-delay:.07s}',
+            '.dt-sk-table tbody tr:nth-child(3) .dt-sk-c{animation-delay:.14s}',
+            '.dt-sk-table tbody tr:nth-child(4) .dt-sk-c{animation-delay:.21s}',
+            '.dt-sk-table tbody tr:nth-child(5) .dt-sk-c{animation-delay:.28s}',
+            '.dt-sk-table tbody tr:nth-child(6) .dt-sk-c{animation-delay:.35s}',
+            '.dt-sk-table tbody tr:nth-child(7) .dt-sk-c{animation-delay:.42s}',
+            '.dt-sk-table tbody tr:nth-child(8) .dt-sk-c{animation-delay:.49s}',
+            '.dt-sk-table tbody tr:nth-child(9) .dt-sk-c{animation-delay:.56s}',
 
-            '.dt-sk-row .dt-sk-c{height:12px;}',
-
-            /* stagger */
-            '.dt-sk-row:nth-child(2) .dt-sk-c{animation-delay:.08s}',
-            '.dt-sk-row:nth-child(3) .dt-sk-c{animation-delay:.16s}',
-            '.dt-sk-row:nth-child(4) .dt-sk-c{animation-delay:.24s}',
-            '.dt-sk-row:nth-child(5) .dt-sk-c{animation-delay:.32s}',
-            '.dt-sk-row:nth-child(6) .dt-sk-c{animation-delay:.40s}',
-            '.dt-sk-row:nth-child(7) .dt-sk-c{animation-delay:.48s}',
-            '.dt-sk-row:nth-child(8) .dt-sk-c{animation-delay:.56s}',
-            '.dt-sk-row:nth-child(9) .dt-sk-c{animation-delay:.64s}',
+            /* vary pill width column-by-column for realism */
+            '.dt-sk-table tbody td:nth-child(1) .dt-sk-c{width:60%}',
+            '.dt-sk-table tbody td:nth-child(2) .dt-sk-c{width:88%}',
+            '.dt-sk-table tbody td:nth-child(3) .dt-sk-c{width:70%}',
+            '.dt-sk-table tbody td:nth-child(4) .dt-sk-c{width:80%}',
+            '.dt-sk-table tbody td:nth-child(5) .dt-sk-c{width:75%}',
+            '.dt-sk-table tbody td:nth-child(6) .dt-sk-c{width:82%}',
+            '.dt-sk-table tbody td:nth-child(7) .dt-sk-c{width:65%}',
+            '.dt-sk-table tbody td:nth-child(8) .dt-sk-c{width:55%}',
+            '.dt-sk-table tbody td:nth-child(9) .dt-sk-c{width:72%}',
+            '.dt-sk-table tbody td:nth-child(10) .dt-sk-c{width:60%}',
 
             '@keyframes dt-shimmer{',
             '0%{background-position:100% 0}100%{background-position:-100% 0}}'
@@ -54,26 +70,39 @@ $(function () {
         document.head.appendChild(s);
     }
 
-    // ── Skeleton HTML builder ────────────────────────────────────────────────────
-    function makeSkeletonRow(isHeader) {
-        var cls = isHeader ? 'dt-sk-hdr' : 'dt-sk-row';
-        return '<div class="' + cls + '">' +
-            '<div class="dt-sk-c" style="width:3%"></div>'   +
-            '<div class="dt-sk-c" style="width:19%"></div>'  +
-            '<div class="dt-sk-c" style="width:8%"></div>'   +
-            '<div class="dt-sk-c" style="width:12%"></div>'  +
-            '<div class="dt-sk-c" style="width:12%"></div>'  +
-            '<div class="dt-sk-c" style="flex:1"></div>'     +
-            '<div class="dt-sk-c" style="width:7%"></div>'   +
-        '</div>';
-    }
+    // ── Build loader from the table's real <thead> ───────────────────────────────
+    function makeLoader(id) {
+        var $ths = $('#' + id).find('thead th');
 
-    function makeLoader() {
-        var rows = makeSkeletonRow(true); // header
-        for (var i = 0; i < 9; i++) rows += makeSkeletonRow(false);
+        // Build colgroup so skeleton columns match the real table's widths
+        var colgroup = '<colgroup>';
+        $ths.each(function () {
+            var w = $(this).outerWidth();
+            colgroup += '<col' + (w ? ' style="width:' + w + 'px"' : '') + '>';
+        });
+        colgroup += '</colgroup>';
+
+        // Real header cells (visible columns only — skip hidden ones)
+        var thead = '<thead><tr>';
+        $ths.each(function () {
+            var label = $(this).text().trim() || '&nbsp;';
+            thead += '<th>' + label + '</th>';
+        });
+        thead += '</tr></thead>';
+
+        // 9 shimmer rows with the same column count
+        var emptyRow = '<tr>' + $ths.toArray().map(function () {
+            return '<td><span class="dt-sk-c"></span></td>';
+        }).join('') + '</tr>';
+        var tbody = '<tbody>' + Array(9).fill(emptyRow).join('') + '</tbody>';
+
         return '<div class="dt-loader-overlay" aria-hidden="true">' +
             '<div class="dt-bar-track"><div class="dt-bar"></div></div>' +
-            '<div class="dt-skeleton">' + rows + '</div>' +
+            '<div class="dt-sk-wrap">' +
+                '<table class="dt-sk-table">' +
+                    colgroup + thead + tbody +
+                '</table>' +
+            '</div>' +
         '</div>';
     }
 
@@ -83,7 +112,7 @@ $(function () {
         if (!$cb.length) return;
         $cb.css('position', 'relative');
         $cb.find('.dt-loader-overlay').remove();
-        $cb.append(makeLoader());
+        $cb.append(makeLoader(id));
     }
 
     function hideLoader(id) {
