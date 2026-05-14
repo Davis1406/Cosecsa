@@ -154,10 +154,13 @@ class CandidatesController extends Controller
         if (!$candidate) {
             return redirect('admin/associates/candidates/list')->with('error', 'Candidate not found');
         }
-        $header_title = "View Candidate";
-        return view('admin.associates.candidates.view_candidate', compact('candidate', 'header_title'));
 
-        // dd($trainee);
+        // Look up the matching trainee record (if this candidate is also a trainee)
+        $linkedTrainee = User::getTrainee()->firstWhere('user_id', $candidate->user_id)
+            ?? \App\Models\Trainee::where('user_id', $candidate->user_id)->first();
+
+        $header_title = "View Candidate";
+        return view('admin.associates.candidates.view_candidate', compact('candidate', 'header_title', 'linkedTrainee'));
     }
 
     public function add()
@@ -298,7 +301,9 @@ class CandidatesController extends Controller
         $fullName = trim("{$request->firstname} {$request->middlename} {$request->lastname}");
         $user->name = $fullName;
         $user->email = $request->email;
-        $user->password = $request->password;
+        if ($request->filled('password')) {
+            $user->password = $request->password;
+        }
         $user->save();
 
         $candidate->update([

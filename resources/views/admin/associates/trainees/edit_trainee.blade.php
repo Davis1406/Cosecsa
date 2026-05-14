@@ -55,7 +55,7 @@
                             </div>
                             <div class="form-group col-md-6">
                                 <label>SFS Password <small class="text-muted">(leave blank to keep current)</small></label>
-                                <input type="text" name="password" class="form-control" value="" autocomplete="new-password">
+                                <input type="password" name="password" class="form-control" value="" autocomplete="new-password" placeholder="••••••••">
                             </div>
                         </div>
 

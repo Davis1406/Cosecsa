@@ -30,9 +30,13 @@ class TraineeController extends Controller
         if (!$trainee) {
             return redirect('admin/associates/trainees/trainees')->with('error', 'Trainee not found');
         }
-        $header_title = "View Trainee";
-        return view('admin.associates.trainees.view', compact('trainee', 'header_title'));
 
+        // Look up the matching candidate record (if this trainee is also a candidate)
+        $linkedCandidate = User::getCandidates()->firstWhere('user_id', $trainee->user_id)
+            ?? \App\Models\Candidates::where('user_id', $trainee->user_id)->first();
+
+        $header_title = "View Trainee";
+        return view('admin.associates.trainees.view', compact('trainee', 'header_title', 'linkedCandidate'));
     }
 
     
