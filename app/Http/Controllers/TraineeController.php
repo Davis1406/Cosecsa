@@ -123,7 +123,9 @@ class TraineeController extends Controller
             'programme_period' => $request->programme_period,
             'invoice_number' => $request->invoice_number,
             'invoice_date' => $request->invoice_date,
+            'invoice_amount' => $request->invoice_amount,
             'invoice_status' => $request->invoice_status,
+            'fee_paid' => $request->fee_paid,
             'sponsor' => $request->sponsor,
             'mode_of_payment' => $request->mode_of_payment,
             'amount_paid' => $request->amount_paid,
@@ -191,7 +193,9 @@ public function update(Request $request, $id)
     $trainee->programme_period        = $request->programme_period;
     $trainee->invoice_number          = $request->invoice_number;
     $trainee->invoice_date            = $request->invoice_date ?: null;
+    $trainee->invoice_amount          = $request->invoice_amount ?: null;
     $trainee->invoice_status          = $request->invoice_status;
+    $trainee->fee_paid                = $request->fee_paid ?? 'No';
     $trainee->sponsor                 = $request->sponsor;
     $trainee->mode_of_payment         = $request->mode_of_payment ?? '';
     $trainee->amount_paid             = $request->amount_paid ?? 0;

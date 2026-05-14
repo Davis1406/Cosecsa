@@ -142,6 +142,8 @@
             $sponsor = ($trainee->sponsor && $trainee->sponsor !== 'null') ? $trainee->sponsor : null;
             $amountFormatted = is_numeric($trainee->amount_paid) && $trainee->amount_paid > 0
                 ? '$' . number_format((float)$trainee->amount_paid, 2) : null;
+            $invAmtFormatted = is_numeric($trainee->invoice_amount ?? null) && $trainee->invoice_amount > 0
+                ? '$' . number_format((float)$trainee->invoice_amount, 2) : null;
 
             // Linked candidate exam fee data
             $candAmountFormatted = null;
@@ -402,10 +404,27 @@
                         <p class="sect-div">Programme Entry Fee</p>
                         <div class="field-row"><span class="field-lbl">Invoice Number</span><span class="field-val">{{ $trainee->invoice_number ?: '—' }}</span></div>
                         <div class="field-row"><span class="field-lbl">Invoice Date</span><span class="field-val">{{ $trainee->invoice_date ?: '—' }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Invoice Amount</span>
+                            <span class="field-val">
+                                @if($invAmtFormatted)
+                                    <strong>{{ $invAmtFormatted }}</strong>
+                                @else —
+                                @endif
+                            </span>
+                        </div>
                         <div class="field-row"><span class="field-lbl">Invoice Status</span>
                             <span class="field-val">
                                 @php $is = $trainee->invoice_status ?? 'Pending'; @endphp
                                 <span class="badge" style="background:{{ in_array($is,['Sent','Paid']) ? '#d4edda' : '#fff3cd' }}; color:{{ in_array($is,['Sent','Paid']) ? '#155724' : '#856404' }};">{{ $is }}</span>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">Fee Paid</span>
+                            <span class="field-val">
+                                @if(($trainee->fee_paid ?? 'No') === 'Yes')
+                                    <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Yes</span>
+                                @else
+                                    <span class="badge badge-danger"><i class="fas fa-times mr-1"></i>No</span>
+                                @endif
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Amount Paid</span>
