@@ -11,6 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('fellows', 'prog_entry_fee_amount_paid')) {
+            return; // Already exists on production — nothing to do
+        }
         Schema::table('fellows', function (Blueprint $table) {
             // Amount paid for the programme entry fee (from Capsule custom field)
             $table->decimal('prog_entry_fee_amount_paid', 10, 2)->nullable()->after('prog_entry_fee_year');
