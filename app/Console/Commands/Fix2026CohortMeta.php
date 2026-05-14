@@ -8,13 +8,35 @@ use Illuminate\Support\Facades\DB;
 class Fix2026CohortMeta extends Command
 {
     protected $signature = 'trainees:fix-2026-meta {--dry-run : Preview without writing}';
-    protected $description = 'Fill admission_year=2026 for /2026/ PENs; mark mmed=Yes for candidates admitted & sitting exams in 2026.';
+    protected $description = 'Fill admission_year=2026 for /2026/ PENs; scrub exam-fee contamination from trainees; mark mmed=Yes for 2026 candidates.';
 
     public function handle(): int
     {
         $dry = $this->option('dry-run');
         if ($dry) {
             $this->warn('[DRY RUN] No changes will be written.');
+        }
+
+        // ── 0. Scrub exam-fee data wrongly synced into the trainees table ────────
+        // invoice_number values starting with 'INV/EF/' belong to candidates only.
+        // They ended up in trainees via a now-fixed bidirectional sync bug.
+        // Clear invoice_number, invoice_date, payment_date, sponsor on any such row.
+        $contaminated = DB::table('trainees')
+            ->whereRaw("invoice_number LIKE 'INV/EF/%'")
+            ->count();
+
+        $this->line("Trainees with exam-fee invoice contamination (INV/EF/*) : {$contaminated}");
+
+        if (!$dry && $contaminated > 0) {
+            DB::table('trainees')
+                ->whereRaw("invoice_number LIKE 'INV/EF/%'")
+                ->update([
+                    'invoice_number' => null,
+                    'invoice_date'   => null,
+                    'payment_date'   => null,
+                    'sponsor'        => null,
+                ]);
+            $this->info("  ✓ Cleared exam-fee contamination from {$contaminated} trainee(s)");
         }
 
         // ── 1. Set admission_year = 2026 for trainees whose PEN contains /2026/ ──
