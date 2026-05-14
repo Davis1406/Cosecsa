@@ -98,6 +98,7 @@ class User extends Authenticatable
                     ->where('user_roles.is_active', '=', 1);
             })
             ->where('users.user_type', '2')
+            ->where('users.is_deleted', 0)
             ->orderBy('trainee_id', 'asc')
             ->get();
 
