@@ -11,6 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('candidates', 'exam_number')) {
+            return;
+        }
         Schema::table('candidates', function (Blueprint $table) {
             $table->string('exam_number')->nullable()->after('entry_number');
         });

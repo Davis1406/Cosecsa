@@ -11,6 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('fellows', 'is_alumni')) {
+            return;
+        }
         Schema::table('fellows', function (Blueprint $table) {
             $table->tinyInteger('is_alumni')->default(0)->after('is_promoted')
                   ->comment('1 = confirmed in the alumni Excel sheet');
