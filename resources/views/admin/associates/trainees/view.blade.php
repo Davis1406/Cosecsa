@@ -27,8 +27,8 @@
     background: linear-gradient(135deg, #a02626, #c0392b);
     letter-spacing: 1px; text-transform: uppercase; flex-shrink: 0;
 }
-.tp-name  { font-size: 1.05rem; font-weight: 700; color: #222; margin-bottom: 1px; }
-.tp-sub   { font-size: .8rem; color: #6c757d; margin-bottom: 0; }
+.tp-name  { font-weight: 700; color: #222; margin-bottom: 1px; }
+.tp-sub   { font-size: .85rem; color: #6c757d; margin-bottom: 0; }
 
 /* ── Tag pills ── */
 .tag-pill {
@@ -48,16 +48,15 @@
 .info-row {
     display: flex; align-items: flex-start;
     padding: 5px 0; border-bottom: 1px solid #f3f3f3;
-    font-size: .83rem;
 }
 .info-row:last-child { border-bottom: none; }
-.info-icon { width: 22px; color: #a02626; flex-shrink: 0; padding-top: 1px; font-size: .8rem; }
-.info-label { font-size: .68rem; color: #aaa; display: block; line-height: 1; margin-bottom: 1px; }
+.info-icon { width: 22px; color: #a02626; flex-shrink: 0; padding-top: 2px; }
+.info-label { font-size: .72rem; color: #aaa; display: block; line-height: 1; margin-bottom: 1px; }
 .info-text  { color: #495057; }
 
 /* ── Section divider ── */
 .sect-div {
-    font-size: .68rem; font-weight: 700;
+    font-size: .72rem; font-weight: 700;
     letter-spacing: .9px; text-transform: uppercase;
     color: #a02626; border-bottom: 2px solid #f0d4d4;
     padding-bottom: 3px; margin: 12px 0 8px;
@@ -66,7 +65,7 @@
 /* ── Field rows in detail panels ── */
 .field-row {
     display: flex; padding: 7px 0;
-    border-bottom: 1px solid #f5f5f5; font-size: .855rem; align-items: flex-start;
+    border-bottom: 1px solid #f5f5f5; align-items: flex-start;
 }
 .field-row:last-child { border-bottom: none; }
 .field-lbl { width: 42%; font-weight: 600; color: #555; flex-shrink: 0; padding-right: 10px; }
