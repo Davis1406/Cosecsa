@@ -329,24 +329,21 @@ public function update(Request $request, $id)
             return;
         }
 
+        // NOTE: payment fields (invoice_number, amount_paid, etc.) are intentionally
+        // NOT synced. trainees.amount_paid = programme entry fee;
+        // candidates.amount_paid = examination fee — they are different fees.
         $candidate->update([
-            'firstname'       => $trainee->firstname,
-            'middlename'      => $trainee->middlename,
-            'lastname'        => $trainee->lastname,
-            'personal_email'  => $trainee->personal_email,
-            'gender'          => $trainee->gender,
-            'programme_id'    => $trainee->programme_id,
-            'hospital_id'     => $trainee->hospital_id,
-            'country_id'      => $trainee->country_id,
-            'entry_number'    => $trainee->entry_number,
-            'sponsor'         => $trainee->sponsor,
-            'exam_year'       => $trainee->exam_year ?: null,
-            'invoice_number'  => $trainee->invoice_number,
-            'invoice_date'    => $trainee->invoice_date,
-            'invoice_status'  => $trainee->invoice_status,
-            'amount_paid'     => $trainee->amount_paid ?: null,
-            'payment_date'    => $trainee->payment_date,
-            'mode_of_payment' => $trainee->mode_of_payment ?: null,
+            'firstname'      => $trainee->firstname,
+            'middlename'     => $trainee->middlename,
+            'lastname'       => $trainee->lastname,
+            'personal_email' => $trainee->personal_email,
+            'gender'         => $trainee->gender,
+            'programme_id'   => $trainee->programme_id,
+            'hospital_id'    => $trainee->hospital_id,
+            'country_id'     => $trainee->country_id,
+            'entry_number'   => $trainee->entry_number,
+            'sponsor'        => $trainee->sponsor,
+            'exam_year'      => $trainee->exam_year ?: null,
         ]);
     }
 }

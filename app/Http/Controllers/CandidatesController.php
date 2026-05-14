@@ -1801,21 +1801,18 @@ class CandidatesController extends Controller
             return;
         }
 
+        // NOTE: payment fields (invoice_number, amount_paid, etc.) are intentionally
+        // NOT synced. trainees.amount_paid = programme entry fee;
+        // candidates.amount_paid = examination fee — they are different fees.
         $payload = [
-            'firstname'       => $candidate->firstname,
-            'middlename'      => $candidate->middlename,
-            'lastname'        => $candidate->lastname,
-            'personal_email'  => $candidate->personal_email,
-            'gender'          => $candidate->gender,
-            'entry_number'    => $candidate->entry_number,
-            'sponsor'         => $candidate->sponsor,
-            'exam_year'       => $candidate->exam_year ?: 0,
-            'invoice_number'  => $candidate->invoice_number,
-            'invoice_date'    => $candidate->invoice_date,
-            'invoice_status'  => $candidate->invoice_status,
-            'amount_paid'     => $candidate->amount_paid ?: 0,
-            'payment_date'    => $candidate->payment_date,
-            'mode_of_payment' => $this->normaliseMOP($candidate->mode_of_payment),
+            'firstname'      => $candidate->firstname,
+            'middlename'     => $candidate->middlename,
+            'lastname'       => $candidate->lastname,
+            'personal_email' => $candidate->personal_email,
+            'gender'         => $candidate->gender,
+            'entry_number'   => $candidate->entry_number,
+            'sponsor'        => $candidate->sponsor,
+            'exam_year'      => $candidate->exam_year ?: 0,
         ];
 
         // Only sync FK columns if the candidate has a valid (non-zero) value
