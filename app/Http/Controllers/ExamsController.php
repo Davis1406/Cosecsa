@@ -1090,7 +1090,18 @@ public function delete($id)
     public function availabilityForm()
     {
         $year = date('Y');
-        return view('public.examiner_availability', compact('year'));
+
+        // All active examiners for the dropdown
+        $examiners = DB::table('examiners')
+            ->join('users', 'users.id', '=', 'examiners.user_id')
+            ->join('user_roles', 'user_roles.user_id', '=', 'users.id')
+            ->where('users.user_type', 9)
+            ->where('user_roles.is_active', 1)
+            ->orderBy('users.name')
+            ->select('examiners.id as exm_id', 'users.name', 'examiners.examiner_id', 'examiners.specialty')
+            ->get();
+
+        return view('public.examiner_availability', compact('year', 'examiners'));
     }
 
     /**
@@ -1099,23 +1110,16 @@ public function delete($id)
     public function availabilitySubmit(Request $request)
     {
         $request->validate([
-            'email'             => 'required|email',
+            'exm_id'            => 'required|integer|exists:examiners,id',
             'exam_availability' => 'required|array|min:1',
+            'mcs_shift'         => 'nullable|in:1,2,3',
         ]);
 
-        // Look up the examiner by email
         $examinerRecord = DB::table('examiners')
             ->join('users', 'users.id', '=', 'examiners.user_id')
-            ->where('users.email', trim($request->email))
-            ->where('users.user_type', 9)
+            ->where('examiners.id', $request->exm_id)
             ->select('examiners.id as exm_id', 'users.name as examiner_name')
             ->first();
-
-        if (!$examinerRecord) {
-            return back()
-                ->withInput()
-                ->with('error', 'No examiner account found for that email address. Please use the email registered with COSECSA.');
-        }
 
         $availability = $request->exam_availability;
         if (in_array('Not Available', $availability)) {
@@ -1126,6 +1130,15 @@ public function delete($id)
             ['exm_id' => $examinerRecord->exm_id],
             ['exam_availability' => json_encode($availability)]
         );
+
+        // Save MCS shift preference when MCS is selected
+        if (in_array('MCS', $availability) && $request->filled('mcs_shift')) {
+            $yearId = User::getCurrentYearId();
+            DB::table('exams_shifts')->updateOrInsert(
+                ['exm_id' => $examinerRecord->exm_id, 'year_id' => $yearId],
+                ['shift' => $request->mcs_shift, 'updated_at' => now(), 'created_at' => now()]
+            );
+        }
 
         return back()->with('success', 'Thank you, ' . $examinerRecord->examiner_name . '! Your availability for the ' . date('Y') . ' examination has been recorded.');
     }
