@@ -594,7 +594,7 @@ class User extends Authenticatable
 //MCS Results on the admin side.
     public static function getAdminExamsResults()
     {
-        $examYearId = 6; // ✅ Fixed exam year ID
+        $examYearId = self::getCurrentYearId(); // Dynamic: matches current calendar year
 
         return \DB::table('mcs_results')
             ->select(
@@ -633,7 +633,7 @@ class User extends Authenticatable
     // Get Results for GS
     public static function getGsResults()
     {
-        $examYearId = 6; // ✅ Fixed exam year ID
+        $examYearId = self::getCurrentYearId(); // Dynamic: matches current calendar year
 
         return \DB::table('gs_results')
             ->select(

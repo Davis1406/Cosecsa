@@ -438,14 +438,22 @@ public function delete($id)
 
     private function getExaminersData()
     {
+        $yearId = User::getCurrentYearId();
+
         return DB::table('examiners')
             ->join('examiners_history', 'examiners.id', '=', 'examiners_history.exm_id')
             ->leftJoin('users', 'examiners.user_id', '=', 'users.id')
             ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
-            ->leftJoin('exams_groups', 'examiners.id', '=', 'exams_groups.exm_id')
+            ->leftJoin('exams_groups', function ($join) use ($yearId) {
+                $join->on('examiners.id', '=', 'exams_groups.exm_id')
+                     ->where('exams_groups.year_id', '=', $yearId);
+            })
             ->leftJoin('examiners_groups', 'exams_groups.group_id', '=', 'examiners_groups.id')
             ->leftJoin('user_roles', 'examiners.user_id', '=', 'user_roles.user_id')
-            ->leftJoin('exams_shifts', 'examiners.id', '=', 'exams_shifts.exm_id')
+            ->leftJoin('exams_shifts', function ($join) use ($yearId) {
+                $join->on('examiners.id', '=', 'exams_shifts.exm_id')
+                     ->where('exams_shifts.year_id', '=', $yearId);
+            })
             ->select(
                 'examiners.id',
                 DB::raw('MAX(examiners.examiner_id) as examiner_id'),
@@ -487,6 +495,7 @@ public function delete($id)
                 $query->whereRaw('TIMESTAMPDIFF(MINUTE, examiners_history.created_at, examiners_history.updated_at) > 1')
                     ->orWhereNotNull('examiners_history.exam_availability');
             })
+            ->whereNotNull('exams_groups.year_id') // Only examiners assigned to the current year
             ->groupBy('examiners.id')
             ->orderBy('examiners.id', 'desc')
             ->get();
@@ -662,6 +671,8 @@ public function delete($id)
     // Better version - properly aggregates multiple examiner results per station
     private function getFcsResults($programmeId, $tableName)
     {
+        $examYearId = User::getCurrentYearId();
+
         // First, get all raw results
         $rawResults = DB::table($tableName)
             ->join('candidates', "$tableName.candidate_id", '=', 'candidates.id')
@@ -677,6 +688,7 @@ public function delete($id)
                 "$tableName.total"
             )
             ->where('candidates.programme_id', $programmeId)
+            ->where("$tableName.exam_year", $examYearId)
             ->orderBy('candidates.candidate_id')
             ->get();
 
@@ -1067,6 +1079,55 @@ public function delete($id)
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error registering attendance: ' . $e->getMessage());
         }
+    }
+
+    // ── Public examiner availability form ────────────────────────────────────
+
+    /**
+     * Show the public availability confirmation form.
+     * No authentication required — the URL can be shared directly with examiners.
+     */
+    public function availabilityForm()
+    {
+        $year = date('Y');
+        return view('public.examiner_availability', compact('year'));
+    }
+
+    /**
+     * Process the submitted availability form.
+     */
+    public function availabilitySubmit(Request $request)
+    {
+        $request->validate([
+            'email'             => 'required|email',
+            'exam_availability' => 'required|array|min:1',
+        ]);
+
+        // Look up the examiner by email
+        $examinerRecord = DB::table('examiners')
+            ->join('users', 'users.id', '=', 'examiners.user_id')
+            ->where('users.email', trim($request->email))
+            ->where('users.user_type', 9)
+            ->select('examiners.id as exm_id', 'users.name as examiner_name')
+            ->first();
+
+        if (!$examinerRecord) {
+            return back()
+                ->withInput()
+                ->with('error', 'No examiner account found for that email address. Please use the email registered with COSECSA.');
+        }
+
+        $availability = $request->exam_availability;
+        if (in_array('Not Available', $availability)) {
+            $availability = ['Not Available'];
+        }
+
+        ExaminerHistory::updateOrCreate(
+            ['exm_id' => $examinerRecord->exm_id],
+            ['exam_availability' => json_encode($availability)]
+        );
+
+        return back()->with('success', 'Thank you, ' . $examinerRecord->examiner_name . '! Your availability for the ' . date('Y') . ' examination has been recorded.');
     }
 
     public function examinerChangePassword(Request $request)

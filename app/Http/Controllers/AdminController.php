@@ -78,7 +78,8 @@ class AdminController extends Controller
             $user->user_type = 1;
 
             if (!empty($request->password)) {
-                $user->password = Hash::make($request->password);
+                // Assign plain text — setPasswordAttribute mutator bcrypts it for user_type=1
+                $user->password = $request->password;
             }
 
             $user->save();

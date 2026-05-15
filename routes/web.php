@@ -40,6 +40,10 @@ Route::get('select-role', [AuthController::class, 'showRoleSelection'])->name('s
 Route::post('select-role', [AuthController::class, 'selectRole']);
 
 
+// Public examiner availability form (no login required — shareable link)
+Route::get('examiner-availability', [ExamsController::class, 'availabilityForm'])->name('examiner.availability.form');
+Route::post('examiner-availability', [ExamsController::class, 'availabilitySubmit'])->name('examiner.availability.submit');
+
 // Admin Routes
 Route::group(['middleware' => 'admin'], function(){
 
