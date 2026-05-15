@@ -186,8 +186,6 @@
                             <option value="{{ $ex->exm_id }}"
                                 {{ old('exm_id') == $ex->exm_id ? 'selected' : '' }}>
                                 {{ $ex->name }}
-                                @if($ex->examiner_id) ({{ $ex->examiner_id }})@endif
-                                @if($ex->specialty) — {{ $ex->specialty }}@endif
                             </option>
                         @endforeach
                     </select>
