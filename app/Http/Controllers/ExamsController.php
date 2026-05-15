@@ -1104,6 +1104,29 @@ public function delete($id)
         }
     }
 
+    // ── Email template editor ─────────────────────────────────────────────────
+
+    public function emailTemplate()
+    {
+        $template = DB::table('email_templates')->where('key', 'examiner_bulk')->first();
+        return view('admin.exams.email_template', compact('template'));
+    }
+
+    public function saveEmailTemplate(Request $request)
+    {
+        $request->validate([
+            'subject' => 'required|string|max:255',
+            'body'    => 'required|string',
+        ]);
+
+        DB::table('email_templates')->updateOrInsert(
+            ['key' => 'examiner_bulk'],
+            ['subject' => $request->subject, 'body' => $request->body, 'updated_at' => now()]
+        );
+
+        return redirect()->back()->with('success', 'Email template saved successfully.');
+    }
+
     // ── Bulk email to examiners ───────────────────────────────────────────────
 
     public function sendBulkEmail(Request $request)
@@ -1128,12 +1151,12 @@ public function delete($id)
 
         foreach ($recipients as $recipient) {
             try {
-                \Illuminate\Support\Facades\Mail::send([], [], function ($message) use ($recipient, $request) {
-                    $message->to($recipient->email, $recipient->name)
-                            ->from('exams_asst@cosecsa.org', 'COSECSA Examinations')
-                            ->subject($request->subject)
-                            ->html(nl2br(e($request->body)));
-                });
+                \Illuminate\Support\Facades\Mail::to($recipient->email, $recipient->name)
+                    ->send(new \App\Mail\ExaminerBulkMail(
+                        $recipient->name,
+                        $request->subject,
+                        $request->body
+                    ));
                 $sent++;
             } catch (\Exception $e) {
                 $failed++;

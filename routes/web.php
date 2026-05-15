@@ -189,6 +189,8 @@ Route::get('admin/exams/edit_examiner/{id}', [ExamsController::class,'edit']);
 Route::post('admin/exams/edit_examiner/{id}', [ExamsController::class,'update'])->name('examiner.update');
 Route::get('admin/exams/examiner-confirmation', [ExamsController::class, 'ExaminerconfirmationView'])->name('examiner.examiner_confirmation');
 Route::post('admin/exams/send-bulk-email', [ExamsController::class, 'sendBulkEmail'])->name('examiners.bulk.email');
+Route::get('admin/exams/email-template',  [ExamsController::class, 'emailTemplate'])->name('exams.email.template');
+Route::post('admin/exams/email-template', [ExamsController::class, 'saveEmailTemplate'])->name('exams.email.template.save');
 Route::get('admin/exams/delete/{id}', [ExamsController::class,'delete']);
 Route::get('admin/exams/exam_results', [ExamsController::class,'adminResults']);
 Route::get('admin/exams/gs_results', [ExamsController::class,'gsResults']);

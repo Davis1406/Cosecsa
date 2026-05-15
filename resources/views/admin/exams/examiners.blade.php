@@ -43,11 +43,16 @@
                             </div>
 
                             {{-- Email selected button --}}
-                            <button class="btn btn-sm btn-success" id="btn-email-selected" disabled
-                                    data-toggle="modal" data-target="#emailModal">
-                                <i class="fas fa-envelope mr-1"></i>
-                                Email Selected <span id="sel-count" class="badge badge-light ml-1">0</span>
-                            </button>
+                            <div class="d-flex" style="gap:.4rem;">
+                                <a href="{{ route('exams.email.template') }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-pencil-alt mr-1"></i> Edit Template
+                                </a>
+                                <button class="btn btn-sm btn-success" id="btn-email-selected" disabled
+                                        data-toggle="modal" data-target="#emailModal">
+                                    <i class="fas fa-envelope mr-1"></i>
+                                    Email Selected <span id="sel-count" class="badge badge-light ml-1">0</span>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="card-body">
@@ -149,14 +154,19 @@
                     </div>
                     <div class="form-group">
                         <label><strong>Subject</strong> <span class="text-danger">*</span></label>
-                        <input type="text" name="subject" class="form-control"
-                               placeholder="e.g. COSECSA 2026 Examination — Examiner Invitation" required>
+                        <input type="text" name="subject" id="modal-subject" class="form-control"
+                               value="{{ optional(DB::table('email_templates')->where('key','examiner_bulk')->first())->subject }}"
+                               required>
                     </div>
                     <div class="form-group">
-                        <label><strong>Message</strong> <span class="text-danger">*</span></label>
-                        <textarea name="body" class="form-control" rows="8"
-                                  placeholder="Type your message here..." required></textarea>
-                        <small class="text-muted">Plain text only. Each examiner will receive a personal copy addressed to them.</small>
+                        <label>
+                            <strong>Message</strong> <span class="text-danger">*</span>
+                            <small class="text-muted ml-2">(HTML from template — edit via
+                                <a href="{{ route('exams.email.template') }}" target="_blank">Edit Template</a>)
+                            </small>
+                        </label>
+                        <textarea name="body" id="modal-body" class="form-control" rows="8" required>{{ optional(DB::table('email_templates')->where('key','examiner_bulk')->first())->body }}</textarea>
+                        <small class="text-muted"><code>[Name]</code> will be replaced with each examiner's name automatically.</small>
                     </div>
 
                     {{-- Hidden inputs for selected examiner IDs injected by JS --}}
