@@ -14,6 +14,7 @@ class ExaminerHistory extends Model
     protected $fillable = [
         'exm_id',
         'exam_availability',
+        'availability_year_id',
         'virtual_mcs_participated',
         'fcs_participated',
         'hospital_type',

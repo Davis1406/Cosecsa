@@ -329,14 +329,15 @@ class ExamsController extends Controller
             }
 
             ExaminerHistory::create([
-                'exm_id' => $examiner->id,
-                'virtual_mcs_participated' => $request->virtual_mcs_participated ?? null,
-                'fcs_participated' => $request->fcs_participated ?? null,
-                'participation_type' => $request->participation_type,
-                'hospital_type' => $request->hospital_type ?? null,
-                'hospital_name' => $request->hospital_name ?? null,
-                'exam_availability' => $availability,
-                'examination_years' => $request->examination_years ?? null,
+                'exm_id'                    => $examiner->id,
+                'virtual_mcs_participated'  => $request->virtual_mcs_participated ?? null,
+                'fcs_participated'          => $request->fcs_participated ?? null,
+                'participation_type'        => $request->participation_type,
+                'hospital_type'             => $request->hospital_type ?? null,
+                'hospital_name'             => $request->hospital_name ?? null,
+                'exam_availability'         => $availability,
+                'availability_year_id'      => User::getCurrentYearId(),
+                'examination_years'         => $request->examination_years ?? null,
             ]);
 
             DB::commit();
@@ -496,6 +497,13 @@ class ExamsController extends Controller
 
         // Attach history (single row lookup)
         $history = DB::table('examiners_history')->where('exm_id', $id)->first();
+
+        // Clear exam_availability if it was saved for a different year —
+        // the examiner has not yet confirmed their availability for this year.
+        if ($history && ($history->availability_year_id ?? 0) != $yearId) {
+            $history->exam_availability = null;
+        }
+
         $examiner->history                    = $history;
         $examiner->virtual_mcs_participated   = $history->virtual_mcs_participated ?? null;
         $examiner->fcs_participated           = $history->fcs_participated ?? null;
@@ -597,12 +605,13 @@ class ExamsController extends Controller
                 ['exm_id' => $examiner->id],
                 [
                     'virtual_mcs_participated' => $request->virtual_mcs_participated ?? null,
-                    'fcs_participated' => $request->fcs_participated ?? null,
-                    'participation_type' => $request->participation_type,
-                    'hospital_type' => $request->hospital_type ?? null,
-                    'hospital_name' => $request->hospital_name ?? null,
-                    'exam_availability' => $availability,
-                    'examination_years' => $request->examination_years ?? null,
+                    'fcs_participated'         => $request->fcs_participated ?? null,
+                    'participation_type'       => $request->participation_type,
+                    'hospital_type'            => $request->hospital_type ?? null,
+                    'hospital_name'            => $request->hospital_name ?? null,
+                    'exam_availability'        => $availability,
+                    'availability_year_id'     => User::getCurrentYearId(),
+                    'examination_years'        => $request->examination_years ?? null,
                 ]
             );
 
@@ -678,6 +687,12 @@ class ExamsController extends Controller
 
         // History record
         $history = DB::table('examiners_history')->where('exm_id', $id)->first();
+
+        // Clear exam_availability if it was saved for a different year
+        if ($history && ($history->availability_year_id ?? 0) != $yearId) {
+            $history->exam_availability = null;
+        }
+
         $examiner->history = $history;
         if ($history) {
             $examiner->virtual_mcs_participated = $history->virtual_mcs_participated;
@@ -1526,7 +1541,7 @@ public function delete($id)
 
         ExaminerHistory::updateOrCreate(
             ['exm_id' => $examinerRecord->exm_id],
-            ['exam_availability' => $availability]
+            ['exam_availability' => $availability, 'availability_year_id' => User::getCurrentYearId()]
         );
 
         // Save MCS shift preference when MCS is selected
@@ -1705,7 +1720,8 @@ public function delete($id)
                     $availability = ['Not Available'];
                 }
 
-                $historyData['exam_availability'] = $availability;
+                $historyData['exam_availability']    = $availability;
+                $historyData['availability_year_id'] = User::getCurrentYearId();
             }
 
             if (isset($validated['virtual_mcs_participated'])) {
