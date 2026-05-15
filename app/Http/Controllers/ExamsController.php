@@ -26,10 +26,34 @@ class ExamsController extends Controller
         $currentYearId = User::getCurrentYearId();
         $lastYearId    = $currentYearId - 1;
 
-        // Single efficient query — no N+1, no fan-out.
-        // user_roles join removed (user_type=9 is sufficient and avoids row multiplication).
-        // Last-year participation uses EXISTS subquery instead of a second LEFT JOIN on
-        // exams_groups, which avoids the Cartesian product that caused the 30-second timeout.
+        // Check whether the participations table has been migrated yet
+        $hasParticipations = \Illuminate\Support\Facades\Schema::hasTable('examiner_participations');
+
+        // Participation subquery fragments — include participations table only if it exists
+        $participatedSql = 'EXISTS(
+                    SELECT 1 FROM mcs_results WHERE mcs_results.examiner_id = examiners.id AND mcs_results.exam_year = ' . $lastYearId . '
+                    UNION ALL
+                    SELECT 1 FROM gs_results  WHERE gs_results.examiner_id  = examiners.id AND gs_results.exam_year  = ' . $lastYearId .
+            ($hasParticipations ? '
+                    UNION ALL
+                    SELECT 1 FROM examiner_participations WHERE examiner_participations.exm_id = examiners.id AND examiner_participations.year_id = ' . $lastYearId : '') . '
+                ) as participated_last_year';
+
+        $examinedForSql = '(
+                    SELECT GROUP_CONCAT(DISTINCT spec ORDER BY spec SEPARATOR ", ")
+                    FROM (
+                        SELECT "MCS" as spec FROM mcs_results
+                            WHERE mcs_results.examiner_id = examiners.id AND mcs_results.exam_year = ' . $lastYearId . '
+                        UNION ALL
+                        SELECT "General Surgery" FROM gs_results
+                            WHERE gs_results.examiner_id  = examiners.id AND gs_results.exam_year  = ' . $lastYearId .
+            ($hasParticipations ? '
+                        UNION ALL
+                        SELECT ep.specialty FROM examiner_participations ep
+                            WHERE ep.exm_id = examiners.id AND ep.year_id = ' . $lastYearId . ' AND ep.specialty IS NOT NULL' : '') . '
+                    ) specs
+                ) as examined_for';
+
         $examiners = DB::table('examiners')
             ->join('users', 'users.id', '=', 'examiners.user_id')
             ->leftJoin('countries', 'countries.id', '=', 'examiners.country_id')
@@ -48,28 +72,8 @@ class ExamsController extends Controller
                 'users.email',
                 'countries.country_name',
                 DB::raw('GROUP_CONCAT(DISTINCT examiners_groups.group_name ORDER BY examiners_groups.group_name SEPARATOR ", ") as group_name'),
-                // participated_last_year: results tables + upload confirmations
-                DB::raw('EXISTS(
-                    SELECT 1 FROM mcs_results WHERE mcs_results.examiner_id = examiners.id AND mcs_results.exam_year = ' . $lastYearId . '
-                    UNION ALL
-                    SELECT 1 FROM gs_results  WHERE gs_results.examiner_id  = examiners.id AND gs_results.exam_year  = ' . $lastYearId . '
-                    UNION ALL
-                    SELECT 1 FROM examiner_participations WHERE examiner_participations.exm_id = examiners.id AND examiner_participations.year_id = ' . $lastYearId . '
-                ) as participated_last_year'),
-                // examined_for: what specialties they actually examined last year
-                DB::raw('(
-                    SELECT GROUP_CONCAT(DISTINCT spec ORDER BY spec SEPARATOR ", ")
-                    FROM (
-                        SELECT "MCS" as spec FROM mcs_results
-                            WHERE mcs_results.examiner_id = examiners.id AND mcs_results.exam_year = ' . $lastYearId . '
-                        UNION ALL
-                        SELECT "General Surgery" FROM gs_results
-                            WHERE gs_results.examiner_id  = examiners.id AND gs_results.exam_year  = ' . $lastYearId . '
-                        UNION ALL
-                        SELECT ep.specialty FROM examiner_participations ep
-                            WHERE ep.exm_id = examiners.id AND ep.year_id = ' . $lastYearId . ' AND ep.specialty IS NOT NULL
-                    ) specs
-                ) as examined_for')
+                DB::raw($participatedSql),
+                DB::raw($examinedForSql)
             )
             ->groupBy(
                 'examiners.id', 'examiners.user_id', 'examiners.examiner_id',
