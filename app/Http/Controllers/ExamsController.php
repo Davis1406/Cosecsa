@@ -617,16 +617,16 @@ class ExamsController extends Controller
 
             DB::commit();
 
-            // Get the back URL from the form submission
+            // Redirect back — always use GET-safe URLs.
+            // view_examiner was POST-only before; now it accepts GET too, so
+            // redirecting to it after an update works without method errors.
             $backUrl = $request->input('back_url');
 
-            // Validate the back URL to ensure it's from your domain
             if ($backUrl && str_contains($backUrl, url('/'))) {
                 return redirect($backUrl)->with('success', 'Examiner updated successfully');
-            } else {
-                // Fallback to default page if back_url is invalid or missing
-                return redirect('admin/exams/examiners')->with('success', 'Examiner updated successfully');
             }
+
+            return redirect('admin/exams/examiners')->with('success', 'Examiner updated successfully');
         } catch (\Throwable $e) {
             DB::rollback();
             return back()->with('error', 'Update failed: ' . $e->getMessage());
