@@ -26,24 +26,18 @@ class ExamsController extends Controller
         $currentYearId = User::getCurrentYearId();
         $lastYearId    = $currentYearId - 1;
 
-        // Single query — no N+1. Gets everything the list view needs.
+        // Single efficient query — no N+1, no fan-out.
+        // user_roles join removed (user_type=9 is sufficient and avoids row multiplication).
+        // Last-year participation uses EXISTS subquery instead of a second LEFT JOIN on
+        // exams_groups, which avoids the Cartesian product that caused the 30-second timeout.
         $examiners = DB::table('examiners')
             ->join('users', 'users.id', '=', 'examiners.user_id')
-            ->join('user_roles', function ($join) {
-                $join->on('user_roles.user_id', '=', 'users.id')
-                     ->where('user_roles.is_active', 1);
-            })
             ->leftJoin('countries', 'countries.id', '=', 'examiners.country_id')
             ->leftJoin('exams_groups', function ($join) use ($currentYearId) {
                 $join->on('exams_groups.exm_id', '=', 'examiners.id')
                      ->where('exams_groups.year_id', $currentYearId);
             })
             ->leftJoin('examiners_groups', 'examiners_groups.id', '=', 'exams_groups.group_id')
-            // Subquery flag: did this examiner participate last year?
-            ->leftJoin('exams_groups as eg_last', function ($join) use ($lastYearId) {
-                $join->on('eg_last.exm_id', '=', 'examiners.id')
-                     ->where('eg_last.year_id', $lastYearId);
-            })
             ->where('users.user_type', 9)
             ->select(
                 'examiners.id as id',
@@ -54,7 +48,7 @@ class ExamsController extends Controller
                 'users.email',
                 'countries.country_name',
                 DB::raw('GROUP_CONCAT(DISTINCT examiners_groups.group_name ORDER BY examiners_groups.group_name SEPARATOR ", ") as group_name'),
-                DB::raw('MAX(eg_last.id) IS NOT NULL as participated_last_year')
+                DB::raw('EXISTS(SELECT 1 FROM exams_groups eg2 WHERE eg2.exm_id = examiners.id AND eg2.year_id = ' . $lastYearId . ') as participated_last_year')
             )
             ->groupBy(
                 'examiners.id', 'examiners.user_id', 'examiners.examiner_id',
