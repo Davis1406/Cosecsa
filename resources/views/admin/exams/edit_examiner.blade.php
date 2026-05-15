@@ -148,12 +148,15 @@
                                         <div class="form-group">
                                             <label for="group_id">Group Name</label>
                                             <select name="group_id" id="group_id" class="form-control">
-                                                @for ($i = 1; $i <= 15; $i++)
-                                                    <option value="{{ $i }}"
-                                                        {{ $examiner->group_id == $i ? 'selected' : '' }}>
-                                                        {{ $groups->firstWhere('id', $i)->group_name ?? 'Group ' . $i }}
+                                                <option value="" {{ empty($examiner->group_id) ? 'selected' : '' }}>
+                                                    — None —
+                                                </option>
+                                                @foreach ($groups as $group)
+                                                    <option value="{{ $group->id }}"
+                                                        {{ $examiner->group_id == $group->id ? 'selected' : '' }}>
+                                                        {{ $group->group_name }}
                                                     </option>
-                                                @endfor
+                                                @endforeach
                                             </select>
                                             <div class="error-message">Please select a group</div>
                                         </div>
