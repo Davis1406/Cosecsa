@@ -24,7 +24,27 @@ class ExamsController extends Controller
     public function list()
     {
         $data['header_title'] = 'Examiners';
-        $data['getExaminers'] = User::getExaminers();
+
+        $lastYearId = User::getCurrentYearId() - 1; // 2025 = id 6, 2026 = id 7, etc.
+
+        // IDs of examiners who participated last year
+        $lastYearExmIds = DB::table('exams_groups')
+            ->where('year_id', $lastYearId)
+            ->pluck('exm_id')
+            ->toArray();
+
+        $examiners = User::getExaminers();
+
+        // Tag each examiner with a boolean flag
+        $examiners->each(function ($ex) use ($lastYearExmIds) {
+            $ex->participated_last_year = in_array($ex->examin_id, $lastYearExmIds);
+        });
+
+        $data['getExaminers']    = $examiners;
+        $data['lastYearCount']   = count($lastYearExmIds);
+        $data['currentYear']     = date('Y');
+        $data['lastYear']        = date('Y') - 1;
+
         return view('admin.exams.examiners', $data);
     }
 
@@ -492,10 +512,13 @@ public function delete($id)
                     ->orWhereNull('user_roles.role_type');
             })
             ->where(function ($query) {
+                // Show anyone who submitted via the availability form OR updated their profile
                 $query->whereRaw('TIMESTAMPDIFF(MINUTE, examiners_history.created_at, examiners_history.updated_at) > 1')
                     ->orWhereNotNull('examiners_history.exam_availability');
             })
-            ->whereNotNull('exams_groups.year_id') // Only examiners assigned to the current year
+            // Removed: ->whereNotNull('exams_groups.year_id')
+            // Reason: examiners who submit via the public form haven't been assigned to a group yet;
+            // the left join already scopes group info to the current year.
             ->groupBy('examiners.id')
             ->orderBy('examiners.id', 'desc')
             ->get();
@@ -1079,6 +1102,49 @@ public function delete($id)
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error registering attendance: ' . $e->getMessage());
         }
+    }
+
+    // ── Bulk email to examiners ───────────────────────────────────────────────
+
+    public function sendBulkEmail(Request $request)
+    {
+        $request->validate([
+            'subject'      => 'required|string|max:255',
+            'body'         => 'required|string',
+            'examiner_ids' => 'required|array|min:1',
+        ]);
+
+        $exmIds = $request->examiner_ids;
+
+        $recipients = DB::table('examiners')
+            ->join('users', 'users.id', '=', 'examiners.user_id')
+            ->whereIn('examiners.id', $exmIds)
+            ->where('users.user_type', 9)
+            ->select('users.email', 'users.name')
+            ->get();
+
+        $sent   = 0;
+        $failed = 0;
+
+        foreach ($recipients as $recipient) {
+            try {
+                \Illuminate\Support\Facades\Mail::send([], [], function ($message) use ($recipient, $request) {
+                    $message->to($recipient->email, $recipient->name)
+                            ->from('exams_asst@cosecsa.org', 'COSECSA Examinations')
+                            ->subject($request->subject)
+                            ->html(nl2br(e($request->body)));
+                });
+                $sent++;
+            } catch (\Exception $e) {
+                $failed++;
+                \Log::error("Examiner email failed to {$recipient->email}: " . $e->getMessage());
+            }
+        }
+
+        $msg = "Email sent to {$sent} examiner(s).";
+        if ($failed) $msg .= " {$failed} failed (check logs).";
+
+        return redirect()->back()->with('success', $msg);
     }
 
     // ── Public examiner availability form ────────────────────────────────────
