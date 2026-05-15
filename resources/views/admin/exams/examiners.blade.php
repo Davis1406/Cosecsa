@@ -81,12 +81,7 @@
                                                    data-name="{{ $value->examiner_name }}">
                                         </td>
                                         <td>{{ $value->id }}</td>
-                                        <td>
-                                            {{ $value->examiner_name }}
-                                            @if($value->participated_last_year)
-                                                <span class="badge badge-primary ml-1" title="{{ $lastYear }} participant">{{ $lastYear }}</span>
-                                            @endif
-                                        </td>
+                                        <td>{{ $value->examiner_name }}</td>
                                         <td>{{ $value->email }}</td>
                                         <td>{{ $value->country_name }}</td>
                                         <td>{{ $value->examiner_id }}</td>
