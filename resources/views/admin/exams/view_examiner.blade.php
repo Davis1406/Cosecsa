@@ -498,7 +498,8 @@
                         <div class="card border-0 shadow-sm">
                             <div class="card-header bg-light">
                                 <h6 class="mb-0">
-                                    <i class="fas fa-calendar-check text-success mr-1"></i> Exam Availability
+                                    <i class="fas fa-calendar-check text-success mr-1"></i>
+                                    {{ $currentYearName }} Exam Availability
                                 </h6>
                             </div>
                             <div class="card-body">
@@ -513,13 +514,13 @@
                                             @if($hasMCS)
                                                 <div class="d-flex align-items-center mb-2">
                                                     <i class="fas fa-check-circle text-success mr-2"></i>
-                                                    <span class="font-weight-bold">MCS (12–13 Nov)</span>
+                                                    <span class="font-weight-bold">MCS — {{ $currentYearName }}</span>
                                                 </div>
                                             @endif
                                             @if($hasFCS)
                                                 <div class="d-flex align-items-center mb-2">
                                                     <i class="fas fa-check-circle text-success mr-2"></i>
-                                                    <span class="font-weight-bold">FCS (1–2 December)</span>
+                                                    <span class="font-weight-bold">FCS — {{ $currentYearName }}</span>
                                                 </div>
                                             @endif
                                         @else

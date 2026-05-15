@@ -517,16 +517,18 @@ class ExamsController extends Controller
         }
 
         // Dynamic year list: 2020 → last completed year
-        $lastYearName = DB::table('years')->where('id', $yearId - 1)->value('year_name') ?? (date('Y') - 1);
-        $examYears    = range(2020, (int) $lastYearName);
+        $currentYearName = DB::table('years')->where('id', $yearId)->value('year_name') ?? date('Y');
+        $lastYearName    = DB::table('years')->where('id', $yearId - 1)->value('year_name') ?? (date('Y') - 1);
+        $examYears       = range(2020, (int) $lastYearName);
 
         return view('admin.exams.edit_examiner', [
             'header_title' => 'Edit Examiner',
             'examiner'     => $examiner,
-            'getCountry'   => Country::getCountry(),
-            'groups'       => DB::table('examiners_groups')->select('id', 'group_name')->get(),
-            'backUrl'      => $backUrl,
-            'examYears'    => $examYears,
+            'getCountry'      => Country::getCountry(),
+            'groups'          => DB::table('examiners_groups')->select('id', 'group_name')->get(),
+            'backUrl'         => $backUrl,
+            'examYears'       => $examYears,
+            'currentYearName' => $currentYearName,
         ]);
     }
 
@@ -692,13 +694,16 @@ class ExamsController extends Controller
         $qrCode = QrCode::size(70)
             ->generate(url("/admin/exams/confirm-attendance/{$examiner->examin_id}"));
 
+        $currentYearName = DB::table('years')->where('id', $yearId)->value('year_name') ?? date('Y');
+
         return view('admin.exams.view_examiner', [
-            'header_title' => 'View Examiner',
-            'examiner'     => $examiner,
-            'getCountry'   => Country::getCountry(),
-            'groups'       => DB::table('examiners_groups')->select('id', 'group_name')->get(),
-            'qrCode'       => $qrCode,
-            'backUrl'      => $backUrl,
+            'header_title'    => 'View Examiner',
+            'examiner'        => $examiner,
+            'getCountry'      => Country::getCountry(),
+            'groups'          => DB::table('examiners_groups')->select('id', 'group_name')->get(),
+            'qrCode'          => $qrCode,
+            'backUrl'         => $backUrl,
+            'currentYearName' => $currentYearName,
         ]);
     }
 public function delete($id)

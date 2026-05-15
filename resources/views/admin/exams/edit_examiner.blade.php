@@ -208,7 +208,7 @@
                                 <div class="row">
                                     <!-- Exam Availability -->
                                     <div class="form-group col-md-6 col-sm-12">
-                                        <label>2025 Exam Availability</label>
+                                        <label>{{ $currentYearName }} Exam Availability</label>
                                         <div class="checkbox-group exam-availability-group">
                                             @php
                                                 // exam_availability is double-encoded in DB — decode twice
@@ -222,21 +222,21 @@
 
                                             <div class="form-check">
                                                 <input class="form-check-input exam-option" type="checkbox"
-                                                    name="exam_availability[]" id="mcs_2025" value="MCS"
+                                                    name="exam_availability[]" id="avail_mcs" value="MCS"
                                                     {{ in_array('MCS', $selectedAvailability) ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="mcs_2025">MCS (12–13 Nov)</label>
+                                                <label class="form-check-label" for="avail_mcs">MCS</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input exam-option" type="checkbox"
-                                                    name="exam_availability[]" id="fcs_2025" value="FCS"
+                                                    name="exam_availability[]" id="avail_fcs" value="FCS"
                                                     {{ in_array('FCS', $selectedAvailability) ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="fcs_2025">FCS (1–2 December)</label>
+                                                <label class="form-check-label" for="avail_fcs">FCS</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
-                                                    name="exam_availability[]" id="not_available" value="Not Available"
+                                                    name="exam_availability[]" id="avail_not_available" value="Not Available"
                                                     {{ in_array('Not Available', $selectedAvailability) ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="not_available">Not Available</label>
+                                                <label class="form-check-label" for="avail_not_available">Not Available</label>
                                             </div>
                                         </div>
                                     </div>
@@ -901,19 +901,18 @@
             // Initialize
             updateUI();
 
-            // === NEW: Exam Availability Logic ===
+            // Exam Availability: "Not Available" disables MCS/FCS options
             function toggleExamOptions() {
-                const isChecked = $('#not_available_2025').is(':checked');
-                $('.exam-option').prop('disabled', isChecked).prop('checked', false);
+                const isNotAvailable = $('#avail_not_available').is(':checked');
+                $('.exam-option').prop('disabled', isNotAvailable);
+                if (isNotAvailable) { $('.exam-option').prop('checked', false); }
             }
 
-            $('#not_available_2025').on('change', toggleExamOptions);
+            $('#avail_not_available').on('change', toggleExamOptions);
 
-            // On load: auto-check Not Available if no exam options are selected
-            if (!$('.exam-option:checked').length) {
-                $('#not_available_2025').prop('checked', true);
-                toggleExamOptions();
-            }
+            // On load: if nothing is selected, leave as-is (don't auto-check Not Available
+            // since existing examiners may simply not have answered yet)
+            toggleExamOptions();
 
             // File upload handlers
             $('#passport_upload').on('change', function() {
