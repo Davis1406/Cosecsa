@@ -33,27 +33,45 @@
                 <div class="col-12">
                     <div class="card">
 
-                        <div class="card-header d-flex align-items-center flex-wrap" style="gap:.5rem;">
-                            {{-- Filter buttons --}}
-                            <div class="btn-group btn-group-sm mr-auto" role="group">
-                                <button class="btn btn-outline-secondary active" id="btn-all">
-                                    All <span class="badge badge-secondary ml-1">{{ $getExaminers->count() }}</span>
-                                </button>
-                                <button class="btn btn-outline-primary" id="btn-lastyear">
-                                    {{ $lastYear }} Participants
-                                    <span class="badge badge-primary ml-1">{{ $getExaminers->where('participated_last_year', true)->count() }}</span>
-                                </button>
+                        <div class="card-header flex-wrap" style="gap:.5rem;">
+                            {{-- Row 1: participant toggle + email actions --}}
+                            <div class="d-flex align-items-center flex-wrap mb-2" style="gap:.5rem;">
+                                <div class="btn-group btn-group-sm mr-auto" role="group">
+                                    <button class="btn btn-outline-secondary active" id="btn-all">
+                                        All <span class="badge badge-secondary ml-1">{{ $getExaminers->count() }}</span>
+                                    </button>
+                                    <button class="btn btn-outline-primary" id="btn-lastyear">
+                                        {{ $lastYear }} Participants
+                                        <span class="badge badge-primary ml-1">{{ $getExaminers->where('participated_last_year', true)->count() }}</span>
+                                    </button>
+                                </div>
+                                <div class="d-flex" style="gap:.4rem;">
+                                    <a href="{{ route('exams.email.template') }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-pencil-alt mr-1"></i> Edit Template
+                                    </a>
+                                    <button class="btn btn-sm btn-success" id="btn-email-selected" disabled
+                                            data-toggle="modal" data-target="#emailModal">
+                                        <i class="fas fa-envelope mr-1"></i>
+                                        Email Selected <span id="sel-count" class="badge badge-light ml-1">0</span>
+                                    </button>
+                                </div>
                             </div>
-
-                            {{-- Email selected button --}}
-                            <div class="d-flex" style="gap:.4rem;">
-                                <a href="{{ route('exams.email.template') }}" class="btn btn-sm btn-outline-secondary">
-                                    <i class="fas fa-pencil-alt mr-1"></i> Edit Template
-                                </a>
-                                <button class="btn btn-sm btn-success" id="btn-email-selected" disabled
-                                        data-toggle="modal" data-target="#emailModal">
-                                    <i class="fas fa-envelope mr-1"></i>
-                                    Email Selected <span id="sel-count" class="badge badge-light ml-1">0</span>
+                            {{-- Row 2: Programme + Country filters --}}
+                            <div class="d-flex flex-wrap" style="gap:.5rem;">
+                                <select id="filter-programme" class="form-control form-control-sm" style="max-width:240px;">
+                                    <option value="">— All Programmes —</option>
+                                    @foreach($programmes as $prog)
+                                        <option value="{{ $prog }}">{{ $prog }}</option>
+                                    @endforeach
+                                </select>
+                                <select id="filter-country" class="form-control form-control-sm" style="max-width:200px;">
+                                    <option value="">— All Countries —</option>
+                                    @foreach($countries as $c)
+                                        <option value="{{ $c }}">{{ $c }}</option>
+                                    @endforeach
+                                </select>
+                                <button id="btn-clear-filters" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-times mr-1"></i> Clear Filters
                                 </button>
                             </div>
                         </div>
@@ -84,21 +102,13 @@
                                                    data-email="{{ $value->email }}"
                                                    data-name="{{ $value->examiner_name }}">
                                         </td>
-                                        <td>{{ $value->id }}</td>
+                                        <td>{{ $loop->iteration }}</td>
                                         <td>{{ $value->examiner_name }}</td>
                                         <td>{{ $value->email }}</td>
                                         <td>{{ $value->country_name }}</td>
                                         <td>{{ $value->examiner_id }}</td>
                                         <td>{{ $value->group_name }}</td>
-                                        <td>
-                                            @if($value->examined_for)
-                                                <span class="badge badge-secondary" style="font-size:.75rem; white-space:normal; text-align:left;">
-                                                    {{ $value->examined_for }}
-                                                </span>
-                                            @else
-                                                <span class="text-muted">—</span>
-                                            @endif
-                                        </td>
+                                        <td>{{ $value->examined_for ?? '—' }}</td>
                                         <td>
                                             <div class="dropdown">
                                                 <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
@@ -231,16 +241,16 @@ $(function () {
     // custom.js already initialised #examinerstable — just get the instance.
     var table = $('#examinerstable').DataTable();
 
-    // ── Filter buttons ────────────────────────────────────────────────────────
-    var filterMode = 'all';
+    // ── Active filters ────────────────────────────────────────────────────────
+    var filterMode       = 'all';   // 'all' | 'lastyear'
+    var filterProgramme  = '';
+    var filterCountry    = '';
 
+    // ── Participant toggle buttons ─────────────────────────────────────────────
     $('#btn-all').on('click', function () {
         filterMode = 'all';
         $(this).addClass('active').siblings().removeClass('active');
         $('#examinerstable').removeClass('filter-lastyear');
-        table.rows().every(function () {
-            $(this.node()).show();
-        });
         table.draw();
         syncSelectAll();
     });
@@ -250,17 +260,57 @@ $(function () {
         $(this).addClass('active').siblings().removeClass('active');
         $('#examinerstable').addClass('filter-lastyear');
         table.draw();
-        // Deselect any hidden rows
         $('#examinerstable tbody tr.examiner-row:not(.last-year-row) .row-chk').prop('checked', false);
         updateEmailButton();
         syncSelectAll();
     });
 
-    // Custom DataTable search to honour last-year filter
-    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, row) {
+    // ── Programme / Country dropdowns ─────────────────────────────────────────
+    $('#filter-programme').on('change', function () {
+        filterProgramme = this.value;
+        table.draw();
+        syncSelectAll();
+    });
+
+    $('#filter-country').on('change', function () {
+        filterCountry = this.value;
+        table.draw();
+        syncSelectAll();
+    });
+
+    $('#btn-clear-filters').on('click', function () {
+        filterMode      = 'all';
+        filterProgramme = '';
+        filterCountry   = '';
+        $('#btn-all').addClass('active').siblings().removeClass('active');
+        $('#examinerstable').removeClass('filter-lastyear');
+        $('#filter-programme').val('');
+        $('#filter-country').val('');
+        table.draw();
+        syncSelectAll();
+    });
+
+    // ── Unified DataTable search extension ────────────────────────────────────
+    // Col indices: 0=chk 1=# 2=name 3=email 4=country 5=examID 6=group 7=examined_for 8=action
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+        if (settings.nTable.id !== 'examinerstable') return true; // guard other tables
+
+        // Last-year participant filter
         if (filterMode === 'lastyear') {
-            return $(table.row(dataIndex).node()).hasClass('last-year-row');
+            if (!$(table.row(dataIndex).node()).hasClass('last-year-row')) return false;
         }
+
+        // Programme filter — column 7 (Examined For), partial match
+        if (filterProgramme) {
+            var prog = (data[7] || '').toLowerCase();
+            if (prog.indexOf(filterProgramme.toLowerCase()) === -1) return false;
+        }
+
+        // Country filter — column 4, exact match
+        if (filterCountry) {
+            if ((data[4] || '').trim() !== filterCountry) return false;
+        }
+
         return true;
     });
 

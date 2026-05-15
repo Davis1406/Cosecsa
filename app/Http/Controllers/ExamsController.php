@@ -82,7 +82,15 @@ class ExamsController extends Controller
             ->orderBy('users.name')
             ->get();
 
+        // Build filter options from the already-fetched collection
+        $countries  = $examiners->pluck('country_name')->filter()->unique()->sort()->values();
+        $programmes = $examiners->pluck('examined_for')->filter()
+            ->flatMap(fn($v) => array_map('trim', explode(',', $v)))
+            ->unique()->sort()->values();
+
         $data['getExaminers']  = $examiners;
+        $data['countries']     = $countries;
+        $data['programmes']    = $programmes;
         $data['currentYear']   = date('Y');
         $data['lastYear']      = date('Y') - 1;
         $data['header_title']  = 'Examiners';
@@ -573,12 +581,69 @@ class ExamsController extends Controller
 
     public function view($id, Request $request)
     {
-        $examiner = User::getExaminers()->firstWhere('examin_id', $id);
+        $yearId = User::getCurrentYearId();
+
+        // Fetch ONLY the requested examiner — no full collection load
+        $examiner = DB::table('examiners')
+            ->join('users', 'users.id', '=', 'examiners.user_id')
+            ->leftJoin('countries', 'countries.id', '=', 'examiners.country_id')
+            ->where('examiners.id', $id)
+            ->select(
+                'examiners.id as examin_id',
+                'examiners.user_id as ex_id',
+                'examiners.examiner_id',
+                'examiners.mobile',
+                'examiners.gender',
+                'examiners.country_id',
+                'examiners.specialty',
+                'examiners.subspecialty',
+                'examiners.curriculum_vitae',
+                'examiners.passport_image',
+                'examiners.role_id',
+                'users.name as examiner_name',
+                'users.email',
+                'countries.country_name'
+            )
+            ->first();
+
         if (!$examiner) return redirect()->back()->with('error', 'Examiner not found');
 
-        $from = $request->input('from', 'admin/exams/examiners');
-        $query = $request->except(['from', '_token']);
+        // Groups for current year (tiny result set)
+        $groups = DB::table('exams_groups')
+            ->join('examiners_groups', 'examiners_groups.id', '=', 'exams_groups.group_id')
+            ->where('exams_groups.exm_id', $id)
+            ->where('exams_groups.year_id', $yearId)
+            ->select('examiners_groups.id as group_id', 'examiners_groups.group_name', 'exams_groups.year_id')
+            ->get();
 
+        $examiner->groups     = $groups;
+        $examiner->group_name = $groups->isNotEmpty() ? $groups->pluck('group_name')->implode(', ') : null;
+        $examiner->group_id   = $groups->isNotEmpty() ? $groups->first()->group_id : null;
+
+        // Shifts for current year
+        $shifts = DB::table('exams_shifts')
+            ->where('exm_id', $id)
+            ->where('year_id', $yearId)
+            ->select('shift', 'year_id')
+            ->get();
+
+        $examiner->shifts   = $shifts;
+        $examiner->shift_id = $shifts->isNotEmpty() ? $shifts->first()->shift : null;
+        $examiner->shift    = $shifts->isNotEmpty() ? User::getShiftName($shifts->first()->shift) : null;
+
+        // History record
+        $history = DB::table('examiners_history')->where('exm_id', $id)->first();
+        $examiner->history = $history;
+        if ($history) {
+            $examiner->virtual_mcs_participated = $history->virtual_mcs_participated;
+            $examiner->fcs_participated         = $history->fcs_participated;
+            $examiner->hospital_type            = $history->hospital_type;
+            $examiner->hospital_name            = $history->hospital_name;
+            $examiner->examination_years        = $history->examination_years;
+        }
+
+        $from    = $request->input('from', 'admin/exams/examiners');
+        $query   = $request->except(['from', '_token']);
         $backUrl = url($from) . (count($query) ? '?' . http_build_query($query) : '');
 
         $qrCode = QrCode::size(70)
@@ -586,11 +651,11 @@ class ExamsController extends Controller
 
         return view('admin.exams.view_examiner', [
             'header_title' => 'View Examiner',
-            'examiner' => $examiner,
-            'getCountry' => Country::getCountry(),
-            'groups' => DB::table('examiners_groups')->select('id', 'group_name')->get(),
-            'qrCode' => $qrCode,
-            'backUrl' => $backUrl,
+            'examiner'     => $examiner,
+            'getCountry'   => Country::getCountry(),
+            'groups'       => DB::table('examiners_groups')->select('id', 'group_name')->get(),
+            'qrCode'       => $qrCode,
+            'backUrl'      => $backUrl,
         ]);
     }
 public function delete($id)
