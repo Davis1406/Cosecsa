@@ -48,7 +48,11 @@ class ExamsController extends Controller
                 'users.email',
                 'countries.country_name',
                 DB::raw('GROUP_CONCAT(DISTINCT examiners_groups.group_name ORDER BY examiners_groups.group_name SEPARATOR ", ") as group_name'),
-                DB::raw('EXISTS(SELECT 1 FROM exams_groups eg2 WHERE eg2.exm_id = examiners.id AND eg2.year_id = ' . $lastYearId . ') as participated_last_year')
+                DB::raw('EXISTS(
+                    SELECT 1 FROM mcs_results WHERE mcs_results.examiner_id = examiners.id AND mcs_results.exam_year = ' . $lastYearId . '
+                    UNION ALL
+                    SELECT 1 FROM gs_results  WHERE gs_results.examiner_id  = examiners.id AND gs_results.exam_year  = ' . $lastYearId . '
+                ) as participated_last_year')
             )
             ->groupBy(
                 'examiners.id', 'examiners.user_id', 'examiners.examiner_id',
@@ -478,7 +482,7 @@ public function delete($id)
         $yearId = User::getCurrentYearId();
 
         return DB::table('examiners')
-            ->join('examiners_history', 'examiners.id', '=', 'examiners_history.exm_id')
+            ->leftJoin('examiners_history', 'examiners.id', '=', 'examiners_history.exm_id')
             ->leftJoin('users', 'examiners.user_id', '=', 'users.id')
             ->leftJoin('countries', 'examiners.country_id', '=', 'countries.id')
             ->leftJoin('exams_groups', function ($join) use ($yearId) {
@@ -529,13 +533,12 @@ public function delete($id)
                     ->orWhereNull('user_roles.role_type');
             })
             ->where(function ($query) {
-                // Show anyone who submitted via the availability form OR updated their profile
-                $query->whereRaw('TIMESTAMPDIFF(MINUTE, examiners_history.created_at, examiners_history.updated_at) > 1')
-                    ->orWhereNotNull('examiners_history.exam_availability');
+                // Only show current-year confirmations:
+                // either they submitted the availability form (exams_shifts scoped to yearId above)
+                // or the admin assigned them to a current-year exam group.
+                $query->whereNotNull('exams_shifts.id')
+                      ->orWhereNotNull('exams_groups.id');
             })
-            // Removed: ->whereNotNull('exams_groups.year_id')
-            // Reason: examiners who submit via the public form haven't been assigned to a group yet;
-            // the left join already scopes group info to the current year.
             ->groupBy('examiners.id')
             ->orderBy('examiners.id', 'desc')
             ->get();
