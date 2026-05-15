@@ -48,11 +48,28 @@ class ExamsController extends Controller
                 'users.email',
                 'countries.country_name',
                 DB::raw('GROUP_CONCAT(DISTINCT examiners_groups.group_name ORDER BY examiners_groups.group_name SEPARATOR ", ") as group_name'),
+                // participated_last_year: results tables + upload confirmations
                 DB::raw('EXISTS(
                     SELECT 1 FROM mcs_results WHERE mcs_results.examiner_id = examiners.id AND mcs_results.exam_year = ' . $lastYearId . '
                     UNION ALL
                     SELECT 1 FROM gs_results  WHERE gs_results.examiner_id  = examiners.id AND gs_results.exam_year  = ' . $lastYearId . '
-                ) as participated_last_year')
+                    UNION ALL
+                    SELECT 1 FROM examiner_participations WHERE examiner_participations.exm_id = examiners.id AND examiner_participations.year_id = ' . $lastYearId . '
+                ) as participated_last_year'),
+                // examined_for: what specialties they actually examined last year
+                DB::raw('(
+                    SELECT GROUP_CONCAT(DISTINCT spec ORDER BY spec SEPARATOR ", ")
+                    FROM (
+                        SELECT "MCS" as spec FROM mcs_results
+                            WHERE mcs_results.examiner_id = examiners.id AND mcs_results.exam_year = ' . $lastYearId . '
+                        UNION ALL
+                        SELECT "General Surgery" FROM gs_results
+                            WHERE gs_results.examiner_id  = examiners.id AND gs_results.exam_year  = ' . $lastYearId . '
+                        UNION ALL
+                        SELECT ep.specialty FROM examiner_participations ep
+                            WHERE ep.exm_id = examiners.id AND ep.year_id = ' . $lastYearId . ' AND ep.specialty IS NOT NULL
+                    ) specs
+                ) as examined_for')
             )
             ->groupBy(
                 'examiners.id', 'examiners.user_id', 'examiners.examiner_id',
@@ -84,6 +101,158 @@ class ExamsController extends Controller
         Excel::import(new ExaminersImport, $request->file('file'));
 
         return redirect('admin/exams/examiners')->with('success', 'Examiners imported successfully');
+    }
+
+    // ── Upload Confirmation ──────────────────────────────────────────────────────
+
+    public function uploadConfirmationForm()
+    {
+        $years = DB::table('years')->orderBy('id', 'desc')->get();
+        $data['years']        = $years;
+        $data['defaultYear']  = User::getCurrentYearId() - 1; // default to last year
+        $data['header_title'] = 'Upload Examiner Confirmation';
+        return view('admin.exams.upload_confirmation', $data);
+    }
+
+    public function processConfirmationUpload(Request $request)
+    {
+        $request->validate([
+            'file'    => 'required|mimes:xlsx,xls,csv|max:5120',
+            'year_id' => 'required|integer',
+        ]);
+
+        $yearId = (int) $request->year_id;
+
+        // Read raw rows (skip header row 0)
+        $rows = Excel::toArray([], $request->file('file'));
+        $sheet = $rows[0] ?? [];
+
+        $results = [
+            'updated'        => [],
+            'duplicate_file' => [],
+            'already_exists' => [],
+            'not_found'      => [],
+            'error'          => [],
+        ];
+
+        $seenKeys   = []; // email|specialty → detect in-file duplicates
+        $yearName   = DB::table('years')->where('id', $yearId)->value('year_name');
+
+        foreach ($sheet as $i => $row) {
+            if ($i === 0) continue; // skip header
+
+            $name        = trim($row[0] ?? '');
+            $email       = strtolower(trim($row[1] ?? ''));
+            $specialty   = trim($row[2] ?? '');
+            $country     = trim($row[3] ?? '');
+            $role        = trim($row[4] ?? '');
+            $fellowship  = trim($row[5] ?? '');
+            $subSpec     = trim($row[6] ?? '');
+
+            // Skip blank rows
+            if ($name === '' && $email === '') continue;
+
+            // Validate required fields
+            if ($email === '') {
+                $results['error'][] = [
+                    'name' => $name, 'email' => '—', 'specialty' => $specialty,
+                    'reason' => 'Missing email address',
+                ];
+                continue;
+            }
+            if ($specialty === '') {
+                $results['error'][] = [
+                    'name' => $name, 'email' => $email, 'specialty' => '—',
+                    'reason' => 'Missing specialty',
+                ];
+                continue;
+            }
+
+            // Detect duplicates within the file
+            $key = $email . '|' . strtolower($specialty);
+            if (in_array($key, $seenKeys)) {
+                $results['duplicate_file'][] = [
+                    'name' => $name, 'email' => $email, 'specialty' => $specialty,
+                    'reason' => 'Same examiner + specialty appears more than once in the file',
+                ];
+                continue;
+            }
+            $seenKeys[] = $key;
+
+            // ── Match examiner in the system ──────────────────────────────────
+            $user = DB::table('users')
+                ->whereRaw('LOWER(email) = ?', [$email])
+                ->first();
+
+            // Fallback: match by first + last name (case-insensitive)
+            if (!$user && $name !== '') {
+                $parts     = preg_split('/\s+/', $name);
+                $firstName = strtolower($parts[0] ?? '');
+                $lastName  = strtolower(end($parts));
+
+                if ($firstName && $lastName && $firstName !== $lastName) {
+                    $user = DB::table('users')
+                        ->where('user_type', 9)
+                        ->whereRaw('LOWER(name) LIKE ?', ["%{$firstName}%"])
+                        ->whereRaw('LOWER(name) LIKE ?', ["%{$lastName}%"])
+                        ->first();
+                }
+            }
+
+            if (!$user) {
+                $results['not_found'][] = [
+                    'name' => $name, 'email' => $email, 'specialty' => $specialty,
+                    'reason' => 'No matching user found in the system',
+                ];
+                continue;
+            }
+
+            $examiner = DB::table('examiners')->where('user_id', $user->id)->first();
+            if (!$examiner) {
+                $results['not_found'][] = [
+                    'name' => $name, 'email' => $email, 'specialty' => $specialty,
+                    'matched_name' => $user->name,
+                    'reason' => 'User found but has no examiner record',
+                ];
+                continue;
+            }
+
+            // Check if already recorded for this year + specialty
+            $existing = DB::table('examiner_participations')
+                ->where('exm_id', $examiner->id)
+                ->where('year_id', $yearId)
+                ->where('specialty', $specialty)
+                ->exists();
+
+            if ($existing) {
+                $results['already_exists'][] = [
+                    'name' => $name, 'email' => $email, 'specialty' => $specialty,
+                    'matched_name' => $user->name,
+                    'reason' => 'Already recorded for this year & specialty',
+                ];
+                continue;
+            }
+
+            // Insert participation record
+            DB::table('examiner_participations')->insert([
+                'exm_id'       => $examiner->id,
+                'year_id'      => $yearId,
+                'specialty'    => $specialty,
+                'role'         => $role ?: null,
+                'sub_specialty'=> $subSpec ?: null,
+                'fellowship_no'=> $fellowship ?: null,
+                'source'       => 'upload',
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ]);
+
+            $results['updated'][] = [
+                'name' => $name, 'email' => $email, 'specialty' => $specialty,
+                'matched_name' => $user->name,
+            ];
+        }
+
+        return view('admin.exams.upload_confirmation_result', compact('results', 'yearName'));
     }
 
     public function add()

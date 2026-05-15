@@ -332,7 +332,8 @@ $(function () {
                 { "visible": true  }, // Country
                 { "visible": true  }, // Examiner ID
                 { "visible": true  }, // Exam Group
-                // Col 7: Action — not sortable/searchable
+                { "visible": true  }, // Examined For
+                // Col 8: Action — not sortable/searchable
                 { "orderable": false, "searchable": false }
             ],
             "initComplete": function () { hideLoader("examinerstable"); },

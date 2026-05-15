@@ -14,6 +14,9 @@
                     <a href="{{ url('admin/exams/import') }}" class="btn btn-sm btn-warning mr-1">
                         <i class="fas fa-upload mr-1"></i> Upload
                     </a>
+                    <a href="{{ route('exams.upload.confirmation') }}" class="btn btn-sm btn-info mr-1">
+                        <i class="fas fa-clipboard-check mr-1"></i> Upload Confirmation
+                    </a>
                     <a href="{{ url('admin/exams/add_examiner') }}" class="btn btn-sm btn-danger">
                         <i class="fas fa-plus mr-1"></i> Add Examiner
                     </a>
@@ -68,6 +71,7 @@
                                         <th>Country</th>
                                         <th>Examiner ID</th>
                                         <th>Exam Group</th>
+                                        <th>{{ $lastYear }} Examined For</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -86,6 +90,15 @@
                                         <td>{{ $value->country_name }}</td>
                                         <td>{{ $value->examiner_id }}</td>
                                         <td>{{ $value->group_name }}</td>
+                                        <td>
+                                            @if($value->examined_for)
+                                                <span class="badge badge-secondary" style="font-size:.75rem; white-space:normal; text-align:left;">
+                                                    {{ $value->examined_for }}
+                                                </span>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
+                                        </td>
                                         <td>
                                             <div class="dropdown">
                                                 <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
