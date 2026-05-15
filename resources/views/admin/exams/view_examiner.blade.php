@@ -232,11 +232,14 @@
             @php
                 $hasHistory = !is_null($examiner->history);
 
-                // Safely decode examination_years — guard against non-array JSON (string/int)
+                // examination_years is double-encoded in DB (json_encode called on save
+                // despite the Eloquent array cast, so raw value is a JSON string wrapping
+                // another JSON array). Decode twice to get the actual array.
                 $exYears = [];
                 if ($hasHistory && !empty($examiner->examination_years)) {
-                    $decoded = json_decode($examiner->examination_years, true);
-                    $exYears = is_array($decoded) ? $decoded : [];
+                    $d = json_decode($examiner->examination_years, true);
+                    if (is_string($d)) { $d = json_decode($d, true); }
+                    $exYears = is_array($d) ? $d : [];
                 }
             @endphp
 
@@ -367,17 +370,19 @@
                 @php
                     $hasHistory = !is_null($examiner->history);
 
-                    // Safely decode examination_years
+                    // Double-decode examination_years (double-encoded in DB)
                     $modalYears = [];
                     if ($hasHistory && !empty($examiner->examination_years)) {
                         $d = json_decode($examiner->examination_years, true);
+                        if (is_string($d)) { $d = json_decode($d, true); }
                         $modalYears = is_array($d) ? $d : [];
                     }
 
-                    // Safely decode exam_availability
+                    // Double-decode exam_availability (same double-encoding issue)
                     $selectedAvailability = [];
                     if ($hasHistory && !empty($examiner->history->exam_availability)) {
                         $av = json_decode($examiner->history->exam_availability, true);
+                        if (is_string($av)) { $av = json_decode($av, true); }
                         $selectedAvailability = is_array($av) ? $av : [];
                     }
                     $hasMCS       = in_array('MCS', $selectedAvailability);
