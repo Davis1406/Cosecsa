@@ -216,16 +216,12 @@
 </style>
 @endpush
 
-@section('scripts')
+@push('scripts')
 <script>
 $(function () {
 
-    // ── DataTable ─────────────────────────────────────────────────────────────
-    var table = $('#examinerstable').DataTable({
-        pageLength: 25,
-        columnDefs: [{ orderable: false, targets: [0, 7] }],
-        language: { search: 'Search:' }
-    });
+    // custom.js already initialised #examinerstable — just get the instance.
+    var table = $('#examinerstable').DataTable();
 
     // ── Filter buttons ────────────────────────────────────────────────────────
     var filterMode = 'all';
@@ -311,4 +307,4 @@ $(function () {
     });
 });
 </script>
-@endsection
+@endpush

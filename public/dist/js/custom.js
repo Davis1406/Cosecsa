@@ -324,9 +324,16 @@ $(function () {
             "paging": true, "stateSave": true,
             "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
             "columns": [
-                { "visible": true  }, { "visible": true  }, { "visible": true  },
-                { "visible": true  }, { "visible": true  }, { "visible": true  },
-                { "visible": true,  "orderable": false, "searchable": false }
+                // Col 0: checkbox — not sortable/searchable
+                { "orderable": false, "searchable": false },
+                { "visible": true  }, // #
+                { "visible": true  }, // Name
+                { "visible": true  }, // Email
+                { "visible": true  }, // Country
+                { "visible": true  }, // Examiner ID
+                { "visible": true  }, // Exam Group
+                // Col 7: Action — not sortable/searchable
+                { "orderable": false, "searchable": false }
             ],
             "initComplete": function () { hideLoader("examinerstable"); },
             "drawCallback": function () { reinitDropdowns(this); }
