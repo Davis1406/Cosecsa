@@ -335,8 +335,8 @@ class ExamsController extends Controller
                 'participation_type' => $request->participation_type,
                 'hospital_type' => $request->hospital_type ?? null,
                 'hospital_name' => $request->hospital_name ?? null,
-                'exam_availability' => json_encode($availability),
-                'examination_years' => isset($request->examination_years) ? json_encode($request->examination_years) : null,
+                'exam_availability' => $availability,
+                'examination_years' => $request->examination_years ?? null,
             ]);
 
             DB::commit();
@@ -456,34 +456,77 @@ class ExamsController extends Controller
 
     public function edit($id, Request $request)
     {
-        $examiner = User::getExaminers()->firstWhere('examin_id', $id);
+        $yearId = User::getCurrentYearId();
+
+        // Single targeted query — avoids loading all 700+ examiners via User::getExaminers()
+        $examiner = DB::table('examiners')
+            ->join('users', 'users.id', '=', 'examiners.user_id')
+            ->leftJoin('countries', 'countries.id', '=', 'examiners.country_id')
+            ->leftJoin('exams_groups', function ($join) use ($yearId) {
+                $join->on('exams_groups.exm_id', '=', 'examiners.id')
+                     ->where('exams_groups.year_id', $yearId);
+            })
+            ->leftJoin('exams_shifts', function ($join) use ($yearId) {
+                $join->on('exams_shifts.exm_id', '=', 'examiners.id')
+                     ->where('exams_shifts.year_id', $yearId);
+            })
+            ->where('examiners.id', $id)
+            ->select(
+                'examiners.id as id',
+                'examiners.id as examin_id',
+                'examiners.user_id as ex_id',
+                'examiners.examiner_id',
+                'examiners.mobile',
+                'examiners.gender',
+                'examiners.country_id',
+                'examiners.specialty',
+                'examiners.subspecialty',
+                'examiners.curriculum_vitae',
+                'examiners.passport_image',
+                'examiners.role_id',
+                'users.name as examiner_name',
+                'users.email',
+                'countries.country_name',
+                'exams_groups.group_id',
+                'exams_shifts.shift as shift_id'
+            )
+            ->first();
+
         if (!$examiner) return redirect()->back()->with('error', 'Examiner not found');
 
-        // Get the referring URL or fallback to examiners list
-        $from = $request->input('from');
-        $backUrl = null;
+        // Attach history (single row lookup)
+        $history = DB::table('examiners_history')->where('exm_id', $id)->first();
+        $examiner->history                    = $history;
+        $examiner->virtual_mcs_participated   = $history->virtual_mcs_participated ?? null;
+        $examiner->fcs_participated           = $history->fcs_participated ?? null;
+        $examiner->hospital_type              = $history->hospital_type ?? null;
+        $examiner->hospital_name              = $history->hospital_name ?? null;
+        $examiner->examination_years          = $history->examination_years ?? null;
 
+        // Back URL
+        $from    = $request->input('from');
+        $backUrl = null;
         if ($from) {
-            // If 'from' parameter exists, use it
-            $query = $request->except(['from', '_token']);
+            $query   = $request->except(['from', '_token']);
             $backUrl = url($from) . (count($query) ? '?' . http_build_query($query) : '');
         } else {
-            // If no 'from' parameter, try to get from HTTP_REFERER
             $referer = $request->header('referer');
-            if ($referer && str_contains($referer, url('/'))) {
-                $backUrl = $referer;
-            } else {
-                // Default fallback
-                $backUrl = url('admin/exams/examiners');
-            }
+            $backUrl = ($referer && str_contains($referer, url('/')))
+                ? $referer
+                : url('admin/exams/examiners');
         }
+
+        // Dynamic year list: 2020 → last completed year
+        $lastYearName = DB::table('years')->where('id', $yearId - 1)->value('year_name') ?? (date('Y') - 1);
+        $examYears    = range(2020, (int) $lastYearName);
 
         return view('admin.exams.edit_examiner', [
             'header_title' => 'Edit Examiner',
-            'examiner' => $examiner,
-            'getCountry' => Country::getCountry(),
-            'groups' => DB::table('examiners_groups')->select('id', 'group_name')->get(),
-            'backUrl' => $backUrl,
+            'examiner'     => $examiner,
+            'getCountry'   => Country::getCountry(),
+            'groups'       => DB::table('examiners_groups')->select('id', 'group_name')->get(),
+            'backUrl'      => $backUrl,
+            'examYears'    => $examYears,
         ]);
     }
 
@@ -556,8 +599,8 @@ class ExamsController extends Controller
                     'participation_type' => $request->participation_type,
                     'hospital_type' => $request->hospital_type ?? null,
                     'hospital_name' => $request->hospital_name ?? null,
-                    'exam_availability' => json_encode($availability),
-                    'examination_years' => isset($request->examination_years) ? json_encode($request->examination_years) : null,
+                    'exam_availability' => $availability,
+                    'examination_years' => $request->examination_years ?? null,
                 ]
             );
 
@@ -1478,7 +1521,7 @@ public function delete($id)
 
         ExaminerHistory::updateOrCreate(
             ['exm_id' => $examinerRecord->exm_id],
-            ['exam_availability' => json_encode($availability)]
+            ['exam_availability' => $availability]
         );
 
         // Save MCS shift preference when MCS is selected
@@ -1657,7 +1700,7 @@ public function delete($id)
                     $availability = ['Not Available'];
                 }
 
-                $historyData['exam_availability'] = json_encode($availability);
+                $historyData['exam_availability'] = $availability;
             }
 
             if (isset($validated['virtual_mcs_participated'])) {
@@ -1677,7 +1720,7 @@ public function delete($id)
             }
 
             if (isset($validated['examination_years'])) {
-                $historyData['examination_years'] = json_encode($validated['examination_years']);
+                $historyData['examination_years'] = $validated['examination_years'];
             }
 
             if (!empty($historyData)) {

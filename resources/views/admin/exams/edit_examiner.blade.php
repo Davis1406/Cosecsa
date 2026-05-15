@@ -211,15 +211,12 @@
                                         <label>2025 Exam Availability</label>
                                         <div class="checkbox-group exam-availability-group">
                                             @php
+                                                // exam_availability is double-encoded in DB — decode twice
                                                 $selectedAvailability = [];
-                                                if ($examiner->history && $examiner->history->exam_availability) {
-                                                    if (is_string($examiner->history->exam_availability)) {
-                                                        $selectedAvailability =
-                                                            json_decode($examiner->history->exam_availability, true) ?:
-                                                            [];
-                                                    } elseif (is_array($examiner->history->exam_availability)) {
-                                                        $selectedAvailability = $examiner->history->exam_availability;
-                                                    }
+                                                if (!empty($examiner->history->exam_availability)) {
+                                                    $av = json_decode($examiner->history->exam_availability, true);
+                                                    if (is_string($av)) { $av = json_decode($av, true); }
+                                                    $selectedAvailability = is_array($av) ? $av : [];
                                                 }
                                             @endphp
 
@@ -371,52 +368,27 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label>Years you have Examined/Observed (2020-2024)</label>
+                                            <label>Years you have Examined/Observed (2020–{{ last($examYears) }})</label>
                                             <div class="checkbox-group">
                                                 @php
-                                                    // Convert examination_years from database to array
+                                                    // examination_years is double-encoded in DB — decode twice
                                                     $selectedYears = [];
-                                                    if ($examiner->examination_years) {
-                                                        if (is_string($examiner->examination_years)) {
-                                                            // If it's a JSON string, decode it
-                                                            $selectedYears =
-                                                                json_decode($examiner->examination_years, true) ?: [];
-                                                        } elseif (is_array($examiner->examination_years)) {
-                                                            $selectedYears = $examiner->examination_years;
-                                                        }
+                                                    if (!empty($examiner->examination_years)) {
+                                                        $ey = json_decode($examiner->examination_years, true);
+                                                        if (is_string($ey)) { $ey = json_decode($ey, true); }
+                                                        $selectedYears = is_array($ey) ? array_map('strval', $ey) : [];
                                                     }
                                                 @endphp
 
+                                                @foreach($examYears as $yr)
                                                 <div class="form-check form-check-inline">
                                                     <input class="form-check-input" type="checkbox"
-                                                        name="examination_years[]" id="year_2020" value="2020"
-                                                        {{ in_array('2020', $selectedYears) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="year_2020">2020</label>
+                                                        name="examination_years[]"
+                                                        id="year_{{ $yr }}" value="{{ $yr }}"
+                                                        {{ in_array((string)$yr, $selectedYears) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="year_{{ $yr }}">{{ $yr }}</label>
                                                 </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="checkbox"
-                                                        name="examination_years[]" id="year_2021" value="2021"
-                                                        {{ in_array('2021', $selectedYears) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="year_2021">2021</label>
-                                                </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="checkbox"
-                                                        name="examination_years[]" id="year_2022" value="2022"
-                                                        {{ in_array('2022', $selectedYears) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="year_2022">2022</label>
-                                                </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="checkbox"
-                                                        name="examination_years[]" id="year_2023" value="2023"
-                                                        {{ in_array('2023', $selectedYears) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="year_2023">2023</label>
-                                                </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="checkbox"
-                                                        name="examination_years[]" id="year_2024" value="2024"
-                                                        {{ in_array('2024', $selectedYears) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="year_2024">2024</label>
-                                                </div>
+                                                @endforeach
                                             </div>
                                             <div class="error-message">Please select examination years</div>
                                         </div>
