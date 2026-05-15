@@ -575,25 +575,32 @@ class ExamsController extends Controller
                     'is_active' => 1,
                 ]);
 
-            // Update group
-            DB::table('exams_groups')->where('exm_id', $examiner->id)->delete();
-            DB::table('exams_groups')->insert([
-                'exm_id' => $examiner->id,
-                'group_id' => $request->group_id,
-                'year_id' => User::getCurrentYearId(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // Update group — only insert when a real group was selected
+            DB::table('exams_groups')
+                ->where('exm_id', $examiner->id)
+                ->where('year_id', User::getCurrentYearId())
+                ->delete();
+            if ($request->filled('group_id')) {
+                DB::table('exams_groups')->insert([
+                    'exm_id'     => $examiner->id,
+                    'group_id'   => $request->group_id,
+                    'year_id'    => User::getCurrentYearId(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
-            // Update shift
+            // Update shift — only insert when a real shift was selected
             ExamsShift::where('exm_id', $examiner->id)
-                ->where('year_id', User::getCurrentYearId())->delete();
-
-            ExamsShift::create([
-                'exm_id' => $examiner->id,
-                'shift' => $request->filled('shift') ? $request->shift : null,
-                'year_id' => User::getCurrentYearId()
-            ]);
+                ->where('year_id', User::getCurrentYearId())
+                ->delete();
+            if ($request->filled('shift')) {
+                ExamsShift::create([
+                    'exm_id'  => $examiner->id,
+                    'shift'   => $request->shift,
+                    'year_id' => User::getCurrentYearId(),
+                ]);
+            }
 
             // Handle Not Available logic
             $availability = $request->exam_availability ?? [];
@@ -833,12 +840,17 @@ public function delete($id)
                 $query->where('user_roles.role_type', 9)
                     ->orWhereNull('user_roles.role_type');
             })
-            ->where(function ($query) {
-                // Only show current-year confirmations:
-                // either they submitted the availability form (exams_shifts scoped to yearId above)
-                // or the admin assigned them to a current-year exam group.
-                $query->whereNotNull('exams_shifts.id')
-                      ->orWhereNotNull('exams_groups.id');
+            ->where(function ($query) use ($yearId) {
+                // Only show examiners who are genuinely confirmed for the current year:
+                // 1. Submitted the availability form for this year (availability_year_id matches and not null)
+                // 2. OR admin assigned them a real shift for this year
+                // 3. OR admin assigned them to a real group for this year
+                $query->where(function ($q) use ($yearId) {
+                          $q->where('examiners_history.availability_year_id', $yearId)
+                            ->whereNotNull('examiners_history.exam_availability');
+                      })
+                      ->orWhereNotNull('exams_shifts.shift')
+                      ->orWhereNotNull('exams_groups.group_id');
             })
             ->groupBy('examiners.id')
             ->orderBy('examiners.id', 'desc')
