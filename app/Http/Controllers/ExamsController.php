@@ -23,27 +23,49 @@ class ExamsController extends Controller
 {
     public function list()
     {
-        $data['header_title'] = 'Examiners';
+        $currentYearId = User::getCurrentYearId();
+        $lastYearId    = $currentYearId - 1;
 
-        $lastYearId = User::getCurrentYearId() - 1; // 2025 = id 6, 2026 = id 7, etc.
+        // Single query — no N+1. Gets everything the list view needs.
+        $examiners = DB::table('examiners')
+            ->join('users', 'users.id', '=', 'examiners.user_id')
+            ->join('user_roles', function ($join) {
+                $join->on('user_roles.user_id', '=', 'users.id')
+                     ->where('user_roles.is_active', 1);
+            })
+            ->leftJoin('countries', 'countries.id', '=', 'examiners.country_id')
+            ->leftJoin('exams_groups', function ($join) use ($currentYearId) {
+                $join->on('exams_groups.exm_id', '=', 'examiners.id')
+                     ->where('exams_groups.year_id', $currentYearId);
+            })
+            ->leftJoin('examiners_groups', 'examiners_groups.id', '=', 'exams_groups.group_id')
+            // Subquery flag: did this examiner participate last year?
+            ->leftJoin('exams_groups as eg_last', function ($join) use ($lastYearId) {
+                $join->on('eg_last.exm_id', '=', 'examiners.id')
+                     ->where('eg_last.year_id', $lastYearId);
+            })
+            ->where('users.user_type', 9)
+            ->select(
+                'examiners.id as examin_id',
+                'examiners.user_id as ex_id',
+                'examiners.examiner_id',
+                'users.name as examiner_name',
+                'users.email',
+                'countries.country_name',
+                DB::raw('GROUP_CONCAT(DISTINCT examiners_groups.group_name ORDER BY examiners_groups.group_name SEPARATOR ", ") as group_name'),
+                DB::raw('MAX(eg_last.id) IS NOT NULL as participated_last_year')
+            )
+            ->groupBy(
+                'examiners.id', 'examiners.user_id', 'examiners.examiner_id',
+                'users.name', 'users.email', 'countries.country_name'
+            )
+            ->orderBy('users.name')
+            ->get();
 
-        // IDs of examiners who participated last year
-        $lastYearExmIds = DB::table('exams_groups')
-            ->where('year_id', $lastYearId)
-            ->pluck('exm_id')
-            ->toArray();
-
-        $examiners = User::getExaminers();
-
-        // Tag each examiner with a boolean flag
-        $examiners->each(function ($ex) use ($lastYearExmIds) {
-            $ex->participated_last_year = in_array($ex->examin_id, $lastYearExmIds);
-        });
-
-        $data['getExaminers']    = $examiners;
-        $data['lastYearCount']   = count($lastYearExmIds);
-        $data['currentYear']     = date('Y');
-        $data['lastYear']        = date('Y') - 1;
+        $data['getExaminers']  = $examiners;
+        $data['currentYear']   = date('Y');
+        $data['lastYear']      = date('Y') - 1;
+        $data['header_title']  = 'Examiners';
 
         return view('admin.exams.examiners', $data);
     }
