@@ -1188,8 +1188,11 @@ public function delete($id)
             ->first();
 
         $availability = $request->exam_availability;
+        // Singleton options override everything else
         if (in_array('Not Available', $availability)) {
             $availability = ['Not Available'];
+        } elseif (in_array('Tentative', $availability)) {
+            $availability = ['Tentative'];
         }
 
         ExaminerHistory::updateOrCreate(

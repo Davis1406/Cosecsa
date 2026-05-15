@@ -94,9 +94,11 @@
         .avail-label.selected { border-color: #a02626; background: #fdf5f5; }
         .avail-label input[type="checkbox"] { width: 18px; height: 18px; accent-color: #a02626; flex-shrink: 0; }
         .avail-icon { font-size: 1.1rem; width: 22px; text-align: center; flex-shrink: 0; }
-        .avail-icon.mcs  { color: #0055a5; }
-        .avail-icon.fcs  { color: #28a745; }
-        .avail-icon.none { color: #dc3545; }
+        .avail-icon.mcs       { color: #0055a5; }
+        .avail-icon.fcs       { color: #28a745; }
+        .avail-icon.tentative { color: #e67e00; }
+        .avail-icon.none      { color: #dc3545; }
+        .avail-label.tentative-label { border-style: dashed; }
 
         /* Shift section */
         #shift-section {
@@ -197,7 +199,7 @@
                 {{-- Availability --}}
                 <div class="form-group">
                     <label><i class="fas fa-calendar-check mr-1"></i> Examination Availability <span class="text-danger">*</span></label>
-                    <small class="form-text text-muted mb-2 d-block">Select all examinations you are available to participate in.</small>
+                    <small class="form-text text-muted mb-2 d-block">Select all that apply. Choose <em>Tentative</em> if you are not yet certain.</small>
 
                     <div class="avail-options">
                         {{-- MCS --}}
@@ -243,6 +245,17 @@
                             <div>
                                 <strong>FCS</strong>
                                 <span class="text-muted" style="font-size:.85rem;"> — Fellowship of the College of Surgeons</span>
+                            </div>
+                        </label>
+
+                        {{-- Tentative --}}
+                        <label class="avail-label tentative-label" id="label-Tentative">
+                            <input type="checkbox" name="exam_availability[]" value="Tentative" id="chk-tentative"
+                                   {{ in_array('Tentative', old('exam_availability', [])) ? 'checked' : '' }}>
+                            <span class="avail-icon tentative"><i class="fas fa-question-circle"></i></span>
+                            <div>
+                                <strong>Tentative</strong>
+                                <span class="text-muted" style="font-size:.85rem;"> — I may be available but cannot confirm yet</span>
                             </div>
                         </label>
 
@@ -298,11 +311,17 @@ $(function () {
     });
 
     // ── Availability logic ────────────────────────────────────────────────────
-    const chkMCS  = document.getElementById('chk-mcs');
-    const chkFCS  = document.getElementById('chk-fcs');
-    const chkNone = document.getElementById('chk-not-available');
+    const chkMCS       = document.getElementById('chk-mcs');
+    const chkFCS       = document.getElementById('chk-fcs');
+    const chkTentative = document.getElementById('chk-tentative');
+    const chkNone      = document.getElementById('chk-not-available');
     const shiftSection = document.getElementById('shift-section');
-    const allChks = [chkMCS, chkFCS, chkNone];
+    const allChks      = [chkMCS, chkFCS, chkTentative, chkNone];
+
+    // Mutual-exclusion rules:
+    // "Not Available"  → clears everything else
+    // "Tentative"      → clears MCS, FCS, Not Available (standalone)
+    // MCS / FCS        → clears Not Available and Tentative
 
     function syncHighlight() {
         allChks.forEach(function(chk) {
@@ -320,24 +339,34 @@ $(function () {
         }
     }
 
-    // "Not Available" is mutually exclusive
     chkNone.addEventListener('change', function () {
         if (this.checked) {
             chkMCS.checked = false;
             chkFCS.checked = false;
+            chkTentative.checked = false;
+        }
+        toggleShift();
+        syncHighlight();
+    });
+
+    chkTentative.addEventListener('change', function () {
+        if (this.checked) {
+            chkMCS.checked = false;
+            chkFCS.checked = false;
+            chkNone.checked = false;
         }
         toggleShift();
         syncHighlight();
     });
 
     chkMCS.addEventListener('change', function () {
-        if (this.checked) chkNone.checked = false;
+        if (this.checked) { chkNone.checked = false; chkTentative.checked = false; }
         toggleShift();
         syncHighlight();
     });
 
     chkFCS.addEventListener('change', function () {
-        if (this.checked) chkNone.checked = false;
+        if (this.checked) { chkNone.checked = false; chkTentative.checked = false; }
         syncHighlight();
     });
 
