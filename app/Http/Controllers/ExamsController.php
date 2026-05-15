@@ -46,6 +46,7 @@ class ExamsController extends Controller
             })
             ->where('users.user_type', 9)
             ->select(
+                'examiners.id as id',
                 'examiners.id as examin_id',
                 'examiners.user_id as ex_id',
                 'examiners.examiner_id',
