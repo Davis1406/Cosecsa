@@ -38,11 +38,25 @@ class ExamsController extends Controller
         $participatedSql = "CASE WHEN MAX(examiners_history.examination_years) LIKE '%{$lastYearName}%'
                             THEN 1 ELSE 0 END as participated_last_year";
 
-        // examined_for: what the examiner participated in last year — still sourced
-        // from examiners_history.exam_availability when present, for display purposes.
-        $examinedForSql = "CASE WHEN MAX(examiners_history.examination_years) LIKE '%{$lastYearName}%'
-                            THEN '{$lastYearName}'
-                            ELSE NULL END as examined_for";
+        // examined_for: programmes the examiner actually participated in last year.
+        // Sourced from mcs_results, gs_results, and examiner_participations for display.
+        // Only shown when examination_years confirms they participated (participated_last_year = 1).
+        $hasParticipations = \Illuminate\Support\Facades\Schema::hasTable('examiner_participations');
+
+        $examinedForSql = '(
+            SELECT GROUP_CONCAT(DISTINCT spec ORDER BY spec SEPARATOR ", ")
+            FROM (
+                SELECT "MCS" as spec FROM mcs_results
+                    WHERE mcs_results.examiner_id = examiners.id AND mcs_results.exam_year = ' . $lastYearId . '
+                UNION ALL
+                SELECT "General Surgery" FROM gs_results
+                    WHERE gs_results.examiner_id = examiners.id AND gs_results.exam_year = ' . $lastYearId .
+            ($hasParticipations ? '
+                UNION ALL
+                SELECT ep.specialty FROM examiner_participations ep
+                    WHERE ep.exm_id = examiners.id AND ep.year_id = ' . $lastYearId . ' AND ep.specialty IS NOT NULL' : '') . '
+            ) specs
+        ) as examined_for';
 
         $examiners = DB::table('examiners')
             ->join('users', 'users.id', '=', 'examiners.user_id')
