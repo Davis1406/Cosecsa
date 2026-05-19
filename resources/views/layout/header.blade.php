@@ -19,6 +19,29 @@
         </li>
     </ul>
 
+    @if(Auth::check() && Auth::user()->user_type == 1)
+    <!-- Global Search (admin only) -->
+    <div class="navbar-search-wrapper ml-3" style="position:relative;flex:1;max-width:420px;">
+        <div class="input-group input-group-sm">
+            <input type="text" id="globalSearchInput" class="form-control"
+                   placeholder="Search trainees, candidates, examiners…"
+                   autocomplete="off"
+                   style="border-radius:20px 0 0 20px;border-right:0;">
+            <div class="input-group-append">
+                <span class="input-group-text" style="border-radius:0 20px 20px 0;background:#fff;border-left:0;cursor:pointer;" id="globalSearchBtn">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+            </div>
+        </div>
+        <!-- Results dropdown -->
+        <div id="globalSearchResults"
+             style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;
+                    background:#fff;border:1px solid #ddd;border-radius:8px;
+                    box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:9999;max-height:420px;overflow-y:auto;">
+        </div>
+    </div>
+    @endif
+
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
         <!-- Dark Mode Toggle Button -->
@@ -34,6 +57,90 @@
         </li>
     </ul>
 </nav>
+
+@if(Auth::check() && Auth::user()->user_type == 1)
+<style>
+#globalSearchResults .gs-section-title {
+    font-size:.68rem;font-weight:700;text-transform:uppercase;
+    letter-spacing:.07em;color:#a02626;padding:6px 12px 2px;
+    border-top:1px solid #f0f0f0;
+}
+#globalSearchResults .gs-section-title:first-child { border-top:none; }
+#globalSearchResults .gs-item {
+    display:block;padding:7px 12px;color:#333;font-size:.85rem;
+    text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#globalSearchResults .gs-item:hover { background:#fdf0f0;color:#a02626; }
+#globalSearchResults .gs-item .gs-sub { color:#888;font-size:.75rem;margin-left:6px; }
+#globalSearchResults .gs-empty { padding:12px;color:#888;font-size:.85rem;text-align:center; }
+#globalSearchResults .gs-loading { padding:12px;color:#888;font-size:.85rem;text-align:center; }
+.navbar-search-wrapper input:focus { box-shadow:none;border-color:#a02626; }
+</style>
+<script>
+(function () {
+    var timer = null;
+    var $input  = $('#globalSearchInput');
+    var $box    = $('#globalSearchResults');
+
+    $input.on('input', function () {
+        clearTimeout(timer);
+        var q = $.trim($(this).val());
+        if (q.length < 2) { $box.hide().empty(); return; }
+        timer = setTimeout(function () { doSearch(q); }, 300);
+    });
+
+    $('#globalSearchBtn').on('click', function () {
+        var q = $.trim($input.val());
+        if (q.length >= 2) doSearch(q);
+    });
+
+    $input.on('keydown', function (e) {
+        if (e.key === 'Enter') { var q = $.trim($(this).val()); if (q.length >= 2) doSearch(q); }
+        if (e.key === 'Escape') { $box.hide().empty(); }
+    });
+
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('.navbar-search-wrapper').length) $box.hide();
+    });
+
+    function doSearch(q) {
+        $box.html('<div class="gs-loading"><i class="fas fa-spinner fa-spin mr-1"></i> Searching…</div>').show();
+        $.getJSON('{{ url("admin/global-search") }}', { q: q })
+            .done(function (data) { renderResults(data, q); })
+            .fail(function () { $box.html('<div class="gs-empty">Search failed. Please try again.</div>'); });
+    }
+
+    function renderResults(data, q) {
+        var html = '';
+        var sections = [
+            { key: 'trainees',   label: 'Trainees',   icon: 'fas fa-user-graduate' },
+            { key: 'candidates', label: 'Candidates',  icon: 'fas fa-user-check' },
+            { key: 'examiners',  label: 'Examiners',   icon: 'fas fa-user-md' },
+            { key: 'fellows',    label: 'Fellows',      icon: 'fas fa-award' },
+        ];
+        var total = 0;
+        sections.forEach(function (s) {
+            var rows = data[s.key] || [];
+            if (!rows.length) return;
+            total += rows.length;
+            html += '<div class="gs-section-title"><i class="' + s.icon + ' mr-1"></i>' + s.label + ' <span style="font-weight:400;color:#aaa;">(' + rows.length + ')</span></div>';
+            rows.forEach(function (r) {
+                html += '<a class="gs-item" href="' + r.url + '">'
+                      + '<strong>' + escHtml(r.name) + '</strong>'
+                      + (r.sub ? '<span class="gs-sub">' + escHtml(r.sub) + '</span>' : '')
+                      + '</a>';
+            });
+        });
+        if (!total) html = '<div class="gs-empty">No results for "<strong>' + escHtml(q) + '</strong>"</div>';
+        $box.html(html).show();
+    }
+
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+})();
+</script>
+@endif
 <!-- /.navbar -->
 
 <!-- Main Sidebar Container -->
@@ -51,7 +158,10 @@
             <!-- Sidebar user panel (optional) -->
             <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                 <div class="image">
-                    <img src="{{ url('public/dist/img/user.png') }}" class="img-circle elevation-2" alt="User Image">
+                    @php $authPhoto = Auth::user()->profile_image ?? null; @endphp
+                    <img src="{{ $authPhoto ? asset('storage/' . $authPhoto) : url('public/dist/img/user.png') }}"
+                         class="img-circle elevation-2" alt="User Image"
+                         style="width:34px;height:34px;object-fit:cover;">
                 </div>
                 <div class="info">
                     <a href="#" class="d-block">{{ Auth::user()->name }}</a>

@@ -1108,6 +1108,34 @@ public function delete($id)
     }
 
     /**
+     * POST admin/exams/examiner/{id}/upload-cv
+     * Upload a CV for an examiner who doesn't have one yet (or replace existing).
+     */
+    public function uploadCv(Request $request, $id)
+    {
+        $request->validate([
+            'curriculum_vitae' => 'required|file|mimes:pdf,doc,docx|max:10240',
+        ]);
+
+        $examiner = ExamsModel::findOrFail($id);
+
+        // Delete old CV if present
+        if ($examiner->curriculum_vitae && Storage::disk('public')->exists($examiner->curriculum_vitae)) {
+            Storage::disk('public')->delete($examiner->curriculum_vitae);
+        }
+
+        $file      = $request->file('curriculum_vitae');
+        $sanitized = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+        $finalName = $examiner->id . '-' . $sanitized . '.' . $file->getClientOriginalExtension();
+        $path      = $file->storeAs('documents/cvs', $finalName, 'public');
+
+        $examiner->curriculum_vitae = $path;
+        $examiner->save();
+
+        return redirect()->back()->with('success', 'CV uploaded successfully.');
+    }
+
+    /**
      * POST admin/exams/manage-participation/{examiner_id}
      * Called from the Manage Participation modal on view_examiner.
      */

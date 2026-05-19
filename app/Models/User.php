@@ -21,6 +21,7 @@ class User extends Authenticatable
         'email',
         'password',
         'user_type',
+        'profile_image',
     ];
 
     protected $hidden = [
@@ -334,10 +335,8 @@ class User extends Authenticatable
         return $shiftNames[$shiftId] ?? 'Unknown Shift';
     }
 
-    static public function getCandidates()
+    static public function getCandidates($year = null)
     {
-        $currentYear = date('Y');
-
         $return = self::select(
             'users.id as user_id',
             'users.name as name',
@@ -353,7 +352,7 @@ class User extends Authenticatable
             'countries.country_name as country_name',
             'user_roles.role_type as role_type'
         )
-            ->leftJoin('candidates', 'users.id', '=', 'candidates.user_id') // ✅ changed to LEFT JOIN
+            ->leftJoin('candidates', 'users.id', '=', 'candidates.user_id')
             ->leftJoin('hospitals', 'candidates.hospital_id', '=', 'hospitals.id')
             ->leftJoin('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
             ->leftJoin('programmes', 'candidates.programme_id', '=', 'programmes.id')
@@ -364,7 +363,11 @@ class User extends Authenticatable
                     ->where('user_roles.role_type', '=', 3); // role_type=3 only — prevents duplicate rows for users with multiple active roles
             })
             ->where('users.is_deleted', '=', '0')
-            ->where('candidates.exam_year', '=', strval($currentYear)); // cast to string for ENUM
+            ->whereNotNull('candidates.id'); // must have a candidates record
+
+        if ($year !== null) {
+            $return = $return->where('candidates.exam_year', '=', strval($year));
+        }
 
         return $return->orderBy('candidates_id', 'asc')->get();
 

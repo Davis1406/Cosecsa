@@ -125,16 +125,16 @@ class CandidatesController extends Controller
 
     public function list()
     {
-        $data['getRecord']       = User::getCandidates();
+        $data['getRecord']       = User::getCandidates(); // all years — client-side year filter applied by DataTables
         $data['header_title']    = "Candidates List";
         $data['filterCountries'] = DB::table('candidates as c')
             ->join('countries as co', 'co.id', '=', 'c.country_id')
             ->select('co.country_name')->groupBy('co.country_name')->orderBy('co.country_name')
-            ->where('c.exam_year', date('Y'))->pluck('co.country_name');
+            ->pluck('co.country_name');
         $data['filterProgrammes'] = DB::table('candidates as c')
             ->join('programmes as p', 'p.id', '=', 'c.programme_id')
             ->select('p.name')->groupBy('p.name')->orderBy('p.name')
-            ->where('c.exam_year', date('Y'))->pluck('p.name');
+            ->pluck('p.name');
         $data['filterYears'] = DB::table('candidates')
             ->whereNotNull('exam_year')->where('exam_year', '!=', '')
             ->select('exam_year')->groupBy('exam_year')->orderByDesc('exam_year')->pluck('exam_year');

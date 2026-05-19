@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Hash;
 use DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
@@ -80,6 +82,17 @@ class AdminController extends Controller
             if (!empty($request->password)) {
                 // Assign plain text — setPasswordAttribute mutator bcrypts it for user_type=1
                 $user->password = $request->password;
+            }
+
+            if ($request->hasFile('profile_image')) {
+                // Delete old image if present
+                if ($user->profile_image && Storage::disk('public')->exists($user->profile_image)) {
+                    Storage::disk('public')->delete($user->profile_image);
+                }
+                $file      = $request->file('profile_image');
+                $sanitized = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+                $finalName = 'admin-' . $user->id . '-' . $sanitized . '.' . $file->getClientOriginalExtension();
+                $user->profile_image = $file->storeAs('profile_images/admins', $finalName, 'public');
             }
 
             $user->save();

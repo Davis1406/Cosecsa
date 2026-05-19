@@ -93,7 +93,7 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h3 class="card-title mb-0">Candidates List {{ date('Y') }}</h3>
+                                <h3 class="card-title mb-0">Candidates List <span id="cardYearLabel">{{ date('Y') }}</span></h3>
                                 <small class="text-muted" id="filteredCount"></small>
                             </div>
                             <div class="card-body">
@@ -263,17 +263,28 @@ $(document).ready(function () {
         return true;
     });
 
+    function updateCardTitle() {
+        var yr = $('#filterYear').val();
+        $('#cardYearLabel').text(yr || 'All Years');
+    }
+
     $('#filterCountry, #filterProgramme, #filterYear, #filterGender, #filterFeePaid').on('change', function () {
         var dt = $('#candidatestable').DataTable();
         dt.draw();
+        updateCardTitle();
         $('#filteredCount').text('Showing ' + dt.page.info().recordsDisplay + ' of ' + dt.page.info().recordsTotal);
     });
 
     $('#btnClearFilters').on('click', function () {
         $('#filterCountry, #filterProgramme, #filterYear, #filterGender, #filterFeePaid').val('');
         $('#candidatestable').DataTable().draw();
+        updateCardTitle();
         $('#filteredCount').text('');
     });
+
+    // Apply the default selected year filter on page load
+    $('#candidatestable').DataTable().draw();
+    updateCardTitle();
 
     // Dropdown init + outside-click handling is managed in custom.js
 });

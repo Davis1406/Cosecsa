@@ -47,6 +47,8 @@ Route::post('examiner-availability', [ExamsController::class, 'availabilitySubmi
 // Admin Routes
 Route::group(['middleware' => 'admin'], function(){
 
+    Route::get('admin/global-search', [DashboardController::class,'globalSearch'])->name('admin.global.search');
+
     Route::get('admin/dashboard', [DashboardController::class,'dashboard']);
     Route::get('admin/list ', [AdminController::class,'list']);
     Route::get('admin/add ', [AdminController::class,'add']);
@@ -216,6 +218,7 @@ Route::get('admin/exams/gs_station_results/{candidate_id}/{station_id}', [ExamsC
 Route::get('admin/exams/attendance', [ExamsController::class, 'attendanceList'])->name('exams.attendance.list');
 // Manage participation history (from view_examiner modal)
 Route::post('admin/exams/manage-participation/{examiner_id}', [ExamsController::class, 'manageParticipation'])->name('exams.manage.participation');
+Route::post('admin/exams/examiner/{id}/upload-cv', [ExamsController::class, 'uploadCv'])->name('examiner.upload.cv');
 // Show attendance confirmation page (GET)
 Route::get('admin/exams/confirm-attendance/{examiner_id}', [ExamsController::class, 'showAttendanceConfirmation'])->name('exams.confirm.attendance');
 // Register attendance via Form (POST) - with CSRF protection

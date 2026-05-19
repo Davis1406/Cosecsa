@@ -188,8 +188,18 @@
                                        class="btn btn-sm btn-outline-danger btn-block">
                                         <i class="fas fa-download mr-1"></i> {{ $cvName }}
                                     </a>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary btn-block mt-1"
+                                            data-toggle="modal" data-target="#uploadCvModal">
+                                        <i class="fas fa-sync-alt mr-1"></i> Replace CV
+                                    </button>
                                 @else
-                                    <span class="text-muted">No CV uploaded</span>
+                                    <span class="text-muted d-block mb-1">No CV uploaded</span>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary btn-block"
+                                            data-toggle="modal" data-target="#uploadCvModal">
+                                        <i class="fas fa-upload mr-1"></i> Upload CV
+                                    </button>
                                 @endif
                             </div>
 
@@ -695,6 +705,49 @@
     </div>
 </div>
 
+{{-- ══ CV Upload Modal ═══════════════════════════════════════════════════════ --}}
+<div class="modal fade" id="uploadCvModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#a02626;color:#fff;padding:.75rem 1rem;">
+                <h5 class="modal-title mb-0">
+                    <i class="fas fa-upload mr-2"></i> Upload Curriculum Vitae
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" style="opacity:.9;">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form method="POST"
+                  action="{{ route('examiner.upload.cv', $examiner->examin_id) }}"
+                  enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    @if(session('success'))
+                        <div class="alert alert-success">{{ session('success') }}</div>
+                    @endif
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold">Select CV File <span class="text-danger">*</span></label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="cvFileInput"
+                                   name="curriculum_vitae" accept=".pdf,.doc,.docx" required>
+                            <label class="custom-file-label" for="cvFileInput">Choose file (PDF, DOC, DOCX — max 10 MB)</label>
+                        </div>
+                        @error('curriculum_vitae')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding:.6rem 1rem;">
+                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-danger">
+                        <i class="fas fa-upload mr-1"></i> Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @push('styles')
 <style>
 /* ── Force light-mode on this page regardless of OS/browser dark mode ──────
@@ -955,6 +1008,17 @@ window.printBadge = function () {
             document.body.removeChild(link);
         });
 };
+
+// ── CV upload modal — custom file label ──────────────────────────────────
+$('#cvFileInput').on('change', function () {
+    var name = $(this).val().split('\\').pop();
+    $(this).next('.custom-file-label').text(name || 'Choose file');
+});
+
+// Re-open CV modal on validation error
+@if($errors->has('curriculum_vitae'))
+    $(document).ready(function () { $('#uploadCvModal').modal('show'); });
+@endif
 
 // ── Programme dropdown (works inside modals via position:fixed) ───────────
 

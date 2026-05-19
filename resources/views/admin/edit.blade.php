@@ -46,39 +46,44 @@
               <!-- /.card-header -->
               <!-- form start -->
             
-              <form method="POST" action="">
+              <form method="POST" action="{{ url('admin/edit/' . $getRecord->id) }}"
+                    enctype="multipart/form-data">
                 {{ csrf_field() }}
                 <div class="card-body">
                     <div class="form-group">
                         <label>Name</label>
-                        <input type="text" class="form-control" name="name" value="{{old  ('name',$getRecord->name)}}"   required placeholder="Enter full name">
-                      </div>
-                  <div class="form-group">
-                    <label>Email address</label>
-                    <input type="email" class="form-control" name="email" value="{{old('email',$getRecord->email)}}" required placeholder="Enter email">
-                    <div style="color: red">{{$errors->first('email')}}</div> 
-                  </div>
-                  <div class="form-group">
-                    <label for="exampleInputPassword1">Password</label>
-                    <input type="password" class="form-control" name="password" placeholder="Password">
-                  </div>
-                  <div class="form-group">
-                    <label for="exampleInputFile">Profile Image</label>
-                    <div class="input-group">
-                      <div class="custom-file">
-                        <input type="file" class="custom-file-input">
-                        <label class="custom-file-label" for="exampleInputFile">Choose file</label>
-                      </div>
-                      <div class="input-group-append">
-                        <span class="input-group-text">Upload</span>
-                      </div>
+                        <input type="text" class="form-control" name="name" value="{{ old('name', $getRecord->name) }}" required placeholder="Enter full name">
                     </div>
-                  </div>
+                    <div class="form-group">
+                        <label>Email address</label>
+                        <input type="email" class="form-control" name="email" value="{{ old('email', $getRecord->email) }}" required placeholder="Enter email">
+                        <div style="color: red">{{ $errors->first('email') }}</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Password <small class="text-muted">(leave blank to keep current)</small></label>
+                        <input type="password" class="form-control" name="password" placeholder="New password">
+                    </div>
+                    <div class="form-group">
+                        <label>Profile Photo</label>
+                        @if(!empty($getRecord->profile_image))
+                            <div class="mb-2">
+                                <img src="{{ asset('storage/' . $getRecord->profile_image) }}"
+                                     alt="Current Photo"
+                                     style="width:80px;height:80px;object-fit:cover;border-radius:50%;border:2px solid #ddd;">
+                                <small class="d-block text-muted mt-1">Current photo</small>
+                            </div>
+                        @endif
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="profileImageInput"
+                                   name="profile_image" accept="image/*">
+                            <label class="custom-file-label" for="profileImageInput">Choose new photo</label>
+                        </div>
+                    </div>
                 </div>
                 <!-- /.card-body -->
 
                 <div class="card-footer" style="background-color: white">
-                  <button type="submit" class="btn btn-primary" style="background-color: #FEC503;border-color:#FEC503">Submit</button>
+                    <button type="submit" class="btn btn-primary" style="background-color: #FEC503;border-color:#FEC503">Save Changes</button>
                 </div>
               </form>
             </div>
@@ -98,7 +103,11 @@
 
 <script>
 $(function () {
-  bsCustomFileInput.init();
+    if (typeof bsCustomFileInput !== 'undefined') { bsCustomFileInput.init(); }
+    $('#profileImageInput').on('change', function () {
+        var name = $(this).val().split('\\').pop();
+        $(this).next('.custom-file-label').text(name || 'Choose new photo');
+    });
 });
 </script>
 </body>
