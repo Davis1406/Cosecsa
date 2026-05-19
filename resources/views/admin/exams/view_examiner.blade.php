@@ -244,6 +244,14 @@
             @endphp
 
             @if($hasHistory)
+            @php
+                // Derive MCS / FCS participation from yearProgrammes (authoritative source)
+                // rather than the old boolean fcs_participated / virtual_mcs_participated fields.
+                $hasMCSHistory = collect($yearProgrammes)->flatten()
+                    ->contains(fn($p) => str_contains(strtoupper($p), 'MCS'));
+                $hasFCSHistory = collect($yearProgrammes)->flatten()
+                    ->contains(fn($p) => str_contains(strtoupper($p), 'FCS'));
+            @endphp
             <div class="card mb-4">
                 <div class="card-header section-header">
                     <i class="fas fa-history mr-2"></i> Participation Summary
@@ -253,21 +261,21 @@
                     {{-- ── Quick-stat row ─────────────────────────────────── --}}
                     <div class="row text-center mb-3">
                         <div class="col-6 col-md-3 mb-3">
-                            <div class="stat-icon mx-auto {{ ($examiner->virtual_mcs_participated ?? '') == 'Yes' ? 'bg-success' : 'bg-light-muted' }}">
+                            <div class="stat-icon mx-auto {{ $hasMCSHistory ? 'bg-success' : 'bg-light-muted' }}">
                                 <i class="fas fa-laptop"></i>
                             </div>
-                            <small class="d-block mt-2 text-muted">Virtual MCS</small>
-                            <strong>{{ ($examiner->virtual_mcs_participated ?? '') == 'Yes' ? 'Participated' : 'N/A' }}</strong>
+                            <small class="d-block mt-2 text-muted">MCS</small>
+                            <strong>{{ $hasMCSHistory ? 'Participated' : 'N/A' }}</strong>
                         </div>
                         <div class="col-6 col-md-3 mb-3">
-                            <div class="stat-icon mx-auto {{ ($examiner->fcs_participated ?? '') == 'Yes' ? 'bg-info' : 'bg-light-muted' }}">
+                            <div class="stat-icon mx-auto {{ $hasFCSHistory ? 'bg-info' : 'bg-light-muted' }}">
                                 <i class="fas fa-stethoscope"></i>
                             </div>
                             <small class="d-block mt-2 text-muted">FCS</small>
-                            <strong>{{ ($examiner->fcs_participated ?? '') == 'Yes' ? 'Participated' : 'N/A' }}</strong>
+                            <strong>{{ $hasFCSHistory ? 'Participated' : 'N/A' }}</strong>
                         </div>
                         <div class="col-6 col-md-3 mb-3">
-                            <div class="stat-icon mx-auto {{ ($examiner->hospital_name ?? '') ? 'bg-warning' : 'bg-light-muted' }}">
+                            <div class="stat-icon mx-auto bg-light-muted">
                                 <i class="fas fa-hospital"></i>
                             </div>
                             <small class="d-block mt-2 text-muted">Hospital</small>
@@ -287,64 +295,36 @@
                     {{-- ── Year-by-year history ────────────────────────────── --}}
                     @if(!empty($exYears))
                     <div style="border-top:1px solid #f0f0f0;padding-top:1rem;">
-                        <p class="mb-3" style="font-size:.7rem;font-weight:700;text-transform:uppercase;
+                        <p class="mb-2" style="font-size:.7rem;font-weight:700;text-transform:uppercase;
                                                letter-spacing:.08em;color:#a02626;">
                             <i class="fas fa-stream mr-1"></i> Examination History by Year
                         </p>
 
-                        <div class="participation-timeline">
-                        @foreach(array_reverse((array)$exYears) as $index => $yr)
-                            @php
-                                $progs  = $yearProgrammes[(string)$yr] ?? [];
-                                $isLast = $index === count($exYears) - 1;
-                            @endphp
-                            <div class="timeline-row d-flex align-items-start mb-3">
-
-                                {{-- Year bubble --}}
-                                <div class="timeline-year flex-shrink-0 text-center mr-3">
-                                    <div style="width:52px;height:52px;border-radius:50%;
-                                                background:linear-gradient(135deg,#a02626,#d63031);
-                                                color:#fff;display:flex;align-items:center;
-                                                justify-content:center;font-size:.72rem;
-                                                font-weight:700;line-height:1.1;">
+                        <table class="table table-sm table-borderless mb-0" style="font-size:.87rem;">
+                            <thead>
+                                <tr style="border-bottom:1px solid #f0f0f0;">
+                                    <th style="width:80px;color:#6c757d;font-weight:600;padding-left:0;">Year</th>
+                                    <th style="color:#6c757d;font-weight:600;">Programme</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach(array_reverse((array)$exYears) as $yr)
+                                @php $progs = $yearProgrammes[(string)$yr] ?? []; @endphp
+                                <tr style="border-bottom:1px solid #f9f9f9;">
+                                    <td style="padding-left:0;font-weight:700;color:#333;vertical-align:middle;">
                                         {{ $yr }}
-                                    </div>
-                                    @if(!$isLast)
-                                        <div style="width:2px;height:18px;background:#e0e0e0;margin:0 auto;"></div>
-                                    @endif
-                                </div>
-
-                                {{-- Programme cards --}}
-                                <div class="flex-grow-1 pt-1">
-                                    @if(!empty($progs))
-                                        <div class="d-flex flex-wrap" style="gap:.4rem;">
-                                        @foreach($progs as $prog)
-                                            @php
-                                                $isMCS = str_contains(strtoupper($prog), 'MCS');
-                                                $isFCS = str_contains(strtoupper($prog), 'FCS');
-                                                $bg    = $isMCS ? '#1565c0' : ($isFCS ? '#00838f' : '#2e7d32');
-                                            @endphp
-                                            <span style="display:inline-flex;align-items:center;
-                                                         background:{{ $bg }};color:#fff;
-                                                         border-radius:6px;padding:4px 12px;
-                                                         font-size:.78rem;font-weight:600;
-                                                         letter-spacing:.02em;">
-                                                <i class="fas {{ $isMCS ? 'fa-microscope' : ($isFCS ? 'fa-stethoscope' : 'fa-user-md') }} mr-1"
-                                                   style="font-size:.7rem;"></i>
-                                                {{ $prog }}
-                                            </span>
-                                        @endforeach
-                                        </div>
-                                    @else
-                                        <span class="text-muted" style="font-size:.82rem;font-style:italic;">
-                                            No programme record found
-                                        </span>
-                                    @endif
-                                </div>
-
-                            </div>
-                        @endforeach
-                        </div>
+                                    </td>
+                                    <td style="vertical-align:middle;">
+                                        @if(!empty($progs))
+                                            {{ implode(', ', $progs) }}
+                                        @else
+                                            <span class="text-muted" style="font-style:italic;">No record</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
                     </div>
                     @endif
 
