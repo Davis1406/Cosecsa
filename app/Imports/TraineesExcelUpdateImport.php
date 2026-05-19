@@ -10,53 +10,53 @@ use Maatwebsite\Excel\Concerns\WithStartRow;
 use Carbon\Carbon;
 
 /**
- * Bulk-update import for the COSECSA SFS "2027 Exam candidates-trainees" Excel format.
+ * Bulk-update / bulk-create import for the COSECSA SFS Excel format.
  *
- * Expected sheet structure (1-indexed rows):
- *   Row 1  – section headers: "Trainee Details" | "MCS PE Fees" | "MCS Exam Fees" | "MCS Repeat Fees"
- *   Row 2  – column headers:  PEN | SFS Username | SFS Password | First Name | ... | Date Paid | Mode of Payment | Amount Paid
- *   Row 3+ – data
+ * Row 1 – section headers  (skipped)
+ * Row 2 – column headers   (skipped)
+ * Row 3+ – data
  *
- * Columns (0-based index):
- *   0  PEN (entry_number)
- *   1  SFS Username   → users.email (login)
- *   2  SFS Password   → users.password
- *   3  First Name
- *   4  Middle Name
- *   5  Last Name
- *   6  Gender
- *   7  Organisation   → trainees.hospital_id (fuzzy match)
- *   8  Country        → trainees.country_id
- *   9  Email          → trainees.personal_email
- *  10  Exam Type      → trainees.programme_id
- *  11  Exam Year      → trainees.exam_year
- *  12  MCS PE Fees  – Date Paid
- *  13  MCS PE Fees  – Amount Paid  → trainees.payment_date / amount_paid
- *  14  MCS Exam Fees – Date Paid
- *  15  MCS Exam Fees – Mode of Payment
- *  16  MCS Exam Fees – Amount Paid → candidates (exam_year=2027)
- *  17  MCS Repeat Fees – Date Paid
- *  18  MCS Repeat Fees – Mode of Payment
- *  19  MCS Repeat Fees – Amount Paid → candidates (repeat_paper_one=Yes)
+ * Col 0  PEN            → entry_number (match key)
+ * Col 1  SFS Username   → users.email
+ * Col 2  SFS Password   → users.password
+ * Col 3  First Name
+ * Col 4  Middle Name
+ * Col 5  Last Name
+ * Col 6  Gender
+ * Col 7  Organisation   → hospital_id  (fuzzy/create)
+ * Col 8  Country        → country_id
+ * Col 9  Email          → personal_email
+ * Col 10 Exam Type      → programme_id
+ * Col 11 Exam Year      → exam_year
+ * Col 12 PE Date Paid   → trainees.payment_date
+ * Col 13 PE Amount      → trainees.amount_paid
+ * Col 14 Exam Date Paid → candidates.payment_date  (exam_year=2027)
+ * Col 15 Exam MOP       → candidates.mode_of_payment
+ * Col 16 Exam Amount    → candidates.amount_paid
+ * Col 17 Repeat Date    → candidates (repeat_paper_one=Yes)
+ * Col 18 Repeat MOP
+ * Col 19 Repeat Amount
  */
 class TraineesExcelUpdateImport implements ToCollection, WithStartRow
 {
-    // ── Programme name → programme_id ────────────────────────────────────────
     private const PROGRAMME_MAP = [
-        'mcs'                         => 10,
-        'fcs general surgery'         => 2,
-        'fcs cardiothoracic surgery'  => 1,
-        'fcs neurosurgery'            => 3,
-        'fcs orthopaedic surgery'     => 4,
-        'fcs otorhinolaryngology'     => 5,
-        'fcs paediatric surgery'      => 7,
-        'fcs plastic surgery'         => 8,
-        'fcs urologic surgery'        => 9,
+        'mcs'                                => 10,
+        'fcs general surgery'                => 2,
+        'fcs cardiothoracic surgery'         => 1,
+        'fcs neurosurgery'                   => 3,
+        'fcs orthopaedic surgery'            => 4,
+        'fcs otorhinolaryngology'            => 5,
+        'fcs paediatric surgery'             => 7,
+        'fcs plastic surgery'                => 8,
+        'fcs urologic surgery'               => 9,
         'fcs paediatric orthopaedic surgery' => 6,
-        'fcs breast surgery'          => 12,
+        'fcs breast surgery'                 => 12,
     ];
 
-    // ── Country name → country_id ─────────────────────────────────────────────
+    // MCS = 2 years, all FCS = 3 years
+    private const PROGRAMME_PERIOD = [10 => 2];
+    private const DEFAULT_PERIOD   = 3;
+
     private const COUNTRY_MAP = [
         'angola'                        => 49,
         'botswana'                      => 1,
@@ -77,10 +77,10 @@ class TraineesExcelUpdateImport implements ToCollection, WithStartRow
     ];
 
     // ── Report buckets ────────────────────────────────────────────────────────
-    private array $updated       = [];   // trainees updated successfully
-    private array $notFound      = [];   // PEN not in trainees table
-    private array $examUpdated   = [];   // candidates exam-fee records updated/created
-    private array $repeatUpdated = [];   // candidates repeat-fee records updated
+    private array $updated       = [];
+    private array $created       = [];
+    private array $examUpdated   = [];
+    private array $repeatUpdated = [];
 
     private array $hospitalCache = [];
 
@@ -91,16 +91,11 @@ class TraineesExcelUpdateImport implements ToCollection, WithStartRow
             ->toArray();
     }
 
-    // Skip the two header rows (section headers + column names)
-    public function startRow(): int
-    {
-        return 3;
-    }
+    public function startRow(): int { return 3; }
 
     public function collection(Collection $rows): void
     {
         foreach ($rows as $row) {
-            // ── Extract raw values ────────────────────────────────────────────
             $pen         = trim((string) ($row[0]  ?? ''));
             $loginEmail  = trim((string) ($row[1]  ?? ''));
             $loginPass   = trim((string) ($row[2]  ?? ''));
@@ -114,120 +109,181 @@ class TraineesExcelUpdateImport implements ToCollection, WithStartRow
             $programme   = trim((string) ($row[10] ?? ''));
             $examYear    = trim((string) ($row[11] ?? ''));
 
-            // MCS PE Fees
             $peDateRaw   = $row[12] ?? null;
             $peAmount    = $this->toInt($row[13] ?? null);
-
-            // MCS Exam Fees
             $examDateRaw = $row[14] ?? null;
             $examMop     = trim((string) ($row[15] ?? ''));
             $examAmount  = $this->toInt($row[16] ?? null);
-
-            // MCS Repeat Fees
             $repDateRaw  = $row[17] ?? null;
             $repMop      = trim((string) ($row[18] ?? ''));
             $repAmount   = $this->toInt($row[19] ?? null);
 
-            if (!$pen || strlen($pen) < 5) continue;  // skip blank / header rows
+            if (!$pen || strlen($pen) < 5) continue;
 
-            // ── Find trainee by entry_number ─────────────────────────────────
+            // ── Resolve lookups ───────────────────────────────────────────────
+            $countryId   = self::COUNTRY_MAP[strtolower($country)] ?? null;
+            $programmeId = self::PROGRAMME_MAP[strtolower($programme)] ?? null;
+            $hospitalId  = $org ? $this->resolveHospital($org, $countryId) : null;
+
+            $fullName = trim(implode(' ', array_filter([$firstName, $middleName, $lastName])));
+
+            // ── Try to find existing trainee ──────────────────────────────────
             $trainee = DB::table('trainees')
                 ->whereRaw('TRIM(entry_number) = ?', [$pen])
                 ->first();
 
-            if (!$trainee) {
-                $this->notFound[] = $pen;
-                continue;
-            }
+            if ($trainee) {
+                // ── UPDATE existing ───────────────────────────────────────────
+                $resolvedCountry   = $countryId   ?? $trainee->country_id;
+                $resolvedProgramme = $programmeId ?? $trainee->programme_id;
+                $resolvedHospital  = $hospitalId  ?? $trainee->hospital_id;
 
-            // ── Resolve foreign keys ─────────────────────────────────────────
-            $countryId   = self::COUNTRY_MAP[strtolower($country)] ?? $trainee->country_id;
-            $programmeId = self::PROGRAMME_MAP[strtolower($programme)] ?? $trainee->programme_id;
-            $hospitalId  = $org ? ($this->resolveHospital($org, $countryId) ?? $trainee->hospital_id) : $trainee->hospital_id;
+                // Update user
+                $userUpd = ['updated_at' => now()];
+                if ($fullName)   $userUpd['name']     = $fullName;
+                if ($loginEmail) $userUpd['email']    = $loginEmail;
+                if ($loginPass)  $userUpd['password'] = Hash::make($loginPass);
+                DB::table('users')->where('id', $trainee->user_id)->update($userUpd);
 
-            // ── Update users table ────────────────────────────────────────────
-            $fullName = trim(implode(' ', array_filter([$firstName, $middleName, $lastName])));
-            $userUpd  = ['updated_at' => now()];
-            if ($fullName)    $userUpd['name']     = $fullName;
-            if ($loginEmail)  $userUpd['email']    = $loginEmail;
-            if ($loginPass)   $userUpd['password'] = Hash::make($loginPass);
+                // Update trainee
+                $traineeUpd = [
+                    'firstname'      => $firstName  ?: $trainee->firstname,
+                    'middlename'     => $middleName ?: $trainee->middlename,
+                    'lastname'       => $lastName   ?: $trainee->lastname,
+                    'personal_email' => $email      ?: $trainee->personal_email,
+                    'gender'         => $gender     ?: $trainee->gender,
+                    'country_id'     => $resolvedCountry,
+                    'programme_id'   => $resolvedProgramme,
+                    'hospital_id'    => $resolvedHospital,
+                    'exam_year'      => $examYear ? (int) $examYear : $trainee->exam_year,
+                    'updated_at'     => now(),
+                ];
+                $peDate = $this->parseDate($peDateRaw);
+                if ($peDate)           $traineeUpd['payment_date'] = $peDate;
+                if ($peAmount !== null) { $traineeUpd['amount_paid'] = $peAmount; $traineeUpd['fee_paid'] = 'Yes'; }
 
-            DB::table('users')
-                ->where('id', $trainee->user_id)
-                ->update($userUpd);
+                DB::table('trainees')->where('id', $trainee->id)->update($traineeUpd);
+                $this->updated[] = ['pen' => $pen, 'name' => trim("$firstName $lastName")];
 
-            // ── Update trainees table ─────────────────────────────────────────
-            $traineeUpd = [
-                'firstname'      => $firstName   ?: $trainee->firstname,
-                'middlename'     => $middleName  ?: $trainee->middlename,
-                'lastname'       => $lastName    ?: $trainee->lastname,
-                'personal_email' => $email       ?: $trainee->personal_email,
-                'gender'         => $gender      ?: $trainee->gender,
-                'country_id'     => $countryId,
-                'programme_id'   => $programmeId,
-                'hospital_id'    => $hospitalId,
-                'exam_year'      => $examYear ? (int) $examYear : $trainee->exam_year,
-                'updated_at'     => now(),
-            ];
-
-            // PE fee → lives in the trainees table
-            $peDate = $this->parseDate($peDateRaw);
-            if ($peDate)      $traineeUpd['payment_date'] = $peDate;
-            if ($peAmount !== null) {
-                $traineeUpd['amount_paid'] = $peAmount;
-                $traineeUpd['fee_paid']    = 'Yes';
-            }
-
-            DB::table('trainees')
-                ->where('id', $trainee->id)
-                ->update($traineeUpd);
-
-            $this->updated[] = [
-                'pen'  => $pen,
-                'name' => trim("$firstName $lastName"),
-            ];
-
-            // ── Upsert candidates record — MCS Exam Fee ───────────────────────
-            if ($examAmount !== null || $examDateRaw) {
-                $this->upsertCandidate(
-                    $trainee, $pen, $programmeId, $hospitalId, $countryId,
-                    $firstName, $middleName, $lastName, $email, $gender,
-                    $examDateRaw, $examMop, $examAmount,
-                    false   // not a repeat record
+                // Candidate records
+                $this->handleCandidateFees(
+                    (object)['user_id' => $trainee->user_id, 'firstname' => $firstName ?: $trainee->firstname,
+                             'middlename' => $middleName ?: $trainee->middlename, 'lastname' => $lastName ?: $trainee->lastname,
+                             'personal_email' => $email ?: $trainee->personal_email, 'hospital_id' => $resolvedHospital],
+                    $pen, $resolvedProgramme, $resolvedHospital, $resolvedCountry, $gender,
+                    $examDateRaw, $examMop, $examAmount, $repDateRaw, $repMop, $repAmount
                 );
-                $this->examUpdated[] = $pen;
-            }
 
-            // ── Upsert candidates record — MCS Repeat Fee ────────────────────
-            if ($repAmount !== null || $repDateRaw) {
-                $this->upsertCandidate(
-                    $trainee, $pen, $programmeId, $hospitalId, $countryId,
-                    $firstName, $middleName, $lastName, $email, $gender,
-                    $repDateRaw, $repMop, $repAmount,
-                    true    // mark as repeat
+            } else {
+                // ── CREATE new trainee ────────────────────────────────────────
+                if (!$firstName || !$lastName) continue; // can't create without a name
+
+                $resolvedCountry   = $countryId   ?? 4;  // fallback Kenya
+                $resolvedProgramme = $programmeId ?? 10; // fallback MCS
+                $resolvedHospital  = $hospitalId  ?? $this->fallbackHospital($resolvedCountry);
+                $admissionYear     = $this->admissionYearFromPen($pen);
+                $period            = self::PROGRAMME_PERIOD[$resolvedProgramme] ?? self::DEFAULT_PERIOD;
+
+                // Find or create user by login email
+                $existingUser = $loginEmail
+                    ? DB::table('users')->where('email', $loginEmail)->first()
+                    : null;
+
+                if ($existingUser) {
+                    $userId = $existingUser->id;
+                    DB::table('users')->where('id', $userId)->update([
+                        'name'       => $fullName ?: $existingUser->name,
+                        'password'   => $loginPass ? Hash::make($loginPass) : $existingUser->password,
+                        'updated_at' => now(),
+                    ]);
+                } else {
+                    $userId = DB::table('users')->insertGetId([
+                        'name'       => $fullName,
+                        'email'      => $loginEmail ?: ('no-email.' . strtolower($pen) . '@import'),
+                        'password'   => Hash::make($loginPass ?: uniqid('', true)),
+                        'user_type'  => 2,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                // Ensure trainee role exists
+                DB::table('user_roles')->insertOrIgnore([
+                    'user_id'    => $userId,
+                    'role_type'  => 2,
+                    'is_active'  => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                // Build trainee row
+                $traineeRow = [
+                    'user_id'                  => $userId,
+                    'entry_number'             => $pen,
+                    'firstname'                => $firstName,
+                    'middlename'               => $middleName ?: null,
+                    'lastname'                 => $lastName,
+                    'personal_email'           => $email ?: $loginEmail,
+                    'gender'                   => $gender ?: null,
+                    'programme_id'             => $resolvedProgramme,
+                    'hospital_id'              => $resolvedHospital,
+                    'country_id'               => $resolvedCountry,
+                    'admission_year'           => $admissionYear,
+                    'exam_year'                => $examYear ? (int) $examYear : ($admissionYear + $period),
+                    'programme_period'         => $period,
+                    'training_year'            => null,
+                    'status'                   => 'Active',
+                    'admission_letter_status'  => 'Pending',
+                    'invitation_letter_status' => 'Pending',
+                    'invoice_status'           => 'Pending',
+                    'amount_paid'              => 0,
+                    'created_at'               => now(),
+                    'updated_at'               => now(),
+                ];
+
+                $peDate = $this->parseDate($peDateRaw);
+                if ($peDate)           $traineeRow['payment_date'] = $peDate;
+                if ($peAmount !== null) { $traineeRow['amount_paid'] = $peAmount; $traineeRow['fee_paid'] = 'Yes'; }
+
+                $traineeId = DB::table('trainees')->insertGetId($traineeRow);
+                $this->created[] = ['pen' => $pen, 'name' => trim("$firstName $lastName")];
+
+                // Candidate records
+                $traineeObj = (object)[
+                    'user_id' => $userId, 'firstname' => $firstName, 'middlename' => $middleName,
+                    'lastname' => $lastName, 'personal_email' => $email ?: $loginEmail,
+                    'hospital_id' => $resolvedHospital,
+                ];
+                $this->handleCandidateFees(
+                    $traineeObj, $pen, $resolvedProgramme, $resolvedHospital, $resolvedCountry, $gender,
+                    $examDateRaw, $examMop, $examAmount, $repDateRaw, $repMop, $repAmount
                 );
-                $this->repeatUpdated[] = $pen;
             }
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Candidate fee upsert ──────────────────────────────────────────────────
+
+    private function handleCandidateFees(
+        object $trainee, string $pen, int $programmeId, int $hospitalId, int $countryId, string $gender,
+        mixed $examDateRaw, string $examMop, ?int $examAmount,
+        mixed $repDateRaw,  string $repMop,  ?int $repAmount
+    ): void {
+        if ($examAmount !== null || $examDateRaw) {
+            $this->upsertCandidate($trainee, $pen, $programmeId, $hospitalId, $countryId, $gender,
+                $examDateRaw, $examMop, $examAmount, false);
+            $this->examUpdated[] = $pen;
+        }
+        if ($repAmount !== null || $repDateRaw) {
+            $this->upsertCandidate($trainee, $pen, $programmeId, $hospitalId, $countryId, $gender,
+                $repDateRaw, $repMop, $repAmount, true);
+            $this->repeatUpdated[] = $pen;
+        }
+    }
 
     private function upsertCandidate(
-        object  $trainee,
-        string  $pen,
-        int     $programmeId,
-        int     $hospitalId,
-        int     $countryId,
-        string  $firstName,
-        string  $middleName,
-        string  $lastName,
-        string  $email,
-        string  $gender,
-        mixed   $datePaid,
-        string  $mop,
-        ?int    $amount,
-        bool    $isRepeat
+        object $trainee, string $pen, int $programmeId, int $hospitalId, int $countryId, string $gender,
+        mixed $datePaid, string $mop, ?int $amount, bool $isRepeat
     ): void {
         $existing = DB::table('candidates')
             ->whereRaw('TRIM(entry_number) = ?', [$pen])
@@ -237,11 +293,11 @@ class TraineesExcelUpdateImport implements ToCollection, WithStartRow
 
         $data = [
             'user_id'        => $trainee->user_id,
-            'firstname'      => $firstName  ?: $trainee->firstname,
-            'middlename'     => $middleName ?: $trainee->middlename,
-            'lastname'       => $lastName   ?: $trainee->lastname,
-            'personal_email' => $email      ?: $trainee->personal_email,
-            'gender'         => $gender     ?: null,
+            'firstname'      => $trainee->firstname,
+            'middlename'     => $trainee->middlename ?? null,
+            'lastname'       => $trainee->lastname,
+            'personal_email' => $trainee->personal_email ?? null,
+            'gender'         => $gender ?: null,
             'programme_id'   => $programmeId,
             'hospital_id'    => $hospitalId,
             'country_id'     => $countryId,
@@ -251,15 +307,10 @@ class TraineesExcelUpdateImport implements ToCollection, WithStartRow
         ];
 
         $date = $this->parseDate($datePaid);
-        if ($date)          $data['payment_date']    = $date;
-        if ($mop)           $data['mode_of_payment'] = $mop;
-        if ($amount !== null) {
-            $data['amount_paid'] = $amount;
-            $data['fee_paid']    = 'Yes';
-        }
-        if ($isRepeat) {
-            $data['repeat_paper_one'] = 'Yes';
-        }
+        if ($date)           $data['payment_date']    = $date;
+        if ($mop)            $data['mode_of_payment'] = $mop;
+        if ($amount !== null) { $data['amount_paid']  = $amount; $data['fee_paid'] = 'Yes'; }
+        if ($isRepeat)       $data['repeat_paper_one'] = 'Yes';
 
         if ($existing) {
             DB::table('candidates')->where('id', $existing->id)->update($data);
@@ -272,30 +323,25 @@ class TraineesExcelUpdateImport implements ToCollection, WithStartRow
         }
     }
 
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    private function admissionYearFromPen(string $pen): string
+    {
+        // Format: CC/YYYY/NN  e.g. KE/2023/25
+        $parts = explode('/', $pen);
+        return (isset($parts[1]) && is_numeric($parts[1])) ? $parts[1] : (string) date('Y');
+    }
+
     private function parseDate(mixed $value): ?string
     {
         if (!$value) return null;
-
-        // Maatwebsite Excel returns DateTime / Carbon objects for date cells
-        if ($value instanceof \DateTime) {
-            return $value->format('Y-m-d');
-        }
-
-        // Fallback: Excel serial number
+        if ($value instanceof \DateTime) return $value->format('Y-m-d');
         if (is_float($value) || (is_int($value) && $value > 40000)) {
-            try {
-                return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)->format('Y-m-d');
-            } catch (\Exception $e) {
-                return null;
-            }
+            try { return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)->format('Y-m-d'); }
+            catch (\Exception $e) { return null; }
         }
-
-        // String date
-        try {
-            return Carbon::parse((string) $value)->format('Y-m-d');
-        } catch (\Exception $e) {
-            return null;
-        }
+        try { return Carbon::parse((string) $value)->format('Y-m-d'); }
+        catch (\Exception $e) { return null; }
     }
 
     private function toInt(mixed $value): ?int
@@ -307,19 +353,35 @@ class TraineesExcelUpdateImport implements ToCollection, WithStartRow
     private function resolveHospital(string $name, ?int $countryId): ?int
     {
         $lower = strtolower($name);
-
-        // Exact match
         foreach ($this->hospitalCache as $h) {
             if (strtolower($h->name) === $lower) return $h->id;
         }
-
-        // Partial / substring match
         foreach ($this->hospitalCache as $h) {
             $hl = strtolower($h->name);
             if (str_contains($lower, $hl) || str_contains($hl, $lower)) return $h->id;
         }
+        // Create hospital if not found
+        $newId = DB::table('hospitals')->insertGetId([
+            'name'          => $name,
+            'country_id'    => $countryId ?? 1,
+            'hospital_type' => 1,
+            'status'        => 0,
+            'is_deleted'    => 0,
+            'created_at'    => now(),
+            'updated_at'    => now(),
+        ]);
+        $this->hospitalCache[] = (object)['id' => $newId, 'name' => $name, 'country_id' => $countryId ?? 1];
+        return $newId;
+    }
 
-        return null;
+    private function fallbackHospital(?int $countryId): int
+    {
+        if ($countryId) {
+            foreach ($this->hospitalCache as $h) {
+                if ($h->country_id == $countryId) return $h->id;
+            }
+        }
+        return $this->hospitalCache[0]->id ?? 1;
     }
 
     // ── Report accessor ───────────────────────────────────────────────────────
@@ -328,12 +390,12 @@ class TraineesExcelUpdateImport implements ToCollection, WithStartRow
     {
         return [
             'updated'        => $this->updated,
-            'notFound'       => $this->notFound,
+            'created'        => $this->created,
             'examUpdated'    => $this->examUpdated,
             'repeatUpdated'  => $this->repeatUpdated,
             'totals' => [
                 'updated'      => count($this->updated),
-                'notFound'     => count($this->notFound),
+                'created'      => count($this->created),
                 'examUpdated'  => count($this->examUpdated),
                 'repeatUpdated'=> count($this->repeatUpdated),
             ],

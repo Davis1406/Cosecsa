@@ -217,19 +217,19 @@
                 <div class="row no-gutters text-center" style="border-bottom:1px solid #dee2e6;">
                     <div class="col py-3" style="border-right:1px solid #dee2e6;background:#f0fff4;">
                         <div style="font-size:2rem;font-weight:700;color:#28a745;">{{ $t['updated'] }}</div>
-                        <div class="text-muted small">Trainees Updated</div>
+                        <div class="text-muted small">Updated</div>
+                    </div>
+                    <div class="col py-3" style="border-right:1px solid #dee2e6;background:#eaf4ff;">
+                        <div style="font-size:2rem;font-weight:700;color:#1d6f42;">{{ $t['created'] }}</div>
+                        <div class="text-muted small">Created (new)</div>
                     </div>
                     <div class="col py-3" style="border-right:1px solid #dee2e6;background:#e8f4fd;">
                         <div style="font-size:2rem;font-weight:700;color:#0077b6;">{{ $t['examUpdated'] }}</div>
                         <div class="text-muted small">Exam Fee Records</div>
                     </div>
-                    <div class="col py-3" style="border-right:1px solid #dee2e6;background:#fff8e6;">
+                    <div class="col py-3" style="background:#fff8e6;">
                         <div style="font-size:2rem;font-weight:700;color:#b45309;">{{ $t['repeatUpdated'] }}</div>
                         <div class="text-muted small">Repeat Fee Records</div>
-                    </div>
-                    <div class="col py-3" style="background:#fff5f5;">
-                        <div style="font-size:2rem;font-weight:700;color:#a02626;">{{ $t['notFound'] }}</div>
-                        <div class="text-muted small">PE Not Found</div>
                     </div>
                 </div>
 
@@ -237,8 +237,14 @@
                 <ul class="nav nav-tabs px-3 pt-2" id="reportTabs" role="tablist">
                     <li class="nav-item">
                         <a class="nav-link active" data-toggle="tab" href="#pane-updated">
-                            <i class="fas fa-check-circle text-success mr-1"></i>
+                            <i class="fas fa-sync-alt text-success mr-1"></i>
                             Updated <span class="badge badge-success">{{ $t['updated'] }}</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#pane-created">
+                            <i class="fas fa-user-plus mr-1" style="color:#1d6f42;"></i>
+                            Created <span class="badge" style="background:#1d6f42;color:#fff;">{{ $t['created'] }}</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -253,14 +259,6 @@
                             Repeat Fees <span class="badge" style="background:#b45309;color:#fff;">{{ $t['repeatUpdated'] }}</span>
                         </a>
                     </li>
-                    @if($t['notFound'] > 0)
-                    <li class="nav-item">
-                        <a class="nav-link" data-toggle="tab" href="#pane-notfound">
-                            <i class="fas fa-exclamation-triangle text-danger mr-1"></i>
-                            Not Found <span class="badge badge-danger">{{ $t['notFound'] }}</span>
-                        </a>
-                    </li>
-                    @endif
                 </ul>
 
                 <div class="tab-content px-3 pb-3 pt-2" style="max-height:420px;overflow-y:auto;">
@@ -269,9 +267,8 @@
                     <div class="tab-pane fade show active" id="pane-updated">
                         @if($t['updated'] > 0)
                             <div class="alert alert-success py-2 mb-2" style="font-size:.85rem;">
-                                <i class="fas fa-check-circle mr-1"></i>
-                                <strong>{{ $t['updated'] }}</strong> trainee record(s) updated successfully
-                                (trainees + users tables).
+                                <i class="fas fa-sync-alt mr-1"></i>
+                                <strong>{{ $t['updated'] }}</strong> existing trainee record(s) updated.
                             </div>
                             <table class="table table-sm table-bordered table-hover" style="font-size:.82rem;">
                                 <thead class="thead-light">
@@ -288,7 +285,33 @@
                                 </tbody>
                             </table>
                         @else
-                            <p class="text-muted mt-3">No trainees were updated.</p>
+                            <p class="text-muted mt-3">No existing trainees were matched for update.</p>
+                        @endif
+                    </div>
+
+                    {{-- Created Trainees --}}
+                    <div class="tab-pane fade" id="pane-created">
+                        @if($t['created'] > 0)
+                            <div class="alert py-2 mb-2" style="background:#eaf4ff;border-color:#90cdf4;font-size:.85rem;">
+                                <i class="fas fa-user-plus mr-1" style="color:#1d6f42;"></i>
+                                <strong>{{ $t['created'] }}</strong> new trainee(s) created (user account + trainee record).
+                            </div>
+                            <table class="table table-sm table-bordered table-hover" style="font-size:.82rem;">
+                                <thead class="thead-light">
+                                    <tr><th>#</th><th>PE Number</th><th>Name</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($report['created'] as $i => $r)
+                                    <tr>
+                                        <td>{{ $i + 1 }}</td>
+                                        <td><code>{{ $r['pen'] }}</code></td>
+                                        <td>{{ $r['name'] }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @else
+                            <p class="text-muted mt-3">No new trainees were created.</p>
                         @endif
                     </div>
 
@@ -297,8 +320,7 @@
                         @if($t['examUpdated'] > 0)
                             <div class="alert py-2 mb-2" style="background:#e8f4fd;border-color:#90cdf4;font-size:.85rem;">
                                 <i class="fas fa-file-invoice-dollar mr-1" style="color:#0077b6;"></i>
-                                <strong>{{ $t['examUpdated'] }}</strong> candidates record(s) updated/created
-                                with 2027 exam fee data.
+                                <strong>{{ $t['examUpdated'] }}</strong> candidates record(s) updated/created with 2027 exam fee data.
                             </div>
                             <table class="table table-sm table-bordered table-hover" style="font-size:.82rem;">
                                 <thead class="thead-light">
@@ -323,7 +345,7 @@
                         @if($t['repeatUpdated'] > 0)
                             <div class="alert py-2 mb-2" style="background:#fff8e6;border-color:#f59e0b;font-size:.85rem;">
                                 <i class="fas fa-redo mr-1" style="color:#b45309;"></i>
-                                <strong>{{ $t['repeatUpdated'] }}</strong> trainee(s) with repeat exam fee data
+                                <strong>{{ $t['repeatUpdated'] }}</strong> trainee(s) with repeat exam fees
                                 &mdash; candidates records marked <code>repeat_paper_one = Yes</code>.
                             </div>
                             <table class="table table-sm table-bordered table-hover" style="font-size:.82rem;">
@@ -343,30 +365,6 @@
                             <p class="text-muted mt-3">No repeat fee records in this file.</p>
                         @endif
                     </div>
-
-                    {{-- Not Found --}}
-                    @if($t['notFound'] > 0)
-                    <div class="tab-pane fade" id="pane-notfound">
-                        <div class="alert alert-danger py-2 mb-2" style="font-size:.85rem;">
-                            <i class="fas fa-exclamation-triangle mr-1"></i>
-                            <strong>{{ $t['notFound'] }}</strong> PE Number(s) were not found in the trainees table.
-                            These rows were skipped.
-                        </div>
-                        <table class="table table-sm table-bordered" style="font-size:.82rem;">
-                            <thead class="thead-light">
-                                <tr><th>#</th><th>PE Number (not matched)</th></tr>
-                            </thead>
-                            <tbody>
-                                @foreach($report['notFound'] as $i => $pen)
-                                <tr>
-                                    <td>{{ $i + 1 }}</td>
-                                    <td class="text-danger"><code>{{ $pen }}</code></td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                    @endif
 
                 </div>{{-- /tab-content --}}
             </div>{{-- /modal-body --}}

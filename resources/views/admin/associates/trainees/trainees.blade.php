@@ -11,6 +11,10 @@
                             <a href="{{ url('admin/associates/trainees/reports') }}" class="btn btn-sm btn-outline-secondary mr-1">
                                 <span class="fas fa-chart-bar mr-1"></span> Analytics
                             </a>
+                            <a href="{{ url('admin/associates/trainees/bulk-update') }}" class="btn btn-sm mr-1"
+                                style="color:#fff; background-color: #1d6f42; border-color: #1d6f42;">
+                                <span class="fas fa-file-excel mr-1"></span> Bulk Update
+                            </a>
                             <a href="{{ url('admin/associates/trainees/import') }}" class="btn btn-sm mr-1"
                                 style="color:black; background-color: #FEC503; border-color: #FEC503;">
                                 <span class="fas fa-upload mr-1"></span> Upload Trainees
