@@ -43,16 +43,15 @@ class ExamsController extends Controller
         // Only shown when examination_years confirms they participated (participated_last_year = 1).
         $hasParticipations = \Illuminate\Support\Facades\Schema::hasTable('examiner_participations');
 
-        // gs_results always emits "General Surgery" — suppress it when examiner_participations
-        // already has a more specific label (e.g. "FCS General Surgery") for the same year,
-        // preventing duplicates like "FCS General Surgery, General Surgery".
+        // gs_results emits "FCS General Surgery" — suppress it when examiner_participations
+        // already has a more specific label for the same year, preventing duplicates.
         $examinedForSql = '(
             SELECT GROUP_CONCAT(DISTINCT spec ORDER BY spec SEPARATOR ", ")
             FROM (
                 SELECT "MCS" as spec FROM mcs_results
                     WHERE mcs_results.examiner_id = examiners.id AND mcs_results.exam_year = ' . $lastYearId . '
                 UNION ALL
-                SELECT "General Surgery" FROM gs_results
+                SELECT "FCS General Surgery" FROM gs_results
                     WHERE gs_results.examiner_id = examiners.id AND gs_results.exam_year = ' . $lastYearId .
             ($hasParticipations ? '
                     AND NOT EXISTS (
@@ -761,10 +760,10 @@ class ExamsController extends Controller
                 if (!empty($epSpecialties)) {
                     $programmes = array_merge($programmes, $epSpecialties);
                 } elseif (DB::table('gs_results')->where('examiner_id', $id)->where('exam_year', $yid)->exists()) {
-                    $programmes[] = 'General Surgery';
+                    $programmes[] = 'FCS General Surgery';
                 }
             } elseif (DB::table('gs_results')->where('examiner_id', $id)->where('exam_year', $yid)->exists()) {
-                $programmes[] = 'General Surgery';
+                $programmes[] = 'FCS General Surgery';
             }
 
             $yearProgrammes[(string)$yearName] = array_unique($programmes);
