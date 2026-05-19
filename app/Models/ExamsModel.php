@@ -21,7 +21,8 @@ class ExamsModel extends Model
         'specialty',
         'subspecialty',
         'curriculum_vitae',
-        'passport_image'
+        'passport_image',
+        'internal_notes',
     ];
 
     public function user()

@@ -238,6 +238,49 @@
                 </div>
             </div>
 
+            {{-- ── Internal Memo ───────────────────────────────────────────────── --}}
+            <div class="card mb-4">
+                <div class="card-header section-header d-flex align-items-center justify-content-between">
+                    <span><i class="fas fa-sticky-note mr-2"></i> Internal Memo</span>
+                    <small class="text-muted font-weight-normal" style="font-size:.72rem;">
+                        Visible to admins only — not shared with the examiner
+                    </small>
+                </div>
+                <div class="card-body">
+                    <form id="memoForm"
+                          method="POST"
+                          action="{{ route('examiner.save.memo', $examiner->examin_id) }}">
+                        @csrf
+                        <div class="form-group mb-2">
+                            <textarea id="memoTextarea" name="internal_notes"
+                                      class="form-control"
+                                      rows="4"
+                                      maxlength="5000"
+                                      placeholder="Add a private note about this examiner — e.g. dietary requirements, special accommodation, past issues, availability notes…"
+                                      style="resize:vertical;font-size:.875rem;">{{ old('internal_notes', $examiner->internal_notes ?? '') }}</textarea>
+                            <div class="d-flex justify-content-between mt-1">
+                                <small class="text-muted" id="memoCharCount">
+                                    <span id="memoUsed">{{ strlen($examiner->internal_notes ?? '') }}</span>/5000 characters
+                                </small>
+                                <small id="memoSavedIndicator" class="text-success" style="display:none;">
+                                    <i class="fas fa-check mr-1"></i> Saved
+                                </small>
+                            </div>
+                        </div>
+                        <div class="d-flex" style="gap:.5rem;">
+                            <button type="submit" id="memoSaveBtn"
+                                    class="btn btn-sm btn-danger">
+                                <i class="fas fa-save mr-1"></i> Save Memo
+                            </button>
+                            <button type="button" id="memoClearBtn"
+                                    class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-times mr-1"></i> Clear
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             {{-- ── Participation Summary (only if history record exists) ──────── --}}
             @php
                 $hasHistory = !is_null($examiner->history);
@@ -1019,6 +1062,60 @@ $('#cvFileInput').on('change', function () {
 @if($errors->has('curriculum_vitae'))
     $(document).ready(function () { $('#uploadCvModal').modal('show'); });
 @endif
+
+// ── Internal Memo ─────────────────────────────────────────────────────────
+(function () {
+    var $ta    = $('#memoTextarea');
+    var $used  = $('#memoUsed');
+    var $saved = $('#memoSavedIndicator');
+    var $btn   = $('#memoSaveBtn');
+    var autoTimer = null;
+
+    // Character counter
+    $ta.on('input', function () {
+        $used.text($ta.val().length);
+        $saved.hide();
+        clearTimeout(autoTimer);
+        // Auto-save after 2 s of inactivity
+        autoTimer = setTimeout(function () { submitMemo(true); }, 2000);
+    });
+
+    // Clear button
+    $('#memoClearBtn').on('click', function () {
+        if ($ta.val() && !confirm('Clear this memo?')) return;
+        $ta.val('');
+        $used.text('0');
+        submitMemo(false);
+    });
+
+    // Manual save
+    $('#memoForm').on('submit', function (e) {
+        e.preventDefault();
+        clearTimeout(autoTimer);
+        submitMemo(false);
+    });
+
+    function submitMemo(silent) {
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Saving…');
+        $.ajax({
+            url:  '{{ route("examiner.save.memo", $examiner->examin_id) }}',
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}', internal_notes: $ta.val() },
+            success: function () {
+                $saved.show();
+                if (!silent) {
+                    setTimeout(function () { $saved.fadeOut(); }, 3000);
+                }
+            },
+            error: function () {
+                if (!silent) alert('Could not save memo. Please try again.');
+            },
+            complete: function () {
+                $btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Save Memo');
+            }
+        });
+    }
+})();
 
 // ── Programme dropdown (works inside modals via position:fixed) ───────────
 

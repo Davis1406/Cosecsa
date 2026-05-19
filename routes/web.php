@@ -219,6 +219,7 @@ Route::get('admin/exams/attendance', [ExamsController::class, 'attendanceList'])
 // Manage participation history (from view_examiner modal)
 Route::post('admin/exams/manage-participation/{examiner_id}', [ExamsController::class, 'manageParticipation'])->name('exams.manage.participation');
 Route::post('admin/exams/examiner/{id}/upload-cv', [ExamsController::class, 'uploadCv'])->name('examiner.upload.cv');
+Route::post('admin/exams/examiner/{id}/memo',      [ExamsController::class, 'saveMemo'])->name('examiner.save.memo');
 // Show attendance confirmation page (GET)
 Route::get('admin/exams/confirm-attendance/{examiner_id}', [ExamsController::class, 'showAttendanceConfirmation'])->name('exams.confirm.attendance');
 // Register attendance via Form (POST) - with CSRF protection

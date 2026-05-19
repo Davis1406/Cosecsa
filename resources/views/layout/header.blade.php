@@ -76,6 +76,8 @@
 #globalSearchResults .gs-loading { padding:12px;color:#888;font-size:.85rem;text-align:center; }
 .navbar-search-wrapper input:focus { box-shadow:none;border-color:#a02626; }
 </style>
+@push('scripts')
+{{-- Global search — deferred until after jQuery loads --}}
 <script>
 (function () {
     var timer = null;
@@ -123,7 +125,8 @@
             var rows = data[s.key] || [];
             if (!rows.length) return;
             total += rows.length;
-            html += '<div class="gs-section-title"><i class="' + s.icon + ' mr-1"></i>' + s.label + ' <span style="font-weight:400;color:#aaa;">(' + rows.length + ')</span></div>';
+            html += '<div class="gs-section-title"><i class="' + s.icon + ' mr-1"></i>' + s.label
+                  + ' <span style="font-weight:400;color:#aaa;">(' + rows.length + ')</span></div>';
             rows.forEach(function (r) {
                 html += '<a class="gs-item" href="' + r.url + '">'
                       + '<strong>' + escHtml(r.name) + '</strong>'
@@ -140,6 +143,7 @@
     }
 })();
 </script>
+@endpush
 @endif
 <!-- /.navbar -->
 

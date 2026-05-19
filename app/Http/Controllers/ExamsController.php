@@ -711,6 +711,7 @@ class ExamsController extends Controller
                 'examiners.curriculum_vitae',
                 'examiners.passport_image',
                 'examiners.role_id',
+                'examiners.internal_notes',
                 'users.name as examiner_name',
                 'users.email',
                 'countries.country_name'
@@ -1133,6 +1134,27 @@ public function delete($id)
         $examiner->save();
 
         return redirect()->back()->with('success', 'CV uploaded successfully.');
+    }
+
+    /**
+     * POST admin/exams/examiner/{id}/memo
+     * Save (or clear) the internal notes / memo for an examiner.
+     */
+    public function saveMemo(Request $request, $id)
+    {
+        $request->validate([
+            'internal_notes' => 'nullable|string|max:5000',
+        ]);
+
+        $examiner = ExamsModel::findOrFail($id);
+        $examiner->internal_notes = $request->input('internal_notes');
+        $examiner->save();
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Memo saved.']);
+        }
+
+        return redirect()->back()->with('success', 'Memo saved successfully.');
     }
 
     /**
