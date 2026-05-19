@@ -248,8 +248,10 @@
                 <div class="card-header section-header">
                     <i class="fas fa-history mr-2"></i> Participation Summary
                 </div>
-                <div class="card-body">
-                    <div class="row text-center">
+                <div class="card-body pb-2">
+
+                    {{-- ── Quick-stat row ─────────────────────────────────── --}}
+                    <div class="row text-center mb-3">
                         <div class="col-6 col-md-3 mb-3">
                             <div class="stat-icon mx-auto {{ ($examiner->virtual_mcs_participated ?? '') == 'Yes' ? 'bg-success' : 'bg-light-muted' }}">
                                 <i class="fas fa-laptop"></i>
@@ -265,7 +267,7 @@
                             <strong>{{ ($examiner->fcs_participated ?? '') == 'Yes' ? 'Participated' : 'N/A' }}</strong>
                         </div>
                         <div class="col-6 col-md-3 mb-3">
-                            <div class="stat-icon mx-auto bg-light-muted">
+                            <div class="stat-icon mx-auto {{ ($examiner->hospital_name ?? '') ? 'bg-warning' : 'bg-light-muted' }}">
                                 <i class="fas fa-hospital"></i>
                             </div>
                             <small class="d-block mt-2 text-muted">Hospital</small>
@@ -274,39 +276,78 @@
                             </strong>
                         </div>
                         <div class="col-6 col-md-3 mb-3">
-                            <div class="stat-icon mx-auto bg-light-muted">
-                                <i class="fas fa-calendar-alt"></i>
+                            <div class="stat-icon mx-auto {{ count($exYears) > 0 ? 'bg-danger' : 'bg-light-muted' }}">
+                                <i class="fas fa-calendar-check"></i>
                             </div>
                             <small class="d-block mt-2 text-muted">Exam Years</small>
                             <strong>{{ count($exYears) > 0 ? count($exYears) . ' year(s)' : '—' }}</strong>
                         </div>
                     </div>
 
+                    {{-- ── Year-by-year history ────────────────────────────── --}}
                     @if(!empty($exYears))
-                    <div class="mt-3">
-                        <small class="text-muted d-block mb-2 font-weight-bold text-uppercase" style="letter-spacing:.05em;">Year by Year Breakdown</small>
-                        @foreach(array_reverse((array)$exYears) as $yr)
+                    <div style="border-top:1px solid #f0f0f0;padding-top:1rem;">
+                        <p class="mb-3" style="font-size:.7rem;font-weight:700;text-transform:uppercase;
+                                               letter-spacing:.08em;color:#a02626;">
+                            <i class="fas fa-stream mr-1"></i> Examination History by Year
+                        </p>
+
+                        <div class="participation-timeline">
+                        @foreach(array_reverse((array)$exYears) as $index => $yr)
                             @php
-                                $progs = $yearProgrammes[(string)$yr] ?? [];
+                                $progs  = $yearProgrammes[(string)$yr] ?? [];
+                                $isLast = $index === count($exYears) - 1;
                             @endphp
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge badge-dark mr-2" style="min-width:46px;font-size:.75rem;">{{ $yr }}</span>
-                                @if(!empty($progs))
-                                    @foreach($progs as $prog)
-                                        @php
-                                            $colour = str_contains($prog,'MCS') ? 'badge-primary'
-                                                    : (str_contains($prog,'FCS') ? 'badge-info'
-                                                    : 'badge-success');
-                                        @endphp
-                                        <span class="badge {{ $colour }} mr-1" style="font-size:.75rem;">{{ $prog }}</span>
-                                    @endforeach
-                                @else
-                                    <span class="text-muted" style="font-size:.8rem;">No programme record</span>
-                                @endif
+                            <div class="timeline-row d-flex align-items-start mb-3">
+
+                                {{-- Year bubble --}}
+                                <div class="timeline-year flex-shrink-0 text-center mr-3">
+                                    <div style="width:52px;height:52px;border-radius:50%;
+                                                background:linear-gradient(135deg,#a02626,#d63031);
+                                                color:#fff;display:flex;align-items:center;
+                                                justify-content:center;font-size:.72rem;
+                                                font-weight:700;line-height:1.1;">
+                                        {{ $yr }}
+                                    </div>
+                                    @if(!$isLast)
+                                        <div style="width:2px;height:18px;background:#e0e0e0;margin:0 auto;"></div>
+                                    @endif
+                                </div>
+
+                                {{-- Programme cards --}}
+                                <div class="flex-grow-1 pt-1">
+                                    @if(!empty($progs))
+                                        <div class="d-flex flex-wrap" style="gap:.4rem;">
+                                        @foreach($progs as $prog)
+                                            @php
+                                                $isMCS = str_contains(strtoupper($prog), 'MCS');
+                                                $isFCS = str_contains(strtoupper($prog), 'FCS');
+                                                $bg    = $isMCS ? '#1565c0' : ($isFCS ? '#00838f' : '#2e7d32');
+                                            @endphp
+                                            <span style="display:inline-flex;align-items:center;
+                                                         background:{{ $bg }};color:#fff;
+                                                         border-radius:6px;padding:4px 12px;
+                                                         font-size:.78rem;font-weight:600;
+                                                         letter-spacing:.02em;">
+                                                <i class="fas {{ $isMCS ? 'fa-microscope' : ($isFCS ? 'fa-stethoscope' : 'fa-user-md') }} mr-1"
+                                                   style="font-size:.7rem;"></i>
+                                                {{ $prog }}
+                                            </span>
+                                        @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-muted" style="font-size:.82rem;font-style:italic;">
+                                            No programme record found
+                                        </span>
+                                    @endif
+                                </div>
+
                             </div>
                         @endforeach
+                        </div>
                     </div>
                     @endif
+
                 </div>
             </div>
             @endif
