@@ -43,6 +43,9 @@ class ExamsController extends Controller
         // Only shown when examination_years confirms they participated (participated_last_year = 1).
         $hasParticipations = \Illuminate\Support\Facades\Schema::hasTable('examiner_participations');
 
+        // gs_results always emits "General Surgery" — suppress it when examiner_participations
+        // already has a more specific label (e.g. "FCS General Surgery") for the same year,
+        // preventing duplicates like "FCS General Surgery, General Surgery".
         $examinedForSql = '(
             SELECT GROUP_CONCAT(DISTINCT spec ORDER BY spec SEPARATOR ", ")
             FROM (
@@ -52,6 +55,10 @@ class ExamsController extends Controller
                 SELECT "General Surgery" FROM gs_results
                     WHERE gs_results.examiner_id = examiners.id AND gs_results.exam_year = ' . $lastYearId .
             ($hasParticipations ? '
+                    AND NOT EXISTS (
+                        SELECT 1 FROM examiner_participations ep2
+                        WHERE ep2.exm_id = examiners.id AND ep2.year_id = ' . $lastYearId . ' AND ep2.specialty IS NOT NULL
+                    )
                 UNION ALL
                 SELECT ep.specialty FROM examiner_participations ep
                     WHERE ep.exm_id = examiners.id AND ep.year_id = ' . $lastYearId . ' AND ep.specialty IS NOT NULL' : '') . '
@@ -723,6 +730,46 @@ class ExamsController extends Controller
 
         $currentYearName = DB::table('years')->where('id', $yearId)->value('year_name') ?? date('Y');
 
+        // Build per-year programme map for the Participation Summary card.
+        // For each year the examiner has in examination_years, look up which
+        // programme(s) they actually examined in from the result tables.
+        $hasParticipations = \Illuminate\Support\Facades\Schema::hasTable('examiner_participations');
+        $yearProgrammes = [];   // ['2024' => 'MCS', '2025' => 'FCS General Surgery']
+
+        $rawYears = $history->examination_years ?? null;
+        $decodedYears = json_decode($rawYears, true);
+        if (is_string($decodedYears)) { $decodedYears = json_decode($decodedYears, true); }
+        $examinedYears = is_array($decodedYears) ? $decodedYears : [];
+
+        foreach ($examinedYears as $yearName) {
+            $yearRow = DB::table('years')->where('year_name', (string)$yearName)->first();
+            if (!$yearRow) continue;
+            $yid = $yearRow->id;
+
+            $programmes = [];
+
+            // MCS participation
+            if (DB::table('mcs_results')->where('examiner_id', $id)->where('exam_year', $yid)->exists()) {
+                $programmes[] = 'MCS';
+            }
+
+            // GS / FCS — prefer examiner_participations specialty over generic "General Surgery"
+            if ($hasParticipations) {
+                $epSpecialties = DB::table('examiner_participations')
+                    ->where('exm_id', $id)->where('year_id', $yid)
+                    ->whereNotNull('specialty')->pluck('specialty')->toArray();
+                if (!empty($epSpecialties)) {
+                    $programmes = array_merge($programmes, $epSpecialties);
+                } elseif (DB::table('gs_results')->where('examiner_id', $id)->where('exam_year', $yid)->exists()) {
+                    $programmes[] = 'General Surgery';
+                }
+            } elseif (DB::table('gs_results')->where('examiner_id', $id)->where('exam_year', $yid)->exists()) {
+                $programmes[] = 'General Surgery';
+            }
+
+            $yearProgrammes[(string)$yearName] = array_unique($programmes);
+        }
+
         return view('admin.exams.view_examiner', [
             'header_title'    => 'View Examiner',
             'examiner'        => $examiner,
@@ -730,6 +777,7 @@ class ExamsController extends Controller
             'groups'          => DB::table('examiners_groups')->select('id', 'group_name')->get(),
             'qrCode'          => $qrCode,
             'backUrl'         => $backUrl,
+            'yearProgrammes'  => $yearProgrammes,
             'currentYearName' => $currentYearName,
         ]);
     }

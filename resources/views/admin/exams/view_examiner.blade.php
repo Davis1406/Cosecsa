@@ -283,10 +283,27 @@
                     </div>
 
                     @if(!empty($exYears))
-                    <div class="text-center mt-1">
-                        @foreach($exYears as $yr)
-                            <span class="badge badge-secondary mr-1 mb-1"
-                                  style="font-size:.78rem;padding:4px 10px;">{{ $yr }}</span>
+                    <div class="mt-3">
+                        <small class="text-muted d-block mb-2 font-weight-bold text-uppercase" style="letter-spacing:.05em;">Year by Year Breakdown</small>
+                        @foreach(array_reverse((array)$exYears) as $yr)
+                            @php
+                                $progs = $yearProgrammes[(string)$yr] ?? [];
+                            @endphp
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge badge-dark mr-2" style="min-width:46px;font-size:.75rem;">{{ $yr }}</span>
+                                @if(!empty($progs))
+                                    @foreach($progs as $prog)
+                                        @php
+                                            $colour = str_contains($prog,'MCS') ? 'badge-primary'
+                                                    : (str_contains($prog,'FCS') ? 'badge-info'
+                                                    : 'badge-success');
+                                        @endphp
+                                        <span class="badge {{ $colour }} mr-1" style="font-size:.75rem;">{{ $prog }}</span>
+                                    @endforeach
+                                @else
+                                    <span class="text-muted" style="font-size:.8rem;">No programme record</span>
+                                @endif
+                            </div>
                         @endforeach
                     </div>
                     @endif
