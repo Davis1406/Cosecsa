@@ -94,6 +94,8 @@ Route::group(['middleware' => 'admin'], function(){
   Route::post('admin/associates/trainees/add',          [TraineeController::class,'insert'])->name('admin.associates.trainees.add');
   Route::get('admin/associates/trainees/import',        [TraineeController::class,'import']);
   Route::post('admin/associates/trainees/import',       [TraineeController::class,'importData'])->name('trainees.import.data');
+  Route::get('admin/associates/trainees/bulk-update',   [TraineeController::class,'bulkUpdate'])->name('trainees.bulk.update');
+  Route::post('admin/associates/trainees/bulk-update',  [TraineeController::class,'bulkUpdateProcess'])->name('trainees.bulk.update.process');
   Route::get('admin/associates/trainees/view/{id}',     [TraineeController::class,'view'])->name('trainees.view');
   Route::get('admin/associates/trainees/edit/{id}',     [TraineeController::class,'edit']);
   Route::post('admin/associates/trainees/edit/{id}',    [TraineeController::class,'update']);
@@ -210,6 +212,10 @@ Route::get('admin/exams/gs_station_results/{candidate_id}/{station_id}', [ExamsC
     Route::get('admin/exams/fcs-station-results/{candidate_id}/{station_id}/{exam_format}/{table}', [ExamsController::class, 'viewFcsStationResults']);
 
 
+// Attendance list page
+Route::get('admin/exams/attendance', [ExamsController::class, 'attendanceList'])->name('exams.attendance.list');
+// Manage participation history (from view_examiner modal)
+Route::post('admin/exams/manage-participation/{examiner_id}', [ExamsController::class, 'manageParticipation'])->name('exams.manage.participation');
 // Show attendance confirmation page (GET)
 Route::get('admin/exams/confirm-attendance/{examiner_id}', [ExamsController::class, 'showAttendanceConfirmation'])->name('exams.confirm.attendance');
 // Register attendance via Form (POST) - with CSRF protection

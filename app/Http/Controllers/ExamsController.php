@@ -540,14 +540,29 @@ class ExamsController extends Controller
         $lastYearName    = DB::table('years')->where('id', $yearId - 1)->value('year_name') ?? (date('Y') - 1);
         $examYears       = range(2020, (int) $lastYearName);
 
+        // Load year → programme map from examiner_participations so the
+        // edit form can pre-select the dropdown for each checked year.
+        $yearParticipations = DB::table('examiner_participations')
+            ->join('years', 'years.id', '=', 'examiner_participations.year_id')
+            ->where('examiner_participations.exm_id', $id)
+            ->select('years.year_name', 'examiner_participations.specialty')
+            ->get()
+            ->pluck('specialty', 'year_name')
+            ->toArray(); // ['2025' => 'FCS Urology', ...]
+
+        // Canonical programme list for the dropdowns (shared static list)
+        $programmeOptions = self::$programmeOptions;
+
         return view('admin.exams.edit_examiner', [
-            'header_title' => 'Edit Examiner',
-            'examiner'     => $examiner,
-            'getCountry'      => Country::getCountry(),
-            'groups'          => DB::table('examiners_groups')->select('id', 'group_name')->get(),
-            'backUrl'         => $backUrl,
-            'examYears'       => $examYears,
-            'currentYearName' => $currentYearName,
+            'header_title'     => 'Edit Examiner',
+            'examiner'         => $examiner,
+            'getCountry'       => Country::getCountry(),
+            'groups'           => DB::table('examiners_groups')->select('id', 'group_name')->get(),
+            'backUrl'          => $backUrl,
+            'examYears'        => $examYears,
+            'currentYearName'  => $currentYearName,
+            'yearParticipations' => $yearParticipations,
+            'programmeOptions' => $programmeOptions,
         ]);
     }
 
@@ -566,15 +581,39 @@ class ExamsController extends Controller
                 'password' => $request->password ? bcrypt($request->password) : $user->password
             ]);
 
+            // ── Upload CV ────────────────────────────────────────────────────
+            if ($request->hasFile('curriculum_vitae')) {
+                if ($examiner->curriculum_vitae && Storage::disk('public')->exists($examiner->curriculum_vitae)) {
+                    Storage::disk('public')->delete($examiner->curriculum_vitae);
+                }
+                $file        = $request->file('curriculum_vitae');
+                $sanitized   = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+                $finalName   = $examiner->id . '-' . $sanitized . '.' . $file->getClientOriginalExtension();
+                $examiner->curriculum_vitae = $file->storeAs('documents/cvs', $finalName, 'public');
+            }
+
+            // ── Upload passport / profile photo ──────────────────────────────
+            if ($request->hasFile('passport_image')) {
+                if ($examiner->passport_image && Storage::disk('public')->exists($examiner->passport_image)) {
+                    Storage::disk('public')->delete($examiner->passport_image);
+                }
+                $file        = $request->file('passport_image');
+                $sanitized   = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+                $finalName   = $examiner->id . '-' . $sanitized . '.' . $file->getClientOriginalExtension();
+                $examiner->passport_image = $file->storeAs('documents/passports', $finalName, 'public');
+            }
+
             // Update examiner info
             $examiner->update([
-                'gender' => $request->gender,
-                'examiner_id' => $request->examiner_id,
-                'country_id' => $request->country_id,
-                'mobile' => $request->mobile,
-                'specialty' => $request->specialty,
+                'gender'       => $request->gender,
+                'examiner_id'  => $request->examiner_id,
+                'country_id'   => $request->country_id,
+                'mobile'       => $request->mobile,
+                'specialty'    => $request->specialty,
                 'subspecialty' => $request->subspecialty,
-                'role_id' => $request->participation_type === 'Examiner' ? 1 : ($request->participation_type === 'Observer' ? 2 : 3)
+                'role_id'      => $request->participation_type === 'Examiner' ? 1 : ($request->participation_type === 'Observer' ? 2 : 3),
+                'curriculum_vitae' => $examiner->curriculum_vitae,
+                'passport_image'   => $examiner->passport_image,
             ]);
 
             // Update user_roles
@@ -613,37 +652,37 @@ class ExamsController extends Controller
                 ]);
             }
 
-            // Handle Not Available logic
-            $availability = $request->exam_availability ?? [];
-            if (in_array('Not Available', $availability)) {
-                $availability = ['Not Available'];
+            // Build history update payload — base fields always updated
+            $historyData = [
+                'virtual_mcs_participated' => $request->virtual_mcs_participated ?? null,
+                'fcs_participated'         => $request->fcs_participated ?? null,
+                'participation_type'       => $request->participation_type,
+                'hospital_type'            => $request->hospital_type ?? null,
+                'hospital_name'            => $request->hospital_name ?? null,
+                'examination_years'        => $request->examination_years ?? null,
+            ];
+
+            // Only write exam_availability when the admin explicitly checked boxes.
+            // Unchecked checkboxes send nothing, so $request->has() is false → keep existing.
+            if ($request->has('exam_availability')) {
+                $availability = $request->exam_availability;
+                if (in_array('Not Available', $availability)) {
+                    $availability = ['Not Available'];
+                }
+                $historyData['exam_availability']    = $availability;
+                $historyData['availability_year_id'] = User::getCurrentYearId();
             }
 
-            ExaminerHistory::updateOrCreate(
-                ['exm_id' => $examiner->id],
-                [
-                    'virtual_mcs_participated' => $request->virtual_mcs_participated ?? null,
-                    'fcs_participated'         => $request->fcs_participated ?? null,
-                    'participation_type'       => $request->participation_type,
-                    'hospital_type'            => $request->hospital_type ?? null,
-                    'hospital_name'            => $request->hospital_name ?? null,
-                    'exam_availability'        => $availability,
-                    'availability_year_id'     => User::getCurrentYearId(),
-                    'examination_years'        => $request->examination_years ?? null,
-                ]
-            );
+            ExaminerHistory::updateOrCreate(['exm_id' => $examiner->id], $historyData);
+
+            // ── Sync examiner_participations from year+programme checkboxes ──────
+            // $request->year_programme = ['2024' => ['MCS'], '2025' => ['FCS Urology','MCS']]
+            // $request->examination_years = ['2024', '2025', ...]
+            $this->syncParticipations($examiner->id, $request->examination_years ?? [], $request->year_programme ?? []);
 
             DB::commit();
 
-            // Redirect back — always use GET-safe URLs.
-            // view_examiner was POST-only before; now it accepts GET too, so
-            // redirecting to it after an update works without method errors.
-            $backUrl = $request->input('back_url');
-
-            if ($backUrl && str_contains($backUrl, url('/'))) {
-                return redirect($backUrl)->with('success', 'Examiner updated successfully');
-            }
-
+            // Always return to the examiners list after a successful edit.
             return redirect('admin/exams/examiners')->with('success', 'Examiner updated successfully');
         } catch (\Throwable $e) {
             DB::rollback();
@@ -769,15 +808,22 @@ class ExamsController extends Controller
             $yearProgrammes[(string)$yearName] = array_unique($programmes);
         }
 
+        // Year range for the Manage Participation modal (2020 → last completed year)
+        $lastYearName2  = DB::table('years')->where('id', $yearId - 1)->value('year_name') ?? (date('Y') - 1);
+        $examYears      = range(2020, (int) $lastYearName2);
+
         return view('admin.exams.view_examiner', [
-            'header_title'    => 'View Examiner',
-            'examiner'        => $examiner,
-            'getCountry'      => Country::getCountry(),
-            'groups'          => DB::table('examiners_groups')->select('id', 'group_name')->get(),
-            'qrCode'          => $qrCode,
-            'backUrl'         => $backUrl,
-            'yearProgrammes'  => $yearProgrammes,
-            'currentYearName' => $currentYearName,
+            'header_title'     => 'View Examiner',
+            'examiner'         => $examiner,
+            'getCountry'       => Country::getCountry(),
+            'groups'           => DB::table('examiners_groups')->select('id', 'group_name')->get(),
+            'qrCode'           => $qrCode,
+            'backUrl'          => $backUrl,
+            'yearProgrammes'   => $yearProgrammes,
+            'currentYearName'  => $currentYearName,
+            'examYears'        => $examYears,
+            'exYears'          => $examinedYears,
+            'programmeOptions' => self::$programmeOptions,
         ]);
     }
 public function delete($id)
@@ -985,27 +1031,183 @@ public function delete($id)
         return view('admin.exams.examiner_confirmation', $data);
     }
 
+    // ── Shared programme list ─────────────────────────────────────────────────
+    private static array $programmeOptions = [
+        'MCS',
+        'FCS General Surgery',
+        'FCS Cardiothoracic Surgery',
+        'FCS Urology',
+        'FCS Paediatric Surgery',
+        'FCS Otorhinolaryngology',
+        'FCS Plastic Surgery',
+        'FCS Neurosurgery',
+        'FCS Orthopaedic Surgery',
+        'FCS Paediatric Orthopaedic Surgery',
+    ];
+
+    /**
+     * Sync examiner_participations for the past years shown in the admin form.
+     *
+     * @param int   $examinerModelId   examiners.id
+     * @param array $selectedYearNames ['2024','2025',…]
+     * @param array $yearProgrammes    ['2024'=>['MCS'],'2025'=>['FCS Urology','FCS General Surgery']]
+     */
+    private function syncParticipations(int $examinerModelId, array $selectedYearNames, array $yearProgrammes): void
+    {
+        $selectedYearNames = array_map('strval', $selectedYearNames);
+
+        $lastYearName = DB::table('years')
+            ->where('id', User::getCurrentYearId() - 1)
+            ->value('year_name') ?? (date('Y') - 1);
+
+        // year_name → year_id for every year the form covers.
+        // year_name is an ENUM column — must compare with strings, not integers.
+        $allFormYears = array_map('strval', range(2020, (int) $lastYearName));
+        $formYearIds  = DB::table('years')
+            ->whereIn('year_name', $allFormYears)
+            ->pluck('id', 'year_name');
+
+        // Delete participation rows for years that were unchecked
+        $uncheckedYearIds = $formYearIds
+            ->filter(fn($id, $name) => !in_array((string) $name, $selectedYearNames))
+            ->values()
+            ->toArray();
+
+        if (!empty($uncheckedYearIds)) {
+            DB::table('examiner_participations')
+                ->where('exm_id', $examinerModelId)
+                ->whereIn('year_id', $uncheckedYearIds)
+                ->delete();
+        }
+
+        // For each checked year: delete existing rows then insert one per selected programme
+        foreach ($selectedYearNames as $yearName) {
+            $programmes = array_filter((array) ($yearProgrammes[(string) $yearName] ?? []));
+            $yearId     = $formYearIds[(string) $yearName] ?? null;
+            if (!$yearId) {
+                continue;
+            }
+
+            // Always delete existing records for this year so we can replace them cleanly
+            DB::table('examiner_participations')
+                ->where('exm_id', $examinerModelId)
+                ->where('year_id', $yearId)
+                ->delete();
+
+            foreach ($programmes as $prog) {
+                DB::table('examiner_participations')->insert([
+                    'exm_id'     => $examinerModelId,
+                    'year_id'    => $yearId,
+                    'specialty'  => $prog,
+                    'source'     => 'manual',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+    }
+
+    /**
+     * POST admin/exams/manage-participation/{examiner_id}
+     * Called from the Manage Participation modal on view_examiner.
+     */
+    public function manageParticipation(Request $request, $examiner_id)
+    {
+        DB::beginTransaction();
+        try {
+            $examiner = ExamsModel::findOrFail($examiner_id);
+
+            $selectedYearNames = array_map('strval', $request->examination_years ?? []);
+
+            // Update examination_years in history
+            ExaminerHistory::updateOrCreate(
+                ['exm_id' => $examiner->id],
+                ['examination_years' => $selectedYearNames ?: null]
+            );
+
+            // Sync the full year range (2020 → lastYear) so unchecked years are cleared
+            $this->syncParticipations($examiner->id, $selectedYearNames, $request->year_programme ?? []);
+
+            DB::commit();
+
+            $from = $request->input('from', 'admin/exams/examiners');
+            return redirect("admin/exams/view_examiner/{$examiner->id}?from=" . urlencode($from))
+                ->with('success', 'Participation history updated successfully');
+        } catch (\Throwable $e) {
+            DB::rollback();
+            return back()->with('error', 'Failed to update participation: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Build a lightweight single-examiner object for attendance methods.
+     * Avoids loading all 700+ examiners via User::getExaminers().
+     */
+    private function fetchExaminerForAttendance($examiner_id)
+    {
+        $yearId = User::getCurrentYearId();
+
+        $examiner = DB::table('examiners')
+            ->join('users', 'users.id', '=', 'examiners.user_id')
+            ->leftJoin('countries', 'countries.id', '=', 'examiners.country_id')
+            ->leftJoin('exams_shifts', function ($join) use ($yearId) {
+                $join->on('exams_shifts.exm_id', '=', 'examiners.id')
+                     ->where('exams_shifts.year_id', '=', $yearId);
+            })
+            ->leftJoin('exams_groups', function ($join) use ($yearId) {
+                $join->on('exams_groups.exm_id', '=', 'examiners.id')
+                     ->where('exams_groups.year_id', '=', $yearId);
+            })
+            ->leftJoin('examiners_groups', 'exams_groups.group_id', '=', 'examiners_groups.id')
+            ->where('examiners.id', $examiner_id)
+            ->select(
+                'examiners.id as examin_id',
+                'examiners.user_id',
+                'users.name as examiner_name',
+                'users.email',
+                'examiners.specialty',
+                'examiners.subspecialty',
+                'examiners.country_id',
+                'countries.country_name',
+                'examiners.mobile',
+                'examiners.curriculum_vitae',
+                'examiners.passport_image',
+                'examiners.examiner_id',
+                'examiners_groups.id as group_id',
+                'examiners_groups.group_name',
+                'exams_shifts.shift as shift_num'
+            )
+            ->first();
+
+        if ($examiner) {
+            $examiner->shift = $examiner->shift_num !== null
+                ? User::getShiftName($examiner->shift_num)
+                : null;
+        }
+
+        return $examiner;
+    }
+
     /**
      * Show attendance confirmation page after QR scan
      */
     public function showAttendanceConfirmation($examiner_id)
     {
-        $examiner = User::getExaminers()->firstWhere('examin_id', $examiner_id);
+        $examiner = $this->fetchExaminerForAttendance($examiner_id);
 
         if (!$examiner) {
             return redirect('admin/exams/examiners')->with('error', 'Examiner not found');
         }
 
-        // Check if already registered today
         $existingAttendance = Attendance::where('examiner_id', $examiner->examin_id)
             ->whereDate('created_at', Carbon::today())
             ->first();
 
         $data = [
-            'header_title' => 'Confirm Attendance Registration',
-            'examiner' => $examiner,
-            'already_registered' => $existingAttendance ? true : false,
-            'registration_time' => $existingAttendance ? $existingAttendance->created_at->format('H:i:s') : null
+            'header_title'      => 'Confirm Attendance Registration',
+            'examiner'          => $examiner,
+            'already_registered'=> $existingAttendance ? true : false,
+            'registration_time' => $existingAttendance ? $existingAttendance->created_at->format('H:i:s') : null,
         ];
 
         return view('admin.exams.confirm_attendance', $data);
@@ -1017,13 +1219,12 @@ public function delete($id)
     public function confirmAttendanceRegistration(Request $request, $examiner_id)
     {
         try {
-            $examiner = User::getExaminers()->firstWhere('examin_id', $examiner_id);
+            $examiner = $this->fetchExaminerForAttendance($examiner_id);
 
             if (!$examiner) {
                 return redirect()->back()->with('error', 'Examiner not found');
             }
 
-            // Check for duplicate attendance (same examiner same day)
             $existingAttendance = Attendance::where('examiner_id', $examiner->examin_id)
                 ->whereDate('created_at', Carbon::today())
                 ->first();
@@ -1035,18 +1236,17 @@ public function delete($id)
                 );
             }
 
-            // Create new attendance record
             $attendance = Attendance::create([
-                'user_id'        => $examiner->user_id ?? null,
-                'examiner_id'    => $examiner->examin_id ?? null,
-                'country_id'     => $examiner->country_id ?? null,
-                'group_id'       => $examiner->group_id ?? null,
-                'mobile'         => $examiner->mobile ?? null,
-                'specialty'      => $examiner->specialty ?? null,
-                'subspecialty'   => $examiner->subspecialty ?? null,
-                'shift'          => $examiner->shift ?? null,
+                'user_id'          => $examiner->user_id ?? null,
+                'examiner_id'      => $examiner->examin_id ?? null,
+                'country_id'       => $examiner->country_id ?? null,
+                'group_id'         => $examiner->group_id ?? null,
+                'mobile'           => $examiner->mobile ?? null,
+                'specialty'        => $examiner->specialty ?? null,
+                'subspecialty'     => $examiner->subspecialty ?? null,
+                'shift'            => $examiner->shift_num ?? null,
                 'curriculum_vitae' => $examiner->curriculum_vitae ?? null,
-                'passport_image' => $examiner->passport_image ?? null,
+                'passport_image'   => $examiner->passport_image ?? null,
             ]);
 
             return redirect()->back()->with(
@@ -1056,6 +1256,80 @@ public function delete($id)
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error registering attendance: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * List all attendance records (admin view), with optional CSV export.
+     */
+    public function attendanceList(Request $request)
+    {
+        $dateFilter = $request->get('date', Carbon::today()->toDateString());
+        $shiftLabels = [1 => 'Morning', 2 => 'Morning & Afternoon', 3 => 'Afternoon'];
+
+        $records = DB::table('attendance')
+            ->join('examiners', 'examiners.id', '=', 'attendance.examiner_id')
+            ->join('users', 'users.id', '=', 'examiners.user_id')
+            ->leftJoin('countries', 'countries.id', '=', 'attendance.country_id')
+            ->leftJoin('examiners_groups', 'examiners_groups.id', '=', 'attendance.group_id')
+            ->when($dateFilter, fn ($q) => $q->whereDate('attendance.created_at', $dateFilter))
+            ->select(
+                'attendance.id',
+                'attendance.created_at as checked_in_at',
+                'attendance.shift',
+                'attendance.specialty',
+                'users.name as examiner_name',
+                'examiners.examiner_id as badge_id',
+                'countries.country_name',
+                'examiners_groups.group_name'
+            )
+            ->orderBy('attendance.created_at', 'desc')
+            ->get();
+
+        // CSV export
+        if ($request->get('export') === '1') {
+            $filename = 'attendance_' . $dateFilter . '.csv';
+            $headers  = [
+                'Content-Type'        => 'text/csv',
+                'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            ];
+
+            $callback = function () use ($records, $shiftLabels) {
+                $out = fopen('php://output', 'w');
+                fputcsv($out, ['#', 'Name', 'Badge ID', 'Specialty', 'Country', 'Group', 'Shift', 'Check-in Time']);
+                foreach ($records as $i => $rec) {
+                    fputcsv($out, [
+                        $i + 1,
+                        $rec->examiner_name,
+                        $rec->badge_id ?? '',
+                        $rec->specialty ?? '',
+                        $rec->country_name ?? '',
+                        $rec->group_name ?? '',
+                        $shiftLabels[$rec->shift] ?? ($rec->shift ?? ''),
+                        Carbon::parse($rec->checked_in_at)->format('H:i:s'),
+                    ]);
+                }
+                fclose($out);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        }
+
+        // All distinct dates that have attendance records (for quick-jump links)
+        $availableDates = DB::table('attendance')
+            ->selectRaw('DATE(created_at) as date')
+            ->groupBy('date')
+            ->orderBy('date', 'desc')
+            ->pluck('date');
+
+        $data = [
+            'header_title'   => 'Examiner Attendance',
+            'records'        => $records,
+            'dateFilter'     => $dateFilter,
+            'availableDates' => $availableDates,
+            'totalToday'     => $records->count(),
+        ];
+
+        return view('admin.exams.attendance_list', $data);
     }
 
 
@@ -1421,22 +1695,21 @@ public function delete($id)
      */
     public function showExaminerAttendanceConfirmation($examiner_id)
     {
-        $examiner = User::getExaminers()->firstWhere('examin_id', $examiner_id);
+        $examiner = $this->fetchExaminerForAttendance($examiner_id);
 
         if (!$examiner) {
             return redirect('examiner/dashboard')->with('error', 'Examiner not found');
         }
 
-        // Check if already registered today
         $existingAttendance = Attendance::where('examiner_id', $examiner->examin_id)
             ->whereDate('created_at', Carbon::today())
             ->first();
 
         $data = [
-            'header_title' => 'Confirm Attendance Registration',
-            'examiner' => $examiner,
-            'already_registered' => $existingAttendance ? true : false,
-            'registration_time' => $existingAttendance ? $existingAttendance->created_at->format('H:i:s') : null
+            'header_title'      => 'Confirm Attendance Registration',
+            'examiner'          => $examiner,
+            'already_registered'=> $existingAttendance ? true : false,
+            'registration_time' => $existingAttendance ? $existingAttendance->created_at->format('H:i:s') : null,
         ];
 
         return view('examiner.confirm_attendance', $data);
@@ -1448,13 +1721,12 @@ public function delete($id)
     public function confirmExaminerAttendanceRegistration(Request $request, $examiner_id)
     {
         try {
-            $examiner = User::getExaminers()->firstWhere('examin_id', $examiner_id);
+            $examiner = $this->fetchExaminerForAttendance($examiner_id);
 
             if (!$examiner) {
                 return redirect()->back()->with('error', 'Examiner not found');
             }
 
-            // Check for duplicate attendance (same examiner same day)
             $existingAttendance = Attendance::where('examiner_id', $examiner->examin_id)
                 ->whereDate('created_at', Carbon::today())
                 ->first();
@@ -1466,18 +1738,17 @@ public function delete($id)
                 );
             }
 
-            // Create new attendance record
             $attendance = Attendance::create([
-                'user_id'        => $examiner->user_id ?? null,
-                'examiner_id'    => $examiner->examin_id ?? null,
-                'country_id'     => $examiner->country_id ?? null,
-                'group_id'       => $examiner->group_id ?? null,
-                'mobile'         => $examiner->mobile ?? null,
-                'specialty'      => $examiner->specialty ?? null,
-                'subspecialty'   => $examiner->subspecialty ?? null,
-                'shift'          => $examiner->shift ?? null,
+                'user_id'          => $examiner->user_id ?? null,
+                'examiner_id'      => $examiner->examin_id ?? null,
+                'country_id'       => $examiner->country_id ?? null,
+                'group_id'         => $examiner->group_id ?? null,
+                'mobile'           => $examiner->mobile ?? null,
+                'specialty'        => $examiner->specialty ?? null,
+                'subspecialty'     => $examiner->subspecialty ?? null,
+                'shift'            => $examiner->shift_num ?? null,
                 'curriculum_vitae' => $examiner->curriculum_vitae ?? null,
-                'passport_image' => $examiner->passport_image ?? null,
+                'passport_image'   => $examiner->passport_image ?? null,
             ]);
 
             return redirect()->back()->with(

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\TraineesImport;
 use App\Imports\TraineesApplicationImport;
+use App\Imports\TraineesExcelUpdateImport;
 use App\Models\Candidates;
 
 class TraineeController extends Controller
@@ -79,6 +80,40 @@ class TraineeController extends Controller
             return redirect()->back()->with('error', 'Import failed: ' . $e->getMessage());
         }
     }
+
+    // ── Bulk Update (SFS Excel format) ───────────────────────────────────────
+
+    public function bulkUpdate()
+    {
+        $data['header_title'] = 'Bulk Update Trainees';
+        $data['report']       = session('bulk_update_report');
+        return view('admin.associates.trainees.bulk_update', $data);
+    }
+
+    public function bulkUpdateProcess(Request $request)
+    {
+        set_time_limit(300);
+        ini_set('max_execution_time', 300);
+
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls|max:20480',
+        ]);
+
+        try {
+            $import = new TraineesExcelUpdateImport;
+            Excel::import($import, $request->file('file'));
+
+            session(['bulk_update_report' => $import->getReport()]);
+
+            return redirect('admin/associates/trainees/bulk-update')
+                ->with('bulk_done', true);
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Bulk update failed: ' . $e->getMessage());
+        }
+    }
+
+    // ── Add trainee (single) ─────────────────────────────────────────────────
 
     public function insert(Request $request)
     {

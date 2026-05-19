@@ -36,7 +36,7 @@
                     {{-- Avatar --}}
                     <div class="flex-shrink-0">
                         <img src="{{ !empty($examiner->passport_image)
-                                    ? asset('storage/app/public/' . $examiner->passport_image)
+                                    ? asset('storage/' . $examiner->passport_image)
                                     : asset('/public/dist/img/user.png') }}"
                              alt="{{ $examiner->examiner_name }}"
                              class="profile-photo">
@@ -183,7 +183,7 @@
                             <div class="mt-1 mb-3">
                                 @if($examiner->curriculum_vitae)
                                     @php $cvName = basename($examiner->curriculum_vitae); @endphp
-                                    <a href="{{ asset('storage/app/public/' . $examiner->curriculum_vitae) }}"
+                                    <a href="{{ asset('storage/' . $examiner->curriculum_vitae) }}"
                                        target="_blank"
                                        class="btn btn-sm btn-outline-danger btn-block">
                                         <i class="fas fa-download mr-1"></i> {{ $cvName }}
@@ -254,6 +254,15 @@
             @endphp
             <div class="card mb-4">
                 <div class="card-header section-header">
+                    <button type="button"
+                            class="btn btn-sm float-right"
+                            data-toggle="modal"
+                            data-target="#manageParticipationModal"
+                            style="background:#a02626;color:#fff;font-size:.75rem;
+                                   padding:3px 10px;border:none;border-radius:4px;
+                                   font-weight:600;letter-spacing:.02em;margin-top:-1px;">
+                        <i class="fas fa-pen mr-1"></i> Manage Participation
+                    </button>
                     <i class="fas fa-history mr-2"></i> Participation Summary
                 </div>
                 <div class="card-body pb-2">
@@ -338,6 +347,100 @@
 </div>
 @endsection
 
+{{-- ══ Manage Participation Modal ════════════════════════════════════════════ --}}
+<div class="modal fade" id="manageParticipationModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#a02626;color:#fff;padding:.75rem 1rem;">
+                <h5 class="modal-title mb-0">
+                    <i class="fas fa-history mr-2"></i>
+                    Manage Participation History — {{ $examiner->examiner_name }}
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" style="opacity:.9;">
+                    <span>&times;</span>
+                </button>
+            </div>
+
+            <form method="POST"
+                  action="{{ route('exams.manage.participation', $examiner->examin_id) }}">
+                @csrf
+                <input type="hidden" name="from" value="{{ $backUrl }}">
+
+                <div class="modal-body" style="padding:1rem 1.25rem;">
+                    @php
+                        // Pre-select: years the examiner already has
+                        $modalSelectedYears = array_map('strval', (array)$exYears);
+                        // Pre-select per year: use $yearProgrammes (already an array per year)
+                    @endphp
+
+                    <p class="text-muted mb-3" style="font-size:.85rem;">
+                        Check the years this examiner participated in, then tick every programme
+                        they examined in that year. Unticking a year removes its record.
+                    </p>
+
+                    <div class="modal-year-list">
+                        @foreach(array_reverse($examYears) as $yr)
+                        @php
+                            $isChecked    = in_array((string)$yr, $modalSelectedYears);
+                            $checkedProgs = array_values(array_filter((array)($yearProgrammes[(string)$yr] ?? [])));
+                            $mpCount      = count($checkedProgs);
+                        @endphp
+                        <div class="modal-year-row" id="modal_row_{{ $yr }}">
+                            {{-- Year checkbox --}}
+                            <div class="modal-year-check">
+                                <input type="checkbox"
+                                       class="modal-year-cb"
+                                       name="examination_years[]"
+                                       id="modal_yr_{{ $yr }}"
+                                       value="{{ $yr }}"
+                                       {{ $isChecked ? 'checked' : '' }}>
+                                <label for="modal_yr_{{ $yr }}" class="modal-yr-label">{{ $yr }}</label>
+                            </div>
+                            {{-- Programme dropdown --}}
+                            <div class="modal-prog-col" id="modal_prog_{{ $yr }}"
+                                 style="{{ $isChecked ? '' : 'display:none;' }}">
+                                <div class="prog-dropdown-wrap">
+                                    <button type="button"
+                                            class="btn btn-sm prog-dd-btn"
+                                            data-prog-menu="prog_dd_{{ $yr }}">
+                                        <i class="fas fa-list-ul mr-1"></i>
+                                        <span class="prog-dd-label">
+                                            @if($mpCount===0) Select programme(s)
+                                            @elseif($mpCount===1) {{ $checkedProgs[0] }}
+                                            @else {{ $mpCount }} programmes
+                                            @endif
+                                        </span>
+                                        <i class="fas fa-caret-down ml-1" style="font-size:10px;"></i>
+                                    </button>
+                                    <div class="prog-dd-menu" id="prog_dd_{{ $yr }}">
+                                        @foreach($programmeOptions as $prog)
+                                        <label class="prog-dd-option">
+                                            <input class="prog-dd-cb" type="checkbox"
+                                                   name="year_programme[{{ $yr }}][]"
+                                                   value="{{ $prog }}"
+                                                   {{ in_array($prog, $checkedProgs) ? 'checked' : '' }}>
+                                            <span>{{ $prog }}</span>
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="padding:.6rem 1rem;">
+                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-danger">
+                        <i class="fas fa-save mr-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {{-- ══ ID Badge Modal ═══════════════════════════════════════════════════════ --}}
 <div class="modal fade" id="idBadgeModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:420px;">
@@ -359,7 +462,7 @@
                         </div>
                         <div class="mb-3">
                             <img src="{{ !empty($examiner->passport_image)
-                                        ? asset('storage/app/public/'.$examiner->passport_image)
+                                        ? asset('storage/'.$examiner->passport_image)
                                         : asset('/public/dist/img/user.png') }}"
                                  alt="{{ $examiner->examiner_name }}"
                                  class="rounded-circle"
@@ -594,6 +697,31 @@
 
 @push('styles')
 <style>
+/* ── Force light-mode on this page regardless of OS/browser dark mode ──────
+   color-scheme:light tells the browser NOT to apply automatic dark mode
+   to this subtree. Explicit overrides catch AdminLTE's .dark-mode class.   */
+.content-wrapper,
+.content-wrapper *:not(.profile-hero-banner):not(.profile-hero-banner *) {
+    color-scheme: light;
+}
+
+/* Cards & headers always light */
+.card                { background-color: #fff !important; color: #212529 !important; }
+.card-body           { background-color: #fff !important; color: #212529 !important; }
+.card-footer         { background-color: #f8f9fa !important; color: #495057 !important; }
+.section-header      { background: #f8f0f0 !important; color: #a02626 !important;
+                       border-bottom-color: #f0dada !important; }
+
+/* Info tables */
+.info-table th       { background: #fafafa !important; color: #555 !important; }
+.info-table td       { background: #fff !important; color: #333 !important; }
+.table               { color: #212529 !important; }
+.table th, .table td { color: #212529 !important; border-color: #dee2e6 !important; }
+
+/* Stat icons & participation summary */
+.stat-icon           { background-color: #e9ecef; }
+.text-muted          { color: #6c757d !important; }
+
 /* ── Profile Hero ─────────────────────────────────────────────────────────── */
 .profile-hero-banner {
     background: linear-gradient(135deg, #a02626 0%, #6e1a1a 100%);
@@ -700,6 +828,93 @@
     flex-shrink: 0;
 }
 
+/* ── Manage Participation Modal ─────────────────────────────────────────── */
+.modal-year-list { display:flex; flex-direction:column; }
+
+.modal-year-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 7px 0;
+    border-bottom: 1px solid #f4f4f4;
+}
+.modal-year-row:last-child { border-bottom: none; }
+
+.modal-year-check {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 70px;
+    flex-shrink: 0;
+}
+.modal-yr-label {
+    font-weight: 700;
+    font-size: .88rem;
+    color: #333;
+    margin: 0;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.modal-prog-col { flex: 1; }
+
+/* ── Shared programme dropdown (modal + edit form) ── */
+.prog-dropdown-wrap { position: relative; display: inline-block; }
+
+.prog-dd-btn {
+    background: #fff;
+    border: 1px solid #d0d7de;
+    color: #405867;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    max-width: 280px;
+    text-align: left;
+}
+.prog-dd-btn:hover, .prog-dd-btn:focus {
+    border-color: #a02626;
+    color: #a02626;
+    box-shadow: none;
+    outline: none;
+}
+
+/* Menu — positioned by JS with position:fixed, so it escapes any overflow parent */
+.prog-dd-menu {
+    display: none;
+    position: fixed;
+    background: #fff;
+    border: 1px solid #e2e2e2;
+    border-radius: 5px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    min-width: 230px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 4px;
+    z-index: 99999;
+}
+
+.prog-dd-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #405867;
+    cursor: pointer;
+    border-radius: 3px;
+    user-select: none;
+}
+.prog-dd-option:hover { background: #fdf0f0; color: #a02626; }
+.prog-dd-cb {
+    width: 14px; height: 14px;
+    accent-color: #a02626;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
 /* ── ID Badge print ──────────────────────────────────────────────────────── */
 .id-badge-template {
     box-shadow: 0 4px 12px rgba(0,0,0,.1);
@@ -740,5 +955,61 @@ window.printBadge = function () {
             document.body.removeChild(link);
         });
 };
+
+// ── Programme dropdown (works inside modals via position:fixed) ───────────
+
+function progDdLabel($btn, $menu) {
+    var $checked = $menu.find('.prog-dd-cb:checked');
+    var label = $checked.length === 0 ? 'Select programme(s)'
+              : $checked.length === 1  ? $checked.first().val()
+              : $checked.length + ' programmes';
+    $btn.find('.prog-dd-label').text(label);
+}
+
+$(document).on('click', '.prog-dd-btn', function (e) {
+    e.preventDefault();
+    var menuId = $(this).data('prog-menu');
+    var $menu  = $('#' + menuId);
+    var isOpen = $menu.is(':visible');
+
+    // Close all open programme menus
+    $('.prog-dd-menu:visible').hide();
+
+    if (!isOpen) {
+        var r = this.getBoundingClientRect();
+        $menu.css({
+            top:      (r.bottom + 2) + 'px',
+            left:     r.left + 'px',
+            minWidth: Math.max(r.width, 230) + 'px'
+        }).show();
+    }
+});
+
+// Close menus only when clicking outside any programme dropdown wrapper
+$(document).on('click', function (e) {
+    if (!$(e.target).closest('.prog-dropdown-wrap').length) {
+        $('.prog-dd-menu:visible').hide();
+    }
+});
+
+// Update label when a programme checkbox changes
+$(document).on('change', '.prog-dd-cb', function () {
+    var $menu = $(this).closest('.prog-dd-menu');
+    var $btn  = $('[data-prog-menu="' + $menu.attr('id') + '"]');
+    progDdLabel($btn, $menu);
+});
+
+// ── Manage Participation modal — year checkbox ────────────────────────────
+$(document).on('change', '.modal-year-cb', function () {
+    var yr   = $(this).val();
+    var $col = $('#modal_prog_' + yr);
+    if ($(this).is(':checked')) {
+        $col.show();
+    } else {
+        $col.hide();
+        $col.find('.prog-dd-cb').prop('checked', false);
+        $col.find('.prog-dd-label').text('Select programme(s)');
+    }
+});
 </script>
 @endpush

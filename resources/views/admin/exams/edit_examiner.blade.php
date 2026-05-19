@@ -371,25 +371,68 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label>Years you have Examined/Observed (2020–{{ last($examYears) }})</label>
-                                            <div class="checkbox-group">
-                                                @php
-                                                    // examination_years is double-encoded in DB — decode twice
-                                                    $selectedYears = [];
-                                                    if (!empty($examiner->examination_years)) {
-                                                        $ey = json_decode($examiner->examination_years, true);
-                                                        if (is_string($ey)) { $ey = json_decode($ey, true); }
-                                                        $selectedYears = is_array($ey) ? array_map('strval', $ey) : [];
-                                                    }
-                                                @endphp
+                                            <label>Years Examined &amp; Programme (2020–{{ last($examYears) }})</label>
+                                            @php
+                                                // examination_years is double-encoded in DB — decode twice
+                                                $selectedYears = [];
+                                                if (!empty($examiner->examination_years)) {
+                                                    $ey = json_decode($examiner->examination_years, true);
+                                                    if (is_string($ey)) { $ey = json_decode($ey, true); }
+                                                    $selectedYears = is_array($ey) ? array_map('strval', $ey) : [];
+                                                }
+                                            @endphp
 
+                                            <div class="year-programme-list">
                                                 @foreach($examYears as $yr)
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="checkbox"
-                                                        name="examination_years[]"
-                                                        id="year_{{ $yr }}" value="{{ $yr }}"
-                                                        {{ in_array((string)$yr, $selectedYears) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="year_{{ $yr }}">{{ $yr }}</label>
+                                                @php $checked = in_array((string)$yr, $selectedYears); @endphp
+                                                <div class="year-programme-row" id="row_{{ $yr }}">
+                                                    <div class="year-check-col">
+                                                        <input class="form-check-input year-checkbox"
+                                                            type="checkbox"
+                                                            name="examination_years[]"
+                                                            id="year_{{ $yr }}"
+                                                            value="{{ $yr }}"
+                                                            {{ $checked ? 'checked' : '' }}>
+                                                        <label class="form-check-label year-label" for="year_{{ $yr }}">
+                                                            {{ $yr }}
+                                                        </label>
+                                                    </div>
+                                                    <div class="prog-select-col" id="prog_{{ $yr }}"
+                                                         style="{{ $checked ? '' : 'display:none;' }}">
+                                                        @php
+                                                            $selectedProgs = (array)($yearParticipations[(string)$yr] ?? []);
+                                                            if (is_string($yearParticipations[(string)$yr] ?? null)) {
+                                                                $selectedProgs = [$yearParticipations[(string)$yr]];
+                                                            }
+                                                            $selectedProgs = array_values(array_filter($selectedProgs));
+                                                            $spCount = count($selectedProgs);
+                                                        @endphp
+                                                        <div class="prog-dropdown-wrap">
+                                                            <button type="button"
+                                                                    class="btn btn-sm prog-dd-btn"
+                                                                    data-prog-menu="edit_prog_dd_{{ $yr }}">
+                                                                <i class="fas fa-list-ul mr-1"></i>
+                                                                <span class="prog-dd-label">
+                                                                    @if($spCount===0) Select programme(s)
+                                                                    @elseif($spCount===1) {{ $selectedProgs[0] }}
+                                                                    @else {{ $spCount }} programmes
+                                                                    @endif
+                                                                </span>
+                                                                <i class="fas fa-caret-down ml-1" style="font-size:10px;"></i>
+                                                            </button>
+                                                            <div class="prog-dd-menu" id="edit_prog_dd_{{ $yr }}">
+                                                                @foreach($programmeOptions as $prog)
+                                                                <label class="prog-dd-option">
+                                                                    <input class="prog-dd-cb" type="checkbox"
+                                                                           name="year_programme[{{ $yr }}][]"
+                                                                           value="{{ $prog }}"
+                                                                           {{ in_array($prog, $selectedProgs) ? 'checked' : '' }}>
+                                                                    <span>{{ $prog }}</span>
+                                                                </label>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 @endforeach
                                             </div>
@@ -755,6 +798,96 @@
             align-items: center;
         }
 
+        /* Year + Programme rows */
+        .year-programme-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .year-programme-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 0;
+        }
+
+        .year-check-col {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 68px;
+            flex-shrink: 0;
+        }
+
+        .year-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #405867;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .prog-select-col { flex: 1; }
+
+        /* Shared programme dropdown styles (see also global .prog-dd-* rules) */
+        .prog-dropdown-wrap { position: relative; display: inline-block; }
+
+        .prog-dd-btn {
+            background: #fff;
+            border: 1px solid #c8d0d8;
+            color: #405867;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            white-space: nowrap;
+            max-width: 280px;
+            text-align: left;
+        }
+        .prog-dd-btn:hover, .prog-dd-btn:focus {
+            border-color: #a02626;
+            color: #a02626;
+            box-shadow: none;
+            outline: none;
+        }
+
+        /* Menu positioned fixed by JS — escapes overflow clipping */
+        .prog-dd-menu {
+            display: none;
+            position: fixed;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            box-shadow: 0 4px 16px rgba(0,0,0,.12);
+            min-width: 230px;
+            max-height: 240px;
+            overflow-y: auto;
+            padding: 4px;
+            z-index: 99999;
+        }
+
+        .prog-dd-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            margin: 0;
+            font-size: 13px;
+            font-weight: 500;
+            color: #405867;
+            cursor: pointer;
+            border-radius: 3px;
+            user-select: none;
+        }
+        .prog-dd-option:hover { background: #fdf0f0; color: #a02626; }
+        .prog-dd-cb {
+            width: 14px; height: 14px;
+            accent-color: #a02626;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
         /* Additional fixes for better alignment */
         .form-check-input[type="checkbox"],
         .form-check-input[type="radio"] {
@@ -912,10 +1045,57 @@
             }
 
             $('#avail_not_available').on('change', toggleExamOptions);
-
-            // On load: if nothing is selected, leave as-is (don't auto-check Not Available
-            // since existing examiners may simply not have answered yet)
             toggleExamOptions();
+
+            // Year checkbox ↔ Programme dropdown toggle
+            // Year checkbox toggle (show/hide programme dropdown)
+            $(document).on('change', '.year-checkbox', function() {
+                const yr  = $(this).val();
+                const $col = $('#prog_' + yr);
+                if ($(this).is(':checked')) {
+                    $col.show();
+                } else {
+                    $col.hide();
+                    $col.find('.prog-dd-cb').prop('checked', false);
+                    $col.find('.prog-dd-label').text('Select programme(s)');
+                }
+            });
+
+            // Programme dropdown — open/close (position:fixed, works in any container)
+            $(document).on('click', '.prog-dd-btn', function(e) {
+                e.preventDefault();
+                const menuId = $(this).data('prog-menu');
+                const $menu  = $('#' + menuId);
+                const isOpen = $menu.is(':visible');
+                $('.prog-dd-menu:visible').hide();
+                if (!isOpen) {
+                    const r = this.getBoundingClientRect();
+                    $menu.css({
+                        top:      (r.bottom + 2) + 'px',
+                        left:     r.left + 'px',
+                        minWidth: Math.max(r.width, 230) + 'px'
+                    }).show();
+                }
+            });
+
+            // Close menus only when clicking outside any programme dropdown wrapper
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.prog-dropdown-wrap').length) {
+                    $('.prog-dd-menu:visible').hide();
+                }
+            });
+
+            // Update label on checkbox change
+            function updateProgLabel($menu) {
+                const $checked = $menu.find('.prog-dd-cb:checked');
+                let label = $checked.length === 0 ? 'Select programme(s)'
+                          : $checked.length === 1  ? $checked.first().val()
+                          : $checked.length + ' programmes';
+                $('[data-prog-menu="' + $menu.attr('id') + '"] .prog-dd-label').text(label);
+            }
+            $(document).on('change', '.prog-dd-cb', function() {
+                updateProgLabel($(this).closest('.prog-dd-menu'));
+            });
 
             // File upload handlers
             $('#passport_upload').on('change', function() {

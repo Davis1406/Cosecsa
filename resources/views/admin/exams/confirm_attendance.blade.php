@@ -72,7 +72,7 @@
                             <div class="row mb-4">
                                 <div class="col-md-4 text-center">
                                     @if($examiner->passport_image)
-                                        <img src="{{ asset('storage/app/public/' . $examiner->passport_image) }}" 
+                                        <img src="{{ asset('storage/' . $examiner->passport_image) }}"
                                              alt="{{ $examiner->examiner_name }}" 
                                              class="img-fluid rounded-circle mb-3"
                                              style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #a02626;">

@@ -6,22 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $header_title ?? '' }}-Cosecsa</title>
 
-    <!-- Google Font: Source Sans Pro -->
+    <!-- Preconnect to external domains for faster DNS resolution -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
+    <!-- Google Font: Source Sans Pro (swap avoids invisible text while loading) -->
     <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    
-    <!-- Bootstrap CSS - Added for proper grid system -->
+        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=swap">
+
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-    
-    <!-- Font Awesome -->
+
+    <!-- Font Awesome (local — CDN duplicate removed) -->
     <link rel="stylesheet" href="{{ url('public/plugins/fontawesome-free/css/all.min.css') }}">
-    <!-- Ionicons -->
-    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
 
     <!-- Tempusdominus Bootstrap 4 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/5.5.2/css/ionicons.min.css">
 
     <!--Select CSS-->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -62,10 +63,10 @@
 <body class="hold-transition sidebar-mini layout-fixed">
     <div class="wrapper">
 
-        {{-- <!-- Preloader -->
-  <div class="preloader flex-column justify-content-center align-items-center">
-    <img class="animation__shake" src="{{url('public/dist/img/Cosecsa_Logo.png')}}" alt="AdminLTELogo" height="60" width="60">
-  </div> --}}
+        <!-- Preloader — covers page until CSS + JS fully initialise, preventing FOUC -->
+        <div class="preloader flex-column justify-content-center align-items-center">
+            <img class="animation__shake" src="{{url('public/dist/img/Cosecsa_Logo.png')}}" alt="COSECSA" height="60" width="60">
+        </div>
 
         @include('layout.header')
 

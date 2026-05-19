@@ -242,6 +242,14 @@
                                     </a>
                                 </li>
 
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/exams/attendance') }}"
+                                        class="nav-link @if(Request::segment(3) == 'attendance') active @endif">
+                                        <i class="fas fa-clipboard-check nav-icon"></i>
+                                        <p>Attendance</p>
+                                    </a>
+                                </li>
+
                                 <!-- Results Section (Parent) -->
                                 <li class="nav-item @if (Request::segment(3) == 'exam_results' ||
                         Request::segment(3) == 'gs_results' ||
