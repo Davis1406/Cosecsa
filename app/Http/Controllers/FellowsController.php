@@ -162,6 +162,31 @@ class FellowsController extends Controller
     public function view($id)
     {
         $fellow = User::getFellows()->firstWhere('fellow_id', $id);
+
+        // Fallback: direct DB lookup in case the fellow lacks a user_roles entry
+        // (e.g. dual examiner-fellow whose role_type=7 row is missing on this environment)
+        if (!$fellow) {
+            $fellow = DB::table('fellows')
+                ->join('users', 'users.id', '=', 'fellows.user_id')
+                ->leftJoin('programmes', 'fellows.programme_id', '=', 'programmes.id')
+                ->leftJoin('categories', 'fellows.category_id', '=', 'categories.id')
+                ->leftJoin('countries', 'fellows.country_id', '=', 'countries.id')
+                ->where('fellows.id', $id)
+                ->select(
+                    'users.id as user_id',
+                    'users.name as fellow_name',
+                    'users.email as email',
+                    'fellows.id as fellow_id',
+                    'fellows.user_id as f_id',
+                    'fellows.personal_email as personal_email',
+                    'fellows.*',
+                    'programmes.name as programme_name',
+                    'countries.country_name as country_name',
+                    'categories.category_name as fellowship_type'
+                )
+                ->first();
+        }
+
         if (!$fellow) {
             return redirect('admin/associates/fellows/list')->with('error', 'Fellow not found');
         }

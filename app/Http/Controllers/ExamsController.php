@@ -82,13 +82,14 @@ class ExamsController extends Controller
                 'users.name as examiner_name',
                 'users.email',
                 'countries.country_name',
+                'examiners.internal_notes',
                 DB::raw('GROUP_CONCAT(DISTINCT examiners_groups.group_name ORDER BY examiners_groups.group_name SEPARATOR ", ") as group_name'),
                 DB::raw($participatedSql),
                 DB::raw($examinedForSql)
             )
             ->groupBy(
                 'examiners.id', 'examiners.user_id', 'examiners.examiner_id',
-                'users.name', 'users.email', 'countries.country_name'
+                'users.name', 'users.email', 'countries.country_name', 'examiners.internal_notes'
             )
             ->orderBy('users.name')
             ->get();
@@ -496,6 +497,7 @@ class ExamsController extends Controller
                 'examiners.curriculum_vitae',
                 'examiners.passport_image',
                 'examiners.role_id',
+                'examiners.examiner_designation',
                 'users.name as examiner_name',
                 'users.email',
                 'countries.country_name',
@@ -605,15 +607,16 @@ class ExamsController extends Controller
 
             // Update examiner info
             $examiner->update([
-                'gender'       => $request->gender,
-                'examiner_id'  => $request->examiner_id,
-                'country_id'   => $request->country_id,
-                'mobile'       => $request->mobile,
-                'specialty'    => $request->specialty,
-                'subspecialty' => $request->subspecialty,
-                'role_id'      => $request->participation_type === 'Examiner' ? 1 : ($request->participation_type === 'Observer' ? 2 : 3),
-                'curriculum_vitae' => $examiner->curriculum_vitae,
-                'passport_image'   => $examiner->passport_image,
+                'gender'               => $request->gender,
+                'examiner_id'          => $request->examiner_id,
+                'country_id'           => $request->country_id,
+                'mobile'               => $request->mobile,
+                'specialty'            => $request->specialty,
+                'subspecialty'         => $request->subspecialty,
+                'role_id'              => $request->participation_type === 'Examiner' ? 1 : ($request->participation_type === 'Observer' ? 2 : 3),
+                'examiner_designation' => $request->examiner_designation ?: null,
+                'curriculum_vitae'     => $examiner->curriculum_vitae,
+                'passport_image'       => $examiner->passport_image,
             ]);
 
             // Update user_roles
@@ -712,6 +715,7 @@ class ExamsController extends Controller
                 'examiners.passport_image',
                 'examiners.role_id',
                 'examiners.internal_notes',
+                'examiners.examiner_designation',
                 'users.name as examiner_name',
                 'users.email',
                 'countries.country_name'
@@ -1155,6 +1159,132 @@ public function delete($id)
         }
 
         return redirect()->back()->with('success', 'Memo saved successfully.');
+    }
+
+    /**
+     * POST admin/exams/examiner/{id}/upload-photo
+     * Replace an examiner's passport / profile photo from the view page.
+     */
+    public function uploadPhoto(Request $request, $id)
+    {
+        $request->validate([
+            'passport_image' => 'required|file|image|max:5120',
+        ]);
+
+        $examiner = ExamsModel::findOrFail($id);
+
+        if ($examiner->passport_image && Storage::disk('public')->exists($examiner->passport_image)) {
+            Storage::disk('public')->delete($examiner->passport_image);
+        }
+
+        $file      = $request->file('passport_image');
+        $sanitized = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+        $finalName = $examiner->id . '-' . $sanitized . '.' . $file->getClientOriginalExtension();
+        $examiner->passport_image = $file->storeAs('documents/passports', $finalName, 'public');
+        $examiner->save();
+
+        return redirect()->back()->with('success', 'Profile photo updated successfully.');
+    }
+
+    // ── Specialty constants ───────────────────────────────────────────────────
+    /** Map messy specialty values → canonical COSECSA programme names */
+    const SPECIALTY_MAP = [
+        'Cardiothoracic'                          => 'FCS Cardiothoracic Surgery',
+        'Cardiothoracic Surgery'                  => 'FCS Cardiothoracic Surgery',
+        'Cardiothoracic/General Surgery'          => 'FCS Cardiothoracic Surgery',
+        'General Surgery'                         => 'FCS General Surgery',
+        'general surgery'                         => 'FCS General Surgery',
+        'General'                                 => 'FCS General Surgery',
+        'FCS'                                     => 'FCS General Surgery',
+        'general surgery/UROLOGY'                 => 'FCS General Surgery',
+        'General/ Breast Surgery'                 => 'FCS General Surgery',
+        'General/ Critical Care Trauma Surgery'   => 'FCS General Surgery',
+        'General/ Gastroenterologist Surgery'     => 'FCS General Surgery',
+        'General/ Paediatric Surgery'             => 'FCS General Surgery',
+        'General/ Plastic Surgery'                => 'FCS General Surgery',
+        'General/ Surgical Oncology Surgery'      => 'FCS General Surgery',
+        'General/ Urology Surgery'                => 'FCS General Surgery',
+        'General/ Vascular Surgery'               => 'FCS General Surgery',
+        'General/HBP/Transplant Surgery'          => 'FCS General Surgery',
+        'Colon & Rectal Gen surg'                 => 'FCS General Surgery',
+        'Neurosurgery'                            => 'FCS Neurosurgery',
+        'Orthopaedic Surgery'                     => 'FCS Orthopaedic Surgery',
+        'Orthopaedics'                            => 'FCS Orthopaedic Surgery',
+        'ORTHOPEDICS'                             => 'FCS Orthopaedic Surgery',
+        'FCS orthopaedics'                        => 'FCS Orthopaedic Surgery',
+        'Trauma & Orthopaedic Surgery'            => 'FCS Orthopaedic Surgery',
+        'Ortho/P-O'                               => 'FCS Orthopaedic Surgery',
+        'Orthopaedic/ Paed-Ortho Surgery'         => 'FCS Orthopaedic Surgery',
+        'Otorhinolaryngology'                     => 'FCS Otorhinolaryngology',
+        'Otorhinolaryngology(ENT)'                => 'FCS Otorhinolaryngology',
+        'Paediatric Surgery'                      => 'FCS Paediatric Surgery',
+        'Paediatric'                              => 'FCS Paediatric Surgery',
+        'Paediatric  Surgery'                     => 'FCS Paediatric Surgery',
+        'FCS Paediatrics'                         => 'FCS Paediatric Surgery',
+        'Paediatric Orthopaedic Surgery'          => 'FCS Paediatric Orthopaedic Surgery',
+        'Plastic Surgery'                         => 'FCS Plastic Surgery',
+        'Urologic Surgery'                        => 'FCS Urologic Surgery',
+        'FCS Urology'                             => 'FCS Urologic Surgery',
+        'FCS  Urologic Surgery'                   => 'FCS Urologic Surgery',
+        'Vascular Surgery'                        => 'FCS General Surgery',
+        'MCS'                                     => 'MCS',
+    ];
+
+    /**
+     * GET admin/exams/mass-update-specialty
+     */
+    public function massUpdateSpecialtyForm()
+    {
+        $current = DB::table('examiners')
+            ->select('specialty', DB::raw('COUNT(*) as cnt'))
+            ->groupBy('specialty')
+            ->orderBy('specialty')
+            ->get()
+            ->map(function ($row) {
+                $canon = self::SPECIALTY_MAP[$row->specialty] ?? null;
+                return (object)[
+                    'specialty' => $row->specialty,
+                    'cnt'       => $row->cnt,
+                    'mapped_to' => $canon,
+                    'needs_fix' => $canon && $canon !== $row->specialty,
+                ];
+            });
+
+        $programmes = DB::table('programmes')->orderBy('name')->pluck('name');
+
+        return view('admin.exams.mass_update_specialty', [
+            'header_title' => 'Mass Update Examiner Specialty',
+            'current'      => $current,
+            'programmes'   => $programmes,
+        ]);
+    }
+
+    /**
+     * POST admin/exams/mass-update-specialty
+     */
+    public function massUpdateSpecialtyProcess(Request $request)
+    {
+        $updated = 0;
+        foreach (self::SPECIALTY_MAP as $from => $to) {
+            $rows = DB::table('examiners')
+                ->where('specialty', $from)
+                ->update(['specialty' => $to]);
+            $updated += $rows;
+        }
+
+        // Handle custom overrides submitted via form (from → to pairs)
+        $overrides = $request->input('overrides', []);
+        foreach ($overrides as $from => $to) {
+            $to = trim($to);
+            if ($to === '') continue;
+            $rows = DB::table('examiners')
+                ->where('specialty', urldecode($from))
+                ->update(['specialty' => $to]);
+            $updated += $rows;
+        }
+
+        return redirect()->route('exams.mass.specialty')
+            ->with('success', "Specialty normalised — {$updated} record(s) updated.");
     }
 
     /**

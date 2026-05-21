@@ -11,6 +11,9 @@
                     <h4 class="mb-0">Examiners — {{ $currentYear }}</h4>
                 </div>
                 <div class="col-sm-6 text-right">
+                    <a href="{{ route('exams.mass.specialty') }}" class="btn btn-sm btn-secondary mr-1">
+                        <i class="fas fa-magic mr-1"></i> Normalise Specialties
+                    </a>
                     <a href="{{ url('admin/exams/import') }}" class="btn btn-sm btn-warning mr-1">
                         <i class="fas fa-upload mr-1"></i> Upload
                     </a>
@@ -90,6 +93,7 @@
                                         <th>Examiner ID</th>
                                         <th>Exam Group</th>
                                         <th>{{ $lastYear }} Examined For</th>
+                                        <th style="width:160px;">Notes</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -109,6 +113,18 @@
                                         <td>{{ $value->examiner_id }}</td>
                                         <td>{{ $value->group_name }}</td>
                                         <td>{{ $value->examined_for ?? '—' }}</td>
+                                        <td>
+                                            @if($value->internal_notes)
+                                                @php $notePreview = Str::limit($value->internal_notes, 60); @endphp
+                                                <span class="text-muted" style="font-size:.8rem;cursor:default;"
+                                                      data-toggle="tooltip" data-placement="left"
+                                                      title="{{ e($value->internal_notes) }}">
+                                                    {{ $notePreview }}
+                                                </span>
+                                            @else
+                                                <span class="text-muted" style="font-size:.8rem;">—</span>
+                                            @endif
+                                        </td>
                                         <td>
                                             <div class="dropdown">
                                                 <button class="btn btn-sm btn-light border dropdown-toggle action-btn"

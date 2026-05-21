@@ -33,13 +33,22 @@
             {{-- ── Profile Hero ────────────────────────────────────────────────── --}}
             <div class="card mb-4 overflow-hidden">
                 <div class="profile-hero-banner d-flex align-items-center flex-wrap p-4" style="gap:1.5rem;">
-                    {{-- Avatar --}}
+                    {{-- Avatar (click to update photo) --}}
                     <div class="flex-shrink-0">
-                        <img src="{{ !empty($examiner->passport_image)
-                                    ? asset('storage/' . $examiner->passport_image)
-                                    : asset('/public/dist/img/user.png') }}"
-                             alt="{{ $examiner->examiner_name }}"
-                             class="profile-photo">
+                        <div class="position-relative" style="display:inline-block;cursor:pointer;"
+                             data-toggle="modal" data-target="#uploadPhotoModal"
+                             title="Click to update profile photo">
+                            <img src="{{ !empty($examiner->passport_image)
+                                        ? asset('storage/' . $examiner->passport_image)
+                                        : asset('/public/dist/img/user.png') }}"
+                                 alt="{{ $examiner->examiner_name }}"
+                                 class="profile-photo">
+                            <div style="position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.5);
+                                        border-radius:50%;width:28px;height:28px;
+                                        display:flex;align-items:center;justify-content:center;">
+                                <i class="fas fa-camera" style="color:#fff;font-size:12px;"></i>
+                            </div>
+                        </div>
                     </div>
 
                     {{-- Details --}}
@@ -154,6 +163,17 @@
                                     <th><i class="fas fa-user-tie text-muted mr-1"></i> Role</th>
                                     <td>{{ $examiner->role_id == 1 ? 'Examiner' : 'Observer' }}</td>
                                 </tr>
+                                @if(!empty($examiner->examiner_designation))
+                                <tr>
+                                    <th><i class="fas fa-gavel text-muted mr-1"></i> Designation</th>
+                                    <td>
+                                        <span class="badge badge-pill"
+                                              style="background:#a02626;color:#fff;font-size:.78rem;padding:.3em .7em;">
+                                            {{ $examiner->examiner_designation }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                @endif
                                 <tr>
                                     <th><i class="fas fa-stethoscope text-muted mr-1"></i> Specialty</th>
                                     <td>{{ $examiner->specialty ?: '—' }}</td>
@@ -595,36 +615,60 @@
                                 </h6>
                             </div>
                             <div class="card-body">
+                                @php
+                                    // Extract specific years for MCS and FCS from yearProgrammes
+                                    $mcsYears = [];
+                                    $fcsYears = [];
+                                    foreach ($yearProgrammes as $yr => $progs) {
+                                        foreach ($progs as $prog) {
+                                            if (strtoupper($prog) === 'MCS') {
+                                                $mcsYears[] = $yr;
+                                            } elseif (stripos($prog, 'FCS') !== false) {
+                                                $fcsYears[] = $yr;
+                                            }
+                                        }
+                                    }
+                                    sort($mcsYears);
+                                    sort($fcsYears);
+                                @endphp
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <div class="icon-circle bg-success text-white mr-3">
+                                        <div class="d-flex align-items-start mb-2">
+                                            <div class="icon-circle bg-success text-white mr-3 flex-shrink-0">
                                                 <i class="fas fa-laptop"></i>
                                             </div>
                                             <div>
                                                 <small class="text-muted">Virtual MCS Participation</small>
                                                 <div class="font-weight-bold">
-                                                    @if($hasHistory && ($examiner->virtual_mcs_participated ?? '') == 'Yes')
+                                                    @if(!empty($mcsYears))
+                                                        @foreach($mcsYears as $mcsYr)
+                                                            <span class="badge badge-success mr-1">{{ $mcsYr }}</span>
+                                                        @endforeach
+                                                    @elseif($hasHistory && ($examiner->virtual_mcs_participated ?? '') == 'Yes')
                                                         <span class="badge badge-success">Yes</span>
                                                     @else
-                                                        <span class="badge badge-secondary">No</span>
+                                                        <span class="badge badge-secondary">No record</span>
                                                     @endif
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <div class="icon-circle bg-info text-white mr-3">
+                                        <div class="d-flex align-items-start mb-2">
+                                            <div class="icon-circle bg-info text-white mr-3 flex-shrink-0">
                                                 <i class="fas fa-stethoscope"></i>
                                             </div>
                                             <div>
                                                 <small class="text-muted">FCS Participation</small>
                                                 <div class="font-weight-bold">
-                                                    @if($hasHistory && ($examiner->fcs_participated ?? '') == 'Yes')
+                                                    @if(!empty($fcsYears))
+                                                        @foreach($fcsYears as $fcsYr)
+                                                            <span class="badge badge-info mr-1">{{ $fcsYr }}</span>
+                                                        @endforeach
+                                                    @elseif($hasHistory && ($examiner->fcs_participated ?? '') == 'Yes')
                                                         <span class="badge badge-info">Yes</span>
                                                     @else
-                                                        <span class="badge badge-secondary">No</span>
+                                                        <span class="badge badge-secondary">No record</span>
                                                     @endif
                                                 </div>
                                             </div>
@@ -784,6 +828,54 @@
                     <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-sm btn-danger">
                         <i class="fas fa-upload mr-1"></i> Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ══ Upload Photo Modal ════════════════════════════════════════════════════ --}}
+<div class="modal fade" id="uploadPhotoModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#a02626;color:#fff;padding:.75rem 1rem;">
+                <h5 class="modal-title mb-0">
+                    <i class="fas fa-camera mr-2"></i> Update Profile Photo
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" style="opacity:.9;">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form method="POST"
+                  action="{{ route('examiner.upload.photo', $examiner->examin_id) }}"
+                  enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <img id="photoPreviewImg"
+                             src="{{ !empty($examiner->passport_image) ? asset('storage/' . $examiner->passport_image) : asset('/public/dist/img/user.png') }}"
+                             alt="Current photo"
+                             style="width:120px;height:120px;object-fit:cover;border-radius:50%;border:3px solid #a02626;">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold">Select New Photo <span class="text-danger">*</span></label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="photoFileInput"
+                                   name="passport_image" accept="image/*" required>
+                            <label class="custom-file-label" for="photoFileInput">
+                                Choose image (JPG, PNG — max 5 MB)
+                            </label>
+                        </div>
+                        @error('passport_image')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding:.6rem 1rem;">
+                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-danger">
+                        <i class="fas fa-upload mr-1"></i> Update Photo
                     </button>
                 </div>
             </form>
@@ -1061,6 +1153,23 @@ $('#cvFileInput').on('change', function () {
 // Re-open CV modal on validation error
 @if($errors->has('curriculum_vitae'))
     $(document).ready(function () { $('#uploadCvModal').modal('show'); });
+@endif
+
+// ── Photo upload modal — preview + label ─────────────────────────────────
+$('#photoFileInput').on('change', function () {
+    var name = $(this).val().split('\\').pop();
+    $(this).next('.custom-file-label').text(name || 'Choose image');
+    var file = this.files[0];
+    if (file && file.type.startsWith('image/')) {
+        var reader = new FileReader();
+        reader.onload = function (e) { $('#photoPreviewImg').attr('src', e.target.result); };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Re-open photo modal on validation error
+@if($errors->has('passport_image'))
+    $(document).ready(function () { $('#uploadPhotoModal').modal('show'); });
 @endif
 
 // ── Internal Memo ─────────────────────────────────────────────────────────

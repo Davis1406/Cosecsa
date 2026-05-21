@@ -218,8 +218,11 @@ Route::get('admin/exams/gs_station_results/{candidate_id}/{station_id}', [ExamsC
 Route::get('admin/exams/attendance', [ExamsController::class, 'attendanceList'])->name('exams.attendance.list');
 // Manage participation history (from view_examiner modal)
 Route::post('admin/exams/manage-participation/{examiner_id}', [ExamsController::class, 'manageParticipation'])->name('exams.manage.participation');
-Route::post('admin/exams/examiner/{id}/upload-cv', [ExamsController::class, 'uploadCv'])->name('examiner.upload.cv');
-Route::post('admin/exams/examiner/{id}/memo',      [ExamsController::class, 'saveMemo'])->name('examiner.save.memo');
+Route::post('admin/exams/examiner/{id}/upload-cv',    [ExamsController::class, 'uploadCv'])->name('examiner.upload.cv');
+Route::post('admin/exams/examiner/{id}/upload-photo', [ExamsController::class, 'uploadPhoto'])->name('examiner.upload.photo');
+Route::post('admin/exams/examiner/{id}/memo',         [ExamsController::class, 'saveMemo'])->name('examiner.save.memo');
+Route::get('admin/exams/mass-update-specialty',       [ExamsController::class, 'massUpdateSpecialtyForm'])->name('exams.mass.specialty');
+Route::post('admin/exams/mass-update-specialty',      [ExamsController::class, 'massUpdateSpecialtyProcess'])->name('exams.mass.specialty.process');
 // Show attendance confirmation page (GET)
 Route::get('admin/exams/confirm-attendance/{examiner_id}', [ExamsController::class, 'showAttendanceConfirmation'])->name('exams.confirm.attendance');
 // Register attendance via Form (POST) - with CSRF protection

@@ -126,13 +126,12 @@ class User extends Authenticatable
             ->leftJoin('programmes', 'fellows.programme_id', '=', 'programmes.id')
             ->leftJoin('categories', 'fellows.category_id', '=', 'categories.id')
             ->leftJoin('countries', 'fellows.country_id', '=', 'countries.id')
-            ->join('user_roles', function ($join) {
+            ->leftJoin('user_roles', function ($join) {
                 $join->on('user_roles.user_id', '=', 'users.id')
-                    ->where('user_roles.role_type', '=', 7)
-                    ->where('user_roles.is_active', '=', 1);
+                    ->where('user_roles.role_type', '=', 7);
             });
 
-        return $return->orderBy('id', 'asc')->get();
+        return $return->orderBy('fellows.id', 'asc')->get();
     }
 
     static public function getMembers()

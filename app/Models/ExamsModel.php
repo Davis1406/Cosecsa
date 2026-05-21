@@ -23,6 +23,7 @@ class ExamsModel extends Model
         'curriculum_vitae',
         'passport_image',
         'internal_notes',
+        'examiner_designation',
     ];
 
     public function user()
