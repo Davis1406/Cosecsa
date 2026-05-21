@@ -287,8 +287,7 @@
             </div>
 
             {{-- ── Internal Memo (hidden when saved; revealed by Edit button) ─── --}}
-            <div class="card mb-4" id="memoCard"
-                 style="{{ !empty($examiner->internal_notes) ? 'display:none;' : '' }}">
+            <div class="card mb-4" id="memoCard" style="display:none;">
                 <div class="card-header section-header d-flex align-items-center justify-content-between">
                     <span><i class="fas fa-sticky-note mr-2"></i> Internal Memo</span>
                     <small class="text-muted font-weight-normal" style="font-size:.72rem;">
