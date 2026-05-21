@@ -102,6 +102,32 @@
         .mb-3 {
             margin-bottom: 1rem;
         }
+
+        /* Password toggle */
+        .password-wrapper {
+            position: relative;
+        }
+        .password-wrapper .form-control {
+            padding-right: 46px;
+        }
+        .btn-password-toggle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 45px;
+            width: 44px;
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            z-index: 5;
+        }
+        .btn-password-toggle:hover { color: #a02626; }
+        .btn-password-toggle:focus { outline: none; }
     </style>
 </head>
 <body class="hold-transition login-page">
@@ -140,8 +166,13 @@
                     <input type="text" class="form-control" name="email" placeholder="Email or Username" required>
                 </div>
 
-                <div class="mb-3">
-                    <input type="password" class="form-control" name="password" placeholder="Password" required>
+                <div class="mb-3 password-wrapper">
+                    <input type="password" class="form-control" name="password" id="passwordInput"
+                           placeholder="Password" required>
+                    <button type="button" class="btn-password-toggle" id="togglePassword"
+                            title="Show / hide password">
+                        <i class="fas fa-eye" id="toggleIcon"></i>
+                    </button>
                 </div>
 
                 <div class="mb-3 form-check">
@@ -165,5 +196,18 @@
         </div>
     </div>
 </div>
+<script>
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        var input = document.getElementById('passwordInput');
+        var icon  = document.getElementById('toggleIcon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    });
+</script>
 </body>
 </html>

@@ -333,7 +333,8 @@ $(function () {
                 { "visible": true  }, // Examiner ID
                 { "visible": true  }, // Exam Group
                 { "visible": true  }, // Examined For
-                // Col 8: Action — not sortable/searchable
+                { "visible": true  }, // Notes
+                // Col 9: Action — not sortable/searchable
                 { "orderable": false, "searchable": false }
             ],
             "initComplete": function () { hideLoader("examinerstable"); },

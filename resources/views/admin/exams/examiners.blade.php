@@ -307,7 +307,7 @@ $(function () {
     });
 
     // ── Unified DataTable search extension ────────────────────────────────────
-    // Col indices: 0=chk 1=# 2=name 3=email 4=country 5=examID 6=group 7=examined_for 8=action
+    // Col indices: 0=chk 1=# 2=name 3=email 4=country 5=examID 6=group 7=examined_for 8=notes 9=action
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
         if (settings.nTable.id !== 'examinerstable') return true; // guard other tables
 
