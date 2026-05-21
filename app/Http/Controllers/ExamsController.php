@@ -309,14 +309,15 @@ class ExamsController extends Controller
             ]);
 
             $examiner = ExamsModel::create([
-                'user_id' => $user->id,
-                'examiner_id' => $request->examiner_id,
-                'country_id' => $request->country_id,
-                'mobile' => $request->mobile,
-                'specialty' => $request->specialty,
-                'subspecialty' => $request->subspecialty,
-                'gender' => $request->gender,
-                'role_id' => $request->participation_type === 'Examiner' ? 1 : ($request->participation_type === 'Observer' ? 2 : 3),
+                'user_id'              => $user->id,
+                'examiner_id'          => $request->examiner_id,
+                'country_id'           => $request->country_id,
+                'mobile'               => $request->mobile,
+                'specialty'            => $request->specialty,
+                'subspecialty'         => $request->subspecialty,
+                'gender'               => $request->gender,
+                'role_id'              => $request->participation_type === 'Examiner' ? 1 : ($request->participation_type === 'Observer' ? 2 : 3),
+                'examiner_designation' => $request->examiner_designation ?: null,
             ]);
 
             // attach group

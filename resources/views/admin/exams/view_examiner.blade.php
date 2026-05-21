@@ -185,19 +185,30 @@
                                     <td>{{ $examiner->subspecialty ?: '—' }}</td>
                                 </tr>
                                 <tr>
-                                    <th style="vertical-align:top;padding-top:.6rem;">
+                                    <th style="vertical-align:top;padding-top:.5rem;">
                                         <i class="fas fa-sticky-note text-muted mr-1"></i> Notes
                                     </th>
                                     <td>
-                                        @if(!empty($examiner->internal_notes))
-                                            <span style="font-size:.82rem;color:#555;white-space:pre-wrap;word-break:break-word;">{{ Str::limit($examiner->internal_notes, 120) }}</span>
-                                            @if(strlen($examiner->internal_notes) > 120)
-                                                <a href="#memoCard" onclick="document.getElementById('memoCard').scrollIntoView({behavior:'smooth'});return false;"
-                                                   style="font-size:.75rem;"> more…</a>
-                                            @endif
-                                        @else
-                                            <span class="text-muted" style="font-size:.82rem;">No notes</span>
-                                        @endif
+                                        <div class="d-flex align-items-start justify-content-between" style="gap:.5rem;">
+                                            <div style="flex:1;">
+                                                @if(!empty($examiner->internal_notes))
+                                                    <span style="font-size:.82rem;color:#555;white-space:pre-wrap;word-break:break-word;">{{ Str::limit($examiner->internal_notes, 120) }}</span>
+                                                    @if(strlen($examiner->internal_notes) > 120)
+                                                        <a href="#memoCard" onclick="document.getElementById('memoCard').scrollIntoView({behavior:'smooth'});return false;"
+                                                           style="font-size:.75rem;"> more…</a>
+                                                    @endif
+                                                @else
+                                                    <span class="text-muted" style="font-size:.82rem;">No notes</span>
+                                                @endif
+                                            </div>
+                                            <button type="button"
+                                                    onclick="document.getElementById('memoCard').scrollIntoView({behavior:'smooth'});setTimeout(function(){$('#memoEditBtn').trigger('click');},350);"
+                                                    class="btn btn-sm btn-outline-secondary flex-shrink-0"
+                                                    style="font-size:.7rem;padding:1px 7px;white-space:nowrap;">
+                                                <i class="fas fa-pencil-alt mr-1"></i>
+                                                {{ empty($examiner->internal_notes) ? 'Add' : 'Edit' }}
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             </table>
@@ -280,42 +291,64 @@
             <div class="card mb-4" id="memoCard">
                 <div class="card-header section-header d-flex align-items-center justify-content-between">
                     <span><i class="fas fa-sticky-note mr-2"></i> Internal Memo</span>
-                    <small class="text-muted font-weight-normal" style="font-size:.72rem;">
-                        Visible to admins only — not shared with the examiner
-                    </small>
+                    <div class="d-flex align-items-center" style="gap:.5rem;">
+                        <small class="text-muted font-weight-normal" style="font-size:.72rem;">
+                            Admins only — not shared with examiner
+                        </small>
+                        {{-- Edit button shown only when memo exists --}}
+                        @if(!empty($examiner->internal_notes))
+                        <button type="button" id="memoEditBtn"
+                                class="btn btn-sm btn-outline-secondary"
+                                style="font-size:.72rem;padding:2px 8px;">
+                            <i class="fas fa-pencil-alt mr-1"></i> Edit
+                        </button>
+                        @endif
+                    </div>
                 </div>
                 <div class="card-body">
-                    <form id="memoForm"
-                          method="POST"
-                          action="{{ route('examiner.save.memo', $examiner->examin_id) }}">
-                        @csrf
-                        <div class="form-group mb-2">
-                            <textarea id="memoTextarea" name="internal_notes"
-                                      class="form-control"
-                                      rows="4"
-                                      maxlength="5000"
-                                      placeholder="Add a private note about this examiner — e.g. dietary requirements, special accommodation, past issues, availability notes…"
-                                      style="resize:vertical;font-size:.875rem;">{{ old('internal_notes', $examiner->internal_notes ?? '') }}</textarea>
-                            <div class="d-flex justify-content-between mt-1">
-                                <small class="text-muted" id="memoCharCount">
-                                    <span id="memoUsed">{{ strlen($examiner->internal_notes ?? '') }}</span>/5000 characters
-                                </small>
-                                <small id="memoSavedIndicator" class="text-success" style="display:none;">
-                                    <i class="fas fa-check mr-1"></i> Saved
-                                </small>
+
+                    {{-- VIEW MODE: shown when memo exists and not editing --}}
+                    <div id="memoViewMode" style="{{ empty($examiner->internal_notes) ? 'display:none;' : '' }}">
+                        <p id="memoViewText"
+                           style="font-size:.875rem;color:#333;white-space:pre-wrap;word-break:break-word;
+                                  margin:0;padding:.5rem 0;line-height:1.6;">{{ $examiner->internal_notes ?? '' }}</p>
+                    </div>
+
+                    {{-- EDIT MODE: shown when no memo yet, or when editing --}}
+                    <div id="memoEditMode" style="{{ !empty($examiner->internal_notes) ? 'display:none;' : '' }}">
+                        <form id="memoForm"
+                              method="POST"
+                              action="{{ route('examiner.save.memo', $examiner->examin_id) }}">
+                            @csrf
+                            <div class="form-group mb-2">
+                                <textarea id="memoTextarea" name="internal_notes"
+                                          class="form-control"
+                                          rows="4"
+                                          maxlength="5000"
+                                          placeholder="Add a private note — e.g. dietary requirements, accommodation, past issues, availability notes…"
+                                          style="resize:vertical;font-size:.875rem;">{{ old('internal_notes', $examiner->internal_notes ?? '') }}</textarea>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small class="text-muted">
+                                        <span id="memoUsed">{{ strlen($examiner->internal_notes ?? '') }}</span>/5000 characters
+                                    </small>
+                                    <small id="memoSavedIndicator" class="text-success" style="display:none;">
+                                        <i class="fas fa-check mr-1"></i> Saved
+                                    </small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="d-flex" style="gap:.5rem;">
-                            <button type="submit" id="memoSaveBtn"
-                                    class="btn btn-sm btn-danger">
-                                <i class="fas fa-save mr-1"></i> Save Memo
-                            </button>
-                            <button type="button" id="memoClearBtn"
-                                    class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-times mr-1"></i> Clear
-                            </button>
-                        </div>
-                    </form>
+                            <div class="d-flex" style="gap:.5rem;">
+                                <button type="submit" id="memoSaveBtn" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-save mr-1"></i> Save Memo
+                                </button>
+                                @if(!empty($examiner->internal_notes))
+                                <button type="button" id="memoCancelBtn" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-times mr-1"></i> Cancel
+                                </button>
+                                @endif
+                            </div>
+                        </form>
+                    </div>
+
                 </div>
             </div>
 
@@ -336,12 +369,19 @@
 
             @if($hasHistory)
             @php
-                // Derive MCS / FCS participation from yearProgrammes (authoritative source)
-                // rather than the old boolean fcs_participated / virtual_mcs_participated fields.
-                $hasMCSHistory = collect($yearProgrammes)->flatten()
-                    ->contains(fn($p) => str_contains(strtoupper($p), 'MCS'));
-                $hasFCSHistory = collect($yearProgrammes)->flatten()
-                    ->contains(fn($p) => str_contains(strtoupper($p), 'FCS'));
+                // Derive MCS / FCS years from yearProgrammes (authoritative source)
+                $mcsStatYears = [];
+                $fcsStatYears = [];
+                foreach ($yearProgrammes as $yr => $progs) {
+                    foreach ($progs as $p) {
+                        if (strtoupper($p) === 'MCS') { $mcsStatYears[] = $yr; }
+                        elseif (stripos($p, 'FCS') !== false) { $fcsStatYears[] = $yr; }
+                    }
+                }
+                sort($mcsStatYears); sort($fcsStatYears);
+                $hasMCSHistory = !empty($mcsStatYears);
+                $hasFCSHistory = !empty($fcsStatYears);
+                $examinerRoleLabel = $examiner->role_id == 1 ? 'Examiner' : 'Observer';
             @endphp
             <div class="card mb-4">
                 <div class="card-header section-header">
@@ -365,14 +405,26 @@
                                 <i class="fas fa-laptop"></i>
                             </div>
                             <small class="d-block mt-2 text-muted">MCS</small>
-                            <strong>{{ $hasMCSHistory ? 'Participated' : 'N/A' }}</strong>
+                            @if($hasMCSHistory)
+                                <div style="font-size:.75rem;font-weight:600;line-height:1.4;margin-top:2px;">
+                                    {{ implode(', ', $mcsStatYears) }}
+                                </div>
+                            @else
+                                <strong class="text-muted">N/A</strong>
+                            @endif
                         </div>
                         <div class="col-6 col-md-3 mb-3">
                             <div class="stat-icon mx-auto {{ $hasFCSHistory ? 'bg-info' : 'bg-light-muted' }}">
                                 <i class="fas fa-stethoscope"></i>
                             </div>
                             <small class="d-block mt-2 text-muted">FCS</small>
-                            <strong>{{ $hasFCSHistory ? 'Participated' : 'N/A' }}</strong>
+                            @if($hasFCSHistory)
+                                <div style="font-size:.75rem;font-weight:600;line-height:1.4;margin-top:2px;">
+                                    {{ implode(', ', $fcsStatYears) }}
+                                </div>
+                            @else
+                                <strong class="text-muted">N/A</strong>
+                            @endif
                         </div>
                         <div class="col-6 col-md-3 mb-3">
                             <div class="stat-icon mx-auto bg-light-muted">
@@ -405,6 +457,7 @@
                                 <tr style="border-bottom:1px solid #f0f0f0;">
                                     <th style="width:80px;color:#6c757d;font-weight:600;padding-left:0;">Year</th>
                                     <th style="color:#6c757d;font-weight:600;">Programme</th>
+                                    <th style="width:100px;color:#6c757d;font-weight:600;">Role</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -420,6 +473,12 @@
                                         @else
                                             <span class="text-muted" style="font-style:italic;">No record</span>
                                         @endif
+                                    </td>
+                                    <td style="vertical-align:middle;">
+                                        <span class="badge badge-pill {{ $examinerRoleLabel === 'Examiner' ? 'badge-success' : 'badge-warning' }}"
+                                              style="font-size:.72rem;">
+                                            {{ $examinerRoleLabel }}
+                                        </span>
                                     </td>
                                 </tr>
                             @endforeach
@@ -1192,27 +1251,37 @@ $('#photoFileInput').on('change', function () {
 
 // ── Internal Memo ─────────────────────────────────────────────────────────
 (function () {
-    var $ta    = $('#memoTextarea');
-    var $used  = $('#memoUsed');
-    var $saved = $('#memoSavedIndicator');
-    var $btn   = $('#memoSaveBtn');
-    var autoTimer = null;
+    var $ta         = $('#memoTextarea');
+    var $used       = $('#memoUsed');
+    var $saved      = $('#memoSavedIndicator');
+    var $btn        = $('#memoSaveBtn');
+    var $editMode   = $('#memoEditMode');
+    var $viewMode   = $('#memoViewMode');
+    var $viewText   = $('#memoViewText');
+    var $editBtn    = $('#memoEditBtn');
+    var $cancelBtn  = $('#memoCancelBtn');
+    var autoTimer   = null;
 
-    // Character counter
+    // Switch to edit mode
+    $editBtn.on('click', function () {
+        $viewMode.hide();
+        $editMode.show();
+        $ta.focus();
+    });
+
+    // Cancel — back to view mode
+    $cancelBtn.on('click', function () {
+        clearTimeout(autoTimer);
+        $editMode.hide();
+        $viewMode.show();
+    });
+
+    // Character counter + auto-save
     $ta.on('input', function () {
         $used.text($ta.val().length);
         $saved.hide();
         clearTimeout(autoTimer);
-        // Auto-save after 2 s of inactivity
         autoTimer = setTimeout(function () { submitMemo(true); }, 2000);
-    });
-
-    // Clear button
-    $('#memoClearBtn').on('click', function () {
-        if ($ta.val() && !confirm('Clear this memo?')) return;
-        $ta.val('');
-        $used.text('0');
-        submitMemo(false);
     });
 
     // Manual save
@@ -1222,34 +1291,59 @@ $('#photoFileInput').on('change', function () {
         submitMemo(false);
     });
 
+    function refreshNotePreview(txt) {
+        // Update the Notes row in the Current Assignment card
+        var preview = txt.length > 120 ? txt.substring(0, 120) + '…' : txt;
+        var $noteCell = $('.info-table tr').filter(function () {
+            return $(this).find('.fa-sticky-note').length > 0;
+        }).find('td');
+        if ($noteCell.length) {
+            if (txt) {
+                $noteCell.html('<span style="font-size:.82rem;color:#555;white-space:pre-wrap;word-break:break-word;">'
+                    + $('<div>').text(preview).html() + '</span>');
+            } else {
+                $noteCell.html('<span class="text-muted" style="font-size:.82rem;">No notes</span>');
+            }
+        }
+    }
+
     function submitMemo(silent) {
         $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Saving…');
+        var txt = $ta.val();
         $.ajax({
             url:  '{{ route("examiner.save.memo", $examiner->examin_id) }}',
             type: 'POST',
-            data: { _token: '{{ csrf_token() }}', internal_notes: $ta.val() },
+            data: { _token: '{{ csrf_token() }}', internal_notes: txt },
             success: function () {
-                // Refresh Notes preview in the Current Assignment card
-                var txt = $ta.val();
-                var preview = txt.length > 120 ? txt.substring(0, 120) + '… ' : txt;
-                var $noteCell = $('td[data-notes-preview]');
-                if ($noteCell.length === 0) {
-                    // find by structure: th containing sticky-note icon
-                    $noteCell = $('.info-table tr').filter(function () {
-                        return $(this).find('.fa-sticky-note').length > 0;
-                    }).find('td');
-                }
-                if ($noteCell.length) {
-                    if (txt) {
-                        $noteCell.html('<span style="font-size:.82rem;color:#555;white-space:pre-wrap;word-break:break-word;">' + $('<div>').text(preview).html() + '</span>');
-                    } else {
-                        $noteCell.html('<span class="text-muted" style="font-size:.82rem;">No notes</span>');
+                refreshNotePreview(txt);
+
+                // Switch to view mode with the saved text
+                $viewText.text(txt);
+                if (txt) {
+                    $viewMode.show();
+                    $editMode.hide();
+                    // Ensure Edit button exists in header
+                    if ($editBtn.length === 0) {
+                        var $hdr = $('#memoCard .card-header .d-flex');
+                        $hdr.prepend('<button type="button" id="memoEditBtn" class="btn btn-sm btn-outline-secondary" style="font-size:.72rem;padding:2px 8px;"><i class="fas fa-pencil-alt mr-1"></i> Edit</button>');
+                        $editBtn = $('#memoEditBtn');
+                        $editBtn.on('click', function () { $viewMode.hide(); $editMode.show(); $ta.focus(); });
                     }
+                    $editBtn.show();
+                    // Show Cancel button in edit form for next time
+                    if ($cancelBtn.length === 0) {
+                        $btn.after('<button type="button" id="memoCancelBtn" class="btn btn-sm btn-outline-secondary ml-1"><i class="fas fa-times mr-1"></i> Cancel</button>');
+                        $cancelBtn = $('#memoCancelBtn');
+                        $cancelBtn.on('click', function () { clearTimeout(autoTimer); $editMode.hide(); $viewMode.show(); });
+                    }
+                } else {
+                    $viewMode.hide();
+                    $editMode.show();
+                    $editBtn.hide();
                 }
+
                 $saved.show();
-                if (!silent) {
-                    setTimeout(function () { $saved.fadeOut(); }, 3000);
-                }
+                if (!silent) { setTimeout(function () { $saved.fadeOut(); }, 3000); }
             },
             error: function () {
                 if (!silent) alert('Could not save memo. Please try again.');

@@ -156,6 +156,21 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
+                                            <label for="examiner_designation">Additional Designation</label>
+                                            <select name="examiner_designation" id="examiner_designation" class="form-control">
+                                                <option value="">— None —</option>
+                                                <option value="Court of Examiner" {{ old('examiner_designation') == 'Court of Examiner' ? 'selected' : '' }}>Court of Examiner</option>
+                                                <option value="Panel Head" {{ old('examiner_designation') == 'Panel Head' ? 'selected' : '' }}>Panel Head</option>
+                                                <option value="Other" {{ old('examiner_designation') == 'Other' ? 'selected' : '' }}>Other</option>
+                                            </select>
+                                            <small class="text-muted">Court of Examiner, Panel Head, or Other</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
                                             <label for="country_id">Country *</label>
                                             <select name="country_id" id="country_id" class="form-control" required>
                                                 <option value="">Select Country</option>
