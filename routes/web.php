@@ -223,6 +223,10 @@ Route::post('admin/exams/examiner/{id}/upload-photo', [ExamsController::class, '
 Route::post('admin/exams/examiner/{id}/memo',         [ExamsController::class, 'saveMemo'])->name('examiner.save.memo');
 Route::get('admin/exams/mass-update-specialty',       [ExamsController::class, 'massUpdateSpecialtyForm'])->name('exams.mass.specialty');
 Route::post('admin/exams/mass-update-specialty',      [ExamsController::class, 'massUpdateSpecialtyProcess'])->name('exams.mass.specialty.process');
+// Designation options admin
+Route::get('admin/settings/designations',             [ExamsController::class, 'designationsIndex'])->name('admin.designations');
+Route::post('admin/settings/designations',            [ExamsController::class, 'designationsStore'])->name('admin.designations.store');
+Route::get('admin/settings/designations/{id}/delete', [ExamsController::class, 'designationsDelete'])->name('admin.designations.delete');
 // Show attendance confirmation page (GET)
 Route::get('admin/exams/confirm-attendance/{examiner_id}', [ExamsController::class, 'showAttendanceConfirmation'])->name('exams.confirm.attendance');
 // Register attendance via Form (POST) - with CSRF protection

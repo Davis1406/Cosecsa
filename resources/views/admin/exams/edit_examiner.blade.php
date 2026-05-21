@@ -188,20 +188,16 @@
                                             <label for="examiner_designation">Additional Designation</label>
                                             <select name="examiner_designation" id="examiner_designation" class="form-control">
                                                 <option value="">— None —</option>
-                                                <option value="Court of Examiner"
-                                                    {{ ($examiner->examiner_designation ?? '') == 'Court of Examiner' ? 'selected' : '' }}>
-                                                    Court of Examiner
+                                                @foreach($designationOptions as $desig)
+                                                <option value="{{ $desig }}"
+                                                    {{ ($examiner->examiner_designation ?? '') == $desig ? 'selected' : '' }}>
+                                                    {{ $desig }}
                                                 </option>
-                                                <option value="Panel Head"
-                                                    {{ ($examiner->examiner_designation ?? '') == 'Panel Head' ? 'selected' : '' }}>
-                                                    Panel Head
-                                                </option>
-                                                <option value="Other"
-                                                    {{ ($examiner->examiner_designation ?? '') == 'Other' ? 'selected' : '' }}>
-                                                    Other
-                                                </option>
+                                                @endforeach
                                             </select>
-                                            <small class="text-muted">Court of Examiner, Panel Head, or Other</small>
+                                            <small class="text-muted">
+                                                <a href="{{ route('admin.designations') }}" target="_blank">Manage options ↗</a>
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
@@ -286,6 +282,8 @@
 
                             <!-- Step 3: Examiner History -->
                             <div class="form-step" data-step="3">
+
+                                {{-- MCS / FCS past participation --}}
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
@@ -306,7 +304,6 @@
                                                     <label class="form-check-label" for="virtual_mcs_no">No</label>
                                                 </div>
                                             </div>
-                                            <div class="error-message">Please select an option</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -326,38 +323,12 @@
                                                     <label class="form-check-label" for="fcs_no">No</label>
                                                 </div>
                                             </div>
-                                            <div class="error-message">Please select an option</div>
                                         </div>
                                     </div>
                                 </div>
 
+                                {{-- Hospital --}}
                                 <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Did you participate as an examiner or observer?</label>
-                                            <div class="radio-group">
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="radio"
-                                                        name="participation_type" id="examiner" value="Examiner"
-                                                        {{ $examiner->role_id == 1 ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="examiner">Examiner</label>
-                                                </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="radio"
-                                                        name="participation_type" id="observer" value="Observer"
-                                                        {{ $examiner->role_id == 2 ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="observer">Observer</label>
-                                                </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="radio"
-                                                        name="participation_type" id="none" value="None"
-                                                        {{ $examiner->role_id == 3 ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="none">None</label>
-                                                </div>
-                                            </div>
-                                            <div class="error-message">Please select participation type</div>
-                                        </div>
-                                    </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Hospital Organization Type</label>
@@ -366,37 +337,36 @@
                                                     <input class="form-check-input" type="radio" name="hospital_type"
                                                         id="teaching_hospital" value="Teaching Hospital"
                                                         {{ $examiner->hospital_type == 'Teaching Hospital' ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="teaching_hospital">Teaching
-                                                        Hospital</label>
+                                                    <label class="form-check-label" for="teaching_hospital">Teaching Hospital</label>
                                                 </div>
                                                 <div class="form-check form-check-inline">
                                                     <input class="form-check-input" type="radio" name="hospital_type"
                                                         id="non_teaching" value="Non Teaching"
                                                         {{ $examiner->hospital_type == 'Non Teaching' ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="non_teaching">Non
-                                                        Teaching</label>
+                                                    <label class="form-check-label" for="non_teaching">Non Teaching</label>
                                                 </div>
                                             </div>
-                                            <div class="error-message">Please select hospital type</div>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="hospital_name">Hospital Name</label>
                                             <input type="text" name="hospital_name" id="hospital_name"
                                                 class="form-control" placeholder="Enter hospital name"
                                                 value="{{ $examiner->hospital_name }}">
-                                            <div class="error-message">Please enter hospital name</div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                </div>
+
+                                {{-- Years & Programmes with per-programme role toggle --}}
+                                <div class="row">
+                                    <div class="col-12">
                                         <div class="form-group">
                                             <label>Years Examined &amp; Programme (2020–{{ last($examYears) }})</label>
+                                            <p style="font-size:.8rem;color:#6c757d;margin-bottom:.5rem;">
+                                                Check the years this examiner participated, then tick each programme and their role (Examiner or Observer).
+                                            </p>
                                             @php
-                                                // examination_years is double-encoded in DB — decode twice
                                                 $selectedYears = [];
                                                 if (!empty($examiner->examination_years)) {
                                                     $ey = json_decode($examiner->examination_years, true);
@@ -405,64 +375,65 @@
                                                 }
                                             @endphp
 
-                                            <div class="year-programme-list">
+                                            <div class="mp-year-list">
                                                 @foreach($examYears as $yr)
-                                                @php $checked = in_array((string)$yr, $selectedYears); @endphp
-                                                <div class="year-programme-row" id="row_{{ $yr }}">
-                                                    <div class="year-check-col">
-                                                        <input class="form-check-input year-checkbox"
-                                                            type="checkbox"
-                                                            name="examination_years[]"
-                                                            id="year_{{ $yr }}"
-                                                            value="{{ $yr }}"
-                                                            {{ $checked ? 'checked' : '' }}>
-                                                        <label class="form-check-label year-label" for="year_{{ $yr }}">
-                                                            {{ $yr }}
-                                                        </label>
-                                                    </div>
-                                                    <div class="prog-select-col" id="prog_{{ $yr }}"
-                                                         style="{{ $checked ? '' : 'display:none;' }}">
+                                                @php
+                                                    $isChecked    = in_array((string)$yr, $selectedYears);
+                                                    $checkedProgs = array_values(array_filter((array)($yearParticipations[(string)$yr] ?? [])));
+                                                @endphp
+                                                <div class="mp-year-block {{ $isChecked ? 'mp-year-active' : '' }}">
+                                                    <label class="mp-year-hdr">
+                                                        <input type="checkbox"
+                                                               class="mp-year-cb"
+                                                               name="examination_years[]"
+                                                               value="{{ $yr }}"
+                                                               {{ $isChecked ? 'checked' : '' }}>
+                                                        <span class="mp-yr-num">{{ $yr }}</span>
+                                                        @if($isChecked && count($checkedProgs))
+                                                        <span class="mp-yr-pill">{{ count($checkedProgs) }} programme{{ count($checkedProgs) > 1 ? 's' : '' }}</span>
+                                                        @endif
+                                                    </label>
+                                                    <div class="mp-prog-panel" style="{{ $isChecked ? '' : 'display:none;' }}">
+                                                        @foreach($programmeOptions as $prog)
                                                         @php
-                                                            $selectedProgs = (array)($yearParticipations[(string)$yr] ?? []);
-                                                            if (is_string($yearParticipations[(string)$yr] ?? null)) {
-                                                                $selectedProgs = [$yearParticipations[(string)$yr]];
-                                                            }
-                                                            $selectedProgs = array_values(array_filter($selectedProgs));
-                                                            $spCount = count($selectedProgs);
+                                                            $isProgChecked = in_array($prog, $checkedProgs);
+                                                            $progRole      = $yearRoles[(string)$yr][$prog] ?? 'Examiner';
                                                         @endphp
-                                                        <div class="prog-dropdown-wrap">
-                                                            <button type="button"
-                                                                    class="btn btn-sm prog-dd-btn"
-                                                                    data-prog-menu="edit_prog_dd_{{ $yr }}">
-                                                                <i class="fas fa-list-ul mr-1"></i>
-                                                                <span class="prog-dd-label">
-                                                                    @if($spCount===0) Select programme(s)
-                                                                    @elseif($spCount===1) {{ $selectedProgs[0] }}
-                                                                    @else {{ $spCount }} programmes
-                                                                    @endif
-                                                                </span>
-                                                                <i class="fas fa-caret-down ml-1" style="font-size:10px;"></i>
-                                                            </button>
-                                                            <div class="prog-dd-menu" id="edit_prog_dd_{{ $yr }}">
-                                                                @foreach($programmeOptions as $prog)
-                                                                <label class="prog-dd-option">
-                                                                    <input class="prog-dd-cb" type="checkbox"
-                                                                           name="year_programme[{{ $yr }}][]"
-                                                                           value="{{ $prog }}"
-                                                                           {{ in_array($prog, $selectedProgs) ? 'checked' : '' }}>
-                                                                    <span>{{ $prog }}</span>
+                                                        <div class="mp-prog-row {{ $isProgChecked ? 'mp-prog-on' : '' }}">
+                                                            <label class="mp-prog-label">
+                                                                <input type="checkbox"
+                                                                       class="mp-prog-cb"
+                                                                       name="year_programme[{{ $yr }}][]"
+                                                                       value="{{ $prog }}"
+                                                                       {{ $isProgChecked ? 'checked' : '' }}>
+                                                                <span class="mp-prog-name">{{ $prog }}</span>
+                                                            </label>
+                                                            <div class="mp-role-wrap" style="{{ $isProgChecked ? '' : 'opacity:.3;pointer-events:none;' }}">
+                                                                <label class="mp-role-btn {{ $progRole === 'Examiner' ? 'mp-role-e-on' : '' }}">
+                                                                    <input type="radio"
+                                                                           name="year_role[{{ $yr }}][{{ $prog }}]"
+                                                                           value="Examiner"
+                                                                           {{ $progRole === 'Examiner' ? 'checked' : '' }}>
+                                                                    <i class="fas fa-user-check"></i> Examiner
                                                                 </label>
-                                                                @endforeach
+                                                                <label class="mp-role-btn {{ $progRole === 'Observer' ? 'mp-role-o-on' : '' }}">
+                                                                    <input type="radio"
+                                                                           name="year_role[{{ $yr }}][{{ $prog }}]"
+                                                                           value="Observer"
+                                                                           {{ $progRole === 'Observer' ? 'checked' : '' }}>
+                                                                    <i class="fas fa-eye"></i> Observer
+                                                                </label>
                                                             </div>
                                                         </div>
+                                                        @endforeach
                                                     </div>
                                                 </div>
                                                 @endforeach
                                             </div>
-                                            <div class="error-message">Please select examination years</div>
                                         </div>
                                     </div>
                                 </div>
+
                             </div>
                         </div>
 
@@ -852,64 +823,43 @@
             cursor: pointer;
         }
 
-        .prog-select-col { flex: 1; }
-
-        /* Shared programme dropdown styles (see also global .prog-dd-* rules) */
-        .prog-dropdown-wrap { position: relative; display: inline-block; }
-
-        .prog-dd-btn {
-            background: #fff;
-            border: 1px solid #c8d0d8;
-            color: #405867;
-            font-size: 12px;
-            padding: 4px 10px;
-            border-radius: 4px;
-            white-space: nowrap;
-            max-width: 280px;
-            text-align: left;
+        /* ── Year/Programme inline role UI (same design as Manage Participation modal) ── */
+        .mp-year-list    { display:flex; flex-direction:column; gap:4px; }
+        .mp-year-block   { border:1px solid #eee; border-radius:6px; overflow:hidden; }
+        .mp-year-block.mp-year-active { border-color:#f0dada; }
+        .mp-year-hdr {
+            display:flex; align-items:center; gap:10px; padding:8px 12px;
+            margin:0; cursor:pointer; background:#fafafa;
+            font-weight:700; font-size:.88rem; color:#333; user-select:none;
         }
-        .prog-dd-btn:hover, .prog-dd-btn:focus {
-            border-color: #a02626;
-            color: #a02626;
-            box-shadow: none;
-            outline: none;
+        .mp-year-block.mp-year-active .mp-year-hdr { background:#fdf4f4; }
+        .mp-year-hdr input[type=checkbox] { accent-color:#a02626; width:15px; height:15px; cursor:pointer; }
+        .mp-yr-num  { font-size:.95rem; }
+        .mp-yr-pill {
+            font-size:.7rem; font-weight:600; background:#a02626; color:#fff;
+            padding:1px 8px; border-radius:10px; margin-left:auto;
         }
-
-        /* Menu positioned fixed by JS — escapes overflow clipping */
-        .prog-dd-menu {
-            display: none;
-            position: fixed;
-            background: #fff;
-            border: 1px solid #e0e0e0;
-            border-radius: 5px;
-            box-shadow: 0 4px 16px rgba(0,0,0,.12);
-            min-width: 230px;
-            max-height: 240px;
-            overflow-y: auto;
-            padding: 4px;
-            z-index: 99999;
+        .mp-prog-panel  { border-top:1px solid #f0e8e8; padding:4px 0; }
+        .mp-prog-row {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:5px 12px; gap:10px; border-bottom:1px solid #fafafa; transition:background .1s;
         }
-
-        .prog-dd-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 10px;
-            margin: 0;
-            font-size: 13px;
-            font-weight: 500;
-            color: #405867;
-            cursor: pointer;
-            border-radius: 3px;
-            user-select: none;
+        .mp-prog-row:last-child { border-bottom:none; }
+        .mp-prog-row.mp-prog-on { background:#fffbf5; }
+        .mp-prog-row:hover { background:#fef8f8; }
+        .mp-prog-label  { display:flex; align-items:center; gap:8px; margin:0; cursor:pointer; font-size:.83rem; font-weight:500; color:#444; flex:1; }
+        .mp-prog-label input[type=checkbox] { accent-color:#a02626; width:14px; height:14px; cursor:pointer; flex-shrink:0; }
+        .mp-prog-name   { line-height:1.3; }
+        .mp-role-wrap   { display:flex; gap:4px; flex-shrink:0; }
+        .mp-role-btn {
+            display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:4px;
+            font-size:.75rem; font-weight:600; cursor:pointer; margin:0; border:1px solid #ddd;
+            background:#f8f9fa; color:#666; transition:all .15s; user-select:none; white-space:nowrap;
         }
-        .prog-dd-option:hover { background: #fdf0f0; color: #a02626; }
-        .prog-dd-cb {
-            width: 14px; height: 14px;
-            accent-color: #a02626;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
+        .mp-role-btn input[type=radio] { display:none; }
+        .mp-role-btn:hover  { border-color:#999; color:#333; }
+        .mp-role-e-on       { background:#d4edda; border-color:#28a745; color:#155724; }
+        .mp-role-o-on       { background:#fff3cd; border-color:#ffc107; color:#856404; }
 
         /* Additional fixes for better alignment */
         .form-check-input[type="checkbox"],
@@ -1072,52 +1022,54 @@
 
             // Year checkbox ↔ Programme dropdown toggle
             // Year checkbox toggle (show/hide programme dropdown)
-            $(document).on('change', '.year-checkbox', function() {
-                const yr  = $(this).val();
-                const $col = $('#prog_' + yr);
-                if ($(this).is(':checked')) {
-                    $col.show();
-                } else {
-                    $col.hide();
-                    $col.find('.prog-dd-cb').prop('checked', false);
-                    $col.find('.prog-dd-label').text('Select programme(s)');
-                }
-            });
-
-            // Programme dropdown — open/close (position:fixed, works in any container)
-            $(document).on('click', '.prog-dd-btn', function(e) {
-                e.preventDefault();
-                const menuId = $(this).data('prog-menu');
-                const $menu  = $('#' + menuId);
-                const isOpen = $menu.is(':visible');
-                $('.prog-dd-menu:visible').hide();
-                if (!isOpen) {
-                    const r = this.getBoundingClientRect();
-                    $menu.css({
-                        top:      (r.bottom + 2) + 'px',
-                        left:     r.left + 'px',
-                        minWidth: Math.max(r.width, 230) + 'px'
-                    }).show();
-                }
-            });
-
-            // Close menus only when clicking outside any programme dropdown wrapper
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('.prog-dropdown-wrap').length) {
-                    $('.prog-dd-menu:visible').hide();
-                }
-            });
-
-            // Update label on checkbox change
-            function updateProgLabel($menu) {
-                const $checked = $menu.find('.prog-dd-cb:checked');
-                let label = $checked.length === 0 ? 'Select programme(s)'
-                          : $checked.length === 1  ? $checked.first().val()
-                          : $checked.length + ' programmes';
-                $('[data-prog-menu="' + $menu.attr('id') + '"] .prog-dd-label').text(label);
+            // ── Year/Programme inline role UI ─────────────────────────────
+            function mpUpdatePill($block) {
+                var n = $block.find('.mp-prog-cb:checked').length;
+                var $hdr = $block.find('.mp-year-hdr');
+                var $pill = $hdr.find('.mp-yr-pill');
+                if (n > 0) {
+                    var txt = n + ' programme' + (n > 1 ? 's' : '');
+                    if ($pill.length) { $pill.text(txt); } else { $hdr.append('<span class="mp-yr-pill">' + txt + '</span>'); }
+                } else { $pill.remove(); }
             }
-            $(document).on('change', '.prog-dd-cb', function() {
-                updateProgLabel($(this).closest('.prog-dd-menu'));
+
+            // Year checkbox: show/hide programme panel
+            $(document).on('change', '.mp-year-cb', function() {
+                var $block = $(this).closest('.mp-year-block');
+                var $panel = $block.find('.mp-prog-panel');
+                if ($(this).is(':checked')) {
+                    $block.addClass('mp-year-active');
+                    $panel.slideDown(150);
+                } else {
+                    $block.removeClass('mp-year-active');
+                    $panel.slideUp(150, function() {
+                        $panel.find('.mp-prog-cb').prop('checked', false);
+                        $panel.find('.mp-prog-row').removeClass('mp-prog-on');
+                        $panel.find('.mp-role-wrap').css({ opacity: '.3', 'pointer-events': 'none' });
+                    });
+                    mpUpdatePill($block);
+                }
+            });
+
+            // Programme checkbox: enable/disable role buttons
+            $(document).on('change', '.mp-prog-cb', function() {
+                var $row = $(this).closest('.mp-prog-row');
+                var $wrap = $row.find('.mp-role-wrap');
+                if ($(this).is(':checked')) {
+                    $row.addClass('mp-prog-on');
+                    $wrap.css({ opacity: '1', 'pointer-events': 'auto' });
+                } else {
+                    $row.removeClass('mp-prog-on');
+                    $wrap.css({ opacity: '.3', 'pointer-events': 'none' });
+                }
+                mpUpdatePill($(this).closest('.mp-year-block'));
+            });
+
+            // Role radio: swap active highlight
+            $(document).on('change', '.mp-role-btn input[type=radio]', function() {
+                var $wrap = $(this).closest('.mp-role-wrap');
+                $wrap.find('.mp-role-btn').removeClass('mp-role-e-on mp-role-o-on');
+                $(this).closest('.mp-role-btn').addClass($(this).val() === 'Examiner' ? 'mp-role-e-on' : 'mp-role-o-on');
             });
 
             // File upload handlers

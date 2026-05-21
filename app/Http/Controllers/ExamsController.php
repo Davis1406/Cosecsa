@@ -281,9 +281,19 @@ class ExamsController extends Controller
 
     public function add()
     {
-        $data['getCountry'] = Country::getCountry();
-        $data['header_title'] = "Add New Examiner";
-        $data['groups'] = DB::table('examiners_groups')->select('id', 'group_name')->get();
+        $yearId   = User::getCurrentYearId();
+        $lastYear = DB::table('years')->where('id', $yearId - 1)->value('year_name') ?? (date('Y') - 1);
+
+        $designationOptions = \Illuminate\Support\Facades\Schema::hasTable('designation_options')
+            ? DB::table('designation_options')->orderBy('sort_order')->orderBy('name')->pluck('name')->toArray()
+            : ['Court of Examiner', 'Panel Head', 'Other'];
+
+        $data['getCountry']         = Country::getCountry();
+        $data['header_title']       = "Add New Examiner";
+        $data['groups']             = DB::table('examiners_groups')->select('id', 'group_name')->get();
+        $data['examYears']          = range(2020, (int) $lastYear);
+        $data['programmeOptions']   = self::$programmeOptions;
+        $data['designationOptions'] = $designationOptions;
         return view('admin.exams.add_examiner', $data);
     }
 
@@ -543,29 +553,41 @@ class ExamsController extends Controller
         $lastYearName    = DB::table('years')->where('id', $yearId - 1)->value('year_name') ?? (date('Y') - 1);
         $examYears       = range(2020, (int) $lastYearName);
 
-        // Load year → programme map from examiner_participations so the
-        // edit form can pre-select the dropdown for each checked year.
-        $yearParticipations = DB::table('examiner_participations')
+        // Load year → [programmes] and year → [programme => role] from examiner_participations
+        $yearParticipations = [];  // ['2024' => ['MCS', 'FCS Plastic Surgery']]
+        $yearRoles          = [];  // ['2024' => ['MCS' => 'Examiner', 'FCS Plastic Surgery' => 'Observer']]
+
+        DB::table('examiner_participations')
             ->join('years', 'years.id', '=', 'examiner_participations.year_id')
             ->where('examiner_participations.exm_id', $id)
-            ->select('years.year_name', 'examiner_participations.specialty')
+            ->whereNotNull('examiner_participations.specialty')
+            ->select('years.year_name', 'examiner_participations.specialty', 'examiner_participations.role')
             ->get()
-            ->pluck('specialty', 'year_name')
-            ->toArray(); // ['2025' => 'FCS Urology', ...]
+            ->each(function ($row) use (&$yearParticipations, &$yearRoles) {
+                $yearParticipations[(string)$row->year_name][] = $row->specialty;
+                $yearRoles[(string)$row->year_name][$row->specialty] = $row->role ?: 'Examiner';
+            });
 
-        // Canonical programme list for the dropdowns (shared static list)
+        // Canonical programme list (shared static list)
         $programmeOptions = self::$programmeOptions;
 
+        // Designation options — DB-driven with hardcoded fallback
+        $designationOptions = \Illuminate\Support\Facades\Schema::hasTable('designation_options')
+            ? DB::table('designation_options')->orderBy('sort_order')->orderBy('name')->pluck('name')->toArray()
+            : ['Court of Examiner', 'Panel Head', 'Other'];
+
         return view('admin.exams.edit_examiner', [
-            'header_title'     => 'Edit Examiner',
-            'examiner'         => $examiner,
-            'getCountry'       => Country::getCountry(),
-            'groups'           => DB::table('examiners_groups')->select('id', 'group_name')->get(),
-            'backUrl'          => $backUrl,
-            'examYears'        => $examYears,
-            'currentYearName'  => $currentYearName,
+            'header_title'       => 'Edit Examiner',
+            'examiner'           => $examiner,
+            'getCountry'         => Country::getCountry(),
+            'groups'             => DB::table('examiners_groups')->select('id', 'group_name')->get(),
+            'backUrl'            => $backUrl,
+            'examYears'          => $examYears,
+            'currentYearName'    => $currentYearName,
             'yearParticipations' => $yearParticipations,
-            'programmeOptions' => $programmeOptions,
+            'yearRoles'          => $yearRoles,
+            'programmeOptions'   => $programmeOptions,
+            'designationOptions' => $designationOptions,
         ]);
     }
 
@@ -1263,6 +1285,48 @@ public function delete($id)
     /**
      * GET admin/exams/mass-update-specialty
      */
+    // ── Designation Options Admin ────────────────────────────────────────────
+
+    public function designationsIndex()
+    {
+        $options = DB::table('designation_options')->orderBy('sort_order')->orderBy('name')->get();
+        return view('admin.exams.designations', ['options' => $options]);
+    }
+
+    public function designationsStore(Request $request)
+    {
+        $name = trim($request->input('name', ''));
+        if (!$name) return back()->with('error', 'Name cannot be empty.');
+        if (strlen($name) > 80) return back()->with('error', 'Name too long (max 80 chars).');
+
+        $exists = DB::table('designation_options')->where('name', $name)->exists();
+        if ($exists) return back()->with('error', '"' . $name . '" already exists.');
+
+        $maxOrder = DB::table('designation_options')->max('sort_order') ?? 0;
+        DB::table('designation_options')->insert([
+            'name'       => $name,
+            'sort_order' => $maxOrder + 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return back()->with('success', '"' . $name . '" added successfully.');
+    }
+
+    public function designationsDelete($id)
+    {
+        $opt = DB::table('designation_options')->find($id);
+        if (!$opt) return back()->with('error', 'Option not found.');
+
+        // Warn if in use (don't block, just inform)
+        $inUse = DB::table('examiners')->where('examiner_designation', $opt->name)->count();
+        DB::table('designation_options')->delete($id);
+
+        $msg = '"' . $opt->name . '" deleted.';
+        if ($inUse) $msg .= ' Note: ' . $inUse . ' examiner(s) still have this designation — it will still display on their profiles.';
+        return back()->with('success', $msg);
+    }
+
     public function massUpdateSpecialtyForm()
     {
         $current = DB::table('examiners')

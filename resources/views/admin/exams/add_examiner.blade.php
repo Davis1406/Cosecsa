@@ -159,11 +159,13 @@
                                             <label for="examiner_designation">Additional Designation</label>
                                             <select name="examiner_designation" id="examiner_designation" class="form-control">
                                                 <option value="">— None —</option>
-                                                <option value="Court of Examiner" {{ old('examiner_designation') == 'Court of Examiner' ? 'selected' : '' }}>Court of Examiner</option>
-                                                <option value="Panel Head" {{ old('examiner_designation') == 'Panel Head' ? 'selected' : '' }}>Panel Head</option>
-                                                <option value="Other" {{ old('examiner_designation') == 'Other' ? 'selected' : '' }}>Other</option>
+                                                @foreach($designationOptions as $desig)
+                                                <option value="{{ $desig }}" {{ old('examiner_designation') == $desig ? 'selected' : '' }}>{{ $desig }}</option>
+                                                @endforeach
                                             </select>
-                                            <small class="text-muted">Court of Examiner, Panel Head, or Other</small>
+                                            <small class="text-muted">
+                                                <a href="{{ route('admin.designations') }}" target="_blank">Manage options ↗</a>
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
@@ -272,33 +274,8 @@
                                     </div>
                                 </div>
 
+                                {{-- Hospital --}}
                                 <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Did you participate as an examiner or observer?</label>
-                                            <div class="radio-group">
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="radio"
-                                                        name="participation_type" id="examiner" value="Examiner"
-                                                        {{ old('participation_type') == 'Examiner' ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="examiner">Examiner</label>
-                                                </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="radio"
-                                                        name="participation_type" id="observer" value="Observer"
-                                                        {{ old('participation_type') == 'Observer' ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="observer">Observer</label>
-                                                </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="radio"
-                                                        name="participation_type" id="none" value="None"
-                                                        {{ old('participation_type') == 'None' ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="none">None</label>
-                                                </div>
-                                            </div>
-                                            <div class="error-message">Please select participation type</div>
-                                        </div>
-                                    </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Hospital Organization Type</label>
@@ -307,68 +284,72 @@
                                                     <input class="form-check-input" type="radio" name="hospital_type"
                                                         id="teaching_hospital" value="Teaching Hospital"
                                                         {{ old('hospital_type') == 'Teaching Hospital' ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="teaching_hospital">Teaching
-                                                        Hospital</label>
+                                                    <label class="form-check-label" for="teaching_hospital">Teaching Hospital</label>
                                                 </div>
                                                 <div class="form-check form-check-inline">
                                                     <input class="form-check-input" type="radio" name="hospital_type"
                                                         id="non_teaching" value="Non Teaching"
                                                         {{ old('hospital_type') == 'Non Teaching' ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="non_teaching">Non
-                                                        Teaching</label>
+                                                    <label class="form-check-label" for="non_teaching">Non Teaching</label>
                                                 </div>
                                             </div>
-                                            <div class="error-message">Please select hospital type</div>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="hospital_name">Hospital Name</label>
                                             <input type="text" name="hospital_name" id="hospital_name"
                                                 class="form-control" placeholder="Enter hospital name"
                                                 value="{{ old('hospital_name') }}">
-                                            <div class="error-message">Please enter hospital name</div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                </div>
+
+                                {{-- Years & Programmes with per-programme role toggle --}}
+                                <div class="row">
+                                    <div class="col-12">
                                         <div class="form-group">
-                                            <label>Years you have Examined/Observed (2020-2024)</label>
-                                            <div class="checkbox-group">
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="checkbox"
-                                                        name="examination_years[]" id="year_2020" value="2020"
-                                                        {{ (is_array(old('examination_years')) && in_array('2020', old('examination_years'))) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="year_2020">2020</label>
+                                            <label>Years Examined &amp; Programme (2020–{{ last($examYears) }})</label>
+                                            <p style="font-size:.8rem;color:#6c757d;margin-bottom:.5rem;">
+                                                Check the years this examiner participated, then tick each programme and their role.
+                                            </p>
+                                            <div class="mp-year-list">
+                                                @foreach($examYears as $yr)
+                                                @php $isChecked = is_array(old('examination_years')) && in_array((string)$yr, old('examination_years')); @endphp
+                                                <div class="mp-year-block {{ $isChecked ? 'mp-year-active' : '' }}">
+                                                    <label class="mp-year-hdr">
+                                                        <input type="checkbox" class="mp-year-cb"
+                                                               name="examination_years[]" value="{{ $yr }}"
+                                                               {{ $isChecked ? 'checked' : '' }}>
+                                                        <span class="mp-yr-num">{{ $yr }}</span>
+                                                    </label>
+                                                    <div class="mp-prog-panel" style="{{ $isChecked ? '' : 'display:none;' }}">
+                                                        @foreach($programmeOptions as $prog)
+                                                        @php $isProgChecked = is_array(old('year_programme.' . $yr)) && in_array($prog, old('year_programme.' . $yr)); @endphp
+                                                        <div class="mp-prog-row {{ $isProgChecked ? 'mp-prog-on' : '' }}">
+                                                            <label class="mp-prog-label">
+                                                                <input type="checkbox" class="mp-prog-cb"
+                                                                       name="year_programme[{{ $yr }}][]"
+                                                                       value="{{ $prog }}"
+                                                                       {{ $isProgChecked ? 'checked' : '' }}>
+                                                                <span class="mp-prog-name">{{ $prog }}</span>
+                                                            </label>
+                                                            <div class="mp-role-wrap" style="{{ $isProgChecked ? '' : 'opacity:.3;pointer-events:none;' }}">
+                                                                <label class="mp-role-btn mp-role-e-on">
+                                                                    <input type="radio" name="year_role[{{ $yr }}][{{ $prog }}]" value="Examiner" checked>
+                                                                    <i class="fas fa-user-check"></i> Examiner
+                                                                </label>
+                                                                <label class="mp-role-btn">
+                                                                    <input type="radio" name="year_role[{{ $yr }}][{{ $prog }}]" value="Observer">
+                                                                    <i class="fas fa-eye"></i> Observer
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                        @endforeach
+                                                    </div>
                                                 </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="checkbox"
-                                                        name="examination_years[]" id="year_2021" value="2021"
-                                                        {{ (is_array(old('examination_years')) && in_array('2021', old('examination_years'))) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="year_2021">2021</label>
-                                                </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="checkbox"
-                                                        name="examination_years[]" id="year_2022" value="2022"
-                                                        {{ (is_array(old('examination_years')) && in_array('2022', old('examination_years'))) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="year_2022">2022</label>
-                                                </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="checkbox"
-                                                        name="examination_years[]" id="year_2023" value="2023"
-                                                        {{ (is_array(old('examination_years')) && in_array('2023', old('examination_years'))) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="year_2023">2023</label>
-                                                </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="checkbox"
-                                                        name="examination_years[]" id="year_2024" value="2024"
-                                                        {{ (is_array(old('examination_years')) && in_array('2024', old('examination_years'))) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="year_2024">2024</label>
-                                                </div>
+                                                @endforeach
                                             </div>
-                                            <div class="error-message">Please select examination years</div>
                                         </div>
                                     </div>
                                 </div>
@@ -869,6 +850,39 @@
                 padding: 8px 12px;
             }
         }
+
+        /* ── Year/Programme inline role UI ─────────────────────────────── */
+        .mp-year-list    { display:flex; flex-direction:column; gap:4px; }
+        .mp-year-block   { border:1px solid #eee; border-radius:6px; overflow:hidden; }
+        .mp-year-block.mp-year-active { border-color:#f0dada; }
+        .mp-year-hdr {
+            display:flex; align-items:center; gap:10px; padding:8px 12px; margin:0;
+            cursor:pointer; background:#fafafa; font-weight:700; font-size:.88rem; color:#333; user-select:none;
+        }
+        .mp-year-block.mp-year-active .mp-year-hdr { background:#fdf4f4; }
+        .mp-year-hdr input[type=checkbox] { accent-color:#a02626; width:15px; height:15px; cursor:pointer; }
+        .mp-yr-num  { font-size:.95rem; }
+        .mp-yr-pill { font-size:.7rem; font-weight:600; background:#a02626; color:#fff; padding:1px 8px; border-radius:10px; margin-left:auto; }
+        .mp-prog-panel  { border-top:1px solid #f0e8e8; padding:4px 0; }
+        .mp-prog-row {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:5px 12px; gap:10px; border-bottom:1px solid #fafafa;
+        }
+        .mp-prog-row:last-child { border-bottom:none; }
+        .mp-prog-row.mp-prog-on { background:#fffbf5; }
+        .mp-prog-row:hover { background:#fef8f8; }
+        .mp-prog-label  { display:flex; align-items:center; gap:8px; margin:0; cursor:pointer; font-size:.83rem; font-weight:500; color:#444; flex:1; }
+        .mp-prog-label input[type=checkbox] { accent-color:#a02626; width:14px; height:14px; cursor:pointer; flex-shrink:0; }
+        .mp-role-wrap   { display:flex; gap:4px; flex-shrink:0; }
+        .mp-role-btn {
+            display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:4px;
+            font-size:.75rem; font-weight:600; cursor:pointer; margin:0; border:1px solid #ddd;
+            background:#f8f9fa; color:#666; user-select:none; white-space:nowrap;
+        }
+        .mp-role-btn input[type=radio] { display:none; }
+        .mp-role-btn:hover  { border-color:#999; color:#333; }
+        .mp-role-e-on       { background:#d4edda; border-color:#28a745; color:#155724; }
+        .mp-role-o-on       { background:#fff3cd; border-color:#ffc107; color:#856404; }
     </style>
 @endpush
 
@@ -880,6 +894,50 @@
 
             // Initialize
             updateUI();
+
+            // ── Year/Programme inline role UI ──────────────────────────────
+            function mpUpdatePill($block) {
+                var n = $block.find('.mp-prog-cb:checked').length;
+                var $hdr = $block.find('.mp-year-hdr');
+                var $pill = $hdr.find('.mp-yr-pill');
+                if (n > 0) {
+                    var txt = n + ' programme' + (n > 1 ? 's' : '');
+                    if ($pill.length) { $pill.text(txt); } else { $hdr.append('<span class="mp-yr-pill">' + txt + '</span>'); }
+                } else { $pill.remove(); }
+            }
+            $(document).on('change', '.mp-year-cb', function() {
+                var $block = $(this).closest('.mp-year-block');
+                var $panel = $block.find('.mp-prog-panel');
+                if ($(this).is(':checked')) {
+                    $block.addClass('mp-year-active');
+                    $panel.slideDown(150);
+                } else {
+                    $block.removeClass('mp-year-active');
+                    $panel.slideUp(150, function() {
+                        $panel.find('.mp-prog-cb').prop('checked', false);
+                        $panel.find('.mp-prog-row').removeClass('mp-prog-on');
+                        $panel.find('.mp-role-wrap').css({ opacity: '.3', 'pointer-events': 'none' });
+                    });
+                    mpUpdatePill($block);
+                }
+            });
+            $(document).on('change', '.mp-prog-cb', function() {
+                var $row = $(this).closest('.mp-prog-row');
+                var $wrap = $row.find('.mp-role-wrap');
+                if ($(this).is(':checked')) {
+                    $row.addClass('mp-prog-on');
+                    $wrap.css({ opacity: '1', 'pointer-events': 'auto' });
+                } else {
+                    $row.removeClass('mp-prog-on');
+                    $wrap.css({ opacity: '.3', 'pointer-events': 'none' });
+                }
+                mpUpdatePill($(this).closest('.mp-year-block'));
+            });
+            $(document).on('change', '.mp-role-btn input[type=radio]', function() {
+                var $wrap = $(this).closest('.mp-role-wrap');
+                $wrap.find('.mp-role-btn').removeClass('mp-role-e-on mp-role-o-on');
+                $(this).closest('.mp-role-btn').addClass($(this).val() === 'Examiner' ? 'mp-role-e-on' : 'mp-role-o-on');
+            });
 
             // File upload handlers
             $('#passport_upload').on('change', function() {
