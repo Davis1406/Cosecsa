@@ -438,25 +438,37 @@
                             </thead>
                             <tbody>
                             @foreach(array_reverse((array)$exYears) as $yr)
-                                @php $progs = $yearProgrammes[(string)$yr] ?? []; @endphp
-                                <tr style="border-bottom:1px solid #f9f9f9;">
-                                    <td style="padding-left:0;font-weight:700;color:#333;vertical-align:middle;">
+                                @php
+                                    $progs = array_values(array_unique($yearProgrammes[(string)$yr] ?? []));
+                                    $rowCount = max(1, count($progs));
+                                @endphp
+                                @if(empty($progs))
+                                <tr style="border-bottom:1px solid #f5f5f5;">
+                                    <td style="padding-left:0;font-weight:700;color:#333;vertical-align:middle;width:60px;">{{ $yr }}</td>
+                                    <td><span class="text-muted" style="font-style:italic;">No record</span></td>
+                                    <td style="padding-left:1rem;"></td>
+                                </tr>
+                                @else
+                                @foreach($progs as $pi => $prog)
+                                @php $role = $yearRoles[(string)$yr][$prog] ?? $examinerRoleLabel; @endphp
+                                <tr style="border-bottom:{{ $pi === count($progs)-1 ? '2px solid #e8e8e8' : '1px solid #f5f5f5' }};">
+                                    @if($pi === 0)
+                                    <td rowspan="{{ $rowCount }}"
+                                        style="padding-left:0;font-weight:700;color:#333;vertical-align:middle;
+                                               width:60px;border-right:2px solid #f0f0f0;padding-right:.75rem;">
                                         {{ $yr }}
                                     </td>
-                                    <td style="vertical-align:middle;">
-                                        @if(!empty($progs))
-                                            {{ implode(', ', $progs) }}
-                                        @else
-                                            <span class="text-muted" style="font-style:italic;">No record</span>
-                                        @endif
-                                    </td>
+                                    @endif
+                                    <td style="vertical-align:middle;padding-left:.75rem;">{{ $prog }}</td>
                                     <td style="vertical-align:middle;padding-left:1rem;white-space:nowrap;">
-                                        <span class="badge badge-pill {{ $examinerRoleLabel === 'Examiner' ? 'badge-success' : 'badge-warning' }}"
+                                        <span class="badge badge-pill {{ $role === 'Examiner' ? 'badge-success' : 'badge-warning' }}"
                                               style="font-size:.72rem;">
-                                            {{ $examinerRoleLabel }}
+                                            {{ $role }}
                                         </span>
                                     </td>
                                 </tr>
+                                @endforeach
+                                @endif
                             @endforeach
                             </tbody>
                         </table>
@@ -504,53 +516,64 @@
                         they examined in that year. Unticking a year removes its record.
                     </p>
 
-                    <div class="modal-year-list">
+                    <div class="mp-year-list">
                         @foreach(array_reverse($examYears) as $yr)
                         @php
                             $isChecked    = in_array((string)$yr, $modalSelectedYears);
                             $checkedProgs = array_values(array_filter((array)($yearProgrammes[(string)$yr] ?? [])));
-                            $mpCount      = count($checkedProgs);
                         @endphp
-                        <div class="modal-year-row" id="modal_row_{{ $yr }}">
-                            {{-- Year checkbox --}}
-                            <div class="modal-year-check">
+                        <div class="mp-year-block {{ $isChecked ? 'mp-year-active' : '' }}" id="mp_block_{{ $yr }}">
+
+                            {{-- Year header row --}}
+                            <label class="mp-year-hdr">
                                 <input type="checkbox"
-                                       class="modal-year-cb"
+                                       class="mp-year-cb"
                                        name="examination_years[]"
-                                       id="modal_yr_{{ $yr }}"
                                        value="{{ $yr }}"
                                        {{ $isChecked ? 'checked' : '' }}>
-                                <label for="modal_yr_{{ $yr }}" class="modal-yr-label">{{ $yr }}</label>
-                            </div>
-                            {{-- Programme dropdown --}}
-                            <div class="modal-prog-col" id="modal_prog_{{ $yr }}"
-                                 style="{{ $isChecked ? '' : 'display:none;' }}">
-                                <div class="prog-dropdown-wrap">
-                                    <button type="button"
-                                            class="btn btn-sm prog-dd-btn"
-                                            data-prog-menu="prog_dd_{{ $yr }}">
-                                        <i class="fas fa-list-ul mr-1"></i>
-                                        <span class="prog-dd-label">
-                                            @if($mpCount===0) Select programme(s)
-                                            @elseif($mpCount===1) {{ $checkedProgs[0] }}
-                                            @else {{ $mpCount }} programmes
-                                            @endif
-                                        </span>
-                                        <i class="fas fa-caret-down ml-1" style="font-size:10px;"></i>
-                                    </button>
-                                    <div class="prog-dd-menu" id="prog_dd_{{ $yr }}">
-                                        @foreach($programmeOptions as $prog)
-                                        <label class="prog-dd-option">
-                                            <input class="prog-dd-cb" type="checkbox"
-                                                   name="year_programme[{{ $yr }}][]"
-                                                   value="{{ $prog }}"
-                                                   {{ in_array($prog, $checkedProgs) ? 'checked' : '' }}>
-                                            <span>{{ $prog }}</span>
+                                <span class="mp-yr-num">{{ $yr }}</span>
+                                @if($isChecked && count($checkedProgs))
+                                <span class="mp-yr-pill">{{ count($checkedProgs) }} programme{{ count($checkedProgs) > 1 ? 's' : '' }}</span>
+                                @endif
+                            </label>
+
+                            {{-- Per-programme list with role toggles --}}
+                            <div class="mp-prog-panel" style="{{ $isChecked ? '' : 'display:none;' }}">
+                                @foreach($programmeOptions as $prog)
+                                @php
+                                    $isProgChecked = in_array($prog, $checkedProgs);
+                                    $progRole      = $yearRoles[(string)$yr][$prog] ?? 'Examiner';
+                                @endphp
+                                <div class="mp-prog-row {{ $isProgChecked ? 'mp-prog-on' : '' }}">
+                                    <label class="mp-prog-label">
+                                        <input type="checkbox"
+                                               class="mp-prog-cb"
+                                               name="year_programme[{{ $yr }}][]"
+                                               value="{{ $prog }}"
+                                               data-yr="{{ $yr }}"
+                                               {{ $isProgChecked ? 'checked' : '' }}>
+                                        <span class="mp-prog-name">{{ $prog }}</span>
+                                    </label>
+                                    <div class="mp-role-wrap" style="{{ $isProgChecked ? '' : 'opacity:.3;pointer-events:none;' }}">
+                                        <label class="mp-role-btn {{ $progRole === 'Examiner' ? 'mp-role-e-on' : '' }}">
+                                            <input type="radio"
+                                                   name="year_role[{{ $yr }}][{{ $prog }}]"
+                                                   value="Examiner"
+                                                   {{ $progRole === 'Examiner' ? 'checked' : '' }}>
+                                            <i class="fas fa-user-check"></i> Examiner
                                         </label>
-                                        @endforeach
+                                        <label class="mp-role-btn {{ $progRole === 'Observer' ? 'mp-role-o-on' : '' }}">
+                                            <input type="radio"
+                                                   name="year_role[{{ $yr }}][{{ $prog }}]"
+                                                   value="Observer"
+                                                   {{ $progRole === 'Observer' ? 'checked' : '' }}>
+                                            <i class="fas fa-eye"></i> Observer
+                                        </label>
                                     </div>
                                 </div>
+                                @endforeach
                             </div>
+
                         </div>
                         @endforeach
                     </div>
@@ -1069,92 +1092,83 @@
     flex-shrink: 0;
 }
 
-/* ── Manage Participation Modal ─────────────────────────────────────────── */
-.modal-year-list { display:flex; flex-direction:column; }
+/* ── Manage Participation Modal — new per-programme role design ─────────── */
+.mp-year-list    { display:flex; flex-direction:column; gap:4px; }
 
-.modal-year-row {
+.mp-year-block {
+    border: 1px solid #eee;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.mp-year-block.mp-year-active { border-color: #f0dada; }
+
+.mp-year-hdr {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 7px 0;
-    border-bottom: 1px solid #f4f4f4;
-}
-.modal-year-row:last-child { border-bottom: none; }
-
-.modal-year-check {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    min-width: 70px;
-    flex-shrink: 0;
-}
-.modal-yr-label {
+    gap: 10px;
+    padding: 8px 12px;
+    margin: 0;
+    cursor: pointer;
+    background: #fafafa;
     font-weight: 700;
     font-size: .88rem;
     color: #333;
-    margin: 0;
-    cursor: pointer;
-    line-height: 1;
-}
-
-.modal-prog-col { flex: 1; }
-
-/* ── Shared programme dropdown (modal + edit form) ── */
-.prog-dropdown-wrap { position: relative; display: inline-block; }
-
-.prog-dd-btn {
-    background: #fff;
-    border: 1px solid #d0d7de;
-    color: #405867;
-    font-size: 12px;
-    padding: 3px 10px;
-    border-radius: 4px;
-    white-space: nowrap;
-    max-width: 280px;
-    text-align: left;
-}
-.prog-dd-btn:hover, .prog-dd-btn:focus {
-    border-color: #a02626;
-    color: #a02626;
-    box-shadow: none;
-    outline: none;
-}
-
-/* Menu — positioned by JS with position:fixed, so it escapes any overflow parent */
-.prog-dd-menu {
-    display: none;
-    position: fixed;
-    background: #fff;
-    border: 1px solid #e2e2e2;
-    border-radius: 5px;
-    box-shadow: 0 4px 16px rgba(0,0,0,.12);
-    min-width: 230px;
-    max-height: 240px;
-    overflow-y: auto;
-    padding: 4px;
-    z-index: 99999;
-}
-
-.prog-dd-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    margin: 0;
-    font-size: 13px;
-    font-weight: 500;
-    color: #405867;
-    cursor: pointer;
-    border-radius: 3px;
     user-select: none;
 }
-.prog-dd-option:hover { background: #fdf0f0; color: #a02626; }
-.prog-dd-cb {
-    width: 14px; height: 14px;
-    accent-color: #a02626;
-    cursor: pointer;
-    flex-shrink: 0;
+.mp-year-block.mp-year-active .mp-year-hdr { background: #fdf4f4; }
+.mp-year-hdr input[type=checkbox] { accent-color: #a02626; width:15px; height:15px; cursor:pointer; }
+.mp-yr-num  { font-size: .95rem; }
+.mp-yr-pill {
+    font-size: .7rem; font-weight: 600;
+    background: #a02626; color: #fff;
+    padding: 1px 8px; border-radius: 10px;
+    margin-left: auto;
 }
+
+/* Programme panel */
+.mp-prog-panel {
+    border-top: 1px solid #f0e8e8;
+    padding: 4px 0;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.mp-prog-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 12px;
+    gap: 10px;
+    border-bottom: 1px solid #fafafa;
+    transition: background .1s;
+}
+.mp-prog-row:last-child { border-bottom: none; }
+.mp-prog-row.mp-prog-on { background: #fffbf5; }
+.mp-prog-row:hover { background: #fef8f8; }
+
+.mp-prog-label {
+    display: flex; align-items: center; gap: 8px;
+    margin: 0; cursor: pointer; font-size: .83rem; font-weight: 500; color: #444;
+    flex: 1;
+}
+.mp-prog-label input[type=checkbox] {
+    accent-color: #a02626; width:14px; height:14px; cursor:pointer; flex-shrink:0;
+}
+.mp-prog-name { line-height: 1.3; }
+
+/* Role toggle buttons */
+.mp-role-wrap  { display: flex; gap: 4px; flex-shrink: 0; }
+
+.mp-role-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 4px; font-size: .75rem; font-weight: 600;
+    cursor: pointer; margin: 0; border: 1px solid #ddd; background: #f8f9fa;
+    color: #666; transition: all .15s; user-select: none; white-space: nowrap;
+}
+.mp-role-btn input[type=radio] { display: none; }
+.mp-role-btn:hover          { border-color: #999; color: #333; }
+.mp-role-e-on               { background: #d4edda; border-color: #28a745; color: #155724; }
+.mp-role-o-on               { background: #fff3cd; border-color: #ffc107; color: #856404; }
 
 /* ── ID Badge print ──────────────────────────────────────────────────────── */
 .id-badge-template {
@@ -1306,60 +1320,59 @@ $(document).on('click', '.memo-open-btn', function () {
     });
 });
 
-// ── Programme dropdown (works inside modals via position:fixed) ───────────
+// ── Manage Participation Modal — per-programme role UI ────────────────────
 
-function progDdLabel($btn, $menu) {
-    var $checked = $menu.find('.prog-dd-cb:checked');
-    var label = $checked.length === 0 ? 'Select programme(s)'
-              : $checked.length === 1  ? $checked.first().val()
-              : $checked.length + ' programmes';
-    $btn.find('.prog-dd-label').text(label);
+// Helper: refresh the pill badge on a year header
+function mpUpdatePill($block) {
+    var n    = $block.find('.mp-prog-cb:checked').length;
+    var $hdr = $block.find('.mp-year-hdr');
+    var $pill = $hdr.find('.mp-yr-pill');
+    if (n > 0) {
+        var txt = n + ' programme' + (n > 1 ? 's' : '');
+        if ($pill.length) { $pill.text(txt); } else { $hdr.append('<span class="mp-yr-pill">' + txt + '</span>'); }
+    } else {
+        $pill.remove();
+    }
 }
 
-$(document).on('click', '.prog-dd-btn', function (e) {
-    e.preventDefault();
-    var menuId = $(this).data('prog-menu');
-    var $menu  = $('#' + menuId);
-    var isOpen = $menu.is(':visible');
-
-    // Close all open programme menus
-    $('.prog-dd-menu:visible').hide();
-
-    if (!isOpen) {
-        var r = this.getBoundingClientRect();
-        $menu.css({
-            top:      (r.bottom + 2) + 'px',
-            left:     r.left + 'px',
-            minWidth: Math.max(r.width, 230) + 'px'
-        }).show();
-    }
-});
-
-// Close menus only when clicking outside any programme dropdown wrapper
-$(document).on('click', function (e) {
-    if (!$(e.target).closest('.prog-dropdown-wrap').length) {
-        $('.prog-dd-menu:visible').hide();
-    }
-});
-
-// Update label when a programme checkbox changes
-$(document).on('change', '.prog-dd-cb', function () {
-    var $menu = $(this).closest('.prog-dd-menu');
-    var $btn  = $('[data-prog-menu="' + $menu.attr('id') + '"]');
-    progDdLabel($btn, $menu);
-});
-
-// ── Manage Participation modal — year checkbox ────────────────────────────
-$(document).on('change', '.modal-year-cb', function () {
-    var yr   = $(this).val();
-    var $col = $('#modal_prog_' + yr);
+// Year checkbox: expand/collapse the programme panel
+$(document).on('change', '.mp-year-cb', function () {
+    var $block = $(this).closest('.mp-year-block');
+    var $panel = $block.find('.mp-prog-panel');
     if ($(this).is(':checked')) {
-        $col.show();
+        $block.addClass('mp-year-active');
+        $panel.slideDown(150);
     } else {
-        $col.hide();
-        $col.find('.prog-dd-cb').prop('checked', false);
-        $col.find('.prog-dd-label').text('Select programme(s)');
+        $block.removeClass('mp-year-active');
+        $panel.slideUp(150, function () {
+            $panel.find('.mp-prog-cb').prop('checked', false);
+            $panel.find('.mp-prog-row').removeClass('mp-prog-on');
+            $panel.find('.mp-role-wrap').css({ opacity: '.3', 'pointer-events': 'none' });
+        });
+        mpUpdatePill($block);
     }
+});
+
+// Programme checkbox: enable/disable its role buttons + update pill
+$(document).on('change', '.mp-prog-cb', function () {
+    var $row  = $(this).closest('.mp-prog-row');
+    var $wrap = $row.find('.mp-role-wrap');
+    if ($(this).is(':checked')) {
+        $row.addClass('mp-prog-on');
+        $wrap.css({ opacity: '1', 'pointer-events': 'auto' });
+    } else {
+        $row.removeClass('mp-prog-on');
+        $wrap.css({ opacity: '.3', 'pointer-events': 'none' });
+    }
+    mpUpdatePill($(this).closest('.mp-year-block'));
+});
+
+// Role radio change: swap the active highlight class
+$(document).on('change', '.mp-role-btn input[type=radio]', function () {
+    var $wrap = $(this).closest('.mp-role-wrap');
+    $wrap.find('.mp-role-btn').removeClass('mp-role-e-on mp-role-o-on');
+    var $lbl = $(this).closest('.mp-role-btn');
+    $lbl.addClass($(this).val() === 'Examiner' ? 'mp-role-e-on' : 'mp-role-o-on');
 });
 </script>
 @endpush

@@ -681,8 +681,8 @@ class ExamsController extends Controller
 
             // ── Sync examiner_participations from year+programme checkboxes ──────
             // $request->year_programme = ['2024' => ['MCS'], '2025' => ['FCS Urology','MCS']]
-            // $request->examination_years = ['2024', '2025', ...]
-            $this->syncParticipations($examiner->id, $request->examination_years ?? [], $request->year_programme ?? []);
+            // $request->year_role      = ['2024' => ['MCS' => 'Examiner'], '2025' => ['MCS' => 'Observer', ...]]
+            $this->syncParticipations($examiner->id, $request->examination_years ?? [], $request->year_programme ?? [], $request->year_role ?? []);
 
             DB::commit();
 
@@ -774,16 +774,31 @@ class ExamsController extends Controller
 
         $currentYearName = DB::table('years')->where('id', $yearId)->value('year_name') ?? date('Y');
 
-        // Build per-year programme map for the Participation Summary card.
-        // For each year the examiner has in examination_years, look up which
-        // programme(s) they actually examined in from the result tables.
+        // Build per-year programme+role map.
         $hasParticipations = \Illuminate\Support\Facades\Schema::hasTable('examiner_participations');
-        $yearProgrammes = [];   // ['2024' => 'MCS', '2025' => 'FCS General Surgery']
+        $yearProgrammes = [];   // ['2024' => ['MCS', 'FCS Plastic Surgery']]
+        $yearRoles      = [];   // ['2024' => ['MCS' => 'Examiner', 'FCS Plastic Surgery' => 'Observer']]
 
         $rawYears = $history->examination_years ?? null;
         $decodedYears = json_decode($rawYears, true);
         if (is_string($decodedYears)) { $decodedYears = json_decode($decodedYears, true); }
         $examinedYears = is_array($decodedYears) ? $decodedYears : [];
+
+        // Pre-load all examiner_participations rows (specialty + role) for this examiner
+        $allEP = [];  // [year_name => [specialty => role]]
+        if ($hasParticipations) {
+            $epRows = DB::table('examiner_participations')
+                ->join('years', 'years.id', '=', 'examiner_participations.year_id')
+                ->where('examiner_participations.exm_id', $id)
+                ->whereNotNull('examiner_participations.specialty')
+                ->select('years.year_name', 'examiner_participations.specialty', 'examiner_participations.role')
+                ->get();
+            foreach ($epRows as $row) {
+                $allEP[(string)$row->year_name][$row->specialty] = $row->role ?: null;
+            }
+        }
+
+        $defaultRole = $examiner->role_id == 1 ? 'Examiner' : 'Observer';
 
         foreach ($examinedYears as $yearName) {
             $yearRow = DB::table('years')->where('year_name', (string)$yearName)->first();
@@ -791,27 +806,35 @@ class ExamsController extends Controller
             $yid = $yearRow->id;
 
             $programmes = [];
+            $roles      = [];
 
-            // MCS participation
-            if (DB::table('mcs_results')->where('examiner_id', $id)->where('exam_year', $yid)->exists()) {
-                $programmes[] = 'MCS';
+            // ── From examiner_participations (primary; has per-programme roles) ──
+            if (!empty($allEP[(string)$yearName])) {
+                foreach ($allEP[(string)$yearName] as $spec => $role) {
+                    $programmes[] = $spec;
+                    $roles[$spec] = $role ?? $defaultRole;
+                }
             }
 
-            // GS / FCS — prefer examiner_participations specialty over generic "General Surgery"
-            if ($hasParticipations) {
-                $epSpecialties = DB::table('examiner_participations')
-                    ->where('exm_id', $id)->where('year_id', $yid)
-                    ->whereNotNull('specialty')->pluck('specialty')->toArray();
-                if (!empty($epSpecialties)) {
-                    $programmes = array_merge($programmes, $epSpecialties);
-                } elseif (DB::table('gs_results')->where('examiner_id', $id)->where('exam_year', $yid)->exists()) {
-                    $programmes[] = 'FCS General Surgery';
+            // ── MCS from mcs_results if not already tracked ─────────────────
+            if (!in_array('MCS', $programmes)) {
+                if (DB::table('mcs_results')->where('examiner_id', $id)->where('exam_year', $yid)->exists()) {
+                    $programmes[] = 'MCS';
+                    $roles['MCS'] = $defaultRole;
                 }
-            } elseif (DB::table('gs_results')->where('examiner_id', $id)->where('exam_year', $yid)->exists()) {
-                $programmes[] = 'FCS General Surgery';
+            }
+
+            // ── FCS General Surgery from gs_results if no FCS row yet ───────
+            $hasFCS = !empty(array_filter($programmes, fn($p) => stripos($p, 'FCS') !== false));
+            if (!$hasFCS) {
+                if (DB::table('gs_results')->where('examiner_id', $id)->where('exam_year', $yid)->exists()) {
+                    $programmes[] = 'FCS General Surgery';
+                    $roles['FCS General Surgery'] = $defaultRole;
+                }
             }
 
             $yearProgrammes[(string)$yearName] = array_unique($programmes);
+            $yearRoles[(string)$yearName]      = $roles;
         }
 
         // Year range for the Manage Participation modal (2020 → last completed year)
@@ -826,6 +849,7 @@ class ExamsController extends Controller
             'qrCode'           => $qrCode,
             'backUrl'          => $backUrl,
             'yearProgrammes'   => $yearProgrammes,
+            'yearRoles'        => $yearRoles,
             'currentYearName'  => $currentYearName,
             'examYears'        => $examYears,
             'exYears'          => $examinedYears,
@@ -1058,7 +1082,10 @@ public function delete($id)
      * @param array $selectedYearNames ['2024','2025',…]
      * @param array $yearProgrammes    ['2024'=>['MCS'],'2025'=>['FCS Urology','FCS General Surgery']]
      */
-    private function syncParticipations(int $examinerModelId, array $selectedYearNames, array $yearProgrammes): void
+    /**
+     * @param array $yearRoles  ['2025' => ['MCS' => 'Examiner', 'FCS Plastic Surgery' => 'Observer']]
+     */
+    private function syncParticipations(int $examinerModelId, array $selectedYearNames, array $yearProgrammes, array $yearRoles = []): void
     {
         $selectedYearNames = array_map('strval', $selectedYearNames);
 
@@ -1101,10 +1128,12 @@ public function delete($id)
                 ->delete();
 
             foreach ($programmes as $prog) {
+                $role = $yearRoles[(string)$yearName][$prog] ?? 'Examiner';
                 DB::table('examiner_participations')->insert([
                     'exm_id'     => $examinerModelId,
                     'year_id'    => $yearId,
                     'specialty'  => $prog,
+                    'role'       => $role,
                     'source'     => 'manual',
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -1307,7 +1336,7 @@ public function delete($id)
             );
 
             // Sync the full year range (2020 → lastYear) so unchecked years are cleared
-            $this->syncParticipations($examiner->id, $selectedYearNames, $request->year_programme ?? []);
+            $this->syncParticipations($examiner->id, $selectedYearNames, $request->year_programme ?? [], $request->year_role ?? []);
 
             DB::commit();
 
