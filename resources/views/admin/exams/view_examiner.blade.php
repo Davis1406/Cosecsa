@@ -163,17 +163,19 @@
                                     <th><i class="fas fa-user-tie text-muted mr-1"></i> Role</th>
                                     <td>{{ $examiner->role_id == 1 ? 'Examiner' : 'Observer' }}</td>
                                 </tr>
-                                @if(!empty($examiner->examiner_designation))
                                 <tr>
                                     <th><i class="fas fa-gavel text-muted mr-1"></i> Designation</th>
                                     <td>
-                                        <span class="badge badge-pill"
-                                              style="background:#a02626;color:#fff;font-size:.78rem;padding:.3em .7em;">
-                                            {{ $examiner->examiner_designation }}
-                                        </span>
+                                        @if(!empty($examiner->examiner_designation))
+                                            <span class="badge badge-pill"
+                                                  style="background:#a02626;color:#fff;font-size:.78rem;padding:.3em .7em;">
+                                                {{ $examiner->examiner_designation }}
+                                            </span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
                                     </td>
                                 </tr>
-                                @endif
                                 <tr>
                                     <th><i class="fas fa-stethoscope text-muted mr-1"></i> Specialty</th>
                                     <td>{{ $examiner->specialty ?: '—' }}</td>
@@ -181,6 +183,22 @@
                                 <tr>
                                     <th><i class="fas fa-microscope text-muted mr-1"></i> Sub-Specialty</th>
                                     <td>{{ $examiner->subspecialty ?: '—' }}</td>
+                                </tr>
+                                <tr>
+                                    <th style="vertical-align:top;padding-top:.6rem;">
+                                        <i class="fas fa-sticky-note text-muted mr-1"></i> Notes
+                                    </th>
+                                    <td>
+                                        @if(!empty($examiner->internal_notes))
+                                            <span style="font-size:.82rem;color:#555;white-space:pre-wrap;word-break:break-word;">{{ Str::limit($examiner->internal_notes, 120) }}</span>
+                                            @if(strlen($examiner->internal_notes) > 120)
+                                                <a href="#memoCard" onclick="document.getElementById('memoCard').scrollIntoView({behavior:'smooth'});return false;"
+                                                   style="font-size:.75rem;"> more…</a>
+                                            @endif
+                                        @else
+                                            <span class="text-muted" style="font-size:.82rem;">No notes</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             </table>
                         </div>
@@ -259,7 +277,7 @@
             </div>
 
             {{-- ── Internal Memo ───────────────────────────────────────────────── --}}
-            <div class="card mb-4">
+            <div class="card mb-4" id="memoCard">
                 <div class="card-header section-header d-flex align-items-center justify-content-between">
                     <span><i class="fas fa-sticky-note mr-2"></i> Internal Memo</span>
                     <small class="text-muted font-weight-normal" style="font-size:.72rem;">
@@ -1211,6 +1229,23 @@ $('#photoFileInput').on('change', function () {
             type: 'POST',
             data: { _token: '{{ csrf_token() }}', internal_notes: $ta.val() },
             success: function () {
+                // Refresh Notes preview in the Current Assignment card
+                var txt = $ta.val();
+                var preview = txt.length > 120 ? txt.substring(0, 120) + '… ' : txt;
+                var $noteCell = $('td[data-notes-preview]');
+                if ($noteCell.length === 0) {
+                    // find by structure: th containing sticky-note icon
+                    $noteCell = $('.info-table tr').filter(function () {
+                        return $(this).find('.fa-sticky-note').length > 0;
+                    }).find('td');
+                }
+                if ($noteCell.length) {
+                    if (txt) {
+                        $noteCell.html('<span style="font-size:.82rem;color:#555;white-space:pre-wrap;word-break:break-word;">' + $('<div>').text(preview).html() + '</span>');
+                    } else {
+                        $noteCell.html('<span class="text-muted" style="font-size:.82rem;">No notes</span>');
+                    }
+                }
                 $saved.show();
                 if (!silent) {
                     setTimeout(function () { $saved.fadeOut(); }, 3000);
