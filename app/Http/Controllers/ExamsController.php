@@ -996,19 +996,15 @@ public function delete($id)
             return redirect($back)->with('error', 'Examiner not found.');
         }
 
-        $history = DB::table('examiners_history')->where('exm_id', $id)->first();
-        if (!$history) {
-            return redirect($back)->with('error', 'No confirmation history found for this examiner.');
-        }
-
         if ($type === 'hard') {
             DB::table('examiners_history')->where('exm_id', $id)->delete();
             DB::table('examiner_participations')->where('exm_id', $id)->delete();
             return redirect($back)->with('success', 'Confirmation history fully deleted.');
         }
 
-        // Soft: clear exam_availability and availability_year_id only (match on exm_id alone)
-        $affected = DB::table('examiners_history')
+        // Soft: clear exam_availability and availability_year_id.
+        // Always succeed — if already null, the desired state is already met.
+        DB::table('examiners_history')
             ->where('exm_id', $id)
             ->update([
                 'exam_availability'    => null,
@@ -1016,11 +1012,7 @@ public function delete($id)
                 'updated_at'           => now(),
             ]);
 
-        if ($affected) {
-            return redirect($back)->with('success', 'Availability confirmation cleared successfully.');
-        }
-
-        return redirect($back)->with('error', 'No changes made — confirmation may already be cleared.');
+        return redirect($back)->with('success', 'Availability confirmation cleared successfully.');
     }
 
     /**
