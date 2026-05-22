@@ -947,8 +947,8 @@ public function delete($id)
             $prevYearName = DB::table('years')->where('id', $yearId - 1)->value('year_name');
             if ($prevYearName) {
                 $getExaminers = $getExaminers->filter(function ($e) use ($prevYearName) {
-                    return $e->examination_years &&
-                           strpos($e->examination_years, (string)$prevYearName) !== false;
+                    $years = $e->examination_years ?? null;
+                    return $years && strpos($years, (string)$prevYearName) !== false;
                 })->values();
             }
         }
@@ -1007,6 +1007,7 @@ public function delete($id)
                 DB::raw('MAX(users.name) as examiner_name'),
                 DB::raw('MAX(users.email) as email'),
                 DB::raw('MAX(examiners_history.exam_availability) as exam_availability'),
+                DB::raw('MAX(examiners_history.examination_years) as examination_years'),
                 DB::raw('MAX(examiners_history.virtual_mcs_participated) as virtual_mcs_participated'),
                 DB::raw('MAX(examiners_history.fcs_participated) as fcs_participated'),
                 DB::raw('MAX(examiners_history.hospital_type) as hospital_type'),
