@@ -78,15 +78,9 @@
                     </h1>
                 </div>
                 <div class="col-sm-6 text-right no-print">
-                    @if(Auth::user()->user_type == 9)
-                        <a href="{{ url('examiner/dashboard') }}" class="btn btn-sm btn-secondary mr-2">
-                            <i class="fas fa-arrow-left mr-1"></i> Back
-                        </a>
-                    @else
-                        <a href="{{ url('admin/exams/examiner-confirmation') }}" class="btn btn-sm btn-secondary mr-2">
-                            <i class="fas fa-arrow-left mr-1"></i> Back
-                        </a>
-                    @endif
+                    <a href="{{ url('admin/exams/examiner-confirmation') }}" class="btn btn-sm btn-secondary mr-2">
+                        <i class="fas fa-arrow-left mr-1"></i> Back
+                    </a>
                     <button onclick="window.print()" class="btn btn-sm btn-success">
                         <i class="fas fa-print mr-1"></i> Print
                     </button>
