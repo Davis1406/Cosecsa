@@ -213,6 +213,9 @@ Route::get('admin/exams/gs_station_results/{candidate_id}/{station_id}', [ExamsC
 // FCS Station Results
     Route::get('admin/exams/fcs-station-results/{candidate_id}/{station_id}/{exam_format}/{table}', [ExamsController::class, 'viewFcsStationResults']);
 
+// Examiner → Candidate results (AJAX JSON)
+Route::get('admin/exams/examiner/{examiner_id}/candidate/{candidate_id}/results', [ExamsController::class, 'examinerCandidateResults'])->name('examiner.candidate.results');
+
 
 // Attendance list page
 Route::get('admin/exams/attendance', [ExamsController::class, 'attendanceList'])->name('exams.attendance.list');

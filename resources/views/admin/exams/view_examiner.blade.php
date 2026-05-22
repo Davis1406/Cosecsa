@@ -520,9 +520,17 @@
                                     </thead>
                                     <tbody>
                                         @foreach($candidatesExamined as $ci => $cand)
-                                        <tr class="ce-row" data-year="{{ $cand->exam_year_display }}">
+                                        <tr class="ce-row ce-clickable"
+                                            data-year="{{ $cand->exam_year_display }}"
+                                            data-candidate-id="{{ $cand->candidate_id }}"
+                                            data-examiner-id="{{ $examiner->examin_id }}"
+                                            style="cursor:pointer;"
+                                            title="Click to view results">
                                             <td class="text-muted" style="font-size:.8rem;">{{ $ci + 1 }}</td>
-                                            <td style="font-weight:500;">{{ $cand->candidate_name ?: '—' }}</td>
+                                            <td style="font-weight:500;">
+                                                {{ $cand->candidate_name ?: '—' }}
+                                                <i class="fas fa-external-link-alt ml-1 text-muted" style="font-size:.7rem;"></i>
+                                            </td>
                                             <td><code>{{ $cand->candidate_no ?? '—' }}</code></td>
                                             <td>
                                                 <span class="badge badge-pill"
@@ -567,15 +575,114 @@ $(function(){
         } else {
             $('.ce-row').hide().filter('[data-year="'+yr+'"]').show();
         }
-        // Re-number visible rows
         var i = 1;
         $('.ce-row:visible td:first-child').each(function(){ $(this).text(i++); });
+    });
+
+    // Click candidate row → load results modal
+    $(document).on('click', '.ce-clickable', function(){
+        var candidateId = $(this).data('candidate-id');
+        var examinerId  = $(this).data('examiner-id');
+        var url = '/admin/exams/examiner/' + examinerId + '/candidate/' + candidateId + '/results';
+
+        $('#candidateResultsBody').html(
+            '<tr><td colspan="5" class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading…</td></tr>'
+        );
+        $('#candidateResultsModalLabel').text('Loading…');
+        $('#candidateResultsModal').modal('show');
+
+        $.getJSON(url, function(data){
+            var cand = data.candidate;
+            var name = cand ? (cand.name || '—') : '—';
+            var no   = cand ? (cand.candidate_no || '') : '';
+            $('#candidateResultsModalLabel').html(
+                '<i class="fas fa-user-graduate mr-2"></i>' + name +
+                (no ? ' <small class="ml-1 text-white-50">(' + no + ')</small>' : '')
+            );
+
+            if (!data.results || data.results.length === 0) {
+                $('#candidateResultsBody').html(
+                    '<tr><td colspan="5" class="text-center text-muted py-4">No results recorded for this candidate.</td></tr>'
+                );
+                return;
+            }
+
+            var progColors = { 'MCS':'#007bff', 'FCS General Surgery':'#28a745' };
+            function progColor(p){ return progColors[p] || '#a02626'; }
+
+            var html = '';
+            var prevProg = null;
+            $.each(data.results, function(i, r){
+                var qmarks = '';
+                if (r.question_mark && typeof r.question_mark === 'object') {
+                    var parts = [];
+                    $.each(r.question_mark, function(k, v){ parts.push('<span class="badge badge-secondary mr-1">Q' + (parseInt(k)+1) + ': ' + v + '</span>'); });
+                    qmarks = parts.join('');
+                } else if (r.question_mark) {
+                    qmarks = r.question_mark;
+                }
+
+                var progBadge = '<span class="badge badge-pill" style="background:' + progColor(r.programme) + ';color:#fff;font-size:.7rem;">' + r.programme + '</span>';
+                var format = r.exam_format ? '<span class="badge badge-outline-secondary" style="border:1px solid #aaa;font-size:.68rem;">' + r.exam_format + '</span>' : '';
+                var station = r.station_id ? 'Station ' + r.station_id : '—';
+                var total   = r.total !== null ? r.total : (r.overall !== null ? r.overall : '—');
+                var remarks = r.remarks ? '<small class="text-muted d-block mt-1">' + r.remarks + '</small>' : '';
+
+                html += '<tr>';
+                html += '<td>' + progBadge + ' ' + format + '</td>';
+                html += '<td>' + station + '</td>';
+                html += '<td>' + (qmarks || '<span class="text-muted">—</span>') + remarks + '</td>';
+                html += '<td><strong>' + total + '</strong></td>';
+                html += '<td>' + (r.exam_year || '—') + '</td>';
+                html += '</tr>';
+            });
+            $('#candidateResultsBody').html(html);
+        }).fail(function(){
+            $('#candidateResultsBody').html(
+                '<tr><td colspan="5" class="text-center text-danger py-4"><i class="fas fa-exclamation-triangle mr-1"></i>Failed to load results.</td></tr>'
+            );
+        });
     });
 });
 </script>
 @endpush
 
 @endsection
+
+{{-- ══ Candidate Results Modal ════════════════════════════════════════════════ --}}
+<div class="modal fade" id="candidateResultsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#a02626;color:#fff;padding:.75rem 1rem;">
+                <h5 class="modal-title mb-0" id="candidateResultsModalLabel">
+                    <i class="fas fa-user-graduate mr-2"></i> Candidate Results
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" style="opacity:.9;">&times;</button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead style="background:#f8f8f8;font-size:.82rem;">
+                            <tr>
+                                <th style="width:180px;">Programme</th>
+                                <th style="width:100px;">Station</th>
+                                <th>Question Marks</th>
+                                <th style="width:70px;">Total</th>
+                                <th style="width:70px;">Year</th>
+                            </tr>
+                        </thead>
+                        <tbody id="candidateResultsBody">
+                            <tr><td colspan="5" class="text-center py-4 text-muted">Select a candidate to view results.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {{-- ══ Manage Participation Modal ════════════════════════════════════════════ --}}
 <div class="modal fade" id="manageParticipationModal" tabindex="-1" role="dialog">

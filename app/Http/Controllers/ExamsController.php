@@ -1951,6 +1951,89 @@ public function delete($id)
         return view('admin.exams.fcs_station_results', compact('candidateResult', 'allResults', 'header_title'));
     }
 
+    /**
+     * AJAX: return all results rows for a given examiner+candidate pair across all programmes.
+     */
+    public function examinerCandidateResults($examiner_id, $candidate_id)
+    {
+        $yearsMap = DB::table('years')->pluck('year_name', 'id')->toArray();
+
+        $tables = [
+            'mcs_results'                     => 'MCS',
+            'gs_results'                      => 'FCS General Surgery',
+            'cardiothoracic_results'          => 'FCS Cardiothoracic',
+            'urology_results'                 => 'FCS Urology',
+            'paediatric_results'              => 'FCS Paediatric Surgery',
+            'ent_results'                     => 'FCS ENT',
+            'plastic_surgery_results'         => 'FCS Plastic Surgery',
+            'neurosurgery_results'            => 'FCS Neurosurgery',
+            'orthopaedic_results'             => 'FCS Orthopaedic Surgery',
+            'paediatric_orthopaedics_results' => 'FCS Paediatric Orthopaedics',
+        ];
+
+        // Candidate name for the modal title
+        $candidateInfo = DB::table('candidates')
+            ->where('candidates.id', $candidate_id)
+            ->select(
+                'candidates.candidate_id as candidate_no',
+                DB::raw("TRIM(CONCAT(COALESCE(firstname,''),' ',COALESCE(middlename,''),' ',COALESCE(lastname,''))) as name")
+            )->first();
+
+        $rows = [];
+        foreach ($tables as $table => $programme) {
+            if (!\Illuminate\Support\Facades\Schema::hasTable($table)) continue;
+            $cols = \Illuminate\Support\Facades\Schema::getColumnListing($table);
+            if (!in_array('examiner_id', $cols) || !in_array('candidate_id', $cols)) continue;
+
+            $hasFormat  = in_array('exam_format', $cols);
+            $hasStation = in_array('station_id', $cols);
+            $hasTotal   = in_array('total', $cols);
+            $hasOverall = in_array('overall', $cols);
+            $hasRemarks = in_array('remarks', $cols);
+            $hasQmark   = in_array('question_mark', $cols);
+            $yearCol    = in_array('exam_year', $cols) ? "exam_year" : null;
+
+            $select = [
+                DB::raw("'$programme' as programme"),
+                DB::raw($hasStation ? "$table.station_id" : "NULL as station_id"),
+                DB::raw($hasFormat  ? "$table.exam_format" : "NULL as exam_format"),
+                DB::raw($hasTotal   ? "$table.total" : "NULL as total"),
+                DB::raw($hasOverall ? "$table.overall" : "NULL as overall"),
+                DB::raw($hasRemarks ? "$table.remarks" : "NULL as remarks"),
+                DB::raw($hasQmark   ? "$table.question_mark" : "NULL as question_mark"),
+                DB::raw($yearCol    ? "$table.$yearCol as exam_year_id" : "NULL as exam_year_id"),
+            ];
+
+            $results = DB::table($table)
+                ->select($select)
+                ->where('examiner_id', $examiner_id)
+                ->where('candidate_id', $candidate_id)
+                ->get();
+
+            foreach ($results as $r) {
+                $yr = $r->exam_year_id;
+                $rows[] = [
+                    'programme'    => $r->programme,
+                    'station_id'   => $r->station_id,
+                    'exam_format'  => $r->exam_format,
+                    'total'        => $r->total,
+                    'overall'      => $r->overall,
+                    'remarks'      => $r->remarks,
+                    'question_mark'=> $r->question_mark ? json_decode($r->question_mark, true) : null,
+                    'exam_year'    => $yr && isset($yearsMap[$yr]) ? $yearsMap[$yr] : ($yr ?? '—'),
+                ];
+            }
+        }
+
+        // Sort: programme → station
+        usort($rows, fn($a, $b) => $a['programme'] <=> $b['programme'] ?: ($a['station_id'] <=> $b['station_id']));
+
+        return response()->json([
+            'candidate' => $candidateInfo,
+            'results'   => $rows,
+        ]);
+    }
+
     // Single Station Results
     public function viewCandidateStationResult($candidate_id, $station_id)
     {
