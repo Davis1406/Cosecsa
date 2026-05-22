@@ -219,8 +219,8 @@ Route::get('admin/exams/examiner/{examiner_id}/candidate/{candidate_id}/results'
 // Delete / reset routes
 Route::post('admin/exams/examiner/{id}/reset-confirmation', [ExamsController::class, 'resetExaminerConfirmation'])->name('examiner.reset.confirmation');
 Route::post('admin/exams/examiner/{id}/destroy',            [ExamsController::class, 'destroyExaminer'])->name('examiner.destroy');
-Route::post('admin/exams/attendance/{id}/destroy',          [ExamsController::class, 'destroyAttendanceRecord'])->name('attendance.destroy.record');
 Route::post('admin/exams/attendance/date/destroy',          [ExamsController::class, 'destroyAttendanceByDate'])->name('attendance.destroy.date');
+Route::post('admin/exams/attendance/{id}/destroy',          [ExamsController::class, 'destroyAttendanceRecord'])->name('attendance.destroy.record');
 
 
 // Attendance list page
