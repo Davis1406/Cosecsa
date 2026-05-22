@@ -935,32 +935,42 @@ public function delete($id)
     /**
      * Generate visual report for examiner confirmations
      */
-    public function generateVisualReport()
+    public function generateVisualReport(Request $request)
     {
-        $getExaminers = $this->getExaminersData();
+        [$yearId, $yearName, $allYears] = $this->resolveYear($request);
+        $filterMode = $request->input('filter', 'all'); // 'all' | 'last_year'
 
-        // Process availability data
-        $availabilityData = $this->processAvailabilityData($getExaminers);
+        $getExaminers = $this->getExaminersData($yearId);
 
-        // Process participation data
-        $participationData = $this->processParticipationData($getExaminers);
-
-        // Process country data
-        $countryData = $this->processCountryData($getExaminers);
+        // Filter to last-year participants only
+        if ($filterMode === 'last_year') {
+            $prevYearName = DB::table('years')->where('id', $yearId - 1)->value('year_name');
+            if ($prevYearName) {
+                $getExaminers = $getExaminers->filter(function ($e) use ($prevYearName) {
+                    return $e->examination_years &&
+                           strpos($e->examination_years, (string)$prevYearName) !== false;
+                })->values();
+            }
+        }
 
         $data = [
-            'availabilityData' => $availabilityData,
-            'participationData' => $participationData,
-            'countryData' => $countryData,
-            'header_title' => 'Examiner Confirmation Visual Report'
+            'availabilityData'  => $this->processAvailabilityData($getExaminers),
+            'participationData' => $this->processParticipationData($getExaminers),
+            'countryData'       => $this->processCountryData($getExaminers),
+            'header_title'      => 'Examiner Visual Report',
+            'allYears'          => $allYears,
+            'selectedYearId'    => $yearId,
+            'selectedYearName'  => $yearName,
+            'filterMode'        => $filterMode,
+            'totalShown'        => $getExaminers->count(),
         ];
 
         return view('admin.exams.visual_report', $data);
     }
 
-    private function getExaminersData()
+    private function getExaminersData($yearId = null)
     {
-        $yearId = User::getCurrentYearId();
+        $yearId = $yearId ?? User::getCurrentYearId();
 
         return DB::table('examiners')
             ->leftJoin('examiners_history', 'examiners.id', '=', 'examiners_history.exm_id')
