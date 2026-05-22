@@ -479,9 +479,102 @@
             @endif
 
         </div>
+
+        {{-- ── Candidates Examined ─────────────────────────────────────────── --}}
+        @if($candidatesExamined->isNotEmpty())
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex align-items-center justify-content-between"
+                         style="background:linear-gradient(135deg,#a02626,#c73333);color:#fff;border-radius:6px 6px 0 0;cursor:pointer;"
+                         data-toggle="collapse" data-target="#candidatesExaminedPanel" aria-expanded="true">
+                        <span style="font-weight:600;font-size:.95rem;">
+                            <i class="fas fa-users mr-2"></i>
+                            Candidates Examined
+                            <span class="badge badge-light ml-2" style="color:#a02626;">{{ $candidatesExamined->count() }}</span>
+                        </span>
+                        <i class="fas fa-chevron-down" style="transition:transform .2s;" id="cep-chevron"></i>
+                    </div>
+                    <div class="collapse show" id="candidatesExaminedPanel">
+                        <div class="card-body p-0">
+                            {{-- Year filter tabs --}}
+                            @php
+                                $ceYears = $candidatesExamined->pluck('exam_year_display')->unique()->filter()->sort()->reverse()->values();
+                            @endphp
+                            <div class="p-3 pb-0 d-flex align-items-center flex-wrap" style="gap:.4rem;border-bottom:1px solid #f0f0f0;">
+                                <button class="btn btn-sm btn-danger ce-year-btn active" data-year="all">All</button>
+                                @foreach($ceYears as $ceYr)
+                                <button class="btn btn-sm btn-outline-secondary ce-year-btn" data-year="{{ $ceYr }}">{{ $ceYr }}</button>
+                                @endforeach
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover mb-0" id="candidatesExaminedTable">
+                                    <thead style="background:#f8f8f8;">
+                                        <tr>
+                                            <th style="width:40px;">#</th>
+                                            <th>Candidate Name</th>
+                                            <th>Candidate No.</th>
+                                            <th>Programme</th>
+                                            <th>Year</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($candidatesExamined as $ci => $cand)
+                                        <tr class="ce-row" data-year="{{ $cand->exam_year_display }}">
+                                            <td class="text-muted" style="font-size:.8rem;">{{ $ci + 1 }}</td>
+                                            <td style="font-weight:500;">{{ $cand->candidate_name ?: '—' }}</td>
+                                            <td><code>{{ $cand->candidate_no ?? '—' }}</code></td>
+                                            <td>
+                                                <span class="badge badge-pill"
+                                                      style="background:{{ str_contains($cand->programme,'MCS') ? '#007bff' : (str_contains($cand->programme,'GS') || str_contains($cand->programme,'General') ? '#28a745' : '#a02626') }};color:#fff;font-size:.72rem;">
+                                                    {{ $cand->programme }}
+                                                </span>
+                                            </td>
+                                            <td>{{ $cand->exam_year_display }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
     </section>
 </div>
 </div>
+
+@push('scripts')
+<script>
+$(function(){
+    // Chevron toggle animation
+    $('#candidatesExaminedPanel').on('show.bs.collapse', function(){
+        $('#cep-chevron').css('transform','rotate(0deg)');
+    }).on('hide.bs.collapse', function(){
+        $('#cep-chevron').css('transform','rotate(-90deg)');
+    });
+
+    // Year filter buttons
+    $(document).on('click', '.ce-year-btn', function(){
+        $('.ce-year-btn').removeClass('active btn-danger').addClass('btn-outline-secondary');
+        $(this).addClass('active btn-danger').removeClass('btn-outline-secondary');
+        var yr = $(this).data('year');
+        if (yr === 'all') {
+            $('.ce-row').show();
+        } else {
+            $('.ce-row').hide().filter('[data-year="'+yr+'"]').show();
+        }
+        // Re-number visible rows
+        var i = 1;
+        $('.ce-row:visible td:first-child').each(function(){ $(this).text(i++); });
+    });
+});
+</script>
+@endpush
+
 @endsection
 
 {{-- ══ Manage Participation Modal ════════════════════════════════════════════ --}}

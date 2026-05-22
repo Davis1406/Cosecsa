@@ -886,6 +886,55 @@ class ExamsController extends Controller
         $lastYearName2  = DB::table('years')->where('id', $yearId - 1)->value('year_name') ?? (date('Y') - 1);
         $examYears      = range(2020, (int) $lastYearName2);
 
+        // ── Candidates Examined by this examiner (all years, all programmes) ──
+        $resultTables = [
+            'mcs_results'                   => 'MCS',
+            'gs_results'                    => 'FCS General Surgery',
+            'cardiothoracic_results'        => 'FCS Cardiothoracic',
+            'urology_results'               => 'FCS Urology',
+            'paediatric_results'            => 'FCS Paediatric Surgery',
+            'ent_results'                   => 'FCS ENT',
+            'plastic_surgery_results'       => 'FCS Plastic Surgery',
+            'neurosurgery_results'          => 'FCS Neurosurgery',
+            'orthopaedic_results'           => 'FCS Orthopaedic Surgery',
+            'paediatric_orthopaedics_results' => 'FCS Paediatric Orthopaedics',
+        ];
+
+        $candidatesExamined = collect();
+        foreach ($resultTables as $table => $programme) {
+            if (!\Illuminate\Support\Facades\Schema::hasTable($table)) continue;
+            $cols = \Illuminate\Support\Facades\Schema::getColumnListing($table);
+            $yearCol = in_array('exam_year', $cols) ? 'exam_year' : null;
+            if (!in_array('examiner_id', $cols) || !in_array('candidate_id', $cols)) continue;
+
+            $q = DB::table($table)
+                ->join('candidates', "$table.candidate_id", '=', 'candidates.id')
+                ->where("$table.examiner_id", $id)
+                ->select(
+                    'candidates.id as candidate_id',
+                    DB::raw("CONCAT(COALESCE(candidates.firstname,''),' ',COALESCE(candidates.middlename,''),' ',COALESCE(candidates.lastname,'')) as candidate_name"),
+                    'candidates.candidate_id as candidate_no',
+                    DB::raw("'$programme' as programme"),
+                    DB::raw($yearCol ? "MAX($table.$yearCol) as exam_year" : "NULL as exam_year")
+                )
+                ->groupBy('candidates.id', 'candidates.firstname', 'candidates.middlename', 'candidates.lastname', 'candidates.candidate_id');
+
+            $rows = $q->get();
+            $candidatesExamined = $candidatesExamined->merge($rows);
+        }
+
+        // Resolve year names for display (exam_year stored as years.id in FCS, as year string in MCS/GS)
+        $yearsMap = DB::table('years')->pluck('year_name', 'id')->toArray();
+        $candidatesExamined = $candidatesExamined->map(function($row) use ($yearsMap) {
+            if ($row->exam_year && isset($yearsMap[$row->exam_year])) {
+                $row->exam_year_display = $yearsMap[$row->exam_year];
+            } else {
+                $row->exam_year_display = $row->exam_year ?? '—';
+            }
+            $row->candidate_name = trim(preg_replace('/\s+/', ' ', $row->candidate_name));
+            return $row;
+        })->sortByDesc('exam_year')->values();
+
         return view('admin.exams.view_examiner', [
             'header_title'     => 'View Examiner',
             'examiner'         => $examiner,
@@ -897,8 +946,9 @@ class ExamsController extends Controller
             'yearRoles'        => $yearRoles,
             'currentYearName'  => $currentYearName,
             'examYears'        => $examYears,
-            'exYears'          => $examinedYears,
-            'programmeOptions' => self::$programmeOptions,
+            'exYears'              => $examinedYears,
+            'programmeOptions'     => self::$programmeOptions,
+            'candidatesExamined'   => $candidatesExamined,
         ]);
     }
 public function delete($id)
