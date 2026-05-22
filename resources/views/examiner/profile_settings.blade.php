@@ -244,6 +244,134 @@
 
             </div>{{-- /row --}}
 
+            {{-- ── Participation Summary ───────────────────────────────────────── --}}
+            @php
+                $hasHistory = !empty($examiner->history) || !empty($exYears);
+                $mcsStatYears = [];
+                $fcsStatYears = [];
+                foreach ($yearProgrammes as $yr => $progs) {
+                    foreach ($progs as $p) {
+                        if (strtoupper($p) === 'MCS') { $mcsStatYears[] = $yr; }
+                        elseif (stripos($p, 'FCS') !== false) { $fcsStatYears[] = $yr; }
+                    }
+                }
+                sort($mcsStatYears); sort($fcsStatYears);
+                $hasMCSHistory = !empty($mcsStatYears);
+                $hasFCSHistory = !empty($fcsStatYears);
+                $examinerRoleLabel = ($examiner->role_id == 1) ? 'Examiner' : 'Observer';
+            @endphp
+
+            @if($hasHistory || !empty($exYears))
+            <div class="card mb-4">
+                <div class="card-header section-header">
+                    <i class="fas fa-history mr-2"></i> Participation Summary
+                </div>
+                <div class="card-body pb-2">
+
+                    {{-- Quick-stat row --}}
+                    <div class="row text-center mb-3">
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="stat-icon mx-auto {{ $hasMCSHistory ? 'bg-success' : 'bg-light-muted' }}">
+                                <i class="fas fa-laptop"></i>
+                            </div>
+                            <small class="d-block mt-2 text-muted">MCS</small>
+                            @if($hasMCSHistory)
+                                <div style="font-size:.75rem;font-weight:600;line-height:1.4;margin-top:2px;">
+                                    {{ implode(', ', $mcsStatYears) }}
+                                </div>
+                            @else
+                                <strong class="text-muted">N/A</strong>
+                            @endif
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="stat-icon mx-auto {{ $hasFCSHistory ? 'bg-info' : 'bg-light-muted' }}">
+                                <i class="fas fa-stethoscope"></i>
+                            </div>
+                            <small class="d-block mt-2 text-muted">FCS</small>
+                            @if($hasFCSHistory)
+                                <div style="font-size:.75rem;font-weight:600;line-height:1.4;margin-top:2px;">
+                                    {{ implode(', ', $fcsStatYears) }}
+                                </div>
+                            @else
+                                <strong class="text-muted">N/A</strong>
+                            @endif
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="stat-icon mx-auto bg-light-muted">
+                                <i class="fas fa-hospital"></i>
+                            </div>
+                            <small class="d-block mt-2 text-muted">Hospital</small>
+                            <strong class="d-block text-truncate" style="font-size:.8rem;max-width:140px;margin:0 auto;">
+                                {{ ($examiner->hospital_name ?? '') ?: '—' }}
+                            </strong>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="stat-icon mx-auto {{ count($exYears) > 0 ? 'bg-danger' : 'bg-light-muted' }}">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <small class="d-block mt-2 text-muted">Exam Years</small>
+                            <strong>{{ count($exYears) > 0 ? count($exYears) . ' year(s)' : '—' }}</strong>
+                        </div>
+                    </div>
+
+                    {{-- Year-by-year history --}}
+                    @if(!empty($exYears))
+                    <div style="border-top:1px solid #f0f0f0;padding-top:1rem;">
+                        <p class="mb-2" style="font-size:.7rem;font-weight:700;text-transform:uppercase;
+                                               letter-spacing:.08em;color:#a02626;">
+                            <i class="fas fa-stream mr-1"></i> Examination History by Year
+                        </p>
+                        <table class="table table-sm table-borderless mb-0" style="font-size:.87rem;width:auto;">
+                            <thead>
+                                <tr style="border-bottom:1px solid #f0f0f0;">
+                                    <th style="width:70px;color:#6c757d;font-weight:600;padding-left:0;">Year</th>
+                                    <th style="color:#6c757d;font-weight:600;white-space:nowrap;">Programme</th>
+                                    <th style="color:#6c757d;font-weight:600;white-space:nowrap;padding-left:1rem;">Role</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach(array_reverse((array)$exYears) as $yr)
+                                @php
+                                    $progs    = array_values(array_unique($yearProgrammes[(string)$yr] ?? []));
+                                    $rowCount = max(1, count($progs));
+                                @endphp
+                                @if(empty($progs))
+                                <tr style="border-bottom:1px solid #f5f5f5;">
+                                    <td style="padding-left:0;font-weight:700;color:#333;vertical-align:middle;width:60px;">{{ $yr }}</td>
+                                    <td><span class="text-muted" style="font-style:italic;">No record</span></td>
+                                    <td style="padding-left:1rem;"></td>
+                                </tr>
+                                @else
+                                @foreach($progs as $pi => $prog)
+                                @php $role = $yearRoles[(string)$yr][$prog] ?? $examinerRoleLabel; @endphp
+                                <tr style="border-bottom:{{ $pi === count($progs)-1 ? '2px solid #e8e8e8' : '1px solid #f5f5f5' }};">
+                                    @if($pi === 0)
+                                    <td rowspan="{{ $rowCount }}"
+                                        style="padding-left:0;font-weight:700;color:#333;vertical-align:middle;
+                                               width:60px;border-right:2px solid #f0f0f0;padding-right:.75rem;">
+                                        {{ $yr }}
+                                    </td>
+                                    @endif
+                                    <td style="vertical-align:middle;padding-left:.75rem;">{{ $prog }}</td>
+                                    <td style="vertical-align:middle;padding-left:1rem;white-space:nowrap;">
+                                        <span class="badge badge-pill {{ $role === 'Examiner' ? 'badge-success' : 'badge-warning' }}"
+                                              style="font-size:.72rem;">
+                                            {{ $role }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                @endforeach
+                                @endif
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
+
+                </div>
+            </div>
+            @endif
+
         </div>
     </section>
 </div>

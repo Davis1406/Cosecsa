@@ -2143,12 +2143,74 @@ public function delete($id)
         // Generate QR code with the confirmation URL
         $qrCode = \QrCode::size(70)->generate($confirmationUrl);
 
+        // ── Participation history (same logic as admin viewExaminer) ──────────
+        $examinerId = $examiner->examin_id;
+        $history    = DB::table('examiners_history')->where('exm_id', $examinerId)->first();
+
+        $rawYears     = $history->examination_years ?? null;
+        $decodedYears = json_decode($rawYears, true);
+        if (is_string($decodedYears)) { $decodedYears = json_decode($decodedYears, true); }
+        $examinedYears = is_array($decodedYears) ? $decodedYears : [];
+
+        $hasParticipations = \Illuminate\Support\Facades\Schema::hasTable('examiner_participations');
+        $allEP = [];
+        if ($hasParticipations) {
+            $epRows = DB::table('examiner_participations')
+                ->join('years', 'years.id', '=', 'examiner_participations.year_id')
+                ->where('examiner_participations.exm_id', $examinerId)
+                ->whereNotNull('examiner_participations.specialty')
+                ->select('years.year_name', 'examiner_participations.specialty', 'examiner_participations.role')
+                ->get();
+            foreach ($epRows as $row) {
+                $allEP[(string)$row->year_name][$row->specialty] = $row->role ?: null;
+            }
+        }
+
+        $defaultRole  = ($examiner->role_id == 1) ? 'Examiner' : 'Observer';
+        $yearProgrammes = [];
+        $yearRoles      = [];
+
+        foreach ($examinedYears as $yrName) {
+            $yearRow = DB::table('years')->where('year_name', (string)$yrName)->first();
+            if (!$yearRow) continue;
+            $yid = $yearRow->id;
+
+            $programmes = [];
+            $roles      = [];
+
+            if (!empty($allEP[(string)$yrName])) {
+                foreach ($allEP[(string)$yrName] as $spec => $role) {
+                    $programmes[] = $spec;
+                    $roles[$spec] = $role ?? $defaultRole;
+                }
+            }
+
+            if (!in_array('MCS', $programmes) &&
+                DB::table('mcs_results')->where('examiner_id', $examinerId)->where('exam_year', $yid)->exists()) {
+                $programmes[] = 'MCS';
+                $roles['MCS'] = $defaultRole;
+            }
+
+            $hasFCS = !empty(array_filter($programmes, fn($p) => stripos($p, 'FCS') !== false));
+            if (!$hasFCS &&
+                DB::table('gs_results')->where('examiner_id', $examinerId)->where('exam_year', $yid)->exists()) {
+                $programmes[] = 'FCS General Surgery';
+                $roles['FCS General Surgery'] = $defaultRole;
+            }
+
+            $yearProgrammes[(string)$yrName] = array_unique($programmes);
+            $yearRoles[(string)$yrName]      = $roles;
+        }
+
         $data = [
-            'header_title' => 'Profile Settings',
-            'examiner' => $examiner,
-            'getCountry' => Country::getCountry(),
-            'groups' => DB::table('examiners_groups')->select('id', 'group_name')->get(),
-            'qrCode' => $qrCode // Add QR code to the data
+            'header_title'   => 'Profile Settings',
+            'examiner'       => $examiner,
+            'getCountry'     => Country::getCountry(),
+            'groups'         => DB::table('examiners_groups')->select('id', 'group_name')->get(),
+            'qrCode'         => $qrCode,
+            'exYears'        => $examinedYears,
+            'yearProgrammes' => $yearProgrammes,
+            'yearRoles'      => $yearRoles,
         ];
 
         return view('examiner.profile_settings', $data);
