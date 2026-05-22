@@ -36,7 +36,7 @@
                     {{-- Avatar --}}
                     <div class="flex-shrink-0">
                         <img src="{{ !empty($examiner->passport_image)
-                                    ? asset('storage/app/public/' . $examiner->passport_image)
+                                    ? asset('storage/' . $examiner->passport_image)
                                     : asset('/public/dist/img/user.png') }}"
                              alt="{{ $examiner->examiner_name }}"
                              class="profile-photo">
@@ -198,7 +198,7 @@
                             <div class="mt-1 mb-3">
                                 @if(!empty($examiner->curriculum_vitae))
                                     @php $cvName = basename($examiner->curriculum_vitae); @endphp
-                                    <a href="{{ asset('storage/app/public/' . $examiner->curriculum_vitae) }}"
+                                    <a href="{{ asset('storage/' . $examiner->curriculum_vitae) }}"
                                        target="_blank"
                                        class="btn btn-sm btn-outline-danger btn-block">
                                         <i class="fas fa-download mr-1"></i> {{ $cvName }}
@@ -270,7 +270,7 @@
                         </div>
                         <div class="mb-3">
                             <img src="{{ !empty($examiner->passport_image)
-                                        ? asset('storage/app/public/' . $examiner->passport_image)
+                                        ? asset('storage/' . $examiner->passport_image)
                                         : asset('/public/dist/img/user.png') }}"
                                  alt="{{ $examiner->examiner_name }}"
                                  class="rounded-circle"
@@ -316,16 +316,18 @@
             </div>
             <div class="modal-body">
                 @php
-                    $hasHistory = isset($examiner->history) && !is_null($examiner->history);
+                    $hasHistory = !empty($examiner->history) && $examiner->history !== null;
 
-                    // examination_years: already an array when cast by ExaminerHistory model,
-                    // but may also arrive as a JSON string from raw DB fallback — handle both.
+                    // examination_years: set directly on $examiner by getExaminers() from
+                    // $history->examination_years (already cast to array). Handle both cases.
+                    $raw = $examiner->examination_years
+                        ?? ($hasHistory ? $examiner->history->examination_years : null);
                     $modalYears = [];
-                    if (!empty($examiner->examination_years)) {
-                        if (is_array($examiner->examination_years)) {
-                            $modalYears = $examiner->examination_years;
+                    if (!empty($raw)) {
+                        if (is_array($raw)) {
+                            $modalYears = $raw;
                         } else {
-                            $d = json_decode($examiner->examination_years, true);
+                            $d = json_decode($raw, true);
                             if (is_string($d)) { $d = json_decode($d, true); }
                             $modalYears = is_array($d) ? $d : [];
                         }

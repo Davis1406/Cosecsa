@@ -2288,6 +2288,12 @@ public function delete($id)
         // Retrieve all groups and pass them to the view
         $data['groups'] = DB::table('examiners_groups')->select('id', 'group_name')->get();
 
+        // Dynamic exam years: all completed years up to (but not including) current year
+        $data['examYears'] = DB::table('years')
+            ->where('id', '<', User::getCurrentYearId())
+            ->orderByDesc('id')
+            ->pluck('year_name');
+
         return view('examiner.edit_info', $data);
     }
 
