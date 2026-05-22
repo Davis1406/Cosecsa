@@ -282,6 +282,7 @@ Route::group(['middleware' => 'examiner'], function(){
     Route::get('examiner/edit_info/{id}', [ExamsController::class, 'examinerEdit'])->name('examiner.edit');
     Route::post('examiner/edit_info/{id}', [ExamsController::class, 'examinerUpdate'])->name('examiner.selfUpdate');
     Route::get('examiner/badge', [ExamsController::class, 'examinerBadge'])->name('examiner.badge');
+    Route::get('examiner/visual_report', [ExamsController::class, 'generateVisualReport'])->name('examiner.visual_report');
 
     // Exam type selection pages
     Route::get('examiner/cardiothoracic', [CandidatesController::class, 'cardiothoracicSelection'])->name('examiner.cardiothoracic');

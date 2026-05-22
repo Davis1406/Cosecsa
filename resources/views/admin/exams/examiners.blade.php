@@ -22,9 +22,6 @@
                     </form>
                 </div>
                 <div class="col-sm-6 text-right">
-                    <a href="{{ route('exams.mass.specialty') }}" class="btn btn-sm btn-secondary mr-1">
-                        <i class="fas fa-magic mr-1"></i> Normalise Specialties
-                    </a>
                     <a href="{{ url('admin/exams/import') }}" class="btn btn-sm btn-warning mr-1">
                         <i class="fas fa-upload mr-1"></i> Upload
                     </a>

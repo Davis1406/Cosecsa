@@ -17,16 +17,16 @@
                             <div class="card">
                                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="gap:.5rem;">
                                     <h3 class="card-title mb-0">{{ $programmeName }} Results — {{ $selectedYearName }}</h3>
-                                    <form method="GET" action="{{ request()->url() }}" class="d-flex align-items-center" style="gap:.4rem;">
-                                        <select name="year_id" class="form-control form-control-sm" style="max-width:130px;">
+                                    <form method="GET" action="{{ request()->url() }}" class="d-flex align-items-center flex-shrink-0" style="gap:.4rem;">
+                                        <select name="year_id" class="form-control form-control-sm flex-shrink-0" style="width:110px;">
                                             @foreach($allYears as $yr)
                                                 <option value="{{ $yr->id }}" {{ $selectedYearId == $yr->id ? 'selected' : '' }}>
                                                     {{ $yr->year_name }}
                                                 </option>
                                             @endforeach
                                         </select>
-                                        <button type="submit" class="btn btn-sm btn-danger">
-                                            <i class="fas fa-filter mr-1"></i> Go
+                                        <button type="submit" class="btn btn-danger flex-shrink-0" style="white-space:nowrap;padding:4px 12px;font-size:.85rem;">
+                                            Filter
                                         </button>
                                     </form>
                                 </div>

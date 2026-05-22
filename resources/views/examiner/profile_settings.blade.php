@@ -318,20 +318,29 @@
                 @php
                     $hasHistory = isset($examiner->history) && !is_null($examiner->history);
 
-                    // Decode examination_years (may be double-encoded)
+                    // examination_years: already an array when cast by ExaminerHistory model,
+                    // but may also arrive as a JSON string from raw DB fallback — handle both.
                     $modalYears = [];
                     if (!empty($examiner->examination_years)) {
-                        $d = json_decode($examiner->examination_years, true);
-                        if (is_string($d)) { $d = json_decode($d, true); }
-                        $modalYears = is_array($d) ? $d : [];
+                        if (is_array($examiner->examination_years)) {
+                            $modalYears = $examiner->examination_years;
+                        } else {
+                            $d = json_decode($examiner->examination_years, true);
+                            if (is_string($d)) { $d = json_decode($d, true); }
+                            $modalYears = is_array($d) ? $d : [];
+                        }
                     }
 
-                    // Decode exam_availability
+                    // exam_availability: same cast pattern
                     $selectedAvailability = [];
                     if ($hasHistory && !empty($examiner->history->exam_availability)) {
-                        $av = json_decode($examiner->history->exam_availability, true);
-                        if (is_string($av)) { $av = json_decode($av, true); }
-                        $selectedAvailability = is_array($av) ? $av : [];
+                        if (is_array($examiner->history->exam_availability)) {
+                            $selectedAvailability = $examiner->history->exam_availability;
+                        } else {
+                            $av = json_decode($examiner->history->exam_availability, true);
+                            if (is_string($av)) { $av = json_decode($av, true); }
+                            $selectedAvailability = is_array($av) ? $av : [];
+                        }
                     }
                     $hasMCS       = in_array('MCS', $selectedAvailability);
                     $hasFCS       = in_array('FCS', $selectedAvailability);

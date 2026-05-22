@@ -555,10 +555,15 @@
                         <li class="nav-item">
                             <a href="{{ url('examiner/profile_settings') }}"
                                 class="nav-link @if (Request::segment(2) == 'profile_settings' || Request::segment(2) == 'edit_info') active @endif">
-                                <i class="nav-icon fas fa-cog "></i>
-                                <p>
-                                    Profile Settings
-                                </p>
+                                <i class="nav-icon fas fa-user-circle"></i>
+                                <p>Profile</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url('examiner/visual_report') }}"
+                                class="nav-link @if (Request::segment(2) == 'visual_report') active @endif">
+                                <i class="nav-icon fas fa-chart-pie"></i>
+                                <p>Visual Report</p>
                             </a>
                         </li>
                     @endif
