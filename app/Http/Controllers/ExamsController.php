@@ -988,13 +988,17 @@ public function delete($id)
      */
     public function resetExaminerConfirmation(Request $request, $id)
     {
-        $type    = $request->input('type', 'soft'); // 'soft' | 'hard'
-        $yearId  = User::getCurrentYearId();
-        $back    = $request->input('back', 'admin/exams/examiner-confirmation');
+        $type = $request->input('type', 'soft'); // 'soft' | 'hard'
+        $back = $request->input('back', url('admin/exams/examiner-confirmation'));
 
         $examiner = DB::table('examiners')->where('id', $id)->first();
         if (!$examiner) {
             return redirect($back)->with('error', 'Examiner not found.');
+        }
+
+        $history = DB::table('examiners_history')->where('exm_id', $id)->first();
+        if (!$history) {
+            return redirect($back)->with('error', 'No confirmation history found for this examiner.');
         }
 
         if ($type === 'hard') {
@@ -1003,17 +1007,20 @@ public function delete($id)
             return redirect($back)->with('success', 'Confirmation history fully deleted.');
         }
 
-        // Soft: clear availability for current year only
-        DB::table('examiners_history')
+        // Soft: clear exam_availability and availability_year_id only (match on exm_id alone)
+        $affected = DB::table('examiners_history')
             ->where('exm_id', $id)
-            ->where('availability_year_id', $yearId)
             ->update([
                 'exam_availability'    => null,
                 'availability_year_id' => null,
                 'updated_at'           => now(),
             ]);
 
-        return redirect($back)->with('success', 'Availability confirmation reset successfully.');
+        if ($affected) {
+            return redirect($back)->with('success', 'Availability confirmation cleared successfully.');
+        }
+
+        return redirect($back)->with('error', 'No changes made — confirmation may already be cleared.');
     }
 
     /**
