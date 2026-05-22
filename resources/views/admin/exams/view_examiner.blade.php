@@ -18,13 +18,21 @@
                        class="btn btn-sm btn-warning mr-1">
                         <i class="fas fa-edit mr-1"></i> Edit
                     </a>
-                    <button type="button" class="btn btn-sm btn-outline-secondary mr-1"
-                            onclick="showVEDeleteModal('confirmation')"
-                            title="Reset or delete this examiner's availability submission">
-                        <i class="fas fa-undo mr-1"></i> Reset Confirmation
-                    </button>
+                    {{-- Reset Confirmation: direct POST with browser confirm --}}
+                    <form method="POST"
+                          action="{{ route('examiner.reset.confirmation', $examiner->examin_id) }}"
+                          style="display:inline;"
+                          onsubmit="return confirm('Reset the availability confirmation for {{ addslashes($examiner->examiner_name) }}? This will clear their submitted availability.')">
+                        @csrf
+                        <input type="hidden" name="type" value="soft">
+                        <input type="hidden" name="back" value="{{ $backUrl ?? url('admin/exams/examiners') }}">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary mr-1"
+                                title="Clear this examiner's availability submission">
+                            <i class="fas fa-undo mr-1"></i> Reset Confirmation
+                        </button>
+                    </form>
                     <button type="button" class="btn btn-sm btn-outline-danger mr-1"
-                            onclick="showVEDeleteModal('examiner')"
+                            onclick="showVEDeleteModal()"
                             title="Soft or hard delete this examiner">
                         <i class="fas fa-trash mr-1"></i> Delete
                     </button>
@@ -660,22 +668,12 @@ $(function(){
     });
 });
 
-function showVEDeleteModal(context) {
+function showVEDeleteModal() {
     var id   = {{ $examiner->examin_id }};
     var name = '{{ addslashes($examiner->examiner_name) }}';
-    if (context === 'confirmation') {
-        $('#veDeleteModalTitle').text('Reset Confirmation — ' + name);
-        $('#veDeleteModalDesc').html('Choose how to handle the confirmation submission for <strong>' + name + '</strong>.');
-        $('#veSoftLabel').text('Clear availability for current year only (keeps all history).');
-        $('#veHardLabel').text('Delete entire confirmation history + all participation records.');
-        $('#veDeleteForm').attr('action', '/admin/exams/examiner/' + id + '/reset-confirmation');
-    } else {
-        $('#veDeleteModalTitle').text('Delete Examiner — ' + name);
-        $('#veDeleteModalDesc').html('Choose how to delete <strong>' + name + '</strong>.');
-        $('#veSoftLabel').text('Deactivate only — all data is kept but examiner is hidden.');
-        $('#veHardLabel').text('Permanently remove examiner + history, groups, shifts, attendance.');
-        $('#veDeleteForm').attr('action', '/admin/exams/examiner/' + id + '/destroy');
-    }
+    $('#veDeleteModalTitle').text('Delete Examiner — ' + name);
+    $('#veDeleteModalDesc').html('Choose how to delete <strong>' + name + '</strong>.');
+    $('#veDeleteForm').attr('action', '/admin/exams/examiner/' + id + '/destroy');
     $('#veTypeSoft').prop('checked', true);
     $('#veDeleteTypeInput').val('soft');
     $('#veDeleteModal').modal('show');
@@ -701,14 +699,14 @@ function showVEDeleteModal(context) {
                         <input type="radio" id="veTypeSoft" name="veDeleteType" value="soft"
                                class="custom-control-input" checked>
                         <label class="custom-control-label" for="veTypeSoft">
-                            <strong>Soft</strong> — <span id="veSoftLabel"></span>
+                            <strong>Soft</strong> — Deactivate only — all data is kept but examiner is hidden.
                         </label>
                     </div>
                     <div class="custom-control custom-radio">
                         <input type="radio" id="veTypeHard" name="veDeleteType" value="hard"
                                class="custom-control-input">
                         <label class="custom-control-label text-danger" for="veTypeHard">
-                            <strong>Hard</strong> — <span id="veHardLabel"></span>
+                            <strong>Hard</strong> — Permanently remove examiner + history, groups, shifts, attendance.
                         </label>
                     </div>
                 </div>
@@ -720,7 +718,7 @@ function showVEDeleteModal(context) {
                     <input type="hidden" name="type" id="veDeleteTypeInput" value="soft">
                     <input type="hidden" name="back" value="{{ url('admin/exams/examiners') }}">
                     <button type="submit" class="btn btn-danger btn-sm">
-                        <i class="fas fa-check mr-1"></i> Confirm
+                        <i class="fas fa-check mr-1"></i> Confirm Delete
                     </button>
                 </form>
             </div>

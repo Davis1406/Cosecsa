@@ -186,15 +186,21 @@
 
                                                                 <div class="dropdown-divider"></div>
 
-                                                                {{-- Reset confirmation --}}
-                                                                <a href="#" class="dropdown-item text-warning"
-                                                                   onclick="showDeleteModal({{ $value->id }}, '{{ addslashes($value->examiner_name) }}', 'confirmation'); return false;">
-                                                                    <i class="fas fa-undo mr-1"></i> Reset Confirmation
-                                                                </a>
+                                                                {{-- Reset confirmation (direct POST, no soft/hard choice) --}}
+                                                                <form method="POST"
+                                                                      action="{{ route('examiner.reset.confirmation', $value->id) }}"
+                                                                      onsubmit="return confirm('Reset the availability confirmation for {{ addslashes($value->examiner_name) }}? This will clear their submitted availability.')">
+                                                                    @csrf
+                                                                    <input type="hidden" name="type" value="soft">
+                                                                    <input type="hidden" name="back" value="{{ request()->fullUrl() }}">
+                                                                    <button type="submit" class="dropdown-item text-warning">
+                                                                        <i class="fas fa-undo mr-1"></i> Reset Confirmation
+                                                                    </button>
+                                                                </form>
 
-                                                                {{-- Delete examiner --}}
+                                                                {{-- Delete examiner (soft/hard modal) --}}
                                                                 <a href="#" class="dropdown-item text-danger"
-                                                                   onclick="showDeleteModal({{ $value->id }}, '{{ addslashes($value->examiner_name) }}', 'examiner'); return false;">
+                                                                   onclick="showDeleteModal({{ $value->id }}, '{{ addslashes($value->examiner_name) }}'); return false;">
                                                                     <i class="fa fa-trash mr-1"></i> Delete Examiner
                                                                 </a>
                                                             </div>
@@ -214,30 +220,30 @@
             </section>
         </div>
     </div>
-{{-- ══ Delete / Reset Modal ════════════════════════════════════════════════ --}}
+{{-- ══ Delete Examiner Modal (soft / hard) ════════════════════════════════ --}}
 <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header" style="background:#a02626;color:#fff;">
-                <h5 class="modal-title" id="deleteModalTitle">Confirm Action</h5>
+                <h5 class="modal-title" id="deleteModalTitle">Delete Examiner</h5>
                 <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <p id="deleteModalDesc" class="mb-3"></p>
                 <div class="form-group mb-0">
-                    <label class="font-weight-bold mb-2">Select action type:</label>
+                    <label class="font-weight-bold mb-2">Select delete type:</label>
                     <div class="custom-control custom-radio mb-2">
                         <input type="radio" id="typeSoft" name="deleteType" value="soft"
                                class="custom-control-input" checked>
                         <label class="custom-control-label" for="typeSoft">
-                            <strong>Soft</strong> — <span id="softLabel"></span>
+                            <strong>Soft</strong> — Deactivate only — all data is kept but examiner is hidden.
                         </label>
                     </div>
                     <div class="custom-control custom-radio">
                         <input type="radio" id="typeHard" name="deleteType" value="hard"
                                class="custom-control-input">
                         <label class="custom-control-label text-danger" for="typeHard">
-                            <strong>Hard</strong> — <span id="hardLabel"></span>
+                            <strong>Hard</strong> — Permanently remove examiner + history, groups, shifts, attendance.
                         </label>
                     </div>
                 </div>
@@ -249,7 +255,7 @@
                     <input type="hidden" name="type" id="deleteTypeInput" value="soft">
                     <input type="hidden" name="back" value="{{ request()->fullUrl() }}">
                     <button type="submit" class="btn btn-danger btn-sm">
-                        <i class="fas fa-check mr-1"></i> Confirm
+                        <i class="fas fa-check mr-1"></i> Confirm Delete
                     </button>
                 </form>
             </div>
@@ -317,20 +323,10 @@
             });
         });
 
-        function showDeleteModal(id, name, context) {
-            if (context === 'confirmation') {
-                $('#deleteModalTitle').text('Reset / Delete Confirmation — ' + name);
-                $('#deleteModalDesc').html('Choose how to handle the confirmation data for <strong>' + name + '</strong>.');
-                $('#softLabel').text('Clear availability for current year only (keeps history).');
-                $('#hardLabel').text('Delete entire confirmation history + all participation records.');
-                $('#deleteForm').attr('action', '/admin/exams/examiner/' + id + '/reset-confirmation');
-            } else {
-                $('#deleteModalTitle').text('Delete Examiner — ' + name);
-                $('#deleteModalDesc').html('Choose how to delete <strong>' + name + '</strong>.');
-                $('#softLabel').text('Deactivate only — all data is kept but examiner is hidden.');
-                $('#hardLabel').text('Permanently remove examiner + history, groups, shifts, attendance.');
-                $('#deleteForm').attr('action', '/admin/exams/examiner/' + id + '/destroy');
-            }
+        function showDeleteModal(id, name) {
+            $('#deleteModalTitle').text('Delete Examiner — ' + name);
+            $('#deleteModalDesc').html('Choose how to delete <strong>' + name + '</strong>.');
+            $('#deleteForm').attr('action', '/admin/exams/examiner/' + id + '/destroy');
             $('#typeSoft').prop('checked', true);
             $('#deleteTypeInput').val('soft');
             $('#deleteModal').modal('show');

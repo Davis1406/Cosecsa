@@ -1725,7 +1725,8 @@ public function delete($id)
      */
     public function attendanceList(Request $request)
     {
-        $dateFilter = $request->get('date', Carbon::today()->toDateString());
+        // null = no filter (show all); a date string = filter to that day
+        $dateFilter  = $request->get('date', null);
         $shiftLabels = [1 => 'Morning', 2 => 'Morning & Afternoon', 3 => 'Afternoon'];
 
         $records = DB::table('attendance')
@@ -1736,6 +1737,7 @@ public function delete($id)
             ->when($dateFilter, fn ($q) => $q->whereDate('attendance.created_at', $dateFilter))
             ->select(
                 'attendance.id',
+                DB::raw('DATE(attendance.created_at) as attendance_date'),
                 'attendance.created_at as checked_in_at',
                 'attendance.shift',
                 'attendance.specialty',
@@ -1749,7 +1751,7 @@ public function delete($id)
 
         // CSV export
         if ($request->get('export') === '1') {
-            $filename = 'attendance_' . $dateFilter . '.csv';
+            $filename = 'attendance_' . ($dateFilter ?? 'all') . '.csv';
             $headers  = [
                 'Content-Type'        => 'text/csv',
                 'Content-Disposition' => "attachment; filename=\"{$filename}\"",
@@ -1757,10 +1759,11 @@ public function delete($id)
 
             $callback = function () use ($records, $shiftLabels) {
                 $out = fopen('php://output', 'w');
-                fputcsv($out, ['#', 'Name', 'Badge ID', 'Specialty', 'Country', 'Group', 'Shift', 'Check-in Time']);
+                fputcsv($out, ['#', 'Date', 'Name', 'Badge ID', 'Specialty', 'Country', 'Group', 'Shift', 'Check-in Time']);
                 foreach ($records as $i => $rec) {
                     fputcsv($out, [
                         $i + 1,
+                        $rec->attendance_date,
                         $rec->examiner_name,
                         $rec->badge_id ?? '',
                         $rec->specialty ?? '',
@@ -1788,7 +1791,7 @@ public function delete($id)
             'records'        => $records,
             'dateFilter'     => $dateFilter,
             'availableDates' => $availableDates,
-            'totalToday'     => $records->count(),
+            'totalRecords'   => $records->count(),
         ];
 
         return view('admin.exams.attendance_list', $data);

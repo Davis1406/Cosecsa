@@ -40,7 +40,9 @@
     <link rel="stylesheet" href="{{ url('public/dist/css/adminlte.min.css') }}">
 
     <!-- Favicon -->
-    <link rel="icon" href="{{ url('public/dist/img/Cosecsa_Logo.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url('public/dist/img/Cosecsa_Logo.png') }}">
+    <link rel="icon"          type="image/png" href="{{ url('public/dist/img/Cosecsa_Logo.png') }}">
+    <link rel="apple-touch-icon"               href="{{ url('public/dist/img/Cosecsa_Logo.png') }}">
 
     <!-- DataTables -->
     <link rel="stylesheet" href="{{ url('public/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
