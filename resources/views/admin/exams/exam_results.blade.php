@@ -16,8 +16,20 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Candidates Results - {{ now()->year }}</h3>
+                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="gap:.5rem;">
+                                <h3 class="card-title mb-0">MCS Results — {{ $selectedYearName }}</h3>
+                                <form method="GET" action="{{ url('admin/exams/exam_results') }}" class="d-flex align-items-center" style="gap:.4rem;">
+                                    <select name="year_id" class="form-control form-control-sm" style="max-width:130px;">
+                                        @foreach($allYears as $yr)
+                                            <option value="{{ $yr->id }}" {{ $selectedYearId == $yr->id ? 'selected' : '' }}>
+                                                {{ $yr->year_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-filter mr-1"></i> Go
+                                    </button>
+                                </form>
                             </div>
 
                             <div class="card-body">

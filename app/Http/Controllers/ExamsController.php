@@ -21,16 +21,19 @@ use Illuminate\Support\Facades\Auth;
 
 class ExamsController extends Controller
 {
-    public function list()
+    public function list(Request $request)
     {
         $currentYearId = User::getCurrentYearId();
-        $lastYearId    = $currentYearId - 1;
 
-        // Resolve last year's display name (e.g. "2025") for the participants badge.
-        // examination_years is the single source of truth — checking/unchecking on
-        // the edit form is the only way to add or remove an examiner from this list.
-        $lastYearName = DB::table('years')->where('id', $lastYearId)->value('year_name')
-                        ?? (string)(date('Y') - 1);
+        // If a specific year is selected, use it for the participation columns;
+        // otherwise default to last year.
+        $allExamYears = DB::table('years')->orderByDesc('id')->get(['id', 'year_name']);
+        $requestedYearId = $request->input('year_id') ? (int)$request->input('year_id') : null;
+        $selectedYearRow = $requestedYearId
+            ? $allExamYears->firstWhere('id', $requestedYearId)
+            : $allExamYears->firstWhere('id', $currentYearId - 1);
+        $lastYearId   = $selectedYearRow ? $selectedYearRow->id   : ($currentYearId - 1);
+        $lastYearName = $selectedYearRow ? $selectedYearRow->year_name : (string)(date('Y') - 1);
 
         // participated_last_year: 1 if last year's name appears in the examiner's
         // examination_years JSON array, 0 otherwise.
@@ -73,12 +76,16 @@ class ExamsController extends Controller
                      ->where('exams_groups.year_id', $currentYearId);
             })
             ->leftJoin('examiners_groups', 'examiners_groups.id', '=', 'exams_groups.group_id')
+            ->leftJoin('examiners_roles', 'examiners_roles.id', '=', 'examiners.role_id')
             ->where('users.user_type', 9)
             ->select(
                 'examiners.id as id',
                 'examiners.id as examin_id',
                 'examiners.user_id as ex_id',
                 'examiners.examiner_id',
+                'examiners.examiner_designation',
+                'examiners.role_id',
+                'examiners_roles.role as role_name',
                 'users.name as examiner_name',
                 'users.email',
                 'countries.country_name',
@@ -89,23 +96,39 @@ class ExamsController extends Controller
             )
             ->groupBy(
                 'examiners.id', 'examiners.user_id', 'examiners.examiner_id',
+                'examiners.examiner_designation', 'examiners.role_id', 'examiners_roles.role',
                 'users.name', 'users.email', 'countries.country_name', 'examiners.internal_notes'
             )
             ->orderBy('users.name')
             ->get();
 
         // Build filter options from the already-fetched collection
-        $countries  = $examiners->pluck('country_name')->filter()->unique()->sort()->values();
-        $programmes = $examiners->pluck('examined_for')->filter()
+        $countries    = $examiners->pluck('country_name')->filter()->unique()->sort()->values();
+        $programmes   = $examiners->pluck('examined_for')->filter()
             ->flatMap(fn($v) => array_map('trim', explode(',', $v)))
             ->unique()->sort()->values();
+        $designations = $examiners->pluck('examiner_designation')->filter()->unique()->sort()->values();
 
-        $data['getExaminers']  = $examiners;
-        $data['countries']     = $countries;
-        $data['programmes']    = $programmes;
-        $data['currentYear']   = date('Y');
-        $data['lastYear']      = $lastYearName;
-        $data['header_title']  = 'Examiners';
+        // Designation options for the filter (from DB; fall back to what's in use)
+        $designationOptions = \Illuminate\Support\Facades\Schema::hasTable('designation_options')
+            ? DB::table('designation_options')->orderBy('sort_order')->orderBy('name')->pluck('name')
+            : $designations;
+
+        // Build role options from the already-fetched collection
+        $roleOptions = $examiners->pluck('role_name')->filter()->unique()
+            ->map(fn($r) => ucfirst($r))->sort()->values();
+
+        $data['getExaminers']       = $examiners;
+        $data['countries']          = $countries;
+        $data['programmes']         = $programmes;
+        $data['designationOptions'] = $designationOptions;
+        $data['roleOptions']        = $roleOptions;
+        $data['allExamYears']       = $allExamYears;
+        $data['selectedExamYear']   = $lastYearName;
+        $data['selectedYearId']     = $lastYearId;
+        $data['currentYear']        = date('Y');
+        $data['lastYear']           = $lastYearName;
+        $data['header_title']       = 'Examiners';
 
         return view('admin.exams.examiners', $data);
     }
@@ -1607,27 +1630,46 @@ public function delete($id)
     }
 
 
-    public function adminResults()
+    /**
+     * Resolve the year filter from the request.
+     * Returns [$yearId, $yearName, $allYears].
+     */
+    private function resolveYear(Request $request): array
     {
-        $data['header_title'] = 'MCS Results';
-        $getResults = User::getAdminExamsResults();
-        $data['getResults'] = $getResults;
+        $allYears = DB::table('years')->orderByDesc('id')->get(['id', 'year_name']);
+        $yearId   = $request->input('year_id') ? (int)$request->input('year_id') : User::getCurrentYearId();
+        $yearRow  = $allYears->firstWhere('id', $yearId);
+        $yearName = $yearRow ? $yearRow->year_name : (string)date('Y');
+        return [$yearId, $yearName, $allYears];
+    }
+
+    public function adminResults(Request $request)
+    {
+        [$yearId, $yearName, $allYears] = $this->resolveYear($request);
+        $data['header_title']     = 'MCS Results';
+        $data['getResults']       = User::getAdminExamsResults($yearId);
+        $data['allYears']         = $allYears;
+        $data['selectedYearId']   = $yearId;
+        $data['selectedYearName'] = $yearName;
         return view('admin.exams.exam_results', $data);
     }
 
-    public function gsResults()
+    public function gsResults(Request $request)
     {
-        $data['header_title'] = 'GS Results';
-        $getResults = User::getGsResults();
-        $data['getResults'] = $getResults;
+        [$yearId, $yearName, $allYears] = $this->resolveYear($request);
+        $data['header_title']     = 'GS Results';
+        $data['getResults']       = User::getGsResults($yearId);
+        $data['allYears']         = $allYears;
+        $data['selectedYearId']   = $yearId;
+        $data['selectedYearName'] = $yearName;
         return view('admin.exams.gs_results', $data);
     }
 
     // Add this helper method to get FCS results
     // Better version - properly aggregates multiple examiner results per station
-    private function getFcsResults($programmeId, $tableName)
+    private function getFcsResults($programmeId, $tableName, $yearId = null)
     {
-        $examYearId = User::getCurrentYearId();
+        $examYearId = $yearId ?? User::getCurrentYearId();
 
         // First, get all raw results
         $rawResults = DB::table($tableName)
@@ -1692,74 +1734,106 @@ public function delete($id)
     }
 
 // Cardiothoracic Results
-    public function cardiothoracicResults()
+    public function cardiothoracicResults(Request $request)
     {
-        $data['header_title'] = 'FCS Cardiothoracic Results';
-        $data['getResults'] = $this->getFcsResults(1, 'cardiothoracic_results');
-        $data['programmeName'] = 'Cardiothoracic Surgery';
+        [$yearId, $yearName, $allYears] = $this->resolveYear($request);
+        $data['header_title']     = 'FCS Cardiothoracic Results';
+        $data['getResults']       = $this->getFcsResults(1, 'cardiothoracic_results', $yearId);
+        $data['programmeName']    = 'Cardiothoracic Surgery';
+        $data['allYears']         = $allYears;
+        $data['selectedYearId']   = $yearId;
+        $data['selectedYearName'] = $yearName;
         return view('admin.exams.fcs_cardiothoracic_results', $data);
     }
 
 // Urology Results
-    public function urologyResults()
+    public function urologyResults(Request $request)
     {
-        $data['header_title'] = 'FCS Urology Results';
-        $data['getResults'] = $this->getFcsResults(9, 'urology_results');
-        $data['programmeName'] = 'Urology';
+        [$yearId, $yearName, $allYears] = $this->resolveYear($request);
+        $data['header_title']     = 'FCS Urology Results';
+        $data['getResults']       = $this->getFcsResults(9, 'urology_results', $yearId);
+        $data['programmeName']    = 'Urology';
+        $data['allYears']         = $allYears;
+        $data['selectedYearId']   = $yearId;
+        $data['selectedYearName'] = $yearName;
         return view('admin.exams.fcs_urology_results', $data);
     }
 
 // Paediatric Surgery Results
-    public function paediatricResults()
+    public function paediatricResults(Request $request)
     {
-        $data['header_title'] = 'FCS Paediatric Surgery Results';
-        $data['getResults'] = $this->getFcsResults(7, 'paediatric_results');
-        $data['programmeName'] = 'Paediatric Surgery';
+        [$yearId, $yearName, $allYears] = $this->resolveYear($request);
+        $data['header_title']     = 'FCS Paediatric Surgery Results';
+        $data['getResults']       = $this->getFcsResults(7, 'paediatric_results', $yearId);
+        $data['programmeName']    = 'Paediatric Surgery';
+        $data['allYears']         = $allYears;
+        $data['selectedYearId']   = $yearId;
+        $data['selectedYearName'] = $yearName;
         return view('admin.exams.fcs_paediatric_results', $data);
     }
 
 // ENT Results
-    public function entResults()
+    public function entResults(Request $request)
     {
-        $data['header_title'] = 'FCS ENT Results';
-        $data['getResults'] = $this->getFcsResults(5, 'ent_results');
-        $data['programmeName'] = 'ENT Surgery';
+        [$yearId, $yearName, $allYears] = $this->resolveYear($request);
+        $data['header_title']     = 'FCS ENT Results';
+        $data['getResults']       = $this->getFcsResults(5, 'ent_results', $yearId);
+        $data['programmeName']    = 'ENT Surgery';
+        $data['allYears']         = $allYears;
+        $data['selectedYearId']   = $yearId;
+        $data['selectedYearName'] = $yearName;
         return view('admin.exams.fcs_ent_results', $data);
     }
 
 // Plastic Surgery Results
-    public function plasticSurgeryResults()
+    public function plasticSurgeryResults(Request $request)
     {
-        $data['header_title'] = 'FCS Plastic Surgery Results';
-        $data['getResults'] = $this->getFcsResults(8, 'plastic_surgery_results');
-        $data['programmeName'] = 'Plastic Surgery';
+        [$yearId, $yearName, $allYears] = $this->resolveYear($request);
+        $data['header_title']     = 'FCS Plastic Surgery Results';
+        $data['getResults']       = $this->getFcsResults(8, 'plastic_surgery_results', $yearId);
+        $data['programmeName']    = 'Plastic Surgery';
+        $data['allYears']         = $allYears;
+        $data['selectedYearId']   = $yearId;
+        $data['selectedYearName'] = $yearName;
         return view('admin.exams.fcs_plastic_surgery_results', $data);
     }
 
 // Neurosurgery Results
-    public function neurosurgeryResults()
+    public function neurosurgeryResults(Request $request)
     {
-        $data['header_title'] = 'FCS Neurosurgery Results';
-        $data['getResults'] = $this->getFcsResults(3, 'neurosurgery_results');
-        $data['programmeName'] = 'Neurosurgery';
+        [$yearId, $yearName, $allYears] = $this->resolveYear($request);
+        $data['header_title']     = 'FCS Neurosurgery Results';
+        $data['getResults']       = $this->getFcsResults(3, 'neurosurgery_results', $yearId);
+        $data['programmeName']    = 'Neurosurgery';
+        $data['allYears']         = $allYears;
+        $data['selectedYearId']   = $yearId;
+        $data['selectedYearName'] = $yearName;
         return view('admin.exams.fcs_neurosurgery_results', $data);
     }
 
 // Orthopaedics Results
-    public function orthopaedicsResults()
+    public function orthopaedicsResults(Request $request)
     {
-        $data['header_title'] = 'FCS Orthopaedics Results';
-        $data['getResults'] = $this->getFcsResults(4, 'orthopaedic_results');
-        $data['programmeName'] = 'Orthopaedics';
+        [$yearId, $yearName, $allYears] = $this->resolveYear($request);
+        $data['header_title']     = 'FCS Orthopaedics Results';
+        $data['getResults']       = $this->getFcsResults(4, 'orthopaedic_results', $yearId);
+        $data['programmeName']    = 'Orthopaedics';
+        $data['allYears']         = $allYears;
+        $data['selectedYearId']   = $yearId;
+        $data['selectedYearName'] = $yearName;
         return view('admin.exams.fcs_orthopaedics_results', $data);
     }
 
 // Paediatric Orthopaedics Results
-    public function paediatricOrthopaedicsResults()
+    public function paediatricOrthopaedicsResults(Request $request)
     {
-        $data['header_title'] = 'FCS Paediatric Orthopaedics Results';
-        $data['getResults'] = $this->getFcsResults(6, 'paediatric_orthopaedics_results');
-        $data['programmeName'] = 'Paediatric Orthopaedics';
+        [$yearId, $yearName, $allYears] = $this->resolveYear($request);
+        $data['header_title']     = 'FCS Paediatric Orthopaedics Results';
+        $data['getResults']       = $this->getFcsResults(6, 'paediatric_orthopaedics_results', $yearId);
+        $data['programmeName']    = 'Paediatric Orthopaedics';
+        $data['allYears']         = $allYears;
+        $data['selectedYearId']   = $yearId;
+        $data['selectedYearName'] = $yearName;
         return view('admin.exams.fcs_paediatric_ortho_results', $data);
     }
 

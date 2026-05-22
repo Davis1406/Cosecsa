@@ -7,8 +7,19 @@
     <section class="content-header">
         <div class="container-fluid">
             <div class="row mb-2 align-items-center">
-                <div class="col-sm-6">
-                    <h4 class="mb-0">Examiners — {{ $currentYear }}</h4>
+                <div class="col-sm-6 d-flex align-items-center flex-wrap" style="gap:.5rem;">
+                    <h4 class="mb-0">Examiners</h4>
+                    {{-- Year filter (server-side page reload) --}}
+                    <form method="GET" action="{{ url('admin/exams/examiners') }}" class="d-flex align-items-center" style="gap:.3rem;">
+                        <select name="year_id" class="form-control form-control-sm" style="max-width:120px;"
+                                onchange="this.form.submit()">
+                            @foreach($allExamYears as $yr)
+                                <option value="{{ $yr->id }}" {{ $selectedYearId == $yr->id ? 'selected' : '' }}>
+                                    {{ $yr->year_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
                 </div>
                 <div class="col-sm-6 text-right">
                     <a href="{{ route('exams.mass.specialty') }}" class="btn btn-sm btn-secondary mr-1">
@@ -59,22 +70,34 @@
                                     </button>
                                 </div>
                             </div>
-                            {{-- Row 2: Programme + Country filters --}}
+                            {{-- Row 2: Programme + Country + Designation + Role filters --}}
                             <div class="d-flex flex-wrap" style="gap:.5rem;">
-                                <select id="filter-programme" class="form-control form-control-sm" style="max-width:240px;">
+                                <select id="filter-programme" class="form-control form-control-sm" style="max-width:220px;">
                                     <option value="">— All Programmes —</option>
                                     @foreach($programmes as $prog)
                                         <option value="{{ $prog }}">{{ $prog }}</option>
                                     @endforeach
                                 </select>
-                                <select id="filter-country" class="form-control form-control-sm" style="max-width:200px;">
+                                <select id="filter-country" class="form-control form-control-sm" style="max-width:180px;">
                                     <option value="">— All Countries —</option>
                                     @foreach($countries as $c)
                                         <option value="{{ $c }}">{{ $c }}</option>
                                     @endforeach
                                 </select>
+                                <select id="filter-designation" class="form-control form-control-sm" style="max-width:200px;">
+                                    <option value="">— All Designations —</option>
+                                    @foreach($designationOptions as $desig)
+                                        <option value="{{ $desig }}">{{ $desig }}</option>
+                                    @endforeach
+                                </select>
+                                <select id="filter-role" class="form-control form-control-sm" style="max-width:160px;">
+                                    <option value="">— All Roles —</option>
+                                    @foreach($roleOptions as $role)
+                                        <option value="{{ $role }}">{{ $role }}</option>
+                                    @endforeach
+                                </select>
                                 <button id="btn-clear-filters" class="btn btn-sm btn-outline-secondary">
-                                    <i class="fas fa-times mr-1"></i> Clear Filters
+                                    <i class="fas fa-times mr-1"></i> Clear
                                 </button>
                             </div>
                         </div>
@@ -99,7 +122,9 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($getExaminers as $value)
-                                    <tr class="examiner-row {{ $value->participated_last_year ? 'last-year-row' : '' }}">
+                                    <tr class="examiner-row {{ $value->participated_last_year ? 'last-year-row' : '' }}"
+                                        data-desig="{{ $value->examiner_designation ?? '' }}"
+                                        data-role="{{ ucfirst($value->role_name ?? '') }}">
                                         <td>
                                             <input type="checkbox" class="row-chk"
                                                    value="{{ $value->examin_id }}"
@@ -258,9 +283,11 @@ $(function () {
     var table = $('#examinerstable').DataTable();
 
     // ── Active filters ────────────────────────────────────────────────────────
-    var filterMode       = 'all';   // 'all' | 'lastyear'
-    var filterProgramme  = '';
-    var filterCountry    = '';
+    var filterMode        = 'all';   // 'all' | 'lastyear'
+    var filterProgramme   = '';
+    var filterCountry     = '';
+    var filterDesignation = '';
+    var filterRole        = '';
 
     // ── Participant toggle buttons ─────────────────────────────────────────────
     $('#btn-all').on('click', function () {
@@ -281,7 +308,7 @@ $(function () {
         syncSelectAll();
     });
 
-    // ── Programme / Country dropdowns ─────────────────────────────────────────
+    // ── Programme / Country / Designation / Role dropdowns ───────────────────
     $('#filter-programme').on('change', function () {
         filterProgramme = this.value;
         table.draw();
@@ -294,14 +321,30 @@ $(function () {
         syncSelectAll();
     });
 
+    $('#filter-designation').on('change', function () {
+        filterDesignation = this.value;
+        table.draw();
+        syncSelectAll();
+    });
+
+    $('#filter-role').on('change', function () {
+        filterRole = this.value;
+        table.draw();
+        syncSelectAll();
+    });
+
     $('#btn-clear-filters').on('click', function () {
-        filterMode      = 'all';
-        filterProgramme = '';
-        filterCountry   = '';
+        filterMode        = 'all';
+        filterProgramme   = '';
+        filterCountry     = '';
+        filterDesignation = '';
+        filterRole        = '';
         $('#btn-all').addClass('active').siblings().removeClass('active');
         $('#examinerstable').removeClass('filter-lastyear');
         $('#filter-programme').val('');
         $('#filter-country').val('');
+        $('#filter-designation').val('');
+        $('#filter-role').val('');
         table.draw();
         syncSelectAll();
     });
@@ -311,9 +354,11 @@ $(function () {
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
         if (settings.nTable.id !== 'examinerstable') return true; // guard other tables
 
+        var $row = $(table.row(dataIndex).node());
+
         // Last-year participant filter
         if (filterMode === 'lastyear') {
-            if (!$(table.row(dataIndex).node()).hasClass('last-year-row')) return false;
+            if (!$row.hasClass('last-year-row')) return false;
         }
 
         // Programme filter — column 7 (Examined For), partial match
@@ -325,6 +370,17 @@ $(function () {
         // Country filter — column 4, exact match
         if (filterCountry) {
             if ((data[4] || '').trim() !== filterCountry) return false;
+        }
+
+        // Designation filter — from data-desig attribute, exact match
+        if (filterDesignation) {
+            if (($row.data('desig') || '').trim() !== filterDesignation) return false;
+        }
+
+        // Role filter — from data-role attribute, case-insensitive
+        if (filterRole) {
+            var rowRole = ($row.data('role') || '').trim().toLowerCase();
+            if (rowRole !== filterRole.toLowerCase()) return false;
         }
 
         return true;

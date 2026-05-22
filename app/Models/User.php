@@ -594,14 +594,14 @@ class User extends Authenticatable
 
 
 //MCS Results on the admin side.
-    public static function getAdminExamsResults()
+    public static function getAdminExamsResults($yearId = null)
     {
-        $examYearId = self::getCurrentYearId(); // Dynamic: matches current calendar year
+        $examYearId = $yearId ?? self::getCurrentYearId();
 
         return \DB::table('mcs_results')
             ->select(
                 'mcs_results.candidate_id as cand_id',
-                'mcs_results.exam_year', // ✅ include exam year column
+                'mcs_results.exam_year',
                 'candidates.firstname',
                 'candidates.middlename',
                 'candidates.lastname',
@@ -610,37 +610,33 @@ class User extends Authenticatable
                 'mcs_results.total'
             )
             ->join('candidates', 'mcs_results.candidate_id', '=', 'candidates.id')
-            ->where('mcs_results.exam_year', $examYearId) // ✅ filter by year ID = 6
+            ->where('mcs_results.exam_year', $examYearId)
             ->orderBy('mcs_results.candidate_id')
             ->get()
             ->groupBy('cand_id')
             ->map(function ($group) {
                 $candidate = $group->first();
                 return (object) [
-                    'exam_year' => $candidate->exam_year, // ✅ show year ID
-                    'candidate_id' => $candidate->c_id,
-                    'cnd_id' => $candidate->cand_id,
-                    'fullname' => trim("{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}"),
-                    'stations' => $group->map(function ($row) {
-                        return [
-                            'station_id' => $row->station_id,
-                            'total' => $row->total
-                        ];
-                    })->toArray(),
+                    'exam_year'   => $candidate->exam_year,
+                    'candidate_id'=> $candidate->c_id,
+                    'cnd_id'      => $candidate->cand_id,
+                    'fullname'    => trim("{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}"),
+                    'stations'    => $group->map(fn($row) => [
+                        'station_id' => $row->station_id,
+                        'total'      => $row->total,
+                    ])->toArray(),
                 ];
             });
     }
 
-
-    // Get Results for GS
-    public static function getGsResults()
+    public static function getGsResults($yearId = null)
     {
-        $examYearId = self::getCurrentYearId(); // Dynamic: matches current calendar year
+        $examYearId = $yearId ?? self::getCurrentYearId();
 
         return \DB::table('gs_results')
             ->select(
                 'gs_results.candidate_id as cand_id',
-                'gs_results.exam_year', // ✅ include exam year column
+                'gs_results.exam_year',
                 'candidates.firstname',
                 'candidates.middlename',
                 'candidates.lastname',
@@ -649,15 +645,10 @@ class User extends Authenticatable
                 \DB::raw('SUM(gs_results.total) as total_sum')
             )
             ->join('candidates', 'gs_results.candidate_id', '=', 'candidates.id')
-            ->where('gs_results.exam_year', $examYearId) // ✅ filter by year ID = 6
+            ->where('gs_results.exam_year', $examYearId)
             ->groupBy(
-                'gs_results.candidate_id',
-                'gs_results.station_id',
-                'gs_results.exam_year', // ✅ add to groupBy
-                'candidates.firstname',
-                'candidates.middlename',
-                'candidates.lastname',
-                'candidates.candidate_id'
+                'gs_results.candidate_id', 'gs_results.station_id', 'gs_results.exam_year',
+                'candidates.firstname', 'candidates.middlename', 'candidates.lastname', 'candidates.candidate_id'
             )
             ->orderBy('gs_results.candidate_id')
             ->get()
@@ -665,16 +656,14 @@ class User extends Authenticatable
             ->map(function ($group) {
                 $candidate = $group->first();
                 return (object) [
-                    'exam_year' => $candidate->exam_year, // ✅ show year ID
-                    'candidate_id' => $candidate->c_id,
-                    'cnd_id' => $candidate->cand_id,
-                    'fullname' => trim("{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}"),
-                    'stations' => $group->map(function ($row) {
-                        return [
-                            'station_id' => $row->station_id,
-                            'total_sum' => $row->total_sum
-                        ];
-                    })->toArray(),
+                    'exam_year'   => $candidate->exam_year,
+                    'candidate_id'=> $candidate->c_id,
+                    'cnd_id'      => $candidate->cand_id,
+                    'fullname'    => trim("{$candidate->firstname} {$candidate->middlename} {$candidate->lastname}"),
+                    'stations'    => $group->map(fn($row) => [
+                        'station_id' => $row->station_id,
+                        'total_sum'  => $row->total_sum,
+                    ])->toArray(),
                 ];
             });
     }
