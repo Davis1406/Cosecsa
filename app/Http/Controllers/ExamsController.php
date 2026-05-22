@@ -992,15 +992,13 @@ public function delete($id)
 
         $getExaminers = $this->getExaminersData($yearId);
 
-        // Filter to last-year participants only
+        // Filter to participants of the selected year
+        // (confirmed for this year AND have the same year in their examination_years history)
         if ($filterMode === 'last_year') {
-            $prevYearName = DB::table('years')->where('id', $yearId - 1)->value('year_name');
-            if ($prevYearName) {
-                $getExaminers = $getExaminers->filter(function ($e) use ($prevYearName) {
-                    $years = $e->examination_years ?? null;
-                    return $years && strpos($years, (string)$prevYearName) !== false;
-                })->values();
-            }
+            $getExaminers = $getExaminers->filter(function ($e) use ($yearName) {
+                $years = $e->examination_years ?? null;
+                return $years && strpos($years, (string)$yearName) !== false;
+            })->values();
         }
 
         $data = [

@@ -121,7 +121,7 @@
                     </a>
                     <a href="{{ url('admin/exams/visual_report') }}?year_id={{ $selectedYearId }}&filter=last_year"
                        class="btn btn-outline-secondary {{ $filterMode === 'last_year' ? 'btn-filter-active' : '' }}">
-                        <i class="fas fa-history mr-1"></i> Prior-Year Participants
+                        <i class="fas fa-history mr-1"></i> {{ $selectedYearName }} Participants
                         <span class="badge badge-light ml-1">{{ $filterMode === 'last_year' ? $totalShown : '—' }}</span>
                     </a>
                 </div>
@@ -130,7 +130,7 @@
                     Showing <strong>{{ $totalShown }}</strong> examiner(s)
                     &nbsp;·&nbsp; {{ $selectedYearName }} exam cycle
                     @if($filterMode === 'last_year')
-                        &nbsp;·&nbsp; <em>Filtered to prior-year participants</em>
+                        &nbsp;·&nbsp; <em>Filtered to {{ $selectedYearName }} participants</em>
                     @endif
                 </span>
             </div>
