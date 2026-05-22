@@ -216,6 +216,12 @@ Route::get('admin/exams/gs_station_results/{candidate_id}/{station_id}', [ExamsC
 // Examiner → Candidate results (AJAX JSON)
 Route::get('admin/exams/examiner/{examiner_id}/candidate/{candidate_id}/results', [ExamsController::class, 'examinerCandidateResults'])->name('examiner.candidate.results');
 
+// Delete / reset routes
+Route::post('admin/exams/examiner/{id}/reset-confirmation', [ExamsController::class, 'resetExaminerConfirmation'])->name('examiner.reset.confirmation');
+Route::post('admin/exams/examiner/{id}/destroy',            [ExamsController::class, 'destroyExaminer'])->name('examiner.destroy');
+Route::post('admin/exams/attendance/{id}/destroy',          [ExamsController::class, 'destroyAttendanceRecord'])->name('attendance.destroy.record');
+Route::post('admin/exams/attendance/date/destroy',          [ExamsController::class, 'destroyAttendanceByDate'])->name('attendance.destroy.date');
+
 
 // Attendance list page
 Route::get('admin/exams/attendance', [ExamsController::class, 'attendanceList'])->name('exams.attendance.list');

@@ -983,6 +983,113 @@ public function delete($id)
 
 
     /**
+     * Soft-delete: clear this year's availability submission only.
+     * Hard-delete: remove the full examiners_history row + examiner_participations.
+     */
+    public function resetExaminerConfirmation(Request $request, $id)
+    {
+        $type    = $request->input('type', 'soft'); // 'soft' | 'hard'
+        $yearId  = User::getCurrentYearId();
+        $back    = $request->input('back', 'admin/exams/examiner-confirmation');
+
+        $examiner = DB::table('examiners')->where('id', $id)->first();
+        if (!$examiner) {
+            return redirect($back)->with('error', 'Examiner not found.');
+        }
+
+        if ($type === 'hard') {
+            DB::table('examiners_history')->where('exm_id', $id)->delete();
+            DB::table('examiner_participations')->where('exm_id', $id)->delete();
+            return redirect($back)->with('success', 'Confirmation history fully deleted.');
+        }
+
+        // Soft: clear availability for current year only
+        DB::table('examiners_history')
+            ->where('exm_id', $id)
+            ->where('availability_year_id', $yearId)
+            ->update([
+                'exam_availability'    => null,
+                'availability_year_id' => null,
+                'updated_at'           => now(),
+            ]);
+
+        return redirect($back)->with('success', 'Availability confirmation reset successfully.');
+    }
+
+    /**
+     * Soft-delete: deactivate user role only (keeps all data).
+     * Hard-delete: remove examiners + all related data (history, participations,
+     *              groups, shifts, attendance). User account is kept unless no
+     *              other roles exist.
+     */
+    public function destroyExaminer(Request $request, $id)
+    {
+        $type = $request->input('type', 'soft');
+        $back = $request->input('back', 'admin/exams/examiners');
+
+        $examiner = DB::table('examiners')->where('id', $id)->first();
+        if (!$examiner) {
+            return redirect($back)->with('error', 'Examiner not found.');
+        }
+
+        $userId = $examiner->user_id;
+
+        if ($type === 'hard') {
+            // Remove all linked data
+            DB::table('examiners_history')->where('exm_id', $id)->delete();
+            DB::table('examiner_participations')->where('exm_id', $id)->delete();
+            DB::table('exams_groups')->where('exm_id', $id)->delete();
+            DB::table('exams_shifts')->where('exm_id', $id)->delete();
+            DB::table('attendance')->where('examiner_id', $id)->delete();
+            DB::table('examiners')->where('id', $id)->delete();
+
+            // Remove user role row
+            DB::table('user_roles')->where('user_id', $userId)->where('role_type', 9)->delete();
+
+            // Delete user account only if no other role rows remain
+            $remainingRoles = DB::table('user_roles')->where('user_id', $userId)->count();
+            if ($remainingRoles === 0) {
+                DB::table('users')->where('id', $userId)->delete();
+            }
+
+            return redirect('admin/exams/examiners')->with('success', 'Examiner and all associated data permanently deleted.');
+        }
+
+        // Soft: deactivate
+        DB::table('user_roles')
+            ->where('user_id', $userId)
+            ->where('role_type', 9)
+            ->update(['is_active' => 0, 'updated_at' => now()]);
+
+        return redirect($back)->with('success', 'Examiner deactivated (soft deleted).');
+    }
+
+    /**
+     * Delete a single attendance record.
+     */
+    public function destroyAttendanceRecord(Request $request, $id)
+    {
+        $date = $request->input('date', \Carbon\Carbon::today()->toDateString());
+        DB::table('attendance')->where('id', $id)->delete();
+        return redirect(url('admin/exams/attendance') . '?date=' . $date)
+            ->with('success', 'Attendance record deleted.');
+    }
+
+    /**
+     * Delete all attendance records for a given date.
+     */
+    public function destroyAttendanceByDate(Request $request)
+    {
+        $date = $request->input('date');
+        if (!$date) {
+            return redirect(url('admin/exams/attendance'))->with('error', 'No date specified.');
+        }
+        $count = DB::table('attendance')->whereDate('created_at', $date)->delete();
+        return redirect(url('admin/exams/attendance') . '?date=' . $date)
+            ->with('success', "{$count} attendance record(s) deleted for {$date}.");
+    }
+
+    /**
      * Generate visual report for examiner confirmations
      */
     public function generateVisualReport(Request $request)

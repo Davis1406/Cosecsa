@@ -14,6 +14,10 @@
                     </h4>
                 </div>
                 <div class="col-sm-6 text-right">
+                    <button class="btn btn-sm btn-outline-danger mr-2"
+                            onclick="confirmClearDate('{{ $dateFilter }}')">
+                        <i class="fas fa-trash mr-1"></i> Clear All for This Date
+                    </button>
                     <a href="{{ url('admin/exams/examiners') }}" class="btn btn-sm btn-secondary">
                         <i class="fas fa-arrow-left mr-1"></i> Back to Examiners
                     </a>
@@ -83,6 +87,7 @@
                                         <th>Group</th>
                                         <th>Shift</th>
                                         <th>Check-in Time</th>
+                                        <th style="width:60px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -109,6 +114,18 @@
                                         </td>
                                         <td style="white-space:nowrap;">
                                             {{ \Carbon\Carbon::parse($rec->checked_in_at)->format('H:i:s') }}
+                                        </td>
+                                        <td class="text-center">
+                                            <form method="POST"
+                                                  action="{{ route('attendance.destroy.record', $rec->id) }}"
+                                                  onsubmit="return confirm('Delete this attendance record?')">
+                                                @csrf
+                                                <input type="hidden" name="date" value="{{ $dateFilter }}">
+                                                <button type="submit" class="btn btn-xs btn-outline-danger"
+                                                        title="Delete record" style="padding:2px 7px;">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                     @endforeach
@@ -153,6 +170,12 @@
         </div>
     </section>
 
+{{-- Hidden clear-date form --}}
+<form id="clearDateForm" method="POST" action="{{ route('attendance.destroy.date') }}" style="display:none;">
+    @csrf
+    <input type="hidden" name="date" id="clearDateInput" value="">
+</form>
+
 </div>
 </div>
 @endsection
@@ -160,7 +183,6 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Simple client-side search
     $('#searchInput').on('keyup', function() {
         const val = $(this).val().toLowerCase();
         $('#attendanceTable tbody tr').each(function() {
@@ -168,6 +190,13 @@ $(document).ready(function() {
         });
     });
 });
+
+function confirmClearDate(date) {
+    if (confirm('Delete ALL attendance records for ' + date + '? This cannot be undone.')) {
+        $('#clearDateInput').val(date);
+        $('#clearDateForm').submit();
+    }
+}
 </script>
 @endpush
 

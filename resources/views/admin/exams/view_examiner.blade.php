@@ -18,6 +18,16 @@
                        class="btn btn-sm btn-warning mr-1">
                         <i class="fas fa-edit mr-1"></i> Edit
                     </a>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mr-1"
+                            onclick="showVEDeleteModal('confirmation')"
+                            title="Reset or delete this examiner's availability submission">
+                        <i class="fas fa-undo mr-1"></i> Reset Confirmation
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger mr-1"
+                            onclick="showVEDeleteModal('examiner')"
+                            title="Soft or hard delete this examiner">
+                        <i class="fas fa-trash mr-1"></i> Delete
+                    </button>
                     <button type="button" class="btn btn-sm btn-danger"
                             data-toggle="modal" data-target="#idBadgeModal">
                         <i class="fas fa-id-card mr-1"></i> ID Badge
@@ -579,6 +589,11 @@ $(function(){
         $('.ce-row:visible td:first-child').each(function(){ $(this).text(i++); });
     });
 
+    // Delete/reset modal
+    $('input[name="veDeleteType"]').on('change', function(){
+        $('#veDeleteTypeInput').val($(this).val());
+    });
+
     // Click candidate row → load results modal
     $(document).on('click', '.ce-clickable', function(){
         var candidateId = $(this).data('candidate-id');
@@ -644,10 +659,74 @@ $(function(){
         });
     });
 });
+
+function showVEDeleteModal(context) {
+    var id   = {{ $examiner->examin_id }};
+    var name = '{{ addslashes($examiner->examiner_name) }}';
+    if (context === 'confirmation') {
+        $('#veDeleteModalTitle').text('Reset Confirmation — ' + name);
+        $('#veDeleteModalDesc').html('Choose how to handle the confirmation submission for <strong>' + name + '</strong>.');
+        $('#veSoftLabel').text('Clear availability for current year only (keeps all history).');
+        $('#veHardLabel').text('Delete entire confirmation history + all participation records.');
+        $('#veDeleteForm').attr('action', '/admin/exams/examiner/' + id + '/reset-confirmation');
+    } else {
+        $('#veDeleteModalTitle').text('Delete Examiner — ' + name);
+        $('#veDeleteModalDesc').html('Choose how to delete <strong>' + name + '</strong>.');
+        $('#veSoftLabel').text('Deactivate only — all data is kept but examiner is hidden.');
+        $('#veHardLabel').text('Permanently remove examiner + history, groups, shifts, attendance.');
+        $('#veDeleteForm').attr('action', '/admin/exams/examiner/' + id + '/destroy');
+    }
+    $('#veTypeSoft').prop('checked', true);
+    $('#veDeleteTypeInput').val('soft');
+    $('#veDeleteModal').modal('show');
+}
 </script>
 @endpush
 
 @endsection
+
+{{-- ══ Delete / Reset Modal ════════════════════════════════════════════════════ --}}
+<div class="modal fade" id="veDeleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#a02626;color:#fff;">
+                <h5 class="modal-title" id="veDeleteModalTitle">Confirm Action</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="veDeleteModalDesc" class="mb-3"></p>
+                <div class="form-group mb-0">
+                    <label class="font-weight-bold mb-2">Select action type:</label>
+                    <div class="custom-control custom-radio mb-2">
+                        <input type="radio" id="veTypeSoft" name="veDeleteType" value="soft"
+                               class="custom-control-input" checked>
+                        <label class="custom-control-label" for="veTypeSoft">
+                            <strong>Soft</strong> — <span id="veSoftLabel"></span>
+                        </label>
+                    </div>
+                    <div class="custom-control custom-radio">
+                        <input type="radio" id="veTypeHard" name="veDeleteType" value="hard"
+                               class="custom-control-input">
+                        <label class="custom-control-label text-danger" for="veTypeHard">
+                            <strong>Hard</strong> — <span id="veHardLabel"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                <form id="veDeleteForm" method="POST" style="display:inline;">
+                    @csrf
+                    <input type="hidden" name="type" id="veDeleteTypeInput" value="soft">
+                    <input type="hidden" name="back" value="{{ url('admin/exams/examiners') }}">
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="fas fa-check mr-1"></i> Confirm
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 {{-- ══ Candidate Results Modal ════════════════════════════════════════════════ --}}
 <div class="modal fade" id="candidateResultsModal" tabindex="-1" role="dialog">
