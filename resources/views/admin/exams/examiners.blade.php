@@ -22,6 +22,9 @@
                     </form>
                 </div>
                 <div class="col-sm-6 text-right">
+                    <a href="{{ url('admin/exams/visual_report') }}?year_id={{ $selectedYearId }}" class="btn btn-sm btn-secondary mr-1">
+                        <i class="fas fa-chart-pie mr-1"></i> Visual Report
+                    </a>
                     <a href="{{ url('admin/exams/import') }}" class="btn btn-sm btn-warning mr-1">
                         <i class="fas fa-upload mr-1"></i> Upload
                     </a>
