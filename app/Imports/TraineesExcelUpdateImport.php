@@ -269,11 +269,15 @@ class TraineesExcelUpdateImport implements ToCollection, WithStartRow
         mixed $examDateRaw, string $examMop, ?int $examAmount,
         mixed $repDateRaw,  string $repMop,  ?int $repAmount
     ): void {
+        // Always upsert a candidate record — trainees sitting 2027 exams must appear
+        // in the candidates table even before exam fees are collected.
+        $this->upsertCandidate($trainee, $pen, $programmeId, $hospitalId, $countryId, $gender,
+            $examDateRaw, $examMop, $examAmount, false);
         if ($examAmount !== null || $examDateRaw) {
-            $this->upsertCandidate($trainee, $pen, $programmeId, $hospitalId, $countryId, $gender,
-                $examDateRaw, $examMop, $examAmount, false);
             $this->examUpdated[] = $pen;
         }
+
+        // Repeat-paper record only when repeat fee data is present.
         if ($repAmount !== null || $repDateRaw) {
             $this->upsertCandidate($trainee, $pen, $programmeId, $hospitalId, $countryId, $gender,
                 $repDateRaw, $repMop, $repAmount, true);
