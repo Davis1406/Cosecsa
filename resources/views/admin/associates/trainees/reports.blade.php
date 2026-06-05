@@ -10,6 +10,7 @@
     .kpi-blue   { background: linear-gradient(135deg,#1a6fa0,#124f72); }
     .kpi-gold   { background: linear-gradient(135deg,#b8860b,#8a6408); }
     .kpi-green  { background: linear-gradient(135deg,#2a7a3b,#1d5629); }
+    .kpi-slate  { background: linear-gradient(135deg,#4a5568,#2d3748); }
     .chart-card { background:#fff; border-radius:8px; box-shadow:0 1px 8px rgba(0,0,0,.08); padding:16px; margin-bottom:18px; }
     .chart-card h6 { font-weight:700; font-size:.82rem; text-transform:uppercase; letter-spacing:.5px; color:#555; margin-bottom:12px; border-bottom:2px solid #a02626; padding-bottom:6px; }
     #error-banner { display:none; }
@@ -38,10 +39,11 @@
 
         {{-- Row 1: KPIs --}}
         <div class="row mb-3" id="kpi-row">
-            <div class="col-6 col-md-3 mb-2"><div class="kpi-box kpi-red"><i class="fas fa-users kpi-icon"></i><div><div class="kpi-val" id="kpi-total">…</div><div class="kpi-lbl">Total Trainees</div></div></div></div>
-            <div class="col-6 col-md-3 mb-2"><div class="kpi-box kpi-green"><i class="fas fa-user-check kpi-icon"></i><div><div class="kpi-val" id="kpi-active">…</div><div class="kpi-lbl">Active</div></div></div></div>
-            <div class="col-6 col-md-3 mb-2"><div class="kpi-box kpi-blue"><i class="fas fa-mars kpi-icon"></i><div><div class="kpi-val" id="kpi-male">…</div><div class="kpi-lbl">Male</div></div></div></div>
-            <div class="col-6 col-md-3 mb-2"><div class="kpi-box kpi-gold"><i class="fas fa-venus kpi-icon"></i><div><div class="kpi-val" id="kpi-female">…</div><div class="kpi-lbl">Female</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-red"><i class="fas fa-users kpi-icon"></i><div><div class="kpi-val" id="kpi-total">…</div><div class="kpi-lbl">Total Trainees</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-green"><i class="fas fa-user-check kpi-icon"></i><div><div class="kpi-val" id="kpi-active">…</div><div class="kpi-lbl">Active</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-slate"><i class="fas fa-user-slash kpi-icon"></i><div><div class="kpi-val" id="kpi-inactive">…</div><div class="kpi-lbl">Inactive</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-blue"><i class="fas fa-mars kpi-icon"></i><div><div class="kpi-val" id="kpi-male">…</div><div class="kpi-lbl">Male</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-gold"><i class="fas fa-venus kpi-icon"></i><div><div class="kpi-val" id="kpi-female">…</div><div class="kpi-lbl">Female</div></div></div></div>
         </div>
 
         {{-- Row 2: Country bar + Programme donut + Status donut --}}
@@ -165,10 +167,11 @@ $(document).ready(function () {
         .then(function (r) { return r.json(); })
         .then(function (d) {
             // KPIs
-            document.getElementById('kpi-total').textContent  = d.total.toLocaleString();
-            document.getElementById('kpi-active').textContent = d.active.toLocaleString();
-            document.getElementById('kpi-male').textContent   = d.male.toLocaleString();
-            document.getElementById('kpi-female').textContent = d.female.toLocaleString();
+            document.getElementById('kpi-total').textContent    = d.total.toLocaleString();
+            document.getElementById('kpi-active').textContent   = d.active.toLocaleString();
+            document.getElementById('kpi-inactive').textContent = d.inactive.toLocaleString();
+            document.getElementById('kpi-male').textContent     = d.male.toLocaleString();
+            document.getElementById('kpi-female').textContent   = d.female.toLocaleString();
 
             var lbl = function (arr) { return arr.map(function (i) { return i.label; }); };
             var val = function (arr) { return arr.map(function (i) { return i.value; }); };

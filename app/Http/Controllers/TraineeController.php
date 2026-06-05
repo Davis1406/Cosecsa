@@ -308,10 +308,12 @@ public function update(Request $request, $id)
     public function reportsData()
     {
         // KPIs
-        $total  = DB::table('trainees')->join('users','users.id','=','trainees.user_id')->where('users.user_type',2)->count();
-        $active = DB::table('trainees')->join('users','users.id','=','trainees.user_id')->where('users.user_type',2)->where('trainees.status','Active')->count();
-        $male   = DB::table('trainees')->join('users','users.id','=','trainees.user_id')->where('users.user_type',2)->where('trainees.gender','Male')->count();
-        $female = DB::table('trainees')->join('users','users.id','=','trainees.user_id')->where('users.user_type',2)->where('trainees.gender','Female')->count();
+        $base   = DB::table('trainees')->join('users','users.id','=','trainees.user_id')->where('users.user_type',2);
+        $total    = (clone $base)->count();
+        $active   = (clone $base)->where('trainees.status','Active')->count();
+        $inactive = (clone $base)->where('trainees.status','Inactive')->count();
+        $male     = (clone $base)->where('trainees.gender','Male')->count();
+        $female   = (clone $base)->where('trainees.gender','Female')->count();
 
         // By Country (top 15)
         $byCountry = DB::table('trainees')
@@ -385,7 +387,7 @@ public function update(Request $request, $id)
             ->orderByDesc('total')->limit(20)->get();
 
         return response()->json(compact(
-            'total','active','male','female',
+            'total','active','inactive','male','female',
             'byCountry','byProgramme','byStatus','byGender',
             'byYear','byStudyYear','byInvoice','countryTable'
         ));
