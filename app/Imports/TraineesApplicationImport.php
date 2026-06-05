@@ -69,6 +69,7 @@ class TraineesApplicationImport implements ToCollection, WithHeadingRow, WithChu
     private array $fieldLabels = [
         'admission_letter_status'  => 'Admission Letter',
         'invitation_letter_status' => 'Invitation Letter',
+        'admission_year'           => 'Admission Year',
         'invoice_number'           => 'Invoice #',
         'invoice_date'             => 'Invoice Date',
         'invoice_status'           => 'Invoice Status',
@@ -242,7 +243,7 @@ class TraineesApplicationImport implements ToCollection, WithHeadingRow, WithChu
                 'entry_number'             => $pe ?: '',
                 'admission_letter_status'  => $this->normaliseLetterStatus($row['admission_letter_sent'] ?? ''),
                 'invitation_letter_status' => $this->normaliseLetterStatus($row['invitation_letter_sent'] ?? ''),
-                'admission_year'           => $this->parseAdmissionYear($row['programme_start'] ?? ''),
+                'admission_year'           => $this->parseAdmissionYear($row['admission_year'] ?? $row['programme_start'] ?? ''),
                 'exam_year'                => $this->parseExamYear($row['exam_year'] ?? ''),
                 'programme_period'         => $this->parseProgrammePeriod($row['programme_period'] ?? ''),
                 'invoice_number'           => trim($row['invoice'] ?? '') ?: null,
@@ -293,7 +294,7 @@ class TraineesApplicationImport implements ToCollection, WithHeadingRow, WithChu
             'personal_email' => $email ?: '',
             'gender'         => $row['gender'] ?? null,
             'exam_year'      => $currentYear,
-            'admission_year' => $this->parseAdmissionYear($row['programme_start'] ?? ''),
+            'admission_year' => $this->parseAdmissionYear($row['admission_year'] ?? $row['programme_start'] ?? ''),
             'sponsor'        => trim($row['sponsor'] ?? '') ?: null,
             'invoice_number' => trim($row['invoice'] ?? '') ?: null,
             'invoice_date'   => $this->parseDate($row['invoice_date'] ?? null),
@@ -341,6 +342,10 @@ class TraineesApplicationImport implements ToCollection, WithHeadingRow, WithChu
         }
 
         if (!empty($row['amount_paid']))  $payload['amount_paid']  = (float) $row['amount_paid'];
+
+        // Admission year — prefer the dedicated column, fall back to Programme Start
+        $admYear = $this->parseAdmissionYear($row['admission_year'] ?? $row['programme_start'] ?? '');
+        if ($admYear) $payload['admission_year'] = $admYear;
 
         $invoiceDate = $this->parseDate($row['invoice_date'] ?? null);
         $paymentDate = $this->parseDate($row['date_paid'] ?? null);
