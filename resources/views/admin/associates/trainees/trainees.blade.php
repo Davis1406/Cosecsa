@@ -34,11 +34,70 @@
 
             <section class="content">
                 <div class="container-wrapper">
+
+                    {{-- Filter Bar --}}
+                    <div class="card card-outline card-secondary mb-2 shadow-sm">
+                        <div class="card-body py-2">
+                            <div class="row align-items-end">
+                                <div class="col-6 col-md-2 pr-1 mb-1">
+                                    <label class="small mb-0 font-weight-bold">Country</label>
+                                    <select id="filterCountry" class="form-control form-control-sm">
+                                        <option value="">All Countries</option>
+                                        @foreach($filterCountries as $c)
+                                        <option value="{{ $c }}">{{ $c }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3 px-1 mb-1">
+                                    <label class="small mb-0 font-weight-bold">Programme</label>
+                                    <select id="filterProgramme" class="form-control form-control-sm">
+                                        <option value="">All Programmes</option>
+                                        @foreach($filterProgrammes as $p)
+                                        <option value="{{ $p }}">{{ $p }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-2 px-1 mb-1">
+                                    <label class="small mb-0 font-weight-bold">Exam Year</label>
+                                    <select id="filterYear" class="form-control form-control-sm">
+                                        <option value="">All Years</option>
+                                        @foreach($filterYears as $y)
+                                        <option value="{{ $y }}">{{ $y }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-2 px-1 mb-1">
+                                    <label class="small mb-0 font-weight-bold">Status</label>
+                                    <select id="filterStatus" class="form-control form-control-sm">
+                                        <option value="">All Statuses</option>
+                                        @foreach($filterStatuses as $s)
+                                        <option value="{{ $s }}">{{ $s }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-2 pl-1 mb-1">
+                                    <label class="small mb-0 font-weight-bold">Gender</label>
+                                    <select id="filterGender" class="form-control form-control-sm">
+                                        <option value="">All Genders</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="text-right mt-1">
+                                <button id="btnClearFilters" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-times mr-1"></i>Clear Filters
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-12">
                             <div class="card">
-                                <div class="card-header">
-                                    <h3 class="card-title">Trainees List</h3>
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h3 class="card-title mb-0">Trainees List</h3>
+                                    <small class="text-muted" id="filteredCount"></small>
                                 </div>
                                 <div class="card-body">
                                     <table id="traineestable" class="table table-bordered table-striped">
@@ -74,7 +133,11 @@
                                         </thead>
                                         <tbody>
                                             @foreach ($getRecord as $value)
-                                                <tr>
+                                                <tr data-country="{{ $value->country_name ?? '' }}"
+                                                    data-programme="{{ $value->programme_name ?? '' }}"
+                                                    data-year="{{ $value->exam_year ?? '' }}"
+                                                    data-status="{{ $value->status ?? '' }}"
+                                                    data-gender="{{ $value->gender ?? '' }}">
                                                     <td class="row-num"></td>
                                                     <td>
                                                         <a href="{{ url('admin/associates/trainees/view/' . $value->trainee_id) }}"
@@ -138,6 +201,7 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -146,6 +210,41 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+        if (settings.nTable.id !== 'traineestable') return true;
+        var $row      = $(settings.nTable).DataTable().row(dataIndex).node();
+        var country   = $('#filterCountry').val();
+        var programme = $('#filterProgramme').val();
+        var year      = $('#filterYear').val();
+        var status    = $('#filterStatus').val();
+        var gender    = $('#filterGender').val();
+
+        if (country   && $($row).data('country')   !== country)              return false;
+        if (programme && $($row).data('programme') !== programme)             return false;
+        if (year      && String($($row).data('year'))  !== String(year))      return false;
+        if (status    && $($row).data('status')    !== status)                return false;
+        if (gender    && $($row).data('gender')    !== gender)                return false;
+        return true;
+    });
+
+    $('#filterCountry, #filterProgramme, #filterYear, #filterStatus, #filterGender').on('change', function () {
+        var dt = $('#traineestable').DataTable();
+        dt.draw();
+        $('#filteredCount').text('Showing ' + dt.page.info().recordsDisplay + ' of ' + dt.page.info().recordsTotal);
+    });
+
+    $('#btnClearFilters').on('click', function () {
+        $('#filterCountry, #filterProgramme, #filterYear, #filterStatus, #filterGender').val('');
+        $('#traineestable').DataTable().draw();
+        $('#filteredCount').text('');
+    });
+});
+</script>
+@endpush
 
 @push('styles')
 <style>
