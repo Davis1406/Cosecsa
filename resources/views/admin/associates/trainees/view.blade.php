@@ -203,12 +203,21 @@
                         {{-- Editable tag pills --}}
                         <div class="mb-2" id="keyInfoTags">
 
-                            {{-- Admission Year --}}
+                            {{-- First Admission Year (read-only — from PEN) --}}
+                            @if($firstAdmissionYear)
+                                <span class="tag-pill tag-blue"
+                                      title="First admission year derived from PEN {{ $trainee->entry_number }}">
+                                    <i class="fas fa-lock" style="font-size:.55rem;opacity:.5;margin-right:2px;vertical-align:middle;"></i>
+                                    First Intake {{ $firstAdmissionYear }}
+                                </span>
+                            @endif
+
+                            {{-- Current Admission Year (editable) --}}
                             <span class="tag-pill tag-blue tag-editable"
                                   data-field="admission_year"
                                   data-value="{{ $trainee->admission_year }}"
                                   data-type="number"
-                                  title="Click to edit admission year">
+                                  title="Click to edit current admission year">
                                 <i class="fas fa-edit tag-edit-icon"></i>
                                 Intake <span class="tag-label">{{ $trainee->admission_year ?: '—' }}</span>
                             </span>

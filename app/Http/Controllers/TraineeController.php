@@ -57,9 +57,16 @@ class TraineeController extends Controller
         $countries  = DB::table('countries')->orderBy('country_name')->get(['id', 'country_name']);
         $examYears  = DB::table('years')->orderByDesc('year_name')->pluck('year_name');
 
+        // First admission year — always derived from the PEN (CC/YYYY/NN), never overrideable
+        $penParts          = explode('/', $trainee->entry_number ?? '');
+        $firstAdmissionYear = (isset($penParts[1]) && is_numeric($penParts[1]) && strlen($penParts[1]) === 4)
+            ? (int) $penParts[1]
+            : null;
+
         $header_title = "View Trainee";
         return view('admin.associates.trainees.view',
-            compact('trainee', 'header_title', 'linkedCandidate', 'programmes', 'countries', 'examYears'));
+            compact('trainee', 'header_title', 'linkedCandidate',
+                    'programmes', 'countries', 'examYears', 'firstAdmissionYear'));
     }
 
     /**
