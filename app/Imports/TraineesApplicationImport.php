@@ -236,7 +236,7 @@ class TraineesApplicationImport implements ToCollection, WithHeadingRow, WithChu
                 'lastname'                 => $lastname,
                 'personal_email'           => $email ?: '',
                 'gender'                   => $row['gender'] ?? null,
-                'status'                   => $appStatus ?: 'Complete',
+                'status'                   => $this->normaliseTraineeStatus($appStatus ?: 'Complete'),
                 'programme_id'             => $programmeId,
                 'hospital_id'              => $hospitalResult['id'],
                 'country_id'               => $countryResult['id'],
@@ -331,7 +331,7 @@ class TraineesApplicationImport implements ToCollection, WithHeadingRow, WithChu
             'invitation_letter_status' => $this->normaliseLetterStatus($row['invitation_letter_sent'] ?? ''),
             'invoice_number'           => trim($row['invoice'] ?? ''),
             'invoice_status'           => $this->normaliseInvoiceStatus($row['status'] ?? ''), // "Status" col = payment status
-            'status'                   => trim($row['application_status'] ?? ''), // "Application Status" col
+            'status'                   => $this->normaliseTraineeStatus(trim($row['application_status'] ?? '')), // "Application Status" col
             'sponsor'                  => trim($row['sponsor'] ?? ''),
             'mode_of_payment'          => $this->normaliseModeOfPayment($row['mode_of_payment'] ?? ''),
             'programme_period'         => $this->parseProgrammePeriod($row['programme_period'] ?? ''),
@@ -568,6 +568,19 @@ class TraineesApplicationImport implements ToCollection, WithHeadingRow, WithChu
     {
         if (preg_match('/\b(20\d{2})\b/', (string) $value, $m)) return (int) $m[1];
         return null;
+    }
+
+    /**
+     * Normalise the Application Status column to the system's trainee status values.
+     * 'Complete' / 'Approved' / 'Enrolled' → 'Active'
+     * Everything else is passed through as-is (e.g. 'Deferred', 'Inactive').
+     */
+    private function normaliseTraineeStatus(string $raw): string
+    {
+        $v = strtolower(trim($raw));
+        if (in_array($v, ['complete', 'approved', 'enrolled'], true)) return 'Active';
+        if ($v === '') return '';
+        return ucfirst($raw); // preserve original casing for other values
     }
 
     /**
