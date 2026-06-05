@@ -92,6 +92,7 @@ Route::group(['middleware' => 'admin'], function(){
   Route::get('admin/associates/trainees/trainees',      [TraineeController::class,'list']);
   Route::get('admin/associates/trainees/reports',       [TraineeController::class,'reports'])->name('trainees.reports');
   Route::get('admin/associates/trainees/reports/data',  [TraineeController::class,'reportsData'])->name('trainees.reports.data');
+  Route::get('admin/associates/trainees/reports/list',  [TraineeController::class,'reportsList'])->name('trainees.reports.list');
   Route::get('admin/associates/trainees/add',           [TraineeController::class,'add']);
   Route::post('admin/associates/trainees/add',          [TraineeController::class,'insert'])->name('admin.associates.trainees.add');
   Route::get('admin/associates/trainees/import',        [TraineeController::class,'import']);

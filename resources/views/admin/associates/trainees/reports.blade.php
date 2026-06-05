@@ -2,7 +2,9 @@
 
 @push('styles')
 <style>
-    .kpi-box { border-radius: 8px; padding: 14px 18px; color: #fff; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+    .kpi-box { border-radius: 8px; padding: 14px 18px; color: #fff; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.12); cursor: pointer; transition: transform .15s, box-shadow .15s; }
+    .kpi-box:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.22); }
+    .kpi-box.kpi-active-tile { outline: 3px solid #fff; outline-offset: 2px; transform: translateY(-2px); }
     .kpi-box .kpi-icon { font-size: 2rem; opacity: .75; }
     .kpi-box .kpi-val  { font-size: 1.5rem; font-weight: 700; line-height: 1; }
     .kpi-box .kpi-lbl  { font-size: .78rem; opacity: .88; margin-top: 2px; }
@@ -38,12 +40,47 @@
         <div id="error-banner" class="alert alert-danger"><i class="fas fa-exclamation-triangle mr-2"></i><span id="error-msg"></span></div>
 
         {{-- Row 1: KPIs --}}
-        <div class="row mb-3" id="kpi-row">
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-red"><i class="fas fa-users kpi-icon"></i><div><div class="kpi-val" id="kpi-total">…</div><div class="kpi-lbl">Total Trainees</div></div></div></div>
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-green"><i class="fas fa-user-check kpi-icon"></i><div><div class="kpi-val" id="kpi-active">…</div><div class="kpi-lbl">Active</div></div></div></div>
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-slate"><i class="fas fa-user-slash kpi-icon"></i><div><div class="kpi-val" id="kpi-inactive">…</div><div class="kpi-lbl">Inactive</div></div></div></div>
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-blue"><i class="fas fa-mars kpi-icon"></i><div><div class="kpi-val" id="kpi-male">…</div><div class="kpi-lbl">Male</div></div></div></div>
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-gold"><i class="fas fa-venus kpi-icon"></i><div><div class="kpi-val" id="kpi-female">…</div><div class="kpi-lbl">Female</div></div></div></div>
+        <div class="row mb-2" id="kpi-row">
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-red"   data-filter="all"     title="Show all trainees"><i class="fas fa-users kpi-icon"></i><div><div class="kpi-val" id="kpi-total">…</div><div class="kpi-lbl">Total Trainees</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-green" data-filter="active"   title="Show active trainees"><i class="fas fa-user-check kpi-icon"></i><div><div class="kpi-val" id="kpi-active">…</div><div class="kpi-lbl">Active</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-slate" data-filter="inactive" title="Show inactive trainees"><i class="fas fa-user-slash kpi-icon"></i><div><div class="kpi-val" id="kpi-inactive">…</div><div class="kpi-lbl">Inactive</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-blue"  data-filter="male"     title="Show male trainees"><i class="fas fa-mars kpi-icon"></i><div><div class="kpi-val" id="kpi-male">…</div><div class="kpi-lbl">Male</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-gold"  data-filter="female"   title="Show female trainees"><i class="fas fa-venus kpi-icon"></i><div><div class="kpi-val" id="kpi-female">…</div><div class="kpi-lbl">Female</div></div></div></div>
+        </div>
+
+        {{-- Drill-down panel (hidden until a tile is clicked) --}}
+        <div id="drilldown-panel" style="display:none;" class="mb-3">
+            <div class="chart-card" style="padding:12px 16px;">
+                <div class="d-flex align-items-center mb-2">
+                    <h6 class="mb-0" id="drilldown-title" style="border:none;padding:0;margin:0;"></h6>
+                    <span class="ml-2 badge badge-secondary" id="drilldown-count"></span>
+                    <button id="drilldown-close" class="btn btn-xs btn-outline-secondary ml-auto" style="font-size:.75rem;">
+                        <i class="fas fa-times mr-1"></i>Close
+                    </button>
+                </div>
+                <div id="drilldown-loading" class="text-center py-4 text-muted" style="display:none;">
+                    <i class="fas fa-spinner fa-spin mr-1"></i> Loading…
+                </div>
+                <div class="table-responsive" id="drilldown-table-wrap" style="display:none;">
+                    <table id="drilldown-table" class="table table-sm table-bordered table-striped" style="font-size:.82rem;width:100%;">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>PEN</th>
+                                <th>Programme</th>
+                                <th>Country</th>
+                                <th>Status</th>
+                                <th>Gender</th>
+                                <th>Admission</th>
+                                <th>Exam Year</th>
+                                <th>Hospital</th>
+                            </tr>
+                        </thead>
+                        <tbody id="drilldown-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         {{-- Row 2: Country bar + Programme donut + Status donut --}}
@@ -163,6 +200,89 @@ $(document).ready(function () {
         });
     }
 
+    // ── Tile drill-down ─────────────────────────────────────────────────────────
+    var drillDt      = null;
+    var activeFilter = null;
+
+    var filterLabels = {
+        all: 'All Trainees', active: 'Active Trainees',
+        inactive: 'Inactive Trainees', male: 'Male Trainees', female: 'Female Trainees'
+    };
+
+    function loadDrilldown(filter) {
+        if (filter === activeFilter) {
+            // Second click on same tile → collapse
+            $('#drilldown-panel').slideUp(200);
+            $('.kpi-box').removeClass('kpi-active-tile');
+            activeFilter = null;
+            return;
+        }
+        activeFilter = filter;
+
+        $('.kpi-box').removeClass('kpi-active-tile');
+        $('[data-filter="' + filter + '"]').addClass('kpi-active-tile');
+
+        $('#drilldown-title').text(filterLabels[filter] || filter);
+        $('#drilldown-count').text('');
+        $('#drilldown-loading').show();
+        $('#drilldown-table-wrap').hide();
+        $('#drilldown-panel').slideDown(200);
+
+        // Destroy existing DataTable before replacing tbody
+        if (drillDt) { drillDt.destroy(); drillDt = null; }
+
+        $.getJSON('{{ url("admin/associates/trainees/reports/list") }}', { filter: filter })
+            .done(function (rows) {
+                var html = '';
+                rows.forEach(function (r, i) {
+                    html += '<tr>' +
+                        '<td>' + (i + 1) + '</td>' +
+                        '<td><a href="/admin/associates/trainees/view/' + r.id + '" target="_blank" style="color:#a02626;">' + (r.name || '—') + '</a></td>' +
+                        '<td>' + (r.entry_number || '—') + '</td>' +
+                        '<td>' + (r.programme_name || '—') + '</td>' +
+                        '<td>' + (r.country_name || '—') + '</td>' +
+                        '<td><span class="badge" style="background:' + (r.status==='Active'?'#d4edda':r.status==='Inactive'?'#e2e3e5':'#fff3cd') + ';color:#333;">' + (r.status || '—') + '</span></td>' +
+                        '<td>' + (r.gender || '—') + '</td>' +
+                        '<td>' + (r.admission_year || '—') + '</td>' +
+                        '<td>' + (r.exam_year || '—') + '</td>' +
+                        '<td>' + (r.hospital_name || '—') + '</td>' +
+                        '</tr>';
+                });
+                $('#drilldown-tbody').html(html);
+                $('#drilldown-count').text(rows.length + ' records');
+                $('#drilldown-loading').hide();
+                $('#drilldown-table-wrap').show();
+
+                drillDt = $('#drilldown-table').DataTable({
+                    destroy: true,
+                    pageLength: 25,
+                    order: [[1, 'asc']],
+                    columnDefs: [{ orderable: false, targets: 0 }],
+                    dom: '<"row"<"col-md-6"l><"col-md-6 text-right"B>>frtip',
+                    buttons: [
+                        { extend:'excelHtml5', text:'<i class="fas fa-file-excel mr-1"></i>Excel', className:'btn btn-success btn-sm', title: filterLabels[filter] },
+                        { extend:'csvHtml5',   text:'<i class="fas fa-file-csv mr-1"></i>CSV',   className:'btn btn-secondary btn-sm' }
+                    ]
+                });
+            })
+            .fail(function () {
+                $('#drilldown-loading').html('<span class="text-danger"><i class="fas fa-exclamation-triangle mr-1"></i>Failed to load data.</span>');
+            });
+    }
+
+    // Tile click handler
+    $(document).on('click', '.kpi-box[data-filter]', function () {
+        loadDrilldown($(this).data('filter'));
+    });
+
+    // Close button
+    $('#drilldown-close').on('click', function () {
+        $('#drilldown-panel').slideUp(200);
+        $('.kpi-box').removeClass('kpi-active-tile');
+        activeFilter = null;
+    });
+
+    // ── Analytics data ───────────────────────────────────────────────────────────
     fetch('{{ url("admin/associates/trainees/reports/data") }}')
         .then(function (r) { return r.json(); })
         .then(function (d) {

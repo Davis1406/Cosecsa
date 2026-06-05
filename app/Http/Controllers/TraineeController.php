@@ -305,6 +305,41 @@ public function update(Request $request, $id)
         return view('admin.associates.trainees.reports', ['header_title' => 'Trainees Analytics']);
     }
 
+    public function reportsList(Request $request)
+    {
+        $filter = $request->get('filter', 'all'); // all | active | inactive | male | female
+
+        $q = DB::table('trainees')
+            ->join('users',      'users.id',      '=', 'trainees.user_id')
+            ->join('programmes', 'programmes.id', '=', 'trainees.programme_id')
+            ->join('countries',  'countries.id',  '=', 'trainees.country_id')
+            ->leftJoin('hospitals', 'hospitals.id', '=', 'trainees.hospital_id')
+            ->where('users.user_type', 2)
+            ->select(
+                'trainees.id',
+                'trainees.entry_number',
+                'users.name',
+                'trainees.gender',
+                'trainees.status',
+                'trainees.admission_year',
+                'trainees.exam_year',
+                'programmes.name as programme_name',
+                'countries.country_name',
+                'hospitals.name as hospital_name',
+                'trainees.personal_email'
+            );
+
+        match ($filter) {
+            'active'   => $q->where('trainees.status', 'Active'),
+            'inactive' => $q->where('trainees.status', 'Inactive'),
+            'male'     => $q->where('trainees.gender', 'Male'),
+            'female'   => $q->where('trainees.gender', 'Female'),
+            default    => null,
+        };
+
+        return response()->json($q->orderBy('users.name')->get());
+    }
+
     public function reportsData()
     {
         // KPIs
