@@ -43,6 +43,10 @@
 .tag-gold   { background: #fff3cd; color: #856404; }
 .tag-grey   { background: #e2e3e5; color: #383d41; }
 .tag-purple { background: #e2d9f3; color: #6f42c1; }
+/* Editable tag */
+.tag-editable { cursor: pointer; transition: opacity .15s; }
+.tag-editable:hover { opacity: .78; }
+.tag-edit-icon { font-size:.6rem; opacity:.5; margin-right:2px; vertical-align:middle; }
 
 /* ── Left-panel info rows ── */
 .info-row {
@@ -196,32 +200,104 @@
                     <div class="card-body pt-0">
                         <span class="sect-div d-block">Key Info</span>
 
-                        {{-- Derived tag pills --}}
-                        <div class="mb-2">
-                            @if($trainee->admission_year)
-                                <span class="tag-pill tag-blue">Intake {{ $trainee->admission_year }}</span>
-                            @endif
-                            @if($trainee->exam_year && $trainee->exam_year > 0)
-                                <span class="tag-pill tag-purple">Exam {{ $trainee->exam_year }}</span>
-                            @endif
-                            @if($trainee->programme_name)
-                                <span class="tag-pill tag-grey">{{ $trainee->programme_name }}</span>
-                            @endif
-                            @if($trainee->country_name)
-                                <span class="tag-pill tag-green">{{ $trainee->country_name }}</span>
-                            @endif
-                            @if($sponsor)
-                                <span class="tag-pill tag-gold">{{ $sponsor }}</span>
-                            @endif
-                            @if($trainee->invoice_status)
-                                <span class="tag-pill {{ $invStatusClass }}">Invoice: {{ $trainee->invoice_status }}</span>
-                            @endif
-                            @if($trainee->admission_letter_status)
-                                <span class="tag-pill tag-grey">Adm. Letter: {{ $trainee->admission_letter_status }}</span>
-                            @endif
+                        {{-- Editable tag pills --}}
+                        <div class="mb-2" id="keyInfoTags">
+
+                            {{-- Admission Year --}}
+                            <span class="tag-pill tag-blue tag-editable"
+                                  data-field="admission_year"
+                                  data-value="{{ $trainee->admission_year }}"
+                                  data-type="number"
+                                  title="Click to edit admission year">
+                                <i class="fas fa-edit tag-edit-icon"></i>
+                                Intake <span class="tag-label">{{ $trainee->admission_year ?: '—' }}</span>
+                            </span>
+
+                            {{-- Exam Year --}}
+                            <span class="tag-pill tag-purple tag-editable"
+                                  data-field="exam_year"
+                                  data-value="{{ $trainee->exam_year }}"
+                                  data-type="select"
+                                  data-options="{{ json_encode($examYears) }}"
+                                  title="Click to edit exam year">
+                                <i class="fas fa-edit tag-edit-icon"></i>
+                                Exam <span class="tag-label">{{ $trainee->exam_year ?: '—' }}</span>
+                            </span>
+
+                            {{-- Programme --}}
+                            <span class="tag-pill tag-grey tag-editable"
+                                  data-field="programme_id"
+                                  data-value="{{ $trainee->programme_id ?? '' }}"
+                                  data-type="select"
+                                  data-options="{{ json_encode($programmes->pluck('name','id')) }}"
+                                  title="Click to edit programme">
+                                <i class="fas fa-edit tag-edit-icon"></i>
+                                <span class="tag-label">{{ $trainee->programme_name ?: '—' }}</span>
+                            </span>
+
+                            {{-- Country --}}
+                            <span class="tag-pill tag-green tag-editable"
+                                  data-field="country_id"
+                                  data-value="{{ $trainee->country_id ?? '' }}"
+                                  data-type="select"
+                                  data-options="{{ json_encode($countries->pluck('country_name','id')) }}"
+                                  title="Click to edit country">
+                                <i class="fas fa-edit tag-edit-icon"></i>
+                                <span class="tag-label">{{ $trainee->country_name ?: '—' }}</span>
+                            </span>
+
+                            {{-- Status --}}
+                            <span class="tag-pill {{ $statusClass }} tag-editable"
+                                  data-field="status"
+                                  data-value="{{ $trainee->status }}"
+                                  data-type="select"
+                                  data-options='{"Active":"Active","Inactive":"Inactive","Deferred":"Deferred"}'
+                                  title="Click to edit status">
+                                <i class="fas fa-edit tag-edit-icon"></i>
+                                <span class="tag-label">{{ $trainee->status ?: 'Unknown' }}</span>
+                            </span>
+
+                            {{-- Invoice Status --}}
+                            <span class="tag-pill {{ $invStatusClass }} tag-editable"
+                                  data-field="invoice_status"
+                                  data-value="{{ $trainee->invoice_status }}"
+                                  data-type="select"
+                                  data-options='{"Pending":"Pending","Sent":"Sent","Complete":"Complete"}'
+                                  title="Click to edit invoice status">
+                                <i class="fas fa-edit tag-edit-icon"></i>
+                                Invoice: <span class="tag-label">{{ $trainee->invoice_status ?: 'Pending' }}</span>
+                            </span>
+
+                            {{-- Admission Letter Status --}}
+                            <span class="tag-pill tag-grey tag-editable"
+                                  data-field="admission_letter_status"
+                                  data-value="{{ $trainee->admission_letter_status }}"
+                                  data-type="select"
+                                  data-options='{"Pending":"Pending","Sent":"Sent"}'
+                                  title="Click to edit admission letter status">
+                                <i class="fas fa-edit tag-edit-icon"></i>
+                                Adm. Letter: <span class="tag-label">{{ $trainee->admission_letter_status ?: 'Pending' }}</span>
+                            </span>
+
+                            {{-- Also a Candidate (read-only) --}}
                             @if($linkedCandidate)
                                 <span class="tag-pill tag-blue">Also a Candidate</span>
                             @endif
+                        </div>
+
+                        {{-- Inline editor popover --}}
+                        <div id="tagEditorPopover" style="display:none;position:absolute;z-index:1050;
+                             background:#fff;border:1px solid #ccc;border-radius:6px;
+                             padding:10px 12px;box-shadow:0 4px 16px rgba(0,0,0,.15);min-width:200px;">
+                            <div class="d-flex align-items-center mb-2">
+                                <strong id="tagEditorLabel" style="font-size:.82rem;"></strong>
+                                <button id="tagEditorClose" type="button"
+                                        style="margin-left:auto;background:none;border:none;font-size:1rem;line-height:1;color:#999;cursor:pointer;">&times;</button>
+                            </div>
+                            <div id="tagEditorInput"></div>
+                            <div class="mt-2 text-right">
+                                <button id="tagEditorSave" class="btn btn-xs btn-danger" style="font-size:.78rem;">Save</button>
+                            </div>
                         </div>
 
                         <div class="sect-div mt-2">Contact</div>
@@ -562,10 +638,109 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
+    // ── Tab memory ───────────────────────────────────────────────────────────
     var saved = localStorage.getItem('adminTraineeViewTab');
     if (saved) { $('#tpTabs a[href="' + saved + '"]').tab('show'); }
     $('#tpTabs a').on('shown.bs.tab', function (e) {
         localStorage.setItem('adminTraineeViewTab', $(e.target).attr('href'));
+    });
+
+    // ── Editable tag pills ───────────────────────────────────────────────────
+    var $pop      = $('#tagEditorPopover');
+    var $activTag = null;
+
+    function fieldLabel(field) {
+        var map = {
+            admission_year:'Admission Year', exam_year:'Exam Year',
+            programme_id:'Programme', country_id:'Country',
+            status:'Status', invoice_status:'Invoice Status',
+            admission_letter_status:'Adm. Letter Status'
+        };
+        return map[field] || field;
+    }
+
+    // Build the inner input/select
+    function buildInput($tag) {
+        var type    = $tag.data('type');
+        var current = $tag.data('value');
+        var html    = '';
+
+        if (type === 'select') {
+            var opts  = $tag.data('options');
+            // opts may be a plain object {val:label} or an array of values
+            html = '<select id="tagEditorValue" class="form-control form-control-sm">';
+            if ($.isArray(opts)) {
+                $.each(opts, function(_, v){ html += '<option value="'+v+'"'+(v==current?' selected':'')+'>'+v+'</option>'; });
+            } else {
+                $.each(opts, function(v, lbl){ html += '<option value="'+v+'"'+(v==current?' selected':'')+'>'+lbl+'</option>'; });
+            }
+            html += '</select>';
+        } else {
+            html = '<input id="tagEditorValue" type="text" class="form-control form-control-sm" value="'+current+'">';
+        }
+        return html;
+    }
+
+    // Position popover below tag
+    function showPopover($tag) {
+        var field = $tag.data('field');
+        $('#tagEditorLabel').text(fieldLabel(field));
+        $('#tagEditorInput').html(buildInput($tag));
+
+        var offset = $tag.offset();
+        $pop.css({ top: offset.top + $tag.outerHeight() + 4, left: offset.left }).show();
+        $('#tagEditorValue').focus();
+        $activTag = $tag;
+    }
+
+    $('#keyInfoTags').on('click', '.tag-editable', function (e) {
+        var $tag = $(this);
+        if ($pop.is(':visible') && $activTag && $activTag.is($tag)) {
+            $pop.hide(); $activTag = null; return;
+        }
+        showPopover($tag);
+        e.stopPropagation();
+    });
+
+    $('#tagEditorClose').on('click', function () { $pop.hide(); $activTag = null; });
+
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('#tagEditorPopover, .tag-editable').length) {
+            $pop.hide(); $activTag = null;
+        }
+    });
+
+    // Save via AJAX
+    $('#tagEditorSave').on('click', function () {
+        if (!$activTag) return;
+        var field   = $activTag.data('field');
+        var newVal  = $('#tagEditorValue').val();
+        var traineeId = {{ $trainee->trainee_id }};
+
+        $.post('{{ url("admin/associates/trainees") }}/' + traineeId + '/quick-update', {
+            _token: '{{ csrf_token() }}',
+            field:  field,
+            value:  newVal
+        })
+        .done(function (res) {
+            // Update tag label
+            $activTag.data('value', newVal);
+            $activTag.find('.tag-label').text(res.label);
+            $pop.hide(); $activTag = null;
+
+            // Flash brief success highlight
+            $activTag && $activTag.css('outline','2px solid #28a745');
+            setTimeout(function(){ $activTag && $activTag.css('outline',''); }, 800);
+        })
+        .fail(function () {
+            alert('Save failed. Please try again.');
+        });
+    });
+
+    // Save on Enter key
+    $('#tagEditorPopover').on('keydown', '#tagEditorValue', function (e) {
+        if (e.key === 'Enter') $('#tagEditorSave').click();
+        if (e.key === 'Escape') { $pop.hide(); $activTag = null; }
     });
 });
 </script>

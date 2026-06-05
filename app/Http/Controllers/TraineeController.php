@@ -49,12 +49,52 @@ class TraineeController extends Controller
             return redirect('admin/associates/trainees/trainees')->with('error', 'Trainee not found');
         }
 
-        // Look up the matching candidate record (if this trainee is also a candidate)
         $linkedCandidate = User::getCandidates()->firstWhere('user_id', $trainee->user_id)
             ?? \App\Models\Candidates::where('user_id', $trainee->user_id)->first();
 
+        // Data for inline tag editors
+        $programmes = DB::table('programmes')->orderBy('name')->get(['id', 'name']);
+        $countries  = DB::table('countries')->orderBy('country_name')->get(['id', 'country_name']);
+        $examYears  = DB::table('years')->orderByDesc('year_name')->pluck('year_name');
+
         $header_title = "View Trainee";
-        return view('admin.associates.trainees.view', compact('trainee', 'header_title', 'linkedCandidate'));
+        return view('admin.associates.trainees.view',
+            compact('trainee', 'header_title', 'linkedCandidate', 'programmes', 'countries', 'examYears'));
+    }
+
+    /**
+     * AJAX quick-update for editable tag fields on the trainee profile.
+     * Allowed fields: status, exam_year, admission_year, invoice_status,
+     *                 admission_letter_status, programme_id, country_id
+     */
+    public function quickUpdate(Request $request, $id)
+    {
+        $allowed = ['status','exam_year','admission_year','invoice_status',
+                    'admission_letter_status','programme_id','country_id'];
+
+        $field = $request->input('field');
+        $value = $request->input('value');
+
+        if (!in_array($field, $allowed)) {
+            return response()->json(['error' => 'Invalid field'], 422);
+        }
+
+        $trainee = DB::table('trainees')->where('id', $id)->first();
+        if (!$trainee) {
+            return response()->json(['error' => 'Trainee not found'], 404);
+        }
+
+        DB::table('trainees')->where('id', $id)->update([$field => $value, 'updated_at' => now()]);
+
+        // Return the updated display label (for programme/country, return name not id)
+        $label = $value;
+        if ($field === 'programme_id') {
+            $label = DB::table('programmes')->where('id', $value)->value('name') ?? $value;
+        } elseif ($field === 'country_id') {
+            $label = DB::table('countries')->where('id', $value)->value('country_name') ?? $value;
+        }
+
+        return response()->json(['success' => true, 'label' => $label]);
     }
 
     

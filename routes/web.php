@@ -102,6 +102,7 @@ Route::group(['middleware' => 'admin'], function(){
   Route::get('admin/associates/trainees/edit/{id}',     [TraineeController::class,'edit']);
   Route::post('admin/associates/trainees/edit/{id}',    [TraineeController::class,'update']);
   Route::get('admin/associates/trainees/delete/{id}',   [TraineeController::class,'delete']);
+  Route::post('admin/associates/trainees/{id}/quick-update', [TraineeController::class,'quickUpdate'])->name('trainees.quick.update');
 
   //Candidates Route
   Route::get('admin/associates/candidates/list', [CandidatesController::class,'list']);
