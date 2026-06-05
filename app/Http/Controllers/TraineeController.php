@@ -30,9 +30,13 @@ class TraineeController extends Controller
             ->join('programmes as p', 'p.id', '=', 't.programme_id')
             ->select('p.name')->groupBy('p.name')->orderBy('p.name')
             ->pluck('p.name');
-        $data['filterYears']      = DB::table('trainees')
+        $data['filterYears']          = DB::table('trainees')
             ->whereNotNull('exam_year')->select('exam_year')->groupBy('exam_year')
             ->orderByDesc('exam_year')->pluck('exam_year');
+        $data['filterAdmissionYears'] = DB::table('trainees')
+            ->whereNotNull('admission_year')->where('admission_year', '!=', '')
+            ->select('admission_year')->groupBy('admission_year')
+            ->orderByDesc('admission_year')->pluck('admission_year');
         $data['filterStatuses']   = DB::table('trainees')
             ->whereNotNull('status')->where('status', '!=', '')
             ->select('status')->groupBy('status')->orderBy('status')->pluck('status');

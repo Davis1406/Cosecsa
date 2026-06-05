@@ -75,6 +75,15 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                <div class="col-6 col-md-2 px-1 mb-1">
+                                    <label class="small mb-0 font-weight-bold">Admission Year</label>
+                                    <select id="filterAdmissionYear" class="form-control form-control-sm">
+                                        <option value="">All Admission Years</option>
+                                        @foreach($filterAdmissionYears as $ay)
+                                        <option value="{{ $ay }}">{{ $ay }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                                 <div class="col-6 col-md-2 pl-1 mb-1">
                                     <label class="small mb-0 font-weight-bold">Gender</label>
                                     <select id="filterGender" class="form-control form-control-sm">
@@ -136,6 +145,7 @@
                                                 <tr data-country="{{ $value->country_name ?? '' }}"
                                                     data-programme="{{ $value->programme_name ?? '' }}"
                                                     data-year="{{ $value->exam_year ?? '' }}"
+                                                    data-admissionyear="{{ $value->admission_year ?? '' }}"
                                                     data-status="{{ $value->status ?? '' }}"
                                                     data-gender="{{ $value->gender ?? '' }}">
                                                     <td class="row-num"></td>
@@ -216,29 +226,33 @@
 $(document).ready(function () {
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
         if (settings.nTable.id !== 'traineestable') return true;
-        var $row      = $(settings.nTable).DataTable().row(dataIndex).node();
-        var country   = $('#filterCountry').val();
-        var programme = $('#filterProgramme').val();
-        var year      = $('#filterYear').val();
-        var status    = $('#filterStatus').val();
-        var gender    = $('#filterGender').val();
+        var $row           = $(settings.nTable).DataTable().row(dataIndex).node();
+        var country        = $('#filterCountry').val();
+        var programme      = $('#filterProgramme').val();
+        var year           = $('#filterYear').val();
+        var admissionYear  = $('#filterAdmissionYear').val();
+        var status         = $('#filterStatus').val();
+        var gender         = $('#filterGender').val();
 
-        if (country   && $($row).data('country')   !== country)              return false;
-        if (programme && $($row).data('programme') !== programme)             return false;
-        if (year      && String($($row).data('year'))  !== String(year))      return false;
-        if (status    && $($row).data('status')    !== status)                return false;
-        if (gender    && $($row).data('gender')    !== gender)                return false;
+        if (country       && $($row).data('country')       !== country)                   return false;
+        if (programme     && $($row).data('programme')     !== programme)                  return false;
+        if (year          && String($($row).data('year'))  !== String(year))               return false;
+        if (admissionYear && String($($row).data('admissionyear')) !== String(admissionYear)) return false;
+        if (status        && $($row).data('status')        !== status)                     return false;
+        if (gender        && $($row).data('gender')        !== gender)                     return false;
         return true;
     });
 
-    $('#filterCountry, #filterProgramme, #filterYear, #filterStatus, #filterGender').on('change', function () {
+    var allFilters = '#filterCountry, #filterProgramme, #filterYear, #filterAdmissionYear, #filterStatus, #filterGender';
+
+    $(allFilters).on('change', function () {
         var dt = $('#traineestable').DataTable();
         dt.draw();
         $('#filteredCount').text('Showing ' + dt.page.info().recordsDisplay + ' of ' + dt.page.info().recordsTotal);
     });
 
     $('#btnClearFilters').on('click', function () {
-        $('#filterCountry, #filterProgramme, #filterYear, #filterStatus, #filterGender').val('');
+        $(allFilters).val('');
         $('#traineestable').DataTable().draw();
         $('#filteredCount').text('');
     });
