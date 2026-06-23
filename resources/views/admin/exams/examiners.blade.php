@@ -74,7 +74,7 @@
                             {{-- Row 2: Programme + Country + Designation + Role filters --}}
                             <div class="d-flex flex-wrap" style="gap:.5rem;">
                                 <select id="filter-programme" class="form-control form-control-sm" style="max-width:220px;">
-                                    <option value="">— All Programmes —</option>
+                                    <option value="">— All Specialties —</option>
                                     @foreach($programmes as $prog)
                                         <option value="{{ $prog }}">{{ $prog }}</option>
                                     @endforeach
@@ -116,7 +116,7 @@
                                         <th>Country</th>
                                         <th>Examiner ID</th>
                                         <th>Exam Group</th>
-                                        <th>{{ $noYearSelected ? '' : $lastYear.' ' }}Examined For</th>
+                                        <th>Specialty</th>
                                         <th style="width:160px;">Notes</th>
                                         <th>Action</th>
                                     </tr>
@@ -126,7 +126,7 @@
                                     <tr class="examiner-row {{ $value->participated_last_year ? 'last-year-row' : '' }}"
                                         data-desig="{{ $value->examiner_designation ?? '' }}"
                                         data-role="{{ ucfirst($value->role_name ?? '') }}"
-                                        data-programmes="{{ $value->all_examined_for ?? '' }}">
+                                        data-programmes="{{ $value->specialty ?? '' }}">
                                         <td>
                                             <input type="checkbox" class="row-chk"
                                                    value="{{ $value->examin_id }}"
@@ -139,7 +139,7 @@
                                         <td>{{ $value->country_name }}</td>
                                         <td>{{ $value->examiner_id }}</td>
                                         <td>{{ $value->group_name }}</td>
-                                        <td>{{ $value->examined_for ?? '—' }}</td>
+                                        <td>{{ $value->specialty ?? '—' }}</td>
                                         <td>
                                             @if($value->internal_notes)
                                                 @php $notePreview = Str::limit($value->internal_notes, 60); @endphp

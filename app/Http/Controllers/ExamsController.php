@@ -34,23 +34,6 @@ class ExamsController extends Controller
 
         $hasParticipations = \Illuminate\Support\Facades\Schema::hasTable('examiner_participations');
 
-        // all_examined_for: always spans ALL years — used to populate the Programmes
-        // dropdown and for client-side filtering regardless of the selected year.
-        $allExaminedForSql = '(
-            SELECT GROUP_CONCAT(DISTINCT spec ORDER BY spec SEPARATOR ", ")
-            FROM (
-                SELECT "MCS" as spec FROM mcs_results
-                    WHERE mcs_results.examiner_id = examiners.id
-                UNION ALL
-                SELECT "FCS General Surgery" FROM gs_results
-                    WHERE gs_results.examiner_id = examiners.id' .
-            ($hasParticipations ? '
-                UNION ALL
-                SELECT ep.specialty FROM examiner_participations ep
-                    WHERE ep.exm_id = examiners.id AND ep.specialty IS NOT NULL' : '') . '
-            ) specs
-        ) as all_examined_for';
-
         if ($noYearSelected) {
             // Default the participation button to the previous year even when "All Years" is shown
             $prevYearRow  = $allExamYears->firstWhere('id', $currentYearId - 1);
@@ -120,6 +103,7 @@ class ExamsController extends Controller
                 'examiners.user_id as ex_id',
                 'examiners.examiner_id',
                 'examiners.examiner_designation',
+                'examiners.specialty',
                 'examiners.role_id',
                 'examiners_roles.role as role_name',
                 'users.name as examiner_name',
@@ -128,23 +112,20 @@ class ExamsController extends Controller
                 'examiners.internal_notes',
                 DB::raw('GROUP_CONCAT(DISTINCT examiners_groups.group_name ORDER BY examiners_groups.group_name SEPARATOR ", ") as group_name'),
                 DB::raw($participatedSql),
-                DB::raw($examinedForSql),
-                DB::raw($allExaminedForSql)
+                DB::raw($examinedForSql)
             )
             ->groupBy(
                 'examiners.id', 'examiners.user_id', 'examiners.examiner_id',
-                'examiners.examiner_designation', 'examiners.role_id', 'examiners_roles.role',
-                'users.name', 'users.email', 'countries.country_name', 'examiners.internal_notes'
+                'examiners.examiner_designation', 'examiners.specialty', 'examiners.role_id',
+                'examiners_roles.role', 'users.name', 'users.email',
+                'countries.country_name', 'examiners.internal_notes'
             )
             ->orderBy('users.name')
             ->get();
 
         // Build filter options from the already-fetched collection
         $countries    = $examiners->pluck('country_name')->filter()->unique()->sort()->values();
-        // Programmes always built from all-years data so the dropdown is complete
-        $programmes   = $examiners->pluck('all_examined_for')->filter()
-            ->flatMap(fn($v) => array_map('trim', explode(',', $v)))
-            ->unique()->sort()->values();
+        $programmes   = $examiners->pluck('specialty')->filter()->unique()->sort()->values();
         $designations = $examiners->pluck('examiner_designation')->filter()->unique()->sort()->values();
 
         // Designation options for the filter (from DB; fall back to what's in use)
