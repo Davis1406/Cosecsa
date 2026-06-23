@@ -32,11 +32,27 @@ class ExamsController extends Controller
         $noYearSelected  = ($yearIdInput === null || $yearIdInput === '');
         $requestedYearId = $noYearSelected ? null : (int)$yearIdInput;
 
+        $hasParticipations = \Illuminate\Support\Facades\Schema::hasTable('examiner_participations');
+
         if ($noYearSelected) {
             $lastYearId      = null;
             $lastYearName    = '';
             $participatedSql = '0 as participated_last_year';
-            $examinedForSql  = 'NULL as examined_for';
+            // Aggregate across all years so the Programmes filter is still populated
+            $examinedForSql = '(
+                SELECT GROUP_CONCAT(DISTINCT spec ORDER BY spec SEPARATOR ", ")
+                FROM (
+                    SELECT "MCS" as spec FROM mcs_results
+                        WHERE mcs_results.examiner_id = examiners.id
+                    UNION ALL
+                    SELECT "FCS General Surgery" FROM gs_results
+                        WHERE gs_results.examiner_id = examiners.id' .
+                ($hasParticipations ? '
+                    UNION ALL
+                    SELECT ep.specialty FROM examiner_participations ep
+                        WHERE ep.exm_id = examiners.id AND ep.specialty IS NOT NULL' : '') . '
+                ) specs
+            ) as examined_for';
         } else {
             $selectedYearRow = $allExamYears->firstWhere('id', $requestedYearId);
             $lastYearId      = $selectedYearRow ? $selectedYearRow->id        : $requestedYearId;
@@ -44,8 +60,6 @@ class ExamsController extends Controller
 
             $participatedSql = "CASE WHEN MAX(examiners_history.examination_years) LIKE '%{$lastYearName}%'
                                 THEN 1 ELSE 0 END as participated_last_year";
-
-            $hasParticipations = \Illuminate\Support\Facades\Schema::hasTable('examiner_participations');
 
             $examinedForSql = '(
                 SELECT GROUP_CONCAT(DISTINCT spec ORDER BY spec SEPARATOR ", ")
