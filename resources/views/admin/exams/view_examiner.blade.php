@@ -681,8 +681,6 @@ function showVEDeleteModal() {
 </script>
 @endpush
 
-@endsection
-
 {{-- ══ Delete / Reset Modal ════════════════════════════════════════════════════ --}}
 <div class="modal fade" id="veDeleteModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -1234,6 +1232,8 @@ function showVEDeleteModal() {
         </div>
     </div>
 </div>
+
+@endsection
 
 @push('styles')
 <style>
