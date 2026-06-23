@@ -167,9 +167,16 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="specialty">Examiner Specialty</label>
-                                            <input type="text" name="specialty" id="specialty" class="form-control"
-                                                value="{{ $examiner->specialty }}">
-                                            <div class="error-message">Please enter specialty</div>
+                                            <select name="specialty" id="specialty" class="form-control">
+                                                <option value="">— Select Specialty —</option>
+                                                @foreach($specialtyOptions as $spec)
+                                                    <option value="{{ $spec }}" {{ ($examiner->specialty ?? '') == $spec ? 'selected' : '' }}>{{ $spec }}</option>
+                                                @endforeach
+                                                @if($examiner->specialty && !$specialtyOptions->contains($examiner->specialty))
+                                                    <option value="{{ $examiner->specialty }}" selected>{{ $examiner->specialty }} (legacy)</option>
+                                                @endif
+                                            </select>
+                                            <div class="error-message">Please select a specialty</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">

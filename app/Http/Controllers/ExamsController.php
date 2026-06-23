@@ -337,6 +337,7 @@ class ExamsController extends Controller
         $data['groups']             = DB::table('examiners_groups')->select('id', 'group_name')->get();
         $data['examYears']          = range(2020, (int) $lastYear);
         $data['programmeOptions']   = self::$programmeOptions;
+        $data['specialtyOptions']   = DB::table('programmes')->where('is_deleted', 0)->orderBy('name')->pluck('name');
         $data['designationOptions'] = $designationOptions;
         return view('admin.exams.add_examiner', $data);
     }
@@ -633,6 +634,7 @@ class ExamsController extends Controller
             'yearParticipations' => $yearParticipations,
             'yearRoles'          => $yearRoles,
             'programmeOptions'   => $programmeOptions,
+            'specialtyOptions'   => DB::table('programmes')->where('is_deleted', 0)->orderBy('name')->pluck('name'),
             'designationOptions' => $designationOptions,
         ]);
     }
