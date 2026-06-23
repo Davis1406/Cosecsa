@@ -24,6 +24,7 @@ class ExamsModel extends Model
         'passport_image',
         'internal_notes',
         'examiner_designation',
+        'status',
     ];
 
     public function user()

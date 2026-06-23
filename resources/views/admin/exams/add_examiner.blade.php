@@ -168,6 +168,16 @@
                                             </small>
                                         </div>
                                     </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="status">Status</label>
+                                            <select name="status" id="status" class="form-control">
+                                                <option value="Active"   {{ old('status', 'Active') == 'Active'   ? 'selected' : '' }}>Active</option>
+                                                <option value="Inactive" {{ old('status') == 'Inactive' ? 'selected' : '' }}>Inactive</option>
+                                                <option value="Deceased" {{ old('status') == 'Deceased' ? 'selected' : '' }}>Deceased</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="row">

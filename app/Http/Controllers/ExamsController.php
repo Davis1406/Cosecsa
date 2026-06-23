@@ -371,6 +371,7 @@ class ExamsController extends Controller
                 'gender'               => $request->gender,
                 'role_id'              => $request->participation_type === 'Examiner' ? 1 : ($request->participation_type === 'Observer' ? 2 : 3),
                 'examiner_designation' => $request->examiner_designation ?: null,
+                'status'               => $request->status ?: 'Active',
             ]);
 
             // attach group
@@ -552,6 +553,7 @@ class ExamsController extends Controller
                 'examiners.passport_image',
                 'examiners.role_id',
                 'examiners.examiner_designation',
+                'examiners.status',
                 'users.name as examiner_name',
                 'users.email',
                 'countries.country_name',
@@ -681,6 +683,7 @@ class ExamsController extends Controller
                 'subspecialty'         => $request->subspecialty,
                 'role_id'              => $request->participation_type === 'Examiner' ? 1 : ($request->participation_type === 'Observer' ? 2 : 3),
                 'examiner_designation' => $request->examiner_designation ?: null,
+                'status'               => $request->status ?: 'Active',
                 'curriculum_vitae'     => $examiner->curriculum_vitae,
                 'passport_image'       => $examiner->passport_image,
             ]);
@@ -782,6 +785,7 @@ class ExamsController extends Controller
                 'examiners.role_id',
                 'examiners.internal_notes',
                 'examiners.examiner_designation',
+                'examiners.status',
                 'users.name as examiner_name',
                 'users.email',
                 'countries.country_name'

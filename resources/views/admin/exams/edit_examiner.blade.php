@@ -215,6 +215,19 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
+                                            <label for="status">Status</label>
+                                            <select name="status" id="status" class="form-control">
+                                                <option value="Active"   {{ ($examiner->status ?? 'Active') == 'Active'   ? 'selected' : '' }}>Active</option>
+                                                <option value="Inactive" {{ ($examiner->status ?? '') == 'Inactive' ? 'selected' : '' }}>Inactive</option>
+                                                <option value="Deceased" {{ ($examiner->status ?? '') == 'Deceased' ? 'selected' : '' }}>Deceased</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
                                             <label for="country_id">Country *</label>
                                             <select name="country_id" id="country_id" class="form-control" required>
                                                 <option value="">Select Country</option>

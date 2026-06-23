@@ -135,6 +135,21 @@
                                     <th><i class="fas fa-id-card text-muted mr-1"></i> Examiner ID</th>
                                     <td>{{ $examiner->examiner_id ?: '—' }}</td>
                                 </tr>
+                                <tr>
+                                    <th><i class="fas fa-circle text-muted mr-1"></i> Status</th>
+                                    <td>
+                                        @php $status = $examiner->status ?? 'Active'; @endphp
+                                        @if($status === 'Active')
+                                            <span class="badge badge-pill badge-success">Active</span>
+                                        @elseif($status === 'Inactive')
+                                            <span class="badge badge-pill badge-warning">Inactive</span>
+                                        @elseif($status === 'Deceased')
+                                            <span class="badge badge-pill badge-secondary">Deceased</span>
+                                        @else
+                                            <span class="badge badge-pill badge-light">{{ $status }}</span>
+                                        @endif
+                                    </td>
+                                </tr>
                             </table>
                         </div>
                     </div>
