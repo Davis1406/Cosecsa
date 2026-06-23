@@ -121,7 +121,6 @@
                                         <th>Email</th>
                                         <th>Country</th>
                                         <th>Examiner ID</th>
-                                        <th>Exam Group</th>
                                         <th>Specialty</th>
                                         <th style="width:160px;">Notes</th>
                                         <th>Action</th>
@@ -145,7 +144,6 @@
                                         <td>{{ $value->email }}</td>
                                         <td>{{ $value->country_name }}</td>
                                         <td>{{ $value->examiner_id }}</td>
-                                        <td>{{ $value->group_name }}</td>
                                         <td>{{ $value->specialty ?? '—' }}</td>
                                         <td>
                                             @if($value->internal_notes)
