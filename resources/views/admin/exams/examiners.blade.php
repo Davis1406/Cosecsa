@@ -55,12 +55,10 @@
                                     <button class="btn btn-outline-secondary active" id="btn-all">
                                         All <span class="badge badge-secondary ml-1">{{ $getExaminers->count() }}</span>
                                     </button>
-                                    @if(!$noYearSelected)
                                     <button class="btn btn-outline-primary" id="btn-lastyear">
                                         {{ $lastYear }} Participants
                                         <span class="badge badge-primary ml-1">{{ $getExaminers->where('participated_last_year', true)->count() }}</span>
                                     </button>
-                                    @endif
                                 </div>
                                 <div class="d-flex" style="gap:.4rem;">
                                     <a href="{{ route('exams.email.template') }}" class="btn btn-sm btn-outline-secondary">

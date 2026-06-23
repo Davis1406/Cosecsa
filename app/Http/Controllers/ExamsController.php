@@ -52,10 +52,15 @@ class ExamsController extends Controller
         ) as all_examined_for';
 
         if ($noYearSelected) {
-            $lastYearId      = null;
-            $lastYearName    = '';
-            $participatedSql = '0 as participated_last_year';
-            // Display column same as filter column when no year is selected
+            // Default the participation button to the previous year even when "All Years" is shown
+            $prevYearRow  = $allExamYears->firstWhere('id', $currentYearId - 1);
+            $lastYearId   = $prevYearRow ? $prevYearRow->id        : ($currentYearId - 1);
+            $lastYearName = $prevYearRow ? $prevYearRow->year_name : (string)(date('Y') - 1);
+
+            $participatedSql = "CASE WHEN MAX(examiners_history.examination_years) LIKE '%{$lastYearName}%'
+                                THEN 1 ELSE 0 END as participated_last_year";
+
+            // Display column aggregates all years when no specific year is selected
             $examinedForSql  = '(
                 SELECT GROUP_CONCAT(DISTINCT spec ORDER BY spec SEPARATOR ", ")
                 FROM (
