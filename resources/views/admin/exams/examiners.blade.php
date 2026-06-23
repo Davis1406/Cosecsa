@@ -91,6 +91,12 @@
                                         <option value="{{ $desig }}">{{ $desig }}</option>
                                     @endforeach
                                 </select>
+                                <select id="filter-status" class="form-control form-control-sm" style="max-width:150px;">
+                                    <option value="">— All Statuses —</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                    <option value="Deceased">Deceased</option>
+                                </select>
                                 <select id="filter-role" class="form-control form-control-sm" style="max-width:160px;">
                                     <option value="">— All Roles —</option>
                                     @foreach($roleOptions as $role)
@@ -126,6 +132,7 @@
                                     <tr class="examiner-row {{ $value->participated_last_year ? 'last-year-row' : '' }}"
                                         data-desig="{{ $value->examiner_designation ?? '' }}"
                                         data-role="{{ ucfirst($value->role_name ?? '') }}"
+                                        data-status="{{ $value->status ?? 'Active' }}"
                                         data-programmes="{{ $value->specialty ?? '' }}">
                                         <td>
                                             <input type="checkbox" class="row-chk"
@@ -289,6 +296,7 @@ $(function () {
     var filterProgramme   = '';
     var filterCountry     = '';
     var filterDesignation = '';
+    var filterStatus      = '';
     var filterRole        = '';
 
     // ── Participant toggle buttons ─────────────────────────────────────────────
@@ -330,6 +338,11 @@ $(function () {
         syncSelectAll();
     });
 
+    $('#filter-status').on('change', function () {
+        filterStatus = this.value;
+        table.draw();
+    });
+
     $('#filter-role').on('change', function () {
         filterRole = this.value;
         table.draw();
@@ -341,12 +354,14 @@ $(function () {
         filterProgramme   = '';
         filterCountry     = '';
         filterDesignation = '';
+        filterStatus      = '';
         filterRole        = '';
         $('#btn-all').addClass('active').siblings().removeClass('active');
         $('#examinerstable').removeClass('filter-lastyear');
         $('#filter-programme').val('');
         $('#filter-country').val('');
         $('#filter-designation').val('');
+        $('#filter-status').val('');
         $('#filter-role').val('');
         table.draw();
         syncSelectAll();
@@ -380,6 +395,11 @@ $(function () {
         // Designation filter — from data-desig attribute, exact match
         if (filterDesignation) {
             if (($row.data('desig') || '').trim() !== filterDesignation) return false;
+        }
+
+        // Status filter — from data-status attribute, exact match
+        if (filterStatus) {
+            if (($row.data('status') || 'Active') !== filterStatus) return false;
         }
 
         // Role filter — from data-role attribute, case-insensitive

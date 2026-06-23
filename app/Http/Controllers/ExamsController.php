@@ -104,6 +104,7 @@ class ExamsController extends Controller
                 'examiners.examiner_id',
                 'examiners.examiner_designation',
                 'examiners.specialty',
+                'examiners.status',
                 'examiners.role_id',
                 'examiners_roles.role as role_name',
                 'users.name as examiner_name',
@@ -116,8 +117,8 @@ class ExamsController extends Controller
             )
             ->groupBy(
                 'examiners.id', 'examiners.user_id', 'examiners.examiner_id',
-                'examiners.examiner_designation', 'examiners.specialty', 'examiners.role_id',
-                'examiners_roles.role', 'users.name', 'users.email',
+                'examiners.examiner_designation', 'examiners.specialty', 'examiners.status',
+                'examiners.role_id', 'examiners_roles.role', 'users.name', 'users.email',
                 'countries.country_name', 'examiners.internal_notes'
             )
             ->orderBy('users.name')
