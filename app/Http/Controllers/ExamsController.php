@@ -25,47 +25,47 @@ class ExamsController extends Controller
     {
         $currentYearId = User::getCurrentYearId();
 
-        // If a specific year is selected, use it for the participation columns;
-        // otherwise default to last year.
         $allExamYears = DB::table('years')->orderByDesc('id')->get(['id', 'year_name']);
-        $requestedYearId = $request->input('year_id') ? (int)$request->input('year_id') : null;
-        $selectedYearRow = $requestedYearId
-            ? $allExamYears->firstWhere('id', $requestedYearId)
-            : $allExamYears->firstWhere('id', $currentYearId - 1);
-        $lastYearId   = $selectedYearRow ? $selectedYearRow->id   : ($currentYearId - 1);
-        $lastYearName = $selectedYearRow ? $selectedYearRow->year_name : (string)(date('Y') - 1);
 
-        // participated_last_year: 1 if last year's name appears in the examiner's
-        // examination_years JSON array, 0 otherwise.
-        // LIKE '%YYYY%' handles both single-encoded ["2025"] and legacy double-encoded values.
-        $participatedSql = "CASE WHEN MAX(examiners_history.examination_years) LIKE '%{$lastYearName}%'
-                            THEN 1 ELSE 0 END as participated_last_year";
+        // '' or absent → show all (no year filter); integer → specific year
+        $yearIdInput     = $request->input('year_id');
+        $noYearSelected  = ($yearIdInput === null || $yearIdInput === '');
+        $requestedYearId = $noYearSelected ? null : (int)$yearIdInput;
 
-        // examined_for: programmes the examiner actually participated in last year.
-        // Sourced from mcs_results, gs_results, and examiner_participations for display.
-        // Only shown when examination_years confirms they participated (participated_last_year = 1).
-        $hasParticipations = \Illuminate\Support\Facades\Schema::hasTable('examiner_participations');
+        if ($noYearSelected) {
+            $lastYearId      = null;
+            $lastYearName    = '';
+            $participatedSql = '0 as participated_last_year';
+            $examinedForSql  = 'NULL as examined_for';
+        } else {
+            $selectedYearRow = $allExamYears->firstWhere('id', $requestedYearId);
+            $lastYearId      = $selectedYearRow ? $selectedYearRow->id        : $requestedYearId;
+            $lastYearName    = $selectedYearRow ? $selectedYearRow->year_name : (string)$requestedYearId;
 
-        // gs_results emits "FCS General Surgery" — suppress it when examiner_participations
-        // already has a more specific label for the same year, preventing duplicates.
-        $examinedForSql = '(
-            SELECT GROUP_CONCAT(DISTINCT spec ORDER BY spec SEPARATOR ", ")
-            FROM (
-                SELECT "MCS" as spec FROM mcs_results
-                    WHERE mcs_results.examiner_id = examiners.id AND mcs_results.exam_year = ' . $lastYearId . '
-                UNION ALL
-                SELECT "FCS General Surgery" FROM gs_results
-                    WHERE gs_results.examiner_id = examiners.id AND gs_results.exam_year = ' . $lastYearId .
-            ($hasParticipations ? '
-                    AND NOT EXISTS (
-                        SELECT 1 FROM examiner_participations ep2
-                        WHERE ep2.exm_id = examiners.id AND ep2.year_id = ' . $lastYearId . ' AND ep2.specialty IS NOT NULL
-                    )
-                UNION ALL
-                SELECT ep.specialty FROM examiner_participations ep
-                    WHERE ep.exm_id = examiners.id AND ep.year_id = ' . $lastYearId . ' AND ep.specialty IS NOT NULL' : '') . '
-            ) specs
-        ) as examined_for';
+            $participatedSql = "CASE WHEN MAX(examiners_history.examination_years) LIKE '%{$lastYearName}%'
+                                THEN 1 ELSE 0 END as participated_last_year";
+
+            $hasParticipations = \Illuminate\Support\Facades\Schema::hasTable('examiner_participations');
+
+            $examinedForSql = '(
+                SELECT GROUP_CONCAT(DISTINCT spec ORDER BY spec SEPARATOR ", ")
+                FROM (
+                    SELECT "MCS" as spec FROM mcs_results
+                        WHERE mcs_results.examiner_id = examiners.id AND mcs_results.exam_year = ' . $lastYearId . '
+                    UNION ALL
+                    SELECT "FCS General Surgery" FROM gs_results
+                        WHERE gs_results.examiner_id = examiners.id AND gs_results.exam_year = ' . $lastYearId .
+                ($hasParticipations ? '
+                        AND NOT EXISTS (
+                            SELECT 1 FROM examiner_participations ep2
+                            WHERE ep2.exm_id = examiners.id AND ep2.year_id = ' . $lastYearId . ' AND ep2.specialty IS NOT NULL
+                        )
+                    UNION ALL
+                    SELECT ep.specialty FROM examiner_participations ep
+                        WHERE ep.exm_id = examiners.id AND ep.year_id = ' . $lastYearId . ' AND ep.specialty IS NOT NULL' : '') . '
+                ) specs
+            ) as examined_for';
+        }
 
         $examiners = DB::table('examiners')
             ->join('users', 'users.id', '=', 'examiners.user_id')
@@ -126,6 +126,7 @@ class ExamsController extends Controller
         $data['allExamYears']       = $allExamYears;
         $data['selectedExamYear']   = $lastYearName;
         $data['selectedYearId']     = $lastYearId;
+        $data['noYearSelected']     = $noYearSelected;
         $data['currentYear']        = date('Y');
         $data['lastYear']           = $lastYearName;
         $data['header_title']       = 'Examiners';

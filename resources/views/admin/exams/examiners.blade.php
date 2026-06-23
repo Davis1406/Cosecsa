@@ -11,10 +11,11 @@
                     <h4 class="mb-0">Examiners</h4>
                     {{-- Year filter (server-side page reload) --}}
                     <form method="GET" action="{{ url('admin/exams/examiners') }}" class="d-flex align-items-center" style="gap:.3rem;">
-                        <select name="year_id" class="form-control form-control-sm" style="max-width:120px;"
+                        <select name="year_id" class="form-control form-control-sm" style="max-width:140px;"
                                 onchange="this.form.submit()">
+                            <option value="" {{ $noYearSelected ? 'selected' : '' }}>— All Years —</option>
                             @foreach($allExamYears as $yr)
-                                <option value="{{ $yr->id }}" {{ $selectedYearId == $yr->id ? 'selected' : '' }}>
+                                <option value="{{ $yr->id }}" {{ !$noYearSelected && $selectedYearId == $yr->id ? 'selected' : '' }}>
                                     {{ $yr->year_name }}
                                 </option>
                             @endforeach
@@ -22,7 +23,7 @@
                     </form>
                 </div>
                 <div class="col-sm-6 text-right">
-                    <a href="{{ url('admin/exams/visual_report') }}?year_id={{ $selectedYearId }}" class="btn btn-sm btn-secondary mr-1">
+                    <a href="{{ url('admin/exams/visual_report') }}{{ $noYearSelected ? '' : '?year_id='.$selectedYearId }}" class="btn btn-sm btn-secondary mr-1">
                         <i class="fas fa-chart-pie mr-1"></i> Visual Report
                     </a>
                     <a href="{{ url('admin/exams/import') }}" class="btn btn-sm btn-warning mr-1">
@@ -54,10 +55,12 @@
                                     <button class="btn btn-outline-secondary active" id="btn-all">
                                         All <span class="badge badge-secondary ml-1">{{ $getExaminers->count() }}</span>
                                     </button>
+                                    @if(!$noYearSelected)
                                     <button class="btn btn-outline-primary" id="btn-lastyear">
                                         {{ $lastYear }} Participants
                                         <span class="badge badge-primary ml-1">{{ $getExaminers->where('participated_last_year', true)->count() }}</span>
                                     </button>
+                                    @endif
                                 </div>
                                 <div class="d-flex" style="gap:.4rem;">
                                     <a href="{{ route('exams.email.template') }}" class="btn btn-sm btn-outline-secondary">
@@ -115,7 +118,7 @@
                                         <th>Country</th>
                                         <th>Examiner ID</th>
                                         <th>Exam Group</th>
-                                        <th>{{ $lastYear }} Examined For</th>
+                                        <th>{{ $noYearSelected ? '' : $lastYear.' ' }}Examined For</th>
                                         <th style="width:160px;">Notes</th>
                                         <th>Action</th>
                                     </tr>
@@ -307,6 +310,7 @@ $(function () {
         updateEmailButton();
         syncSelectAll();
     });
+
 
     // ── Programme / Country / Designation / Role dropdowns ───────────────────
     $('#filter-programme').on('change', function () {
