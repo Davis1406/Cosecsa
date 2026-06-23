@@ -127,7 +127,8 @@
                                     @foreach ($getExaminers as $value)
                                     <tr class="examiner-row {{ $value->participated_last_year ? 'last-year-row' : '' }}"
                                         data-desig="{{ $value->examiner_designation ?? '' }}"
-                                        data-role="{{ ucfirst($value->role_name ?? '') }}">
+                                        data-role="{{ ucfirst($value->role_name ?? '') }}"
+                                        data-programmes="{{ $value->all_examined_for ?? '' }}">
                                         <td>
                                             <input type="checkbox" class="row-chk"
                                                    value="{{ $value->examin_id }}"
@@ -365,10 +366,12 @@ $(function () {
             if (!$row.hasClass('last-year-row')) return false;
         }
 
-        // Programme filter — column 7 (Examined For), partial match
+        // Programme filter — match against all-time specialties (data-programmes), not
+        // the year-specific display column, so selecting "MCS" shows all MCS examiners
+        // regardless of which year is currently displayed.
         if (filterProgramme) {
-            var prog = (data[7] || '').toLowerCase();
-            if (prog.indexOf(filterProgramme.toLowerCase()) === -1) return false;
+            var allProgs = ($row.data('programmes') || '').toLowerCase();
+            if (allProgs.indexOf(filterProgramme.toLowerCase()) === -1) return false;
         }
 
         // Country filter — column 4, exact match
