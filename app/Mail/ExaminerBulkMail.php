@@ -28,7 +28,10 @@ class ExaminerBulkMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: new \Illuminate\Mail\Mailables\Address('exams_asst@cosecsa.org', 'COSECSA Examinations'),
+            from: new \Illuminate\Mail\Mailables\Address(
+                config('mail.from.address'),
+                config('mail.from.name'),
+            ),
             subject: $this->emailSubject,
         );
     }

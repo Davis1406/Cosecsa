@@ -215,7 +215,7 @@
 
                     <div class="form-group">
                         <label><strong>From</strong></label>
-                        <input type="text" class="form-control" value="exams_asst@cosecsa.org" readonly
+                        <input type="text" class="form-control" value="{{ config('mail.from.address') }}" readonly
                                style="background:#f8f9fa; color:#6c757d;">
                     </div>
                     <div class="form-group">

@@ -150,7 +150,7 @@ $(function () {
         <hr style="border:none; border-top:1px solid #e0e0e0; margin:10px 0;">
         <p style="font-size:11px; color:#888; margin:0; line-height:1.6;">
           College of Surgeons of East, Central and Southern Africa<br>
-          Email: <a href="mailto:exams_asst@cosecsa.org" style="color:#a02626;">exams_asst@cosecsa.org</a>
+          Email: <a href="mailto:{{ config('mail.from.address') }}" style="color:#a02626;">{{ config('mail.from.address') }}</a>
           &nbsp;|&nbsp; Web: <a href="https://www.cosecsa.org" style="color:#a02626;">www.cosecsa.org</a>
         </p>
       </div>`;

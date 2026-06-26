@@ -86,7 +86,7 @@
       <p style="margin:0; font-size:11.5px; color:#888; line-height:1.6; font-family:Arial,Helvetica,sans-serif;">
         College of Surgeons of East, Central and Southern Africa<br>
         Plot 1009, 157 Olorien, Njiro. Arusha, Tanzania<br>
-        Email: <a href="mailto:exams_asst@cosecsa.org" style="color:#a02626; text-decoration:none;">exams_asst@cosecsa.org</a>
+        Email: <a href="mailto:{{ config('mail.from.address') }}" style="color:#a02626; text-decoration:none;">{{ config('mail.from.address') }}</a>
         &nbsp;|&nbsp;
         Web: <a href="https://www.cosecsa.org" style="color:#a02626; text-decoration:none;">www.cosecsa.org</a>
       </p>
@@ -94,7 +94,7 @@
       <p style="margin:10px 0 0; font-size:10.5px; color:#aaa; font-family:Arial,Helvetica,sans-serif;">
         This email was sent from the COSECSA Management Information System.
         If you believe you received this in error, please contact
-        <a href="mailto:exams_asst@cosecsa.org" style="color:#aaa;">exams_asst@cosecsa.org</a>.
+        <a href="mailto:{{ config('mail.from.address') }}" style="color:#aaa;">{{ config('mail.from.address') }}</a>.
       </p>
     </div>
 
