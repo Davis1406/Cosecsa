@@ -1228,7 +1228,8 @@ public function delete($id)
             'FCS' => 0,
             'MCS' => 0,
             'FCS and MCS' => 0,
-            'Not Available' => 0
+            'Tentative' => 0,
+            'Not Available' => 0,
         ];
 
         foreach ($examiners as $examiner) {
@@ -1249,6 +1250,8 @@ public function delete($id)
 
             if (in_array('Not Available', $availability)) {
                 $availabilityCount['Not Available']++;
+            } elseif (in_array('Tentative', $availability)) {
+                $availabilityCount['Tentative']++;
             } elseif (in_array('FCS', $availability) && in_array('MCS', $availability)) {
                 $availabilityCount['FCS and MCS']++;
             } elseif (in_array('FCS', $availability)) {

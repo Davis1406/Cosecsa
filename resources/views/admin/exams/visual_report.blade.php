@@ -139,14 +139,14 @@
             <div class="row">
                 <div class="col-6 col-md-3">
                     <div class="stat-card">
-                        <div class="stat-number">{{ array_sum($availabilityData) }}</div>
+                        <div class="stat-number">{{ $totalShown }}</div>
                         <div class="stat-label">Total Examiners</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="stat-card">
                         <div class="stat-number">
-                            {{ ($availabilityData['FCS'] ?? 0) + ($availabilityData['MCS'] ?? 0) + ($availabilityData['FCS and MCS'] ?? 0) }}
+                            {{ ($availabilityData['FCS'] ?? 0) + ($availabilityData['MCS'] ?? 0) + ($availabilityData['FCS and MCS'] ?? 0) + ($availabilityData['Tentative'] ?? 0) }}
                         </div>
                         <div class="stat-label">Available</div>
                     </div>
@@ -250,7 +250,7 @@ $(function () {
             data: {
                 labels: raw.availability.labels,
                 datasets: [{ data: raw.availability.data,
-                    backgroundColor: ['#28a745','#17a2b8','#007bff','#dc3545'],
+                    backgroundColor: ['#28a745','#17a2b8','#007bff','#fd7e14','#dc3545'],
                     borderWidth: 2, borderColor: '#fff' }]
             },
             options: {
