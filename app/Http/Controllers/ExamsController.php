@@ -1248,16 +1248,24 @@ public function delete($id)
                 }
             }
 
+            $hasFCS     = in_array('FCS', $availability);
+            $hasMCS     = in_array('MCS', $availability);
+            $hasTentFCS = in_array('Tentative FCS', $availability);
+            $hasTentMCS = in_array('Tentative MCS', $availability);
+            $hasTent    = in_array('Tentative', $availability); // legacy
+
             if (in_array('Not Available', $availability)) {
                 $availabilityCount['Not Available']++;
-            } elseif (in_array('Tentative', $availability)) {
-                $availabilityCount['Tentative']++;
-            } elseif (in_array('FCS', $availability) && in_array('MCS', $availability)) {
+            } elseif ($hasFCS && $hasMCS) {
                 $availabilityCount['FCS and MCS']++;
-            } elseif (in_array('FCS', $availability)) {
+            } elseif ($hasFCS) {
+                // Confirmed FCS (may also have Tentative MCS — still counted as FCS)
                 $availabilityCount['FCS']++;
-            } elseif (in_array('MCS', $availability)) {
+            } elseif ($hasMCS) {
+                // Confirmed MCS (may also have Tentative FCS — still counted as MCS)
                 $availabilityCount['MCS']++;
+            } elseif ($hasTentFCS || $hasTentMCS || $hasTent) {
+                $availabilityCount['Tentative']++;
             }
         }
 
@@ -2548,6 +2556,7 @@ public function delete($id)
         $request->validate([
             'exm_id'            => 'required|integer|exists:examiners,id',
             'exam_availability' => 'required|array|min:1',
+            'exam_availability.*' => 'in:MCS,FCS,Tentative FCS,Tentative MCS,Tentative,Not Available',
             'mcs_shift'         => 'nullable|in:1,2,3',
         ]);
 
@@ -2558,11 +2567,17 @@ public function delete($id)
             ->first();
 
         $availability = $request->exam_availability;
-        // Singleton options override everything else
+        // Not Available overrides everything
         if (in_array('Not Available', $availability)) {
             $availability = ['Not Available'];
-        } elseif (in_array('Tentative', $availability)) {
-            $availability = ['Tentative'];
+        } else {
+            // Server-side conflict resolution: confirmed exam beats tentative for same exam
+            if (in_array('FCS', $availability)) {
+                $availability = array_values(array_filter($availability, fn($v) => $v !== 'Tentative FCS'));
+            }
+            if (in_array('MCS', $availability)) {
+                $availability = array_values(array_filter($availability, fn($v) => $v !== 'Tentative MCS'));
+            }
         }
 
         ExaminerHistory::updateOrCreate(

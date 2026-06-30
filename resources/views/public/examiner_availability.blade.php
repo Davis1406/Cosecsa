@@ -128,6 +128,48 @@
         .shift-btn.active { border-color: #0055a5; background: #0055a5; color: #fff; }
         .shift-btn input[type="radio"] { display: none; }
 
+        /* Tentative sub-options */
+        #tentative-sub {
+            background: #fff8ee;
+            border: 1px dashed #e67e00;
+            border-radius: .4rem;
+            padding: .7rem .9rem;
+            margin-top: .45rem;
+        }
+        .tentative-sub-label {
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            padding: .55rem .7rem;
+            border: 1px dashed #e6a040;
+            border-radius: .35rem;
+            cursor: pointer;
+            font-size: .91rem;
+            margin-bottom: .4rem;
+            background: #fff;
+            transition: border-color .12s, background .12s;
+        }
+        .tentative-sub-label:last-child { margin-bottom: 0; }
+        .tentative-sub-label:hover { border-color: #e67e00; background: #fff3e0; }
+        .tentative-sub-label.selected { border-color: #e67e00; background: #fff3e0; }
+        .tentative-sub-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: #e67e00; flex-shrink: 0; }
+        .tentative-toggle-row {
+            display: flex;
+            align-items: center;
+            gap: .8rem;
+            padding: .75rem 1rem;
+            border: 2px dashed #dee2e6;
+            border-radius: .4rem;
+            cursor: pointer;
+            transition: border-color .12s, background .12s;
+            font-size: .94rem;
+            user-select: none;
+        }
+        .tentative-toggle-row:hover { border-color: #e67e00; background: #fff8ee; }
+        .tentative-toggle-row.has-selection { border-color: #e67e00; background: #fff8ee; }
+        .tentative-arrow { margin-left: auto; color: #e67e00; transition: transform .15s; }
+        .tentative-arrow.open { transform: rotate(180deg); }
+
         .form-group label { font-weight: 600; color: #343a40; margin-bottom: .4rem; }
         footer.page-footer { text-align: center; color: #adb5bd; font-size: .78rem; margin-top: 1.25rem; padding-bottom: 1rem; }
     </style>
@@ -248,16 +290,44 @@
                             </div>
                         </label>
 
-                        {{-- Tentative --}}
-                        <label class="avail-label tentative-label" id="label-Tentative">
-                            <input type="checkbox" name="exam_availability[]" value="Tentative" id="chk-tentative"
-                                   {{ in_array('Tentative', old('exam_availability', [])) ? 'checked' : '' }}>
-                            <span class="avail-icon tentative"><i class="fas fa-question-circle"></i></span>
-                            <div>
-                                <strong>Tentative</strong>
-                                <span class="text-muted" style="font-size:.85rem;"> — I may be available but cannot confirm yet</span>
+                        {{-- Tentative (expandable) --}}
+                        @php
+                            $oldAvail     = old('exam_availability', []);
+                            $tentFcsOld   = in_array('Tentative FCS', $oldAvail);
+                            $tentMcsOld   = in_array('Tentative MCS', $oldAvail);
+                            $tentOldAny   = $tentFcsOld || $tentMcsOld || in_array('Tentative', $oldAvail);
+                        @endphp
+                        <div>
+                            <div class="tentative-toggle-row {{ $tentOldAny ? 'has-selection' : '' }}" id="tentative-toggle">
+                                <span class="avail-icon tentative"><i class="fas fa-question-circle"></i></span>
+                                <div>
+                                    <strong>Tentative</strong>
+                                    <span class="text-muted" style="font-size:.85rem;"> — I may be available but cannot confirm yet</span>
+                                </div>
+                                <i class="fas fa-chevron-down tentative-arrow {{ $tentOldAny ? 'open' : '' }}" id="tentative-arrow"></i>
                             </div>
-                        </label>
+
+                            <div id="tentative-sub" style="{{ $tentOldAny ? '' : 'display:none;' }}">
+                                <label class="tentative-sub-label {{ $tentFcsOld ? 'selected' : '' }}" id="label-TentFCS">
+                                    <input type="checkbox" name="exam_availability[]" value="Tentative FCS"
+                                           id="chk-tentative-fcs" {{ $tentFcsOld ? 'checked' : '' }}>
+                                    <span class="avail-icon fcs"><i class="fas fa-user-md"></i></span>
+                                    <div>
+                                        <strong>Tentative for FCS</strong>
+                                        <span class="text-muted" style="font-size:.83rem;"> — Fellowship, not yet confirmed</span>
+                                    </div>
+                                </label>
+                                <label class="tentative-sub-label {{ $tentMcsOld ? 'selected' : '' }}" id="label-TentMCS">
+                                    <input type="checkbox" name="exam_availability[]" value="Tentative MCS"
+                                           id="chk-tentative-mcs" {{ $tentMcsOld ? 'checked' : '' }}>
+                                    <span class="avail-icon mcs"><i class="fas fa-stethoscope"></i></span>
+                                    <div>
+                                        <strong>Tentative for MCS</strong>
+                                        <span class="text-muted" style="font-size:.83rem;"> — Membership, not yet confirmed</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
 
                         {{-- Not Available --}}
                         <label class="avail-label" id="label-NotAvailable">
@@ -311,22 +381,49 @@ $(function () {
     });
 
     // ── Availability logic ────────────────────────────────────────────────────
-    const chkMCS       = document.getElementById('chk-mcs');
-    const chkFCS       = document.getElementById('chk-fcs');
-    const chkTentative = document.getElementById('chk-tentative');
-    const chkNone      = document.getElementById('chk-not-available');
-    const shiftSection = document.getElementById('shift-section');
-    const allChks      = [chkMCS, chkFCS, chkTentative, chkNone];
+    const chkMCS        = document.getElementById('chk-mcs');
+    const chkFCS        = document.getElementById('chk-fcs');
+    const chkTentFCS    = document.getElementById('chk-tentative-fcs');
+    const chkTentMCS    = document.getElementById('chk-tentative-mcs');
+    const chkNone       = document.getElementById('chk-not-available');
+    const shiftSection  = document.getElementById('shift-section');
+    const tentSub       = document.getElementById('tentative-sub');
+    const tentToggle    = document.getElementById('tentative-toggle');
+    const tentArrow     = document.getElementById('tentative-arrow');
 
-    // Mutual-exclusion rules:
-    // "Not Available"  → clears everything else
-    // "Tentative"      → clears MCS, FCS, Not Available (standalone)
-    // MCS / FCS        → clears Not Available and Tentative
+    // ── Tentative accordion toggle ────────────────────────────────────────────
+    tentToggle.addEventListener('click', function () {
+        const isOpen = tentSub.style.display !== 'none';
+        tentSub.style.display = isOpen ? 'none' : '';
+        tentArrow.classList.toggle('open', !isOpen);
+        if (isOpen) {
+            // Collapsing: uncheck any tentative sub-options
+            chkTentFCS.checked = false;
+            chkTentMCS.checked = false;
+            syncTentativeHighlight();
+        }
+        syncTentativeToggle();
+        // Opening: uncheck Not Available
+        if (!isOpen && chkNone.checked) {
+            chkNone.checked = false;
+            syncHighlight(chkNone);
+        }
+    });
 
-    function syncHighlight() {
-        allChks.forEach(function(chk) {
-            chk.closest('.avail-label').classList.toggle('selected', chk.checked);
-        });
+    // ── Sync helpers ──────────────────────────────────────────────────────────
+    function syncHighlight(chk) {
+        const lbl = chk.closest('.avail-label');
+        if (lbl) lbl.classList.toggle('selected', chk.checked);
+    }
+
+    function syncTentativeHighlight() {
+        document.getElementById('label-TentFCS').classList.toggle('selected', chkTentFCS.checked);
+        document.getElementById('label-TentMCS').classList.toggle('selected', chkTentMCS.checked);
+    }
+
+    function syncTentativeToggle() {
+        const anyTent = chkTentFCS.checked || chkTentMCS.checked;
+        tentToggle.classList.toggle('has-selection', anyTent);
     }
 
     function toggleShift() {
@@ -339,35 +436,65 @@ $(function () {
         }
     }
 
+    // ── Not Available: clears everything ─────────────────────────────────────
     chkNone.addEventListener('change', function () {
         if (this.checked) {
-            chkMCS.checked = false;
+            chkMCS.checked = false; toggleShift();
             chkFCS.checked = false;
-            chkTentative.checked = false;
+            chkTentFCS.checked = false;
+            chkTentMCS.checked = false;
+            tentSub.style.display = 'none';
+            tentArrow.classList.remove('open');
+            syncTentativeHighlight();
+            syncTentativeToggle();
         }
-        toggleShift();
-        syncHighlight();
+        syncHighlight(chkMCS);
+        syncHighlight(chkFCS);
+        syncHighlight(this);
     });
 
-    chkTentative.addEventListener('change', function () {
-        if (this.checked) {
-            chkMCS.checked = false;
-            chkFCS.checked = false;
-            chkNone.checked = false;
-        }
-        toggleShift();
-        syncHighlight();
-    });
-
+    // ── MCS (confirmed): uncheck Tentative MCS (same exam conflict) ───────────
     chkMCS.addEventListener('change', function () {
-        if (this.checked) { chkNone.checked = false; chkTentative.checked = false; }
+        if (this.checked) {
+            chkNone.checked = false; syncHighlight(chkNone);
+            chkTentMCS.checked = false;
+            syncTentativeHighlight();
+            syncTentativeToggle();
+        }
         toggleShift();
-        syncHighlight();
+        syncHighlight(this);
     });
 
+    // ── FCS (confirmed): uncheck Tentative FCS (same exam conflict) ───────────
     chkFCS.addEventListener('change', function () {
-        if (this.checked) { chkNone.checked = false; chkTentative.checked = false; }
-        syncHighlight();
+        if (this.checked) {
+            chkNone.checked = false; syncHighlight(chkNone);
+            chkTentFCS.checked = false;
+            syncTentativeHighlight();
+            syncTentativeToggle();
+        }
+        syncHighlight(this);
+    });
+
+    // ── Tentative FCS: uncheck confirmed FCS (same exam conflict) ────────────
+    chkTentFCS.addEventListener('change', function () {
+        if (this.checked) {
+            chkFCS.checked = false; syncHighlight(chkFCS);
+            chkNone.checked = false; syncHighlight(chkNone);
+        }
+        syncTentativeHighlight();
+        syncTentativeToggle();
+    });
+
+    // ── Tentative MCS: uncheck confirmed MCS (same exam conflict) ────────────
+    chkTentMCS.addEventListener('change', function () {
+        if (this.checked) {
+            chkMCS.checked = false; toggleShift();
+            syncHighlight(chkMCS);
+            chkNone.checked = false; syncHighlight(chkNone);
+        }
+        syncTentativeHighlight();
+        syncTentativeToggle();
     });
 
     // Shift button highlight
@@ -379,7 +506,11 @@ $(function () {
     });
 
     // Init
-    syncHighlight();
+    syncHighlight(chkMCS);
+    syncHighlight(chkFCS);
+    syncHighlight(chkNone);
+    syncTentativeHighlight();
+    syncTentativeToggle();
     toggleShift();
 });
 </script>
