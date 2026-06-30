@@ -2183,9 +2183,11 @@ public function delete($id)
     public function viewCandidateStationResult($candidate_id, $station_id)
     {
         $header_title = 'Station Results';
-        $candidateResult = \DB::table('mcs_results')
+
+        // Fetch all examiner entries for this candidate+station (multiple examiners possible)
+        $allResults = \DB::table('mcs_results')
             ->join('candidates', 'mcs_results.candidate_id', '=', 'candidates.id')
-            ->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+            ->join('examiners_groups', 'mcs_results.group_id', '=', 'examiners_groups.id')
             ->join('examiners', 'examiners.id', '=', 'mcs_results.examiner_id')
             ->join('users', 'examiners.user_id', '=', 'users.id')
             ->select(
@@ -2201,9 +2203,11 @@ public function delete($id)
             )
             ->where('mcs_results.candidate_id', $candidate_id)
             ->where('mcs_results.station_id', $station_id)
-            ->first();
+            ->get();
 
-        return view('admin.exams.station_results', compact('candidateResult', 'header_title'));
+        $candidateResult = $allResults->first();
+
+        return view('admin.exams.station_results', compact('candidateResult', 'allResults', 'header_title'));
     }
 
     public function viewGsStationResult($candidate_id, $station_id)

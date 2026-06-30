@@ -27,51 +27,53 @@
             </div>
             <div class="card-body">
                 @if ($candidateResult)
-                    <table class="table table-bordered" style="width: 100%; m  argin: 0 auto;">
+                    {{-- Candidate + station header (shared across all examiners) --}}
+                    <table class="table table-bordered mb-3" style="width:100%;">
                         <tr>
-                            <th>Candidate ID</th>
+                            <th style="width:200px;">Candidate ID</th>
                             <td>{{ $candidateResult->candidate_name }}</td>
                         </tr>
                         <tr>
-                            <th>Examiner ID</th>
-                            <td>{{ $candidateResult->examin_id }} - {{$candidateResult->examiner_name}}</td>
-                        </tr>
-                        <tr>
-                            <th>Group Name</th>
+                            <th>Group</th>
                             <td>Group {{ $candidateResult->group_name }}</td>
                         </tr>
                         <tr>
-                            <th>Station </th>
+                            <th>Station</th>
                             <td>Station {{ $candidateResult->station_id }}</td>
                         </tr>
-                        @php
-                            $marks = json_decode($candidateResult->question_mark, true); 
-                        @endphp
-                        @if(is_array($marks))
-                            @foreach($marks as $index => $mark)
-                                <tr>
-                                    <th>Question {{ $index + 1 }}</th>
-                                    <td>{{ $mark }}</td>
-                                </tr>
-                            @endforeach
-                        @else
-                            <tr>
-                                <td colspan="2">No question marks available</td>
-                            </tr>
-                        @endif
-                        <tr>
-                            <th>Total Marks</th>
-                            <td><b>{{ $candidateResult->total }}</b></td>
-                        </tr>
-                        <tr>
-                            <th>Overall Grade</th>
-                            <td>{{ $candidateResult->overall }}</td>
-                        </tr>
-                        <tr>
-                            <th>Remarks</th>
-                            <td>{{ $candidateResult->remarks }}</td>
-                        </tr>
                     </table>
+
+                    {{-- One block per examiner --}}
+                    @foreach ($allResults ?? [$candidateResult] as $i => $result)
+                        <h6 class="mt-3 mb-1" style="color:#a02626;">
+                            Examiner {{ $i + 1 }}: {{ $result->examin_id }} — {{ $result->examiner_name }}
+                        </h6>
+                        <table class="table table-bordered mb-3" style="width:100%;">
+                            @php $marks = json_decode($result->question_mark, true); @endphp
+                            @if(is_array($marks))
+                                @foreach($marks as $index => $mark)
+                                    <tr>
+                                        <th style="width:200px;">Question {{ $index + 1 }}</th>
+                                        <td>{{ $mark }}</td>
+                                    </tr>
+                                @endforeach
+                            @else
+                                <tr><td colspan="2">No question marks available</td></tr>
+                            @endif
+                            <tr>
+                                <th>Total Marks</th>
+                                <td><b>{{ $result->total }}</b></td>
+                            </tr>
+                            <tr>
+                                <th>Overall Grade</th>
+                                <td>{{ $result->overall }}</td>
+                            </tr>
+                            <tr>
+                                <th>Remarks</th>
+                                <td>{{ $result->remarks }}</td>
+                            </tr>
+                        </table>
+                    @endforeach
                 @else
                     <p>No result data found for this candidate.</p>
                 @endif
