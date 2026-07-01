@@ -124,7 +124,12 @@
                                             data-gender="{{ $value->gender ?? '' }}"
                                             data-alumni="{{ $value->is_alumni ?? 0 }}">
                                             <td class="row-num"></td>
-                                            <td>{{ $value->fellow_name ?? '-' }}</td>
+                                            <td>
+                                                {{ $value->fellow_name ?? '-' }}
+                                                @if(!empty($value->second_fcs_specialty))
+                                                    <span class="badge ml-1 px-2" style="background:#f0f7e8; color:#3a7a1a; border:1px solid #b8d98e; font-size:.65rem; vertical-align:middle;" title="Dual FCS: {{ $value->second_fcs_specialty }} ({{ $value->second_fcs_year }})">Dual FCS</span>
+                                                @endif
+                                            </td>
                                             <td>{{ $value->personal_email ?? '-' }}</td>
                                             <td>{{ $value->country_name ?? '-' }}</td>
                                             <td>{{ $value->current_specialty ?: ($value->programme_name ? preg_replace('/^FCS\s+/i','', $value->programme_name) : '-') }}</td>
