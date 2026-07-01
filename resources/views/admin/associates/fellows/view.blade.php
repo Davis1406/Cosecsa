@@ -287,8 +287,13 @@
                             @if($fellow->is_promoted == '1')
                                 <span class="tag-pill tag-green">MCS Passed</span>
                             @endif
-                            @if($fellow->second_fcs_specialty ?? null)
-                                <span class="tag-pill" style="background:#f0f7e8; color:#3a7a1a; border:1px solid #b8d98e;">Dual FCS</span>
+                            @php
+                                $fcsCount = 1
+                                    + (!empty($fellow->second_fcs_specialty) ? 1 : 0)
+                                    + (!empty($fellow->third_fcs_specialty)  ? 1 : 0);
+                            @endphp
+                            @if($fcsCount > 1)
+                                <span class="tag-pill" style="background:#f0f7e8; color:#3a7a1a; border:1px solid #b8d98e;">{{ $fcsCount }} FCS Specialties</span>
                             @endif
                         </div>
 
@@ -487,23 +492,35 @@
                         <div class="field-row"><span class="field-lbl">Fellowship Year</span><span class="field-val">{{ $fellow->fellowship_year ?? '—' }}</span></div>
                         <div class="field-row"><span class="field-lbl">Candidate Number</span><span class="field-val">{{ $fellow->candidate_number ?? '—' }}</span></div>
 
-                        @if(($fellow->second_fcs_specialty ?? null) || ($fellow->fellowship_type ?? null) === 'Fellow by Examination')
+                        @php
+                            $fcsSpecialties = [];
+                            if($fellow->fellowship_year)
+                                $fcsSpecialties[] = ['name' => $fellow->current_specialty ?? 'FCS', 'year' => $fellow->fellowship_year];
+                            if(!empty($fellow->second_fcs_specialty))
+                                $fcsSpecialties[] = ['name' => $fellow->second_fcs_specialty, 'year' => $fellow->second_fcs_year];
+                            if(!empty($fellow->third_fcs_specialty))
+                                $fcsSpecialties[] = ['name' => $fellow->third_fcs_specialty, 'year' => $fellow->third_fcs_year];
+                        @endphp
+                        @if(count($fcsSpecialties) > 1)
                         <p class="sect-div">FCS Qualifications</p>
                         <div class="field-row">
-                            <span class="field-lbl">FCS Specialty</span>
+                            <span class="field-lbl">FCS Specialties</span>
                             <span class="field-val">
-                                @if($fellow->fellowship_year)
-                                    <span class="badge mr-1 px-2 py-1" style="background:#e8f4fd; color:#1a6fa8; border:1px solid #b8d9f0; font-size:.78rem;">
-                                        {{ $fellow->current_specialty ?? 'FCS' }}
-                                        <span class="ml-1 text-muted" style="font-weight:400;">({{ $fellow->fellowship_year }})</span>
+                                @foreach($fcsSpecialties as $i => $spec)
+                                    @php
+                                        $colors = [
+                                            ['bg'=>'#e8f4fd','color'=>'#1a6fa8','border'=>'#b8d9f0'],
+                                            ['bg'=>'#f0f7e8','color'=>'#3a7a1a','border'=>'#b8d98e'],
+                                            ['bg'=>'#fdf3e8','color'=>'#8a5a1a','border'=>'#e8c98e'],
+                                        ];
+                                        $c = $colors[$i] ?? $colors[0];
+                                    @endphp
+                                    <span class="badge mr-1 mb-1 px-2 py-1"
+                                          style="background:{{ $c['bg'] }}; color:{{ $c['color'] }}; border:1px solid {{ $c['border'] }}; font-size:.78rem; display:inline-block;">
+                                        {{ $spec['name'] }}
+                                        <span class="ml-1" style="font-weight:400; opacity:.75;">({{ $spec['year'] }})</span>
                                     </span>
-                                @endif
-                                @if($fellow->second_fcs_specialty ?? null)
-                                    <span class="badge px-2 py-1" style="background:#f0f7e8; color:#3a7a1a; border:1px solid #b8d98e; font-size:.78rem;">
-                                        {{ $fellow->second_fcs_specialty }}
-                                        <span class="ml-1 text-muted" style="font-weight:400;">({{ $fellow->second_fcs_year }})</span>
-                                    </span>
-                                @endif
+                                @endforeach
                             </span>
                         </div>
                         @endif

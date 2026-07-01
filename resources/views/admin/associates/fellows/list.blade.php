@@ -125,10 +125,25 @@
                                             data-alumni="{{ $value->is_alumni ?? 0 }}">
                                             <td class="row-num"></td>
                                             <td>
-                                                {{ $value->fellow_name ?? '-' }}
-                                                @if(!empty($value->second_fcs_specialty))
-                                                    <span class="badge ml-1 px-2" style="background:#f0f7e8; color:#3a7a1a; border:1px solid #b8d98e; font-size:.65rem; vertical-align:middle;" title="Dual FCS: {{ $value->second_fcs_specialty }} ({{ $value->second_fcs_year }})">Dual FCS</span>
-                                                @endif
+                                                @php
+                                                    $specCount = 1
+                                                        + (!empty($value->second_fcs_specialty) ? 1 : 0)
+                                                        + (!empty($value->third_fcs_specialty)  ? 1 : 0);
+                                                    $multiSpec = $specCount > 1;
+                                                @endphp
+                                                <span style="position:relative; display:inline-block;">
+                                                    @if($multiSpec)
+                                                        <span style="
+                                                            position:absolute; top:-8px; right:-14px;
+                                                            background:#3a7a1a; color:#fff;
+                                                            border-radius:50%; width:16px; height:16px;
+                                                            font-size:.6rem; font-weight:700;
+                                                            display:flex; align-items:center; justify-content:center;
+                                                            line-height:1; z-index:1;
+                                                        " title="{{ $specCount }} FCS specialties">{{ $specCount }}</span>
+                                                    @endif
+                                                    <span style="{{ $multiSpec ? 'color:#3a7a1a; font-weight:600;' : '' }}">{{ $value->fellow_name ?? '-' }}</span>
+                                                </span>
                                             </td>
                                             <td>{{ $value->personal_email ?? '-' }}</td>
                                             <td>{{ $value->country_name ?? '-' }}</td>
