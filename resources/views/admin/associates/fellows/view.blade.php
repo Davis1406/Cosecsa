@@ -287,6 +287,9 @@
                             @if($fellow->is_promoted == '1')
                                 <span class="tag-pill tag-green">MCS Passed</span>
                             @endif
+                            @if($fellow->second_fcs_specialty ?? null)
+                                <span class="tag-pill" style="background:#f0f7e8; color:#3a7a1a; border:1px solid #b8d98e;">Dual FCS</span>
+                            @endif
                         </div>
 
                         {{-- Custom assigned labels --}}
@@ -483,6 +486,27 @@
                         <div class="field-row"><span class="field-lbl">MCS Qualification Year</span><span class="field-val">{{ $fellow->mcs_qualification_year ?? '—' }}</span></div>
                         <div class="field-row"><span class="field-lbl">Fellowship Year</span><span class="field-val">{{ $fellow->fellowship_year ?? '—' }}</span></div>
                         <div class="field-row"><span class="field-lbl">Candidate Number</span><span class="field-val">{{ $fellow->candidate_number ?? '—' }}</span></div>
+
+                        @if(($fellow->second_fcs_specialty ?? null) || ($fellow->fellowship_type ?? null) === 'Fellow by Examination')
+                        <p class="sect-div">FCS Qualifications</p>
+                        <div class="field-row">
+                            <span class="field-lbl">FCS Specialty</span>
+                            <span class="field-val">
+                                @if($fellow->fellowship_year)
+                                    <span class="badge mr-1 px-2 py-1" style="background:#e8f4fd; color:#1a6fa8; border:1px solid #b8d9f0; font-size:.78rem;">
+                                        {{ $fellow->current_specialty ?? 'FCS' }}
+                                        <span class="ml-1 text-muted" style="font-weight:400;">({{ $fellow->fellowship_year }})</span>
+                                    </span>
+                                @endif
+                                @if($fellow->second_fcs_specialty ?? null)
+                                    <span class="badge px-2 py-1" style="background:#f0f7e8; color:#3a7a1a; border:1px solid #b8d98e; font-size:.78rem;">
+                                        {{ $fellow->second_fcs_specialty }}
+                                        <span class="ml-1 text-muted" style="font-weight:400;">({{ $fellow->second_fcs_year }})</span>
+                                    </span>
+                                @endif
+                            </span>
+                        </div>
+                        @endif
 
                         <p class="sect-div">Training</p>
                         <div class="field-row"><span class="field-lbl">Supervised by</span><span class="field-val">{{ $fellow->supervised_by ?? '—' }}</span></div>
