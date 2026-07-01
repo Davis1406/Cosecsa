@@ -142,7 +142,10 @@
                                                             line-height:1; z-index:1;
                                                         " title="{{ $specCount }} FCS specialties">{{ $specCount }}</span>
                                                     @endif
-                                                    <span style="{{ $multiSpec ? 'color:#3a7a1a; font-weight:600;' : '' }}">{{ $value->fellow_name ?? '-' }}</span>
+                                                    <a href="{{ url('admin/associates/fellows/view/' . ($value->fellow_id ?? 0)) }}"
+                                                       style="{{ $multiSpec ? 'color:#3a7a1a; font-weight:600;' : 'color:#222;' }} text-decoration:none;"
+                                                       onmouseover="this.style.textDecoration='underline'"
+                                                       onmouseout="this.style.textDecoration='none'">{{ $value->fellow_name ?? '-' }}</a>
                                                 </span>
                                             </td>
                                             <td>{{ $value->personal_email ?? '-' }}</td>
