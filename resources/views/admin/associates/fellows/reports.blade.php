@@ -258,8 +258,9 @@ $(document).ready(function () {
     if (yr)  params.year        = yr;
     if (gen) params.gender      = gen;
     if (alm !== '') params.is_alumni = alm;
+    params._t = Date.now();
     var qs = $.param(params);
-    return '{{ url("admin/associates/fellows/reports/data") }}' + (qs ? '?' + qs : '');
+    return '{{ url("admin/associates/fellows/reports/data") }}' + '?' + qs;
   }
 
   function destroyChart(key) {
@@ -267,7 +268,7 @@ $(document).ready(function () {
   }
 
   function loadReport() {
-    fetch(buildUrl())
+    fetch(buildUrl(), { cache: 'no-store' })
       .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
       .then(function(d){
         // KPIs

@@ -102,8 +102,8 @@ class FellowsController extends Controller
             ->whereNotNull('current_specialty')->where('current_specialty', '!=', '')
             ->groupBy('current_specialty')->orderByDesc('value')->limit(10)->get();
 
-        // Annual subscriptions status by year (2015–2026)
-        $subYears = range(2015, 2026);
+        // Annual subscriptions status by year (2015–current)
+        $subYears = range(2015, (int) date('Y'));
         $subData  = [];
         foreach ($subYears as $yr) {
             $row = DB::table('fellow_subscriptions')
@@ -120,10 +120,10 @@ class FellowsController extends Controller
             ];
         }
 
-        // Exam pass/fail by year & part
+        // Exam pass/fail by year & part (last 5 years)
         $examStats = DB::table('fellow_exam_results')
             ->select('year', 'part', 'result', DB::raw('COUNT(*) as cnt'))
-            ->whereIn('year', [2021, 2022, 2023, 2024])
+            ->where('year', '>=', (int) date('Y') - 4)
             ->whereNotNull('result')
             ->where('result', '!=', '')
             ->groupBy('year', 'part', 'result')
@@ -156,7 +156,8 @@ class FellowsController extends Controller
             'subscriptions'=> $subData,
             'examStats'    => $examStats,
             'countryTable' => $countryTable,
-        ]);
+        ])->header('Cache-Control', 'no-store, no-cache, must-revalidate')
+          ->header('Pragma', 'no-cache');
     }
 
     public function view($id)
