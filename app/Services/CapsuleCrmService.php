@@ -126,6 +126,18 @@ class CapsuleCrmService
     }
 
     /**
+     * Get the total number of contacts in Capsule CRM.
+     */
+    public function getTotalContacts(): ?int
+    {
+        $response = $this->http()->get("{$this->baseUrl}/parties", ['perPage' => 1]);
+        if (! $response->successful()) {
+            return null;
+        }
+        return $response->json('meta.total') ?? count($response->json('parties', []));
+    }
+
+    /**
      * Get list of all tags in the account.
      */
     public function getTags(): array

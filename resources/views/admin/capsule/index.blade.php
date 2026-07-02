@@ -23,42 +23,64 @@
     <section class="content">
         <div class="container-fluid">
 
-            {{-- Status Cards --}}
+            {{-- Comparison Cards --}}
             <div class="row mb-4">
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-primary">
+                        <div class="inner">
+                            <h3>{{ $capsuleTotal !== null ? number_format($capsuleTotal) : '—' }}</h3>
+                            <p>Contacts in Capsule CRM</p>
+                        </div>
+                        <div class="icon"><i class="fas fa-address-book"></i></div>
+                        <a href="https://cosecsatrainees.capsulecrm.com/parties" target="_blank" class="small-box-footer">
+                            View in Capsule <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    </div>
+                </div>
                 <div class="col-lg-3 col-6">
                     <div class="small-box bg-info">
                         <div class="inner">
                             <h3>{{ number_format($totalFellows) }}</h3>
-                            <p>Total Fellows</p>
+                            <p>Fellows in MIS</p>
                         </div>
                         <div class="icon"><i class="fas fa-users"></i></div>
+                        <a href="{{ url('admin/associates/fellows/list') }}" class="small-box-footer">
+                            View Fellows <i class="fas fa-arrow-circle-right"></i>
+                        </a>
                     </div>
                 </div>
                 <div class="col-lg-3 col-6">
-                    <div class="small-box bg-success">
+                    @php
+                        $diffAbs = $difference !== null ? abs($difference) : null;
+                        $diffColor = ($difference === 0) ? 'bg-success' : 'bg-warning';
+                        $diffLabel = $difference === null ? '—'
+                            : ($difference === 0 ? 'In sync' : ($difference > 0 ? "+{$difference} in MIS" : abs($difference).' more in Capsule'));
+                    @endphp
+                    <div class="small-box {{ $diffColor }}">
                         <div class="inner">
-                            <h3>{{ $lastSync ? number_format($lastSync->created) : '—' }}</h3>
-                            <p>Created in Last Sync</p>
+                            <h3>{{ $diffAbs !== null ? number_format($diffAbs) : '—' }}</h3>
+                            <p>Difference</p>
                         </div>
-                        <div class="icon"><i class="fas fa-user-plus"></i></div>
+                        <div class="icon"><i class="fas fa-not-equal"></i></div>
+                        <span class="small-box-footer">{{ $diffLabel }}</span>
                     </div>
                 </div>
                 <div class="col-lg-3 col-6">
-                    <div class="small-box bg-warning">
-                        <div class="inner">
-                            <h3>{{ $lastSync ? number_format($lastSync->updated) : '—' }}</h3>
-                            <p>Updated in Last Sync</p>
+                    <div class="small-box {{ $lastSync ? 'bg-secondary' : 'bg-light' }}">
+                        <div class="inner" style="{{ $lastSync ? '' : 'color:#555' }}">
+                            <h3 style="font-size:1.4rem;">{{ $lastSync ? \Carbon\Carbon::parse($lastSync->synced_at)->diffForHumans() : 'Never' }}</h3>
+                            <p>Last Sync</p>
                         </div>
-                        <div class="icon"><i class="fas fa-sync-alt"></i></div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-danger">
-                        <div class="inner">
-                            <h3>{{ $lastSync ? number_format($lastSync->failed) : '—' }}</h3>
-                            <p>Failed in Last Sync</p>
-                        </div>
-                        <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="icon"><i class="fas fa-history"></i></div>
+                        <span class="small-box-footer">
+                            @if($lastSync)
+                                {{ number_format($lastSync->created) }} created &middot;
+                                {{ number_format($lastSync->updated) }} updated &middot;
+                                {{ number_format($lastSync->failed) }} failed
+                            @else
+                                No sync run yet
+                            @endif
+                        </span>
                     </div>
                 </div>
             </div>
@@ -71,29 +93,18 @@
                         </div>
                         <div class="card-body">
                             <p class="text-muted">
-                                This sync will push <strong>all {{ number_format($totalFellows) }} fellows</strong>
-                                ({{ number_format($withEmail) }} with email, {{ number_format($withoutEmail) }} without)
-                                from the MIS to your Capsule CRM account
-                                (<a href="https://cosecsatrainees.capsulecrm.com/parties" target="_blank">cosecsatrainees.capsulecrm.com</a>).
+                                This will sync <strong>all {{ number_format($totalFellows) }} MIS fellows</strong>
+                                ({{ number_format($withEmail) }} with email · {{ number_format($withoutEmail) }} without)
+                                into your Capsule CRM
+                                (<a href="https://cosecsatrainees.capsulecrm.com/parties" target="_blank">{{ $capsuleTotal !== null ? number_format($capsuleTotal).' contacts currently' : 'view' }}</a>).
                             </p>
                             <ul class="text-muted mb-3" style="font-size:0.92em;">
-                                <li>Fellows with email: matched in Capsule by <strong>email address</strong>.</li>
-                                <li>Fellows without email: matched by <strong>full name</strong> (first + last) as fallback.</li>
-                                <li>If no match is found in either case, a <strong>new contact is created</strong>.</li>
-                                <li>Tags are set based on category (Fellow, Associate Fellow, Overseas Fellow, etc.) and COSECSA region.</li>
-                                <li>Sync respects the Capsule API rate limit (~4 req/s). Expect ~8–10 min for {{ number_format($totalFellows) }} records.</li>
+                                <li>Fellows <strong>with email</strong>: matched in Capsule by email address.</li>
+                                <li>Fellows <strong>without email</strong>: matched by full name (first + last) as fallback.</li>
+                                <li>No match found → a <strong>new contact is created</strong>.</li>
+                                <li>Tags assigned from MIS category + COSECSA region (see table →).</li>
+                                <li>Rate-limited to ~4 req/s. Expect ~8–10 min for {{ number_format($totalFellows) }} records.</li>
                             </ul>
-
-                            @if($lastSync)
-                            <div class="alert alert-secondary py-2">
-                                <i class="fas fa-history mr-1"></i>
-                                Last sync: <strong>{{ \Carbon\Carbon::parse($lastSync->synced_at)->diffForHumans() }}</strong>
-                                — {{ number_format($lastSync->total) }} processed,
-                                {{ number_format($lastSync->created) }} created,
-                                {{ number_format($lastSync->updated) }} updated,
-                                {{ number_format($lastSync->failed) }} failed.
-                            </div>
-                            @endif
 
                             <button id="syncBtn" class="btn btn-primary btn-lg">
                                 <i class="fas fa-sync-alt mr-2"></i>Start Full Sync

@@ -21,20 +21,24 @@ class CapsuleSyncController extends Controller
      */
     public function index()
     {
-        $totalFellows = DB::table('fellows')->count();
-
-        $withEmail    = DB::table('fellows')
+        $totalFellows  = DB::table('fellows')->count();
+        $withEmail     = DB::table('fellows')
             ->whereNotNull('personal_email')
             ->where('personal_email', '!=', '')
             ->count();
+        $withoutEmail  = $totalFellows - $withEmail;
 
-        $withoutEmail = $totalFellows - $withEmail;
+        $capsuleTotal  = $this->capsule->getTotalContacts(); // null if API unreachable
+        $difference    = ($capsuleTotal !== null) ? ($totalFellows - $capsuleTotal) : null;
 
         $lastSync = DB::table('capsule_sync_log')
             ->orderByDesc('synced_at')
             ->first();
 
-        return view('admin.capsule.index', compact('totalFellows', 'withEmail', 'withoutEmail', 'lastSync'));
+        return view('admin.capsule.index', compact(
+            'totalFellows', 'withEmail', 'withoutEmail',
+            'capsuleTotal', 'difference', 'lastSync'
+        ));
     }
 
     /**
