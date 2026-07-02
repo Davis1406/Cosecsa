@@ -127,14 +127,31 @@ class CapsuleCrmService
 
     /**
      * Get the total number of contacts in Capsule CRM.
+     * Capsule API has no total-count endpoint, so we paginate at 100/page and count.
+     * Result is cached for 1 hour to avoid hammering the API on every page load.
      */
     public function getTotalContacts(): ?int
     {
-        $response = $this->http()->get("{$this->baseUrl}/parties", ['perPage' => 1]);
-        if (! $response->successful()) {
-            return null;
-        }
-        return $response->json('meta.total') ?? count($response->json('parties', []));
+        return \Illuminate\Support\Facades\Cache::remember('capsule_total_contacts', 3600, function () {
+            $total = 0;
+            $page  = 1;
+            do {
+                $response = $this->http()->get("{$this->baseUrl}/parties", [
+                    'perPage' => 100,
+                    'page'    => $page,
+                ]);
+                if (! $response->successful()) {
+                    return null;
+                }
+                $records = $response->json('parties', []);
+                $total  += count($records);
+                $hasMore = $response->header('X-Pagination-Has-More') === 'true';
+                $page++;
+                usleep(50000); // 50ms between pages — well within rate limit
+            } while ($hasMore);
+
+            return $total;
+        });
     }
 
     /**

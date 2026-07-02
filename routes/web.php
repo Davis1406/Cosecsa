@@ -169,9 +169,11 @@ Route::get('admin/associates/fellows/subscriptions/{id}',  [FellowsController::c
 Route::post('admin/associates/fellows/subscriptions/{id}', [FellowsController::class,'storeSubscription'])->name('fellows.subscriptions.store');
 
 // Capsule CRM Integration
-Route::get('admin/capsule',           [CapsuleSyncController::class, 'index'])->name('admin.capsule.index');
-Route::post('admin/capsule/sync',     [CapsuleSyncController::class, 'sync'])->name('admin.capsule.sync');
-Route::post('admin/capsule/sync/{id}',[CapsuleSyncController::class, 'syncOne'])->name('admin.capsule.sync.one');
+Route::get('admin/capsule',            [CapsuleSyncController::class, 'index'])->name('admin.capsule.index');
+Route::get('admin/capsule/count',      [CapsuleSyncController::class, 'capsuleCount'])->name('admin.capsule.count');
+Route::get('admin/capsule/status',     [CapsuleSyncController::class, 'status'])->name('admin.capsule.status');
+Route::post('admin/capsule/sync',      [CapsuleSyncController::class, 'sync'])->name('admin.capsule.sync');
+Route::post('admin/capsule/sync/{id}', [CapsuleSyncController::class, 'syncOne'])->name('admin.capsule.sync.one');
 
 // Fellow Labels Settings (Admin)
 Route::get('admin/settings/fellow-labels',          [FellowLabelController::class,'index'])->name('admin.settings.fellow-labels');
