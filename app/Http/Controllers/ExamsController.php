@@ -1225,7 +1225,8 @@ public function delete($id)
                 // 3. OR admin assigned them to a real group for this year
                 $query->where(function ($q) use ($yearId) {
                           $q->where('examiners_history.availability_year_id', $yearId)
-                            ->whereNotNull('examiners_history.exam_availability');
+                            ->whereNotNull('examiners_history.exam_availability')
+                            ->whereRaw("JSON_LENGTH(examiners_history.exam_availability) > 0");
                       })
                       ->orWhereNotNull('exams_shifts.shift')
                       ->orWhereNotNull('exams_groups.group_id');
