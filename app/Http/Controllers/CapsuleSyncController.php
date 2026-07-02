@@ -18,7 +18,6 @@ class CapsuleSyncController extends Controller
 
     /**
      * Show the Capsule CRM sync dashboard.
-     * Capsule contact count is fetched lazily via JS to keep page load fast.
      */
     public function index()
     {
@@ -29,28 +28,27 @@ class CapsuleSyncController extends Controller
             ->count();
         $withoutEmail = $totalFellows - $withEmail;
 
+        // Last completed sync (for counts)
         $lastSync = DB::table('capsule_sync_log')
+            ->whereIn('status', ['completed', 'failed'])
             ->orderByDesc('synced_at')
             ->first();
 
+        // Currently running sync (for progress bar)
         $running = DB::table('capsule_sync_log')
             ->where('status', 'running')
             ->orderByDesc('id')
             ->first();
 
-        return view('admin.capsule.index', compact(
-            'totalFellows', 'withEmail', 'withoutEmail', 'lastSync', 'running'
-        ));
-    }
+        // Local import of Davis Fellows list from Capsule
+        $capsuleTotal = DB::table('capsule_contacts')->count() ?: null;
+        $lastImport   = DB::table('capsule_contacts')->max('imported_at');
+        $difference   = ($capsuleTotal !== null) ? ($totalFellows - $capsuleTotal) : null;
 
-    /**
-     * Return the live Capsule contact count (called via AJAX on page load).
-     * Cached for 1 hour.
-     */
-    public function capsuleCount()
-    {
-        $count = $this->capsule->getTotalContacts();
-        return response()->json(['count' => $count]);
+        return view('admin.capsule.index', compact(
+            'totalFellows', 'withEmail', 'withoutEmail',
+            'lastSync', 'running', 'capsuleTotal', 'lastImport', 'difference'
+        ));
     }
 
     /**
@@ -123,6 +121,43 @@ class CapsuleSyncController extends Controller
             'updated' => $last->updated ?? 0,
             'failed'  => $last->failed  ?? 0,
         ]);
+    }
+
+    /**
+     * List imported Capsule contacts from local table.
+     */
+    public function contacts(Request $request)
+    {
+        $search = $request->input('q');
+
+        $query = DB::table('capsule_contacts')->orderBy('last_name')->orderBy('first_name');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name',  'like', "%{$search}%")
+                  ->orWhere('email',      'like', "%{$search}%")
+                  ->orWhere('tags',       'like', "%{$search}%");
+            });
+        }
+
+        $contacts    = $query->paginate(50)->withQueryString();
+        $totalLocal  = DB::table('capsule_contacts')->count();
+        $lastImport  = DB::table('capsule_contacts')->max('imported_at');
+
+        return view('admin.capsule.contacts', compact('contacts', 'totalLocal', 'lastImport', 'search'));
+    }
+
+    /**
+     * Launch the contact import as a background Artisan command.
+     */
+    public function importContacts(Request $request)
+    {
+        $artisan = base_path('artisan');
+        $log     = storage_path('logs/capsule-import.log');
+        exec("nohup php {$artisan} capsule:import-contacts >> {$log} 2>&1 &");
+
+        return response()->json(['success' => true, 'message' => 'Import started in background.']);
     }
 
     /**
