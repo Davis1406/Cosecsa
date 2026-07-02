@@ -70,7 +70,9 @@
                             <p>Difference</p>
                         </div>
                         <div class="icon"><i class="fas fa-not-equal"></i></div>
-                        <span class="small-box-footer">{{ $diffLabel }}</span>
+                        <a href="{{ url('admin/capsule/differences') }}" class="small-box-footer">
+                            {{ $diffLabel }} — View details <i class="fas fa-arrow-circle-right"></i>
+                        </a>
                     </div>
                 </div>
 

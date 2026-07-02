@@ -52,6 +52,49 @@ class CapsuleSyncController extends Controller
     }
 
     /**
+     * Show MIS fellows not found in the local Capsule contacts table.
+     */
+    public function differences(Request $request)
+    {
+        $search = $request->input('q');
+
+        // Fellows with no email match AND no name match in capsule_contacts
+        $query = DB::table('fellows as f')
+            ->join('categories as cat', 'f.category_id', '=', 'cat.id')
+            ->leftJoin('countries as co', 'f.country_id', '=', 'co.id')
+            ->select([
+                'f.id', 'f.firstname', 'f.lastname', 'f.personal_email',
+                'f.phone_number', 'f.status', 'f.fellowship_year',
+                'cat.category_name', 'co.country_name',
+            ])
+            ->whereNotExists(function ($q) {
+                $q->from('capsule_contacts as cc')
+                  ->whereRaw('LOWER(TRIM(f.personal_email)) = LOWER(TRIM(cc.email))')
+                  ->whereRaw("f.personal_email IS NOT NULL AND f.personal_email != ''");
+            })
+            ->whereNotExists(function ($q) {
+                $q->from('capsule_contacts as cc')
+                  ->whereRaw('LOWER(TRIM(f.firstname)) = LOWER(TRIM(cc.first_name))')
+                  ->whereRaw('LOWER(TRIM(f.lastname)) = LOWER(TRIM(cc.last_name))');
+            });
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('f.firstname',      'like', "%{$search}%")
+                  ->orWhere('f.lastname',     'like', "%{$search}%")
+                  ->orWhere('f.personal_email','like', "%{$search}%")
+                  ->orWhere('co.country_name', 'like', "%{$search}%");
+            });
+        }
+
+        $fellows      = $query->orderBy('f.lastname')->orderBy('f.firstname')->paginate(50)->withQueryString();
+        $totalMis     = DB::table('fellows')->count();
+        $totalCapsule = DB::table('capsule_contacts')->count();
+
+        return view('admin.capsule.differences', compact('fellows', 'totalMis', 'totalCapsule', 'search'));
+    }
+
+    /**
      * Launch the sync as a background Artisan command so PHP's 30s web limit doesn't kill it.
      */
     public function sync(Request $request)

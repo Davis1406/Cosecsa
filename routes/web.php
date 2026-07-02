@@ -171,6 +171,7 @@ Route::post('admin/associates/fellows/subscriptions/{id}', [FellowsController::c
 // Capsule CRM Integration
 Route::get('admin/capsule',                  [CapsuleSyncController::class, 'index'])->name('admin.capsule.index');
 Route::get('admin/capsule/contacts',         [CapsuleSyncController::class, 'contacts'])->name('admin.capsule.contacts');
+Route::get('admin/capsule/differences',      [CapsuleSyncController::class, 'differences'])->name('admin.capsule.differences');
 Route::post('admin/capsule/import-contacts', [CapsuleSyncController::class, 'importContacts'])->name('admin.capsule.import');
 Route::get('admin/capsule/count',            [CapsuleSyncController::class, 'capsuleCount'])->name('admin.capsule.count');
 Route::get('admin/capsule/status',           [CapsuleSyncController::class, 'status'])->name('admin.capsule.status');
