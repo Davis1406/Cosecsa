@@ -211,7 +211,7 @@
 
                                 <div class="row">
                                     <div class="form-group col-md-6 col-sm-12">
-                                        <label>2025 Exam Availability</label>
+                                        <label>{{ $currentYearName }} Exam Availability</label>
                                         <div class="checkbox-group exam-availability-group">
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"

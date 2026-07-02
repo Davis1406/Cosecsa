@@ -336,6 +336,7 @@ class ExamsController extends Controller
         $data['header_title']       = "Add New Examiner";
         $data['groups']             = DB::table('examiners_groups')->select('id', 'group_name')->get();
         $data['examYears']          = range(2020, (int) $lastYear);
+        $data['currentYearName']    = DB::table('years')->where('id', $yearId)->value('year_name') ?? date('Y');
         $data['programmeOptions']   = self::$programmeOptions;
         $data['specialtyOptions']   = DB::table('programmes')->where('is_deleted', 0)->orderBy('name')->pluck('name');
         $data['designationOptions'] = $designationOptions;
