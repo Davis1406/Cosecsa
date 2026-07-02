@@ -376,20 +376,25 @@ class ExamsController extends Controller
                 'status'               => $request->status ?: 'Active',
             ]);
 
-            // attach group
-            ExamsShift::create([
-                'exm_id' => $examiner->id,
-                'shift' => $request->shift,
-                'year_id' => User::getCurrentYearId()
-            ]);
+            // attach shift only when selected
+            if ($request->filled('shift')) {
+                ExamsShift::create([
+                    'exm_id'  => $examiner->id,
+                    'shift'   => $request->shift,
+                    'year_id' => User::getCurrentYearId(),
+                ]);
+            }
 
-            DB::table('exams_groups')->insert([
-                'exm_id' => $examiner->id,
-                'group_id' => $request->group_id,
-                'year_id' => User::getCurrentYearId(),
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+            // attach group only when selected (group_id is NOT NULL in DB)
+            if ($request->filled('group_id')) {
+                DB::table('exams_groups')->insert([
+                    'exm_id'     => $examiner->id,
+                    'group_id'   => $request->group_id,
+                    'year_id'    => User::getCurrentYearId(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
             // New logic: prioritize "Not Available"
             $availability = $request->exam_availability ?? [];
@@ -401,13 +406,20 @@ class ExamsController extends Controller
                 'exm_id'                    => $examiner->id,
                 'virtual_mcs_participated'  => $request->virtual_mcs_participated ?? null,
                 'fcs_participated'          => $request->fcs_participated ?? null,
-                'participation_type'        => $request->participation_type,
                 'hospital_type'             => $request->hospital_type ?? null,
                 'hospital_name'             => $request->hospital_name ?? null,
                 'exam_availability'         => $availability,
                 'availability_year_id'      => User::getCurrentYearId(),
                 'examination_years'         => $request->examination_years ?? null,
             ]);
+
+            // Sync per-year programme+role into examiner_participations
+            $this->syncParticipations(
+                $examiner->id,
+                $request->examination_years ?? [],
+                $request->year_programme ?? [],
+                $request->year_role ?? []
+            );
 
             DB::commit();
             return redirect('admin/exams/examiners')->with('success', 'Examiner added successfully');

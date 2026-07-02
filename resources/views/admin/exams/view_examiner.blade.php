@@ -360,7 +360,7 @@
                 </div>
             </div>
 
-            {{-- ── Participation Summary (only if history record exists) ──────── --}}
+            {{-- ── Participation Summary ─────────────────────────────────────── --}}
             @php
                 $hasHistory = !is_null($examiner->history);
 
@@ -507,6 +507,25 @@
                     </div>
                     @endif
 
+                </div>
+            </div>
+            @else
+            {{-- No history yet — show card with just the Manage Participation button --}}
+            <div class="card mb-4">
+                <div class="card-header section-header">
+                    <button type="button"
+                            class="btn btn-sm float-right"
+                            data-toggle="modal"
+                            data-target="#manageParticipationModal"
+                            style="background:#a02626;color:#fff;font-size:.75rem;
+                                   padding:3px 10px;border:none;border-radius:4px;
+                                   font-weight:600;letter-spacing:.02em;margin-top:-1px;">
+                        <i class="fas fa-pen mr-1"></i> Manage Participation
+                    </button>
+                    <i class="fas fa-history mr-2"></i> Participation Summary
+                </div>
+                <div class="card-body text-muted" style="font-size:.875rem;padding:1rem 1.25rem;">
+                    No participation history recorded yet. Use <strong>Manage Participation</strong> to add years and programmes.
                 </div>
             </div>
             @endif
