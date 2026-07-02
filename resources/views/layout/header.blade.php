@@ -266,6 +266,13 @@
                                         <p>Fellows</p>
                                     </a>
                                 </li>
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/capsule') }}"
+                                        class="nav-link @if (Request::segment(2) == 'capsule') active @endif">
+                                        <i class="fas fa-sync-alt nav-icon"></i>
+                                        <p>Capsule CRM Sync</p>
+                                    </a>
+                                </li>
                                 <li class="nav-item @if (Request::segment(3) == 'trainers' || Request::segment(3) == 'reps') menu-open @endif">
                                     <a href="#" class="nav-link">
                                         <i class="fas fa-stethoscope nav-icon"></i>

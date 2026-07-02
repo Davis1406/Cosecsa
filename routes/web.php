@@ -17,6 +17,7 @@ use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\MembersController;
 use App\Http\Controllers\ExamsController;
 use App\Http\Controllers\FellowLabelController;
+use App\Http\Controllers\CapsuleSyncController;
 
 
 // Route::get('/', [AuthController::class,'login'])->name('login');
@@ -166,6 +167,11 @@ Route::put('admin/associates/fellows/subscriptions/update/{sub_id}',    [Fellows
 Route::delete('admin/associates/fellows/subscriptions/delete/{sub_id}', [FellowsController::class,'deleteSubscription'])->name('fellows.subscriptions.delete');
 Route::get('admin/associates/fellows/subscriptions/{id}',  [FellowsController::class,'subscriptions'])->name('fellows.subscriptions');
 Route::post('admin/associates/fellows/subscriptions/{id}', [FellowsController::class,'storeSubscription'])->name('fellows.subscriptions.store');
+
+// Capsule CRM Integration
+Route::get('admin/capsule',           [CapsuleSyncController::class, 'index'])->name('admin.capsule.index');
+Route::post('admin/capsule/sync',     [CapsuleSyncController::class, 'sync'])->name('admin.capsule.sync');
+Route::post('admin/capsule/sync/{id}',[CapsuleSyncController::class, 'syncOne'])->name('admin.capsule.sync.one');
 
 // Fellow Labels Settings (Admin)
 Route::get('admin/settings/fellow-labels',          [FellowLabelController::class,'index'])->name('admin.settings.fellow-labels');
