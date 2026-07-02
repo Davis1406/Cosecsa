@@ -52,6 +52,39 @@ class CapsuleCrmService
     }
 
     /**
+     * Search for a contact by full name. Returns the first matching party or null.
+     */
+    public function findByName(string $firstName, string $lastName): ?array
+    {
+        $q = trim("{$firstName} {$lastName}");
+        if (! $q) {
+            return null;
+        }
+
+        $response = $this->http()->get("{$this->baseUrl}/parties", [
+            'q'       => $q,
+            'embed'   => 'tags',
+            'perPage' => 5,
+        ]);
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        $parties = $response->json('parties', []);
+
+        foreach ($parties as $party) {
+            $pFirst = strtolower($party['firstName'] ?? '');
+            $pLast  = strtolower($party['lastName']  ?? '');
+            if ($pFirst === strtolower($firstName) && $pLast === strtolower($lastName)) {
+                return $party;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Create a new person contact.
      */
     public function createContact(array $data): ?array

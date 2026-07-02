@@ -29,7 +29,7 @@
                     <div class="small-box bg-info">
                         <div class="inner">
                             <h3>{{ number_format($totalFellows) }}</h3>
-                            <p>Fellows with Email</p>
+                            <p>Total Fellows</p>
                         </div>
                         <div class="icon"><i class="fas fa-users"></i></div>
                     </div>
@@ -71,15 +71,17 @@
                         </div>
                         <div class="card-body">
                             <p class="text-muted">
-                                This sync will push all <strong>{{ number_format($totalFellows) }} fellows</strong> with
-                                email addresses from the MIS to your Capsule CRM account
+                                This sync will push <strong>all {{ number_format($totalFellows) }} fellows</strong>
+                                ({{ number_format($withEmail) }} with email, {{ number_format($withoutEmail) }} without)
+                                from the MIS to your Capsule CRM account
                                 (<a href="https://cosecsatrainees.capsulecrm.com/parties" target="_blank">cosecsatrainees.capsulecrm.com</a>).
                             </p>
                             <ul class="text-muted mb-3" style="font-size:0.92em;">
-                                <li>Fellows that already exist in Capsule (matched by email) will be <strong>updated</strong>.</li>
-                                <li>Fellows not yet in Capsule will be <strong>created</strong> as new contacts.</li>
+                                <li>Fellows with email: matched in Capsule by <strong>email address</strong>.</li>
+                                <li>Fellows without email: matched by <strong>full name</strong> (first + last) as fallback.</li>
+                                <li>If no match is found in either case, a <strong>new contact is created</strong>.</li>
                                 <li>Tags are set based on category (Fellow, Associate Fellow, Overseas Fellow, etc.) and COSECSA region.</li>
-                                <li>Sync respects the Capsule API rate limit. Expect ~4 min for {{ number_format($totalFellows) }} records.</li>
+                                <li>Sync respects the Capsule API rate limit (~4 req/s). Expect ~8–10 min for {{ number_format($totalFellows) }} records.</li>
                             </ul>
 
                             @if($lastSync)

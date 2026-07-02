@@ -21,21 +21,25 @@ class CapsuleSyncController extends Controller
      */
     public function index()
     {
-        $totalFellows = DB::table('fellows')
+        $totalFellows = DB::table('fellows')->count();
+
+        $withEmail    = DB::table('fellows')
             ->whereNotNull('personal_email')
             ->where('personal_email', '!=', '')
             ->count();
+
+        $withoutEmail = $totalFellows - $withEmail;
 
         $lastSync = DB::table('capsule_sync_log')
             ->orderByDesc('synced_at')
             ->first();
 
-        return view('admin.capsule.index', compact('totalFellows', 'lastSync'));
+        return view('admin.capsule.index', compact('totalFellows', 'withEmail', 'withoutEmail', 'lastSync'));
     }
 
     /**
-     * Run a full sync of all fellows to Capsule CRM.
-     * Processes in batches, streams progress as JSON lines.
+     * Run a full sync of ALL fellows (with or without email) to Capsule CRM.
+     * Match strategy: email first, then full-name fallback, then create.
      */
     public function sync(Request $request)
     {
@@ -44,8 +48,6 @@ class CapsuleSyncController extends Controller
         $fellows = DB::table('fellows')
             ->join('categories', 'fellows.category_id', '=', 'categories.id')
             ->leftJoin('countries', 'fellows.country_id', '=', 'countries.id')
-            ->whereNotNull('fellows.personal_email')
-            ->where('fellows.personal_email', '!=', '')
             ->select([
                 'fellows.id',
                 'fellows.firstname',
@@ -76,14 +78,20 @@ class CapsuleSyncController extends Controller
                 $payload = CapsuleCrmService::fellowToPayload($fellow);
                 $tags    = CapsuleCrmService::fellowTags($fellow);
 
-                $existing = $this->capsule->findByEmail($fellow->personal_email);
+                // Try to find existing contact: email first, name fallback
+                $existing = null;
+                if (! empty($fellow->personal_email)) {
+                    $existing = $this->capsule->findByEmail($fellow->personal_email);
+                }
+                if (! $existing) {
+                    $existing = $this->capsule->findByName($fellow->firstname, $fellow->lastname);
+                }
 
                 if ($existing) {
                     $ok = $this->capsule->updateContact($existing['id'], $payload);
                     if ($ok && $tags) {
                         $existingTagNames = array_column($existing['tags'] ?? [], 'name');
-                        $mergedTags = array_unique(array_merge($existingTagNames, $tags));
-                        $this->capsule->setTags($existing['id'], $mergedTags);
+                        $this->capsule->setTags($existing['id'], array_unique(array_merge($existingTagNames, $tags)));
                     }
                     $ok ? $updated++ : $failed++;
                 } else {
@@ -98,7 +106,7 @@ class CapsuleSyncController extends Controller
                     }
                 }
 
-                // Small delay to respect Capsule rate limits (~4 req/s)
+                // Respect Capsule rate limits (~4 req/s)
                 usleep(250000);
             } catch (\Exception $e) {
                 Log::error("Capsule sync failed for fellow {$fellow->id}: " . $e->getMessage());
@@ -106,7 +114,6 @@ class CapsuleSyncController extends Controller
             }
         }
 
-        // Log the sync
         DB::table('capsule_sync_log')->insert([
             'total'     => $fellows->count(),
             'created'   => $created,
@@ -125,7 +132,7 @@ class CapsuleSyncController extends Controller
     }
 
     /**
-     * Sync a single fellow to Capsule CRM (called from fellow view page).
+     * Sync a single fellow to Capsule CRM.
      */
     public function syncOne(int $fellowId)
     {
@@ -149,13 +156,16 @@ class CapsuleSyncController extends Controller
             return response()->json(['success' => false, 'message' => 'Fellow not found'], 404);
         }
 
-        if (empty($fellow->personal_email)) {
-            return response()->json(['success' => false, 'message' => 'Fellow has no email address'], 422);
-        }
-
         $payload  = CapsuleCrmService::fellowToPayload($fellow);
         $tags     = CapsuleCrmService::fellowTags($fellow);
-        $existing = $this->capsule->findByEmail($fellow->personal_email);
+
+        $existing = null;
+        if (! empty($fellow->personal_email)) {
+            $existing = $this->capsule->findByEmail($fellow->personal_email);
+        }
+        if (! $existing) {
+            $existing = $this->capsule->findByName($fellow->firstname, $fellow->lastname);
+        }
 
         if ($existing) {
             $ok = $this->capsule->updateContact($existing['id'], $payload);
@@ -163,7 +173,7 @@ class CapsuleSyncController extends Controller
                 $existingTagNames = array_column($existing['tags'] ?? [], 'name');
                 $this->capsule->setTags($existing['id'], array_unique(array_merge($existingTagNames, $tags)));
             }
-            $action = 'updated';
+            $action = $ok ? 'updated' : 'failed';
         } else {
             $created_party = $this->capsule->createContact($payload);
             if (! $created_party) {
