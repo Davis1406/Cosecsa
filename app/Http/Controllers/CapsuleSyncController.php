@@ -59,6 +59,7 @@ class CapsuleSyncController extends Controller
         $search = $request->input('q');
 
         // Fellows with no email match AND no name match in capsule_contacts
+        // COLLATE clause needed because fellows uses utf8mb4_general_ci and capsule_contacts uses utf8mb4_unicode_ci
         $query = DB::table('fellows as f')
             ->join('categories as cat', 'f.category_id', '=', 'cat.id')
             ->leftJoin('countries as co', 'f.country_id', '=', 'co.id')
@@ -69,13 +70,13 @@ class CapsuleSyncController extends Controller
             ])
             ->whereNotExists(function ($q) {
                 $q->from('capsule_contacts as cc')
-                  ->whereRaw('LOWER(TRIM(f.personal_email)) = LOWER(TRIM(cc.email))')
-                  ->whereRaw("f.personal_email IS NOT NULL AND f.personal_email != ''");
+                  ->whereRaw("f.personal_email IS NOT NULL AND f.personal_email != ''")
+                  ->whereRaw('LOWER(TRIM(f.personal_email)) COLLATE utf8mb4_unicode_ci = LOWER(TRIM(cc.email)) COLLATE utf8mb4_unicode_ci');
             })
             ->whereNotExists(function ($q) {
                 $q->from('capsule_contacts as cc')
-                  ->whereRaw('LOWER(TRIM(f.firstname)) = LOWER(TRIM(cc.first_name))')
-                  ->whereRaw('LOWER(TRIM(f.lastname)) = LOWER(TRIM(cc.last_name))');
+                  ->whereRaw('LOWER(TRIM(f.firstname)) COLLATE utf8mb4_unicode_ci = LOWER(TRIM(cc.first_name)) COLLATE utf8mb4_unicode_ci')
+                  ->whereRaw('LOWER(TRIM(f.lastname)) COLLATE utf8mb4_unicode_ci = LOWER(TRIM(cc.last_name)) COLLATE utf8mb4_unicode_ci');
             });
 
         if ($search) {
