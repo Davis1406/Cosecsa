@@ -85,6 +85,57 @@ class CapsuleCrmService
     }
 
     /**
+     * Fuzzy name search: search Capsule by last name alone, then check if the
+     * first name from Capsule starts with the MIS first name (or vice versa).
+     * Handles "J Mallya" vs "J S Mallya" and "S Hirwa" vs "S Mutabi Hirwa".
+     */
+    public function findByNameFuzzy(string $firstName, string $lastName): ?array
+    {
+        $lastName = trim($lastName);
+        if (! $lastName) {
+            return null;
+        }
+
+        $response = $this->http()->get("{$this->baseUrl}/parties", [
+            'q'       => $lastName,
+            'embed'   => 'tags',
+            'perPage' => 10,
+        ]);
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        $misFn = strtolower(trim($firstName));
+        $misLn = strtolower($lastName);
+
+        foreach ($response->json('parties', []) as $party) {
+            $capFn = strtolower(trim($party['firstName'] ?? ''));
+            $capLn = strtolower(trim($party['lastName']  ?? ''));
+
+            // Last name must contain or be contained by the MIS last name
+            $lnMatch = ($capLn === $misLn)
+                || str_contains($capLn, $misLn)
+                || str_contains($misLn, $capLn);
+
+            if (! $lnMatch) {
+                continue;
+            }
+
+            // First name: one must start with the other (handles initials like "J" vs "J S")
+            $fnMatch = ($capFn === $misFn)
+                || str_starts_with($capFn, $misFn)
+                || str_starts_with($misFn, $capFn);
+
+            if ($fnMatch) {
+                return $party;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Create a new person contact.
      */
     public function createContact(array $data): ?array

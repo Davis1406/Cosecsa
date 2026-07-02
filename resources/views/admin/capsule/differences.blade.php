@@ -65,8 +65,10 @@
             <div class="callout callout-warning">
                 <h5><i class="fas fa-info-circle mr-1"></i>How matching works</h5>
                 A MIS fellow is considered "in Capsule" if their <strong>email address</strong> matches a Capsule contact,
-                or (if no email) their <strong>full name</strong> matches. The {{ number_format($fellows->total()) }} below
-                match neither — run <strong>Start Full Sync</strong> on the dashboard to push them to Capsule.
+                or (if no email) their <strong>exact full name</strong> matches. The {{ number_format($fellows->total()) }} below
+                match neither. <strong>Highlighted rows</strong> <span class="badge" style="background:#ffc107;">yellow</span>
+                have a <em>fuzzy name match</em> in Capsule — the name exists but with a different spelling or extra middle name.
+                Running <strong>Start Full Sync</strong> will use fuzzy matching to link these automatically.
             </div>
 
             <div class="card">
@@ -105,18 +107,19 @@
                             <thead class="thead-light">
                                 <tr>
                                     <th>#</th>
-                                    <th>Name</th>
+                                    <th>MIS Name</th>
                                     <th>Category</th>
                                     <th>Email</th>
                                     <th>Country</th>
-                                    <th>Year</th>
+                                    <th>Possible Capsule Match</th>
                                     <th>Status</th>
                                     <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($fellows as $i => $f)
-                                <tr>
+                                @php $hasPossible = !empty($f->possible_match); @endphp
+                                <tr class="{{ $hasPossible ? 'table-warning' : '' }}">
                                     <td class="text-muted" style="font-size:0.85em;">{{ $fellows->firstItem() + $i }}</td>
                                     <td>
                                         <a href="{{ url('admin/associates/fellows/view/' . $f->id) }}">
@@ -132,7 +135,14 @@
                                         @endif
                                     </td>
                                     <td>{{ $f->country_name ?? '—' }}</td>
-                                    <td>{{ $f->fellowship_year ?: '—' }}</td>
+                                    <td style="font-size:0.85em;">
+                                        @if($hasPossible)
+                                            <i class="fas fa-exclamation-circle text-warning mr-1" title="Fuzzy match found — name mismatch"></i>
+                                            {{ $f->possible_match }}
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
                                     <td>
                                         <span class="badge badge-{{ $f->status === 'Active' ? 'success' : ($f->status === 'Deceased' ? 'dark' : 'secondary') }}">
                                             {{ $f->status ?: '—' }}

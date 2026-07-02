@@ -71,6 +71,9 @@ class SyncFellowsToCapsule extends Command
                 if (! $existing) {
                     $existing = $capsule->findByName($fellow->firstname, $fellow->lastname);
                 }
+                if (! $existing) {
+                    $existing = $capsule->findByNameFuzzy($fellow->firstname, $fellow->lastname);
+                }
 
                 if ($existing) {
                     $ok = $capsule->updateContact($existing['id'], $payload);
@@ -115,18 +118,51 @@ class SyncFellowsToCapsule extends Command
         $bar->finish();
         $this->newLine();
 
+        // Count total Capsule contacts now (CLI = no timeout)
+        $this->info('Counting total Capsule contacts…');
+        $capsuleTotal = $this->countCapsuleContacts($capsule);
+
         DB::table('capsule_sync_log')->where('id', $logId)->update([
-            'status'    => 'completed',
-            'progress'  => $done,
-            'total'     => $total,
-            'created'   => $created,
-            'updated'   => $updated,
-            'failed'    => $failed,
-            'synced_at' => now(),
+            'status'        => 'completed',
+            'progress'      => $done,
+            'total'         => $total,
+            'created'       => $created,
+            'updated'       => $updated,
+            'failed'        => $failed,
+            'capsule_total' => $capsuleTotal,
+            'synced_at'     => now(),
         ]);
 
-        $this->info("Done: {$created} created, {$updated} updated, {$failed} failed.");
+        \Illuminate\Support\Facades\Cache::put('capsule_total_contacts', $capsuleTotal, 3600);
+
+        $this->info("Done: {$created} created, {$updated} updated, {$failed} failed. Capsule total: {$capsuleTotal}.");
 
         return Command::SUCCESS;
+    }
+
+    protected function countCapsuleContacts(CapsuleCrmService $capsule): int
+    {
+        $total = 0;
+        $page  = 1;
+        do {
+            $response = \Illuminate\Support\Facades\Http::withToken(config('services.capsule.token'))
+                ->withHeaders(['Accept' => 'application/json'])
+                ->timeout(30)
+                ->get('https://api.capsulecrm.com/api/v2/parties', [
+                    'perPage' => 100,
+                    'page'    => $page,
+                ]);
+
+            if (! $response->successful()) {
+                break;
+            }
+
+            $total  += count($response->json('parties', []));
+            $hasMore = $response->header('X-Pagination-Has-More') === 'true';
+            $page++;
+            usleep(50000);
+        } while ($hasMore);
+
+        return $total;
     }
 }

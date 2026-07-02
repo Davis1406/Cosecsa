@@ -60,6 +60,20 @@ class CapsuleSyncController extends Controller
 
         // Fellows with no email match AND no name match in capsule_contacts
         // COLLATE clause needed because fellows uses utf8mb4_general_ci and capsule_contacts uses utf8mb4_unicode_ci
+        $possibleMatch = DB::raw("(
+            SELECT GROUP_CONCAT(CONCAT(cc.first_name, ' ', cc.last_name) ORDER BY cc.last_name SEPARATOR '  |  ')
+            FROM capsule_contacts cc
+            WHERE (
+                LOWER(TRIM(cc.last_name))  COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', LOWER(TRIM(f.lastname))  COLLATE utf8mb4_unicode_ci, '%')
+             OR LOWER(TRIM(f.lastname))    COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', LOWER(TRIM(cc.last_name)) COLLATE utf8mb4_unicode_ci, '%')
+            )
+            AND (
+                LOWER(TRIM(cc.first_name))  COLLATE utf8mb4_unicode_ci LIKE CONCAT(LOWER(TRIM(f.firstname)) COLLATE utf8mb4_unicode_ci, '%')
+             OR LOWER(TRIM(f.firstname))    COLLATE utf8mb4_unicode_ci LIKE CONCAT(LOWER(TRIM(cc.first_name)) COLLATE utf8mb4_unicode_ci, '%')
+            )
+            LIMIT 3
+        ) as possible_match");
+
         $query = DB::table('fellows as f')
             ->join('categories as cat', 'f.category_id', '=', 'cat.id')
             ->leftJoin('countries as co', 'f.country_id', '=', 'co.id')
@@ -67,6 +81,7 @@ class CapsuleSyncController extends Controller
                 'f.id', 'f.firstname', 'f.lastname', 'f.personal_email',
                 'f.phone_number', 'f.status', 'f.fellowship_year',
                 'cat.category_name', 'co.country_name',
+                $possibleMatch,
             ])
             ->whereNotExists(function ($q) {
                 $q->from('capsule_contacts as cc')
@@ -238,6 +253,9 @@ class CapsuleSyncController extends Controller
         }
         if (! $existing) {
             $existing = $this->capsule->findByName($fellow->firstname, $fellow->lastname);
+        }
+        if (! $existing) {
+            $existing = $this->capsule->findByNameFuzzy($fellow->firstname, $fellow->lastname);
         }
 
         if ($existing) {
