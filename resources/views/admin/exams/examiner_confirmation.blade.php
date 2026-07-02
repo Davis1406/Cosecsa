@@ -507,22 +507,8 @@
                 return true;
             });
 
-            // ── Init DataTable ─────────────────────────────────────────────────
-            var dt = $('#examinerconfirmationtable').DataTable({
-                pageLength: 25,
-                responsive: true,
-                order: [[0, 'asc']],
-                columnDefs: [
-                    { orderable: false, targets: [-1, -2, -3] },  // Action, Email Status, Source
-                ],
-                language: {
-                    search: 'Search:',
-                    lengthMenu: 'Show _MENU_ examiners',
-                    info: 'Showing _START_ to _END_ of _TOTAL_ examiners',
-                    infoFiltered: '(filtered from _MAX_ total)',
-                    zeroRecords: 'No examiners match the selected filters.',
-                },
-            });
+            // ── Get existing DataTable instance (custom.js initialises it) ────
+            var dt = $('#examinerconfirmationtable').DataTable();
 
             // ── Wire up filter selects ─────────────────────────────────────────
             function updateFilterBadge() {

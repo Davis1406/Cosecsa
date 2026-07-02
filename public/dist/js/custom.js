@@ -352,7 +352,7 @@ $(function () {
             "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
             "columnDefs": [
                 { "targets": [9, 10], "visible": false },
-                { "targets": [11], "orderable": false }
+                { "targets": [13], "orderable": false }
             ],
             "initComplete": function () { hideLoader("examinerconfirmationtable"); },
             "drawCallback": function () { reinitDropdowns(this); }

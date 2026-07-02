@@ -2541,13 +2541,18 @@ public function delete($id)
         foreach ($recipients as $recipient) {
             $token = \Illuminate\Support\Str::uuid()->toString();
 
-            \App\Models\EmailTracking::create([
-                'token'           => $token,
-                'exm_id'          => $recipient->exm_id,
-                'recipient_email' => $recipient->email,
-                'subject'         => $request->subject,
-                'sent_at'         => now(),
-            ]);
+            try {
+                \App\Models\EmailTracking::create([
+                    'token'           => $token,
+                    'exm_id'          => $recipient->exm_id,
+                    'recipient_email' => $recipient->email,
+                    'subject'         => $request->subject,
+                    'sent_at'         => now(),
+                ]);
+            } catch (\Exception $e) {
+                \Log::error("Email tracking create failed for {$recipient->email}: " . $e->getMessage());
+                // Continue — a tracking failure must not block the email
+            }
 
             try {
                 \Illuminate\Support\Facades\Mail::to($recipient->email, $recipient->name)
