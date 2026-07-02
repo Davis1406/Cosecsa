@@ -52,6 +52,51 @@
         .export-btn:hover {
             background-color: #218838;
         }
+
+        .filter-bar {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 14px 16px;
+            margin-bottom: 18px;
+        }
+
+        .filter-bar .filter-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .filter-bar select {
+            font-size: 13px;
+        }
+
+        .filter-bar .btn-clear {
+            background: #fff;
+            border: 1px solid #ced4da;
+            color: #495057;
+            font-size: 13px;
+        }
+
+        .filter-bar .btn-clear:hover {
+            background: #a02626;
+            border-color: #a02626;
+            color: #fff;
+        }
+
+        .filter-badge {
+            font-size: 11px;
+            background: #a02626;
+            color: #fff;
+            border-radius: 10px;
+            padding: 1px 7px;
+            margin-left: 4px;
+            display: none;
+        }
     </style>
 @endpush
 
@@ -87,6 +132,70 @@
                                         </a>
                                     </div>
 
+                                    @php
+                                        $specialties = $getExaminers->pluck('specialty')->filter()->unique()->sort()->values();
+                                        $countries   = $getExaminers->pluck('country_name')->filter()->unique()->sort()->values();
+                                    @endphp
+
+                                    <!-- Filter Bar -->
+                                    <div class="filter-bar">
+                                        <div class="row align-items-end g-2" style="row-gap:10px;">
+                                            <div class="col-6 col-md-2">
+                                                <label class="filter-label">Specialty</label>
+                                                <select id="filter-specialty" class="form-control form-control-sm">
+                                                    <option value="">All Specialties</option>
+                                                    @foreach($specialties as $sp)
+                                                        <option value="{{ $sp }}">{{ $sp }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-6 col-md-2">
+                                                <label class="filter-label">Availability</label>
+                                                <select id="filter-availability" class="form-control form-control-sm">
+                                                    <option value="">All</option>
+                                                    <option value="MCS">MCS</option>
+                                                    <option value="FCS">FCS</option>
+                                                    <option value="MCS+FCS">MCS &amp; FCS</option>
+                                                    <option value="Not Available">Not Available</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-6 col-md-2">
+                                                <label class="filter-label">MCS Shift</label>
+                                                <select id="filter-shift" class="form-control form-control-sm">
+                                                    <option value="">All</option>
+                                                    <option value="1">Morning</option>
+                                                    <option value="2">Morning &amp; Afternoon</option>
+                                                    <option value="3">Afternoon</option>
+                                                    <option value="0">No Shift</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-6 col-md-2">
+                                                <label class="filter-label">Participation</label>
+                                                <select id="filter-participation" class="form-control form-control-sm">
+                                                    <option value="">All</option>
+                                                    <option value="Examiner">Examiner</option>
+                                                    <option value="Observer">Observer</option>
+                                                    <option value="None">None</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-6 col-md-2">
+                                                <label class="filter-label">Country</label>
+                                                <select id="filter-country" class="form-control form-control-sm">
+                                                    <option value="">All Countries</option>
+                                                    @foreach($countries as $c)
+                                                        <option value="{{ $c }}">{{ $c }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-6 col-md-2 d-flex align-items-end">
+                                                <button id="btn-clear-filters" class="btn btn-clear btn-sm w-100">
+                                                    <i class="fas fa-times mr-1"></i> Clear Filters
+                                                    <span class="filter-badge" id="filter-count"></span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <table id="examinerconfirmationtable" class="table table-bordered table-striped">
                                         <thead>
                                             <tr>
@@ -106,7 +215,25 @@
                                         </thead>
                                         <tbody>
                                             @foreach ($getExaminers as $index => $value)
-                                                <tr>
+                                                @php
+                                                    $rowAvail = [];
+                                                    if (!empty($value->exam_availability)) {
+                                                        $dec = json_decode($value->exam_availability, true);
+                                                        if (is_string($dec)) $dec = json_decode($dec, true) ?: [];
+                                                        $rowAvail = is_array($dec) ? $dec : [];
+                                                    }
+                                                    sort($rowAvail);
+                                                    $availKey = count($rowAvail) === 2 && in_array('FCS',$rowAvail) && in_array('MCS',$rowAvail)
+                                                        ? 'MCS+FCS'
+                                                        : implode('', $rowAvail);
+                                                @endphp
+                                                <tr
+                                                    data-specialty="{{ $value->specialty ?? '' }}"
+                                                    data-availability="{{ $availKey }}"
+                                                    data-shift="{{ $value->shift ?? '0' }}"
+                                                    data-participation="{{ $value->participation_type ?? '' }}"
+                                                    data-country="{{ $value->country_name ?? '' }}"
+                                                >
                                                     <td>{{ $index + 1 }}</td>
                                                     <td>{{ $value->examiner_name ?? '-' }}</td>
                                                     <td>{{ $value->email ?? '-' }}</td>
@@ -302,23 +429,100 @@
 
 @section('scripts')
     <script>
-        $(document).ready(function() {
-            $('.filter-button').click(function() {
-                var filter = $(this).attr('data-filter');
-                if (filter === 'all') {
-                    $('.user-row').show();
+        $(document).ready(function () {
+
+            // ── Active filter state ────────────────────────────────────────────
+            var filters = {
+                specialty:      '',
+                availability:   '',
+                shift:          '',
+                participation:  '',
+                country:        '',
+            };
+
+            // ── Custom DataTable search extension ──────────────────────────────
+            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                if (settings.nTable.id !== 'examinerconfirmationtable') return true;
+                var $row = $(settings.nTable).DataTable().row(dataIndex).node();
+
+                if (filters.specialty && $($row).data('specialty') !== filters.specialty)         return false;
+                if (filters.availability && $($row).data('availability') !== filters.availability) return false;
+                if (filters.shift !== '' && String($($row).data('shift')) !== filters.shift)       return false;
+                if (filters.participation && $($row).data('participation') !== filters.participation) return false;
+                if (filters.country && $($row).data('country') !== filters.country)               return false;
+
+                return true;
+            });
+
+            // ── Init DataTable ─────────────────────────────────────────────────
+            var dt = $('#examinerconfirmationtable').DataTable({
+                pageLength: 25,
+                responsive: true,
+                order: [[0, 'asc']],
+                columnDefs: [
+                    { orderable: false, targets: -1 },  // Action column not sortable
+                ],
+                language: {
+                    search: 'Search:',
+                    lengthMenu: 'Show _MENU_ examiners',
+                    info: 'Showing _START_ to _END_ of _TOTAL_ examiners',
+                    infoFiltered: '(filtered from _MAX_ total)',
+                    zeroRecords: 'No examiners match the selected filters.',
+                },
+            });
+
+            // ── Wire up filter selects ─────────────────────────────────────────
+            function updateFilterBadge() {
+                var active = Object.values(filters).filter(function (v) { return v !== ''; }).length;
+                if (active > 0) {
+                    $('#filter-count').text(active).show();
                 } else {
-                    $('.user-row').hide();
-                    $('.user-row[data-user-type="' + filter + '"]').show();
+                    $('#filter-count').hide();
                 }
+            }
+
+            $('#filter-specialty').on('change', function () {
+                filters.specialty = $(this).val();
+                dt.draw();
+                updateFilterBadge();
             });
 
-            $('[data-toggle="popover"]').popover({
-                placement: 'right',
-                trigger: 'focus'
+            $('#filter-availability').on('change', function () {
+                filters.availability = $(this).val();
+                dt.draw();
+                updateFilterBadge();
             });
 
-            $('input[name="deleteType"]').on('change', function(){
+            $('#filter-shift').on('change', function () {
+                filters.shift = $(this).val();
+                dt.draw();
+                updateFilterBadge();
+            });
+
+            $('#filter-participation').on('change', function () {
+                filters.participation = $(this).val();
+                dt.draw();
+                updateFilterBadge();
+            });
+
+            $('#filter-country').on('change', function () {
+                filters.country = $(this).val();
+                dt.draw();
+                updateFilterBadge();
+            });
+
+            // ── Clear all filters ──────────────────────────────────────────────
+            $('#btn-clear-filters').on('click', function () {
+                filters = { specialty: '', availability: '', shift: '', participation: '', country: '' };
+                $('#filter-specialty, #filter-availability, #filter-shift, #filter-participation, #filter-country').val('');
+                dt.draw();
+                updateFilterBadge();
+            });
+
+            // ── Misc ───────────────────────────────────────────────────────────
+            $('[data-toggle="popover"]').popover({ placement: 'right', trigger: 'focus' });
+
+            $('input[name="deleteType"]').on('change', function () {
                 $('#deleteTypeInput').val($(this).val());
             });
         });
