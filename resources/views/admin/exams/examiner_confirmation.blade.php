@@ -97,6 +97,12 @@
             margin-left: 4px;
             display: none;
         }
+
+        .badge-source-self  { background:#1565c0; color:#fff; font-size:10px; padding:2px 7px; border-radius:10px; white-space:nowrap; }
+        .badge-source-admin { background:#e65100; color:#fff; font-size:10px; padding:2px 7px; border-radius:10px; white-space:nowrap; }
+        .badge-email-opened { background:#2e7d32; color:#fff; font-size:10px; padding:2px 7px; border-radius:10px; white-space:nowrap; }
+        .badge-email-sent   { background:#f9a825; color:#333; font-size:10px; padding:2px 7px; border-radius:10px; white-space:nowrap; }
+        .badge-email-none   { color:#aaa; font-size:12px; }
     </style>
 @endpush
 
@@ -187,6 +193,23 @@
                                                     @endforeach
                                                 </select>
                                             </div>
+                                            <div class="col-6 col-md-2">
+                                                <label class="filter-label">Source</label>
+                                                <select id="filter-source" class="form-control form-control-sm">
+                                                    <option value="">All</option>
+                                                    <option value="self">Self-submitted</option>
+                                                    <option value="admin">Admin-entered</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-6 col-md-2">
+                                                <label class="filter-label">Email Status</label>
+                                                <select id="filter-email" class="form-control form-control-sm">
+                                                    <option value="">All</option>
+                                                    <option value="opened">Opened</option>
+                                                    <option value="sent">Sent (not opened)</option>
+                                                    <option value="none">Not emailed</option>
+                                                </select>
+                                            </div>
                                             <div class="col-6 col-md-2 d-flex align-items-end">
                                                 <button id="btn-clear-filters" class="btn btn-clear btn-sm w-100">
                                                     <i class="fas fa-times mr-1"></i> Clear Filters
@@ -210,6 +233,8 @@
                                                 <th>Hospital</th>
                                                 <th>Mobile Number</th>
                                                 <th>Updated Date</th>
+                                                <th>Source</th>
+                                                <th>Email Status</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -233,6 +258,8 @@
                                                     data-shift="{{ $value->shift ?? '0' }}"
                                                     data-participation="{{ $value->participation_type ?? '' }}"
                                                     data-country="{{ $value->country_name ?? '' }}"
+                                                    data-source="{{ $value->history_source ?? '' }}"
+                                                    data-email="{{ $value->last_email_opened_at ? 'opened' : ($value->last_email_sent_at ? 'sent' : 'none') }}"
                                                 >
                                                     <td>{{ $index + 1 }}</td>
                                                     <td>{{ $value->examiner_name ?? '-' }}</td>
@@ -282,6 +309,28 @@
                                                     <td>{{ $value->hospital_name ?? '-' }}</td>
                                                     <td>{{ $value->mobile ?? '-' }}</td>
                                                     <td>{{ $value->history_updated_at ?? '-'}}</td>
+                                                    <td>
+                                                        @if($value->history_source === 'self')
+                                                            <span class="badge-source-self">Self</span>
+                                                        @elseif($value->history_source === 'admin')
+                                                            <span class="badge-source-admin">Admin</span>
+                                                        @else
+                                                            <span class="badge-email-none">-</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if($value->last_email_opened_at)
+                                                            <span class="badge-email-opened" title="Opened {{ $value->last_email_opened_at }}&#10;Opens: {{ $value->total_email_opens }}">
+                                                                Opened
+                                                            </span>
+                                                        @elseif($value->last_email_sent_at)
+                                                            <span class="badge-email-sent" title="Sent {{ $value->last_email_sent_at }}&#10;Not yet opened">
+                                                                Sent
+                                                            </span>
+                                                        @else
+                                                            <span class="badge-email-none">-</span>
+                                                        @endif
+                                                    </td>
                                                     <td>
                                                         <div class="dropdown">
                                                             <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
@@ -438,6 +487,8 @@
                 shift:          '',
                 participation:  '',
                 country:        '',
+                source:         '',
+                email:          '',
             };
 
             // ── Custom DataTable search extension ──────────────────────────────
@@ -445,11 +496,13 @@
                 if (settings.nTable.id !== 'examinerconfirmationtable') return true;
                 var $row = $(settings.nTable).DataTable().row(dataIndex).node();
 
-                if (filters.specialty && $($row).data('specialty') !== filters.specialty)         return false;
-                if (filters.availability && $($row).data('availability') !== filters.availability) return false;
-                if (filters.shift !== '' && String($($row).data('shift')) !== filters.shift)       return false;
-                if (filters.participation && $($row).data('participation') !== filters.participation) return false;
-                if (filters.country && $($row).data('country') !== filters.country)               return false;
+                if (filters.specialty && $($row).data('specialty') !== filters.specialty)             return false;
+                if (filters.availability && $($row).data('availability') !== filters.availability)     return false;
+                if (filters.shift !== '' && String($($row).data('shift')) !== filters.shift)           return false;
+                if (filters.participation && $($row).data('participation') !== filters.participation)   return false;
+                if (filters.country && $($row).data('country') !== filters.country)                   return false;
+                if (filters.source && $($row).data('source') !== filters.source)                       return false;
+                if (filters.email && $($row).data('email') !== filters.email)                          return false;
 
                 return true;
             });
@@ -460,7 +513,7 @@
                 responsive: true,
                 order: [[0, 'asc']],
                 columnDefs: [
-                    { orderable: false, targets: -1 },  // Action column not sortable
+                    { orderable: false, targets: [-1, -2, -3] },  // Action, Email Status, Source
                 ],
                 language: {
                     search: 'Search:',
@@ -481,40 +534,19 @@
                 }
             }
 
-            $('#filter-specialty').on('change', function () {
-                filters.specialty = $(this).val();
-                dt.draw();
-                updateFilterBadge();
-            });
-
-            $('#filter-availability').on('change', function () {
-                filters.availability = $(this).val();
-                dt.draw();
-                updateFilterBadge();
-            });
-
-            $('#filter-shift').on('change', function () {
-                filters.shift = $(this).val();
-                dt.draw();
-                updateFilterBadge();
-            });
-
-            $('#filter-participation').on('change', function () {
-                filters.participation = $(this).val();
-                dt.draw();
-                updateFilterBadge();
-            });
-
-            $('#filter-country').on('change', function () {
-                filters.country = $(this).val();
-                dt.draw();
-                updateFilterBadge();
+            var filterIds = ['specialty', 'availability', 'shift', 'participation', 'country', 'source', 'email'];
+            filterIds.forEach(function (key) {
+                $('#filter-' + key).on('change', function () {
+                    filters[key] = $(this).val();
+                    dt.draw();
+                    updateFilterBadge();
+                });
             });
 
             // ── Clear all filters ──────────────────────────────────────────────
             $('#btn-clear-filters').on('click', function () {
-                filters = { specialty: '', availability: '', shift: '', participation: '', country: '' };
-                $('#filter-specialty, #filter-availability, #filter-shift, #filter-participation, #filter-country').val('');
+                filterIds.forEach(function (k) { filters[k] = ''; });
+                $('#filter-specialty, #filter-availability, #filter-shift, #filter-participation, #filter-country, #filter-source, #filter-email').val('');
                 dt.draw();
                 updateFilterBadge();
             });

@@ -20,6 +20,7 @@ class ExaminerHistory extends Model
         'hospital_type',
         'hospital_name',
         'examination_years',
+        'source',
     ];
 
     protected $casts = [

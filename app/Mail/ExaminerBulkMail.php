@@ -16,11 +16,13 @@ class ExaminerBulkMail extends Mailable
     public string $recipientName;
     public string $emailSubject;
     public string $emailBody;   // HTML, may contain [Name] placeholder
+    public ?string $trackingToken;
 
-    public function __construct(string $recipientName, string $subject, string $body)
+    public function __construct(string $recipientName, string $subject, string $body, ?string $trackingToken = null)
     {
-        $this->recipientName = $recipientName;
-        $this->emailSubject  = $subject;
+        $this->recipientName  = $recipientName;
+        $this->emailSubject   = $subject;
+        $this->trackingToken  = $trackingToken;
         // Replace [Name] placeholder with the actual recipient name
         $this->emailBody = str_replace('[Name]', $recipientName, $body);
     }

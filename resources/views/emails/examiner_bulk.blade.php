@@ -100,5 +100,11 @@
 
   </div>
 </div>
+@if(!empty($trackingToken))
+<img src="{{ url('track/open/' . $trackingToken) }}"
+     width="1" height="1" border="0"
+     style="display:block;width:1px;height:1px;border:0;margin:0;padding:0;"
+     alt="">
+@endif
 </body>
 </html>

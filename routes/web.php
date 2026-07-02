@@ -44,6 +44,9 @@ Route::post('select-role', [AuthController::class, 'selectRole']);
 Route::get('examiner-availability', [ExamsController::class, 'availabilityForm'])->name('examiner.availability.form');
 Route::post('examiner-availability', [ExamsController::class, 'availabilitySubmit'])->name('examiner.availability.submit');
 
+// Email open tracking pixel (public, no auth — called by email clients loading the image)
+Route::get('track/open/{token}', [ExamsController::class, 'trackEmailOpen'])->name('email.track.open');
+
 // Admin Routes
 Route::group(['middleware' => 'admin'], function(){
 

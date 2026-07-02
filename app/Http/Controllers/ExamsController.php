@@ -412,6 +412,7 @@ class ExamsController extends Controller
                 'exam_availability'         => $availability,
                 'availability_year_id'      => User::getCurrentYearId(),
                 'examination_years'         => $request->examination_years ?? null,
+                'source'                    => 'admin',
             ]);
 
             // Sync per-year programme+role into examiner_participations
@@ -748,6 +749,7 @@ class ExamsController extends Controller
                 'hospital_type'            => $request->hospital_type ?? null,
                 'hospital_name'            => $request->hospital_name ?? null,
                 'examination_years'        => $request->examination_years ?? null,
+                'source'                   => 'admin',
             ];
 
             // Only write exam_availability when the admin explicitly checked boxes.
@@ -1166,6 +1168,15 @@ public function delete($id)
     {
         $yearId = $yearId ?? User::getCurrentYearId();
 
+        $emailSub = DB::table('email_tracking')
+            ->select(
+                'exm_id',
+                DB::raw('MAX(sent_at) as last_email_sent_at'),
+                DB::raw('MAX(opened_at) as last_email_opened_at'),
+                DB::raw('SUM(open_count) as total_email_opens')
+            )
+            ->groupBy('exm_id');
+
         return DB::table('examiners')
             ->leftJoin('examiners_history', 'examiners.id', '=', 'examiners_history.exm_id')
             ->leftJoin('users', 'examiners.user_id', '=', 'users.id')
@@ -1180,6 +1191,7 @@ public function delete($id)
                 $join->on('examiners.id', '=', 'exams_shifts.exm_id')
                      ->where('exams_shifts.year_id', '=', $yearId);
             })
+            ->leftJoinSub($emailSub, 'et', 'et.exm_id', '=', 'examiners.id')
             ->select(
                 'examiners.id',
                 DB::raw('MAX(examiners.examiner_id) as examiner_id'),
@@ -1209,10 +1221,14 @@ public function delete($id)
                 DB::raw('MAX(countries.country_name) as country_name'),
                 DB::raw('GROUP_CONCAT(DISTINCT examiners_groups.group_name ORDER BY examiners_groups.group_name SEPARATOR ", ") as group_names'),
                 DB::raw('MAX(exams_shifts.shift) as shift'),
+                DB::raw('MAX(examiners_history.source) as history_source'),
                 DB::raw('MAX(examiners_history.created_at) as history_created_at'),
                 DB::raw('MAX(examiners_history.updated_at) as history_updated_at'),
                 DB::raw('TIMESTAMPDIFF(SECOND, MAX(examiners_history.created_at), MAX(examiners_history.updated_at)) as history_time_diff_seconds'),
-                DB::raw('TIMESTAMPDIFF(MINUTE, MAX(examiners_history.created_at), MAX(examiners_history.updated_at)) as history_time_diff_minutes')
+                DB::raw('TIMESTAMPDIFF(MINUTE, MAX(examiners_history.created_at), MAX(examiners_history.updated_at)) as history_time_diff_minutes'),
+                DB::raw('MAX(et.last_email_sent_at) as last_email_sent_at'),
+                DB::raw('MAX(et.last_email_opened_at) as last_email_opened_at'),
+                DB::raw('MAX(et.total_email_opens) as total_email_opens')
             )
             ->where(function ($query) {
                 $query->where('user_roles.role_type', 9)
@@ -2516,19 +2532,30 @@ public function delete($id)
             ->join('users', 'users.id', '=', 'examiners.user_id')
             ->whereIn('examiners.id', $exmIds)
             ->where('users.user_type', 9)
-            ->select('users.email', 'users.name')
+            ->select('examiners.id as exm_id', 'users.email', 'users.name')
             ->get();
 
         $sent   = 0;
         $failed = 0;
 
         foreach ($recipients as $recipient) {
+            $token = \Illuminate\Support\Str::uuid()->toString();
+
+            \App\Models\EmailTracking::create([
+                'token'           => $token,
+                'exm_id'          => $recipient->exm_id,
+                'recipient_email' => $recipient->email,
+                'subject'         => $request->subject,
+                'sent_at'         => now(),
+            ]);
+
             try {
                 \Illuminate\Support\Facades\Mail::to($recipient->email, $recipient->name)
                     ->send(new \App\Mail\ExaminerBulkMail(
                         $recipient->name,
                         $request->subject,
-                        $request->body
+                        $request->body,
+                        $token
                     ));
                 $sent++;
             } catch (\Exception $e) {
@@ -2541,6 +2568,31 @@ public function delete($id)
         if ($failed) $msg .= " {$failed} failed (check logs).";
 
         return redirect()->back()->with('success', $msg);
+    }
+
+    // ── Email open tracking pixel ─────────────────────────────────────────────
+
+    public function trackEmailOpen(string $token)
+    {
+        $record = \App\Models\EmailTracking::where('token', $token)->first();
+
+        if ($record) {
+            $record->open_count++;
+            if (is_null($record->opened_at)) {
+                $record->opened_at = now();
+            }
+            $record->last_ip         = request()->ip();
+            $record->last_user_agent = request()->userAgent();
+            $record->save();
+        }
+
+        // Return a 1×1 transparent GIF — must never redirect or return HTML
+        $gif = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
+        return response($gif, 200, [
+            'Content-Type'  => 'image/gif',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma'        => 'no-cache',
+        ]);
     }
 
     // ── Public examiner availability form ────────────────────────────────────
@@ -2600,7 +2652,7 @@ public function delete($id)
 
         ExaminerHistory::updateOrCreate(
             ['exm_id' => $examinerRecord->exm_id],
-            ['exam_availability' => $availability, 'availability_year_id' => User::getCurrentYearId()]
+            ['exam_availability' => $availability, 'availability_year_id' => User::getCurrentYearId(), 'source' => 'self']
         );
 
         // Save MCS shift preference when MCS is selected
@@ -2815,6 +2867,7 @@ public function delete($id)
             }
 
             if (!empty($historyData)) {
+                $historyData['source'] = 'self';
                 \App\Models\ExaminerHistory::updateOrCreate(
                     ['exm_id' => $examiner->id],
                     $historyData
