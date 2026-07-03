@@ -332,8 +332,9 @@ $(function () {
                 { "visible": true  }, // Country
                 { "visible": true  }, // Examiner ID
                 { "visible": true  }, // Specialty
+                { "visible": true  }, // Designation
                 { "visible": true  }, // Notes
-                // Col 8: Action — not sortable/searchable
+                // Col 9: Action — not sortable/searchable
                 { "orderable": false, "searchable": false }
             ],
             "initComplete": function () { hideLoader("examinerstable"); },
