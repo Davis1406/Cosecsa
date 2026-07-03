@@ -35,64 +35,47 @@
                 {{-- Filter Bar --}}
                 <div class="card card-outline card-secondary mb-2 shadow-sm">
                     <div class="card-body py-2">
-                        <div class="row align-items-end" id="fellowFilters">
-                            <div class="col-6 col-md-2 pr-1 mb-1">
-                                <label class="small mb-0 font-weight-bold">Programme</label>
-                                <select id="filterProgramme" class="form-control form-control-sm">
-                                    <option value="">All Programmes</option>
-                                    @foreach($filterProgrammes as $p)
-                                    <option value="{{ $p }}">{{ $p }}</option>
-                                    @endforeach
-                                </select>
+                        @php
+                        $filterDefs = [
+                            ['id'=>'filterProgramme', 'label'=>'Programme',       'options'=>$filterProgrammes,         'default'=>[], 'optLabels'=>[]],
+                            ['id'=>'filterCountry',   'label'=>'Country',         'options'=>$filterCountries,          'default'=>[], 'optLabels'=>[]],
+                            ['id'=>'filterType',      'label'=>'Fellowship Type', 'options'=>$filterTypes,              'default'=>[], 'optLabels'=>[]],
+                            ['id'=>'filterYear',      'label'=>'Year',            'options'=>$filterYears,              'default'=>[], 'optLabels'=>[]],
+                            ['id'=>'filterGender',    'label'=>'Gender',          'options'=>collect(['Male','Female']), 'default'=>[], 'optLabels'=>[]],
+                            ['id'=>'filterAlumni',    'label'=>'Alumni',          'options'=>collect(['1','0']),         'default'=>[], 'optLabels'=>['1'=>'Alumni Only','0'=>'Non-Alumni Only']],
+                        ];
+                        @endphp
+                        <div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
+                            @foreach($filterDefs as $fd)
+                            <div class="chk-filter-wrap" data-filter="{{ $fd['id'] }}">
+                                <button type="button" class="btn btn-sm btn-outline-secondary chk-filter-btn" data-filter="{{ $fd['id'] }}">
+                                    {{ $fd['label'] }}
+                                    <span class="badge badge-danger chk-badge ml-1" style="display:none;font-size:.65rem;"></span>
+                                    <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
+                                </button>
+                                <div class="chk-filter-panel shadow" id="{{ $fd['id'] }}-panel" style="display:none;">
+                                    @if(collect($fd['options'])->count() > 6)
+                                    <input type="text" class="form-control form-control-sm chk-search mb-1" placeholder="Search…" autocomplete="off">
+                                    @endif
+                                    <div class="chk-list">
+                                        @foreach($fd['options'] as $opt)
+                                        <label class="chk-item">
+                                            <input type="checkbox" class="chk-option" data-filter="{{ $fd['id'] }}" value="{{ $opt }}">
+                                            {{ !empty($fd['optLabels'][$opt]) ? $fd['optLabels'][$opt] : $opt }}
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                    <div class="chk-footer">
+                                        <a href="#" class="chk-select-all small">All</a>
+                                        <a href="#" class="chk-clear small text-danger">Clear</a>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-6 col-md-2 px-1 mb-1">
-                                <label class="small mb-0 font-weight-bold">Country</label>
-                                <select id="filterCountry" class="form-control form-control-sm">
-                                    <option value="">All Countries</option>
-                                    @foreach($filterCountries as $c)
-                                    <option value="{{ $c }}">{{ $c }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-6 col-md-2 px-1 mb-1">
-                                <label class="small mb-0 font-weight-bold">Fellowship Type</label>
-                                <select id="filterType" class="form-control form-control-sm">
-                                    <option value="">All Types</option>
-                                    @foreach($filterTypes as $t)
-                                    <option value="{{ $t }}">{{ $t }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-6 col-md-2 px-1 mb-1">
-                                <label class="small mb-0 font-weight-bold">Year</label>
-                                <select id="filterYear" class="form-control form-control-sm">
-                                    <option value="">All Years</option>
-                                    @foreach($filterYears as $y)
-                                    <option value="{{ $y }}">{{ $y }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-6 col-md-2 px-1 mb-1">
-                                <label class="small mb-0 font-weight-bold">Gender</label>
-                                <select id="filterGender" class="form-control form-control-sm">
-                                    <option value="">All Genders</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                </select>
-                            </div>
-                            <div class="col-6 col-md-2 pl-1 mb-1">
-                                <label class="small mb-0 font-weight-bold">Alumni</label>
-                                <select id="filterAlumni" class="form-control form-control-sm">
-                                    <option value="">All Fellows</option>
-                                    <option value="1">Alumni Only</option>
-                                    <option value="0">Non-Alumni Only</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="text-right mt-1">
+                            @endforeach
                             <button id="btnClearFilters" class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-times mr-1"></i>Clear Filters
+                                <i class="fas fa-times mr-1"></i>Clear All
                             </button>
+                            <small class="text-muted ml-auto" id="filteredCount"></small>
                         </div>
                     </div>
                 </div>
@@ -194,6 +177,31 @@
 
 @push('styles')
 <style>
+    /* ── Checkbox filter dropdowns ── */
+    .chk-filter-wrap { position: relative; display: inline-block; }
+    .chk-filter-panel {
+        position: absolute; top: calc(100% + 4px); left: 0; z-index: 1055;
+        background: #fff; border: 1px solid #ced4da; border-radius: 6px;
+        min-width: 190px; max-width: 260px; padding: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+    .chk-list { max-height: 220px; overflow-y: auto; }
+    .chk-item {
+        display: flex; align-items: center; gap: 6px;
+        padding: 3px 2px; font-size: .82rem; font-weight: normal;
+        cursor: pointer; white-space: nowrap; margin: 0;
+    }
+    .chk-item:hover { background: #f8f0f0; border-radius: 4px; }
+    .chk-item input[type="checkbox"] { margin: 0; cursor: pointer; accent-color: #a02626; }
+    .chk-footer {
+        display: flex; justify-content: space-between;
+        border-top: 1px solid #eee; margin-top: 6px; padding-top: 5px;
+        font-size: .78rem;
+    }
+    .chk-footer a { color: #6c757d; }
+    .chk-footer a:hover { color: #a02626; text-decoration: none; }
+    .chk-filter-btn { white-space: nowrap; }
+    /* ── Table ── */
     #fellowstable td { vertical-align: middle; }
     .action-btn { padding: 2px 8px; line-height: 1.4; border-radius: 4px; }
     .action-btn:hover { background-color: #f0f0f0; }
@@ -211,40 +219,98 @@
 <script>
 $(document).ready(function () {
 
-    // Custom search filter for the fellows DataTable
+    function getChecked(filterId) {
+        return $('.chk-option[data-filter="' + filterId + '"]:checked')
+               .map(function () { return this.value; }).get();
+    }
+
+    function updateBadge(filterId) {
+        var checked = getChecked(filterId);
+        var $badge  = $('.chk-filter-btn[data-filter="' + filterId + '"] .chk-badge');
+        if (checked.length) $badge.text(checked.length).show();
+        else $badge.hide();
+    }
+
+    function redraw() {
+        var dt   = $('#fellowstable').DataTable();
+        dt.draw();
+        var info = dt.page.info();
+        $('#filteredCount').text(
+            info.recordsDisplay < info.recordsTotal
+                ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal : ''
+        );
+    }
+
+    // DataTable custom search filter
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
         if (settings.nTable.id !== 'fellowstable') return true;
+        var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
 
-        var $row      = $(settings.nTable).DataTable().row(dataIndex).node();
-        var country   = $('#filterCountry').val();
-        var programme = $('#filterProgramme').val();
-        var ftype     = $('#filterType').val();
-        var year      = $('#filterYear').val();
-        var gender    = $('#filterGender').val();
-        var alumni    = $('#filterAlumni').val();
+        var chkProgramme = getChecked('filterProgramme');
+        var chkCountry   = getChecked('filterCountry');
+        var chkType      = getChecked('filterType');
+        var chkYear      = getChecked('filterYear');
+        var chkGender    = getChecked('filterGender');
+        var chkAlumni    = getChecked('filterAlumni');
 
-        if (country   && $($row).data('country')   !== country)            return false;
-        if (programme && $($row).data('programme') !== programme)          return false;
-        if (ftype     && $($row).data('ftype')     !== ftype)              return false;
-        if (year      && String($($row).data('year'))      !== year)        return false;
-        if (gender    && $($row).data('gender')    !== gender)             return false;
-        if (alumni    !== '' && String($($row).data('alumni')) !== alumni)  return false;
-
+        if (chkProgramme.length && chkProgramme.indexOf(String($row.data('programme') || '')) === -1) return false;
+        if (chkCountry.length   && chkCountry.indexOf(String($row.data('country')     || '')) === -1) return false;
+        if (chkType.length      && chkType.indexOf(String($row.data('ftype')          || '')) === -1) return false;
+        if (chkYear.length      && chkYear.indexOf(String($row.data('year')           || '')) === -1) return false;
+        if (chkGender.length    && chkGender.indexOf(String($row.data('gender')       || '')) === -1) return false;
+        if (chkAlumni.length    && chkAlumni.indexOf(String($row.data('alumni')))             === -1) return false;
         return true;
     });
 
-    // Trigger DataTable redraw on filter change
-    $('#filterCountry, #filterProgramme, #filterType, #filterYear, #filterGender, #filterAlumni').on('change', function () {
-        $('#fellowstable').DataTable().draw();
+    // Panel open/close
+    $(document).on('click', '.chk-filter-btn', function (e) {
+        e.stopPropagation();
+        var filterId = $(this).data('filter');
+        var $panel   = $('#' + filterId + '-panel');
+        $('.chk-filter-panel').not($panel).hide();
+        $panel.toggle();
+    });
+    $(document).on('click', '.chk-filter-panel', function (e) { e.stopPropagation(); });
+    $(document).on('click', function () { $('.chk-filter-panel').hide(); });
+
+    // In-panel search
+    $(document).on('input', '.chk-search', function () {
+        var q = $(this).val().toLowerCase();
+        $(this).closest('.chk-filter-panel').find('.chk-item').each(function () {
+            $(this).toggle($(this).text().toLowerCase().indexOf(q) !== -1);
+        });
     });
 
-    // Clear filters button
+    // Checkbox change
+    $(document).on('change', '.chk-option', function () {
+        updateBadge($(this).data('filter'));
+        redraw();
+    });
+
+    // Select All / Clear per panel
+    $(document).on('click', '.chk-select-all', function (e) {
+        e.preventDefault();
+        var $panel = $(this).closest('.chk-filter-panel');
+        $panel.find('.chk-item:visible .chk-option').prop('checked', true);
+        updateBadge($panel.closest('.chk-filter-wrap').data('filter'));
+        redraw();
+    });
+    $(document).on('click', '.chk-clear', function (e) {
+        e.preventDefault();
+        var $panel   = $(this).closest('.chk-filter-panel');
+        var filterId = $panel.closest('.chk-filter-wrap').data('filter');
+        $panel.find('.chk-option').prop('checked', false);
+        updateBadge(filterId);
+        redraw();
+    });
+
+    // Clear All
     $('#btnClearFilters').on('click', function () {
-        $('#filterCountry, #filterProgramme, #filterType, #filterYear, #filterGender, #filterAlumni').val('');
-        $('#fellowstable').DataTable().draw();
+        $('.chk-option').prop('checked', false);
+        $('.chk-badge').hide();
+        redraw();
+        $('#filteredCount').text('');
     });
-
-    // Dropdowns are re-initialised in custom.js drawCallback
 });
 </script>
 @endpush

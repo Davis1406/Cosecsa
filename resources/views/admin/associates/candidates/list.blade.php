@@ -36,55 +36,47 @@
                 {{-- Filter Bar --}}
                 <div class="card card-outline card-secondary mb-2 shadow-sm">
                     <div class="card-body py-2">
-                        <div class="row align-items-end">
-                            <div class="col-6 col-md-2 pr-1 mb-1">
-                                <label class="small mb-0 font-weight-bold">Country</label>
-                                <select id="filterCountry" class="form-control form-control-sm">
-                                    <option value="">All Countries</option>
-                                    @foreach($filterCountries as $c)
-                                    <option value="{{ $c }}">{{ $c }}</option>
-                                    @endforeach
-                                </select>
+                        @php
+                        $filterDefs = [
+                            ['id'=>'filterCountry',   'label'=>'Country',   'options'=>$filterCountries,         'default'=>[], 'optLabels'=>[]],
+                            ['id'=>'filterProgramme', 'label'=>'Programme', 'options'=>$filterProgrammes,        'default'=>[], 'optLabels'=>[]],
+                            ['id'=>'filterYear',      'label'=>'Exam Year', 'options'=>$filterYears,             'default'=>[(string)date('Y')], 'optLabels'=>[]],
+                            ['id'=>'filterGender',    'label'=>'Gender',    'options'=>collect(['Male','Female']),'default'=>[], 'optLabels'=>[]],
+                            ['id'=>'filterFeePaid',   'label'=>'Fee Paid',  'options'=>collect(['Yes','No']),     'default'=>[], 'optLabels'=>['Yes'=>'Paid','No'=>'Not Paid']],
+                        ];
+                        @endphp
+                        <div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
+                            @foreach($filterDefs as $fd)
+                            <div class="chk-filter-wrap" data-filter="{{ $fd['id'] }}">
+                                <button type="button" class="btn btn-sm btn-outline-secondary chk-filter-btn" data-filter="{{ $fd['id'] }}">
+                                    {{ $fd['label'] }}
+                                    <span class="badge badge-danger chk-badge ml-1" style="display:none;font-size:.65rem;"></span>
+                                    <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
+                                </button>
+                                <div class="chk-filter-panel shadow" id="{{ $fd['id'] }}-panel" style="display:none;">
+                                    @if(collect($fd['options'])->count() > 6)
+                                    <input type="text" class="form-control form-control-sm chk-search mb-1" placeholder="Search…" autocomplete="off">
+                                    @endif
+                                    <div class="chk-list">
+                                        @foreach($fd['options'] as $opt)
+                                        <label class="chk-item">
+                                            <input type="checkbox" class="chk-option" data-filter="{{ $fd['id'] }}" value="{{ $opt }}"
+                                                   {{ in_array((string)$opt, array_map('strval', $fd['default'])) ? 'checked' : '' }}>
+                                            {{ !empty($fd['optLabels'][$opt]) ? $fd['optLabels'][$opt] : $opt }}
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                    <div class="chk-footer">
+                                        <a href="#" class="chk-select-all small">All</a>
+                                        <a href="#" class="chk-clear small text-danger">Clear</a>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-6 col-md-3 px-1 mb-1">
-                                <label class="small mb-0 font-weight-bold">Programme / Exam Type</label>
-                                <select id="filterProgramme" class="form-control form-control-sm">
-                                    <option value="">All Programmes</option>
-                                    @foreach($filterProgrammes as $p)
-                                    <option value="{{ $p }}">{{ $p }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-6 col-md-2 px-1 mb-1">
-                                <label class="small mb-0 font-weight-bold">Exam Year</label>
-                                <select id="filterYear" class="form-control form-control-sm">
-                                    <option value="">All Years</option>
-                                    @foreach($filterYears as $y)
-                                    <option value="{{ $y }}" {{ $y == date('Y') ? 'selected' : '' }}>{{ $y }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-6 col-md-2 px-1 mb-1">
-                                <label class="small mb-0 font-weight-bold">Gender</label>
-                                <select id="filterGender" class="form-control form-control-sm">
-                                    <option value="">All Genders</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                </select>
-                            </div>
-                            <div class="col-6 col-md-2 pl-1 mb-1">
-                                <label class="small mb-0 font-weight-bold">Fee Paid</label>
-                                <select id="filterFeePaid" class="form-control form-control-sm">
-                                    <option value="">All</option>
-                                    <option value="Yes">Paid</option>
-                                    <option value="No">Not Paid</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="text-right mt-1">
+                            @endforeach
                             <button id="btnClearFilters" class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-times mr-1"></i>Clear Filters
+                                <i class="fas fa-times mr-1"></i>Clear All
                             </button>
+                            <small class="text-muted ml-auto" id="filteredCount"></small>
                         </div>
                     </div>
                 </div>
@@ -215,6 +207,31 @@
 
 @push('styles')
 <style>
+    /* ── Checkbox filter dropdowns ── */
+    .chk-filter-wrap { position: relative; display: inline-block; }
+    .chk-filter-panel {
+        position: absolute; top: calc(100% + 4px); left: 0; z-index: 1055;
+        background: #fff; border: 1px solid #ced4da; border-radius: 6px;
+        min-width: 190px; max-width: 260px; padding: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+    .chk-list { max-height: 220px; overflow-y: auto; }
+    .chk-item {
+        display: flex; align-items: center; gap: 6px;
+        padding: 3px 2px; font-size: .82rem; font-weight: normal;
+        cursor: pointer; white-space: nowrap; margin: 0;
+    }
+    .chk-item:hover { background: #f8f0f0; border-radius: 4px; }
+    .chk-item input[type="checkbox"] { margin: 0; cursor: pointer; accent-color: #a02626; }
+    .chk-footer {
+        display: flex; justify-content: space-between;
+        border-top: 1px solid #eee; margin-top: 6px; padding-top: 5px;
+        font-size: .78rem;
+    }
+    .chk-footer a { color: #6c757d; }
+    .chk-footer a:hover { color: #a02626; text-decoration: none; }
+    .chk-filter-btn { white-space: nowrap; }
+    /* ── Table ── */
     #candidatestable td { vertical-align: middle; }
     .candidate-name-link {
         color: #333;
@@ -245,48 +262,107 @@
 <script>
 $(document).ready(function () {
 
-    // Custom DataTable search filter
+    function getChecked(filterId) {
+        return $('.chk-option[data-filter="' + filterId + '"]:checked')
+               .map(function () { return this.value; }).get();
+    }
+
+    function updateBadge(filterId) {
+        var checked = getChecked(filterId);
+        var $badge  = $('.chk-filter-btn[data-filter="' + filterId + '"] .chk-badge');
+        if (checked.length) $badge.text(checked.length).show();
+        else $badge.hide();
+    }
+
+    function updateCardTitle() {
+        var yrs = getChecked('filterYear');
+        if (yrs.length === 0)      $('#cardYearLabel').text('All Years');
+        else if (yrs.length === 1) $('#cardYearLabel').text(yrs[0]);
+        else                       $('#cardYearLabel').text(yrs[0] + ' (+' + (yrs.length - 1) + ' more)');
+    }
+
+    function redraw() {
+        var dt   = $('#candidatestable').DataTable();
+        dt.draw();
+        var info = dt.page.info();
+        $('#filteredCount').text(
+            info.recordsDisplay < info.recordsTotal
+                ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal : ''
+        );
+        updateCardTitle();
+    }
+
+    // DataTable custom search filter
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
         if (settings.nTable.id !== 'candidatestable') return true;
-        var $row     = $(settings.nTable).DataTable().row(dataIndex).node();
-        var country  = $('#filterCountry').val();
-        var programme= $('#filterProgramme').val();
-        var year     = $('#filterYear').val();
-        var gender   = $('#filterGender').val();
-        var feePaid  = $('#filterFeePaid').val();
+        var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
 
-        if (country   && $($row).data('country')   !== country)   return false;
-        if (programme && $($row).data('programme') !== programme)  return false;
-        if (year      && String($($row).data('year')) !== year)    return false;
-        if (gender    && $($row).data('gender')    !== gender)     return false;
-        if (feePaid   && $($row).data('feepaid')   !== feePaid)    return false;
+        var chkCountry   = getChecked('filterCountry');
+        var chkProgramme = getChecked('filterProgramme');
+        var chkYear      = getChecked('filterYear');
+        var chkGender    = getChecked('filterGender');
+        var chkFeePaid   = getChecked('filterFeePaid');
+
+        if (chkCountry.length   && chkCountry.indexOf(String($row.data('country')    || '')) === -1) return false;
+        if (chkProgramme.length && chkProgramme.indexOf(String($row.data('programme')|| '')) === -1) return false;
+        if (chkYear.length      && chkYear.indexOf(String($row.data('year')          || '')) === -1) return false;
+        if (chkGender.length    && chkGender.indexOf(String($row.data('gender')      || '')) === -1) return false;
+        if (chkFeePaid.length   && chkFeePaid.indexOf(String($row.data('feepaid')    || '')) === -1) return false;
         return true;
     });
 
-    function updateCardTitle() {
-        var yr = $('#filterYear').val();
-        $('#cardYearLabel').text(yr || 'All Years');
-    }
+    // Panel open/close
+    $(document).on('click', '.chk-filter-btn', function (e) {
+        e.stopPropagation();
+        var filterId = $(this).data('filter');
+        var $panel   = $('#' + filterId + '-panel');
+        $('.chk-filter-panel').not($panel).hide();
+        $panel.toggle();
+    });
+    $(document).on('click', '.chk-filter-panel', function (e) { e.stopPropagation(); });
+    $(document).on('click', function () { $('.chk-filter-panel').hide(); });
 
-    $('#filterCountry, #filterProgramme, #filterYear, #filterGender, #filterFeePaid').on('change', function () {
-        var dt = $('#candidatestable').DataTable();
-        dt.draw();
-        updateCardTitle();
-        $('#filteredCount').text('Showing ' + dt.page.info().recordsDisplay + ' of ' + dt.page.info().recordsTotal);
+    // In-panel search
+    $(document).on('input', '.chk-search', function () {
+        var q = $(this).val().toLowerCase();
+        $(this).closest('.chk-filter-panel').find('.chk-item').each(function () {
+            $(this).toggle($(this).text().toLowerCase().indexOf(q) !== -1);
+        });
     });
 
+    // Checkbox change
+    $(document).on('change', '.chk-option', function () {
+        updateBadge($(this).data('filter'));
+        redraw();
+    });
+
+    // Select All / Clear per panel
+    $(document).on('click', '.chk-select-all', function (e) {
+        e.preventDefault();
+        var $panel = $(this).closest('.chk-filter-panel');
+        $panel.find('.chk-item:visible .chk-option').prop('checked', true);
+        updateBadge($panel.closest('.chk-filter-wrap').data('filter'));
+        redraw();
+    });
+    $(document).on('click', '.chk-clear', function (e) {
+        e.preventDefault();
+        var $panel   = $(this).closest('.chk-filter-panel');
+        var filterId = $panel.closest('.chk-filter-wrap').data('filter');
+        $panel.find('.chk-option').prop('checked', false);
+        updateBadge(filterId);
+        redraw();
+    });
+
+    // Clear All
     $('#btnClearFilters').on('click', function () {
-        $('#filterCountry, #filterProgramme, #filterYear, #filterGender, #filterFeePaid').val('');
-        $('#candidatestable').DataTable().draw();
-        updateCardTitle();
+        $('.chk-option').prop('checked', false);
+        $('.chk-badge').hide();
+        redraw();
         $('#filteredCount').text('');
     });
 
-    // Apply the default selected year filter on page load
-    $('#candidatestable').DataTable().draw();
-    updateCardTitle();
-
-    // Dropdown init + outside-click handling is managed in custom.js
+    // Apply default year filter on page load
+    redraw();
 });
 </script>
 @endpush

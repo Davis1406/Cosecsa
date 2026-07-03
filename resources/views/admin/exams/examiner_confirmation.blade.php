@@ -103,6 +103,31 @@
         .badge-email-opened { background:#2e7d32; color:#fff; font-size:10px; padding:2px 7px; border-radius:10px; white-space:nowrap; }
         .badge-email-sent   { background:#f9a825; color:#333; font-size:10px; padding:2px 7px; border-radius:10px; white-space:nowrap; }
         .badge-email-none   { color:#aaa; font-size:12px; }
+
+        /* ── Checkbox filter dropdowns ── */
+        .chk-filter-wrap { position: relative; display: inline-block; }
+        .chk-filter-panel {
+            position: absolute; top: calc(100% + 4px); left: 0; z-index: 1055;
+            background: #fff; border: 1px solid #ced4da; border-radius: 6px;
+            min-width: 190px; max-width: 260px; padding: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,.12);
+        }
+        .chk-list { max-height: 220px; overflow-y: auto; }
+        .chk-item {
+            display: flex; align-items: center; gap: 6px;
+            padding: 3px 2px; font-size: .82rem; font-weight: normal;
+            cursor: pointer; white-space: nowrap; margin: 0;
+        }
+        .chk-item:hover { background: #f8f0f0; border-radius: 4px; }
+        .chk-item input[type="checkbox"] { margin: 0; cursor: pointer; accent-color: #a02626; }
+        .chk-footer {
+            display: flex; justify-content: space-between;
+            border-top: 1px solid #eee; margin-top: 6px; padding-top: 5px;
+            font-size: .78rem;
+        }
+        .chk-footer a { color: #6c757d; }
+        .chk-footer a:hover { color: #a02626; text-decoration: none; }
+        .chk-filter-btn { white-space: nowrap; }
     </style>
 @endpush
 
@@ -144,78 +169,48 @@
                                     @endphp
 
                                     <!-- Filter Bar -->
+                                    @php
+                                    $confFilterDefs = [
+                                        ['id'=>'filter-specialty',    'label'=>'Specialty',    'options'=>$specialties,  'optLabels'=>[]],
+                                        ['id'=>'filter-availability', 'label'=>'Availability', 'options'=>collect(['MCS','FCS','MCS+FCS','Not Available']), 'optLabels'=>[]],
+                                        ['id'=>'filter-shift',        'label'=>'MCS Shift',    'options'=>collect(['1','2','3','0']), 'optLabels'=>['1'=>'Morning','2'=>'Morning & Afternoon','3'=>'Afternoon','0'=>'No Shift']],
+                                        ['id'=>'filter-participation','label'=>'Participation','options'=>collect(['Examiner','Observer','None']), 'optLabels'=>[]],
+                                        ['id'=>'filter-country',      'label'=>'Country',      'options'=>$countries,    'optLabels'=>[]],
+                                        ['id'=>'filter-source',       'label'=>'Source',       'options'=>collect(['self','admin']), 'optLabels'=>['self'=>'Self-submitted','admin'=>'Admin-entered']],
+                                        ['id'=>'filter-email',        'label'=>'Email Status', 'options'=>collect(['opened','sent','none']), 'optLabels'=>['opened'=>'Opened','sent'=>'Sent (not opened)','none'=>'Not emailed']],
+                                    ];
+                                    @endphp
                                     <div class="filter-bar">
-                                        <div class="row align-items-end g-2" style="row-gap:10px;">
-                                            <div class="col-6 col-md-2">
-                                                <label class="filter-label">Specialty</label>
-                                                <select id="filter-specialty" class="form-control form-control-sm">
-                                                    <option value="">All Specialties</option>
-                                                    @foreach($specialties as $sp)
-                                                        <option value="{{ $sp }}">{{ $sp }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <div class="col-6 col-md-2">
-                                                <label class="filter-label">Availability</label>
-                                                <select id="filter-availability" class="form-control form-control-sm">
-                                                    <option value="">All</option>
-                                                    <option value="MCS">MCS</option>
-                                                    <option value="FCS">FCS</option>
-                                                    <option value="MCS+FCS">MCS &amp; FCS</option>
-                                                    <option value="Not Available">Not Available</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-6 col-md-2">
-                                                <label class="filter-label">MCS Shift</label>
-                                                <select id="filter-shift" class="form-control form-control-sm">
-                                                    <option value="">All</option>
-                                                    <option value="1">Morning</option>
-                                                    <option value="2">Morning &amp; Afternoon</option>
-                                                    <option value="3">Afternoon</option>
-                                                    <option value="0">No Shift</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-6 col-md-2">
-                                                <label class="filter-label">Participation</label>
-                                                <select id="filter-participation" class="form-control form-control-sm">
-                                                    <option value="">All</option>
-                                                    <option value="Examiner">Examiner</option>
-                                                    <option value="Observer">Observer</option>
-                                                    <option value="None">None</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-6 col-md-2">
-                                                <label class="filter-label">Country</label>
-                                                <select id="filter-country" class="form-control form-control-sm">
-                                                    <option value="">All Countries</option>
-                                                    @foreach($countries as $c)
-                                                        <option value="{{ $c }}">{{ $c }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <div class="col-6 col-md-2">
-                                                <label class="filter-label">Source</label>
-                                                <select id="filter-source" class="form-control form-control-sm">
-                                                    <option value="">All</option>
-                                                    <option value="self">Self-submitted</option>
-                                                    <option value="admin">Admin-entered</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-6 col-md-2">
-                                                <label class="filter-label">Email Status</label>
-                                                <select id="filter-email" class="form-control form-control-sm">
-                                                    <option value="">All</option>
-                                                    <option value="opened">Opened</option>
-                                                    <option value="sent">Sent (not opened)</option>
-                                                    <option value="none">Not emailed</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-6 col-md-2 d-flex align-items-end">
-                                                <button id="btn-clear-filters" class="btn btn-clear btn-sm w-100">
-                                                    <i class="fas fa-times mr-1"></i> Clear Filters
-                                                    <span class="filter-badge" id="filter-count"></span>
+                                        <div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
+                                            @foreach($confFilterDefs as $fd)
+                                            <div class="chk-filter-wrap" data-filter="{{ $fd['id'] }}">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary chk-filter-btn" data-filter="{{ $fd['id'] }}">
+                                                    {{ $fd['label'] }}
+                                                    <span class="badge badge-danger chk-badge ml-1" style="display:none;font-size:.65rem;"></span>
+                                                    <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
                                                 </button>
+                                                <div class="chk-filter-panel shadow" id="{{ $fd['id'] }}-panel" style="display:none;">
+                                                    @if(collect($fd['options'])->count() > 6)
+                                                    <input type="text" class="form-control form-control-sm chk-search mb-1" placeholder="Search…" autocomplete="off">
+                                                    @endif
+                                                    <div class="chk-list">
+                                                        @foreach($fd['options'] as $opt)
+                                                        <label class="chk-item">
+                                                            <input type="checkbox" class="chk-option" data-filter="{{ $fd['id'] }}" value="{{ $opt }}">
+                                                            {{ !empty($fd['optLabels'][$opt]) ? $fd['optLabels'][$opt] : $opt }}
+                                                        </label>
+                                                        @endforeach
+                                                    </div>
+                                                    <div class="chk-footer">
+                                                        <a href="#" class="chk-select-all small">All</a>
+                                                        <a href="#" class="chk-clear small text-danger">Clear</a>
+                                                    </div>
+                                                </div>
                                             </div>
+                                            @endforeach
+                                            <button id="btn-clear-filters" class="btn btn-clear btn-sm">
+                                                <i class="fas fa-times mr-1"></i> Clear Filters
+                                            </button>
                                         </div>
                                     </div>
 
@@ -455,61 +450,88 @@
     <script>
         $(document).ready(function () {
 
-            // ── Active filter state ────────────────────────────────────────────
-            var filters = {
-                specialty:      '',
-                availability:   '',
-                shift:          '',
-                participation:  '',
-                country:        '',
-                source:         '',
-                email:          '',
-            };
+            var dt = $('#examinerconfirmationtable').DataTable();
+
+            function getChecked(filterId) {
+                return $('.chk-option[data-filter="' + filterId + '"]:checked')
+                       .map(function () { return this.value; }).get();
+            }
+
+            function updateBadge(filterId) {
+                var checked = getChecked(filterId);
+                var $badge  = $('.chk-filter-btn[data-filter="' + filterId + '"] .chk-badge');
+                if (checked.length) $badge.text(checked.length).show();
+                else $badge.hide();
+            }
 
             // ── Custom DataTable search extension ──────────────────────────────
             $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
                 if (settings.nTable.id !== 'examinerconfirmationtable') return true;
-                var $row = $(settings.nTable).DataTable().row(dataIndex).node();
+                var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
 
-                if (filters.specialty && $($row).data('specialty') !== filters.specialty)             return false;
-                if (filters.availability && $($row).data('availability') !== filters.availability)     return false;
-                if (filters.shift !== '' && String($($row).data('shift')) !== filters.shift)           return false;
-                if (filters.participation && $($row).data('participation') !== filters.participation)   return false;
-                if (filters.country && $($row).data('country') !== filters.country)                   return false;
-                if (filters.source && $($row).data('source') !== filters.source)                       return false;
-                if (filters.email && $($row).data('email') !== filters.email)                          return false;
+                function chkMatch(filterId, rowVal) {
+                    var checked = getChecked(filterId);
+                    return !checked.length || checked.indexOf(String(rowVal)) !== -1;
+                }
+
+                if (!chkMatch('filter-specialty',    $row.data('specialty')    || '')) return false;
+                if (!chkMatch('filter-availability', $row.data('availability') || '')) return false;
+                if (!chkMatch('filter-shift',        String($row.data('shift'))))      return false;
+                if (!chkMatch('filter-participation',$row.data('participation')|| '')) return false;
+                if (!chkMatch('filter-country',      $row.data('country')      || '')) return false;
+                if (!chkMatch('filter-source',       $row.data('source')       || '')) return false;
+                if (!chkMatch('filter-email',        $row.data('email')        || '')) return false;
 
                 return true;
             });
 
-            // ── Get existing DataTable instance (custom.js initialises it) ────
-            var dt = $('#examinerconfirmationtable').DataTable();
+            // ── Panel open/close ───────────────────────────────────────────────
+            $(document).on('click', '.chk-filter-btn', function (e) {
+                e.stopPropagation();
+                var filterId = $(this).data('filter');
+                var $panel   = $('#' + filterId + '-panel');
+                $('.chk-filter-panel').not($panel).hide();
+                $panel.toggle();
+            });
+            $(document).on('click', '.chk-filter-panel', function (e) { e.stopPropagation(); });
+            $(document).on('click', function () { $('.chk-filter-panel').hide(); });
 
-            // ── Wire up filter selects ─────────────────────────────────────────
-            function updateFilterBadge() {
-                var active = Object.values(filters).filter(function (v) { return v !== ''; }).length;
-                if (active > 0) {
-                    $('#filter-count').text(active).show();
-                } else {
-                    $('#filter-count').hide();
-                }
-            }
-
-            var filterIds = ['specialty', 'availability', 'shift', 'participation', 'country', 'source', 'email'];
-            filterIds.forEach(function (key) {
-                $('#filter-' + key).on('change', function () {
-                    filters[key] = $(this).val();
-                    dt.draw();
-                    updateFilterBadge();
+            // In-panel search
+            $(document).on('input', '.chk-search', function () {
+                var q = $(this).val().toLowerCase();
+                $(this).closest('.chk-filter-panel').find('.chk-item').each(function () {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(q) !== -1);
                 });
             });
 
-            // ── Clear all filters ──────────────────────────────────────────────
-            $('#btn-clear-filters').on('click', function () {
-                filterIds.forEach(function (k) { filters[k] = ''; });
-                $('#filter-specialty, #filter-availability, #filter-shift, #filter-participation, #filter-country, #filter-source, #filter-email').val('');
+            // Checkbox change
+            $(document).on('change', '.chk-option', function () {
+                updateBadge($(this).data('filter'));
                 dt.draw();
-                updateFilterBadge();
+            });
+
+            // Select All / Clear per panel
+            $(document).on('click', '.chk-select-all', function (e) {
+                e.preventDefault();
+                var $panel = $(this).closest('.chk-filter-panel');
+                $panel.find('.chk-item:visible .chk-option').prop('checked', true);
+                updateBadge($panel.closest('.chk-filter-wrap').data('filter'));
+                dt.draw();
+            });
+            $(document).on('click', '.chk-clear', function (e) {
+                e.preventDefault();
+                var $panel   = $(this).closest('.chk-filter-panel');
+                var filterId = $panel.closest('.chk-filter-wrap').data('filter');
+                $panel.find('.chk-option').prop('checked', false);
+                updateBadge(filterId);
+                dt.draw();
+            });
+
+            // Clear all filters
+            $('#btn-clear-filters').on('click', function () {
+                $('.chk-option').prop('checked', false);
+                $('.chk-badge').hide();
+                dt.draw();
             });
 
             // ── Misc ───────────────────────────────────────────────────────────

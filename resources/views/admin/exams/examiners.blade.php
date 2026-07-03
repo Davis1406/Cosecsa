@@ -74,38 +74,43 @@
                                     </button>
                                 </div>
                             </div>
-                            {{-- Row 2: Programme + Country + Designation + Role filters --}}
-                            <div class="d-flex flex-wrap" style="gap:.5rem;">
-                                <select id="filter-programme" class="form-control form-control-sm" style="max-width:220px;">
-                                    <option value="">— All Specialties —</option>
-                                    @foreach($programmes as $prog)
-                                        <option value="{{ $prog }}">{{ $prog }}</option>
-                                    @endforeach
-                                </select>
-                                <select id="filter-country" class="form-control form-control-sm" style="max-width:180px;">
-                                    <option value="">— All Countries —</option>
-                                    @foreach($countries as $c)
-                                        <option value="{{ $c }}">{{ $c }}</option>
-                                    @endforeach
-                                </select>
-                                <select id="filter-designation" class="form-control form-control-sm" style="max-width:200px;">
-                                    <option value="">— All Designations —</option>
-                                    @foreach($designationOptions as $desig)
-                                        <option value="{{ $desig }}">{{ $desig }}</option>
-                                    @endforeach
-                                </select>
-                                <select id="filter-status" class="form-control form-control-sm" style="max-width:150px;">
-                                    <option value="">— All Statuses —</option>
-                                    <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
-                                    <option value="Deceased">Deceased</option>
-                                </select>
-                                <select id="filter-role" class="form-control form-control-sm" style="max-width:160px;">
-                                    <option value="">— All Roles —</option>
-                                    @foreach($roleOptions as $role)
-                                        <option value="{{ $role }}">{{ $role }}</option>
-                                    @endforeach
-                                </select>
+                            {{-- Row 2: filters --}}
+                            @php
+                            $examFilterDefs = [
+                                ['id'=>'filter-programme',   'label'=>'Specialty',    'options'=>collect($programmes)],
+                                ['id'=>'filter-country',     'label'=>'Country',      'options'=>collect($countries)],
+                                ['id'=>'filter-designation', 'label'=>'Designation',  'options'=>collect($designationOptions)],
+                                ['id'=>'filter-status',      'label'=>'Status',       'options'=>collect(['Active','Inactive','Deceased'])],
+                                ['id'=>'filter-role',        'label'=>'Role',         'options'=>collect($roleOptions)],
+                            ];
+                            @endphp
+                            <div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
+                                @foreach($examFilterDefs as $fd)
+                                <div class="chk-filter-wrap" data-filter="{{ $fd['id'] }}">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary chk-filter-btn" data-filter="{{ $fd['id'] }}">
+                                        {{ $fd['label'] }}
+                                        <span class="badge badge-danger chk-badge ml-1" style="display:none;font-size:.65rem;"></span>
+                                        <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
+                                    </button>
+                                    <div class="chk-filter-panel shadow" id="{{ $fd['id'] }}-panel" style="display:none;">
+                                        @if($fd['options']->count() > 6)
+                                        <input type="text" class="form-control form-control-sm chk-search mb-1" placeholder="Search…" autocomplete="off">
+                                        @endif
+                                        <div class="chk-list">
+                                            @foreach($fd['options'] as $opt)
+                                            <label class="chk-item">
+                                                <input type="checkbox" class="chk-option" data-filter="{{ $fd['id'] }}" value="{{ $opt }}">
+                                                {{ $opt }}
+                                            </label>
+                                            @endforeach
+                                        </div>
+                                        <div class="chk-footer">
+                                            <a href="#" class="chk-select-all small">All</a>
+                                            <a href="#" class="chk-clear small text-danger">Clear</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
                                 <button id="btn-clear-filters" class="btn btn-sm btn-outline-secondary">
                                     <i class="fas fa-times mr-1"></i> Clear
                                 </button>
@@ -266,6 +271,31 @@
 
 @push('styles')
 <style>
+    /* ── Checkbox filter dropdowns ── */
+    .chk-filter-wrap { position: relative; display: inline-block; }
+    .chk-filter-panel {
+        position: absolute; top: calc(100% + 4px); left: 0; z-index: 1055;
+        background: #fff; border: 1px solid #ced4da; border-radius: 6px;
+        min-width: 190px; max-width: 260px; padding: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+    .chk-list { max-height: 220px; overflow-y: auto; }
+    .chk-item {
+        display: flex; align-items: center; gap: 6px;
+        padding: 3px 2px; font-size: .82rem; font-weight: normal;
+        cursor: pointer; white-space: nowrap; margin: 0;
+    }
+    .chk-item:hover { background: #f8f0f0; border-radius: 4px; }
+    .chk-item input[type="checkbox"] { margin: 0; cursor: pointer; accent-color: #a02626; }
+    .chk-footer {
+        display: flex; justify-content: space-between;
+        border-top: 1px solid #eee; margin-top: 6px; padding-top: 5px;
+        font-size: .78rem;
+    }
+    .chk-footer a { color: #6c757d; }
+    .chk-footer a:hover { color: #a02626; text-decoration: none; }
+    .chk-filter-btn { white-space: nowrap; }
+    /* ── Table ── */
     #examinerstable td { vertical-align: middle; }
     .action-btn { padding: 2px 8px; line-height: 1.4; border-radius: 4px; }
     .dropdown-menu { min-width: 130px; font-size: .875rem; }
@@ -303,12 +333,19 @@ $(function () {
     var table = $('#examinerstable').DataTable();
 
     // ── Active filters ────────────────────────────────────────────────────────
-    var filterMode        = 'all';   // 'all' | 'lastyear'
-    var filterProgramme   = '';
-    var filterCountry     = '';
-    var filterDesignation = '';
-    var filterStatus      = '';
-    var filterRole        = '';
+    var filterMode = 'all';   // 'all' | 'lastyear'
+
+    function getChecked(filterId) {
+        return $('.chk-option[data-filter="' + filterId + '"]:checked')
+               .map(function () { return this.value; }).get();
+    }
+
+    function updateBadge(filterId) {
+        var checked = getChecked(filterId);
+        var $badge  = $('.chk-filter-btn[data-filter="' + filterId + '"] .chk-badge');
+        if (checked.length) $badge.text(checked.length).show();
+        else $badge.hide();
+    }
 
     // ── Participant toggle buttons ─────────────────────────────────────────────
     $('#btn-all').on('click', function () {
@@ -329,94 +366,93 @@ $(function () {
         syncSelectAll();
     });
 
+    // ── Checkbox filter panel open/close ──────────────────────────────────────
+    $(document).on('click', '.chk-filter-btn', function (e) {
+        e.stopPropagation();
+        var filterId = $(this).data('filter');
+        var $panel   = $('#' + filterId + '-panel');
+        $('.chk-filter-panel').not($panel).hide();
+        $panel.toggle();
+    });
+    $(document).on('click', '.chk-filter-panel', function (e) { e.stopPropagation(); });
+    $(document).on('click', function () { $('.chk-filter-panel').hide(); });
 
-    // ── Programme / Country / Designation / Role dropdowns ───────────────────
-    $('#filter-programme').on('change', function () {
-        filterProgramme = this.value;
+    // In-panel search
+    $(document).on('input', '.chk-search', function () {
+        var q = $(this).val().toLowerCase();
+        $(this).closest('.chk-filter-panel').find('.chk-item').each(function () {
+            $(this).toggle($(this).text().toLowerCase().indexOf(q) !== -1);
+        });
+    });
+
+    // Checkbox change
+    $(document).on('change', '.chk-option', function () {
+        updateBadge($(this).data('filter'));
         table.draw();
         syncSelectAll();
     });
 
-    $('#filter-country').on('change', function () {
-        filterCountry = this.value;
-        table.draw();
-        syncSelectAll();
+    // Select All / Clear per panel
+    $(document).on('click', '.chk-select-all', function (e) {
+        e.preventDefault();
+        var $panel = $(this).closest('.chk-filter-panel');
+        $panel.find('.chk-item:visible .chk-option').prop('checked', true);
+        updateBadge($panel.closest('.chk-filter-wrap').data('filter'));
+        table.draw(); syncSelectAll();
     });
-
-    $('#filter-designation').on('change', function () {
-        filterDesignation = this.value;
-        table.draw();
-        syncSelectAll();
-    });
-
-    $('#filter-status').on('change', function () {
-        filterStatus = this.value;
-        table.draw();
-    });
-
-    $('#filter-role').on('change', function () {
-        filterRole = this.value;
-        table.draw();
-        syncSelectAll();
+    $(document).on('click', '.chk-clear', function (e) {
+        e.preventDefault();
+        var $panel   = $(this).closest('.chk-filter-panel');
+        var filterId = $panel.closest('.chk-filter-wrap').data('filter');
+        $panel.find('.chk-option').prop('checked', false);
+        updateBadge(filterId);
+        table.draw(); syncSelectAll();
     });
 
     $('#btn-clear-filters').on('click', function () {
-        filterMode        = 'all';
-        filterProgramme   = '';
-        filterCountry     = '';
-        filterDesignation = '';
-        filterStatus      = '';
-        filterRole        = '';
+        filterMode = 'all';
         $('#btn-all').addClass('active').siblings().removeClass('active');
         $('#examinerstable').removeClass('filter-lastyear');
-        $('#filter-programme').val('');
-        $('#filter-country').val('');
-        $('#filter-designation').val('');
-        $('#filter-status').val('');
-        $('#filter-role').val('');
+        $('.chk-option').prop('checked', false);
+        $('.chk-badge').hide();
         table.draw();
         syncSelectAll();
     });
 
     // ── Unified DataTable search extension ────────────────────────────────────
-    // Col indices: 0=chk 1=# 2=name 3=email 4=country 5=examID 6=specialty 7=notes 8=action
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-        if (settings.nTable.id !== 'examinerstable') return true; // guard other tables
+        if (settings.nTable.id !== 'examinerstable') return true;
 
         var $row = $(table.row(dataIndex).node());
 
         // Last-year participant filter
-        if (filterMode === 'lastyear') {
-            if (!$row.hasClass('last-year-row')) return false;
-        }
+        if (filterMode === 'lastyear' && !$row.hasClass('last-year-row')) return false;
 
-        // Programme filter — match against all-time specialties (data-programmes), not
-        // the year-specific display column, so selecting "MCS" shows all MCS examiners
-        // regardless of which year is currently displayed.
-        if (filterProgramme) {
+        // Programme — substring OR-match against data-programmes
+        var chkProgramme = getChecked('filter-programme');
+        if (chkProgramme.length) {
             var allProgs = ($row.data('programmes') || '').toLowerCase();
-            if (allProgs.indexOf(filterProgramme.toLowerCase()) === -1) return false;
+            var anyMatch = chkProgramme.some(function (p) { return allProgs.indexOf(p.toLowerCase()) !== -1; });
+            if (!anyMatch) return false;
         }
 
-        // Country filter — column 4, exact match
-        if (filterCountry) {
-            if ((data[4] || '').trim() !== filterCountry) return false;
-        }
+        // Country — exact match against column 4
+        var chkCountry = getChecked('filter-country');
+        if (chkCountry.length && chkCountry.indexOf((data[4] || '').trim()) === -1) return false;
 
-        // Designation filter — from data-desig attribute, exact match
-        if (filterDesignation) {
-            if (($row.data('desig') || '').trim() !== filterDesignation) return false;
-        }
+        // Designation — exact match from data-desig
+        var chkDesig = getChecked('filter-designation');
+        if (chkDesig.length && chkDesig.indexOf(($row.data('desig') || '').trim()) === -1) return false;
 
-        // Status filter — from data-status attribute, exact match
-        if (filterStatus) {
-            if (($row.data('status') || 'Active') !== filterStatus) return false;
-        }
+        // Status — exact match from data-status
+        var chkStatus = getChecked('filter-status');
+        if (chkStatus.length && chkStatus.indexOf($row.data('status') || 'Active') === -1) return false;
 
-        // Role filter — from data-role attribute, case-insensitive
-        if (filterRole) {
+        // Role — case-insensitive from data-role
+        var chkRole = getChecked('filter-role');
+        if (chkRole.length) {
             var rowRole = ($row.data('role') || '').trim().toLowerCase();
-            if (rowRole !== filterRole.toLowerCase()) return false;
+            if (!chkRole.some(function (r) { return r.toLowerCase() === rowRole; })) return false;
         }
 
         return true;
