@@ -360,6 +360,7 @@ $(function () {
                 { "visible": true  }, // Participation
                 { "visible": true  }, // Source
                 { "visible": true  }, // Email Status
+                { "visible": false }, // Updated At (hidden; toggle via ColVis)
                 { "orderable": false } // Action
             ],
             "initComplete": function () { hideLoader("examinerconfirmationtable"); },

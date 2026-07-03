@@ -225,6 +225,7 @@
                                                 <th>Participation</th>
                                                 <th>Source</th>
                                                 <th>Email Status</th>
+                                                <th>Updated At</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -301,6 +302,7 @@
                                                             <span class="badge-email-none">-</span>
                                                         @endif
                                                     </td>
+                                                    <td>{{ $value->history_updated_at ? \Carbon\Carbon::parse($value->history_updated_at)->format('d M Y H:i') : '-' }}</td>
                                                     <td>
                                                         <div class="dropdown">
                                                             <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
