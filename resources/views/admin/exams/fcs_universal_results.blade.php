@@ -32,6 +32,40 @@
                                 </div>
 
                                 <div class="card-body">
+                                    {{-- Group filter --}}
+                                    @php
+                                    $fcsGroups = $getResults->pluck('group_name')->filter()->unique()->sort()->values();
+                                    @endphp
+                                    @if($fcsGroups->count())
+                                    <div class="mb-3 d-flex flex-wrap align-items-center" style="gap:.5rem;">
+                                        <div class="chk-filter-wrap" data-filter="fcsFilterGroup">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary chk-filter-btn" data-filter="fcsFilterGroup">
+                                                Group
+                                                <span class="badge badge-danger chk-badge ml-1" style="display:none;font-size:.65rem;"></span>
+                                                <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
+                                            </button>
+                                            <div class="chk-filter-panel shadow" id="fcsFilterGroup-panel" style="display:none;">
+                                                <div class="chk-list">
+                                                    @foreach($fcsGroups as $g)
+                                                    <label class="chk-item">
+                                                        <input type="checkbox" class="chk-option" data-filter="fcsFilterGroup" value="{{ $g }}">
+                                                        {{ $g }}
+                                                    </label>
+                                                    @endforeach
+                                                </div>
+                                                <div class="chk-footer">
+                                                    <a href="#" class="chk-select-all small">All</a>
+                                                    <a href="#" class="chk-clear small text-danger">Clear</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button id="fcsBtnClear" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-times mr-1"></i>Clear
+                                        </button>
+                                        <small class="text-muted ml-auto" id="fcsFilteredCount"></small>
+                                    </div>
+                                    @endif
+
                                     <table id="fcsresultstable" class="table table-bordered table-striped">
                                         <thead>
                                         <tr>
@@ -57,7 +91,7 @@
                                         </thead>
                                         <tbody>
                                         @foreach ($getResults as $value)
-                                            <tr>
+                                            <tr data-group="{{ $value->group_name ?? '' }}">
                                                 <td>{{ $value->candidate_id }}</td>
                                                 <td>{{ $value->fullname }}</td>
                                                 <td>{{ $value->group_name }}</td>
@@ -107,3 +141,103 @@
     </div>
 
 @endsection
+
+@push('styles')
+<style>
+    .chk-filter-wrap { position: relative; display: inline-block; }
+    .chk-filter-panel {
+        position: absolute; top: calc(100% + 4px); left: 0; z-index: 1055;
+        background: #fff; border: 1px solid #ced4da; border-radius: 6px;
+        min-width: 160px; max-width: 240px; padding: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+    .chk-list { max-height: 220px; overflow-y: auto; }
+    .chk-item {
+        display: flex; align-items: center; gap: 6px;
+        padding: 3px 2px; font-size: .82rem; font-weight: normal;
+        cursor: pointer; white-space: nowrap; margin: 0;
+    }
+    .chk-item:hover { background: #f8f0f0; border-radius: 4px; }
+    .chk-item input[type="checkbox"] { margin: 0; cursor: pointer; accent-color: #a02626; }
+    .chk-footer {
+        display: flex; justify-content: space-between;
+        border-top: 1px solid #eee; margin-top: 6px; padding-top: 5px;
+        font-size: .78rem;
+    }
+    .chk-footer a { color: #6c757d; }
+    .chk-footer a:hover { color: #a02626; text-decoration: none; }
+    .chk-filter-btn { white-space: nowrap; }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+
+    function getChecked(filterId) {
+        return $('.chk-option[data-filter="' + filterId + '"]:checked')
+               .map(function () { return this.value; }).get();
+    }
+
+    function updateBadge(filterId) {
+        var checked = getChecked(filterId);
+        var $badge  = $('.chk-filter-btn[data-filter="' + filterId + '"] .chk-badge');
+        if (checked.length) $badge.text(checked.length).show();
+        else $badge.hide();
+    }
+
+    function redraw() {
+        var dt   = $('#fcsresultstable').DataTable();
+        dt.draw();
+        var info = dt.page.info();
+        $('#fcsFilteredCount').text(
+            info.recordsDisplay < info.recordsTotal
+                ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal : ''
+        );
+    }
+
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+        if (settings.nTable.id !== 'fcsresultstable') return true;
+        var $row     = $($(settings.nTable).DataTable().row(dataIndex).node());
+        var chkGroup = getChecked('fcsFilterGroup');
+        if (chkGroup.length && chkGroup.indexOf(String($row.data('group') || '')) === -1) return false;
+        return true;
+    });
+
+    $(document).on('click', '.chk-filter-btn', function (e) {
+        e.stopPropagation();
+        var filterId = $(this).data('filter');
+        var $panel   = $('#' + filterId + '-panel');
+        $('.chk-filter-panel').not($panel).hide();
+        $panel.toggle();
+    });
+    $(document).on('click', '.chk-filter-panel', function (e) { e.stopPropagation(); });
+    $(document).on('click', function () { $('.chk-filter-panel').hide(); });
+    $(document).on('change', '.chk-option', function () {
+        updateBadge($(this).data('filter'));
+        redraw();
+    });
+    $(document).on('click', '.chk-select-all', function (e) {
+        e.preventDefault();
+        var $panel = $(this).closest('.chk-filter-panel');
+        $panel.find('.chk-item:visible .chk-option').prop('checked', true);
+        updateBadge($panel.closest('.chk-filter-wrap').data('filter'));
+        redraw();
+    });
+    $(document).on('click', '.chk-clear', function (e) {
+        e.preventDefault();
+        var $panel   = $(this).closest('.chk-filter-panel');
+        var filterId = $panel.closest('.chk-filter-wrap').data('filter');
+        $panel.find('.chk-option').prop('checked', false);
+        updateBadge(filterId);
+        redraw();
+    });
+    $('#fcsBtnClear').on('click', function () {
+        $('.chk-option').prop('checked', false);
+        $('.chk-badge').hide();
+        redraw();
+        $('#fcsFilteredCount').text('');
+    });
+});
+</script>
+@endpush

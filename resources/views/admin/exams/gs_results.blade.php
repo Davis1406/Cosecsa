@@ -33,6 +33,15 @@
                             </div>
 
                             <div class="card-body">
+                                <div class="mb-3 d-flex align-items-center" style="gap:.5rem;">
+                                    <label class="mb-0 small font-weight-bold text-muted">Min Total Score:</label>
+                                    <input type="number" id="gsMinScore" class="form-control form-control-sm"
+                                           min="0" placeholder="e.g. 150" style="width:110px;">
+                                    <button id="gsClearScore" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-times mr-1"></i>Clear
+                                    </button>
+                                    <small class="text-muted ml-2" id="gsFilteredCount"></small>
+                                </div>
                                 <table id="gsresultstable" class="table table-bordered table-striped">
                                     <thead>
                                         <tr>
@@ -46,7 +55,8 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($getResults as $value)
-                                        <tr>
+                                        @php $gsTotal = array_sum(array_column($value->stations, 'total_sum')); @endphp
+                                        <tr data-total="{{ $gsTotal }}">
                                             <td>{{ $value->candidate_id }}</td>
                                             <td>{{ $value->fullname }}</td>
                                             @for ($i = 1; $i <= 8; $i++)
@@ -83,10 +93,36 @@
 
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
-    $(document).ready(function(){
-        $('[data-toggle="popover"]').popover();
+$(document).ready(function () {
+
+    function redraw() {
+        var dt   = $('#gsresultstable').DataTable();
+        dt.draw();
+        var info = dt.page.info();
+        $('#gsFilteredCount').text(
+            info.recordsDisplay < info.recordsTotal
+                ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal : ''
+        );
+    }
+
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+        if (settings.nTable.id !== 'gsresultstable') return true;
+        var min = parseInt($('#gsMinScore').val(), 10);
+        if (isNaN(min)) return true;
+        var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
+        return parseInt($row.data('total'), 10) >= min;
     });
+
+    $('#gsMinScore').on('input', redraw);
+    $('#gsClearScore').on('click', function () {
+        $('#gsMinScore').val('');
+        redraw();
+        $('#gsFilteredCount').text('');
+    });
+
+    $('[data-toggle="popover"]').popover();
+});
 </script>
-@endsection
+@endpush

@@ -33,6 +33,16 @@
                             </div>
 
                             <div class="card-body">
+                                {{-- Min total score filter --}}
+                                <div class="mb-3 d-flex align-items-center" style="gap:.5rem;">
+                                    <label class="mb-0 small font-weight-bold text-muted">Min Total Score:</label>
+                                    <input type="number" id="mcsMinScore" class="form-control form-control-sm"
+                                           min="0" placeholder="e.g. 150" style="width:110px;">
+                                    <button id="mcsClearScore" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-times mr-1"></i>Clear
+                                    </button>
+                                    <small class="text-muted ml-2" id="mcsFilteredCount"></small>
+                                </div>
                                 <table id="adminresultstable" class="table table-bordered table-striped">
                                     <thead>
                                         <tr>
@@ -46,7 +56,8 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($getResults as $value)
-                                        <tr>
+                                        @php $mcsTotal = array_sum(array_column($value->stations, 'total')); @endphp
+                                        <tr data-total="{{ $mcsTotal }}">
                                             <td>{{ $value->candidate_id }}</td>
                                             <td>{{ $value->fullname }}</td>
                                             @for ($i = 1; $i <= 8; $i++)
@@ -83,10 +94,34 @@
 
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
-    $(document).ready(function(){
-        $('[data-toggle="popover"]').popover();
+$(document).ready(function () {
+
+    function redraw() {
+        var dt   = $('#adminresultstable').DataTable();
+        dt.draw();
+        var info = dt.page.info();
+        $('#mcsFilteredCount').text(
+            info.recordsDisplay < info.recordsTotal
+                ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal : ''
+        );
+    }
+
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+        if (settings.nTable.id !== 'adminresultstable') return true;
+        var min = parseInt($('#mcsMinScore').val(), 10);
+        if (isNaN(min)) return true;
+        var $row  = $($(settings.nTable).DataTable().row(dataIndex).node());
+        return parseInt($row.data('total'), 10) >= min;
     });
+
+    $('#mcsMinScore').on('input', redraw);
+    $('#mcsClearScore').on('click', function () {
+        $('#mcsMinScore').val('');
+        redraw();
+        $('#mcsFilteredCount').text('');
+    });
+});
 </script>
-@endsection
+@endpush

@@ -27,6 +27,53 @@
         <!-- Main content -->
         <section class="content">
             <div class="container-wrapper">
+
+                {{-- Filter Bar --}}
+                @php
+                $pdCountries = collect($getRecord)->pluck('country_name')->filter()->unique()->sort()->values();
+                $pdHospitals = collect($getRecord)->pluck('hospital_name')->filter()->unique()->sort()->values();
+                $pdFilterDefs = [
+                    ['id'=>'pdFilterCountry',  'label'=>'Country',  'options'=>$pdCountries],
+                    ['id'=>'pdFilterHospital', 'label'=>'Hospital', 'options'=>$pdHospitals],
+                ];
+                @endphp
+                <div class="card card-outline card-secondary mb-2 shadow-sm">
+                    <div class="card-body py-2">
+                        <div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
+                            @foreach($pdFilterDefs as $fd)
+                            <div class="chk-filter-wrap" data-filter="{{ $fd['id'] }}">
+                                <button type="button" class="btn btn-sm btn-outline-secondary chk-filter-btn" data-filter="{{ $fd['id'] }}">
+                                    {{ $fd['label'] }}
+                                    <span class="badge badge-danger chk-badge ml-1" style="display:none;font-size:.65rem;"></span>
+                                    <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
+                                </button>
+                                <div class="chk-filter-panel shadow" id="{{ $fd['id'] }}-panel" style="display:none;">
+                                    @if($fd['options']->count() > 6)
+                                    <input type="text" class="form-control form-control-sm chk-search mb-1" placeholder="Search…" autocomplete="off">
+                                    @endif
+                                    <div class="chk-list">
+                                        @foreach($fd['options'] as $opt)
+                                        <label class="chk-item">
+                                            <input type="checkbox" class="chk-option" data-filter="{{ $fd['id'] }}" value="{{ $opt }}">
+                                            {{ $opt }}
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                    <div class="chk-footer">
+                                        <a href="#" class="chk-select-all small">All</a>
+                                        <a href="#" class="chk-clear small text-danger">Clear</a>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                            <button id="pdBtnClear" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-times mr-1"></i>Clear All
+                            </button>
+                            <small class="text-muted ml-auto" id="pdFilteredCount"></small>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
@@ -52,7 +99,9 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($getRecord as $value)
-                                        <tr class="user-row" data-user-type="{{ $value->user_type == 3 ? 'country_rep' : 'trainer' }}">
+                                        <tr class="user-row"
+                                            data-country="{{ $value->country_name ?? '' }}"
+                                            data-hospital="{{ $value->hospital_name ?? '' }}">
                                             <td>{{$value->id}}</td>
                                             <td>{{$value->name}}</td>
                                             <td>{{$value->user_email}}</td>
@@ -111,6 +160,29 @@
 
 @push('styles')
 <style>
+    .chk-filter-wrap { position: relative; display: inline-block; }
+    .chk-filter-panel {
+        position: absolute; top: calc(100% + 4px); left: 0; z-index: 1055;
+        background: #fff; border: 1px solid #ced4da; border-radius: 6px;
+        min-width: 190px; max-width: 260px; padding: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+    .chk-list { max-height: 220px; overflow-y: auto; }
+    .chk-item {
+        display: flex; align-items: center; gap: 6px;
+        padding: 3px 2px; font-size: .82rem; font-weight: normal;
+        cursor: pointer; white-space: nowrap; margin: 0;
+    }
+    .chk-item:hover { background: #f8f0f0; border-radius: 4px; }
+    .chk-item input[type="checkbox"] { margin: 0; cursor: pointer; accent-color: #a02626; }
+    .chk-footer {
+        display: flex; justify-content: space-between;
+        border-top: 1px solid #eee; margin-top: 6px; padding-top: 5px;
+        font-size: .78rem;
+    }
+    .chk-footer a { color: #6c757d; }
+    .chk-footer a:hover { color: #a02626; text-decoration: none; }
+    .chk-filter-btn { white-space: nowrap; }
     #trainerstable td { vertical-align: middle; }
     .action-btn { padding: 2px 8px; line-height: 1.4; border-radius: 4px; }
     .action-btn:hover { background-color: #f0f0f0; }
@@ -122,18 +194,82 @@
     .paginate_button>.page-link:focus, .paginate_button.active>.page-link:focus { box-shadow: none !important; outline: none !important; }
 </style>
 @endpush
-@section('scripts')
+@push('scripts')
 <script>
-    $(document).ready(function(){
-        $('.filter-button').click(function(){
-            var filter = $(this).attr('data-filter');
-            if (filter == 'all') {
-                $('.user-row').show();
-            } else {
-                $('.user-row').hide();
-                $('.user-row[data-user-type="' + filter + '"]').show();
-            }
+$(document).ready(function () {
+
+    function getChecked(filterId) {
+        return $('.chk-option[data-filter="' + filterId + '"]:checked')
+               .map(function () { return this.value; }).get();
+    }
+
+    function updateBadge(filterId) {
+        var checked = getChecked(filterId);
+        var $badge  = $('.chk-filter-btn[data-filter="' + filterId + '"] .chk-badge');
+        if (checked.length) $badge.text(checked.length).show();
+        else $badge.hide();
+    }
+
+    function redraw() {
+        var dt   = $('#trainerstable').DataTable();
+        dt.draw();
+        var info = dt.page.info();
+        $('#pdFilteredCount').text(
+            info.recordsDisplay < info.recordsTotal
+                ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal : ''
+        );
+    }
+
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+        if (settings.nTable.id !== 'trainerstable') return true;
+        var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
+        var chkCountry  = getChecked('pdFilterCountry');
+        var chkHospital = getChecked('pdFilterHospital');
+        if (chkCountry.length  && chkCountry.indexOf(String($row.data('country')  || '')) === -1) return false;
+        if (chkHospital.length && chkHospital.indexOf(String($row.data('hospital')|| '')) === -1) return false;
+        return true;
+    });
+
+    $(document).on('click', '.chk-filter-btn', function (e) {
+        e.stopPropagation();
+        var filterId = $(this).data('filter');
+        var $panel   = $('#' + filterId + '-panel');
+        $('.chk-filter-panel').not($panel).hide();
+        $panel.toggle();
+    });
+    $(document).on('click', '.chk-filter-panel', function (e) { e.stopPropagation(); });
+    $(document).on('click', function () { $('.chk-filter-panel').hide(); });
+    $(document).on('input', '.chk-search', function () {
+        var q = $(this).val().toLowerCase();
+        $(this).closest('.chk-filter-panel').find('.chk-item').each(function () {
+            $(this).toggle($(this).text().toLowerCase().indexOf(q) !== -1);
         });
     });
+    $(document).on('change', '.chk-option', function () {
+        updateBadge($(this).data('filter'));
+        redraw();
+    });
+    $(document).on('click', '.chk-select-all', function (e) {
+        e.preventDefault();
+        var $panel = $(this).closest('.chk-filter-panel');
+        $panel.find('.chk-item:visible .chk-option').prop('checked', true);
+        updateBadge($panel.closest('.chk-filter-wrap').data('filter'));
+        redraw();
+    });
+    $(document).on('click', '.chk-clear', function (e) {
+        e.preventDefault();
+        var $panel   = $(this).closest('.chk-filter-panel');
+        var filterId = $panel.closest('.chk-filter-wrap').data('filter');
+        $panel.find('.chk-option').prop('checked', false);
+        updateBadge(filterId);
+        redraw();
+    });
+    $('#pdBtnClear').on('click', function () {
+        $('.chk-option').prop('checked', false);
+        $('.chk-badge').hide();
+        redraw();
+        $('#pdFilteredCount').text('');
+    });
+});
 </script>
-@endsection
+@endpush
