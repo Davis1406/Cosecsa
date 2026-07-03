@@ -1,9 +1,8 @@
-<!-- Inline script to prevent flash of light mode -->
+<!-- Inline script to prevent flash of wrong mode -->
 <script>
-    // Apply dark mode immediately if it was previously selected
     (function() {
         const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
+        if (savedTheme !== 'light') {
             document.documentElement.classList.add('dark-mode');
             document.body.classList.add('dark-mode');
         }
@@ -1226,6 +1225,111 @@
     body.dark-mode ::-webkit-scrollbar-track { background: #1a1a1a; }
     body.dark-mode ::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
     body.dark-mode ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+    /* ── Dark mode: profile page custom classes ── */
+    /* Admin action bar */
+    body.dark-mode .admin-action-bar {
+        background: #374151 !important;
+        border-color: #4a5568 !important;
+    }
+    /* Stat chips (top summary cards on profile) */
+    body.dark-mode .stat-chip {
+        background: #374151 !important;
+        border-color: #4a5568 !important;
+    }
+    body.dark-mode .chip-label { color: #9ca3af !important; }
+    body.dark-mode .chip-val   { color: #e0e0e0 !important; }
+    body.dark-mode .chip-icon  { background: #4a5568 !important; }
+
+    /* Profile name & subtitle */
+    body.dark-mode .tp-name { color: #e0e0e0 !important; }
+    body.dark-mode .tp-sub  { color: #9ca3af !important; }
+
+    /* Info rows (left panel) */
+    body.dark-mode .info-row  { border-bottom-color: #374151 !important; }
+    body.dark-mode .info-label { color: #9ca3af !important; }
+    body.dark-mode .info-text  { color: #d1d5db !important; }
+
+    /* Section dividers */
+    body.dark-mode .sect-div {
+        color: #f87171 !important;
+        border-bottom-color: #4a3030 !important;
+    }
+
+    /* Field rows (tab panel details) */
+    body.dark-mode .field-row { border-bottom-color: #374151 !important; }
+    body.dark-mode .field-lbl { color: #9ca3af !important; }
+    body.dark-mode .field-val { color: #e0e0e0 !important; }
+
+    /* Tag pills */
+    body.dark-mode .tag-pill  { background: #374151 !important; color: #d1d5db !important; }
+    body.dark-mode .tag-red   { background: #4a1f1f !important; color: #fca5a5 !important; }
+    body.dark-mode .tag-green { background: #14532d !important; color: #86efac !important; }
+    body.dark-mode .tag-blue  { background: #1e3a5f !important; color: #93c5fd !important; }
+    body.dark-mode .tag-gold  { background: #451a03 !important; color: #fde68a !important; }
+    body.dark-mode .tag-grey  { background: #374151 !important; color: #9ca3af !important; }
+    body.dark-mode .tag-purple { background: #3b2a6e !important; color: #c4b5fd !important; }
+
+    /* Trainee profile tabs (.tp-tabs overrides bootstrap .nav-tabs) */
+    body.dark-mode .tp-tabs .nav-link {
+        background: #374151 !important;
+        color: #d1d5db !important;
+        border-color: #4a5568 !important;
+    }
+    body.dark-mode .tp-tabs .nav-link:hover {
+        background: #4a5568 !important;
+        color: #ffffff !important;
+        border-color: #4a5568 !important;
+    }
+    body.dark-mode .tp-tabs .nav-link.active {
+        background: #a02626 !important;
+        color: #fff !important;
+        border-color: #a02626 !important;
+    }
+
+    /* Profile link card */
+    body.dark-mode .profile-link-card {
+        background: #2d3030 !important;
+        border-color: #856404 !important;
+    }
+    body.dark-mode .profile-link-card .plink-icon { color: #fde68a !important; }
+
+    /* Examiner / fellow profile header section */
+    body.dark-mode .exm-profile-header,
+    body.dark-mode .profile-header-card,
+    body.dark-mode [class*="profile-header"] {
+        background: #1f2937 !important;
+        color: #e0e0e0 !important;
+    }
+
+    /* Generic white bg containers that escape card coverage */
+    body.dark-mode .bg-white { background-color: #2d3748 !important; }
+    body.dark-mode .bg-light { background-color: #374151 !important; }
+
+    /* Inline style overrides for hardcoded light backgrounds on rows/divs */
+    body.dark-mode [style*="background-color: #fff"],
+    body.dark-mode [style*="background-color:#fff"],
+    body.dark-mode [style*="background-color: white"],
+    body.dark-mode [style*="background:#fff"],
+    body.dark-mode [style*="background: #fff"],
+    body.dark-mode [style*="background-color: #f8f9fa"],
+    body.dark-mode [style*="background-color:#f8f9fa"],
+    body.dark-mode [style*="background-color: #fff8e1"],
+    body.dark-mode [style*="background-color:#fff8e1"] {
+        background-color: #2d3748 !important;
+    }
+
+    /* Inline hardcoded dark text colors */
+    body.dark-mode [style*="color: #333"],
+    body.dark-mode [style*="color:#333"],
+    body.dark-mode [style*="color: #222"],
+    body.dark-mode [style*="color:#222"],
+    body.dark-mode [style*="color: #555"],
+    body.dark-mode [style*="color:#555"],
+    body.dark-mode [style*="color: #495057"],
+    body.dark-mode [style*="color:#495057"] {
+        color: #e0e0e0 !important;
+    }
 </style>
 
 <script>
@@ -1235,11 +1339,11 @@
         const body = document.body;
         const html = document.documentElement;
 
-        // Check for saved theme preference or default to light mode
-        const currentTheme = localStorage.getItem('theme') || 'light';
+        // Default to dark mode; only go light if user explicitly chose light
+        const currentTheme = localStorage.getItem('theme') || 'dark';
 
         // Apply the saved theme and set the correct icon
-        if (currentTheme === 'dark') {
+        if (currentTheme !== 'light') {
             body.classList.add('dark-mode');
             html.classList.add('dark-mode');
             darkModeIcon.classList.remove('fa-moon');
