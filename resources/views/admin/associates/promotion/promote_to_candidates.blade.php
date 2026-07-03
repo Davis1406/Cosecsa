@@ -156,12 +156,16 @@
                     Trainees in Selected Group
                     <span id="previewCountBadge" class="badge badge-secondary ml-1" style="display:none;"></span>
                   </h6>
-                  <div id="selectAllWrap" style="display:none;">
-                    <div class="custom-control custom-checkbox">
+                  <div id="selectAllWrap" style="display:none;" class="d-flex align-items-center" style="gap:.5rem;">
+                    <div class="custom-control custom-checkbox mr-2">
                       <input type="checkbox" class="custom-control-input" id="chkSelectAll">
                       <label class="custom-control-label font-weight-bold" for="chkSelectAll"
                              style="font-size:.82rem;cursor:pointer;">Select All</label>
                     </div>
+                    <button type="button" id="btnDeselectAll" class="btn btn-sm btn-outline-secondary"
+                            style="font-size:.78rem;padding:2px 8px;">
+                      <i class="fas fa-square mr-1"></i>Deselect All
+                    </button>
                   </div>
                 </div>
                 <div class="card-body p-0">
@@ -317,6 +321,12 @@ $(document).ready(function () {
   // Select all / deselect all
   $('#chkSelectAll').on('change', function () {
     $('input.chk-trainee:not(:disabled)').prop('checked', $(this).is(':checked'));
+    updateSummary();
+  });
+
+  $('#btnDeselectAll').on('click', function () {
+    $('input.chk-trainee:not(:disabled)').prop('checked', false);
+    $('#chkSelectAll').prop('checked', false).prop('indeterminate', false);
     updateSummary();
   });
 

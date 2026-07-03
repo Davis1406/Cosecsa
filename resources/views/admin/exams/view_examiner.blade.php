@@ -286,6 +286,54 @@
 
                             <hr class="my-3">
 
+                            {{-- Confirmation Email --}}
+                            <small class="text-muted font-weight-bold text-uppercase"
+                                   style="letter-spacing:.04em;">
+                                <i class="fas fa-envelope mr-1"></i> Confirmation Email
+                            </small>
+                            <div class="mt-1 mb-3">
+                                @if($examiner->email_confirmed)
+                                    <div class="alert alert-success py-2 px-3 mb-2" style="font-size:.82rem;">
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        Examiner has confirmed availability.
+                                    </div>
+                                    <form method="POST"
+                                          action="{{ route('examiner.send.confirmation', $examiner->examin_id) }}"
+                                          onsubmit="return confirm('Resend confirmation email to {{ addslashes($examiner->email) }}?')">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary btn-block">
+                                            <i class="fas fa-redo mr-1"></i> Resend Email
+                                        </button>
+                                    </form>
+                                @elseif($examiner->last_email_sent_at)
+                                    <div class="alert alert-warning py-2 px-3 mb-2" style="font-size:.82rem;">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        Email sent {{ \Carbon\Carbon::parse($examiner->last_email_sent_at)->diffForHumans() }} — not yet confirmed.
+                                    </div>
+                                    <form method="POST"
+                                          action="{{ route('examiner.send.confirmation', $examiner->examin_id) }}"
+                                          onsubmit="return confirm('Resend confirmation email to {{ addslashes($examiner->email) }}?')">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-warning btn-block">
+                                            <i class="fas fa-paper-plane mr-1"></i> Resend Email
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="text-muted d-block mb-2" style="font-size:.82rem;">No confirmation email sent yet.</span>
+                                    <form method="POST"
+                                          action="{{ route('examiner.send.confirmation', $examiner->examin_id) }}"
+                                          onsubmit="return confirm('Send confirmation email to {{ addslashes($examiner->email) }}?')">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-block text-white"
+                                                style="background:#a02626;border-color:#a02626;">
+                                            <i class="fas fa-paper-plane mr-1"></i> Send Confirmation
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+
+                            <hr class="my-3">
+
                             {{-- History --}}
                             <small class="text-muted font-weight-bold text-uppercase"
                                    style="letter-spacing:.04em;">

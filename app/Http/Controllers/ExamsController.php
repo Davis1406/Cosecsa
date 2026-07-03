@@ -977,6 +977,14 @@ class ExamsController extends Controller
             return $row;
         })->sortByDesc('exam_year')->values();
 
+        // Email tracking: last email sent + whether examiner self-confirmed
+        $lastEmail = DB::table('email_tracking')
+            ->where('exm_id', $id)
+            ->orderByDesc('sent_at')
+            ->first();
+        $examiner->last_email_sent_at = $lastEmail?->sent_at ?? null;
+        $examiner->email_confirmed    = ($history?->source === 'self');
+
         return view('admin.exams.view_examiner', [
             'header_title'     => 'View Examiner',
             'examiner'         => $examiner,
@@ -991,8 +999,50 @@ class ExamsController extends Controller
             'exYears'              => $examinedYears,
             'programmeOptions'     => self::$programmeOptions,
             'candidatesExamined'   => $candidatesExamined,
+            'designationOptions'   => DB::table('designations')->orderBy('name')->pluck('name'),
         ]);
     }
+
+    public function sendConfirmationEmail(Request $request, $id)
+    {
+        $examiner = DB::table('examiners')
+            ->join('users', 'users.id', '=', 'examiners.user_id')
+            ->where('examiners.id', $id)
+            ->select('examiners.id as exm_id', 'users.email', 'users.name')
+            ->first();
+
+        if (!$examiner || !$examiner->email) {
+            return redirect()->back()->with('error', 'Examiner has no email address.');
+        }
+
+        $token   = \Illuminate\Support\Str::uuid()->toString();
+        $subject = 'COSECSA Examiner – Availability Confirmation';
+
+        $availabilityUrl = url('/examiner/availability');
+        $body = "Dear {$examiner->name},\n\nPlease confirm your availability for the upcoming COSECSA examinations by visiting the link below:\n\n{$availabilityUrl}\n\nThank you.";
+
+        try {
+            \App\Models\EmailTracking::create([
+                'token'           => $token,
+                'exm_id'          => $examiner->exm_id,
+                'recipient_email' => $examiner->email,
+                'subject'         => $subject,
+                'sent_at'         => now(),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error("Email tracking failed for examiner {$id}: " . $e->getMessage());
+        }
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($examiner->email, $examiner->name)
+                ->send(new \App\Mail\ExaminerBulkMail($examiner->name, $subject, $body, $token));
+            return redirect()->back()->with('success', 'Confirmation email sent to ' . $examiner->email);
+        } catch (\Exception $e) {
+            \Log::error("Confirmation email failed for examiner {$id}: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to send email. Check logs.');
+        }
+    }
+
 public function delete($id)
 {
     $user = User::find($id);

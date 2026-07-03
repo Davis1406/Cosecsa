@@ -160,6 +160,16 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
+                                            <label for="participation_type">Main Role</label>
+                                            <select name="participation_type" id="participation_type" class="form-control">
+                                                <option value="Examiner" {{ old('participation_type', 'Examiner') == 'Examiner' ? 'selected' : '' }}>Examiner</option>
+                                                <option value="Observer" {{ old('participation_type') == 'Observer' ? 'selected' : '' }}>Observer</option>
+                                                <option value="None"     {{ old('participation_type') == 'None' ? 'selected' : '' }}>None</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
                                             <label for="examiner_designation">Additional Designation</label>
                                             <select name="examiner_designation" id="examiner_designation" class="form-control">
                                                 <option value="">— None —</option>
@@ -172,6 +182,9 @@
                                             </small>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="status">Status</label>

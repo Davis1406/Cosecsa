@@ -122,6 +122,7 @@
                                         <th>Country</th>
                                         <th>Examiner ID</th>
                                         <th>Specialty</th>
+                                        <th>Designation</th>
                                         <th style="width:160px;">Notes</th>
                                         <th>Action</th>
                                     </tr>
@@ -145,6 +146,15 @@
                                         <td>{{ $value->country_name }}</td>
                                         <td>{{ $value->examiner_id }}</td>
                                         <td>{{ $value->specialty ?? '—' }}</td>
+                                        <td>
+                                            @if(!empty($value->examiner_designation))
+                                                <span class="badge badge-pill" style="background:#a02626;color:#fff;font-size:.75rem;">
+                                                    {{ $value->examiner_designation }}
+                                                </span>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
+                                        </td>
                                         <td>
                                             @if($value->internal_notes)
                                                 @php $notePreview = Str::limit($value->internal_notes, 60); @endphp
