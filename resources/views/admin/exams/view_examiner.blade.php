@@ -1542,6 +1542,45 @@ function showVEDeleteModal() {
         box-shadow: none !important;
     }
 }
+
+/* ── Dark mode overrides (must be last to beat !important rules above) ── */
+body.dark-mode .card                { background-color: #2d3748 !important; color: #e0e0e0 !important; }
+body.dark-mode .card-body           { background-color: #2d3748 !important; color: #e0e0e0 !important; }
+body.dark-mode .card-footer         { background-color: #374151 !important; color: #9ca3af !important; border-top-color: #4a5568 !important; }
+body.dark-mode .card-header         { background-color: #374151 !important; color: #e0e0e0 !important; border-bottom-color: #4a5568 !important; }
+body.dark-mode .section-header      { background: #374151 !important; border-bottom-color: #4a5568 !important; }
+
+body.dark-mode .info-table th       { background: #374151 !important; color: #9ca3af !important; }
+body.dark-mode .info-table td       { background: #2d3748 !important; color: #e0e0e0 !important; }
+
+body.dark-mode .table               { color: #e0e0e0 !important; }
+body.dark-mode .table th,
+body.dark-mode .table td            { color: #e0e0e0 !important; border-color: #4a5568 !important; background-color: transparent !important; }
+body.dark-mode .table-striped tbody tr:nth-of-type(odd) td { background-color: #374151 !important; }
+body.dark-mode thead                { background-color: #374151 !important; }
+body.dark-mode thead th             { background-color: #374151 !important; color: #9ca3af !important; border-color: #4a5568 !important; }
+
+body.dark-mode .stat-icon           { background-color: #374151 !important; color: #e0e0e0 !important; }
+body.dark-mode .bg-light-muted      { background-color: #374151 !important; }
+body.dark-mode .text-muted          { color: #9ca3af !important; }
+
+body.dark-mode [style*="background:#f8f8f8"],
+body.dark-mode [style*="background: #f8f8f8"],
+body.dark-mode [style*="background-color:#f8f8f8"],
+body.dark-mode [style*="background-color: #f8f8f8"] { background: #374151 !important; }
+
+body.dark-mode [style*="color:#333"],
+body.dark-mode [style*="color: #333"],
+body.dark-mode [style*="color:#6c757d"],
+body.dark-mode [style*="color: #6c757d"],
+body.dark-mode [style*="color:#555"],
+body.dark-mode [style*="color: #555"],
+body.dark-mode [style*="color:#212529"],
+body.dark-mode [style*="color: #212529"] { color: #e0e0e0 !important; }
+
+body.dark-mode .modal-content       { background-color: #2d3748 !important; color: #e0e0e0 !important; border-color: #4a5568 !important; }
+body.dark-mode .modal-body          { background-color: #2d3748 !important; color: #e0e0e0 !important; }
+body.dark-mode .modal-footer        { background-color: #374151 !important; border-top-color: #4a5568 !important; }
 </style>
 @endpush
 
