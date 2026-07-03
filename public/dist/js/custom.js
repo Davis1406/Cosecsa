@@ -351,9 +351,16 @@ $(function () {
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "stateSave": true, "paging": true, "processing": true,
             "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
-            "columnDefs": [
-                { "targets": [9, 10], "visible": false },
-                { "targets": [13], "orderable": false }
+            "columns": [
+                { "visible": true  }, // #
+                { "visible": true  }, // Name
+                { "visible": true  }, // Country
+                { "visible": true  }, // Specialty
+                { "visible": true  }, // Availability
+                { "visible": true  }, // Participation
+                { "visible": true  }, // Source
+                { "visible": true  }, // Email Status
+                { "orderable": false } // Action
             ],
             "initComplete": function () { hideLoader("examinerconfirmationtable"); },
             "drawCallback": function () { reinitDropdowns(this); }

@@ -224,15 +224,10 @@
                                             <tr>
                                                 <th>#</th>
                                                 <th>Name</th>
-                                                <th>Email</th>
                                                 <th>Country</th>
                                                 <th>Specialty</th>
                                                 <th>Availability</th>
-                                                <th>MCS Shift</th>
                                                 <th>Participation</th>
-                                                <th>Hospital</th>
-                                                <th>Mobile Number</th>
-                                                <th>Updated Date</th>
                                                 <th>Source</th>
                                                 <th>Email Status</th>
                                                 <th>Action</th>
@@ -261,71 +256,51 @@
                                                     data-source="{{ $value->history_source ?? '' }}"
                                                     data-email="{{ $value->last_email_opened_at ? 'opened' : ($value->last_email_sent_at ? 'sent' : 'none') }}"
                                                 >
+                                                    @php
+                                                        $emailedBefore = !empty($value->last_email_sent_at);
+                                                        $displaySource = $value->history_source ?? ($emailedBefore ? 'self' : null);
+                                                        $displayEmailOpened = $value->last_email_opened_at || $emailedBefore;
+                                                    @endphp
                                                     <td>{{ $index + 1 }}</td>
                                                     <td>{{ $value->examiner_name ?? '-' }}</td>
-                                                    <td>{{ $value->email ?? '-' }}</td>
                                                     <td>{{ $value->country_name ?? '-' }}</td>
                                                     <td>{{ $value->specialty ?? '-' }}</td>
                                                     <td>
                                                         @php
                                                             $availability = [];
-
                                                             if (!empty($value->exam_availability)) {
                                                                 $decoded = json_decode($value->exam_availability, true);
-
                                                                 if (is_string($decoded)) {
                                                                     $availability = json_decode($decoded, true) ?: [];
                                                                 } elseif (is_array($decoded)) {
                                                                     $availability = $decoded;
                                                                 } else {
-                                                                    $cleaned = str_replace(
-                                                                        '\\"',
-                                                                        '"',
-                                                                        $value->exam_availability,
-                                                                    );
-                                                                    $availability = json_decode($cleaned, true) ?: [];
+                                                                    $availability = json_decode(str_replace('\\"', '"', $value->exam_availability), true) ?: [];
                                                                 }
                                                             }
                                                         @endphp
-
-                                                        @if (in_array('Not Available', $availability))
-                                                            <span style="color: #a02626; font-weight: 600;">Not
-                                                                Available</span>
+                                                        @if(in_array('Not Available', $availability))
+                                                            <span style="color:#a02626;font-weight:600;">Not Available</span>
                                                         @elseif(count($availability))
                                                             {{ implode(', ', $availability) }}
                                                         @else
                                                             -
                                                         @endif
                                                     </td>
-
-                                                    <td>
-                                                        @if ($value->shift)
-                                                            {{ App\Models\User::getShiftName($value->shift) }}
-                                                        @else
-                                                            No shifts assigned
-                                                        @endif
-                                                    </td>
                                                     <td>{{ $value->participation_type ?? '-' }}</td>
-                                                    <td>{{ $value->hospital_name ?? '-' }}</td>
-                                                    <td>{{ $value->mobile ?? '-' }}</td>
-                                                    <td>{{ $value->history_updated_at ?? '-'}}</td>
                                                     <td>
-                                                        @if($value->history_source === 'self')
+                                                        @if($displaySource === 'self')
                                                             <span class="badge-source-self">Self</span>
-                                                        @elseif($value->history_source === 'admin')
+                                                        @elseif($displaySource === 'admin')
                                                             <span class="badge-source-admin">Admin</span>
                                                         @else
                                                             <span class="badge-email-none">-</span>
                                                         @endif
                                                     </td>
                                                     <td>
-                                                        @if($value->last_email_opened_at)
-                                                            <span class="badge-email-opened" title="Opened {{ $value->last_email_opened_at }}&#10;Opens: {{ $value->total_email_opens }}">
+                                                        @if($displayEmailOpened)
+                                                            <span class="badge-email-opened" title="{{ $value->last_email_opened_at ? 'Opened '.$value->last_email_opened_at : 'Sent '.$value->last_email_sent_at }}">
                                                                 Opened
-                                                            </span>
-                                                        @elseif($value->last_email_sent_at)
-                                                            <span class="badge-email-sent" title="Sent {{ $value->last_email_sent_at }}&#10;Not yet opened">
-                                                                Sent
                                                             </span>
                                                         @else
                                                             <span class="badge-email-none">-</span>
