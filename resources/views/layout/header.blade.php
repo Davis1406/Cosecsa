@@ -1,8 +1,8 @@
-<!-- Inline script to prevent flash of wrong mode -->
+<!-- Inline script to prevent flash of light mode -->
 <script>
     (function() {
         const savedTheme = localStorage.getItem('theme');
-        if (savedTheme !== 'light') {
+        if (savedTheme === 'dark') {
             document.documentElement.classList.add('dark-mode');
             document.body.classList.add('dark-mode');
         }
@@ -1339,11 +1339,11 @@
         const body = document.body;
         const html = document.documentElement;
 
-        // Default to dark mode; only go light if user explicitly chose light
-        const currentTheme = localStorage.getItem('theme') || 'dark';
+        // Default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
 
         // Apply the saved theme and set the correct icon
-        if (currentTheme !== 'light') {
+        if (currentTheme === 'dark') {
             body.classList.add('dark-mode');
             html.classList.add('dark-mode');
             darkModeIcon.classList.remove('fa-moon');
