@@ -13,8 +13,17 @@ use Carbon\Carbon;
 class HospitalProgrammesController extends Controller
 {
     public function list(Request $request){
-        $data['getHospitalProgrammes'] = HospitalProgrammesModel::getHospitalProgrammes($request);
+        $all = HospitalProgrammesModel::getHospitalProgrammes($request);
+        $data['getHospitalProgrammes'] = $all;
         $data['header_title'] = "Hospital Programmes";
+
+        // Stats for visual report
+        $data['totalAccreditations'] = $all->count();
+        $data['totalActive']  = $all->where('status', 'Active')->count();
+        $data['totalExpired'] = $all->where('status', 'Expired')->count();
+        $data['byProgramme']  = $all->groupBy('programme_name')->map(fn($g) => $g->count())->sortDesc();
+        $data['byCountry']    = $all->groupBy('country_name')->map(fn($g) => $g->count())->sortDesc();
+
         return view('admin.hospitalprogrammes.list', $data);
     }
 

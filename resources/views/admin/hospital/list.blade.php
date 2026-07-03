@@ -35,16 +35,10 @@
 
     /* ── Table ── */
     #hospitalTable td { vertical-align:middle; }
-    .type-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:.7rem;
-                  font-weight:600; white-space:nowrap; }
-    .type-govt  { background:#dbeafe; color:#1e40af; }
-    .type-ngo   { background:#dcfce7; color:#166534; }
-    .type-priv  { background:#fef9c3; color:#854d0e; }
-    .type-univ  { background:#ede9fe; color:#5b21b6; }
-    .status-active   { background:#dcfce7; color:#166534; padding:2px 8px; border-radius:10px;
-                       font-size:.7rem; font-weight:600; }
-    .status-inactive { background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:10px;
-                       font-size:.7rem; font-weight:600; }
+    .type-label { font-size:.82rem; color:#555; }
+    .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; flex-shrink:0; }
+    .dot-active   { background:#22c55e; }
+    .dot-inactive { background:#ef4444; }
 
     .action-btn { padding:2px 8px; line-height:1.4; border-radius:4px; }
     .action-btn:hover { background-color:#f0f0f0; }
@@ -66,6 +60,7 @@
     body.dark-mode .chk-footer { border-top-color:#4a5568 !important; }
     body.dark-mode .chk-footer a { color:#9ca3af !important; }
     body.dark-mode .dropdown-item:hover { background-color:#4a5568 !important; color:#fff !important; }
+    body.dark-mode .type-label { color:#9ca3af !important; }
 </style>
 @endpush
 
@@ -100,13 +95,13 @@
                     <div class="row mb-3" style="row-gap:.75rem;">
                         @php
                         $stats = [
-                            ['icon'=>'fas fa-hospital',         'bg'=>'#dbeafe','ic'=>'#1e40af', 'label'=>'Total Hospitals',        'val'=>$totalHospitals],
-                            ['icon'=>'fas fa-check-circle',     'bg'=>'#dcfce7','ic'=>'#166534', 'label'=>'Active',                  'val'=>$totalActive],
-                            ['icon'=>'fas fa-pause-circle',     'bg'=>'#fee2e2','ic'=>'#991b1b', 'label'=>'Inactive',                'val'=>$totalInactive],
-                            ['icon'=>'fas fa-landmark',         'bg'=>'#dbeafe','ic'=>'#1e40af', 'label'=>'Government',              'val'=>$countGovt],
-                            ['icon'=>'fas fa-hands-helping',    'bg'=>'#dcfce7','ic'=>'#166534', 'label'=>'NGO / Faith-Based',       'val'=>$countNGO],
-                            ['icon'=>'fas fa-clinic-medical',   'bg'=>'#fef9c3','ic'=>'#854d0e', 'label'=>'Private',                 'val'=>$countPrivate],
-                            ['icon'=>'fas fa-graduation-cap',   'bg'=>'#ede9fe','ic'=>'#5b21b6', 'label'=>'University Teaching',     'val'=>$countUniversity],
+                            ['icon'=>'fas fa-hospital',       'bg'=>'#f0d4d4','ic'=>'#a02626', 'label'=>'Total Hospitals',      'val'=>$totalHospitals],
+                            ['icon'=>'fas fa-circle',         'bg'=>'#e6f4ea','ic'=>'#2e7d32', 'label'=>'Active',               'val'=>$totalActive],
+                            ['icon'=>'fas fa-circle',         'bg'=>'#fce8e8','ic'=>'#c62828', 'label'=>'Inactive',             'val'=>$totalInactive],
+                            ['icon'=>'fas fa-landmark',       'bg'=>'#e8eaf6','ic'=>'#3949ab', 'label'=>'Government',           'val'=>$countGovt],
+                            ['icon'=>'fas fa-hands-helping',  'bg'=>'#e8f5e9','ic'=>'#388e3c', 'label'=>'NGO / Faith-Based',   'val'=>$countNGO],
+                            ['icon'=>'fas fa-clinic-medical', 'bg'=>'#fff8e1','ic'=>'#f9a825', 'label'=>'Private',              'val'=>$countPrivate],
+                            ['icon'=>'fas fa-graduation-cap', 'bg'=>'#f3e5f5','ic'=>'#7b1fa2', 'label'=>'University Teaching', 'val'=>$countUniversity],
                         ];
                         @endphp
                         @foreach($stats as $s)
@@ -208,7 +203,6 @@
                                         @foreach ($getRecord as $index => $value)
                                         @php
                                             $typeLabels = [1=>'Government',2=>'NGO / Faith-Based',3=>'Private',4=>'University Teaching'];
-                                            $typeCls    = [1=>'type-govt',2=>'type-ngo',3=>'type-priv',4=>'type-univ'];
                                             $statusStr  = $value->status == 0 ? 'active' : 'inactive';
                                         @endphp
                                         <tr
@@ -219,15 +213,9 @@
                                             <td>{{ $index + 1 }}</td>
                                             <td>{{ $value->name }}</td>
                                             <td>{{ $value->country_name }}</td>
+                                            <td><span class="type-label">{{ $typeLabels[$value->hospital_type] ?? '-' }}</span></td>
                                             <td>
-                                                <span class="type-badge {{ $typeCls[$value->hospital_type] ?? '' }}">
-                                                    {{ $typeLabels[$value->hospital_type] ?? '-' }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span class="{{ $statusStr === 'active' ? 'status-active' : 'status-inactive' }}">
-                                                    {{ $statusStr === 'active' ? 'Active' : 'Inactive' }}
-                                                </span>
+                                                <span class="dot dot-{{ $statusStr }}"></span>{{ $statusStr === 'active' ? 'Active' : 'Inactive' }}
                                             </td>
                                             <td class="text-center" style="white-space:nowrap;">
                                                 <div class="dropdown">
