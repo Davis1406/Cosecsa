@@ -72,6 +72,7 @@ Route::group(['middleware' => 'admin'], function(){
 
    //Programmes Routes
    Route::get('admin/programmes/list', [ProgrammesController::class, 'list']);
+   Route::get('admin/programmes/view/{id}', [ProgrammesController::class, 'view']);
    Route::get('admin/programmes/add_programmes', [ProgrammesController::class, 'add']);
    Route::post('admin/programmes/add_programmes', [ProgrammesController::class, 'insert']);
    Route::get('admin/programmes/edit_programmes/{id}', [ProgrammesController::class, 'edit']);

@@ -49,12 +49,65 @@ class HospitalController extends Controller
             ->where('hospitals.id', $id)
             ->first();
 
-        if ($hospital) {
-            $header_title = 'Hospital Details';
-            return view('admin.hospital.view_hospital', compact('hospital', 'header_title'));
-        } else {
+        if (!$hospital) {
             return redirect('admin/hospital/list')->with('error', 'Hospital not found');
         }
+
+        // Accredited programmes at this hospital
+        $programmes = \DB::table('hospital_programmes')
+            ->join('programmes', 'programmes.id', '=', 'hospital_programmes.programme_id')
+            ->where('hospital_programmes.hospital_id', $id)
+            ->where('hospital_programmes.is_delete', 0)
+            ->select('hospital_programmes.*', 'programmes.name as programme_name', 'programmes.id as programme_id')
+            ->orderBy('programmes.name')
+            ->get();
+
+        // Programme directors (trainers) at this hospital
+        $trainers = \DB::table('trainers')
+            ->join('users', 'users.id', '=', 'trainers.user_id')
+            ->join('user_roles', function($j){
+                $j->on('user_roles.user_id','=','users.id')
+                  ->where('user_roles.role_type', 4)
+                  ->where('user_roles.is_active', 1);
+            })
+            ->where('trainers.hospital_id', $id)
+            ->where('users.is_deleted', 0)
+            ->select('trainers.id as trainer_id', 'users.name', 'users.email',
+                     'trainers.phone_number', 'trainers.assistant_pd', 'trainers.assistant_email')
+            ->orderBy('users.name')
+            ->get();
+
+        // Trainees at this hospital
+        $trainees = \DB::table('trainees')
+            ->join('users', 'users.id', '=', 'trainees.user_id')
+            ->join('programmes', 'programmes.id', '=', 'trainees.programme_id')
+            ->where('trainees.hospital_id', $id)
+            ->where('users.is_deleted', 0)
+            ->select('trainees.id as trainee_id', 'users.name', 'users.email',
+                     'programmes.name as programme_name', 'programmes.id as programme_id',
+                     'trainees.admission_year', 'trainees.training_year', 'trainees.status')
+            ->orderBy('users.name')
+            ->get();
+
+        // Fellows affiliated via this hospital's programmes
+        $progIds = $programmes->pluck('programme_id')->unique()->toArray();
+        $fellows = collect();
+        if (!empty($progIds)) {
+            $fellows = \DB::table('fellows')
+                ->join('users', 'users.id', '=', 'fellows.user_id')
+                ->leftJoin('programmes', 'programmes.id', '=', 'fellows.programme_id')
+                ->whereIn('fellows.programme_id', $progIds)
+                ->where('users.is_deleted', 0)
+                ->select('fellows.id as fellow_id', 'users.name', 'users.email',
+                         'programmes.name as programme_name', 'programmes.id as programme_id',
+                         'fellows.fellowship_year', 'fellows.status')
+                ->orderBy('users.name')
+                ->get();
+        }
+
+        $header_title = $hospital->name;
+        return view('admin.hospital.view_hospital',
+            compact('hospital', 'header_title', 'programmes', 'trainers', 'trainees', 'fellows'));
     }
 
     public function add(){

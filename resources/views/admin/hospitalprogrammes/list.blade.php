@@ -48,6 +48,9 @@
     .paginate_button>.page-link { color:#a02626; }
     .paginate_button>.page-link:focus, .paginate_button.active>.page-link:focus { box-shadow:none !important; outline:none !important; }
 
+    .entity-link { color:#a02626; font-weight:500; text-decoration:none; }
+    .entity-link:hover { text-decoration:underline; }
+
     /* dark mode */
     body.dark-mode .hp-stat      { background:#374151 !important; border-color:#4a5568 !important; }
     body.dark-mode .hp-stat-lbl  { color:#9ca3af !important; }
@@ -205,8 +208,16 @@
                                     data-status="{{ $data->status }}"
                                 >
                                     <td>{{ $index + 1 }}</td>
-                                    <td>{{ $data->hospital_name }}</td>
-                                    <td>{{ $data->programme_name }}</td>
+                                    <td>
+                                        <a href="{{ url('admin/hospital/view_hospital/'.$data->hospital_id) }}" class="entity-link">
+                                            {{ $data->hospital_name }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url('admin/programmes/view/'.$data->programme_id) }}" class="entity-link">
+                                            {{ $data->programme_name }}
+                                        </a>
+                                    </td>
                                     <td>{{ $data->country_name }}</td>
                                     <td>{{ $data->accredited_date }}</td>
                                     <td>{{ $data->expiry_date }}</td>

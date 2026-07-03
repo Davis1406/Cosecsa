@@ -36,6 +36,8 @@
     /* ── Table ── */
     #hospitalTable td { vertical-align:middle; }
     .type-label { font-size:.82rem; color:#555; }
+    .entity-link { color:#a02626; font-weight:500; text-decoration:none; }
+    .entity-link:hover { text-decoration:underline; }
     .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; flex-shrink:0; }
     .dot-active   { background:#22c55e; }
     .dot-inactive { background:#ef4444; }
@@ -211,7 +213,11 @@
                                             data-status="{{ $statusStr }}"
                                         >
                                             <td>{{ $index + 1 }}</td>
-                                            <td>{{ $value->name }}</td>
+                                            <td>
+                                                <a href="{{ url('admin/hospital/view_hospital/'.$value->id) }}" class="entity-link">
+                                                    {{ $value->name }}
+                                                </a>
+                                            </td>
                                             <td>{{ $value->country_name }}</td>
                                             <td><span class="type-label">{{ $typeLabels[$value->hospital_type] ?? '-' }}</span></td>
                                             <td>

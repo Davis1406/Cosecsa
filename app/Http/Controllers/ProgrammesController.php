@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Programme;
 use App\Models\HospitalModel;
+use Illuminate\Support\Facades\DB;
 
 class ProgrammesController extends Controller
 {
@@ -71,6 +72,55 @@ class ProgrammesController extends Controller
        }
 
 
+
+    public function view($id)
+    {
+        $programme = Programme::getSingleId($id);
+        if (!$programme || $programme->is_deleted) {
+            return redirect('admin/programmes/list')->with('error', 'Programme not found');
+        }
+
+        // Accredited hospitals for this programme
+        $hospitals = DB::table('hospital_programmes')
+            ->join('hospitals', 'hospitals.id', '=', 'hospital_programmes.hospital_id')
+            ->leftJoin('countries', 'countries.id', '=', 'hospitals.country_id')
+            ->where('hospital_programmes.programme_id', $id)
+            ->where('hospital_programmes.is_delete', 0)
+            ->where('hospitals.is_deleted', 0)
+            ->select('hospital_programmes.*',
+                     'hospitals.id as hospital_id', 'hospitals.name as hospital_name',
+                     'countries.country_name')
+            ->orderBy('hospitals.name')
+            ->get();
+
+        // Trainees enrolled in this programme
+        $trainees = DB::table('trainees')
+            ->join('users', 'users.id', '=', 'trainees.user_id')
+            ->leftJoin('hospitals', 'hospitals.id', '=', 'trainees.hospital_id')
+            ->where('trainees.programme_id', $id)
+            ->where('users.is_deleted', 0)
+            ->select('trainees.id as trainee_id', 'users.name', 'users.email',
+                     'hospitals.name as hospital_name', 'hospitals.id as hospital_id',
+                     'trainees.admission_year', 'trainees.status')
+            ->orderBy('users.name')
+            ->get();
+
+        // Fellows who completed this programme
+        $fellows = DB::table('fellows')
+            ->join('users', 'users.id', '=', 'fellows.user_id')
+            ->where('fellows.programme_id', $id)
+            ->where('users.is_deleted', 0)
+            ->select('fellows.id as fellow_id', 'users.name', 'users.email',
+                     'fellows.fellowship_year', 'fellows.status', 'fellows.country_id')
+            ->leftJoin('countries', 'countries.id', '=', 'fellows.country_id')
+            ->addSelect('countries.country_name')
+            ->orderBy('users.name')
+            ->get();
+
+        $data = compact('programme', 'hospitals', 'trainees', 'fellows');
+        $data['header_title'] = $programme->name;
+        return view('admin.programmes.view', $data);
+    }
 
        public function delete($id){
       
