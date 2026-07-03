@@ -999,7 +999,7 @@ class ExamsController extends Controller
             'exYears'              => $examinedYears,
             'programmeOptions'     => self::$programmeOptions,
             'candidatesExamined'   => $candidatesExamined,
-            'designationOptions'   => DB::table('designations')->orderBy('name')->pluck('name'),
+            'designationOptions'   => DB::table('examiners')->whereNotNull('examiner_designation')->distinct()->orderBy('examiner_designation')->pluck('examiner_designation'),
         ]);
     }
 
