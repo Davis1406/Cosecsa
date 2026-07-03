@@ -451,7 +451,7 @@
 </style>
 @endpush
 
-@section('scripts')
+@push('scripts')
     <script>
         $(document).ready(function () {
 
@@ -529,4 +529,4 @@
             $('#deleteModal').modal('show');
         }
     </script>
-@endsection
+@endpush
