@@ -1471,6 +1471,99 @@ public function delete($id)
     }
 
     /**
+     * GET  admin/exams/bulk-upload-docs
+     */
+    public function bulkUploadDocsView()
+    {
+        $filter = request('filter', 'both'); // 'cv' | 'photo' | 'both'
+
+        $query = DB::table('examiners')
+            ->join('users', 'users.id', '=', 'examiners.user_id')
+            ->select(
+                'examiners.id',
+                'examiners.examiner_id',
+                'examiners.curriculum_vitae',
+                'examiners.passport_image',
+                'users.name',
+                'users.email'
+            )
+            ->orderBy('users.name');
+
+        if ($filter === 'cv') {
+            $query->where(function ($q) {
+                $q->whereNull('examiners.curriculum_vitae')->orWhere('examiners.curriculum_vitae', '');
+            });
+        } elseif ($filter === 'photo') {
+            $query->where(function ($q) {
+                $q->whereNull('examiners.passport_image')->orWhere('examiners.passport_image', '');
+            });
+        } else {
+            $query->where(function ($q) {
+                $q->where(function ($q2) {
+                    $q2->whereNull('examiners.curriculum_vitae')->orWhere('examiners.curriculum_vitae', '');
+                })->orWhere(function ($q2) {
+                    $q2->whereNull('examiners.passport_image')->orWhere('examiners.passport_image', '');
+                });
+            });
+        }
+
+        $examiners = $query->get();
+
+        $totalNoCv    = DB::table('examiners')->where(function ($q) { $q->whereNull('curriculum_vitae')->orWhere('curriculum_vitae', ''); })->count();
+        $totalNoPhoto = DB::table('examiners')->where(function ($q) { $q->whereNull('passport_image')->orWhere('passport_image', ''); })->count();
+
+        return view('admin.exams.bulk_upload_docs', compact('examiners', 'filter', 'totalNoCv', 'totalNoPhoto'));
+    }
+
+    /**
+     * POST admin/exams/bulk-upload-docs
+     */
+    public function bulkUploadDocs(Request $request)
+    {
+        $cvUploaded    = 0;
+        $photoUploaded = 0;
+
+        foreach ($request->file('cv', []) as $examId => $file) {
+            if (!$file || !$file->isValid()) continue;
+            $examiner = ExamsModel::find((int) $examId);
+            if (!$examiner) continue;
+
+            if ($examiner->curriculum_vitae && Storage::disk('public')->exists($examiner->curriculum_vitae)) {
+                Storage::disk('public')->delete($examiner->curriculum_vitae);
+            }
+
+            $sanitized = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+            $finalName = $examiner->id . '-' . $sanitized . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('documents/cvs', $finalName, 'public');
+            $examiner->curriculum_vitae = $path;
+            $examiner->save();
+            $cvUploaded++;
+        }
+
+        foreach ($request->file('photo', []) as $examId => $file) {
+            if (!$file || !$file->isValid()) continue;
+            $examiner = ExamsModel::find((int) $examId);
+            if (!$examiner) continue;
+
+            if ($examiner->passport_image && Storage::disk('public')->exists($examiner->passport_image)) {
+                Storage::disk('public')->delete($examiner->passport_image);
+            }
+
+            $sanitized = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+            $finalName = $examiner->id . '-' . $sanitized . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('documents/passports', $finalName, 'public');
+            $examiner->passport_image = $path;
+            $examiner->save();
+            $photoUploaded++;
+        }
+
+        $total = $cvUploaded + $photoUploaded;
+        $msg   = "Uploaded {$total} file(s): {$cvUploaded} CV(s), {$photoUploaded} photo(s).";
+
+        return redirect()->route('examiners.bulk.upload.docs')->with('success', $msg);
+    }
+
+    /**
      * POST admin/exams/examiner/{id}/upload-cv
      * Upload a CV for an examiner who doesn't have one yet (or replace existing).
      */

@@ -32,6 +32,9 @@
                     <a href="{{ route('exams.upload.confirmation') }}" class="btn btn-sm btn-info mr-1">
                         <i class="fas fa-clipboard-check mr-1"></i> Upload Confirmation
                     </a>
+                    <a href="{{ route('examiners.bulk.upload.docs') }}" class="btn btn-sm btn-outline-danger mr-1">
+                        <i class="fas fa-upload mr-1"></i> Bulk CV/Photo
+                    </a>
                     <a href="{{ url('admin/exams/add_examiner') }}" class="btn btn-sm btn-danger">
                         <i class="fas fa-plus mr-1"></i> Add Examiner
                     </a>
