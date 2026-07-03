@@ -445,6 +445,32 @@
         box-shadow: none !important;
         outline: none !important;
     }
+
+    /* ── Dark mode overrides for this page ── */
+    body.dark-mode .filter-bar {
+        background: #2d3748 !important;
+        border-color: #4a5568 !important;
+    }
+    body.dark-mode .filter-bar .filter-label { color: #9ca3af !important; }
+    body.dark-mode .filter-bar .btn-clear {
+        background: #374151 !important;
+        border-color: #4a5568 !important;
+        color: #e0e0e0 !important;
+    }
+    body.dark-mode .action-icon { color: #d1d5db !important; }
+    body.dark-mode .action-icon:hover { color: #f87171 !important; }
+    body.dark-mode .dropdown-menu .dropdown-item:hover {
+        background-color: #4a5568 !important;
+        color: #e0e0e0 !important;
+    }
+    body.dark-mode .dropdown-menu .dropdown-item:hover i { color: #e0e0e0 !important; }
+    body.dark-mode .chk-filter-panel {
+        background: #374151 !important;
+        border-color: #4a5568 !important;
+    }
+    body.dark-mode .chk-item:hover { background: #4a5568 !important; }
+    body.dark-mode .chk-footer { border-top-color: #4a5568 !important; }
+    body.dark-mode .chk-footer a { color: #9ca3af !important; }
 </style>
 @endpush
 
