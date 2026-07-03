@@ -41,8 +41,7 @@
                             <div class="row align-items-end">
                                 <div class="col-6 col-md-2 pr-1 mb-1">
                                     <label class="small mb-0 font-weight-bold">Country</label>
-                                    <select id="filterCountry" class="form-control form-control-sm">
-                                        <option value="">All Countries</option>
+                                    <select id="filterCountry" class="trainee-filter" multiple>
                                         @foreach($filterCountries as $c)
                                         <option value="{{ $c }}">{{ $c }}</option>
                                         @endforeach
@@ -50,8 +49,7 @@
                                 </div>
                                 <div class="col-6 col-md-3 px-1 mb-1">
                                     <label class="small mb-0 font-weight-bold">Programme</label>
-                                    <select id="filterProgramme" class="form-control form-control-sm">
-                                        <option value="">All Programmes</option>
+                                    <select id="filterProgramme" class="trainee-filter" multiple>
                                         @foreach($filterProgrammes as $p)
                                         <option value="{{ $p }}">{{ $p }}</option>
                                         @endforeach
@@ -59,8 +57,7 @@
                                 </div>
                                 <div class="col-6 col-md-2 px-1 mb-1">
                                     <label class="small mb-0 font-weight-bold">Exam Year</label>
-                                    <select id="filterYear" class="form-control form-control-sm">
-                                        <option value="">All Years</option>
+                                    <select id="filterYear" class="trainee-filter" multiple>
                                         @foreach($filterYears as $y)
                                         <option value="{{ $y }}">{{ $y }}</option>
                                         @endforeach
@@ -68,8 +65,7 @@
                                 </div>
                                 <div class="col-6 col-md-2 px-1 mb-1">
                                     <label class="small mb-0 font-weight-bold">Status</label>
-                                    <select id="filterStatus" class="form-control form-control-sm">
-                                        <option value="">All Statuses</option>
+                                    <select id="filterStatus" class="trainee-filter" multiple>
                                         @foreach($filterStatuses as $s)
                                         <option value="{{ $s }}">{{ $s }}</option>
                                         @endforeach
@@ -77,8 +73,7 @@
                                 </div>
                                 <div class="col-6 col-md-2 px-1 mb-1">
                                     <label class="small mb-0 font-weight-bold">Admission Year</label>
-                                    <select id="filterAdmissionYear" class="form-control form-control-sm">
-                                        <option value="">All Admission Years</option>
+                                    <select id="filterAdmissionYear" class="trainee-filter" multiple>
                                         @foreach($filterAdmissionYears as $ay)
                                         <option value="{{ $ay }}">{{ $ay }}</option>
                                         @endforeach
@@ -86,16 +81,14 @@
                                 </div>
                                 <div class="col-6 col-md-2 pl-1 mb-1">
                                     <label class="small mb-0 font-weight-bold">Gender</label>
-                                    <select id="filterGender" class="form-control form-control-sm">
-                                        <option value="">All Genders</option>
+                                    <select id="filterGender" class="trainee-filter" multiple>
                                         <option value="Male">Male</option>
                                         <option value="Female">Female</option>
                                     </select>
                                 </div>
                                 <div class="col-12 col-md-3 pl-1 mb-1">
                                     <label class="small mb-0 font-weight-bold">Hospital</label>
-                                    <select id="filterHospital" class="form-control form-control-sm">
-                                        <option value="">All Hospitals</option>
+                                    <select id="filterHospital" class="trainee-filter" multiple>
                                         @foreach($filterHospitals as $h)
                                         <option value="{{ $h }}">{{ $h }}</option>
                                         @endforeach
@@ -234,37 +227,47 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
+
+    // Init Select2 on all filter dropdowns
+    $('.trainee-filter').select2({
+        theme: 'bootstrap4',
+        placeholder: '— All —',
+        allowClear: true,
+        width: '100%',
+    });
+
+    function matches(selected, rowVal) {
+        if (!selected || selected.length === 0) return true;
+        return selected.indexOf(String(rowVal)) !== -1;
+    }
+
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
         if (settings.nTable.id !== 'traineestable') return true;
-        var $row           = $(settings.nTable).DataTable().row(dataIndex).node();
-        var country        = $('#filterCountry').val();
-        var programme      = $('#filterProgramme').val();
-        var year           = $('#filterYear').val();
-        var admissionYear  = $('#filterAdmissionYear').val();
-        var status         = $('#filterStatus').val();
-        var gender         = $('#filterGender').val();
-        var hospital       = $('#filterHospital').val();
+        var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
 
-        if (country       && $($row).data('country')       !== country)                      return false;
-        if (programme     && $($row).data('programme')     !== programme)                     return false;
-        if (year          && String($($row).data('year'))  !== String(year))                  return false;
-        if (admissionYear && String($($row).data('admissionyear')) !== String(admissionYear)) return false;
-        if (status        && $($row).data('status')        !== status)                        return false;
-        if (gender        && $($row).data('gender')        !== gender)                        return false;
-        if (hospital      && $($row).data('hospital')      !== hospital)                      return false;
+        if (!matches($('#filterCountry').val(),       $row.data('country')))       return false;
+        if (!matches($('#filterProgramme').val(),     $row.data('programme')))     return false;
+        if (!matches($('#filterYear').val(),          String($row.data('year'))))  return false;
+        if (!matches($('#filterAdmissionYear').val(), String($row.data('admissionyear')))) return false;
+        if (!matches($('#filterStatus').val(),        $row.data('status')))        return false;
+        if (!matches($('#filterGender').val(),        $row.data('gender')))        return false;
+        if (!matches($('#filterHospital').val(),      $row.data('hospital')))      return false;
         return true;
     });
 
-    var allFilters = '#filterCountry, #filterProgramme, #filterYear, #filterAdmissionYear, #filterStatus, #filterGender, #filterHospital';
-
-    $(allFilters).on('change', function () {
+    $('.trainee-filter').on('change', function () {
         var dt = $('#traineestable').DataTable();
         dt.draw();
-        $('#filteredCount').text('Showing ' + dt.page.info().recordsDisplay + ' of ' + dt.page.info().recordsTotal);
+        var info = dt.page.info();
+        $('#filteredCount').text(
+            info.recordsDisplay < info.recordsTotal
+                ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal
+                : ''
+        );
     });
 
     $('#btnClearFilters').on('click', function () {
-        $(allFilters).val('');
+        $('.trainee-filter').val(null).trigger('change');
         $('#traineestable').DataTable().draw();
         $('#filteredCount').text('');
     });
@@ -273,7 +276,11 @@ $(document).ready(function () {
 @endpush
 
 @push('styles')
+<link rel="stylesheet" href="{{ url('public/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}">
 <style>
+    /* Keep Select2 tags compact inside the filter bar */
+    .trainee-filter + .select2-container .select2-selection--multiple { min-height: 31px; }
+    .trainee-filter + .select2-container .select2-selection__choice { font-size: .75rem; padding: 0 6px; }
     #traineestable td { vertical-align: middle; }
     .trainee-name-link {
         color: #333;
