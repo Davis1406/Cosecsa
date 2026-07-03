@@ -40,6 +40,11 @@ class TraineeController extends Controller
         $data['filterStatuses']   = DB::table('trainees')
             ->whereNotNull('status')->where('status', '!=', '')
             ->select('status')->groupBy('status')->orderBy('status')->pluck('status');
+        $data['filterHospitals']  = DB::table('trainees as t')
+            ->join('hospitals as h', 'h.id', '=', 't.hospital_id')
+            ->whereNotNull('h.name')->where('h.name', '!=', '')
+            ->select('h.name')->groupBy('h.name')->orderBy('h.name')
+            ->pluck('h.name');
         return view('admin.associates.trainees.trainees', $data);
     }
     public function view($id)

@@ -92,6 +92,15 @@
                                         <option value="Female">Female</option>
                                     </select>
                                 </div>
+                                <div class="col-12 col-md-3 pl-1 mb-1">
+                                    <label class="small mb-0 font-weight-bold">Hospital</label>
+                                    <select id="filterHospital" class="form-control form-control-sm">
+                                        <option value="">All Hospitals</option>
+                                        @foreach($filterHospitals as $h)
+                                        <option value="{{ $h }}">{{ $h }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                             <div class="text-right mt-1">
                                 <button id="btnClearFilters" class="btn btn-sm btn-outline-secondary">
@@ -147,7 +156,8 @@
                                                     data-year="{{ $value->exam_year ?? '' }}"
                                                     data-admissionyear="{{ $value->admission_year ?? '' }}"
                                                     data-status="{{ $value->status ?? '' }}"
-                                                    data-gender="{{ $value->gender ?? '' }}">
+                                                    data-gender="{{ $value->gender ?? '' }}"
+                                                    data-hospital="{{ $value->hospital_name ?? '' }}">
                                                     <td class="row-num"></td>
                                                     <td>
                                                         <a href="{{ url('admin/associates/trainees/view/' . $value->trainee_id) }}"
@@ -233,17 +243,19 @@ $(document).ready(function () {
         var admissionYear  = $('#filterAdmissionYear').val();
         var status         = $('#filterStatus').val();
         var gender         = $('#filterGender').val();
+        var hospital       = $('#filterHospital').val();
 
-        if (country       && $($row).data('country')       !== country)                   return false;
-        if (programme     && $($row).data('programme')     !== programme)                  return false;
-        if (year          && String($($row).data('year'))  !== String(year))               return false;
+        if (country       && $($row).data('country')       !== country)                      return false;
+        if (programme     && $($row).data('programme')     !== programme)                     return false;
+        if (year          && String($($row).data('year'))  !== String(year))                  return false;
         if (admissionYear && String($($row).data('admissionyear')) !== String(admissionYear)) return false;
-        if (status        && $($row).data('status')        !== status)                     return false;
-        if (gender        && $($row).data('gender')        !== gender)                     return false;
+        if (status        && $($row).data('status')        !== status)                        return false;
+        if (gender        && $($row).data('gender')        !== gender)                        return false;
+        if (hospital      && $($row).data('hospital')      !== hospital)                      return false;
         return true;
     });
 
-    var allFilters = '#filterCountry, #filterProgramme, #filterYear, #filterAdmissionYear, #filterStatus, #filterGender';
+    var allFilters = '#filterCountry, #filterProgramme, #filterYear, #filterAdmissionYear, #filterStatus, #filterGender, #filterHospital';
 
     $(allFilters).on('change', function () {
         var dt = $('#traineestable').DataTable();
