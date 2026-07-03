@@ -38,67 +38,57 @@
                     {{-- Filter Bar --}}
                     <div class="card card-outline card-secondary mb-2 shadow-sm">
                         <div class="card-body py-2">
-                            <div class="row align-items-end">
-                                <div class="col-6 col-md-2 pr-1 mb-1">
-                                    <label class="small mb-0 font-weight-bold">Country</label>
-                                    <select id="filterCountry" class="trainee-filter" multiple>
-                                        @foreach($filterCountries as $c)
-                                        <option value="{{ $c }}">{{ $c }}</option>
-                                        @endforeach
-                                    </select>
+                            <div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
+
+                                @php
+                                $filterDefs = [
+                                    ['id'=>'filterCountry',       'label'=>'Country',         'options'=>$filterCountries],
+                                    ['id'=>'filterProgramme',     'label'=>'Programme',       'options'=>$filterProgrammes],
+                                    ['id'=>'filterYear',          'label'=>'Exam Year',       'options'=>$filterYears],
+                                    ['id'=>'filterStatus',        'label'=>'Status',          'options'=>$filterStatuses],
+                                    ['id'=>'filterAdmissionYear', 'label'=>'Admission Year',  'options'=>$filterAdmissionYears],
+                                    ['id'=>'filterGender',        'label'=>'Gender',          'options'=>collect(['Male','Female'])],
+                                    ['id'=>'filterHospital',      'label'=>'Hospital',        'options'=>$filterHospitals],
+                                ];
+                                @endphp
+
+                                @foreach($filterDefs as $fd)
+                                <div class="chk-filter-wrap" data-filter="{{ $fd['id'] }}">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary chk-filter-btn"
+                                            data-filter="{{ $fd['id'] }}">
+                                        {{ $fd['label'] }}
+                                        <span class="badge badge-danger chk-badge ml-1" style="display:none;font-size:.65rem;"></span>
+                                        <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
+                                    </button>
+                                    <div class="chk-filter-panel shadow" id="{{ $fd['id'] }}-panel" style="display:none;">
+                                        @if($fd['options']->count() > 6)
+                                        <input type="text" class="form-control form-control-sm chk-search mb-1"
+                                               placeholder="Search…" autocomplete="off">
+                                        @endif
+                                        <div class="chk-list">
+                                            @foreach($fd['options'] as $opt)
+                                            <label class="chk-item">
+                                                <input type="checkbox"
+                                                       class="chk-option"
+                                                       data-filter="{{ $fd['id'] }}"
+                                                       value="{{ $opt }}">
+                                                {{ $opt }}
+                                            </label>
+                                            @endforeach
+                                        </div>
+                                        <div class="chk-footer">
+                                            <a href="#" class="chk-select-all small">All</a>
+                                            <a href="#" class="chk-clear small text-danger">Clear</a>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-6 col-md-3 px-1 mb-1">
-                                    <label class="small mb-0 font-weight-bold">Programme</label>
-                                    <select id="filterProgramme" class="trainee-filter" multiple>
-                                        @foreach($filterProgrammes as $p)
-                                        <option value="{{ $p }}">{{ $p }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-6 col-md-2 px-1 mb-1">
-                                    <label class="small mb-0 font-weight-bold">Exam Year</label>
-                                    <select id="filterYear" class="trainee-filter" multiple>
-                                        @foreach($filterYears as $y)
-                                        <option value="{{ $y }}">{{ $y }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-6 col-md-2 px-1 mb-1">
-                                    <label class="small mb-0 font-weight-bold">Status</label>
-                                    <select id="filterStatus" class="trainee-filter" multiple>
-                                        @foreach($filterStatuses as $s)
-                                        <option value="{{ $s }}">{{ $s }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-6 col-md-2 px-1 mb-1">
-                                    <label class="small mb-0 font-weight-bold">Admission Year</label>
-                                    <select id="filterAdmissionYear" class="trainee-filter" multiple>
-                                        @foreach($filterAdmissionYears as $ay)
-                                        <option value="{{ $ay }}">{{ $ay }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-6 col-md-2 pl-1 mb-1">
-                                    <label class="small mb-0 font-weight-bold">Gender</label>
-                                    <select id="filterGender" class="trainee-filter" multiple>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                    </select>
-                                </div>
-                                <div class="col-12 col-md-3 pl-1 mb-1">
-                                    <label class="small mb-0 font-weight-bold">Hospital</label>
-                                    <select id="filterHospital" class="trainee-filter" multiple>
-                                        @foreach($filterHospitals as $h)
-                                        <option value="{{ $h }}">{{ $h }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="text-right mt-1">
+                                @endforeach
+
                                 <button id="btnClearFilters" class="btn btn-sm btn-outline-secondary">
-                                    <i class="fas fa-times mr-1"></i>Clear Filters
+                                    <i class="fas fa-times mr-1"></i>Clear All
                                 </button>
+                                <small class="text-muted ml-auto" id="filteredCount"></small>
                             </div>
                         </div>
                     </div>
@@ -228,47 +218,110 @@
 <script>
 $(document).ready(function () {
 
-    // Init Select2 on all filter dropdowns
-    $('.trainee-filter').select2({
-        theme: 'bootstrap4',
-        placeholder: '— All —',
-        allowClear: true,
-        width: '100%',
-    });
+    // ── Checkbox filter state: { filterId: Set of checked values } ────────────
+    var filterState = {};
 
-    function matches(selected, rowVal) {
-        if (!selected || selected.length === 0) return true;
-        return selected.indexOf(String(rowVal)) !== -1;
+    function getChecked(filterId) {
+        return $('.chk-option[data-filter="' + filterId + '"]:checked')
+               .map(function () { return this.value; }).get();
     }
 
-    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-        if (settings.nTable.id !== 'traineestable') return true;
-        var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
-
-        if (!matches($('#filterCountry').val(),       $row.data('country')))       return false;
-        if (!matches($('#filterProgramme').val(),     $row.data('programme')))     return false;
-        if (!matches($('#filterYear').val(),          String($row.data('year'))))  return false;
-        if (!matches($('#filterAdmissionYear').val(), String($row.data('admissionyear')))) return false;
-        if (!matches($('#filterStatus').val(),        $row.data('status')))        return false;
-        if (!matches($('#filterGender').val(),        $row.data('gender')))        return false;
-        if (!matches($('#filterHospital').val(),      $row.data('hospital')))      return false;
-        return true;
-    });
-
-    $('.trainee-filter').on('change', function () {
+    function redraw() {
         var dt = $('#traineestable').DataTable();
         dt.draw();
         var info = dt.page.info();
         $('#filteredCount').text(
             info.recordsDisplay < info.recordsTotal
-                ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal
-                : ''
+                ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal : ''
         );
+    }
+
+    function updateBadge(filterId) {
+        var checked = getChecked(filterId);
+        var $badge  = $('.chk-filter-btn[data-filter="' + filterId + '"] .chk-badge');
+        if (checked.length) {
+            $badge.text(checked.length).show();
+        } else {
+            $badge.hide();
+        }
+    }
+
+    // ── DataTable custom search ───────────────────────────────────────────────
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+        if (settings.nTable.id !== 'traineestable') return true;
+        var $row     = $($(settings.nTable).DataTable().row(dataIndex).node());
+        var filters  = [
+            { id: 'filterCountry',       val: String($row.data('country')      || '') },
+            { id: 'filterProgramme',     val: String($row.data('programme')    || '') },
+            { id: 'filterYear',          val: String($row.data('year')         || '') },
+            { id: 'filterAdmissionYear', val: String($row.data('admissionyear')|| '') },
+            { id: 'filterStatus',        val: String($row.data('status')       || '') },
+            { id: 'filterGender',        val: String($row.data('gender')       || '') },
+            { id: 'filterHospital',      val: String($row.data('hospital')     || '') },
+        ];
+        for (var i = 0; i < filters.length; i++) {
+            var checked = getChecked(filters[i].id);
+            if (checked.length && checked.indexOf(filters[i].val) === -1) return false;
+        }
+        return true;
     });
 
+    // ── Open / close panels ───────────────────────────────────────────────────
+    $(document).on('click', '.chk-filter-btn', function (e) {
+        e.stopPropagation();
+        var filterId = $(this).data('filter');
+        var $panel   = $('#' + filterId + '-panel');
+        $('.chk-filter-panel').not($panel).hide(); // close others
+        $panel.toggle();
+    });
+
+    $(document).on('click', '.chk-filter-panel', function (e) {
+        e.stopPropagation(); // keep panel open when clicking inside
+    });
+
+    $(document).on('click', function () {
+        $('.chk-filter-panel').hide();
+    });
+
+    // ── Checkbox change ───────────────────────────────────────────────────────
+    $(document).on('change', '.chk-option', function () {
+        updateBadge($(this).data('filter'));
+        redraw();
+    });
+
+    // ── In-panel search ───────────────────────────────────────────────────────
+    $(document).on('input', '.chk-search', function () {
+        var q      = $(this).val().toLowerCase();
+        var $panel = $(this).closest('.chk-filter-panel');
+        $panel.find('.chk-item').each(function () {
+            $(this).toggle($(this).text().toLowerCase().indexOf(q) !== -1);
+        });
+    });
+
+    // ── Select All / Clear links ──────────────────────────────────────────────
+    $(document).on('click', '.chk-select-all', function (e) {
+        e.preventDefault();
+        var $panel = $(this).closest('.chk-filter-panel');
+        $panel.find('.chk-item:visible .chk-option').prop('checked', true);
+        var filterId = $panel.closest('.chk-filter-wrap').data('filter');
+        updateBadge(filterId);
+        redraw();
+    });
+
+    $(document).on('click', '.chk-clear', function (e) {
+        e.preventDefault();
+        var $panel   = $(this).closest('.chk-filter-panel');
+        var filterId = $panel.closest('.chk-filter-wrap').data('filter');
+        $panel.find('.chk-option').prop('checked', false);
+        updateBadge(filterId);
+        redraw();
+    });
+
+    // ── Clear All ─────────────────────────────────────────────────────────────
     $('#btnClearFilters').on('click', function () {
-        $('.trainee-filter').val(null).trigger('change');
-        $('#traineestable').DataTable().draw();
+        $('.chk-option').prop('checked', false);
+        $('.chk-badge').hide();
+        redraw();
         $('#filteredCount').text('');
     });
 });
@@ -276,11 +329,32 @@ $(document).ready(function () {
 @endpush
 
 @push('styles')
-<link rel="stylesheet" href="{{ url('public/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}">
 <style>
-    /* Keep Select2 tags compact inside the filter bar */
-    .trainee-filter + .select2-container .select2-selection--multiple { min-height: 31px; }
-    .trainee-filter + .select2-container .select2-selection__choice { font-size: .75rem; padding: 0 6px; }
+    /* ── Checkbox filter dropdowns ── */
+    .chk-filter-wrap { position: relative; display: inline-block; }
+    .chk-filter-panel {
+        position: absolute; top: calc(100% + 4px); left: 0; z-index: 1055;
+        background: #fff; border: 1px solid #ced4da; border-radius: 6px;
+        min-width: 190px; max-width: 260px; padding: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+    .chk-list { max-height: 220px; overflow-y: auto; }
+    .chk-item {
+        display: flex; align-items: center; gap: 6px;
+        padding: 3px 2px; font-size: .82rem; font-weight: normal;
+        cursor: pointer; white-space: nowrap; margin: 0;
+    }
+    .chk-item:hover { background: #f8f0f0; border-radius: 4px; }
+    .chk-item input[type="checkbox"] { margin: 0; cursor: pointer; accent-color: #a02626; }
+    .chk-footer {
+        display: flex; justify-content: space-between;
+        border-top: 1px solid #eee; margin-top: 6px; padding-top: 5px;
+        font-size: .78rem;
+    }
+    .chk-footer a { color: #6c757d; }
+    .chk-footer a:hover { color: #a02626; text-decoration: none; }
+    .chk-filter-btn { white-space: nowrap; }
+    /* ── Table ── */
     #traineestable td { vertical-align: middle; }
     .trainee-name-link {
         color: #333;
