@@ -297,7 +297,7 @@
                                     </tbody>
                                 </table>
                                 @else
-                                <div class="empty-state"><i class="fas fa-award"></i>No fellows who trained at this hospital.</div>
+                                <div class="empty-state"><i class="fas fa-award"></i>No fellows found for this country &amp; programme combination.</div>
                                 @endif
                             </div>
                         </div>

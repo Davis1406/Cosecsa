@@ -89,18 +89,16 @@ class HospitalController extends Controller
             ->orderBy('users.name')
             ->get();
 
-        // Fellows who trained at this hospital (linked via trainees.user_id → fellows.user_id)
-        $traineeUserIds = \DB::table('trainees')
-            ->where('hospital_id', $id)
-            ->pluck('user_id')
-            ->unique()
-            ->toArray();
+        // Fellows: filtered by programme offered at this hospital + same country.
+        // fellows has no hospital_id column, so programme+country is the best available proxy.
+        $progIds = $programmes->pluck('programme_id')->unique()->toArray();
         $fellows = collect();
-        if (!empty($traineeUserIds)) {
+        if (!empty($progIds)) {
             $fellows = \DB::table('fellows')
                 ->join('users', 'users.id', '=', 'fellows.user_id')
                 ->leftJoin('programmes', 'programmes.id', '=', 'fellows.programme_id')
-                ->whereIn('fellows.user_id', $traineeUserIds)
+                ->whereIn('fellows.programme_id', $progIds)
+                ->where('fellows.country_id', $hospital->country_id)
                 ->where('users.is_deleted', 0)
                 ->select('fellows.id as fellow_id', 'users.name', 'users.email',
                          'programmes.name as programme_name', 'programmes.id as programme_id',
