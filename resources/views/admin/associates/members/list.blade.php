@@ -53,7 +53,7 @@
                                             <td>{{$value->members_id}}</td>
                                             <td>{{$value->member_name}}</td>
                                             <td>{{$value->personal_email}}</td>
-                                            <td>{{$value->country_name}}</td>
+                                            <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{{$value->country_name}}</a>@else{{$value->country_name}}@endif</td>
                                             <td>{{$value->membership_type}}</td>
                                             <td>{{$value->membership_year}}</td>     
                                             <td class="text-center" style="white-space:nowrap;">
