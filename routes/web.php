@@ -18,6 +18,7 @@ use App\Http\Controllers\MembersController;
 use App\Http\Controllers\ExamsController;
 use App\Http\Controllers\FellowLabelController;
 use App\Http\Controllers\CapsuleSyncController;
+use App\Http\Controllers\CountryController;
 
 
 // Route::get('/', [AuthController::class,'login'])->name('login');
@@ -60,6 +61,10 @@ Route::group(['middleware' => 'admin'], function(){
     Route::get('admin/edit/{id} ', [AdminController::class,'edit']);
     Route::post('admin/edit/{id} ', [AdminController::class,'update']);
     Route::get('admin/delete/{id} ', [AdminController::class,'delete']);
+
+    // Country Routes
+    Route::get('admin/countries/list', [CountryController::class, 'list']);
+    Route::get('admin/countries/view/{id}', [CountryController::class, 'view']);
 
     //Hospital Routes;
     Route::get('admin/hospital/list ', [HospitalController::class,'hospital']);

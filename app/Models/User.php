@@ -680,6 +680,7 @@ class User extends Authenticatable
             'trainers.user_id as tr_id',
             'trainers.*',
             'hospitals.name as hospital_name',
+            'hospitals.country_id as country_id',
             'countries.country_name as country_name'
         )
             ->join('trainers', 'users.id', '=', 'trainers.user_id')

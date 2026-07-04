@@ -45,7 +45,13 @@
                             </tr>
                             <tr>
                                 <th>Country</th>
-                                <td>{{ $member->country_name }}</td>
+                                <td>
+                                    @if($member->country_id)
+                                    <a href="{{ url('admin/countries/view/'.$member->country_id) }}" style="color:#a02626;font-weight:500;">
+                                        {{ $member->country_name }}
+                                    </a>
+                                    @else {{ $member->country_name }} @endif
+                                </td>
                             </tr>
                             <tr>
                                 <th>Gender</th>

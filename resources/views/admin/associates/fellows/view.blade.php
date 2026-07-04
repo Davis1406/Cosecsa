@@ -273,10 +273,14 @@
                                 <span class="tag-pill tag-gold">{{ $fellow->fellowship_type }}</span>
                             @endif
                             @if($fellow->programme_name ?? null)
-                                <span class="tag-pill tag-grey">{{ $fellow->programme_name }}</span>
+                                <a href="{{ url('admin/programmes/view/'.($fellow->programme_id ?? 0)) }}" style="text-decoration:none;">
+                                    <span class="tag-pill tag-grey">{{ $fellow->programme_name }}</span>
+                                </a>
                             @endif
                             @if($fellow->country_name ?? null)
-                                <span class="tag-pill tag-green">{{ $fellow->country_name }}</span>
+                                <a href="{{ url('admin/countries/view/'.($fellow->country_id ?? 0)) }}" style="text-decoration:none;">
+                                    <span class="tag-pill tag-green">{{ $fellow->country_name }}</span>
+                                </a>
                             @endif
                             @if($fellow->cosecsa_region)
                                 <span class="tag-pill tag-blue">{{ $fellow->cosecsa_region }}</span>
@@ -367,7 +371,9 @@
                         @if($fellow->country_name ?? null)
                         <div class="info-row">
                             <span class="info-icon"><i class="fas fa-flag"></i></span>
-                            <span><span class="info-label">Country</span><span class="info-text">{{ $fellow->country_name }}</span></span>
+                            <span><span class="info-label">Country</span><span class="info-text">
+                                @if($fellow->country_id ?? null)<a href="{{ url('admin/countries/view/'.$fellow->country_id) }}" style="color:#a02626;">{{ $fellow->country_name }}</a>@else{{ $fellow->country_name }}@endif
+                            </span></span>
                         </div>
                         @endif
                     </div>
@@ -444,7 +450,7 @@
                         @endif
                         <div class="field-row"><span class="field-lbl">Phone</span><span class="field-val">{{ $fellow->phone_number ?? '—' }}</span></div>
                         <div class="field-row"><span class="field-lbl">Address</span><span class="field-val">{{ $fellow->address ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Country</span><span class="field-val">{{ $fellow->country_name ?? '—' }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Country</span><span class="field-val">@if($fellow->country_id ?? null)<a href="{{ url('admin/countries/view/'.$fellow->country_id) }}" style="color:#a02626;">{{ $fellow->country_name }}</a>@else{{ $fellow->country_name ?? '—' }}@endif</span></div>
                         @if($fellow->cosecsa_region)
                         <div class="field-row"><span class="field-lbl">COSECSA Region</span><span class="field-val">{{ $fellow->cosecsa_region }}</span></div>
                         @endif
@@ -475,7 +481,7 @@
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Fellowship Type</span><span class="field-val">{{ $fellow->fellowship_type ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Fellowship Programme</span><span class="field-val">{{ $fellow->programme_name ?? '—' }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Fellowship Programme</span><span class="field-val">@if($fellow->programme_id ?? null)<a href="{{ url('admin/programmes/view/'.$fellow->programme_id) }}" style="color:#a02626;">{{ $fellow->programme_name }}</a>@else{{ $fellow->programme_name ?? '—' }}@endif</span></div>
                         <div class="field-row"><span class="field-lbl">Promoted to Fellow</span>
                             <span class="field-val">
                                 @if($fellow->is_promoted == '1')

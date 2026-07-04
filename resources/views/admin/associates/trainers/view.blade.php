@@ -46,11 +46,23 @@
 
                             <tr>
                                 <th>Hospital Name</th>
-                                <td>{{ $trainer->hospital_name }}</td>
+                                <td>
+                                    @if($trainer->hospital_id)
+                                    <a href="{{ url('admin/hospital/view_hospital/'.$trainer->hospital_id) }}" style="color:#a02626;font-weight:500;">
+                                        {{ $trainer->hospital_name }}
+                                    </a>
+                                    @else {{ $trainer->hospital_name }} @endif
+                                </td>
                             </tr>
                             <tr>
                                 <th>Country</th>
-                                <td>{{ $trainer->country_name }}</td>
+                                <td>
+                                    @if($trainer->country_id)
+                                    <a href="{{ url('admin/countries/view/'.$trainer->country_id) }}" style="color:#a02626;font-weight:500;">
+                                        {{ $trainer->country_name }}
+                                    </a>
+                                    @else {{ $trainer->country_name }} @endif
+                                </td>
                             </tr>
                             <tr>
                                 <th>PD Phone Number</th>

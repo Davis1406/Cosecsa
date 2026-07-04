@@ -190,10 +190,14 @@
                                 <span class="tag-pill tag-blue">Exam {{ $candidate->exam_year }}</span>
                             @endif
                             @if($candidate->programme_name)
-                                <span class="tag-pill tag-grey">{{ $candidate->programme_name }}</span>
+                                <a href="{{ url('admin/programmes/view/'.($candidate->programme_id ?? 0)) }}" style="text-decoration:none;">
+                                    <span class="tag-pill tag-grey">{{ $candidate->programme_name }}</span>
+                                </a>
                             @endif
                             @if($candidate->country_name)
-                                <span class="tag-pill tag-teal">{{ $candidate->country_name }}</span>
+                                <a href="{{ url('admin/countries/view/'.($candidate->country_id ?? 0)) }}" style="text-decoration:none;">
+                                    <span class="tag-pill tag-teal">{{ $candidate->country_name }}</span>
+                                </a>
                             @endif
                             @if($sponsor)
                                 <span class="tag-pill tag-gold">{{ $sponsor }}</span>
@@ -234,14 +238,14 @@
                         <div class="info-row">
                             <span class="info-icon"><i class="fas fa-flag"></i></span>
                             <span><span class="info-label">Country</span>
-                                  <span class="info-text">{{ $candidate->country_name }}</span></span>
+                                  <span class="info-text">@if($candidate->country_id ?? null)<a href="{{ url('admin/countries/view/'.$candidate->country_id) }}" style="color:#a02626;">{{ $candidate->country_name }}</a>@else{{ $candidate->country_name }}@endif</span></span>
                         </div>
                         @endif
                         @if($candidate->hospital_name)
                         <div class="info-row">
                             <span class="info-icon"><i class="fas fa-hospital"></i></span>
                             <span><span class="info-label">Hospital</span>
-                                  <span class="info-text">{{ $candidate->hospital_name }}</span></span>
+                                  <span class="info-text">@if($candidate->hospital_id ?? null)<a href="{{ url('admin/hospital/view_hospital/'.$candidate->hospital_id) }}" style="color:#a02626;">{{ $candidate->hospital_name }}</a>@else{{ $candidate->hospital_name }}@endif</span></span>
                         </div>
                         @endif
                     </div>
@@ -322,8 +326,8 @@
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">SFS Username</span><span class="field-val"><code>{{ $candidate->user_email ?? '—' }}</code></span></div>
-                        <div class="field-row"><span class="field-lbl">Country</span><span class="field-val">{{ $candidate->country_name ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Hospital</span><span class="field-val">{{ $candidate->hospital_name ?? '—' }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Country</span><span class="field-val">@if($candidate->country_id ?? null)<a href="{{ url('admin/countries/view/'.$candidate->country_id) }}" style="color:#a02626;">{{ $candidate->country_name }}</a>@else{{ $candidate->country_name ?? '—' }}@endif</span></div>
+                        <div class="field-row"><span class="field-lbl">Hospital</span><span class="field-val">@if($candidate->hospital_id ?? null)<a href="{{ url('admin/hospital/view_hospital/'.$candidate->hospital_id) }}" style="color:#a02626;">{{ $candidate->hospital_name }}</a>@else{{ $candidate->hospital_name ?? '—' }}@endif</span></div>
                     </div>
 
                     {{-- ── TAB: Exam Info ── --}}
@@ -341,7 +345,7 @@
                         <div class="field-row"><span class="field-lbl">Exam Number</span><span class="field-val">{{ $candidate->exam_number ?? '—' }}</span></div>
 
                         <p class="sect-div">Programme &amp; Year</p>
-                        <div class="field-row"><span class="field-lbl">Programme</span><span class="field-val">{{ $candidate->programme_name ?? '—' }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Programme</span><span class="field-val">@if($candidate->programme_id ?? null)<a href="{{ url('admin/programmes/view/'.$candidate->programme_id) }}" style="color:#a02626;">{{ $candidate->programme_name }}</a>@else{{ $candidate->programme_name ?? '—' }}@endif</span></div>
                         <div class="field-row"><span class="field-lbl">Admission Year</span><span class="field-val">{{ $candidate->admission_year ?? '—' }}</span></div>
                         <div class="field-row"><span class="field-lbl">Exam Year</span><span class="field-val">{{ $candidate->exam_year ?? '—' }}</span></div>
                         <div class="field-row"><span class="field-lbl">Exam Group</span><span class="field-val">{{ $candidate->group_name ?? '—' }}</span></div>

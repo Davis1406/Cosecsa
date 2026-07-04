@@ -328,14 +328,18 @@
                         <div class="info-row">
                             <span class="info-icon"><i class="fas fa-flag"></i></span>
                             <span><span class="info-label">Country</span>
-                                  <span class="info-text">{{ $trainee->country_name }}</span></span>
+                                  <span class="info-text">
+                                      @if($trainee->country_id)<a href="{{ url('admin/countries/view/'.$trainee->country_id) }}" style="color:#a02626;">{{ $trainee->country_name }}</a>@else{{ $trainee->country_name }}@endif
+                                  </span></span>
                         </div>
                         @endif
                         @if($trainee->hospital_name)
                         <div class="info-row">
                             <span class="info-icon"><i class="fas fa-hospital"></i></span>
                             <span><span class="info-label">Hospital</span>
-                                  <span class="info-text">{{ $trainee->hospital_name }}</span></span>
+                                  <span class="info-text">
+                                      @if($trainee->hospital_id)<a href="{{ url('admin/hospital/view_hospital/'.$trainee->hospital_id) }}" style="color:#a02626;">{{ $trainee->hospital_name }}</a>@else{{ $trainee->hospital_name }}@endif
+                                  </span></span>
                         </div>
                         @endif
                     </div>
@@ -407,7 +411,7 @@
                                 @endif
                             </span>
                         </div>
-                        <div class="field-row"><span class="field-lbl">Country</span><span class="field-val">{{ $trainee->country_name ?? '—' }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Country</span><span class="field-val">@if($trainee->country_id ?? null)<a href="{{ url('admin/countries/view/'.$trainee->country_id) }}" style="color:#a02626;">{{ $trainee->country_name }}</a>@else{{ $trainee->country_name ?? '—' }}@endif</span></div>
 
                         <p class="sect-div">Correspondence</p>
                         <div class="field-row"><span class="field-lbl">Admission Letter</span>
@@ -427,9 +431,9 @@
                     {{-- ── TAB: Training ── --}}
                     <div class="tab-pane fade" id="tab-training">
                         <p class="sect-div">Programme Details</p>
-                        <div class="field-row"><span class="field-lbl">Programme</span><span class="field-val">{{ $trainee->programme_name ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Hospital</span><span class="field-val">{{ $trainee->hospital_name ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Country</span><span class="field-val">{{ $trainee->country_name ?? '—' }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Programme</span><span class="field-val">@if($trainee->programme_id ?? null)<a href="{{ url('admin/programmes/view/'.$trainee->programme_id) }}" style="color:#a02626;">{{ $trainee->programme_name }}</a>@else{{ $trainee->programme_name ?? '—' }}@endif</span></div>
+                        <div class="field-row"><span class="field-lbl">Hospital</span><span class="field-val">@if($trainee->hospital_id ?? null)<a href="{{ url('admin/hospital/view_hospital/'.$trainee->hospital_id) }}" style="color:#a02626;">{{ $trainee->hospital_name }}</a>@else{{ $trainee->hospital_name ?? '—' }}@endif</span></div>
+                        <div class="field-row"><span class="field-lbl">Country</span><span class="field-val">@if($trainee->country_id ?? null)<a href="{{ url('admin/countries/view/'.$trainee->country_id) }}" style="color:#a02626;">{{ $trainee->country_name }}</a>@else{{ $trainee->country_name ?? '—' }}@endif</span></div>
                         <div class="field-row"><span class="field-lbl">Programme Duration</span>
                             <span class="field-val">
                                 @if($trainee->programme_period)

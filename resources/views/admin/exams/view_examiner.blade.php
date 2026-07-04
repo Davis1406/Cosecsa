@@ -85,7 +85,11 @@
                         </div>
                         <div class="profile-meta d-flex flex-wrap" style="gap:.75rem;">
                             @if($examiner->country_name)
-                                <span><i class="fas fa-map-marker-alt mr-1"></i>{{ $examiner->country_name }}</span>
+                                <span><i class="fas fa-map-marker-alt mr-1"></i>
+                                    @if($examiner->country_id ?? null)
+                                    <a href="{{ url('admin/countries/view/'.$examiner->country_id) }}" style="color:inherit;">{{ $examiner->country_name }}</a>
+                                    @else{{ $examiner->country_name }}@endif
+                                </span>
                             @endif
                             @if($examiner->examiner_id)
                                 <span><i class="fas fa-id-badge mr-1"></i>{{ $examiner->examiner_id }}</span>
@@ -125,7 +129,7 @@
                                 </tr>
                                 <tr>
                                     <th><i class="fas fa-globe text-muted mr-1"></i> Country</th>
-                                    <td>{{ $examiner->country_name ?: '—' }}</td>
+                                    <td>@if($examiner->country_id ?? null)<a href="{{ url('admin/countries/view/'.$examiner->country_id) }}" style="color:#a02626;">{{ $examiner->country_name }}</a>@else{{ $examiner->country_name ?: '—' }}@endif</td>
                                 </tr>
                                 <tr>
                                     <th><i class="fas fa-venus-mars text-muted mr-1"></i> Gender</th>

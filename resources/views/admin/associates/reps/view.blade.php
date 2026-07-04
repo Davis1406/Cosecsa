@@ -45,7 +45,13 @@
                             </tr>
                             <tr>
                                 <th>Country</th>
-                                <td>{{ $countryRep->country_name }}</td>
+                                <td>
+                                    @if($countryRep->country_id)
+                                    <a href="{{ url('admin/countries/view/'.$countryRep->country_id) }}" style="color:#a02626;font-weight:500;">
+                                        {{ $countryRep->country_name }}
+                                    </a>
+                                    @else {{ $countryRep->country_name }} @endif
+                                </td>
                             </tr>
                             <tr>
                                 <th>Cosecsa Email</th>
