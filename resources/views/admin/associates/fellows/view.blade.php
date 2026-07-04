@@ -422,7 +422,14 @@
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-fees">Fees &amp; Payments</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-subs">Subscriptions</a></li>
                     @php $resultsCount = isset($fellowResults) ? $fellowResults->count() : 0; @endphp
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-results">Results@if($resultsCount) <span class="badge badge-pill ml-1" style="background:#a02626;color:#fff;font-size:.65rem;">{{ $resultsCount }}</span>@endif</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#tab-results">
+                            Results
+                            @if($resultsCount)
+                            <span class="badge badge-pill ml-1" style="background:#a02626;color:#fff;font-size:.65rem;">{{ $resultsCount }}</span>
+                            @endif
+                        </a>
+                    </li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-history">History</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-admin">Admin Notes</a></li>
                 </ul>
