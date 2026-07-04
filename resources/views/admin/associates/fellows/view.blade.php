@@ -421,7 +421,8 @@
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-fellowship">Fellowship</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-fees">Fees &amp; Payments</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-subs">Subscriptions</a></li>
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-results">Results@if(!empty($fellowResults) && $fellowResults->count()) <span class="badge badge-pill ml-1" style="background:#a02626;color:#fff;font-size:.65rem;">{{ $fellowResults->count() }}</span>@endif</a></li>
+                    @php $resultsCount = isset($fellowResults) ? $fellowResults->count() : 0; @endphp
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-results">Results@if($resultsCount) <span class="badge badge-pill ml-1" style="background:#a02626;color:#fff;font-size:.65rem;">{{ $resultsCount }}</span>@endif</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-history">History</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-admin">Admin Notes</a></li>
                 </ul>
@@ -620,7 +621,7 @@
                     {{-- ── TAB: Exam Results ── --}}
                     <div class="tab-pane fade" id="tab-results">
                         <p class="sect-div">FCS Exam Results</p>
-                        @if(!empty($fellowResults) && $fellowResults->count())
+                        @if($resultsCount)
                         <div class="table-responsive">
                             <table class="table table-sm table-hover" style="font-size:.85rem;">
                                 <thead style="background:#fff5f5;">
@@ -634,18 +635,19 @@
                                 </thead>
                                 <tbody>
                                     @foreach($fellowResults as $r)
+                                    @php
+                                        $rRes = strtolower($r->result ?? '');
+                                        $rBg  = $rRes === 'pass' ? '#d4edda' : ($rRes === 'fail' ? '#f8d7da' : '#e9ecef');
+                                        $rClr = $rRes === 'pass' ? '#155724' : ($rRes === 'fail' ? '#721c24' : '#495057');
+                                    @endphp
                                     <tr>
                                         <td>{{ $r->year }}</td>
                                         <td>Part {{ $r->part }}</td>
-                                        <td>{{ $r->exam_type ?? '—' }}</td>
-                                        <td>{{ $r->score !== null ? number_format($r->score, 1) : '—' }}</td>
+                                        <td>{{ $r->exam_type ?? '-' }}</td>
+                                        <td>{{ $r->score !== null ? number_format($r->score, 1) : '-' }}</td>
                                         <td>
-                                            @php $res = strtolower($r->result ?? ''); @endphp
-                                            <span class="badge" style="
-                                                background:{{ $res === 'pass' ? '#d4edda' : ($res === 'fail' ? '#f8d7da' : '#e9ecef') }};
-                                                color:{{ $res === 'pass' ? '#155724' : ($res === 'fail' ? '#721c24' : '#495057') }};
-                                                font-size:.8rem; padding:3px 8px;">
-                                                {{ strtoupper($r->result ?? '—') }}
+                                            <span class="badge" style="background:{{ $rBg }};color:{{ $rClr }};font-size:.8rem;padding:3px 8px;">
+                                                {{ strtoupper($r->result ?? '-') }}
                                             </span>
                                         </td>
                                     </tr>
