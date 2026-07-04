@@ -151,9 +151,9 @@
                                                     <td>{{ $value->gender }}</td>
                                                     <td>{{ $value->entry_number }}</td>
                                                     <td>{{ $value->personal_email }}</td>
-                                                    <td>@if($value->programme_id)<a href="{{ url('admin/programmes/view/'.$value->programme_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{{ $value->programme_name }}</a>@else{{ $value->programme_name }}@endif</td>
-                                                    <td>@if($value->hospital_id)<a href="{{ url('admin/hospital/view_hospital/'.$value->hospital_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{{ $value->hospital_name }}</a>@else{{ $value->hospital_name }}@endif</td>
-                                                    <td>@if($value->country_id)<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{{ $value->country_name }}</a>@else{{ $value->country_name }}@endif</td>
+                                                    <td>@if($value->programme_id)<a href="{{ url('admin/programmes/view/'.$value->programme_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->programme_name }}</a>@else{{ $value->programme_name }}@endif</td>
+                                                    <td>@if($value->hospital_id)<a href="{{ url('admin/hospital/view_hospital/'.$value->hospital_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->hospital_name }}</a>@else{{ $value->hospital_name }}@endif</td>
+                                                    <td>@if($value->country_id)<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->country_name }}</a>@else{{ $value->country_name }}@endif</td>
                                                     <td>{{ $value->status }}</td>
                                                     {{-- Hidden columns --}}
                                                     <td>{{ $value->user_email }}</td>
@@ -363,7 +363,7 @@ $(document).ready(function () {
     }
     .trainee-name-link:hover {
         color: #a02626;
-        text-decoration: underline;
+        text-decoration: none;
     }
     .action-btn { padding: 2px 8px; line-height: 1.4; border-radius: 4px; }
     .action-btn:hover { background-color: #f0f0f0; }

@@ -126,14 +126,12 @@
                                                         " title="{{ $specCount }} FCS specialties">{{ $specCount }}</span>
                                                     @endif
                                                     <a href="{{ url('admin/associates/fellows/view/' . ($value->fellow_id ?? 0)) }}"
-                                                       style="{{ $multiSpec ? 'color:#3a7a1a; font-weight:600;' : 'color:#222;' }} text-decoration:none;"
-                                                       onmouseover="this.style.textDecoration='underline'"
-                                                       onmouseout="this.style.textDecoration='none'">{{ $value->fellow_name ?? '-' }}</a>
+                                                       style="{{ $multiSpec ? 'color:#3a7a1a; font-weight:600;' : 'color:#222;' }} text-decoration:none;">{{ $value->fellow_name ?? '-' }}</a>
                                                 </span>
                                             </td>
                                             <td>{{ $value->personal_email ?? '-' }}</td>
-                                            <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{{ $value->country_name ?? '-' }}</a>@else{{ $value->country_name ?? '-' }}@endif</td>
-                                            <td>@if(!empty($value->programme_id))<a href="{{ url('admin/programmes/view/'.$value->programme_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{{ $value->current_specialty ?: ($value->programme_name ? preg_replace('/^FCS\s+/i','', $value->programme_name) : '-') }}</a>@else{{ $value->current_specialty ?: ($value->programme_name ? preg_replace('/^FCS\s+/i','', $value->programme_name) : '-') }}@endif</td>
+                                            <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->country_name ?? '-' }}</a>@else{{ $value->country_name ?? '-' }}@endif</td>
+                                            <td>@if(!empty($value->programme_id))<a href="{{ url('admin/programmes/view/'.$value->programme_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->current_specialty ?: ($value->programme_name ? preg_replace('/^FCS\s+/i','', $value->programme_name) : '-') }}</a>@else{{ $value->current_specialty ?: ($value->programme_name ? preg_replace('/^FCS\s+/i','', $value->programme_name) : '-') }}@endif</td>
                                             <td>{{ $value->fellowship_type ?? '-' }}</td>
                                             <td>{{ $value->fellowship_year ?? '-' }}</td>
                                             <td class="text-center" style="white-space:nowrap;">

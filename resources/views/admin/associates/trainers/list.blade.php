@@ -105,8 +105,8 @@
                                             <td>{{$value->id}}</td>
                                             <td>{{$value->name}}</td>
                                             <td>{{$value->user_email}}</td>
-                                            <td>@if(!empty($value->hospital_id))<a href="{{ url('admin/hospital/view_hospital/'.$value->hospital_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{{$value->hospital_name}}</a>@else{{$value->hospital_name}}@endif</td>
-                                            <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{{$value->country_name}}</a>@else{{$value->country_name}}@endif</td>
+                                            <td>@if(!empty($value->hospital_id))<a href="{{ url('admin/hospital/view_hospital/'.$value->hospital_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{$value->hospital_name}}</a>@else{{$value->hospital_name}}@endif</td>
+                                            <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{$value->country_name}}</a>@else{{$value->country_name}}@endif</td>
                                             <td>{{$value->phone_number}}</td>
                                             <td>{{$value->assistant_pd}}</td>
                                             <td>{{$value->assistant_email}}</td>
