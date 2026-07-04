@@ -217,14 +217,13 @@
                         <div class="card"><div class="card-body p-0">
                             @if(count($reps))
                             <table class="table table-bordered table-striped entity-table mb-0">
-                                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Status</th><th>Action</th></tr></thead>
+                                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Action</th></tr></thead>
                                 <tbody>
                                     @foreach($reps as $i => $r)
                                     <tr>
                                         <td>{{ $i+1 }}</td>
                                         <td><a href="{{ url('admin/associates/reps/view/'.$r->rep_id) }}" class="entity-link">{{ $r->name }}</a></td>
                                         <td>{{ $r->email ?: '—' }}</td>
-                                        <td>{{ $r->status ?: '—' }}</td>
                                         <td><a href="{{ url('admin/associates/reps/view/'.$r->rep_id) }}" class="btn btn-xs btn-light border"><i class="fas fa-eye text-info"></i></a></td>
                                     </tr>
                                     @endforeach
