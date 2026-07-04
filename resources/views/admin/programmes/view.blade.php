@@ -222,8 +222,8 @@
                                             </td>
                                             <td>{{ $t->admission_year ?: '-' }}</td>
                                             <td>
-                                                <span class="dot dot-{{ $t->status == 1 ? 'active' : 'inactive' }}"></span>
-                                                {{ $t->status == 1 ? 'Active' : 'Inactive' }}
+                                                <span class="dot dot-{{ strtolower($t->status??'')=='active'?'active':'inactive' }}"></span>
+                                                {{ $t->status ?: '—' }}
                                             </td>
                                             <td>
                                                 <a href="{{ url('admin/associates/trainees/view/'.$t->trainee_id) }}" class="btn btn-xs btn-light border">

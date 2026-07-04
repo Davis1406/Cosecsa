@@ -136,7 +136,7 @@
                                         <td>@if($t->programme_id)<a href="{{ url('admin/programmes/view/'.$t->programme_id) }}" class="entity-link">{{ $t->programme_name }}</a>@else{{ $t->programme_name }}@endif</td>
                                         <td>@if($t->hospital_id)<a href="{{ url('admin/hospital/view_hospital/'.$t->hospital_id) }}" class="entity-link">{{ $t->hospital_name }}</a>@else{{ $t->hospital_name ?? '—' }}@endif</td>
                                         <td>{{ $t->admission_year ?: '—' }}</td>
-                                        <td><span class="dot dot-{{ $t->status==1?'active':'inactive' }}"></span>{{ $t->status==1?'Active':'Inactive' }}</td>
+                                        <td><span class="dot dot-{{ strtolower($t->status??'')=='active'?'active':'inactive' }}"></span>{{ $t->status ?: '—' }}</td>
                                         <td><a href="{{ url('admin/associates/trainees/view/'.$t->trainee_id) }}" class="btn btn-xs btn-light border"><i class="fas fa-eye text-info"></i></a></td>
                                     </tr>
                                     @endforeach
