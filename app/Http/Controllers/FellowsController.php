@@ -211,6 +211,13 @@ class FellowsController extends Controller
             $examHistory = $mcs->merge($gs)->sortByDesc('exam_year')->values();
         }
 
+        // Load FCS exam results
+        $fellowResults = \DB::table('fellow_exam_results')
+            ->where('fellow_id', $fellow->fellow_id)
+            ->orderByDesc('year')
+            ->orderBy('part')
+            ->get();
+
         // Load labels
         $fellowRecord = FellowsModel::find($fellow->fellow_id);
         $allLabels = FellowLabel::where('is_active', true)->orderBy('name')->get();
@@ -220,7 +227,7 @@ class FellowsController extends Controller
         $header_title = "View Fellow";
         return view('admin.associates.fellows.view', compact(
             'fellow', 'header_title', 'subscriptions', 'examHistory',
-            'allLabels', 'assignedLabels', 'currentLabelIds'
+            'allLabels', 'assignedLabels', 'currentLabelIds', 'fellowResults'
         ));
     }
 

@@ -81,7 +81,7 @@ class CountryController extends Controller
             ->join('users', 'users.id', '=', 'country_reps.user_id')
             ->where('country_reps.country_id', $id)
             ->where('users.is_deleted', 0)
-            ->select('country_reps.id as rep_id', 'users.name', 'users.email', 'country_reps.status')
+            ->select('country_reps.id as rep_id', 'users.name', 'users.email')
             ->orderBy('users.name')
             ->get();
 

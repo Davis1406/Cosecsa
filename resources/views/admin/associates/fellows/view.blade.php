@@ -421,6 +421,7 @@
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-fellowship">Fellowship</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-fees">Fees &amp; Payments</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-subs">Subscriptions</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-results">Results@if(!empty($fellowResults) && $fellowResults->count()) <span class="badge badge-pill ml-1" style="background:#a02626;color:#fff;font-size:.65rem;">{{ $fellowResults->count() }}</span>@endif</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-history">History</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-admin">Admin Notes</a></li>
                 </ul>
@@ -612,6 +613,49 @@
                         @else
                         <div class="text-center py-4 text-muted">
                             <i class="fas fa-receipt fa-2x mb-2"></i><br>No subscription records.
+                        </div>
+                        @endif
+                    </div>
+
+                    {{-- ── TAB: Exam Results ── --}}
+                    <div class="tab-pane fade" id="tab-results">
+                        <p class="sect-div">FCS Exam Results</p>
+                        @if(!empty($fellowResults) && $fellowResults->count())
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover" style="font-size:.85rem;">
+                                <thead style="background:#fff5f5;">
+                                    <tr>
+                                        <th style="color:#a02626;font-weight:700;">Year</th>
+                                        <th style="color:#a02626;font-weight:700;">Part</th>
+                                        <th style="color:#a02626;font-weight:700;">Exam Type</th>
+                                        <th style="color:#a02626;font-weight:700;">Score</th>
+                                        <th style="color:#a02626;font-weight:700;">Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($fellowResults as $r)
+                                    <tr>
+                                        <td>{{ $r->year }}</td>
+                                        <td>Part {{ $r->part }}</td>
+                                        <td>{{ $r->exam_type ?? '—' }}</td>
+                                        <td>{{ $r->score !== null ? number_format($r->score, 1) : '—' }}</td>
+                                        <td>
+                                            @php $res = strtolower($r->result ?? ''); @endphp
+                                            <span class="badge" style="
+                                                background:{{ $res === 'pass' ? '#d4edda' : ($res === 'fail' ? '#f8d7da' : '#e9ecef') }};
+                                                color:{{ $res === 'pass' ? '#155724' : ($res === 'fail' ? '#721c24' : '#495057') }};
+                                                font-size:.8rem; padding:3px 8px;">
+                                                {{ strtoupper($r->result ?? '—') }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        @else
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-clipboard-list fa-2x mb-2"></i><br>No exam results on record.
                         </div>
                         @endif
                     </div>
