@@ -221,6 +221,7 @@ Route::post('admin/exams/upload-confirmation', [ExamsController::class, 'process
 Route::get('admin/exams/bulk-upload-docs',  [ExamsController::class, 'bulkUploadDocsView'])->name('examiners.bulk.upload.docs');
 Route::post('admin/exams/bulk-upload-docs', [ExamsController::class, 'bulkUploadDocs'])->name('examiners.bulk.upload.docs.process');
 Route::get('admin/exams/delete/{id}', [ExamsController::class,'delete']);
+Route::get('admin/exams/overall_results', [ExamsController::class,'overallResults']);
 Route::get('admin/exams/exam_results', [ExamsController::class,'adminResults']);
 Route::get('admin/exams/gs_results', [ExamsController::class,'gsResults']);
 Route::get('admin/exams/station_results/{candidate_id}/{station_id}', [ExamsController::class, 'viewCandidateStationResult']);

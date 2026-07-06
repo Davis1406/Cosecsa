@@ -392,6 +392,15 @@
                                         </p>
                                     </a>
                                     <ul class="nav nav-treeview" style="padding-left: 20px;">
+                                        <!-- Overall Results (Capsule CRM historical) -->
+                                        <li class="nav-item">
+                                            <a href="{{ url('admin/exams/overall_results') }}"
+                                               class="nav-link @if (Request::segment(3) == 'overall_results') active @endif">
+                                                <i class="fas fa-chart-bar nav-icon"></i>
+                                                <p>Overall Results</p>
+                                            </a>
+                                        </li>
+
                                         <!-- MCS Results -->
                                         <li class="nav-item">
                                             <a href="{{ url('admin/exams/exam_results') }}"

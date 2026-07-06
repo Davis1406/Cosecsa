@@ -2034,6 +2034,79 @@ public function delete($id)
         return view('admin.exams.exam_results', $data);
     }
 
+    public function overallResults(Request $request)
+    {
+        $selectedYear     = $request->input('year');
+        $selectedProgramme = $request->input('programme_id');
+
+        $programmes = \DB::table('programmes')
+            ->where('is_deleted', 0)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $years = \DB::table('capsule_exam_results')
+            ->whereNotNull('exam_year')
+            ->selectRaw('DISTINCT exam_year')
+            ->orderByDesc('exam_year')
+            ->pluck('exam_year');
+
+        $query = \DB::table('capsule_exam_results as cer')
+            ->leftJoin('programmes as p', 'p.id', '=', 'cer.programme_id')
+            ->leftJoin('trainees as t', 't.id', '=', 'cer.trainee_id')
+            ->leftJoin('users as u', 'u.id', '=', 't.user_id')
+            ->select(
+                'cer.id', 'cer.contact_name', 'cer.exam_year', 'cer.specialty',
+                'cer.exam_type', 'cer.score', 'cer.result',
+                'cer.trainee_id', 'u.name as trainee_name',
+                'p.name as programme_name', 'cer.programme_id'
+            );
+
+        if ($selectedYear) {
+            $query->where('cer.exam_year', $selectedYear);
+        }
+        if ($selectedProgramme) {
+            $query->where('cer.programme_id', $selectedProgramme);
+        }
+
+        $results = $query->orderByDesc('cer.exam_year')
+            ->orderBy('cer.contact_name')
+            ->get();
+
+        // Summary: pass/fail counts per programme per year (respecting filters)
+        $summaryQuery = \DB::table('capsule_exam_results as cer')
+            ->leftJoin('programmes as p', 'p.id', '=', 'cer.programme_id')
+            ->selectRaw('cer.exam_year, COALESCE(p.name, cer.specialty, "Unknown") as prog_name, cer.result, COUNT(*) as n')
+            ->groupBy('cer.exam_year', 'prog_name', 'cer.result')
+            ->orderByDesc('cer.exam_year')
+            ->orderBy('prog_name');
+
+        if ($selectedYear) {
+            $summaryQuery->where('cer.exam_year', $selectedYear);
+        }
+        if ($selectedProgramme) {
+            $summaryQuery->where('cer.programme_id', $selectedProgramme);
+        }
+
+        $summaryRaw = $summaryQuery->get();
+
+        // Reshape: [year][prog_name] => {pass, fail, absent}
+        $summary = [];
+        foreach ($summaryRaw as $row) {
+            $summary[$row->exam_year][$row->prog_name][$row->result] = $row->n;
+        }
+
+        $data = [
+            'header_title'      => 'Overall Exam Results',
+            'results'           => $results,
+            'summary'           => $summary,
+            'programmes'        => $programmes,
+            'years'             => $years,
+            'selectedYear'      => $selectedYear,
+            'selectedProgramme' => $selectedProgramme,
+        ];
+        return view('admin.exams.overall_results', $data);
+    }
+
     public function gsResults(Request $request)
     {
         [$yearId, $yearName, $allYears] = $this->resolveYear($request);
