@@ -110,6 +110,7 @@ class ExamsController extends Controller
                 'users.name as examiner_name',
                 'users.email',
                 'countries.country_name',
+                'examiners.country_id',
                 'examiners.internal_notes',
                 DB::raw('GROUP_CONCAT(DISTINCT examiners_groups.group_name ORDER BY examiners_groups.group_name SEPARATOR ", ") as group_name'),
                 DB::raw($participatedSql),
@@ -119,7 +120,7 @@ class ExamsController extends Controller
                 'examiners.id', 'examiners.user_id', 'examiners.examiner_id',
                 'examiners.examiner_designation', 'examiners.specialty', 'examiners.status',
                 'examiners.role_id', 'examiners_roles.role', 'users.name', 'users.email',
-                'countries.country_name', 'examiners.internal_notes'
+                'countries.country_name', 'examiners.country_id', 'examiners.internal_notes'
             )
             ->orderBy('users.name')
             ->get();
