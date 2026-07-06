@@ -2017,7 +2017,24 @@ public function delete($id)
     private function resolveYear(Request $request): array
     {
         $allYears = DB::table('years')->orderByDesc('id')->get(['id', 'year_name']);
-        $yearId   = $request->input('year_id') ? (int)$request->input('year_id') : User::getCurrentYearId();
+        if ($request->input('year_id')) {
+            $yearId = (int)$request->input('year_id');
+        } else {
+            // Default to the most recent year that has any OSCE exam data,
+            // falling back to the current calendar year if none found.
+            $examTables = ['mcs_results','gs_results','orthopaedic_results',
+                           'cardiothoracic_results','urology_results','paediatric_results',
+                           'ent_results','plastic_surgery_results','neurosurgery_results',
+                           'paediatric_orthopaedics_results'];
+            $latestYearId = null;
+            foreach ($examTables as $tbl) {
+                $max = DB::table($tbl)->max('exam_year');
+                if ($max && ($latestYearId === null || $max > $latestYearId)) {
+                    $latestYearId = $max;
+                }
+            }
+            $yearId = $latestYearId ?? User::getCurrentYearId();
+        }
         $yearRow  = $allYears->firstWhere('id', $yearId);
         $yearName = $yearRow ? $yearRow->year_name : (string)date('Y');
         return [$yearId, $yearName, $allYears];
