@@ -386,6 +386,14 @@
                     <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tab-personal">Personal</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-training">Training</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-fees">Fees &amp; Payments</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#tab-results">
+                            Exam Results
+                            @if(isset($capsuleExamResults) && $capsuleExamResults->count())
+                            <span class="badge badge-pill ml-1" style="background:#a02626;color:#fff;font-size:.65rem;">{{ $capsuleExamResults->count() }}</span>
+                            @endif
+                        </a>
+                    </li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-admin">Admin</a></li>
                 </ul>
 
@@ -589,6 +597,50 @@
                             <div class="text-center py-3 text-muted" style="font-size:.83rem;">
                                 <i class="fas fa-info-circle mr-1"></i>No candidate exam fee record linked to this trainee.
                             </div>
+                        @endif
+                    </div>
+
+                    {{-- ── TAB: Exam Results ── --}}
+                    <div class="tab-pane fade" id="tab-results">
+                        <p class="sect-div">Exam Results (from Capsule CRM)</p>
+                        @if(isset($capsuleExamResults) && $capsuleExamResults->count())
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover" style="font-size:.85rem;">
+                                <thead style="background:#fff5f5;">
+                                    <tr>
+                                        <th style="color:#a02626;font-weight:700;">Year</th>
+                                        <th style="color:#a02626;font-weight:700;">Specialty</th>
+                                        <th style="color:#a02626;font-weight:700;">Exam Type</th>
+                                        <th style="color:#a02626;font-weight:700;">Score</th>
+                                        <th style="color:#a02626;font-weight:700;">Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($capsuleExamResults as $r)
+                                    @php
+                                        $rRes = strtolower($r->result ?? '');
+                                        $rBg  = $rRes === 'pass' ? '#d4edda' : ($rRes === 'fail' ? '#f8d7da' : '#e9ecef');
+                                        $rClr = $rRes === 'pass' ? '#155724' : ($rRes === 'fail' ? '#721c24' : '#495057');
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $r->exam_year }}</td>
+                                        <td>{{ $r->specialty ?? '(General)' }}</td>
+                                        <td>{{ $r->exam_type ?? '-' }}</td>
+                                        <td>{{ $r->score !== null ? number_format($r->score, 2) : '-' }}</td>
+                                        <td>
+                                            <span class="badge" style="background:{{ $rBg }};color:{{ $rClr }};font-size:.8rem;padding:3px 8px;">
+                                                {{ strtoupper($r->result ?? '-') }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        @else
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-clipboard-list fa-2x mb-2"></i><br>No exam results found for this trainee.
+                        </div>
                         @endif
                     </div>
 

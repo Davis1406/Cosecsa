@@ -117,7 +117,27 @@ class ProgrammesController extends Controller
             ->orderBy('users.name')
             ->get();
 
-        $data = compact('programme', 'hospitals', 'trainees', 'fellows');
+        // Capsule exam results for this programme (by year)
+        $examResultsByYear = \DB::table('capsule_exam_results')
+            ->where('programme_id', $id)
+            ->selectRaw("exam_year, result, COUNT(*) as n")
+            ->groupBy('exam_year', 'result')
+            ->orderByDesc('exam_year')
+            ->get()
+            ->groupBy('exam_year');
+
+        $examResultsAll = \DB::table('capsule_exam_results as cer')
+            ->where('cer.programme_id', $id)
+            ->leftJoin('trainees as t', 't.id', '=', 'cer.trainee_id')
+            ->leftJoin('users as u', 'u.id', '=', 't.user_id')
+            ->select('cer.contact_name', 'cer.exam_year', 'cer.exam_type',
+                     'cer.score', 'cer.result', 'cer.trainee_id', 'u.name as trainee_name')
+            ->orderByDesc('cer.exam_year')
+            ->orderBy('cer.contact_name')
+            ->get();
+
+        $data = compact('programme', 'hospitals', 'trainees', 'fellows',
+                        'examResultsByYear', 'examResultsAll');
         $data['header_title'] = $programme->name;
         return view('admin.programmes.view', $data);
     }

@@ -627,8 +627,51 @@
 
                     {{-- ── TAB: Exam Results ── --}}
                     <div class="tab-pane fade" id="tab-results">
-                        <p class="sect-div">FCS Exam Results</p>
+                        @php
+                            $capsuleCount = isset($capsuleExamResults) ? $capsuleExamResults->count() : 0;
+                        @endphp
+
+                        {{-- Capsule CRM results (historical record) --}}
+                        @if($capsuleCount)
+                        <p class="sect-div">Exam History (Capsule CRM)</p>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover" style="font-size:.85rem;">
+                                <thead style="background:#fff5f5;">
+                                    <tr>
+                                        <th style="color:#a02626;font-weight:700;">Year</th>
+                                        <th style="color:#a02626;font-weight:700;">Specialty / Exam</th>
+                                        <th style="color:#a02626;font-weight:700;">Type</th>
+                                        <th style="color:#a02626;font-weight:700;">Score</th>
+                                        <th style="color:#a02626;font-weight:700;">Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($capsuleExamResults as $r)
+                                    @php
+                                        $rRes = strtolower($r->result ?? '');
+                                        $rBg  = $rRes === 'pass' ? '#d4edda' : ($rRes === 'fail' ? '#f8d7da' : ($rRes === 'absent' ? '#fff3cd' : '#e9ecef'));
+                                        $rClr = $rRes === 'pass' ? '#155724' : ($rRes === 'fail' ? '#721c24' : ($rRes === 'absent' ? '#856404' : '#495057'));
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $r->exam_year }}</td>
+                                        <td>{{ $r->specialty ?? '(General FCS/MCS)' }}</td>
+                                        <td>{{ $r->exam_type ?? '-' }}</td>
+                                        <td>{{ $r->score !== null ? number_format($r->score, 2) : '-' }}</td>
+                                        <td>
+                                            <span class="badge" style="background:{{ $rBg }};color:{{ $rClr }};font-size:.8rem;padding:3px 8px;">
+                                                {{ strtoupper($r->result ?? '-') }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        @endif
+
+                        {{-- Internal FCS exam results (from exam system) --}}
                         @if($resultsCount)
+                        <p class="sect-div {{ $capsuleCount ? 'mt-3' : '' }}">FCS Exam Results (Exam System)</p>
                         <div class="table-responsive">
                             <table class="table table-sm table-hover" style="font-size:.85rem;">
                                 <thead style="background:#fff5f5;">
@@ -662,7 +705,9 @@
                                 </tbody>
                             </table>
                         </div>
-                        @else
+                        @endif
+
+                        @if(!$resultsCount && !$capsuleCount)
                         <div class="text-center py-4 text-muted">
                             <i class="fas fa-clipboard-list fa-2x mb-2"></i><br>No exam results on record.
                         </div>

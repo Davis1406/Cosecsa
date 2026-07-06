@@ -93,6 +93,12 @@
                         <div class="lbl">Fellows</div>
                         <div class="val">{{ $fellows->count() }}</div>
                     </div>
+                    @if(isset($examResultsAll) && $examResultsAll->count())
+                    <div class="prog-info-chip">
+                        <div class="lbl">Exam Records</div>
+                        <div class="val">{{ $examResultsAll->count() }}</div>
+                    </div>
+                    @endif
                     @if($programme->duration)
                     <div class="prog-info-chip">
                         <div class="lbl">Duration</div>
@@ -133,6 +139,14 @@
                             <span class="tab-count">{{ $fellows->count() }}</span>
                         </a>
                     </li>
+                    @if(isset($examResultsAll) && $examResultsAll->count())
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#pane-results" role="tab">
+                            <i class="fas fa-chart-bar mr-1"></i>Exam Results
+                            <span class="tab-count">{{ $examResultsAll->count() }}</span>
+                        </a>
+                    </li>
+                    @endif
                 </ul>
 
                 <div class="tab-content">
@@ -284,6 +298,127 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- ── Results tab ── --}}
+                    @if(isset($examResultsAll) && $examResultsAll->count())
+                    <div class="tab-pane fade" id="pane-results" role="tabpanel">
+                        <div class="card mb-3">
+                            <div class="card-header" style="background:#fff5f5;border-bottom:1px solid #e8d5d5;">
+                                <strong style="color:#a02626;font-size:.9rem;">
+                                    <i class="fas fa-table mr-1"></i>Results by Year
+                                </strong>
+                            </div>
+                            <div class="card-body p-0">
+                                <table class="table table-sm table-bordered entity-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Year</th>
+                                            <th class="text-center" style="color:#155724;">Pass</th>
+                                            <th class="text-center" style="color:#721c24;">Fail</th>
+                                            <th class="text-center">Absent</th>
+                                            <th class="text-center">Total</th>
+                                            <th class="text-center">Pass Rate</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($examResultsByYear as $year => $rows)
+                                        @php
+                                            $passN   = $rows->firstWhere('result','Pass')->n  ?? 0;
+                                            $failN   = $rows->firstWhere('result','Fail')->n  ?? 0;
+                                            $absentN = $rows->firstWhere('result','Absent')->n ?? 0;
+                                            $total   = $passN + $failN + $absentN;
+                                            $rate    = ($passN + $failN) > 0 ? round($passN / ($passN + $failN) * 100) : null;
+                                        @endphp
+                                        <tr>
+                                            <td><strong>{{ $year }}</strong></td>
+                                            <td class="text-center">
+                                                @if($passN)<span class="badge" style="background:#d4edda;color:#155724;">{{ $passN }}</span>@else -@endif
+                                            </td>
+                                            <td class="text-center">
+                                                @if($failN)<span class="badge" style="background:#f8d7da;color:#721c24;">{{ $failN }}</span>@else -@endif
+                                            </td>
+                                            <td class="text-center">
+                                                @if($absentN)<span class="badge" style="background:#fff3cd;color:#856404;">{{ $absentN }}</span>@else -@endif
+                                            </td>
+                                            <td class="text-center">{{ $total }}</td>
+                                            <td class="text-center">
+                                                @if($rate !== null)
+                                                    <span style="font-weight:600;color:{{ $rate >= 50 ? '#155724' : '#721c24' }};">{{ $rate }}%</span>
+                                                @else -@endif
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header" style="background:#fff5f5;border-bottom:1px solid #e8d5d5;">
+                                <strong style="color:#a02626;font-size:.9rem;">
+                                    <i class="fas fa-list mr-1"></i>All Results
+                                </strong>
+                            </div>
+                            <div class="card-body p-0">
+                                <table class="table table-sm table-bordered table-striped entity-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Name</th>
+                                            <th>Year</th>
+                                            <th>Exam Type</th>
+                                            <th class="text-center">Score</th>
+                                            <th class="text-center">Result</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($examResultsAll as $i => $r)
+                                        @php
+                                            $rRes = strtolower($r->result ?? '');
+                                            $rBg  = $rRes === 'pass'   ? '#d4edda' :
+                                                    ($rRes === 'fail'   ? '#f8d7da' :
+                                                    ($rRes === 'absent' ? '#fff3cd' : '#e9ecef'));
+                                            $rClr = $rRes === 'pass'   ? '#155724' :
+                                                    ($rRes === 'fail'   ? '#721c24' :
+                                                    ($rRes === 'absent' ? '#856404' : '#495057'));
+                                            $displayName = $r->trainee_name ?: $r->contact_name;
+                                        @endphp
+                                        <tr>
+                                            <td>{{ $i + 1 }}</td>
+                                            <td>
+                                                @if($r->trainee_id)
+                                                <a href="{{ url('admin/associates/trainees/view/'.$r->trainee_id) }}" class="entity-link">
+                                                    {{ $displayName }}
+                                                </a>
+                                                @else
+                                                {{ $displayName }}
+                                                @endif
+                                            </td>
+                                            <td>{{ $r->exam_year }}</td>
+                                            <td>{{ $r->exam_type ?? '-' }}</td>
+                                            <td class="text-center">{{ $r->score !== null ? number_format($r->score, 2) : '-' }}</td>
+                                            <td class="text-center">
+                                                <span class="badge" style="background:{{ $rBg }};color:{{ $rClr }};padding:3px 8px;font-size:.8rem;">
+                                                    {{ strtoupper($r->result ?? '-') }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if($r->trainee_id)
+                                                <a href="{{ url('admin/associates/trainees/view/'.$r->trainee_id) }}" class="btn btn-xs btn-light border">
+                                                    <i class="fas fa-eye text-info"></i>
+                                                </a>
+                                                @else -
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
 
                 </div>{{-- /.tab-content --}}
 

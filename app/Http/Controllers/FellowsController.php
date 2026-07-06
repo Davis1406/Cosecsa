@@ -211,12 +211,36 @@ class FellowsController extends Controller
             $examHistory = $mcs->merge($gs)->sortByDesc('exam_year')->values();
         }
 
-        // Load FCS exam results
+        // Load FCS exam results (from internal exam tables)
         $fellowResults = \DB::table('fellow_exam_results')
             ->where('fellow_id', $fellow->fellow_id)
             ->orderByDesc('year')
             ->orderBy('part')
             ->get();
+
+        // Load Capsule CRM exam results matched by email or name
+        $capsuleExamResults = collect();
+        $fellowEmail = strtolower(trim($fellow->email ?? ''));
+        if ($fellowEmail) {
+            $capsuleId = \DB::table('capsule_contacts')
+                ->whereRaw('LOWER(email) = ?', [$fellowEmail])
+                ->value('capsule_id');
+            if ($capsuleId) {
+                $capsuleExamResults = \DB::table('capsule_exam_results')
+                    ->where('capsule_id', $capsuleId)
+                    ->orderByDesc('exam_year')
+                    ->orderBy('specialty')
+                    ->get();
+            }
+        }
+        if ($capsuleExamResults->isEmpty()) {
+            $capsuleExamResults = \DB::table('capsule_exam_results')
+                ->whereRaw("LOWER(contact_name) = LOWER(?)",
+                    [trim(($fellow->firstname ?? '') . ' ' . ($fellow->lastname ?? ''))])
+                ->orderByDesc('exam_year')
+                ->orderBy('specialty')
+                ->get();
+        }
 
         // Load labels
         $fellowRecord = FellowsModel::find($fellow->fellow_id);
@@ -227,7 +251,8 @@ class FellowsController extends Controller
         $header_title = "View Fellow";
         return view('admin.associates.fellows.view', compact(
             'fellow', 'header_title', 'subscriptions', 'examHistory',
-            'allLabels', 'assignedLabels', 'currentLabelIds', 'fellowResults'
+            'allLabels', 'assignedLabels', 'currentLabelIds', 'fellowResults',
+            'capsuleExamResults'
         ));
     }
 

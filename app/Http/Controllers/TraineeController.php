@@ -68,10 +68,18 @@ class TraineeController extends Controller
             ? (int) $penParts[1]
             : null;
 
+        // Capsule exam results linked to this trainee
+        $capsuleExamResults = \DB::table('capsule_exam_results')
+            ->where('trainee_id', $id)
+            ->orderByDesc('exam_year')
+            ->orderBy('specialty')
+            ->get();
+
         $header_title = "View Trainee";
         return view('admin.associates.trainees.view',
             compact('trainee', 'header_title', 'linkedCandidate',
-                    'programmes', 'countries', 'examYears', 'firstAdmissionYear'));
+                    'programmes', 'countries', 'examYears', 'firstAdmissionYear',
+                    'capsuleExamResults'));
     }
 
     /**
