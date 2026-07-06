@@ -68,12 +68,36 @@ class TraineeController extends Controller
             ? (int) $penParts[1]
             : null;
 
-        // Capsule exam results linked to this trainee
+        // Capsule exam results — try trainee_id first, then email→capsule_id, then name fallback
         $capsuleExamResults = \DB::table('capsule_exam_results')
             ->where('trainee_id', $id)
             ->orderByDesc('exam_year')
             ->orderBy('specialty')
             ->get();
+
+        if ($capsuleExamResults->isEmpty()) {
+            $traineeEmail = strtolower(trim($trainee->email ?? ''));
+            if ($traineeEmail) {
+                $capsuleId = \DB::table('capsule_contacts')
+                    ->whereRaw('LOWER(email) = ?', [$traineeEmail])
+                    ->value('capsule_id');
+                if ($capsuleId) {
+                    $capsuleExamResults = \DB::table('capsule_exam_results')
+                        ->where('capsule_id', $capsuleId)
+                        ->orderByDesc('exam_year')
+                        ->orderBy('specialty')
+                        ->get();
+                }
+            }
+        }
+
+        if ($capsuleExamResults->isEmpty() && !empty($trainee->name)) {
+            $capsuleExamResults = \DB::table('capsule_exam_results')
+                ->whereRaw("LOWER(contact_name) = LOWER(?)", [trim($trainee->name)])
+                ->orderByDesc('exam_year')
+                ->orderBy('specialty')
+                ->get();
+        }
 
         $header_title = "View Trainee";
         return view('admin.associates.trainees.view',
