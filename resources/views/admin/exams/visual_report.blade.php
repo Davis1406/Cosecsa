@@ -144,7 +144,7 @@
                     </div>
                 </div>
                 <div class="col-6 col-md">
-                    <div class="stat-card">
+                    <div class="stat-card" style="background:linear-gradient(135deg,#1a6e3c,#28a05a);">
                         <div class="stat-number">
                             {{ ($availabilityData['FCS'] ?? 0) + ($availabilityData['MCS'] ?? 0) + ($availabilityData['FCS and MCS'] ?? 0) }}
                         </div>
@@ -152,25 +152,19 @@
                     </div>
                 </div>
                 <div class="col-6 col-md">
-                    <div class="stat-card" style="background: linear-gradient(135deg, #e07b00, #f59500);">
+                    <div class="stat-card" style="background:linear-gradient(135deg,#e07b00,#f59500);">
                         <div class="stat-number">{{ $availabilityData['Tentative'] ?? 0 }}</div>
                         <div class="stat-label">Tentative</div>
                     </div>
                 </div>
                 <div class="col-6 col-md">
-                    <div class="stat-card">
+                    <div class="stat-card" style="background:linear-gradient(135deg,#922b21,#c0392b);">
                         <div class="stat-number">{{ $availabilityData['Not Available'] ?? 0 }}</div>
                         <div class="stat-label">Not Available</div>
                     </div>
                 </div>
                 <div class="col-6 col-md">
-                    <div class="stat-card">
-                        <div class="stat-number">{{ count($countryData) }}</div>
-                        <div class="stat-label">Countries</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md">
-                    <div class="stat-card" style="background:linear-gradient(135deg,#1a6e3c,#28a05a);">
+                    <div class="stat-card" style="background:linear-gradient(135deg,#1a5276,#2471a3);">
                         <div class="stat-number">{{ $invitationsSent }}</div>
                         <div class="stat-label">Invitations Sent</div>
                     </div>
@@ -187,15 +181,9 @@
                     </div>
                 </div>
                 <div class="col-6 col-md">
-                    <div class="stat-card" style="background:linear-gradient(135deg,#922b21,#c0392b);">
-                        <div class="stat-number">{{ $invitationsSent - $invitationsOpened }}</div>
-                        <div class="stat-label">Not Opened</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md">
-                    <div class="stat-card" style="background:linear-gradient(135deg,#1a5276,#2471a3);">
-                        <div class="stat-number">{{ $totalOpenEvents }}</div>
-                        <div class="stat-label">Total Opens</div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ count($countryData) }}</div>
+                        <div class="stat-label">Countries</div>
                     </div>
                 </div>
             </div>

@@ -1213,9 +1213,6 @@ public function delete($id)
             ->whereBetween('sent_at', [$yearStart, $yearEnd])
             ->whereNotNull('opened_at')
             ->count();
-        $totalOpenEvents   = (int) DB::table('email_tracking')
-            ->whereBetween('sent_at', [$yearStart, $yearEnd])
-            ->sum('open_count');
 
         $data = [
             'availabilityData'  => $this->processAvailabilityData($getExaminers),
@@ -1229,7 +1226,6 @@ public function delete($id)
             'totalShown'        => $getExaminers->count(),
             'invitationsSent'   => $invitationsSent,
             'invitationsOpened' => $invitationsOpened,
-            'totalOpenEvents'   => $totalOpenEvents,
         ];
 
         return view('admin.exams.visual_report', $data);
