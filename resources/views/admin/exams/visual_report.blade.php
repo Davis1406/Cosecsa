@@ -176,20 +176,26 @@
                     </div>
                 </div>
                 <div class="col-6 col-md">
-                    <div class="stat-card" style="background:linear-gradient(135deg,#1a5276,#2471a3);">
-                        <div class="stat-number">{{ $uniqueInvited }}</div>
-                        <div class="stat-label">Examiners Invited</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md">
                     <div class="stat-card" style="background:linear-gradient(135deg,#5b2c8d,#7d3fc8);">
                         <div class="stat-number">{{ $invitationsOpened }}</div>
                         <div class="stat-label">
                             Opened
-                            @if($uniqueInvited > 0)
-                                <small style="font-size:.75rem;opacity:.85;">({{ round($invitationsOpened/$uniqueInvited*100) }}%)</small>
+                            @if($invitationsSent > 0)
+                                <small style="font-size:.75rem;opacity:.85;">({{ round($invitationsOpened/$invitationsSent*100) }}%)</small>
                             @endif
                         </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md">
+                    <div class="stat-card" style="background:linear-gradient(135deg,#922b21,#c0392b);">
+                        <div class="stat-number">{{ $invitationsSent - $invitationsOpened }}</div>
+                        <div class="stat-label">Not Opened</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md">
+                    <div class="stat-card" style="background:linear-gradient(135deg,#1a5276,#2471a3);">
+                        <div class="stat-number">{{ $totalOpenEvents }}</div>
+                        <div class="stat-label">Total Opens</div>
                     </div>
                 </div>
             </div>

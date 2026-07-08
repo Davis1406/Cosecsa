@@ -1209,13 +1209,13 @@ public function delete($id)
         $invitationsSent   = DB::table('email_tracking')
             ->whereBetween('sent_at', [$yearStart, $yearEnd])
             ->count();
-        $uniqueInvited     = DB::table('email_tracking')
-            ->whereBetween('sent_at', [$yearStart, $yearEnd])
-            ->distinct()->count('exm_id');
         $invitationsOpened = DB::table('email_tracking')
             ->whereBetween('sent_at', [$yearStart, $yearEnd])
             ->whereNotNull('opened_at')
-            ->distinct()->count('exm_id');
+            ->count();
+        $totalOpenEvents   = (int) DB::table('email_tracking')
+            ->whereBetween('sent_at', [$yearStart, $yearEnd])
+            ->sum('open_count');
 
         $data = [
             'availabilityData'  => $this->processAvailabilityData($getExaminers),
@@ -1228,8 +1228,8 @@ public function delete($id)
             'filterMode'        => $filterMode,
             'totalShown'        => $getExaminers->count(),
             'invitationsSent'   => $invitationsSent,
-            'uniqueInvited'     => $uniqueInvited,
             'invitationsOpened' => $invitationsOpened,
+            'totalOpenEvents'   => $totalOpenEvents,
         ];
 
         return view('admin.exams.visual_report', $data);
