@@ -294,6 +294,7 @@
                             </div>
 
                             {{-- Additional Documents --}}
+                            @php $examinerDocuments = $examinerDocuments ?? collect(); @endphp
                             @if($examinerDocuments->isNotEmpty())
                             <hr class="my-2">
                             <small class="text-muted font-weight-bold text-uppercase"
