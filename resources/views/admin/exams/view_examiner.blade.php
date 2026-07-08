@@ -255,8 +255,13 @@
                 {{-- Documents & Actions --}}
                 <div class="col-md-4 col-sm-12 mb-4">
                     <div class="card h-100">
-                        <div class="card-header section-header">
-                            <i class="fas fa-folder-open mr-2"></i> Documents & Actions
+                        <div class="card-header section-header d-flex align-items-center justify-content-between">
+                            <span><i class="fas fa-folder-open mr-2"></i> Documents & Actions</span>
+                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                    style="font-size:.7rem;padding:2px 8px;"
+                                    data-toggle="modal" data-target="#uploadDocumentModal">
+                                <i class="fas fa-plus mr-1"></i> Add Document
+                            </button>
                         </div>
                         <div class="card-body">
 
@@ -287,6 +292,48 @@
                                     </button>
                                 @endif
                             </div>
+
+                            {{-- Additional Documents --}}
+                            @if($examinerDocuments->isNotEmpty())
+                            <hr class="my-2">
+                            <small class="text-muted font-weight-bold text-uppercase"
+                                   style="letter-spacing:.04em;">
+                                <i class="fas fa-paperclip mr-1"></i> Additional Documents
+                                <span class="badge badge-secondary ml-1" style="font-size:.65rem;">{{ $examinerDocuments->count() }}</span>
+                            </small>
+                            <div class="mt-2 mb-3">
+                                @foreach($examinerDocuments as $doc)
+                                @php
+                                    $docIcon = match(strtolower($doc->file_type ?? '')) {
+                                        'pdf'  => 'fas fa-file-pdf text-danger',
+                                        'doc', 'docx' => 'fas fa-file-word text-primary',
+                                        'xls', 'xlsx' => 'fas fa-file-excel text-success',
+                                        default => 'fas fa-file text-secondary',
+                                    };
+                                @endphp
+                                <div class="d-flex align-items-center mb-1" style="gap:.4rem;">
+                                    <i class="{{ $docIcon }}" style="font-size:1rem;flex-shrink:0;"></i>
+                                    <a href="{{ asset('storage/' . $doc->file_path) }}"
+                                       target="_blank"
+                                       class="text-truncate flex-grow-1"
+                                       style="font-size:.8rem;color:#333;max-width:160px;"
+                                       title="{{ $doc->original_name }}">
+                                        {{ $doc->title }}
+                                    </a>
+                                    <form method="POST"
+                                          action="{{ route('examiner.delete.document', [$examiner->examin_id, $doc->id]) }}"
+                                          style="flex-shrink:0;"
+                                          onsubmit="return confirm('Delete &quot;{{ addslashes($doc->title) }}&quot;?')">
+                                        @csrf
+                                        <button type="submit" class="btn btn-xs btn-outline-danger"
+                                                style="padding:1px 6px;font-size:.7rem;" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                @endforeach
+                            </div>
+                            @endif
 
                             <hr class="my-3">
 
@@ -1228,6 +1275,58 @@ function showVEDeleteModal() {
     </div>
 </div>
 
+{{-- ══ Upload Document Modal ══════════════════════════════════════════════════ --}}
+<div class="modal fade" id="uploadDocumentModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#a02626;color:#fff;padding:.75rem 1rem;">
+                <h5 class="modal-title mb-0">
+                    <i class="fas fa-paperclip mr-2"></i> Add Document
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" style="opacity:.9;">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form method="POST"
+                  action="{{ route('examiner.upload.document', $examiner->examin_id) }}"
+                  enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Document Title <span class="text-danger">*</span></label>
+                        <input type="text" name="doc_title" class="form-control"
+                               placeholder="e.g. Appointment Letter, Certificate, Contract…"
+                               value="{{ old('doc_title') }}" required maxlength="255">
+                        @error('doc_title')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold">File <span class="text-danger">*</span></label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="docFileInput"
+                                   name="doc_file"
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+                            <label class="custom-file-label" for="docFileInput">
+                                Choose file (PDF, Word, Excel — max 20 MB)
+                            </label>
+                        </div>
+                        @error('doc_file')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding:.6rem 1rem;">
+                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-danger">
+                        <i class="fas fa-upload mr-1"></i> Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {{-- ══ CV Upload Modal ═══════════════════════════════════════════════════════ --}}
 <div class="modal fade" id="uploadCvModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -1617,6 +1716,17 @@ $('#cvFileInput').on('change', function () {
     var name = $(this).val().split('\\').pop();
     $(this).next('.custom-file-label').text(name || 'Choose file');
 });
+
+// ── Add Document modal — custom file label ────────────────────────────────
+$('#docFileInput').on('change', function () {
+    var name = $(this).val().split('\\').pop();
+    $(this).next('.custom-file-label').text(name || 'Choose file');
+});
+
+// Re-open Add Document modal on validation error
+@if($errors->has('doc_title') || $errors->has('doc_file'))
+    $(document).ready(function () { $('#uploadDocumentModal').modal('show'); });
+@endif
 
 // Re-open CV modal on validation error
 @if($errors->has('curriculum_vitae'))

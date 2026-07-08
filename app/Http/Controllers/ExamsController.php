@@ -989,6 +989,11 @@ class ExamsController extends Controller
         $examiner->last_email_sent_at = $lastEmail?->sent_at ?? null;
         $examiner->email_confirmed    = ($history?->source === 'self');
 
+        $examinerDocuments = DB::table('examiner_documents')
+            ->where('exm_id', $id)
+            ->orderByDesc('created_at')
+            ->get();
+
         return view('admin.exams.view_examiner', [
             'header_title'     => 'View Examiner',
             'examiner'         => $examiner,
@@ -1004,6 +1009,7 @@ class ExamsController extends Controller
             'programmeOptions'     => self::$programmeOptions,
             'candidatesExamined'   => $candidatesExamined,
             'designationOptions'   => DB::table('examiners')->whereNotNull('examiner_designation')->distinct()->orderBy('examiner_designation')->pluck('examiner_designation'),
+            'examinerDocuments'    => $examinerDocuments,
         ]);
     }
 
@@ -1652,6 +1658,60 @@ public function delete($id)
         $examiner->save();
 
         return redirect()->back()->with('success', 'Profile photo updated successfully.');
+    }
+
+    /**
+     * POST admin/exams/examiner/{id}/documents
+     * Upload an additional document (PDF, Word, Excel) to an examiner's profile.
+     */
+    public function uploadDocument(Request $request, $id)
+    {
+        $request->validate([
+            'doc_title' => 'required|string|max:255',
+            'doc_file'  => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+        ]);
+
+        $examiner = ExamsModel::findOrFail($id);
+        $file     = $request->file('doc_file');
+        $ext      = strtolower($file->getClientOriginalExtension());
+        $slug     = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+        $fileName = $examiner->id . '-' . time() . '-' . $slug . '.' . $ext;
+        $path     = $file->storeAs('documents/examiner_docs', $fileName, 'public');
+
+        DB::table('examiner_documents')->insert([
+            'exm_id'        => $id,
+            'title'         => $request->input('doc_title'),
+            'file_path'     => $path,
+            'original_name' => $file->getClientOriginalName(),
+            'file_type'     => $ext,
+            'file_size'     => $file->getSize(),
+            'uploaded_by'   => auth()->id(),
+            'created_at'    => now(),
+            'updated_at'    => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Document uploaded successfully.');
+    }
+
+    /**
+     * POST admin/exams/examiner/{id}/documents/{docId}/delete
+     * Remove a document from the examiner's profile.
+     */
+    public function deleteDocument(Request $request, $id, $docId)
+    {
+        $doc = DB::table('examiner_documents')->where('id', $docId)->where('exm_id', $id)->first();
+
+        if (!$doc) {
+            return redirect()->back()->with('error', 'Document not found.');
+        }
+
+        if (Storage::disk('public')->exists($doc->file_path)) {
+            Storage::disk('public')->delete($doc->file_path);
+        }
+
+        DB::table('examiner_documents')->where('id', $docId)->delete();
+
+        return redirect()->back()->with('success', 'Document deleted.');
     }
 
     // ── Specialty constants ───────────────────────────────────────────────────

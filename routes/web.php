@@ -256,6 +256,8 @@ Route::post('admin/exams/manage-participation/{examiner_id}', [ExamsController::
 Route::post('admin/exams/examiner/{id}/upload-cv',    [ExamsController::class, 'uploadCv'])->name('examiner.upload.cv');
 Route::post('admin/exams/examiner/{id}/upload-photo', [ExamsController::class, 'uploadPhoto'])->name('examiner.upload.photo');
 Route::post('admin/exams/examiner/{id}/memo',         [ExamsController::class, 'saveMemo'])->name('examiner.save.memo');
+Route::post('admin/exams/examiner/{id}/documents',              [ExamsController::class, 'uploadDocument'])->name('examiner.upload.document');
+Route::post('admin/exams/examiner/{id}/documents/{docId}/delete', [ExamsController::class, 'deleteDocument'])->name('examiner.delete.document');
 Route::get('admin/exams/mass-update-specialty',       [ExamsController::class, 'massUpdateSpecialtyForm'])->name('exams.mass.specialty');
 Route::post('admin/exams/mass-update-specialty',      [ExamsController::class, 'massUpdateSpecialtyProcess'])->name('exams.mass.specialty.process');
 // Designation options admin
