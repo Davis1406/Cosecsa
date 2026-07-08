@@ -130,7 +130,23 @@ $(function () {
 
     // ── Global DataTables defaults ───────────────────────────────────────────────
     $.extend(true, $.fn.dataTable.defaults, {
-        "dom": '<"row"<"col-md-6"l><"col-md-6"f>><"row"<"col-sm-12 dt-info-top"i>>rt<"row"<"col-md-12"p>>'
+        "dom": '<"row"<"col-md-6"l><"col-md-6"f>>rt<"row"<"col-md-5"i><"col-md-7"p>>'
+    });
+
+    // ── Show info text at the top of every table as well as the bottom ───────────
+    $(document).on('draw.dt', function (e) {
+        var wrapper = $(e.target).closest('.dataTables_wrapper');
+        var info    = wrapper.find('.dataTables_info').not('.dt-top-info');
+        if (!info.length) return;
+        var topInfo = wrapper.find('.dt-top-info');
+        if (topInfo.length) {
+            topInfo.html(info.html());
+        } else {
+            info.clone()
+                .addClass('dt-top-info')
+                .css('margin-bottom', '4px')
+                .insertBefore(wrapper.find('table.dataTable').first());
+        }
     });
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -147,7 +163,7 @@ $(function () {
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "stateSave": true, "paging": true, "pageLength": 25,
             "order": [[1, "asc"]],
-            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>><"row"<"col-sm-12 dt-info-top"i>>rt<"row"<"col-md-12"p>>',
+            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
             "buttons": [
                 { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
                   className: "btn btn-success btn-sm", title: "Trainees List",
@@ -193,7 +209,7 @@ $(function () {
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "stateSave": true, "paging": true, "pageLength": 25,
             "order": [[1, "asc"]],
-            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>><"row"<"col-sm-12 dt-info-top"i>>rt<"row"<"col-md-12"p>>',
+            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
             "buttons": [
                 { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
                   className: "btn btn-success btn-sm", title: "Candidates List",
@@ -234,7 +250,7 @@ $(function () {
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "paging": true, "pageLength": 25, "stateSave": true,
             "order": [[6, "desc"], [1, "asc"]],
-            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>><"row"<"col-sm-12 dt-info-top"i>>rt<"row"<"col-md-12"p>>',
+            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
             "buttons": [
                 { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
                   className: "btn btn-success btn-sm", title: "Alumni List",
@@ -271,7 +287,7 @@ $(function () {
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "paging": true, "pageLength": 25, "stateSave": true,
             "order": [[1, "asc"]],
-            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>><"row"<"col-sm-12 dt-info-top"i>>rt<"row"<"col-md-12"p>>',
+            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
             "buttons": [
                 { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
                   className: "btn btn-success btn-sm", title: "Fellows List",
