@@ -333,8 +333,9 @@ $(function () {
                 { "visible": true  }, // Examiner ID
                 { "visible": true  }, // Specialty
                 { "visible": true  }, // Designation
+                { "visible": false }, // Shift
                 { "visible": true  }, // Notes
-                // Col 9: Action — not sortable/searchable
+                // Col 10: Action — not sortable/searchable
                 { "orderable": false, "searchable": false }
             ],
             "initComplete": function () { hideLoader("examinerstable"); },
@@ -357,6 +358,7 @@ $(function () {
                 { "visible": true  }, // Country
                 { "visible": true  }, // Specialty
                 { "visible": true  }, // Availability
+                { "visible": false }, // Shift
                 { "visible": true  }, // Participation
                 { "visible": true  }, // Source
                 { "visible": true  }, // Email Status

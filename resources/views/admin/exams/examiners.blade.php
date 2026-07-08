@@ -355,9 +355,8 @@ $(function () {
     // custom.js already initialised #examinerstable — just get the instance.
     var table = $('#examinerstable').DataTable();
 
-    // ── Column visibility: Shift (column index 8) hidden by default ───────────
+    // ── Column visibility: Shift (column index 8, hidden by default in custom.js) ──
     var SHIFT_COL = 8;
-    table.column(SHIFT_COL).visible(false);
 
     $('#col-toggle-shift').on('change', function () {
         table.column(SHIFT_COL).visible(this.checked);
