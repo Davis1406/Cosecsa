@@ -146,8 +146,14 @@ class PromotionController extends Controller
             return redirect()->back()->with('error', 'No trainees found for the selected IDs.');
         }
 
-        $promoted = 0; $skipped = 0;
+        $promoted = 0; $skipped = 0; $invalid = 0;
         foreach ($trainees as $t) {
+            // Skip trainees not linked to a valid user account
+            if (empty($t->user_id) || !DB::table('users')->where('id', $t->user_id)->exists()) {
+                $invalid++;
+                continue;
+            }
+
             $exists = DB::table('candidates')
                 ->where('user_id', $t->user_id)
                 ->where('exam_year', $examYear)
@@ -179,6 +185,9 @@ class PromotionController extends Controller
         $msg = "Successfully promoted <strong>{$promoted}</strong> trainee(s) to <strong>{$examYear}</strong> candidates.";
         if ($skipped > 0) {
             $msg .= " ({$skipped} already registered as {$examYear} candidates — skipped)";
+        }
+        if ($invalid > 0) {
+            $msg .= " ({$invalid} skipped — no linked user account)";
         }
 
         return redirect()->back()->with('success', $msg);
