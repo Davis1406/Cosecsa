@@ -773,8 +773,11 @@ class ExamsController extends Controller
 
             DB::commit();
 
-            // Always return to the examiners list after a successful edit.
-            return redirect('admin/exams/examiners')->with('success', 'Examiner updated successfully');
+            $backUrl = $request->input('back_url');
+            $redirect = ($backUrl && str_starts_with($backUrl, url('/')))
+                ? $backUrl
+                : url('admin/exams/view_examiner/' . $id);
+            return redirect($redirect)->with('success', 'Examiner updated successfully');
         } catch (\Throwable $e) {
             DB::rollback();
             return back()->with('error', 'Update failed: ' . $e->getMessage());
