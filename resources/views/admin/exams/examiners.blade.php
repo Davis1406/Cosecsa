@@ -459,12 +459,12 @@ $(function () {
     });
 
     // ── Checkbox logic ────────────────────────────────────────────────────────
-    function getChecked() {
+    function getCheckedRows() {
         return $('#examinerstable tbody .row-chk:checked');
     }
 
     function updateEmailButton() {
-        var n = getChecked().length;
+        var n = getCheckedRows().length;
         $('#sel-count').text(n);
         $('#send-count').text(n);
         $('#btn-email-selected').prop('disabled', n === 0);
@@ -497,7 +497,7 @@ $(function () {
     $('#emailModal').on('show.bs.modal', function () {
         var pills  = '';
         var hidden = '';
-        getChecked().each(function () {
+        getCheckedRows().each(function () {
             var name  = $(this).data('name');
             var exmId = $(this).val();
             pills  += '<span class="recipient-pill"><i class="fas fa-user mr-1"></i>' + name + '</span>';
@@ -505,7 +505,7 @@ $(function () {
         });
         $('#recipient-pills').html(pills || '<em class="text-muted">No recipients selected.</em>');
         $('#hidden-ids').html(hidden);
-        $('#send-count').text(getChecked().length);
+        $('#send-count').text(getCheckedRows().length);
     });
 });
 </script>
