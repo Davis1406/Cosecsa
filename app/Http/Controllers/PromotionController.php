@@ -74,12 +74,18 @@ class PromotionController extends Controller
             ->select('sy.id', 'sy.name as sy_name', 'p.id as prog_id', 'p.name as prog_name', 'p.duration')
             ->orderBy('p.id')->orderBy('sy.id')->get();
 
-        // Pre-count trainees per study_year
-        $countMap = DB::table('trainees')
-            ->select('training_year', DB::raw('COUNT(*) as cnt'))
-            ->whereNotNull('training_year')
-            ->groupBy('training_year')
-            ->pluck('cnt', 'training_year');
+        // Pre-count only trainees with a valid, active user account (mirrors getTrainee())
+        $countMap = DB::table('trainees as t')
+            ->join('users as u', 'u.id', '=', 't.user_id')
+            ->join('user_roles as ur', function ($j) {
+                $j->on('ur.user_id', '=', 'u.id')->where('ur.is_active', 1);
+            })
+            ->where('u.user_type', 2)
+            ->where('u.is_deleted', 0)
+            ->whereNotNull('t.training_year')
+            ->select('t.training_year', DB::raw('COUNT(*) as cnt'))
+            ->groupBy('t.training_year')
+            ->pluck('cnt', 't.training_year');
 
         $data['studyYears']  = $studyYears;
         $data['countMap']    = $countMap;
@@ -99,10 +105,15 @@ class PromotionController extends Controller
         }
 
         $trainees = DB::table('trainees as t')
-            ->leftJoin('users as u',      'u.id',  '=', 't.user_id')
+            ->join('users as u', 'u.id', '=', 't.user_id')
+            ->join('user_roles as ur', function ($j) {
+                $j->on('ur.user_id', '=', 'u.id')->where('ur.is_active', 1);
+            })
             ->leftJoin('hospitals as h',  'h.id',  '=', 't.hospital_id')
             ->leftJoin('countries as co', 'co.id', '=', 't.country_id')
             ->leftJoin('programmes as p', 'p.id',  '=', 't.programme_id')
+            ->where('u.user_type', 2)
+            ->where('u.is_deleted', 0)
             ->where('t.training_year', $studyYearId)
             ->select(
                 't.id as trainee_id',
