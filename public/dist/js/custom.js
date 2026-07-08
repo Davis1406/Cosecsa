@@ -339,7 +339,7 @@ $(function () {
                 { "orderable": false, "searchable": false }
             ],
             "stateLoadParams": function (settings, data) {
-                if (data.columns && data.columns.length !== 11) { return false; }
+                if (!data || (data.columns && data.columns.length !== 11)) { return false; }
             },
             "initComplete": function () { hideLoader("examinerstable"); },
             "drawCallback": function () { reinitDropdowns(this); }
@@ -369,7 +369,7 @@ $(function () {
                 { "orderable": false } // Action
             ],
             "stateLoadParams": function (settings, data) {
-                if (data.columns && data.columns.length !== 11) { return false; }
+                if (!data || (data.columns && data.columns.length !== 11)) { return false; }
             },
             "initComplete": function () { hideLoader("examinerconfirmationtable"); },
             "drawCallback": function () { reinitDropdowns(this); }
