@@ -168,6 +168,23 @@
                                         $countries   = $getExaminers->pluck('country_name')->filter()->unique()->sort()->values();
                                     @endphp
 
+                                    <!-- Column Visibility Toggle -->
+                                    <div class="mb-2">
+                                        <div class="chk-filter-wrap" data-filter="col-vis-conf">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary chk-filter-btn" data-filter="col-vis-conf">
+                                                <i class="fas fa-columns mr-1"></i> Columns
+                                                <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
+                                            </button>
+                                            <div class="chk-filter-panel shadow" id="col-vis-conf-panel" style="display:none;min-width:160px;">
+                                                <div class="chk-list">
+                                                    <label class="chk-item">
+                                                        <input type="checkbox" id="col-toggle-shift-conf"> Shift
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <!-- Filter Bar -->
                                     @php
                                     $confFilterDefs = [
@@ -222,6 +239,7 @@
                                                 <th>Country</th>
                                                 <th>Specialty</th>
                                                 <th>Availability</th>
+                                                <th>Shift</th>
                                                 <th>Participation</th>
                                                 <th>Source</th>
                                                 <th>Email Status</th>
@@ -281,6 +299,15 @@
                                                             {{ implode(', ', $availability) }}
                                                         @else
                                                             -
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if(!empty($value->shift) && $value->shift != 0)
+                                                            <span class="badge badge-info" style="font-size:.75rem;">
+                                                                {{ \App\Models\User::getShiftName($value->shift) }}
+                                                            </span>
+                                                        @else
+                                                            <span class="text-muted">—</span>
                                                         @endif
                                                     </td>
                                                     <td>{{ $value->participation_type ?? '-' }}</td>
@@ -479,6 +506,14 @@
         $(document).ready(function () {
 
             var dt = $('#examinerconfirmationtable').DataTable();
+
+            // Shift column (index 5) hidden by default
+            var SHIFT_COL_CONF = 5;
+            dt.column(SHIFT_COL_CONF).visible(false);
+
+            $('#col-toggle-shift-conf').on('change', function () {
+                dt.column(SHIFT_COL_CONF).visible(this.checked);
+            });
 
             function getChecked(filterId) {
                 return $('.chk-option[data-filter="' + filterId + '"]:checked')
