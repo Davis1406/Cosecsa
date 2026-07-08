@@ -96,6 +96,10 @@ class ExamsController extends Controller
             })
             ->leftJoin('examiners_groups', 'examiners_groups.id', '=', 'exams_groups.group_id')
             ->leftJoin('examiners_roles', 'examiners_roles.id', '=', 'examiners.role_id')
+            ->leftJoin('exams_shifts', function ($join) use ($lastYearId) {
+                $join->on('exams_shifts.exm_id', '=', 'examiners.id')
+                     ->where('exams_shifts.year_id', $lastYearId);
+            })
             ->where('users.user_type', 9)
             ->select(
                 'examiners.id as id',
@@ -113,6 +117,7 @@ class ExamsController extends Controller
                 'examiners.country_id',
                 'examiners.internal_notes',
                 DB::raw('GROUP_CONCAT(DISTINCT examiners_groups.group_name ORDER BY examiners_groups.group_name SEPARATOR ", ") as group_name'),
+                DB::raw('MAX(exams_shifts.shift) as shift_id'),
                 DB::raw($participatedSql),
                 DB::raw($examinedForSql)
             )

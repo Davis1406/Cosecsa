@@ -67,6 +67,19 @@
                                     <a href="{{ route('exams.email.template') }}" class="btn btn-sm btn-outline-secondary">
                                         <i class="fas fa-pencil-alt mr-1"></i> Edit Template
                                     </a>
+                                    <div class="chk-filter-wrap" data-filter="col-vis">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary chk-filter-btn" data-filter="col-vis">
+                                            <i class="fas fa-columns mr-1"></i> Columns
+                                            <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
+                                        </button>
+                                        <div class="chk-filter-panel shadow" id="col-vis-panel" style="display:none;min-width:160px;">
+                                            <div class="chk-list">
+                                                <label class="chk-item">
+                                                    <input type="checkbox" id="col-toggle-shift"> Shift
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <button class="btn btn-sm btn-success" id="btn-email-selected" disabled
                                             data-toggle="modal" data-target="#emailModal">
                                         <i class="fas fa-envelope mr-1"></i>
@@ -131,6 +144,7 @@
                                         <th>Examiner ID</th>
                                         <th>Specialty</th>
                                         <th>Designation</th>
+                                        <th id="col-shift-header">Shift</th>
                                         <th style="width:160px;">Notes</th>
                                         <th>Action</th>
                                     </tr>
@@ -158,6 +172,15 @@
                                             @if(!empty($value->examiner_designation))
                                                 <span class="badge badge-pill" style="background:#a02626;color:#fff;font-size:.75rem;">
                                                     {{ $value->examiner_designation }}
+                                                </span>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($value->shift_id)
+                                                <span class="badge badge-info" style="font-size:.75rem;">
+                                                    {{ \App\Models\User::getShiftName($value->shift_id) }}
                                                 </span>
                                             @else
                                                 <span class="text-muted">—</span>
@@ -331,6 +354,14 @@ $(function () {
 
     // custom.js already initialised #examinerstable — just get the instance.
     var table = $('#examinerstable').DataTable();
+
+    // ── Column visibility: Shift (column index 8) hidden by default ───────────
+    var SHIFT_COL = 8;
+    table.column(SHIFT_COL).visible(false);
+
+    $('#col-toggle-shift').on('change', function () {
+        table.column(SHIFT_COL).visible(this.checked);
+    });
 
     // ── Active filters ────────────────────────────────────────────────────────
     var filterMode = 'all';   // 'all' | 'lastyear'
