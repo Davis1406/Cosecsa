@@ -128,6 +128,11 @@ $(function () {
         $(tableEl).find('[data-toggle="dropdown"]').dropdown();
     }
 
+    // ── Global DataTables defaults ───────────────────────────────────────────────
+    $.extend(true, $.fn.dataTable.defaults, {
+        "dom": '<"row"<"col-md-6"l><"col-md-6"f>><"row"<"col-sm-12 dt-info-top"i>>rt<"row"<"col-md-12"p>>'
+    });
+
     // ═══════════════════════════════════════════════════════════════════════════════
     // Trainees
     // Cols: #(0) Name(1) Gender(2) AdmNo(3) Email(4) Programme(5) Hospital(6)
@@ -142,7 +147,7 @@ $(function () {
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "stateSave": true, "paging": true, "pageLength": 25,
             "order": [[1, "asc"]],
-            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
+            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>><"row"<"col-sm-12 dt-info-top"i>>rt<"row"<"col-md-12"p>>',
             "buttons": [
                 { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
                   className: "btn btn-success btn-sm", title: "Trainees List",
@@ -188,7 +193,7 @@ $(function () {
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "stateSave": true, "paging": true, "pageLength": 25,
             "order": [[1, "asc"]],
-            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
+            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>><"row"<"col-sm-12 dt-info-top"i>>rt<"row"<"col-md-12"p>>',
             "buttons": [
                 { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
                   className: "btn btn-success btn-sm", title: "Candidates List",
@@ -229,7 +234,7 @@ $(function () {
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "paging": true, "pageLength": 25, "stateSave": true,
             "order": [[6, "desc"], [1, "asc"]],
-            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
+            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>><"row"<"col-sm-12 dt-info-top"i>>rt<"row"<"col-md-12"p>>',
             "buttons": [
                 { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
                   className: "btn btn-success btn-sm", title: "Alumni List",
@@ -266,7 +271,7 @@ $(function () {
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "paging": true, "pageLength": 25, "stateSave": true,
             "order": [[1, "asc"]],
-            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
+            "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>><"row"<"col-sm-12 dt-info-top"i>>rt<"row"<"col-md-12"p>>',
             "buttons": [
                 { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
                   className: "btn btn-success btn-sm", title: "Fellows List",
