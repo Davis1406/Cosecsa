@@ -1203,6 +1203,20 @@ public function delete($id)
             })->values();
         }
 
+        // Invitation stats from email_tracking for this year's cycle
+        $yearStart = $yearName . '-01-01';
+        $yearEnd   = $yearName . '-12-31';
+        $invitationsSent   = DB::table('email_tracking')
+            ->whereBetween('sent_at', [$yearStart, $yearEnd])
+            ->count();
+        $uniqueInvited     = DB::table('email_tracking')
+            ->whereBetween('sent_at', [$yearStart, $yearEnd])
+            ->distinct()->count('exm_id');
+        $invitationsOpened = DB::table('email_tracking')
+            ->whereBetween('sent_at', [$yearStart, $yearEnd])
+            ->whereNotNull('opened_at')
+            ->distinct()->count('exm_id');
+
         $data = [
             'availabilityData'  => $this->processAvailabilityData($getExaminers),
             'participationData' => $this->processParticipationData($getExaminers),
@@ -1213,6 +1227,9 @@ public function delete($id)
             'selectedYearName'  => $yearName,
             'filterMode'        => $filterMode,
             'totalShown'        => $getExaminers->count(),
+            'invitationsSent'   => $invitationsSent,
+            'uniqueInvited'     => $uniqueInvited,
+            'invitationsOpened' => $invitationsOpened,
         ];
 
         return view('admin.exams.visual_report', $data);

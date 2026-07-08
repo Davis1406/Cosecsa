@@ -169,6 +169,29 @@
                         <div class="stat-label">Countries</div>
                     </div>
                 </div>
+                <div class="col-6 col-md">
+                    <div class="stat-card" style="background:linear-gradient(135deg,#1a6e3c,#28a05a);">
+                        <div class="stat-number">{{ $invitationsSent }}</div>
+                        <div class="stat-label">Invitations Sent</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md">
+                    <div class="stat-card" style="background:linear-gradient(135deg,#1a5276,#2471a3);">
+                        <div class="stat-number">{{ $uniqueInvited }}</div>
+                        <div class="stat-label">Examiners Invited</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md">
+                    <div class="stat-card" style="background:linear-gradient(135deg,#5b2c8d,#7d3fc8);">
+                        <div class="stat-number">{{ $invitationsOpened }}</div>
+                        <div class="stat-label">
+                            Opened
+                            @if($uniqueInvited > 0)
+                                <small style="font-size:.75rem;opacity:.85;">({{ round($invitationsOpened/$uniqueInvited*100) }}%)</small>
+                            @endif
+                        </div>
+                    </div>
+                </div>
             </div>
 
             @if($totalShown === 0)

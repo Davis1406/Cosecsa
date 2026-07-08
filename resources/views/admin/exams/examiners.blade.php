@@ -458,54 +458,75 @@ $(function () {
         return true;
     });
 
-    // ── Checkbox logic ────────────────────────────────────────────────────────
-    function getCheckedRows() {
-        return $('#examinerstable tbody .row-chk:checked');
-    }
+    // ── Cross-page checkbox selection ─────────────────────────────────────────
+    // selectedIds: Map of exmId → {email, name} — persists across DT page changes
+    var selectedIds = {};
 
     function updateEmailButton() {
-        var n = getCheckedRows().length;
+        var n = Object.keys(selectedIds).length;
         $('#sel-count').text(n);
         $('#send-count').text(n);
         $('#btn-email-selected').prop('disabled', n === 0);
     }
 
     function syncSelectAll() {
-        var visibleChks = $('#examinerstable tbody tr:visible .row-chk');
-        var allChecked  = visibleChks.length > 0 && visibleChks.filter(':not(:checked)').length === 0;
+        var $visible = $('#examinerstable tbody tr:visible .row-chk');
+        var allChecked = $visible.length > 0 && $visible.filter(':not(:checked)').length === 0;
         $('#chk-all').prop('checked', allChecked);
     }
 
+    // Restore checkboxes after each DataTable page draw
+    table.on('draw', function () {
+        $('#examinerstable tbody .row-chk').each(function () {
+            var id = $(this).val();
+            $(this).prop('checked', selectedIds.hasOwnProperty(id));
+        });
+        syncSelectAll();
+        updateEmailButton();
+    });
+
+    // Individual row checkbox change
+    $('#examinerstable').on('change', '.row-chk', function () {
+        var id    = $(this).val();
+        var email = $(this).data('email');
+        var name  = $(this).data('name');
+        if (this.checked) {
+            selectedIds[id] = { email: email, name: name };
+        } else {
+            delete selectedIds[id];
+        }
+        updateEmailButton();
+        syncSelectAll();
+    });
+
+    // Select-all header checkbox — only affects current page
     $('#chk-all').on('change', function () {
         var checked = this.checked;
-        $('#examinerstable tbody tr:visible .row-chk').prop('checked', checked);
+        $('#examinerstable tbody tr:visible .row-chk').each(function () {
+            var id    = $(this).val();
+            var email = $(this).data('email');
+            var name  = $(this).data('name');
+            $(this).prop('checked', checked);
+            if (checked) {
+                selectedIds[id] = { email: email, name: name };
+            } else {
+                delete selectedIds[id];
+            }
+        });
         updateEmailButton();
-    });
-
-    $('#examinerstable').on('change', '.row-chk', function () {
-        updateEmailButton();
-        syncSelectAll();
-    });
-
-    // Re-sync after DataTable page/search change
-    table.on('draw', function () {
-        updateEmailButton();
-        syncSelectAll();
     });
 
     // ── Email modal ───────────────────────────────────────────────────────────
     $('#emailModal').on('show.bs.modal', function () {
         var pills  = '';
         var hidden = '';
-        getCheckedRows().each(function () {
-            var name  = $(this).data('name');
-            var exmId = $(this).val();
-            pills  += '<span class="recipient-pill"><i class="fas fa-user mr-1"></i>' + name + '</span>';
+        $.each(selectedIds, function (exmId, info) {
+            pills  += '<span class="recipient-pill"><i class="fas fa-user mr-1"></i>' + info.name + '</span>';
             hidden += '<input type="hidden" name="examiner_ids[]" value="' + exmId + '">';
         });
         $('#recipient-pills').html(pills || '<em class="text-muted">No recipients selected.</em>');
         $('#hidden-ids').html(hidden);
-        $('#send-count').text(getCheckedRows().length);
+        $('#send-count').text(Object.keys(selectedIds).length);
     });
 });
 </script>
