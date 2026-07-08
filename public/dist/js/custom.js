@@ -338,6 +338,9 @@ $(function () {
                 // Col 10: Action — not sortable/searchable
                 { "orderable": false, "searchable": false }
             ],
+            "stateLoadParams": function (settings, data) {
+                if (data.columns && data.columns.length !== 11) { return false; }
+            },
             "initComplete": function () { hideLoader("examinerstable"); },
             "drawCallback": function () { reinitDropdowns(this); }
         }).buttons().container().appendTo('#examinerstable_wrapper .col-md-6:eq(0)');
@@ -365,6 +368,9 @@ $(function () {
                 { "visible": true  }, // Updated At
                 { "orderable": false } // Action
             ],
+            "stateLoadParams": function (settings, data) {
+                if (data.columns && data.columns.length !== 11) { return false; }
+            },
             "initComplete": function () { hideLoader("examinerconfirmationtable"); },
             "drawCallback": function () { reinitDropdowns(this); }
         }).buttons().container().appendTo('#examinerconfirmationtable_wrapper .col-md-6:eq(0)');
