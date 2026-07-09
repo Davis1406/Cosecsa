@@ -218,29 +218,25 @@ class FellowsController extends Controller
             ->orderBy('part')
             ->get();
 
-        // Load Capsule CRM exam results matched by email or name
-        $capsuleExamResults = collect();
+        // Load Capsule CRM exam results. Prefer the reliable fellow_id link (set
+        // when enriching 2020-2025 results from the examination officer's
+        // spreadsheet, matched via PEN/candidate_number), then fall back to the
+        // legacy capsule_id / contact_name match for older, unlinked records.
         $fellowEmail = strtolower(trim($fellow->email ?? ''));
-        if ($fellowEmail) {
-            $capsuleId = \DB::table('capsule_contacts')
-                ->whereRaw('LOWER(email) = ?', [$fellowEmail])
-                ->value('capsule_id');
-            if ($capsuleId) {
-                $capsuleExamResults = \DB::table('capsule_exam_results')
-                    ->where('capsule_id', $capsuleId)
-                    ->orderByDesc('exam_year')
-                    ->orderBy('specialty')
-                    ->get();
-            }
-        }
-        if ($capsuleExamResults->isEmpty()) {
-            $capsuleExamResults = \DB::table('capsule_exam_results')
-                ->whereRaw("LOWER(contact_name) = LOWER(?)",
-                    [trim(($fellow->firstname ?? '') . ' ' . ($fellow->lastname ?? ''))])
-                ->orderByDesc('exam_year')
-                ->orderBy('specialty')
-                ->get();
-        }
+        $capsuleId = $fellowEmail
+            ? \DB::table('capsule_contacts')->whereRaw('LOWER(email) = ?', [$fellowEmail])->value('capsule_id')
+            : null;
+        $fullName = trim(($fellow->firstname ?? '') . ' ' . ($fellow->lastname ?? ''));
+
+        $capsuleExamResults = \DB::table('capsule_exam_results')
+            ->where('fellow_id', $fellow->fellow_id)
+            ->when($capsuleId, fn($q) => $q->orWhere('capsule_id', $capsuleId))
+            ->when($fullName, fn($q) => $q->orWhereRaw('LOWER(contact_name) = LOWER(?)', [$fullName]))
+            ->orderByDesc('exam_year')
+            ->orderBy('specialty')
+            ->get()
+            ->unique('id')
+            ->values();
 
         // Load labels
         $fellowRecord = FellowsModel::find($fellow->fellow_id);
