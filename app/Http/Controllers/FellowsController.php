@@ -198,19 +198,6 @@ class FellowsController extends Controller
             ->orderBy('year', 'desc')
             ->get();
 
-        // Load exam history
-        $examHistory = collect();
-        $candidate = \DB::table('candidates')->where('user_id', $fellow->user_id)->first();
-        if ($candidate) {
-            $mcs = \DB::table('mcs_results')->where('candidate_id', $candidate->id)
-                ->select('exam_year', 'exam_type', 'overall', 'remarks', 'created_at')
-                ->get()->map(fn($r) => (object) array_merge((array) $r, ['source' => 'MCS']));
-            $gs = \DB::table('gs_results')->where('candidate_id', $candidate->id)
-                ->select('exam_year', 'exam_type', 'overall', 'remarks', 'created_at')
-                ->get()->map(fn($r) => (object) array_merge((array) $r, ['source' => 'FCS GS']));
-            $examHistory = $mcs->merge($gs)->sortByDesc('exam_year')->values();
-        }
-
         // Load FCS exam results (from internal exam tables)
         $fellowResults = \DB::table('fellow_exam_results')
             ->where('fellow_id', $fellow->fellow_id)
@@ -246,7 +233,7 @@ class FellowsController extends Controller
 
         $header_title = "View Fellow";
         return view('admin.associates.fellows.view', compact(
-            'fellow', 'header_title', 'subscriptions', 'examHistory',
+            'fellow', 'header_title', 'subscriptions',
             'allLabels', 'assignedLabels', 'currentLabelIds', 'fellowResults',
             'capsuleExamResults'
         ));

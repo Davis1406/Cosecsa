@@ -162,13 +162,6 @@
 .badge-unpaid   { background:#f8d7da; color:#721c24; }
 .badge-partial  { background:#fff3cd; color:#856404; }
 .badge-waived   { background:#e2e3e5; color:#383d41; }
-
-/* ── History timeline ── */
-.timeline-item { padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
-.timeline-item:last-child { border-bottom: none; }
-.tl-year  { font-size:.75rem; font-weight:700; color:#a02626; min-width:60px; }
-.tl-label { font-size:.82rem; font-weight:600; }
-.tl-sub   { font-size:.75rem; color:#6c757d; }
 </style>
 @endpush
 
@@ -430,7 +423,6 @@
                             @endif
                         </a>
                     </li>
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-history">History</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-admin">Admin Notes</a></li>
                 </ul>
 
@@ -711,34 +703,6 @@
                         <div class="text-center py-4 text-muted">
                             <i class="fas fa-clipboard-list fa-2x mb-2"></i><br>No exam results on record.
                         </div>
-                        @endif
-                    </div>
-
-                    {{-- ── TAB: History ── --}}
-                    <div class="tab-pane fade" id="tab-history">
-                        <p class="sect-div">Examination History</p>
-                        @if($examHistory && $examHistory->count())
-                            @foreach($examHistory as $h)
-                            <div class="timeline-item d-flex align-items-start gap-3">
-                                <span class="tl-year">{{ $h->exam_year }}</span>
-                                <div>
-                                    <div class="tl-label">{{ $h->source ?? '' }} – {{ $h->exam_type ?? '' }}</div>
-                                    <div class="tl-sub">
-                                        Overall: <strong>{{ $h->overall ?? '—' }}</strong>
-                                        @if($h->remarks) · {{ $h->remarks }} @endif
-                                    </div>
-                                </div>
-                                <span class="ml-auto badge"
-                                      style="background:{{ strtolower($h->remarks??'')==='pass'?'#d4edda':'#f8d7da' }};
-                                             color:{{ strtolower($h->remarks??'')==='pass'?'#155724':'#721c24' }};">
-                                    {{ $h->remarks ?? '' }}
-                                </span>
-                            </div>
-                            @endforeach
-                        @else
-                            <div class="text-center py-4 text-muted">
-                                <i class="fas fa-history fa-2x mb-2"></i><br>No exam history found.
-                            </div>
                         @endif
                     </div>
 
