@@ -2151,10 +2151,22 @@ public function delete($id)
         // Consolidate to one row per candidate per diet: pick the most "final" stage
         // (FCS/MCS > Clinical > Local Exam > Written) as the canonical result, and
         // separately surface the Written-stage score as Part I.
+        //
+        // Group identity prefers candidate_id/trainee_id (reliable system IDs) over
+        // the raw contact_name string, because the same person can appear under
+        // slightly different name spellings between the original Capsule CRM sync
+        // and manually-enriched records (e.g. with/without a middle name) — matching
+        // on name alone left those as separate rows instead of one candidate.
+        $groupKeyExpr = "
+            CASE WHEN cer.candidate_id IS NOT NULL THEN CONCAT('C', cer.candidate_id)
+                 WHEN cer.trainee_id IS NOT NULL THEN CONCAT('T', cer.trainee_id)
+                 ELSE CONCAT('N', cer.contact_name) END
+        ";
         $consolidated = \DB::table(\DB::raw("(
                 SELECT cer.*,
+                       {$groupKeyExpr} AS group_key,
                        ROW_NUMBER() OVER (
-                           PARTITION BY cer.contact_name, cer.specialty, cer.exam_year
+                           PARTITION BY {$groupKeyExpr}, cer.specialty, cer.exam_year
                            ORDER BY CASE cer.exam_type
                                         WHEN 'FCS' THEN 1
                                         WHEN 'MCS' THEN 1
@@ -2168,15 +2180,20 @@ public function delete($id)
             ) as final"))
             ->where('final.rn', 1);
 
+        $writtenScores = \DB::raw("(
+                SELECT cer.*, {$groupKeyExpr} AS group_key
+                FROM capsule_exam_results cer
+                WHERE cer.exam_type = 'Written'
+            ) as w");
+
         $query = (clone $consolidated)
             ->leftJoin('programmes as p', 'p.id', '=', 'final.programme_id')
             ->leftJoin('trainees as t', 't.id', '=', 'final.trainee_id')
             ->leftJoin('users as u', 'u.id', '=', 't.user_id')
-            ->leftJoin('capsule_exam_results as w', function ($j) {
-                $j->on('w.contact_name', '=', 'final.contact_name')
+            ->leftJoin($writtenScores, function ($j) {
+                $j->on('w.group_key', '=', 'final.group_key')
                   ->on('w.specialty', '=', 'final.specialty')
-                  ->on('w.exam_year', '=', 'final.exam_year')
-                  ->where('w.exam_type', '=', 'Written');
+                  ->on('w.exam_year', '=', 'final.exam_year');
             })
             ->select(
                 'final.id', 'final.contact_name', 'final.exam_year', 'final.specialty',
