@@ -22,6 +22,9 @@
                                text-transform:uppercase; letter-spacing:.04em; }
     .detail-table thead th  { background:#f8f0f0; color:#a02626; font-size:.75rem;
                                text-transform:uppercase; letter-spacing:.04em; }
+    .summary-table td { vertical-align:middle; }
+    .count-pill { display:inline-block; min-width:44px; padding:6px 4px;
+                  border-radius:8px; font-size:1.05rem; font-weight:700; }
     .nav-tabs .nav-link.active { color:#a02626; border-bottom:2px solid #a02626; font-weight:600; }
 </style>
 @endpush
@@ -154,19 +157,19 @@
                                                 <td>{{ $year }}</td>
                                                 <td>{{ $progName }}</td>
                                                 <td class="text-center">
-                                                    @if($p)<span class="badge" style="background:#d4edda;color:#155724;">{{ $p }}</span>@else -@endif
+                                                    @if($p)<span class="count-pill" style="background:#d4edda;color:#155724;">{{ $p }}</span>@else <span class="text-muted">—</span>@endif
                                                 </td>
                                                 <td class="text-center">
-                                                    @if($f)<span class="badge" style="background:#f8d7da;color:#721c24;">{{ $f }}</span>@else -@endif
+                                                    @if($f)<span class="count-pill" style="background:#f8d7da;color:#721c24;">{{ $f }}</span>@else <span class="text-muted">—</span>@endif
                                                 </td>
                                                 <td class="text-center">
-                                                    @if($a)<span class="badge" style="background:#fff3cd;color:#856404;">{{ $a }}</span>@else -@endif
+                                                    @if($a)<span class="count-pill" style="background:#fff3cd;color:#856404;">{{ $a }}</span>@else <span class="text-muted">—</span>@endif
                                                 </td>
-                                                <td class="text-center"><strong>{{ $tot }}</strong></td>
+                                                <td class="text-center"><span style="font-size:1.05rem;font-weight:700;">{{ $tot }}</span></td>
                                                 <td class="text-center">
                                                     @if($rate !== null)
-                                                        <span style="font-weight:600;color:{{ $rate >= 50 ? '#155724' : '#721c24' }};">{{ $rate }}%</span>
-                                                    @else -@endif
+                                                        <span style="font-size:1.05rem;font-weight:700;color:{{ $rate >= 50 ? '#155724' : '#721c24' }};">{{ $rate }}%</span>
+                                                    @else <span class="text-muted">—</span>@endif
                                                 </td>
                                             </tr>
                                             @endforeach
