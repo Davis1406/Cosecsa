@@ -100,6 +100,15 @@ class User extends Authenticatable
             })
             ->where('users.user_type', '2')
             ->where('users.is_deleted', 0)
+            // Exclude anyone already promoted to Fellow (matched by PEN/entry number)
+            // so graduated trainees stop showing on trainee lists, search, and counts.
+            ->whereNotExists(function ($q) {
+                $q->select(\DB::raw(1))
+                    ->from('fellows')
+                    ->whereColumn('fellows.candidate_number', 'trainees.entry_number')
+                    ->whereNotNull('trainees.entry_number')
+                    ->where('trainees.entry_number', '!=', '');
+            })
             ->orderBy('trainee_id', 'asc')
             ->get();
 

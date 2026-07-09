@@ -100,8 +100,21 @@ public function dashboard()
         // Trainees
         $trainees = DB::table('trainees as t')
             ->join('users as u', 'u.id', '=', 't.user_id')
+            ->join('user_roles as ur', function ($j) {
+                $j->on('ur.user_id', '=', 'u.id')->where('ur.is_active', 1);
+            })
             ->leftJoin('programmes as p', 'p.id', '=', 't.programme_id')
+            ->where('u.user_type', 2)
             ->where('u.is_deleted', 0)
+            // Exclude anyone already promoted to Fellow — their profile lives
+            // under Fellows now, and the trainee record may be orphaned.
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('fellows')
+                    ->whereColumn('fellows.candidate_number', 't.entry_number')
+                    ->whereNotNull('t.entry_number')
+                    ->where('t.entry_number', '!=', '');
+            })
             ->where(function ($w) use ($like) {
                 $w->where('u.name', 'like', $like)
                   ->orWhere('t.entry_number', 'like', $like)
