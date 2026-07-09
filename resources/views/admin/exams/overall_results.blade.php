@@ -188,8 +188,8 @@
                                             <th>Name</th>
                                             <th>Programme</th>
                                             <th>Year</th>
-                                            <th>Type</th>
-                                            <th class="text-center">Score</th>
+                                            <th class="text-center">Part I (%)</th>
+                                            <th class="text-center">Part II (%)</th>
                                             <th class="text-center">Result</th>
                                             <th>Profile</th>
                                         </tr>
@@ -211,9 +211,11 @@
                                             <td>{{ $displayName }}</td>
                                             <td>{{ $r->programme_name ?? $r->specialty ?? '—' }}</td>
                                             <td>{{ $r->exam_year }}</td>
-                                            <td>{{ $r->exam_type ?? '—' }}</td>
                                             <td class="text-center">
-                                                {{ $r->score !== null ? number_format($r->score, 2) : '—' }}
+                                                {{ $r->part1_score !== null ? number_format($r->part1_score, 2) : '—' }}
+                                            </td>
+                                            <td class="text-center">
+                                                {{ $r->part2_score !== null ? number_format($r->part2_score, 2) : '—' }}
                                             </td>
                                             <td class="text-center">
                                                 <span class="badge" style="background:{{ $rBg }};color:{{ $rClr }};padding:3px 8px;font-size:.8rem;">

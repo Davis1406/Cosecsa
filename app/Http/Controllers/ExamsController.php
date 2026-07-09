@@ -2148,41 +2148,69 @@ public function delete($id)
             ->orderByDesc('exam_year')
             ->pluck('exam_year');
 
-        $query = \DB::table('capsule_exam_results as cer')
-            ->leftJoin('programmes as p', 'p.id', '=', 'cer.programme_id')
-            ->leftJoin('trainees as t', 't.id', '=', 'cer.trainee_id')
+        // Consolidate to one row per candidate per diet: pick the most "final" stage
+        // (FCS/MCS > Clinical > Local Exam > Written) as the canonical result, and
+        // separately surface the Written-stage score as Part I.
+        $consolidated = \DB::table(\DB::raw("(
+                SELECT cer.*,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY cer.contact_name, cer.specialty, cer.exam_year
+                           ORDER BY CASE cer.exam_type
+                                        WHEN 'FCS' THEN 1
+                                        WHEN 'MCS' THEN 1
+                                        WHEN 'Clinical' THEN 2
+                                        WHEN 'Local Exam' THEN 3
+                                        WHEN 'Written' THEN 4
+                                        ELSE 5
+                                    END
+                           ) as rn
+                FROM capsule_exam_results cer
+            ) as final"))
+            ->where('final.rn', 1);
+
+        $query = (clone $consolidated)
+            ->leftJoin('programmes as p', 'p.id', '=', 'final.programme_id')
+            ->leftJoin('trainees as t', 't.id', '=', 'final.trainee_id')
             ->leftJoin('users as u', 'u.id', '=', 't.user_id')
+            ->leftJoin('capsule_exam_results as w', function ($j) {
+                $j->on('w.contact_name', '=', 'final.contact_name')
+                  ->on('w.specialty', '=', 'final.specialty')
+                  ->on('w.exam_year', '=', 'final.exam_year')
+                  ->where('w.exam_type', '=', 'Written');
+            })
             ->select(
-                'cer.id', 'cer.contact_name', 'cer.exam_year', 'cer.specialty',
-                'cer.exam_type', 'cer.score', 'cer.result',
-                'cer.trainee_id', 'u.name as trainee_name',
-                'p.name as programme_name', 'cer.programme_id'
+                'final.id', 'final.contact_name', 'final.exam_year', 'final.specialty',
+                'final.exam_type', 'final.score as part2_score', 'final.result',
+                'w.score as part1_score',
+                'final.trainee_id', 'u.name as trainee_name',
+                'p.name as programme_name', 'final.programme_id'
             );
 
         if ($selectedYear) {
-            $query->where('cer.exam_year', $selectedYear);
+            $query->where('final.exam_year', $selectedYear);
         }
         if ($selectedProgramme) {
-            $query->where('cer.programme_id', $selectedProgramme);
+            $query->where('final.programme_id', $selectedProgramme);
         }
 
-        $results = $query->orderByDesc('cer.exam_year')
-            ->orderBy('cer.contact_name')
+        $results = $query->orderByDesc('final.exam_year')
+            ->orderBy('final.contact_name')
             ->get();
 
-        // Summary: pass/fail counts per programme per year (respecting filters)
-        $summaryQuery = \DB::table('capsule_exam_results as cer')
-            ->leftJoin('programmes as p', 'p.id', '=', 'cer.programme_id')
-            ->selectRaw('cer.exam_year, COALESCE(p.name, cer.specialty, "Unknown") as prog_name, cer.result, COUNT(*) as n')
-            ->groupBy('cer.exam_year', 'prog_name', 'cer.result')
-            ->orderByDesc('cer.exam_year')
+        // Summary: pass/fail counts per programme per year (respecting filters),
+        // computed from the same deduplicated set so a candidate is only counted once.
+        $summaryQuery = (clone $consolidated)
+            ->leftJoin('programmes as p', 'p.id', '=', 'final.programme_id')
+            ->selectRaw('final.exam_year, COALESCE(p.name, final.specialty, "Unknown") as prog_name, final.result, COUNT(*) as n')
+            ->groupBy('final.exam_year', 'prog_name', 'final.result')
+            ->orderByDesc('final.exam_year')
             ->orderBy('prog_name');
 
         if ($selectedYear) {
-            $summaryQuery->where('cer.exam_year', $selectedYear);
+            $summaryQuery->where('final.exam_year', $selectedYear);
         }
         if ($selectedProgramme) {
-            $summaryQuery->where('cer.programme_id', $selectedProgramme);
+            $summaryQuery->where('final.programme_id', $selectedProgramme);
         }
 
         $summaryRaw = $summaryQuery->get();
