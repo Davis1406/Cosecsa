@@ -235,7 +235,12 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                @if($r->trainee_id)
+                                                @if($r->fellow_id)
+                                                <a href="{{ url('admin/associates/fellows/view/'.$r->fellow_id) }}"
+                                                   class="btn btn-xs btn-light border" title="View fellow profile">
+                                                    <i class="fas fa-user-graduate text-success"></i>
+                                                </a>
+                                                @elseif($r->trainee_id)
                                                 <a href="{{ url('admin/associates/trainees/view/'.$r->trainee_id) }}"
                                                    class="btn btn-xs btn-light border" title="View trainee">
                                                     <i class="fas fa-eye text-info"></i>

@@ -2195,13 +2195,14 @@ public function delete($id)
                   ->on('w.specialty', '=', 'final.specialty')
                   ->on('w.exam_year', '=', 'final.exam_year');
             })
-            ->select(
-                'final.id', 'final.contact_name', 'final.exam_year', 'final.specialty',
-                'final.exam_type', 'final.score as part2_score', 'final.result',
-                'w.score as part1_score',
-                'final.trainee_id', 'u.name as trainee_name',
-                'p.name as programme_name', 'final.programme_id'
-            );
+            ->selectRaw("
+                final.id, final.contact_name, final.exam_year, final.specialty,
+                final.exam_type, final.score as part2_score, final.result,
+                w.score as part1_score,
+                final.trainee_id, u.name as trainee_name,
+                COALESCE(final.fellow_id, w.fellow_id) as fellow_id,
+                p.name as programme_name, final.programme_id
+            ");
 
         if ($selectedYear) {
             $query->where('final.exam_year', $selectedYear);
