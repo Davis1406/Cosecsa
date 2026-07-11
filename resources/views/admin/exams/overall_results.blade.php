@@ -76,9 +76,6 @@
                             </select>
                         </div>
                         <div class="d-flex" style="gap:.4rem;">
-                            <button type="submit" class="btn btn-danger btn-sm" style="white-space:nowrap;">
-                                <i class="fas fa-filter mr-1"></i>Filter
-                            </button>
                             <a href="{{ url('admin/exams/overall_results') }}" class="btn btn-outline-secondary btn-sm">Clear</a>
                         </div>
                     </form>
