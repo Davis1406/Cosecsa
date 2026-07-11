@@ -59,7 +59,7 @@
                           class="d-flex flex-wrap align-items-end" style="gap:.75rem;">
                         <div>
                             <label class="d-block mb-1 small font-weight-bold text-muted">Year</label>
-                            <select name="year" class="form-control form-control-sm" style="width:110px;">
+                            <select name="year" class="form-control form-control-sm" style="width:110px;" onchange="this.form.submit()">
                                 <option value="">All years</option>
                                 @foreach($years as $yr)
                                     <option value="{{ $yr }}" {{ $selectedYear == $yr ? 'selected' : '' }}>{{ $yr }}</option>
@@ -68,7 +68,7 @@
                         </div>
                         <div>
                             <label class="d-block mb-1 small font-weight-bold text-muted">Programme</label>
-                            <select name="programme_id" class="form-control form-control-sm" style="width:200px;">
+                            <select name="programme_id" class="form-control form-control-sm" style="width:200px;" onchange="this.form.submit()">
                                 <option value="">All programmes</option>
                                 @foreach($programmes as $p)
                                     <option value="{{ $p->id }}" {{ $selectedProgramme == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
