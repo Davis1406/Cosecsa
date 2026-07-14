@@ -111,8 +111,8 @@ class SalesforceSyncController extends Controller
                         'entry_number'         => $r['Entry_Number__c'] ?? null,
                         'application_received' => (bool) ($r['Application_Received__c'] ?? false),
                         'application_approved' => (bool) ($r['Application_Approved__c'] ?? false),
-                        'sf_created_at'        => $r['CreatedDate'] ?? null,
-                        'sf_modified_at'        => $r['LastModifiedDate'] ?? null,
+                        'sf_created_at'        => isset($r['CreatedDate']) ? \Carbon\Carbon::parse($r['CreatedDate']) : null,
+                        'sf_modified_at'       => isset($r['LastModifiedDate']) ? \Carbon\Carbon::parse($r['LastModifiedDate']) : null,
                         'synced_at'            => now(),
                         'updated_at'           => now(),
                     ]
