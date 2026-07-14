@@ -48,7 +48,10 @@
               </div>
               <div class="card-body">
 
-                <div class="alert alert-info mb-3" style="border-left:4px solid #2980b9;font-size:.88rem;">
+                <div class="alert alert-info import-req mb-3" style="border-left:4px solid #2980b9;font-size:.88rem;">
+                  <style>
+                    .import-req code { color:#a02626; background:rgba(160,38,38,.08); }
+                  </style>
                   <i class="fas fa-info-circle mr-1"></i>
                   <strong>File requirements:</strong>
                   Accepted formats: <code>.csv</code>, <code>.xls</code>, <code>.xlsx</code>. Max size: 2 MB.
