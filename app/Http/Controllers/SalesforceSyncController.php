@@ -57,7 +57,8 @@ class SalesforceSyncController extends Controller
             if ($received !== null && $received !== '') $query->where('application_received', (bool) $received);
             if ($approved !== null && $approved !== '') $query->where('application_approved', (bool) $approved);
             if ($appYear && $appYear !== 'all') {
-                $query->whereYear('date_of_application', $appYear);
+                [$start, $end] = self::intakeWindow((int) $appYear);
+                $query->whereBetween('date_of_application', [$start, $end]);
             }
             return $query;
         };
@@ -73,11 +74,14 @@ class SalesforceSyncController extends Controller
         $countries  = DB::table('salesforce_applications')->whereNotNull('country')->distinct()->orderBy('country')->pluck('country');
         $levels     = DB::table('salesforce_applications')->whereNotNull('application_level')->distinct()->orderBy('application_level')->pluck('application_level');
 
+        // Intake year runs 1 Jul (Y-1) → 30 Jun (Y) — e.g. "2026" applications
+        // started July 2025. A date's intake year is therefore its calendar
+        // year + 1 for Jul-Dec, or unchanged for Jan-Jun.
         $years = DB::table('salesforce_applications')
             ->whereNotNull('date_of_application')
-            ->selectRaw('DISTINCT YEAR(date_of_application) as yr')
-            ->orderByDesc('yr')
-            ->pluck('yr');
+            ->selectRaw('DISTINCT (CASE WHEN MONTH(date_of_application) >= 7 THEN YEAR(date_of_application) + 1 ELSE YEAR(date_of_application) END) as intake_yr')
+            ->orderByDesc('intake_yr')
+            ->pluck('intake_yr');
         if (! $years->contains(self::DEFAULT_APPLICATION_YEAR)) {
             $years = $years->push(self::DEFAULT_APPLICATION_YEAR)->sortByDesc(fn ($y) => $y)->values();
         }
@@ -92,13 +96,15 @@ class SalesforceSyncController extends Controller
 
         $countryCounts = $applications->countBy('country')->sortDesc()->take(10);
 
-        // Trend: by month if a single year is selected, by year if "All years".
+        // Trend: by month (in intake-window order, Jul→Jun) if a single year
+        // is selected, by intake year if "All years".
         if ($appYear && $appYear !== 'all') {
-            $trendLabels = collect(range(1, 12))->map(fn ($m) => \Carbon\Carbon::create()->month($m)->format('M'));
+            $fiscalMonths = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6];
+            $trendLabels = collect($fiscalMonths)->map(fn ($m) => \Carbon\Carbon::create()->month($m)->format('M'));
             $byMonth = $applications->groupBy(fn ($a) => $a->date_of_application ? (int) \Carbon\Carbon::parse($a->date_of_application)->format('n') : 0);
-            $trendCounts = collect(range(1, 12))->map(fn ($m) => $byMonth->get($m, collect())->count());
+            $trendCounts = collect($fiscalMonths)->map(fn ($m) => $byMonth->get($m, collect())->count());
         } else {
-            $byYear = $applications->groupBy(fn ($a) => $a->date_of_application ? \Carbon\Carbon::parse($a->date_of_application)->format('Y') : 'Unknown');
+            $byYear = $applications->groupBy(fn ($a) => $a->date_of_application ? self::intakeYearOf($a->date_of_application) : 'Unknown');
             $trendLabels = $byYear->keys()->sort()->values();
             $trendCounts = $trendLabels->map(fn ($y) => $byYear->get($y)->count());
         }
@@ -113,6 +119,23 @@ class SalesforceSyncController extends Controller
             'total', 'lastSync', 'stageCounts', 'programmeCounts', 'countryCounts',
             'trendLabels', 'trendCounts', 'receivedCount', 'approvedCount', 'rejectedCount'
         ));
+    }
+
+    /**
+     * The [start, end] SQL date bounds for intake year $y: 1 Jul (y-1) → 30 Jun (y).
+     */
+    protected static function intakeWindow(int $y): array
+    {
+        return [($y - 1) . '-07-01', $y . '-06-30'];
+    }
+
+    /**
+     * Which intake year a given date falls into.
+     */
+    protected static function intakeYearOf(string $date): int
+    {
+        $d = \Carbon\Carbon::parse($date);
+        return $d->month >= 7 ? $d->year + 1 : $d->year;
     }
 
     /**

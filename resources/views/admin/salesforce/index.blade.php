@@ -91,6 +91,9 @@
                                 @endforeach
                                 <option value="all" {{ $appYear === 'all' ? 'selected' : '' }}>All years</option>
                             </select>
+                            @if($appYear !== 'all')
+                                <small class="text-muted d-block mt-1">Jul {{ $appYear - 1 }} – Jun {{ $appYear }}</small>
+                            @endif
                         </div>
                         <div>
                             <label class="d-block mb-1 small font-weight-bold text-muted">Programme</label>
@@ -189,43 +192,55 @@
                     </div>
                 @else
 
-                {{-- ── Visual report ───────────────────────────────────────────── --}}
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <div class="chart-title">By Application Stage</div>
-                            <div class="chart-wrapper"><canvas id="stageChart"></canvas></div>
-                        </div>
+                {{-- ── Visual report (collapsible) ─────────────────────────────── --}}
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center" style="background:#f8f0f0;">
+                        <h6 class="mb-0 font-weight-bold" style="color:#a02626;">
+                            <i class="fas fa-chart-pie mr-2"></i>Visual Report
+                        </h6>
+                        <button type="button" class="btn btn-sm btn-outline-secondary no-print" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
                     </div>
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <div class="chart-title">By Application Level</div>
-                            <div class="chart-wrapper"><canvas id="levelChart"></canvas></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <div class="chart-title">Top Programmes</div>
-                            <div class="chart-wrapper"><canvas id="programmeChart"></canvas></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <div class="chart-title">Top Countries</div>
-                            <div class="chart-wrapper"><canvas id="countryChart"></canvas></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-12">
-                        <div class="chart-container">
-                            <div class="chart-title">
-                                Applications Over Time
-                                {{ $appYear !== 'all' ? '(' . $appYear . ', by month)' : '(by year)' }}
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <div class="chart-title">By Application Stage</div>
+                                    <div class="chart-wrapper"><canvas id="stageChart"></canvas></div>
+                                </div>
                             </div>
-                            <div class="chart-wrapper"><canvas id="trendChart"></canvas></div>
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <div class="chart-title">By Application Level</div>
+                                    <div class="chart-wrapper"><canvas id="levelChart"></canvas></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <div class="chart-title">Top Programmes</div>
+                                    <div class="chart-wrapper"><canvas id="programmeChart"></canvas></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <div class="chart-title">Top Countries</div>
+                                    <div class="chart-wrapper"><canvas id="countryChart"></canvas></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="chart-container">
+                                    <div class="chart-title">
+                                        Applications Over Time
+                                        {{ $appYear !== 'all' ? '(' . $appYear . ' window, Jul–Jun)' : '(by intake year)' }}
+                                    </div>
+                                    <div class="chart-wrapper"><canvas id="trendChart"></canvas></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
