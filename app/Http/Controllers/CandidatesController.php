@@ -197,10 +197,16 @@ class CandidatesController extends Controller
             Excel::import($import, $file);
 
             $imported = $import->getImportedCount();
-            $skipped  = $import->getSkippedCount();
-            $msg = "Import complete: {$imported} candidate(s) saved";
-            if ($skipped > 0) $msg .= ", {$skipped} updated (already existed)";
-            return redirect('admin/associates/candidates/list')->with('success', $msg);
+            $updated  = $import->getUpdatedCount();
+            $errors   = $import->getErrors();
+
+            $msg = "Import complete: {$imported} candidate(s) created";
+            if ($updated > 0) $msg .= ", {$updated} updated (already existed)";
+            if (!empty($errors)) $msg .= ", " . count($errors) . " row(s) had unresolved lookups (see below)";
+
+            return redirect('admin/associates/candidates/list')
+                ->with('success', $msg)
+                ->with('importErrors', $errors);
 
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Import failed: ' . $e->getMessage());

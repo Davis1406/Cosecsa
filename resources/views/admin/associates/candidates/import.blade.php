@@ -52,10 +52,29 @@
                   <i class="fas fa-info-circle mr-1"></i>
                   <strong>File requirements:</strong>
                   Accepted formats: <code>.csv</code>, <code>.xls</code>, <code>.xlsx</code>. Max size: 2 MB.
-                  The first row must be a header row. Required columns:
-                  <code>firstname</code>, <code>lastname</code>, <code>personal_email</code>,
-                  <code>programme_id</code>, <code>hospital_id</code>, <code>country_id</code>, <code>entry_number</code>.
+                  Upload the examination officer's candidates template with these columns:
+                  <code>First Name</code>, <code>Middle Name</code>, <code>Last Name</code>, <code>Email</code>,
+                  <code>PEN</code>, <code>Organisation</code>, <code>Exam Type</code>, <code>Gender</code>,
+                  <code>Country</code>, <code>Repeat PI</code>, <code>Repeat PII</code>, <code>MMED</code>,
+                  <code>Sponsor</code>, <code>Remarks</code>, <code>Invoice #</code>, <code>Invoice Date</code>,
+                  <code>Amount</code>, <code>Invoice Sent</code>, <code>Fee Paid</code>, <code>Date</code>,
+                  <code>Amount Paid</code>, <code>Mode of Payment</code>, <code>Comments</code>.
+                  Candidates are matched/updated by <strong>PEN</strong> — re-uploading an updated sheet is safe
+                  and will not create duplicates. <code>Exam Type</code> must match a programme name exactly
+                  (e.g. "MCS", "FCS General Surgery"); <code>Country</code> and <code>Organisation</code>
+                  are matched against existing records, and any row that can't be matched is reported after import.
                 </div>
+
+                @if(session('importErrors') && count(session('importErrors')))
+                <div class="alert alert-warning mb-3" style="border-left:4px solid #e67e22;font-size:.85rem;max-height:220px;overflow-y:auto;">
+                  <strong><i class="fas fa-exclamation-triangle mr-1"></i>Unresolved lookups from the last import:</strong>
+                  <ul class="mb-0 pl-3 mt-1">
+                    @foreach(session('importErrors') as $err)
+                      <li>{{ $err }}</li>
+                    @endforeach
+                  </ul>
+                </div>
+                @endif
 
                 <form method="POST" action="{{ route('candidates.import.data') }}" enctype="multipart/form-data" id="importForm">
                   @csrf
