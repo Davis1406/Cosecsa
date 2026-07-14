@@ -170,7 +170,7 @@
                     <div class="col-6 col-md-3">
                         <div class="stat-card st-good">
                             <div class="stat-number">{{ number_format($approvedCount) }}</div>
-                            <div class="stat-label">Approved</div>
+                            <div class="stat-label">Complete</div>
                         </div>
                     </div>
                     <div class="col-6 col-md-3">

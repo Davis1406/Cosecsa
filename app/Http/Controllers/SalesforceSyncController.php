@@ -110,7 +110,7 @@ class SalesforceSyncController extends Controller
         }
 
         $receivedCount = $applications->where('application_received', true)->count();
-        $approvedCount = $applications->where('application_approved', true)->count();
+        $approvedCount = $applications->where('application_stage', 'Complete')->count();
         $rejectedCount = $applications->whereIn('application_stage', ['Rejected', 'Withdrawn by applicant'])->count();
 
         return view('admin.salesforce.index', compact(
