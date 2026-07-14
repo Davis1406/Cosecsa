@@ -91,9 +91,6 @@
                                 @endforeach
                                 <option value="all" {{ $appYear === 'all' ? 'selected' : '' }}>All years</option>
                             </select>
-                            @if($appYear !== 'all')
-                                <small class="text-muted d-block mt-1">Jul {{ $appYear - 1 }} – Jun {{ $appYear }}</small>
-                            @endif
                         </div>
                         <div>
                             <label class="d-block mb-1 small font-weight-bold text-muted">Programme</label>
