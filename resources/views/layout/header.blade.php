@@ -490,6 +490,16 @@
                         <!-- /.Examinations -->
 
                         <li class="nav-item">
+                            <a href="{{ url('admin/salesforce') }}"
+                                class="nav-link @if (Request::segment(2) == 'salesforce') active @endif">
+                                <i class="nav-icon fas fa-cloud"></i>
+                                <p>
+                                    Salesforce Application
+                                </p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
                             <a href="{{ url('profile/change_password') }}"
                                 class="nav-link @if (Request::segment(2) == 'change_password') active @endif">
                                 <i class="nav-icon fas fa-cog"></i>

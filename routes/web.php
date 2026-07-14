@@ -18,6 +18,7 @@ use App\Http\Controllers\MembersController;
 use App\Http\Controllers\ExamsController;
 use App\Http\Controllers\FellowLabelController;
 use App\Http\Controllers\CapsuleSyncController;
+use App\Http\Controllers\SalesforceSyncController;
 use App\Http\Controllers\CountryController;
 
 
@@ -183,6 +184,10 @@ Route::get('admin/capsule/count',            [CapsuleSyncController::class, 'cap
 Route::get('admin/capsule/status',           [CapsuleSyncController::class, 'status'])->name('admin.capsule.status');
 Route::post('admin/capsule/sync',            [CapsuleSyncController::class, 'sync'])->name('admin.capsule.sync');
 Route::post('admin/capsule/sync/{id}',       [CapsuleSyncController::class, 'syncOne'])->name('admin.capsule.sync.one');
+
+// Salesforce CRM Integration
+Route::get('admin/salesforce',      [SalesforceSyncController::class, 'index'])->name('admin.salesforce.index');
+Route::post('admin/salesforce/sync', [SalesforceSyncController::class, 'sync'])->name('admin.salesforce.sync');
 
 // Fellow Labels Settings (Admin)
 Route::get('admin/settings/fellow-labels',          [FellowLabelController::class,'index'])->name('admin.settings.fellow-labels');

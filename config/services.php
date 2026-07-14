@@ -35,4 +35,11 @@ return [
         'token' => env('CAPSULE_API_TOKEN'),
     ],
 
+    'salesforce' => [
+        'login_url'     => env('SALESFORCE_LOGIN_URL', 'https://cosecsa2.my.salesforce.com'),
+        'client_id'     => env('SALESFORCE_CLIENT_ID'),
+        'client_secret' => env('SALESFORCE_CLIENT_SECRET'),
+        'api_version'   => env('SALESFORCE_API_VERSION', 'v60.0'),
+    ],
+
 ];
