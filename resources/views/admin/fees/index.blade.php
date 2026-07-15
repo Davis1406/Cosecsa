@@ -360,7 +360,7 @@
                                     </td>
                                     <td>{{ ucfirst($row->payer_type) }}</td>
                                     <td>{{ $row->fee_group }} — {{ $row->fee_name }}</td>
-                                    <td>{{ $row->reference_number ?: '—' }}</td>
+                                    <td>{{ (!$row->reference_number || strtolower($row->reference_number) === 'null') ? '—' : $row->reference_number }}</td>
                                     <td>{{ number_format($row->amount_due ?? 0, 2) }}</td>
                                     <td>{{ number_format($row->amount_paid ?? 0, 2) }}</td>
                                     <td>
