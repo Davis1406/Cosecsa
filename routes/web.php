@@ -19,6 +19,7 @@ use App\Http\Controllers\ExamsController;
 use App\Http\Controllers\FellowLabelController;
 use App\Http\Controllers\CapsuleSyncController;
 use App\Http\Controllers\SalesforceSyncController;
+use App\Http\Controllers\FeesController;
 use App\Http\Controllers\CountryController;
 
 
@@ -191,6 +192,16 @@ Route::post('admin/salesforce/sync',     [SalesforceSyncController::class, 'sync
 Route::get('admin/salesforce/view/{id}', [SalesforceSyncController::class, 'show'])->name('admin.salesforce.show');
 Route::get('admin/salesforce/populate-trainees',  [SalesforceSyncController::class, 'populateTraineesPreview'])->name('admin.salesforce.populate-trainees.preview');
 Route::post('admin/salesforce/populate-trainees', [SalesforceSyncController::class, 'populateTraineesApply'])->name('admin.salesforce.populate-trainees.apply');
+
+// Fees
+Route::get('admin/fees',                      [FeesController::class, 'index'])->name('admin.fees.index');
+Route::get('admin/fees/search-payer',         [FeesController::class, 'searchPayer'])->name('admin.fees.search-payer');
+Route::post('admin/fees/record-payment',      [FeesController::class, 'recordPayment'])->name('admin.fees.record-payment');
+Route::put('admin/fees/payment/{rowKey}',     [FeesController::class, 'updatePayment'])->name('admin.fees.payment.update')->where('rowKey', '.*');
+Route::delete('admin/fees/payment/{rowKey}',  [FeesController::class, 'destroyPayment'])->name('admin.fees.payment.destroy')->where('rowKey', '.*');
+Route::post('admin/fees/types',               [FeesController::class, 'storeFeeType'])->name('admin.fees.types.store');
+Route::put('admin/fees/types/{id}',           [FeesController::class, 'updateFeeType'])->name('admin.fees.types.update');
+Route::delete('admin/fees/types/{id}',        [FeesController::class, 'destroyFeeType'])->name('admin.fees.types.destroy');
 
 // Fellow Labels Settings (Admin)
 Route::get('admin/settings/fellow-labels',          [FellowLabelController::class,'index'])->name('admin.settings.fellow-labels');
