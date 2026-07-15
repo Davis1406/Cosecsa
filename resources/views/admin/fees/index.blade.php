@@ -332,7 +332,7 @@
                                     <th>Type</th>
                                     <th>Fee</th>
                                     <th>Invoice #</th>
-                                    <th>Due</th>
+                                    <th>Balance Due</th>
                                     <th>Paid</th>
                                     <th>Status</th>
                                     <th>Date Paid</th>
@@ -363,7 +363,8 @@
                                     <td>{{ ucfirst($row->payer_type) }}</td>
                                     <td>{{ $row->fee_group }} — {{ $row->fee_name }}</td>
                                     <td>{{ (!$row->reference_number || strtolower($row->reference_number) === 'null') ? '—' : $row->reference_number }}</td>
-                                    <td>{{ number_format($row->amount_due ?? 0, 2) }}</td>
+                                    @php $balance = max(0, ($row->amount_due ?? 0) - ($row->amount_paid ?? 0)); @endphp
+                                    <td>{{ $balance > 0 ? number_format($balance, 2) : '—' }}</td>
                                     <td>{{ number_format($row->amount_paid ?? 0, 2) }}</td>
                                     <td>
                                         <span class="status-pill status-{{ $row->status }}">
