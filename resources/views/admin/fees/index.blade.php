@@ -376,7 +376,7 @@
                                         </span>
                                     </td>
                                     <td>{{ $row->date_paid ? \Carbon\Carbon::parse($row->date_paid)->format('d M Y') : '—' }}</td>
-                                    <td>{{ $row->mode_of_payment ?: '—' }}</td>
+                                    <td>{{ (!$row->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $row->mode_of_payment)) ? '—' : $row->mode_of_payment }}</td>
                                     <td class="no-export">
                                         <button type="button" class="btn btn-xs btn-outline-warning"
                                                 onclick='editPayment({!! json_encode($row) !!})'>
