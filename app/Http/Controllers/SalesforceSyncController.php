@@ -281,7 +281,7 @@ class SalesforceSyncController extends Controller
      * duplicate — same PEN *and* same programme already in trainees — is
      * skipped outright.
      */
-    protected function resolveTraineeCandidates(): array
+    protected function resolveTraineeCandidates(bool $allYears = false): array
     {
         $programmesByName = DB::table('programmes')->pluck('id', 'name')
             ->mapWithKeys(fn ($id, $name) => [strtolower(trim($name)) => $id]);
@@ -309,7 +309,7 @@ class SalesforceSyncController extends Controller
             ->where('application_stage', 'Complete')
             ->whereNull('trainee_id')
             ->get()
-            ->filter(fn ($app) => $app->date_of_application && self::intakeYearOf($app->date_of_application) === self::DEFAULT_APPLICATION_YEAR)
+            ->filter(fn ($app) => $app->date_of_application && ($allYears || self::intakeYearOf($app->date_of_application) === self::DEFAULT_APPLICATION_YEAR))
             ->values();
 
         $ready = [];
@@ -363,6 +363,10 @@ class SalesforceSyncController extends Controller
                 continue;
             }
 
+            // Each application's own intake window, not the hardcoded current
+            // one — matters once we're backfilling historical years too.
+            $appIntakeYear = self::intakeYearOf($app->date_of_application);
+
             // ── PEN: reuse if this person already exists anywhere, else mint the next one ──
             $existingPen = $app->applicant_email ? ($penByEmail[strtolower($app->applicant_email)] ?? null) : null;
             $penSource = 'new';
@@ -376,9 +380,9 @@ class SalesforceSyncController extends Controller
                     $unresolved[] = ['app' => $app, 'reason' => 'Country has no country_code to build a PEN from'];
                     continue;
                 }
-                $seqKey = "{$code}-" . self::DEFAULT_APPLICATION_YEAR;
+                $seqKey = "{$code}-{$appIntakeYear}";
                 if (! isset($sequenceCounters[$seqKey])) {
-                    $prefix = "{$code}/" . self::DEFAULT_APPLICATION_YEAR . "/";
+                    $prefix = "{$code}/{$appIntakeYear}/";
                     $max = $existingTraineePens->keys()
                         ->filter(fn ($pen) => str_starts_with($pen, $prefix))
                         ->map(fn ($pen) => (int) substr($pen, strlen($prefix)))
@@ -386,7 +390,7 @@ class SalesforceSyncController extends Controller
                     $sequenceCounters[$seqKey] = $max;
                 }
                 $sequenceCounters[$seqKey]++;
-                $pen = sprintf('%s/%d/%02d', $code, self::DEFAULT_APPLICATION_YEAR, $sequenceCounters[$seqKey]);
+                $pen = sprintf('%s/%d/%02d', $code, $appIntakeYear, $sequenceCounters[$seqKey]);
             }
 
             // True duplicate: this exact PEN already has a trainee row for this exact programme.
@@ -404,7 +408,7 @@ class SalesforceSyncController extends Controller
                 'hospital_id' => $hospitalId,
                 'exam_year' => $examYear,
                 'exam_year_source' => $examYearSource,
-                'admission_year' => self::DEFAULT_APPLICATION_YEAR,
+                'admission_year' => $appIntakeYear,
             ];
         }
 
@@ -414,11 +418,12 @@ class SalesforceSyncController extends Controller
     /**
      * Preview what "Populate Trainees" would do — no writes.
      */
-    public function populateTraineesPreview()
+    public function populateTraineesPreview(Request $request)
     {
-        ['ready' => $ready, 'skipped' => $skipped, 'unresolved' => $unresolved] = $this->resolveTraineeCandidates();
+        $allYears = $request->boolean('all_years');
+        ['ready' => $ready, 'skipped' => $skipped, 'unresolved' => $unresolved] = $this->resolveTraineeCandidates($allYears);
 
-        return view('admin.salesforce.populate_trainees', compact('ready', 'skipped', 'unresolved'));
+        return view('admin.salesforce.populate_trainees', compact('ready', 'skipped', 'unresolved', 'allYears'));
     }
 
     /**
@@ -426,7 +431,8 @@ class SalesforceSyncController extends Controller
      */
     public function populateTraineesApply(Request $request)
     {
-        ['ready' => $ready] = $this->resolveTraineeCandidates();
+        $allYears = $request->boolean('all_years');
+        ['ready' => $ready] = $this->resolveTraineeCandidates($allYears);
 
         $created = 0;
 

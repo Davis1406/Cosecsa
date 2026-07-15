@@ -37,6 +37,18 @@
                     </a>
                 </div>
 
+                <div class="d-flex flex-wrap align-items-center mb-3" style="gap:.75rem;">
+                    @if($allYears)
+                        <a href="{{ url('admin/salesforce/populate-trainees') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-calendar mr-1"></i>Showing all years — switch to current intake only
+                        </a>
+                    @else
+                        <a href="{{ url('admin/salesforce/populate-trainees') }}?all_years=1" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-history mr-1"></i>Include historical years (backfill gaps)
+                        </a>
+                    @endif
+                </div>
+
                 <div class="d-flex flex-wrap mb-3" style="gap:.75rem;">
                     <div class="stat-chip"><span class="lbl">Ready to create</span><span class="val" style="color:#155724;">{{ count($ready) }}</span></div>
                     <div class="stat-chip"><span class="lbl">Already exist</span><span class="val" style="color:#856404;">{{ count($skipped) }}</span></div>
@@ -47,6 +59,7 @@
                 <form method="POST" action="{{ route('admin.salesforce.populate-trainees.apply') }}"
                       onsubmit="return confirm('Create {{ count($ready) }} new trainee record(s)? This writes to the database.');">
                     @csrf
+                    <input type="hidden" name="all_years" value="{{ $allYears ? 1 : 0 }}">
                     <button type="submit" class="btn btn-danger mb-3" style="background:#a02626;border-color:#a02626;">
                         <i class="fas fa-check mr-1"></i>Create {{ count($ready) }} Trainee(s)
                     </button>
