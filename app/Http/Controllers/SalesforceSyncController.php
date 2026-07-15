@@ -205,29 +205,37 @@ class SalesforceSyncController extends Controller
             $records = $this->salesforce->getApplications($modifiedSince);
 
             foreach ($records as $r) {
+                $invoice = $r['Invoices__r']['records'][0] ?? null;
+
                 DB::table('salesforce_applications')->updateOrInsert(
                     ['sf_id' => $r['Id']],
                     [
-                        'name'                 => $r['Name'] ?? null,
-                        'applicant_name'       => $r['Applicant__r']['Name'] ?? null,
-                        'applicant_email'      => $r['Applicant__r']['Email__c'] ?? null,
-                        'applicant_phone'      => $r['Applicant__r']['Phone_Number__c'] ?? null,
-                        'applicant_gender'     => $r['Applicant__r']['Gender__c'] ?? null,
-                        'application_level'    => $r['Application_Level__c'] ?? null,
-                        'application_stage'    => $r['Application_Stage__c'] ?? null,
-                        'programme_name'       => $r['COSECSA_Programme_applied_for__r']['Name'] ?? null,
-                        'hospital_name'        => $r['Base_Hospital__r']['Name'] ?? null,
-                        'country'              => $r['Country__c'] ?? null,
-                        'exam_year'            => $r['Exam_Year__c'] ?? null,
-                        'date_of_application'  => $r['Date_of_Application__c'] ?? null,
-                        'entry_number'         => $r['Entry_Number__c'] ?? null,
-                        'pen'                  => self::normalizePen($r['Program_Entry_Number__c'] ?? null),
-                        'application_received' => (bool) ($r['Application_Received__c'] ?? false),
-                        'application_approved' => (bool) ($r['Application_Approved__c'] ?? false),
-                        'sf_created_at'        => isset($r['CreatedDate']) ? \Carbon\Carbon::parse($r['CreatedDate']) : null,
-                        'sf_modified_at'       => isset($r['LastModifiedDate']) ? \Carbon\Carbon::parse($r['LastModifiedDate']) : null,
-                        'synced_at'            => now(),
-                        'updated_at'           => now(),
+                        'name'                  => $r['Name'] ?? null,
+                        'applicant_name'        => $r['Applicant__r']['Name'] ?? null,
+                        'applicant_email'       => $r['Applicant__r']['Email__c'] ?? null,
+                        'applicant_phone'       => $r['Applicant__r']['Phone_Number__c'] ?? null,
+                        'applicant_gender'      => $r['Applicant__r']['Gender__c'] ?? null,
+                        'application_level'     => $r['Application_Level__c'] ?? null,
+                        'application_stage'     => $r['Application_Stage__c'] ?? null,
+                        'programme_name'        => $r['COSECSA_Programme_applied_for__r']['Name'] ?? null,
+                        'hospital_name'         => $r['Base_Hospital__r']['Name'] ?? null,
+                        'country'               => $r['Country__c'] ?? null,
+                        'exam_year'             => $r['Exam_Year__c'] ?? null,
+                        'date_of_application'   => $r['Date_of_Application__c'] ?? null,
+                        'entry_number'          => $r['Entry_Number__c'] ?? null,
+                        'pen'                   => self::normalizePen($r['Program_Entry_Number__c'] ?? null),
+                        'entry_invoice_number'  => $invoice['Name'] ?? null,
+                        'entry_invoice_amount'  => $invoice['Invoiced_Amount__c'] ?? null,
+                        'entry_payment_amount'  => $invoice['Payment_Amount__c'] ?? null,
+                        'entry_payment_date'    => $invoice['Payment_Date__c'] ?? null,
+                        'entry_payment_method'  => $invoice['Payment_Method__c'] ?? null,
+                        'entry_invoice_status'  => $invoice['Status__c'] ?? null,
+                        'application_received'  => (bool) ($r['Application_Received__c'] ?? false),
+                        'application_approved'  => (bool) ($r['Application_Approved__c'] ?? false),
+                        'sf_created_at'         => isset($r['CreatedDate']) ? \Carbon\Carbon::parse($r['CreatedDate']) : null,
+                        'sf_modified_at'        => isset($r['LastModifiedDate']) ? \Carbon\Carbon::parse($r['LastModifiedDate']) : null,
+                        'synced_at'             => now(),
+                        'updated_at'            => now(),
                     ]
                 );
             }
@@ -458,6 +466,14 @@ class SalesforceSyncController extends Controller
 
                 $gender = in_array($app->applicant_gender, ['Male', 'Female']) ? $app->applicant_gender : null;
 
+                // Entry fee invoice: prefer the linked Salesforce invoice (real
+                // invoice #, amount, payment date/method); fall back to the
+                // programme's default entry fee if this application has none.
+                $invoiceAmount = $app->entry_invoice_amount
+                    ?? DB::table('programmes')->where('id', $row['programme_id'])->value('entry_fee');
+                $amountPaid    = $app->entry_payment_amount ?? 0;
+                $feePaid       = strtolower($app->entry_invoice_status ?? '') === 'paid' ? 'Yes' : 'No';
+
                 $traineeId = DB::table('trainees')->insertGetId([
                     'entry_number'             => $row['pen'],
                     'user_id'                  => $userId,
@@ -476,7 +492,13 @@ class SalesforceSyncController extends Controller
                     'training_year'            => 1,
                     'programme_period'         => 1,
                     'status'                   => 'Active',
-                    'amount_paid'              => 0,
+                    'invoice_number'           => $app->entry_invoice_number,
+                    'invoice_amount'           => $invoiceAmount,
+                    'invoice_status'           => $app->entry_invoice_status ?: 'Pending',
+                    'fee_paid'                 => $feePaid,
+                    'amount_paid'              => $amountPaid,
+                    'payment_date'             => $app->entry_payment_date,
+                    'mode_of_payment'          => $app->entry_payment_method,
                     'is_promoted'              => '0',
                     'created_at'               => now(),
                     'updated_at'               => now(),

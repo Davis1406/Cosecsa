@@ -95,7 +95,9 @@ class SalesforceCrmService
               . "Applicant__r.Gender__c, Application_Level__c, Application_Stage__c, "
               . "COSECSA_Programme_applied_for__r.Name, Base_Hospital__r.Name, "
               . "Country__c, Exam_Year__c, Date_of_Application__c, Entry_Number__c, Program_Entry_Number__c, "
-              . "Application_Received__c, Application_Approved__c, CreatedDate, LastModifiedDate "
+              . "Application_Received__c, Application_Approved__c, CreatedDate, LastModifiedDate, "
+              . "(SELECT Name, Payment_Date__c, Payment_Amount__c, Invoiced_Amount__c, Payment_Method__c, Status__c "
+              . " FROM Invoices__r WHERE Invoice_Type__c = 'Application' ORDER BY CreatedDate DESC LIMIT 1) "
               . "FROM Application__c ";
 
         if ($modifiedSince) {
