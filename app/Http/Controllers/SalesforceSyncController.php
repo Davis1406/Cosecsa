@@ -479,6 +479,10 @@ class SalesforceSyncController extends Controller
                     ?? DB::table('programmes')->where('id', $row['programme_id'])->value('entry_fee');
                 $amountPaid    = $app->entry_payment_amount ?? 0;
                 $feePaid       = strtolower($app->entry_invoice_status ?? '') === 'paid' ? 'Yes' : 'No';
+                // trainees.invoice_status is an enum('Pending','Sent','Complete') —
+                // Salesforce's Status__c values ('Paid','Sent','Overdue', etc.) don't
+                // match it directly.
+                $invoiceStatus = $feePaid === 'Yes' ? 'Complete' : (strtolower($app->entry_invoice_status ?? '') === 'sent' ? 'Sent' : 'Pending');
 
                 $traineeId = DB::table('trainees')->insertGetId([
                     'entry_number'             => $row['pen'],
@@ -500,7 +504,7 @@ class SalesforceSyncController extends Controller
                     'status'                   => 'Active',
                     'invoice_number'           => $app->entry_invoice_number,
                     'invoice_amount'           => $invoiceAmount,
-                    'invoice_status'           => $app->entry_invoice_status ?: 'Pending',
+                    'invoice_status'           => $invoiceStatus,
                     'fee_paid'                 => $feePaid,
                     'amount_paid'              => $amountPaid,
                     'payment_date'             => $app->entry_payment_date,
