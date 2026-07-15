@@ -134,7 +134,7 @@ class FellowsController extends Controller
         $countryTable = tap(
             DB::table('fellows as f')
                 ->join('countries as c', 'c.id', '=', 'f.country_id')
-                ->join('categories as cat', 'cat.id', '=', 'f.category_id'),
+                ->leftJoin('categories as cat', 'cat.id', '=', 'f.category_id'),
             fn($q) => $applyF($q, 'f')
         )
             ->select(
