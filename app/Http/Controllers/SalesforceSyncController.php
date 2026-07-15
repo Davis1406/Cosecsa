@@ -277,9 +277,17 @@ class SalesforceSyncController extends Controller
      * country + intake year ("TZ/2027/01", "TZ/2027/02", ...). Someone who
      * already exists elsewhere in the system (matched by email against
      * trainees/candidates/fellows — e.g. an MCS graduate now applying for
-     * FCS) keeps their original PEN instead of getting a new one. A true
-     * duplicate — same PEN *and* same programme already in trainees — is
-     * skipped outright.
+     * FCS) keeps their original PEN instead of getting a new one.
+     *
+     * One profile per person: anyone who is *already a trainee* (any
+     * programme) is skipped outright — their fee history across programmes
+     * is shown live on their existing trainee profile (TraineeController),
+     * never by spawning a second trainee row. Someone who already exists as
+     * a candidate or a fellow but has never been a trainee is genuinely new
+     * to this role, so a trainee row is created for them — but attached to
+     * their existing `users` account (resolved via candidates/fellows
+     * user_id, not just a raw users.email match) so no duplicate login
+     * account is created.
      */
     protected function resolveTraineeCandidates(bool $allYears = false): array
     {
@@ -303,6 +311,29 @@ class SalesforceSyncController extends Controller
             $penByEmail[strtolower($f->personal_email)] ??= $f->candidate_number;
         }
 
+        // Anyone already a trainee (any programme) — new applications from
+        // these people never get a second trainee row.
+        $existingTraineeEmails = [];
+        foreach (DB::table('trainees')->whereNotNull('personal_email')->pluck('personal_email') as $email) {
+            $existingTraineeEmails[strtolower($email)] = true;
+        }
+
+        // The real users.id this person should be attached to, so a new
+        // trainee row for an existing candidate/fellow reuses their login
+        // account instead of minting a duplicate one. users.email itself
+        // takes priority; otherwise fall back to the user_id already sitting
+        // on their candidate/fellow record.
+        $userIdByEmail = [];
+        foreach (DB::table('candidates')->whereNotNull('personal_email')->whereNotNull('user_id')->get(['personal_email', 'user_id']) as $c) {
+            $userIdByEmail[strtolower($c->personal_email)] ??= $c->user_id;
+        }
+        foreach (DB::table('fellows')->whereNotNull('personal_email')->whereNotNull('user_id')->get(['personal_email', 'user_id']) as $f) {
+            $userIdByEmail[strtolower($f->personal_email)] ??= $f->user_id;
+        }
+        foreach (DB::table('users')->whereNotNull('email')->get(['email', 'id']) as $u) {
+            $userIdByEmail[strtolower($u->email)] = $u->id; // users.email is authoritative — overwrite any candidate/fellow guess
+        }
+
         $existingTraineePens = DB::table('trainees')->pluck('programme_id', 'entry_number');
 
         $applications = DB::table('salesforce_applications')
@@ -318,6 +349,16 @@ class SalesforceSyncController extends Controller
         $sequenceCounters = []; // "CC-YYYY" => last used number, so repeated calls in one run keep incrementing
 
         foreach ($applications as $app) {
+            $appEmailKey = $app->applicant_email ? strtolower(trim($app->applicant_email)) : null;
+
+            // One profile per person: already a trainee anywhere → never a
+            // second trainee row. Their new application's fee data shows up
+            // automatically on their existing profile's Fees tab.
+            if ($appEmailKey && isset($existingTraineeEmails[$appEmailKey])) {
+                $skipped[] = ['app' => $app, 'reason' => 'Already a trainee — fees will show on their existing profile', 'pen' => $penByEmail[$appEmailKey] ?? null];
+                continue;
+            }
+
             $problems = [];
 
             $programmeId = $app->programme_name ? ($programmesByName[strtolower(trim($app->programme_name))] ?? null) : null;
@@ -409,6 +450,7 @@ class SalesforceSyncController extends Controller
                 'exam_year' => $examYear,
                 'exam_year_source' => $examYearSource,
                 'admission_year' => $appIntakeYear,
+                'existing_user_id' => $appEmailKey ? ($userIdByEmail[$appEmailKey] ?? null) : null,
             ];
         }
 
@@ -427,7 +469,10 @@ class SalesforceSyncController extends Controller
     }
 
     /**
-     * Create trainee records for every resolved "Complete" application.
+     * Create trainee records for every resolved "Complete" application that
+     * doesn't already belong to a trainee. If the applicant already exists
+     * as a candidate or fellow, the new trainee row is attached to their
+     * existing users account instead of creating a new one.
      */
     public function populateTraineesApply(Request $request)
     {
@@ -447,11 +492,16 @@ class SalesforceSyncController extends Controller
                 $lastname  = count($parts) > 1 ? end($parts) : $firstname;
                 $middlename = count($parts) > 2 ? implode(' ', array_slice($parts, 1, -1)) : null;
 
-                $user = null;
-                if ($app->applicant_email) {
-                    $user = DB::table('users')->where('email', $app->applicant_email)->first();
+                // Reuse the account already resolved during matching (via
+                // users.email, or via their existing candidate/fellow
+                // record's user_id) before ever creating a new one — this is
+                // what stops a candidate/fellow's first trainee application
+                // from spawning a duplicate login account.
+                $userId = $row['existing_user_id'] ?? null;
+                if (! $userId && $app->applicant_email) {
+                    $userId = DB::table('users')->where('email', $app->applicant_email)->value('id');
                 }
-                if (! $user) {
+                if (! $userId) {
                     $userId = DB::table('users')->insertGetId([
                         'name'       => $fullName,
                         'email'      => $app->applicant_email,
@@ -461,8 +511,6 @@ class SalesforceSyncController extends Controller
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
-                } else {
-                    $userId = $user->id;
                 }
 
                 DB::table('user_roles')->updateOrInsert(
