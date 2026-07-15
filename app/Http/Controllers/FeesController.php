@@ -22,6 +22,9 @@ class FeesController extends Controller
         $group     = $request->input('group');
         $payerType = $request->input('payer_type');
         $status    = $request->input('status');
+        // Years of subscription history go back to 2015 — default to the
+        // current year so the page doesn't try to render 3,000+ rows at once.
+        $year      = $request->input('year', (string) date('Y'));
 
         // ── Generic fee_payments log ──
         $feePayments = DB::table('fee_payments')
@@ -31,6 +34,11 @@ class FeesController extends Controller
                 'amount_due', 'amount_paid', 'status', 'date_paid', 'mode_of_payment',
                 'reference_number', 'notes', 'created_at',
             ])
+            ->when($search, fn ($q) => $q->where('payer_name', 'like', "%{$search}%"))
+            ->when($group, fn ($q) => $q->where('fee_group', $group))
+            ->when($payerType, fn ($q) => $q->where('payer_type', $payerType))
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($year && $year !== 'all', fn ($q) => $q->whereYear('created_at', $year))
             ->get();
 
         // ── Annual Subscription log, sourced from fellow_subscriptions ──
@@ -50,31 +58,23 @@ class FeesController extends Controller
                 DB::raw('NULL as notes'),
                 'fs.created_at',
             ])
+            ->when($search, fn ($q) => $q->where('u.name', 'like', "%{$search}%"))
+            ->when($group, fn ($q) => $q->where(DB::raw('1'), $group === 'Annual Subscription' ? 1 : 0))
+            ->when($payerType, fn ($q) => $q->where(DB::raw('1'), $payerType === 'fellow' ? 1 : 0))
+            ->when($status, fn ($q) => $q->where('fs.status', $status))
+            ->when($year && $year !== 'all', fn ($q) => $q->where('fs.year', $year))
             ->get();
 
-        $log = $feePayments->concat($subscriptionPayments);
-
-        if ($search) {
-            $log = $log->filter(fn ($r) => str_contains(strtolower($r->payer_name), strtolower($search)));
-        }
-        if ($group) {
-            $log = $log->filter(fn ($r) => $r->fee_group === $group);
-        }
-        if ($payerType) {
-            $log = $log->filter(fn ($r) => $r->payer_type === $payerType);
-        }
-        if ($status) {
-            $log = $log->filter(fn ($r) => $r->status === $status);
-        }
-
-        $log = $log->sortByDesc('created_at')->values();
+        $log = $feePayments->concat($subscriptionPayments)->sortByDesc('created_at')->values();
 
         $totalCollected = $log->sum('amount_paid');
         $totalDue       = $log->sum(fn ($r) => max(0, $r->amount_due - $r->amount_paid));
         $paidCount      = $log->where('status', 'Paid')->count();
 
+        $years = DB::table('fellow_subscriptions')->selectRaw('DISTINCT year')->orderByDesc('year')->pluck('year');
+
         return view('admin.fees.index', compact(
-            'header_title', 'feeTypes', 'log', 'search', 'group', 'payerType', 'status',
+            'header_title', 'feeTypes', 'log', 'search', 'group', 'payerType', 'status', 'year', 'years',
             'totalCollected', 'totalDue', 'paidCount'
         ));
     }

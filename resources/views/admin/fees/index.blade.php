@@ -200,6 +200,54 @@
                     <div class="card-header">
                         <h3 class="card-title" style="font-size:1rem;"><i class="fas fa-history mr-2" style="color:#a02626;"></i>Payments Log</h3>
                     </div>
+                    <div class="card-body border-bottom">
+                        <form method="GET" action="{{ url('admin/fees') }}" class="d-flex flex-wrap align-items-end" style="gap:.75rem;">
+                            <div>
+                                <label class="d-block mb-1 small font-weight-bold text-muted">Search</label>
+                                <input type="text" name="q" value="{{ $search }}" placeholder="Payer name..."
+                                       class="form-control form-control-sm" onchange="this.form.submit()">
+                            </div>
+                            <div>
+                                <label class="d-block mb-1 small font-weight-bold text-muted">Year</label>
+                                <select name="year" class="form-control form-control-sm" style="width:120px;" onchange="this.form.submit()">
+                                    @foreach($years as $y)
+                                        <option value="{{ $y }}" {{ (string)$year === (string)$y ? 'selected' : '' }}>{{ $y }}</option>
+                                    @endforeach
+                                    <option value="all" {{ $year === 'all' ? 'selected' : '' }}>All years</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="d-block mb-1 small font-weight-bold text-muted">Fee Group</label>
+                                <select name="group" class="form-control form-control-sm" style="width:180px;" onchange="this.form.submit()">
+                                    <option value="">All groups</option>
+                                    @foreach($feeTypes->keys() as $g)
+                                        <option value="{{ $g }}" {{ $group == $g ? 'selected' : '' }}>{{ $g }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="d-block mb-1 small font-weight-bold text-muted">Payer Type</label>
+                                <select name="payer_type" class="form-control form-control-sm" style="width:130px;" onchange="this.form.submit()">
+                                    <option value="">All</option>
+                                    <option value="fellow" {{ $payerType == 'fellow' ? 'selected' : '' }}>Fellow</option>
+                                    <option value="trainee" {{ $payerType == 'trainee' ? 'selected' : '' }}>Trainee</option>
+                                    <option value="candidate" {{ $payerType == 'candidate' ? 'selected' : '' }}>Candidate</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="d-block mb-1 small font-weight-bold text-muted">Status</label>
+                                <select name="status" class="form-control form-control-sm" style="width:120px;" onchange="this.form.submit()">
+                                    <option value="">All</option>
+                                    <option value="Paid" {{ $status == 'Paid' ? 'selected' : '' }}>Paid</option>
+                                    <option value="Partial" {{ $status == 'Partial' ? 'selected' : '' }}>Partial</option>
+                                    <option value="Unpaid" {{ $status == 'Unpaid' ? 'selected' : '' }}>Unpaid</option>
+                                </select>
+                            </div>
+                            <div>
+                                <a href="{{ url('admin/fees') }}" class="btn btn-outline-secondary btn-sm">Clear</a>
+                            </div>
+                        </form>
+                    </div>
                     <div class="card-body p-0">
                         <table id="feesTable" class="table table-sm table-bordered table-striped fees-table mb-0" style="width:100%;">
                             <thead>
