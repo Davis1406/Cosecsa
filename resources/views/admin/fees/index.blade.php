@@ -49,8 +49,8 @@
                     <div>
                         <h4 class="mb-0"><i class="fas fa-money-check-alt mr-2"></i>Fees</h4>
                         <div style="font-size:.85rem;opacity:.85;">
-                            Fellowship registration, annual subscriptions, graduation, gown and transcript fees.
-                            Programme entry / exam fees are managed under Programmes.
+                            Fellowship registration, annual subscriptions, graduation, gown, transcript, and programme
+                            entry / exam fees. Fee amounts for programmes are managed under Programmes.
                         </div>
                     </div>
                 </div>
@@ -98,6 +98,33 @@
                                 @endforeach
                             </div>
                         </div>
+
+                        {{-- ── Programme Fees (read-only reference) ── --}}
+                        <div class="card fee-card mt-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h3 class="card-title" style="font-size:1rem;"><i class="fas fa-graduation-cap mr-2" style="color:#a02626;"></i>Programme Fees</h3>
+                                <a href="{{ url('admin/programmes/list') }}" class="btn btn-xs btn-outline-secondary">
+                                    <i class="fas fa-external-link-alt mr-1"></i>Edit
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small mb-2">
+                                    Entry, exam, and repeat fees per programme — amounts are managed on the
+                                    <a href="{{ url('admin/programmes/list') }}">Programmes</a> page, but you can
+                                    record a payment against them below.
+                                </p>
+                                @foreach($programmes as $p)
+                                    <div class="fee-type-row">
+                                        <div>{{ $p->name }}</div>
+                                        <div class="text-right" style="font-size:.78rem;">
+                                            <span class="fee-amount">Entry {{ number_format($p->entry_fee, 0) }}</span> ·
+                                            Exam {{ number_format($p->exam_fee, 0) }} ·
+                                            Repeat {{ number_format($p->repeat_fee, 0) }}
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
                     </div>
 
                     {{-- ── Record Payment ── --}}
@@ -117,6 +144,7 @@
                                         <input type="hidden" name="payer_type" id="payer_type" required>
                                         <input type="hidden" name="payer_id" id="payer_id" required>
                                         <input type="hidden" name="payer_name" id="payer_name" required>
+                                        <input type="hidden" name="programme_fee_amount" id="programme_fee_amount">
                                         <small class="text-muted" id="payerSelectedLabel"></small>
                                     </div>
 
@@ -125,6 +153,9 @@
                                             <label class="font-weight-bold small">Fee Type <span class="text-danger">*</span></label>
                                             <select name="fee_type_id" id="fee_type_id" class="form-control" required>
                                                 <option value="">-- Select fee --</option>
+                                                <optgroup label="Programme Fees" id="programmeFeeOptgroup" style="display:none;">
+                                                    <option value="programme" id="programmeFeeOption" data-amount="" data-subscription="0"></option>
+                                                </optgroup>
                                                 @foreach($feeTypes as $groupName => $types)
                                                     <optgroup label="{{ $groupName }}">
                                                         @foreach($types->where('is_active', true) as $ft)
@@ -220,6 +251,7 @@
                                 <label class="d-block mb-1 small font-weight-bold text-muted">Fee Group</label>
                                 <select name="group" class="form-control form-control-sm" style="width:180px;" onchange="this.form.submit()">
                                     <option value="">All groups</option>
+                                    <option value="Programme Fees" {{ $group == 'Programme Fees' ? 'selected' : '' }}>Programme Fees</option>
                                     @foreach($feeTypes->keys() as $g)
                                         <option value="{{ $g }}" {{ $group == $g ? 'selected' : '' }}>{{ $g }}</option>
                                     @endforeach
@@ -269,8 +301,8 @@
                                     <td>{{ $row->payer_name }}</td>
                                     <td>{{ ucfirst($row->payer_type) }}</td>
                                     <td>{{ $row->fee_group }} — {{ $row->fee_name }}</td>
-                                    <td>{{ number_format($row->amount_due, 2) }}</td>
-                                    <td>{{ number_format($row->amount_paid, 2) }}</td>
+                                    <td>{{ number_format($row->amount_due ?? 0, 2) }}</td>
+                                    <td>{{ number_format($row->amount_paid ?? 0, 2) }}</td>
                                     <td><span class="status-pill status-{{ $row->status }}">{{ $row->status }}</span></td>
                                     <td>{{ $row->date_paid ? \Carbon\Carbon::parse($row->date_paid)->format('d M Y') : '—' }}</td>
                                     <td>{{ $row->mode_of_payment ?: '—' }}</td>
@@ -502,6 +534,19 @@ function selectPayer(r) {
     document.getElementById('payerSearch').value = r.name;
     document.getElementById('payerSelectedLabel').textContent = 'Selected: ' + r.subtitle;
     document.getElementById('payerResults').style.display = 'none';
+
+    var pfGroup = document.getElementById('programmeFeeOptgroup');
+    var pfOption = document.getElementById('programmeFeeOption');
+    if (r.programme_fee) {
+        pfOption.textContent = r.programme_fee.label + ' (USD ' + r.programme_fee.amount + ')';
+        pfOption.dataset.amount = r.programme_fee.amount;
+        pfGroup.style.display = '';
+    } else {
+        pfGroup.style.display = 'none';
+        if (document.getElementById('fee_type_id').value === 'programme') {
+            document.getElementById('fee_type_id').value = '';
+        }
+    }
 }
 
 document.addEventListener('click', function (e) {
@@ -517,6 +562,7 @@ document.getElementById('fee_type_id').addEventListener('change', function () {
     var amount = opt.dataset.amount;
     document.getElementById('yearField').style.display = isSub ? '' : 'none';
     if (amount) document.getElementById('amount_paid').value = amount;
+    document.getElementById('programme_fee_amount').value = this.value === 'programme' ? amount : '';
 });
 
 // ── Edit fee type ────────────────────────────────────────────────────────
@@ -536,13 +582,14 @@ function editPayment(row) {
     document.getElementById('editPaymentForm').action = '/admin/fees/payment/' + row.row_key;
     document.getElementById('epPayerName').textContent = row.payer_name;
     document.getElementById('epFeeName').textContent = row.fee_group + ' — ' + row.fee_name;
-    document.getElementById('epAmountPaid').value = row.amount_paid;
+    document.getElementById('epAmountPaid').value = row.amount_paid || 0;
     document.getElementById('epStatus').value = row.status;
     document.getElementById('epDatePaid').value = row.date_paid ? row.date_paid.substring(0, 10) : '';
     document.getElementById('epMode').value = row.mode_of_payment || '';
     var isSub = row.row_key.startsWith('sub-');
+    var isProgrammeFee = row.row_key.startsWith('tfee-') || row.row_key.startsWith('cfee-');
     document.getElementById('epReferenceGroup').style.display = isSub ? 'none' : '';
-    document.getElementById('epNotesGroup').style.display = isSub ? 'none' : '';
+    document.getElementById('epNotesGroup').style.display = (isSub || isProgrammeFee) ? 'none' : '';
     document.getElementById('epReference').value = row.reference_number || '';
     document.getElementById('epNotes').value = row.notes || '';
     $('#editPaymentModal').modal('show');

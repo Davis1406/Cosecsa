@@ -65,16 +65,72 @@ class FeesController extends Controller
             ->when($year && $year !== 'all', fn ($q) => $q->where('fs.year', $year))
             ->get();
 
-        $log = $feePayments->concat($subscriptionPayments)->sortByDesc('created_at')->values();
+        // ── Programme Entry Fee log, sourced from trainees ──
+        $traineeFeePayments = DB::table('trainees as t')
+            ->join('users as u', 'u.id', '=', 't.user_id')
+            ->leftJoin('programmes as p', 'p.id', '=', 't.programme_id')
+            ->where(fn ($w) => $w->where('t.amount_paid', '>', 0)->orWhere('t.fee_paid', 'Yes'))
+            ->select([
+                DB::raw("CONCAT('tfee-', t.id) as row_key"),
+                DB::raw("'Programme Fees' as fee_group"),
+                DB::raw("CONCAT('Entry Fee - ', COALESCE(p.name, 'Unknown Programme')) as fee_name"),
+                DB::raw("'trainee' as payer_type"),
+                't.id as payer_id',
+                'u.name as payer_name',
+                DB::raw('t.invoice_amount as amount_due'),
+                't.amount_paid',
+                DB::raw("(CASE WHEN t.fee_paid = 'Yes' THEN 'Paid' WHEN t.amount_paid > 0 THEN 'Partial' ELSE 'Unpaid' END) as status"),
+                't.payment_date as date_paid', 't.mode_of_payment',
+                't.invoice_number as reference_number',
+                DB::raw('NULL as notes'),
+                't.updated_at as created_at',
+            ])
+            ->when($search, fn ($q) => $q->where('u.name', 'like', "%{$search}%"))
+            ->when($group, fn ($q) => $q->where(DB::raw('1'), $group === 'Programme Fees' ? 1 : 0))
+            ->when($payerType, fn ($q) => $q->where(DB::raw('1'), $payerType === 'trainee' ? 1 : 0))
+            ->when($year && $year !== 'all', fn ($q) => $q->whereYear('t.updated_at', $year))
+            ->get();
 
-        $totalCollected = $log->sum('amount_paid');
-        $totalDue       = $log->sum(fn ($r) => max(0, $r->amount_due - $r->amount_paid));
+        // ── Exam Fee log, sourced from candidates ──
+        $candidateFeePayments = DB::table('candidates as c')
+            ->join('users as u', 'u.id', '=', 'c.user_id')
+            ->leftJoin('programmes as p', 'p.id', '=', 'c.programme_id')
+            ->where(fn ($w) => $w->where('c.amount_paid', '>', 0)->orWhere('c.fee_paid', 'Yes'))
+            ->select([
+                DB::raw("CONCAT('cfee-', c.id) as row_key"),
+                DB::raw("'Programme Fees' as fee_group"),
+                DB::raw("CONCAT('Exam Fee - ', COALESCE(p.name, 'Unknown Programme')) as fee_name"),
+                DB::raw("'candidate' as payer_type"),
+                'c.id as payer_id',
+                'u.name as payer_name',
+                DB::raw('c.invoice_amount as amount_due'),
+                'c.amount_paid',
+                DB::raw("(CASE WHEN c.fee_paid = 'Yes' THEN 'Paid' WHEN c.amount_paid > 0 THEN 'Partial' ELSE 'Unpaid' END) as status"),
+                'c.payment_date as date_paid', 'c.mode_of_payment',
+                'c.invoice_number as reference_number',
+                DB::raw('NULL as notes'),
+                'c.updated_at as created_at',
+            ])
+            ->when($search, fn ($q) => $q->where('u.name', 'like', "%{$search}%"))
+            ->when($group, fn ($q) => $q->where(DB::raw('1'), $group === 'Programme Fees' ? 1 : 0))
+            ->when($payerType, fn ($q) => $q->where(DB::raw('1'), $payerType === 'candidate' ? 1 : 0))
+            ->when($year && $year !== 'all', fn ($q) => $q->whereYear('c.updated_at', $year))
+            ->get();
+
+        $log = $feePayments->concat($subscriptionPayments)
+            ->concat($traineeFeePayments)->concat($candidateFeePayments)
+            ->sortByDesc('created_at')->values();
+
+        $totalCollected = $log->sum(fn ($r) => $r->amount_paid ?? 0);
+        $totalDue       = $log->sum(fn ($r) => max(0, ($r->amount_due ?? 0) - ($r->amount_paid ?? 0)));
         $paidCount      = $log->where('status', 'Paid')->count();
 
         $years = DB::table('fellow_subscriptions')->selectRaw('DISTINCT year')->orderByDesc('year')->pluck('year');
 
+        $programmes = DB::table('programmes')->where('is_deleted', 0)->orderBy('name')->get();
+
         return view('admin.fees.index', compact(
-            'header_title', 'feeTypes', 'log', 'search', 'group', 'payerType', 'status', 'year', 'years',
+            'header_title', 'feeTypes', 'programmes', 'log', 'search', 'group', 'payerType', 'status', 'year', 'years',
             'totalCollected', 'totalDue', 'paidCount'
         ));
     }
@@ -161,32 +217,44 @@ class FeesController extends Controller
 
         $trainees = DB::table('trainees as t')
             ->join('users as u', 'u.id', '=', 't.user_id')
+            ->leftJoin('programmes as p', 'p.id', '=', 't.programme_id')
             ->where(function ($w) use ($like) {
                 $w->where('u.name', 'like', $like)
                   ->orWhere('t.personal_email', 'like', $like)
                   ->orWhere('t.entry_number', 'like', $like);
             })
-            ->select('t.id', 'u.name', 't.entry_number')
+            ->select('t.id', 'u.name', 't.entry_number', 'p.name as programme_name',
+                     'p.entry_fee', 'p.repeat_fee', 't.repeat_paper_one', 't.repeat_paper_two')
             ->limit(8)->get()
             ->map(fn ($r) => [
                 'type' => 'trainee', 'id' => $r->id, 'name' => $r->name,
-                'subtitle' => implode(' · ', array_filter(['Trainee', $r->entry_number])),
+                'subtitle' => implode(' · ', array_filter(['Trainee', $r->entry_number, $r->programme_name])),
                 'category_name' => null,
+                'programme_fee' => $r->programme_name ? [
+                    'label'  => "Entry Fee - {$r->programme_name}",
+                    'amount' => ($r->repeat_paper_one === 'Yes' || $r->repeat_paper_two === 'Yes') ? $r->repeat_fee : $r->entry_fee,
+                ] : null,
             ]);
 
         $candidates = DB::table('candidates as c')
             ->join('users as u', 'u.id', '=', 'c.user_id')
+            ->leftJoin('programmes as p', 'p.id', '=', 'c.programme_id')
             ->where(function ($w) use ($like) {
                 $w->where('u.name', 'like', $like)
                   ->orWhere('c.personal_email', 'like', $like)
                   ->orWhere('c.entry_number', 'like', $like);
             })
-            ->select('c.id', 'u.name', 'c.entry_number')
+            ->select('c.id', 'u.name', 'c.entry_number', 'p.name as programme_name',
+                     'p.exam_fee', 'p.repeat_fee', 'c.repeat_paper_one', 'c.repeat_paper_two')
             ->limit(8)->get()
             ->map(fn ($r) => [
                 'type' => 'candidate', 'id' => $r->id, 'name' => $r->name,
-                'subtitle' => implode(' · ', array_filter(['Candidate', $r->entry_number])),
+                'subtitle' => implode(' · ', array_filter(['Candidate', $r->entry_number, $r->programme_name])),
                 'category_name' => null,
+                'programme_fee' => $r->programme_name ? [
+                    'label'  => "Exam Fee - {$r->programme_name}",
+                    'amount' => ($r->repeat_paper_one === 'Yes' || $r->repeat_paper_two === 'Yes') ? $r->repeat_fee : $r->exam_fee,
+                ] : null,
             ]);
 
         return response()->json($fellows->concat($trainees)->concat($candidates)->values());
@@ -197,13 +265,40 @@ class FeesController extends Controller
     public function recordPayment(Request $request)
     {
         $request->validate([
-            'fee_type_id' => 'required|exists:fee_types,id',
+            'fee_type_id' => 'required|string',
             'payer_type'  => 'required|in:fellow,trainee,candidate',
             'payer_id'    => 'required|integer',
             'payer_name'  => 'required|string|max:255',
             'amount_paid' => 'required|numeric|min:0',
             'status'      => 'required|in:Paid,Unpaid,Partial',
         ]);
+
+        // ── Programme Entry Fee (trainee) / Exam Fee (candidate) — these live
+        //    on the trainees/candidates records themselves, managed under
+        //    Programmes for the amounts, not the fee_types catalog. ──
+        if ($request->fee_type_id === 'programme') {
+            if (! in_array($request->payer_type, ['trainee', 'candidate'])) {
+                return redirect('admin/fees')->with('error', 'Programme fees only apply to trainees or candidates.');
+            }
+
+            $table = $request->payer_type === 'trainee' ? 'trainees' : 'candidates';
+
+            DB::table($table)->where('id', $request->payer_id)->update([
+                'invoice_amount'  => $request->input('programme_fee_amount'),
+                'amount_paid'     => $request->amount_paid,
+                'fee_paid'        => $request->status === 'Paid' ? 'Yes' : 'No',
+                'invoice_status'  => $request->status === 'Paid' ? 'Complete' : 'Sent',
+                'payment_date'    => $request->date_paid ?: null,
+                'mode_of_payment' => $request->mode_of_payment,
+                'invoice_number'  => $request->reference_number,
+                'updated_at'      => now(),
+            ]);
+
+            $label = $request->payer_type === 'trainee' ? 'Entry fee' : 'Exam fee';
+            return redirect('admin/fees')->with('success', "{$label} recorded for {$request->payer_name}.");
+        }
+
+        $request->validate(['fee_type_id' => 'exists:fee_types,id']);
 
         $feeType = DB::table('fee_types')->find($request->fee_type_id);
         if (! $feeType) {
@@ -252,7 +347,8 @@ class FeesController extends Controller
     }
 
     /**
-     * $rowKey is "fee-{id}" or "sub-{id}" — routes the edit to the right table.
+     * $rowKey is "fee-{id}", "sub-{id}", "tfee-{id}", or "cfee-{id}" — routes
+     * the edit to the right table.
      */
     public function updatePayment(Request $request, $rowKey)
     {
@@ -269,6 +365,16 @@ class FeesController extends Controller
                 'status'          => $request->status,
                 'date_paid'       => $request->date_paid ?: null,
                 'mode_of_payment' => $request->mode_of_payment,
+                'updated_at'      => now(),
+            ]);
+        } elseif ($source === 'tfee' || $source === 'cfee') {
+            DB::table($source === 'tfee' ? 'trainees' : 'candidates')->where('id', $id)->update([
+                'amount_paid'     => $request->amount_paid,
+                'fee_paid'        => $request->status === 'Paid' ? 'Yes' : 'No',
+                'invoice_status'  => $request->status === 'Paid' ? 'Complete' : 'Sent',
+                'payment_date'    => $request->date_paid ?: null,
+                'mode_of_payment' => $request->mode_of_payment,
+                'invoice_number'  => $request->reference_number,
                 'updated_at'      => now(),
             ]);
         } else {
@@ -292,6 +398,18 @@ class FeesController extends Controller
 
         if ($source === 'sub') {
             DB::table('fellow_subscriptions')->where('id', $id)->delete();
+        } elseif ($source === 'tfee' || $source === 'cfee') {
+            // "Deleting" a programme-fee log entry just clears the fee fields
+            // on the trainee/candidate record — there's no separate row to remove.
+            DB::table($source === 'tfee' ? 'trainees' : 'candidates')->where('id', $id)->update([
+                'amount_paid'     => 0,
+                'fee_paid'        => 'No',
+                'invoice_status'  => 'Pending',
+                'payment_date'    => null,
+                'mode_of_payment' => null,
+                'invoice_number'  => null,
+                'updated_at'      => now(),
+            ]);
         } else {
             DB::table('fee_payments')->where('id', $id)->delete();
         }
