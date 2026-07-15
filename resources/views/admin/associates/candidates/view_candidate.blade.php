@@ -526,8 +526,13 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
-    var saved = localStorage.getItem('adminCandidateViewTab');
-    if (saved) { $('#cpTabs a[href="' + saved + '"]').tab('show'); }
+    // A URL hash (e.g. from the Fees page) wins over the last-viewed tab.
+    if (location.hash) {
+        $('#cpTabs a[href="' + location.hash + '"]').tab('show');
+    } else {
+        var saved = localStorage.getItem('adminCandidateViewTab');
+        if (saved) { $('#cpTabs a[href="' + saved + '"]').tab('show'); }
+    }
     $('#cpTabs a').on('shown.bs.tab', function (e) {
         localStorage.setItem('adminCandidateViewTab', $(e.target).attr('href'));
     });

@@ -755,9 +755,13 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
-    // Restore active tab
-    var saved = localStorage.getItem('adminFellowViewTab');
-    if (saved) { $('#fellowTabs a[href="' + saved + '"]').tab('show'); }
+    // A URL hash (e.g. from the Fees page) wins over the last-viewed tab.
+    if (location.hash) {
+        $('#fellowTabs a[href="' + location.hash + '"]').tab('show');
+    } else {
+        var saved = localStorage.getItem('adminFellowViewTab');
+        if (saved) { $('#fellowTabs a[href="' + saved + '"]').tab('show'); }
+    }
     $('#fellowTabs a').on('shown.bs.tab', function (e) {
         localStorage.setItem('adminFellowViewTab', $(e.target).attr('href'));
     });

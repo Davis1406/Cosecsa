@@ -704,8 +704,13 @@
 <script>
 $(document).ready(function () {
     // ── Tab memory ───────────────────────────────────────────────────────────
-    var saved = localStorage.getItem('adminTraineeViewTab');
-    if (saved) { $('#tpTabs a[href="' + saved + '"]').tab('show'); }
+    // A URL hash (e.g. from the Fees page) wins over the last-viewed tab.
+    if (location.hash) {
+        $('#tpTabs a[href="' + location.hash + '"]').tab('show');
+    } else {
+        var saved = localStorage.getItem('adminTraineeViewTab');
+        if (saved) { $('#tpTabs a[href="' + saved + '"]').tab('show'); }
+    }
     $('#tpTabs a').on('shown.bs.tab', function (e) {
         localStorage.setItem('adminTraineeViewTab', $(e.target).attr('href'));
     });

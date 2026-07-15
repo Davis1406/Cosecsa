@@ -227,7 +227,6 @@
                                     <select name="status" class="form-control" required>
                                         <option value="Paid">Paid</option>
                                         <option value="Partial">Partial</option>
-                                        <option value="Unpaid">Unpaid</option>
                                     </select>
                                 </div>
                                 <div class="form-group col-md-4">
@@ -327,9 +326,11 @@
                         <table id="feesTable" class="table table-sm table-bordered table-striped fees-table mb-0" style="width:100%;">
                             <thead>
                                 <tr>
+                                    <th>#</th>
                                     <th>Payer</th>
                                     <th>Type</th>
                                     <th>Fee</th>
+                                    <th>Invoice #</th>
                                     <th>Due</th>
                                     <th>Paid</th>
                                     <th>Status</th>
@@ -339,14 +340,38 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($log as $row)
+                                @foreach($log as $i => $row)
+                                @php
+                                    $profileUrl = match($row->payer_type) {
+                                        'fellow'    => url('admin/associates/fellows/view/' . $row->payer_id) . '#tab-subs',
+                                        'trainee'   => url('admin/associates/trainees/view/' . $row->payer_id) . '#tab-fees',
+                                        'candidate' => url('admin/associates/candidates/view/' . $row->payer_id) . '#ctab-fees',
+                                        default     => null,
+                                    };
+                                @endphp
                                 <tr>
-                                    <td>{{ $row->payer_name }}</td>
+                                    <td>{{ $i + 1 }}</td>
+                                    <td>
+                                        @if($profileUrl)
+                                            <a href="{{ $profileUrl }}">{{ $row->payer_name }}</a>
+                                        @else
+                                            {{ $row->payer_name }}
+                                        @endif
+                                    </td>
                                     <td>{{ ucfirst($row->payer_type) }}</td>
                                     <td>{{ $row->fee_group }} — {{ $row->fee_name }}</td>
+                                    <td>{{ $row->reference_number ?: '—' }}</td>
                                     <td>{{ number_format($row->amount_due ?? 0, 2) }}</td>
                                     <td>{{ number_format($row->amount_paid ?? 0, 2) }}</td>
-                                    <td><span class="status-pill status-{{ $row->status }}">{{ $row->status }}</span></td>
+                                    <td>
+                                        <span class="status-pill status-{{ $row->status }}">
+                                            @if($row->status === 'Partial')
+                                                Partial ({{ number_format($row->amount_paid ?? 0, 0) }}/{{ number_format($row->amount_due ?? 0, 0) }})
+                                            @else
+                                                {{ $row->status }}
+                                            @endif
+                                        </span>
+                                    </td>
                                     <td>{{ $row->date_paid ? \Carbon\Carbon::parse($row->date_paid)->format('d M Y') : '—' }}</td>
                                     <td>{{ $row->mode_of_payment ?: '—' }}</td>
                                     <td class="no-export">
@@ -445,7 +470,6 @@
                             <select name="status" id="epStatus" class="form-control" required>
                                 <option value="Paid">Paid</option>
                                 <option value="Partial">Partial</option>
-                                <option value="Unpaid">Unpaid</option>
                             </select>
                         </div>
                     </div>
@@ -491,9 +515,12 @@ $(document).ready(function () {
             { extend: 'pdfHtml5',   className: 'btn-sm', title: 'Fees Log', orientation: 'landscape', pageSize: 'A4', exportOptions: { columns: ':not(.no-export)' } },
             { extend: 'print',      className: 'btn-sm', exportOptions: { columns: ':not(.no-export)' } }
         ],
-        columnDefs: [{ orderable: false, targets: -1 }],
+        columnDefs: [
+            { orderable: false, targets: -1 },
+            { orderable: false, targets: 0, render: function (data, type, row, meta) { return meta.row + 1; } }
+        ],
         pageLength: 25,
-        order: [[6, 'desc']]
+        order: [] // keep the server's most-recently-touched-first order
     });
 });
 
