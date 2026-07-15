@@ -151,7 +151,7 @@ class FeesController extends Controller
                   ->orWhere('f.personal_email', 'like', $like)
                   ->orWhere('f.candidate_number', 'like', $like);
             })
-            ->select('f.id', 'u.name', 'f.candidate_number', 'cat.name as category_name')
+            ->select('f.id', 'u.name', 'f.candidate_number', 'cat.category_name as category_name')
             ->limit(8)->get()
             ->map(fn ($r) => [
                 'type' => 'fellow', 'id' => $r->id, 'name' => $r->name,
