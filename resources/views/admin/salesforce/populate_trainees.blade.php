@@ -61,7 +61,7 @@
                             @forelse($ready as $row)
                             <tr>
                                 <td>{{ $row['app']->applicant_name }}</td>
-                                <td>{{ $row['app']->pen }}</td>
+                                <td>{{ $row['pen'] }} <small class="text-muted">({{ $row['pen_source'] === 'existing' ? 'existing PEN' : 'new' }})</small></td>
                                 <td>{{ $row['app']->programme_name }}</td>
                                 <td>{{ $row['app']->country }}</td>
                                 <td>{{ $row['app']->hospital_name }}</td>
@@ -78,17 +78,16 @@
                 <h6 class="font-weight-bold" style="color:#856404;">Already exist, skipped ({{ count($skipped) }})</h6>
                 <div class="scroll-table mb-4">
                     <table class="table table-sm table-bordered table-striped pt-table mb-0">
-                        <thead><tr><th>Name</th><th>PEN</th><th>Reason</th><th>Trainee</th></tr></thead>
+                        <thead><tr><th>Name</th><th>PEN</th><th>Reason</th></tr></thead>
                         <tbody>
                             @forelse($skipped as $row)
                             <tr>
                                 <td>{{ $row['app']->applicant_name }}</td>
-                                <td>{{ $row['app']->pen ?: $row['app']->entry_number }}</td>
+                                <td>{{ $row['pen'] ?? ($row['app']->pen ?: $row['app']->entry_number) }}</td>
                                 <td>{{ $row['reason'] }}</td>
-                                <td><a href="{{ url('admin/associates/trainees/view/' . $row['trainee_id']) }}">View #{{ $row['trainee_id'] }}</a></td>
                             </tr>
                             @empty
-                            <tr><td colspan="4" class="text-center text-muted py-3">None</td></tr>
+                            <tr><td colspan="3" class="text-center text-muted py-3">None</td></tr>
                             @endforelse
                         </tbody>
                     </table>

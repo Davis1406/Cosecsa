@@ -255,9 +255,18 @@ class SalesforceSyncController extends Controller
     ];
 
     /**
-     * Resolve every "Complete" application that hasn't produced a trainee yet,
-     * without writing anything — used by both the preview page and (for the
-     * final resolved set) the apply action.
+     * Resolve every "Complete" application in the current intake window
+     * (DEFAULT_APPLICATION_YEAR) that hasn't produced a trainee yet, without
+     * writing anything — used by both the preview page and (for the final
+     * resolved set) the apply action.
+     *
+     * PEN rule: a brand-new entrant gets the next sequential number for their
+     * country + intake year ("TZ/2027/01", "TZ/2027/02", ...). Someone who
+     * already exists elsewhere in the system (matched by email against
+     * trainees/candidates/fellows — e.g. an MCS graduate now applying for
+     * FCS) keeps their original PEN instead of getting a new one. A true
+     * duplicate — same PEN *and* same programme already in trainees — is
+     * skipped outright.
      */
     protected function resolveTraineeCandidates(): array
     {
@@ -265,36 +274,37 @@ class SalesforceSyncController extends Controller
             ->mapWithKeys(fn ($id, $name) => [strtolower(trim($name)) => $id]);
         $countriesByName = DB::table('countries')->pluck('id', 'country_name')
             ->mapWithKeys(fn ($id, $name) => [strtolower(trim($name)) => $id]);
+        $countryCodes = DB::table('countries')->pluck('country_code', 'id');
         $hospitalsByName = DB::table('hospitals')->pluck('id', 'name')
             ->mapWithKeys(fn ($id, $name) => [strtolower(trim($name)) => $id]);
 
-        $existingPens   = DB::table('trainees')->whereNotNull('entry_number')->pluck('id', 'entry_number');
-        $existingEmails = DB::table('trainees')->whereNotNull('personal_email')->pluck('id', 'personal_email')
-            ->mapWithKeys(fn ($id, $email) => [strtolower($email) => $id]);
+        // Every known PEN this person could already hold, keyed by lowercased email.
+        $penByEmail = [];
+        foreach (DB::table('trainees')->whereNotNull('personal_email')->get(['personal_email', 'entry_number']) as $t) {
+            $penByEmail[strtolower($t->personal_email)] ??= $t->entry_number;
+        }
+        foreach (DB::table('candidates')->whereNotNull('personal_email')->get(['personal_email', 'entry_number']) as $c) {
+            $penByEmail[strtolower($c->personal_email)] ??= $c->entry_number;
+        }
+        foreach (DB::table('fellows')->whereNotNull('personal_email')->get(['personal_email', 'candidate_number']) as $f) {
+            $penByEmail[strtolower($f->personal_email)] ??= $f->candidate_number;
+        }
+
+        $existingTraineePens = DB::table('trainees')->pluck('programme_id', 'entry_number');
 
         $applications = DB::table('salesforce_applications')
             ->where('application_stage', 'Complete')
             ->whereNull('trainee_id')
-            ->get();
+            ->get()
+            ->filter(fn ($app) => $app->date_of_application && self::intakeYearOf($app->date_of_application) === self::DEFAULT_APPLICATION_YEAR)
+            ->values();
 
         $ready = [];
         $skipped = [];
         $unresolved = [];
+        $sequenceCounters = []; // "CC-YYYY" => last used number, so repeated calls in one run keep incrementing
 
         foreach ($applications as $app) {
-            if (! $app->pen) {
-                $unresolved[] = ['app' => $app, 'reason' => 'No PEN (Program_Entry_Number__c) on the application'];
-                continue;
-            }
-            if (isset($existingPens[$app->pen])) {
-                $skipped[] = ['app' => $app, 'reason' => 'Trainee already exists with this PEN', 'trainee_id' => $existingPens[$app->pen]];
-                continue;
-            }
-            if ($app->applicant_email && isset($existingEmails[strtolower($app->applicant_email)])) {
-                $skipped[] = ['app' => $app, 'reason' => 'Trainee already exists with this email', 'trainee_id' => $existingEmails[strtolower($app->applicant_email)]];
-                continue;
-            }
-
             $problems = [];
 
             $programmeId = $app->programme_name ? ($programmesByName[strtolower(trim($app->programme_name))] ?? null) : null;
@@ -335,22 +345,53 @@ class SalesforceSyncController extends Controller
             }
             if (! $examYear) $problems[] = 'No exam year on Salesforce or in Capsule exam history';
 
-            $intakeYear = $app->date_of_application ? self::intakeYearOf($app->date_of_application) : null;
-            if (! $intakeYear) $problems[] = 'No Date of Application to derive intake year from';
-
             if ($problems) {
                 $unresolved[] = ['app' => $app, 'reason' => implode('; ', $problems)];
                 continue;
             }
 
+            // ── PEN: reuse if this person already exists anywhere, else mint the next one ──
+            $existingPen = $app->applicant_email ? ($penByEmail[strtolower($app->applicant_email)] ?? null) : null;
+            $penSource = 'new';
+
+            if ($existingPen) {
+                $pen = $existingPen;
+                $penSource = 'existing';
+            } else {
+                $code = $countryCodes[$countryId] ?? null;
+                if (! $code) {
+                    $unresolved[] = ['app' => $app, 'reason' => 'Country has no country_code to build a PEN from'];
+                    continue;
+                }
+                $seqKey = "{$code}-" . self::DEFAULT_APPLICATION_YEAR;
+                if (! isset($sequenceCounters[$seqKey])) {
+                    $prefix = "{$code}/" . self::DEFAULT_APPLICATION_YEAR . "/";
+                    $max = $existingTraineePens->keys()
+                        ->filter(fn ($pen) => str_starts_with($pen, $prefix))
+                        ->map(fn ($pen) => (int) substr($pen, strlen($prefix)))
+                        ->max() ?? 0;
+                    $sequenceCounters[$seqKey] = $max;
+                }
+                $sequenceCounters[$seqKey]++;
+                $pen = sprintf('%s/%d/%02d', $code, self::DEFAULT_APPLICATION_YEAR, $sequenceCounters[$seqKey]);
+            }
+
+            // True duplicate: this exact PEN already has a trainee row for this exact programme.
+            if (isset($existingTraineePens[$pen]) && $existingTraineePens[$pen] == $programmeId) {
+                $skipped[] = ['app' => $app, 'reason' => "Trainee already exists for {$pen} in this programme", 'pen' => $pen];
+                continue;
+            }
+
             $ready[] = [
                 'app' => $app,
+                'pen' => $pen,
+                'pen_source' => $penSource,
                 'programme_id' => $programmeId,
                 'country_id' => $countryId,
                 'hospital_id' => $hospitalId,
                 'exam_year' => $examYear,
                 'exam_year_source' => $examYearSource,
-                'admission_year' => $intakeYear,
+                'admission_year' => self::DEFAULT_APPLICATION_YEAR,
             ];
         }
 
@@ -413,7 +454,7 @@ class SalesforceSyncController extends Controller
                 $gender = in_array($app->applicant_gender, ['Male', 'Female']) ? $app->applicant_gender : null;
 
                 $traineeId = DB::table('trainees')->insertGetId([
-                    'entry_number'             => $app->pen,
+                    'entry_number'             => $row['pen'],
                     'user_id'                  => $userId,
                     'admission_letter_status'  => 'Pending',
                     'invitation_letter_status' => 'Pending',

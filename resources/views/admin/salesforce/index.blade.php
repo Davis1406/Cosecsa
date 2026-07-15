@@ -251,6 +251,7 @@
                         <table id="applicationsTable" class="table table-sm table-bordered table-striped sf-table mb-0" style="width:100%;">
                             <thead>
                                 <tr>
+                                    <th>#</th>
                                     <th>Applicant</th>
                                     <th>Email</th>
                                     <th>Programme</th>
@@ -259,13 +260,11 @@
                                     <th>PEN</th>
                                     <th>Date Applied</th>
                                     <th>Stage</th>
-                                    <th>Received</th>
-                                    <th>Approved</th>
                                     <th class="no-export">View</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($applications as $app)
+                                @foreach($applications as $i => $app)
                                 @php
                                     $stageLower = strtolower($app->application_stage ?? '');
                                     $pillClass = 'stage-default';
@@ -275,6 +274,7 @@
                                     elseif (str_contains($stageLower, 'reject') || str_contains($stageLower, 'withdrawn')) $pillClass = 'stage-rejected';
                                 @endphp
                                 <tr>
+                                    <td>{{ $i + 1 }}</td>
                                     <td>{{ $app->applicant_name ?: '—' }}</td>
                                     <td>{{ $app->applicant_email ?: '—' }}</td>
                                     <td>{{ $app->programme_name ?: '—' }}</td>
@@ -285,8 +285,6 @@
                                         {{ $app->date_of_application ? \Carbon\Carbon::parse($app->date_of_application)->format('d M Y') : '—' }}
                                     </td>
                                     <td><span class="stage-pill {{ $pillClass }}">{{ $app->application_stage ?: '—' }}</span></td>
-                                    <td>{{ $app->application_received ? 'Yes' : 'No' }}</td>
-                                    <td>{{ $app->application_approved ? 'Yes' : 'No' }}</td>
                                     <td class="no-export">
                                         <a href="{{ url('admin/salesforce/view/' . $app->id) }}" class="btn btn-xs btn-light border" title="View application">
                                             <i class="fas fa-eye text-info"></i>
@@ -331,9 +329,12 @@ $(document).ready(function () {
             { extend: 'pdfHtml5',   className: 'btn-sm', title: 'Salesforce Applications', orientation: 'landscape', pageSize: 'A4', exportOptions: { columns: ':not(.no-export)' } },
             { extend: 'print',      className: 'btn-sm', exportOptions: { columns: ':not(.no-export)' } }
         ],
-        columnDefs: [{ orderable: false, targets: -1 }],
+        columnDefs: [
+            { orderable: false, targets: -1 },
+            { orderable: false, targets: 0, render: function (data, type, row, meta) { return meta.row + 1; } }
+        ],
         pageLength: 25,
-        order: [[6, 'desc']]
+        order: [[7, 'desc']]
     });
 
     var raw, levelRaw;
