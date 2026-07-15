@@ -77,9 +77,9 @@ class FeesController extends Controller
                 DB::raw("'trainee' as payer_type"),
                 't.id as payer_id',
                 'u.name as payer_name',
-                DB::raw('t.invoice_amount as amount_due'),
+                DB::raw('COALESCE(NULLIF(t.invoice_amount, 0), p.entry_fee) as amount_due'),
                 't.amount_paid',
-                DB::raw("(CASE WHEN t.fee_paid = 'Yes' THEN 'Paid' WHEN t.amount_paid > 0 THEN 'Partial' ELSE 'Unpaid' END) as status"),
+                DB::raw("(CASE WHEN t.fee_paid = 'Yes' OR (t.amount_paid > 0 AND t.amount_paid >= COALESCE(NULLIF(t.invoice_amount, 0), p.entry_fee)) THEN 'Paid' WHEN t.amount_paid > 0 THEN 'Partial' ELSE 'Unpaid' END) as status"),
                 't.payment_date as date_paid', 't.mode_of_payment',
                 't.invoice_number as reference_number',
                 DB::raw('NULL as notes'),
@@ -103,9 +103,9 @@ class FeesController extends Controller
                 DB::raw("'candidate' as payer_type"),
                 'c.id as payer_id',
                 'u.name as payer_name',
-                DB::raw('c.invoice_amount as amount_due'),
+                DB::raw('COALESCE(NULLIF(c.invoice_amount, 0), p.exam_fee) as amount_due'),
                 'c.amount_paid',
-                DB::raw("(CASE WHEN c.fee_paid = 'Yes' THEN 'Paid' WHEN c.amount_paid > 0 THEN 'Partial' ELSE 'Unpaid' END) as status"),
+                DB::raw("(CASE WHEN c.fee_paid = 'Yes' OR (c.amount_paid > 0 AND c.amount_paid >= COALESCE(NULLIF(c.invoice_amount, 0), p.exam_fee)) THEN 'Paid' WHEN c.amount_paid > 0 THEN 'Partial' ELSE 'Unpaid' END) as status"),
                 'c.payment_date as date_paid', 'c.mode_of_payment',
                 'c.invoice_number as reference_number',
                 DB::raw('NULL as notes'),
@@ -117,8 +117,48 @@ class FeesController extends Controller
             ->when($year && $year !== 'all', fn ($q) => $q->whereYear('c.updated_at', $year))
             ->get();
 
+        // ── Programme Entry Fee invoices straight from Salesforce, for
+        //    applicants who haven't produced a trainee record yet (their
+        //    application hasn't reached "Complete" stage / Populate Trainees
+        //    hasn't run for them) — otherwise their invoice data is invisible
+        //    even though it's already synced. Once a trainee_id is linked,
+        //    the row above (sourced from trainees) takes over instead. ──
+        $pendingApplicationFees = DB::table('salesforce_applications')
+            ->whereNotNull('entry_invoice_number')
+            ->whereNull('trainee_id')
+            // Skip applications whose applicant already has a trainee record
+            // (matched by email) — their entry fee is already represented via
+            // the trainees-sourced row above; without this a person can be
+            // double-counted once as a trainee and once as a bare applicant.
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('trainees')
+                    ->whereRaw('trainees.personal_email COLLATE utf8mb4_unicode_ci = salesforce_applications.applicant_email COLLATE utf8mb4_unicode_ci')
+                    ->whereNotNull('salesforce_applications.applicant_email');
+            })
+            ->select([
+                DB::raw("CONCAT('appfee-', id) as row_key"),
+                DB::raw("'Programme Fees' as fee_group"),
+                DB::raw("CONCAT('Entry Fee - ', COALESCE(programme_name, 'Unknown Programme'), ' (Salesforce)') as fee_name"),
+                DB::raw("'applicant' as payer_type"),
+                'id as payer_id',
+                'applicant_name as payer_name',
+                DB::raw('entry_invoice_amount as amount_due'),
+                DB::raw('COALESCE(entry_payment_amount, 0) as amount_paid'),
+                DB::raw("(CASE WHEN LOWER(entry_invoice_status) = 'paid' THEN 'Paid' WHEN COALESCE(entry_payment_amount,0) > 0 THEN 'Partial' ELSE 'Unpaid' END) as status"),
+                'entry_payment_date as date_paid', 'entry_payment_method as mode_of_payment',
+                'entry_invoice_number as reference_number',
+                DB::raw('NULL as notes'),
+                'synced_at as created_at',
+            ])
+            ->when($search, fn ($q) => $q->where('applicant_name', 'like', "%{$search}%"))
+            ->when($group, fn ($q) => $q->where(DB::raw('1'), $group === 'Programme Fees' ? 1 : 0))
+            ->when($payerType, fn ($q) => $q->where(DB::raw('1'), $payerType === 'applicant' ? 1 : 0))
+            ->when($year && $year !== 'all', fn ($q) => $q->whereRaw('YEAR(COALESCE(entry_payment_date, date_of_application)) = ?', [$year]))
+            ->get();
+
         $log = $feePayments->concat($subscriptionPayments)
-            ->concat($traineeFeePayments)->concat($candidateFeePayments)
+            ->concat($traineeFeePayments)->concat($candidateFeePayments)->concat($pendingApplicationFees)
             ->sortByDesc('created_at')->values();
 
         $totalCollected = $log->sum(fn ($r) => $r->amount_paid ?? 0);

@@ -306,6 +306,7 @@
                                     <option value="fellow" {{ $payerType == 'fellow' ? 'selected' : '' }}>Fellow</option>
                                     <option value="trainee" {{ $payerType == 'trainee' ? 'selected' : '' }}>Trainee</option>
                                     <option value="candidate" {{ $payerType == 'candidate' ? 'selected' : '' }}>Candidate</option>
+                                    <option value="applicant" {{ $payerType == 'applicant' ? 'selected' : '' }}>Applicant (not yet a trainee)</option>
                                 </select>
                             </div>
                             <div>
@@ -346,6 +347,7 @@
                                         'fellow'    => url('admin/associates/fellows/view/' . $row->payer_id) . '#tab-subs',
                                         'trainee'   => url('admin/associates/trainees/view/' . $row->payer_id) . '#tab-fees',
                                         'candidate' => url('admin/associates/candidates/view/' . $row->payer_id) . '#ctab-fees',
+                                        'applicant' => url('admin/salesforce/view/' . $row->payer_id),
                                         default     => null,
                                     };
                                 @endphp
