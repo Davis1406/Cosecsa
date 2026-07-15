@@ -63,8 +63,8 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-4">
-                        {{-- ── Programme Fees (read-only reference) ── --}}
+                    {{-- ── Programme Fees (read-only reference) ── --}}
+                    <div class="col-md-6">
                         <div class="card fee-card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h3 class="card-title" style="font-size:1rem;"><i class="fas fa-graduation-cap mr-2" style="color:#a02626;"></i>Programme Fees</h3>
@@ -76,7 +76,7 @@
                                 <p class="text-muted small mb-2">
                                     Entry, exam, and repeat fees per programme — amounts are managed on the
                                     <a href="{{ url('admin/programmes/list') }}">Programmes</a> page, but you can
-                                    record a payment against them below.
+                                    record a payment against them via <strong>Record a Payment</strong> below.
                                 </p>
                                 @foreach($programmes as $p)
                                     <div class="fee-type-row">
@@ -90,9 +90,11 @@
                                 @endforeach
                             </div>
                         </div>
+                    </div>
 
-                        {{-- ── Fee Type Catalog ── --}}
-                        <div class="card fee-card mt-3">
+                    {{-- ── Fee Type Catalog ── --}}
+                    <div class="col-md-6">
+                        <div class="card fee-card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h3 class="card-title" style="font-size:1rem;"><i class="fas fa-list-ul mr-2" style="color:#a02626;"></i>Fee Catalog</h3>
                                 <button type="button" class="btn btn-xs btn-outline-danger" onclick="toggleAddFeeForm()">
@@ -163,103 +165,107 @@
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {{-- ── Record Payment ── --}}
-                    <div class="col-md-8">
-                        <div class="card fee-card">
-                            <div class="card-header">
-                                <h3 class="card-title" style="font-size:1rem;"><i class="fas fa-hand-holding-usd mr-2" style="color:#a02626;"></i>Record a Payment</h3>
+                {{-- ── Record Payment (collapsed behind a + button) ── --}}
+                <div class="card fee-card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="card-title" style="font-size:1rem;"><i class="fas fa-hand-holding-usd mr-2" style="color:#a02626;"></i>Record a Payment</h3>
+                        <button type="button" class="btn btn-xs btn-outline-danger" onclick="toggleRecordPaymentForm()">
+                            <i class="fas fa-plus mr-1"></i>Record Payment
+                        </button>
+                    </div>
+                    <div class="card-body" id="recordPaymentWrapper" style="display:none;">
+                        <form method="POST" action="{{ route('admin.fees.record-payment') }}" id="recordPaymentForm">
+                            @csrf
+                            <div class="form-group position-relative">
+                                <label class="font-weight-bold small">Search Person <span class="text-danger">*</span></label>
+                                <input type="text" id="payerSearch" class="form-control" autocomplete="off"
+                                       placeholder="Type a name, email, or entry number...">
+                                <div id="payerResults"></div>
+                                <input type="hidden" name="payer_type" id="payer_type" required>
+                                <input type="hidden" name="payer_id" id="payer_id" required>
+                                <input type="hidden" name="payer_name" id="payer_name" required>
+                                <input type="hidden" name="programme_fee_amount" id="programme_fee_amount">
+                                <small class="text-muted" id="payerSelectedLabel"></small>
                             </div>
-                            <div class="card-body">
-                                <form method="POST" action="{{ route('admin.fees.record-payment') }}" id="recordPaymentForm">
-                                    @csrf
-                                    <div class="form-group position-relative">
-                                        <label class="font-weight-bold small">Search Person <span class="text-danger">*</span></label>
-                                        <input type="text" id="payerSearch" class="form-control" autocomplete="off"
-                                               placeholder="Type a name, email, or entry number...">
-                                        <div id="payerResults"></div>
-                                        <input type="hidden" name="payer_type" id="payer_type" required>
-                                        <input type="hidden" name="payer_id" id="payer_id" required>
-                                        <input type="hidden" name="payer_name" id="payer_name" required>
-                                        <input type="hidden" name="programme_fee_amount" id="programme_fee_amount">
-                                        <small class="text-muted" id="payerSelectedLabel"></small>
-                                    </div>
 
-                                    <div class="form-row">
-                                        <div class="form-group col-md-6">
-                                            <label class="font-weight-bold small">Fee Type <span class="text-danger">*</span></label>
-                                            <select name="fee_type_id" id="fee_type_id" class="form-control" required>
-                                                <option value="">-- Select fee --</option>
-                                                <optgroup label="Programme Fees" id="programmeFeeOptgroup" style="display:none;">
-                                                    <option value="programme" id="programmeFeeOption" data-amount="" data-subscription="0"></option>
-                                                </optgroup>
-                                                @foreach($feeTypes as $groupName => $types)
-                                                    <optgroup label="{{ $groupName }}">
-                                                        @foreach($types->where('is_active', true) as $ft)
-                                                            <option value="{{ $ft->id }}"
-                                                                    data-amount="{{ $ft->amount }}"
-                                                                    data-subscription="{{ $ft->applies_to_subscription ? 1 : 0 }}">
-                                                                {{ $ft->name }} ({{ $ft->currency }} {{ number_format($ft->amount, 0) }})
-                                                            </option>
-                                                        @endforeach
-                                                    </optgroup>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label class="font-weight-bold small">Fee Type <span class="text-danger">*</span></label>
+                                    <select name="fee_type_id" id="fee_type_id" class="form-control" required>
+                                        <option value="">-- Select fee --</option>
+                                        <optgroup label="Programme Fees" id="programmeFeeOptgroup" style="display:none;">
+                                            <option value="programme" id="programmeFeeOption" data-amount="" data-subscription="0"></option>
+                                        </optgroup>
+                                        @foreach($feeTypes as $groupName => $types)
+                                            <optgroup label="{{ $groupName }}">
+                                                @foreach($types->where('is_active', true) as $ft)
+                                                    <option value="{{ $ft->id }}"
+                                                            data-amount="{{ $ft->amount }}"
+                                                            data-subscription="{{ $ft->applies_to_subscription ? 1 : 0 }}">
+                                                        {{ $ft->name }} ({{ $ft->currency }} {{ number_format($ft->amount, 0) }})
+                                                    </option>
                                                 @endforeach
-                                            </select>
-                                        </div>
-                                        <div class="form-group col-md-6" id="yearField" style="display:none;">
-                                            <label class="font-weight-bold small">Subscription Year</label>
-                                            <input type="number" name="year" class="form-control" value="{{ date('Y') }}" min="2000" max="2100">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group col-md-4">
-                                            <label class="font-weight-bold small">Amount Paid <span class="text-danger">*</span></label>
-                                            <input type="number" step="0.01" min="0" name="amount_paid" id="amount_paid" class="form-control" required>
-                                        </div>
-                                        <div class="form-group col-md-4">
-                                            <label class="font-weight-bold small">Status <span class="text-danger">*</span></label>
-                                            <select name="status" class="form-control" required>
-                                                <option value="Paid">Paid</option>
-                                                <option value="Partial">Partial</option>
-                                                <option value="Unpaid">Unpaid</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group col-md-4">
-                                            <label class="font-weight-bold small">Date Paid</label>
-                                            <input type="date" name="date_paid" class="form-control" value="{{ date('Y-m-d') }}">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group col-md-6">
-                                            <label class="font-weight-bold small">Mode of Payment</label>
-                                            <select name="mode_of_payment" class="form-control">
-                                                <option value="">-- Select --</option>
-                                                <option>Bank Transfer</option>
-                                                <option>Online Payment</option>
-                                                <option>Cash</option>
-                                                <option>Cheque</option>
-                                                <option>Mobile Money</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group col-md-6">
-                                            <label class="font-weight-bold small">Reference / Invoice #</label>
-                                            <input type="text" name="reference_number" class="form-control">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="font-weight-bold small">Notes</label>
-                                        <textarea name="notes" class="form-control" rows="2"></textarea>
-                                    </div>
-
-                                    <button type="submit" class="btn font-weight-bold" style="background:#a02626;border-color:#a02626;color:#fff;">
-                                        <i class="fas fa-check mr-1"></i>Save Payment
-                                    </button>
-                                </form>
+                                            </optgroup>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-6" id="yearField" style="display:none;">
+                                    <label class="font-weight-bold small">Subscription Year</label>
+                                    <input type="number" name="year" class="form-control" value="{{ date('Y') }}" min="2000" max="2100">
+                                </div>
                             </div>
-                        </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-4">
+                                    <label class="font-weight-bold small">Amount Paid <span class="text-danger">*</span></label>
+                                    <input type="number" step="0.01" min="0" name="amount_paid" id="amount_paid" class="form-control" required>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label class="font-weight-bold small">Status <span class="text-danger">*</span></label>
+                                    <select name="status" class="form-control" required>
+                                        <option value="Paid">Paid</option>
+                                        <option value="Partial">Partial</option>
+                                        <option value="Unpaid">Unpaid</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label class="font-weight-bold small">Date Paid</label>
+                                    <input type="date" name="date_paid" class="form-control" value="{{ date('Y-m-d') }}">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label class="font-weight-bold small">Mode of Payment</label>
+                                    <select name="mode_of_payment" class="form-control">
+                                        <option value="">-- Select --</option>
+                                        <option>Bank Transfer</option>
+                                        <option>Online Payment</option>
+                                        <option>Cash</option>
+                                        <option>Cheque</option>
+                                        <option>Mobile Money</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label class="font-weight-bold small">Reference / Invoice #</label>
+                                    <input type="text" name="reference_number" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="font-weight-bold small">Notes</label>
+                                <textarea name="notes" class="form-control" rows="2"></textarea>
+                            </div>
+
+                            <div class="d-flex" style="gap:.4rem;">
+                                <button type="submit" class="btn font-weight-bold" style="background:#a02626;border-color:#a02626;color:#fff;">
+                                    <i class="fas fa-check mr-1"></i>Save Payment
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="toggleRecordPaymentForm()">Cancel</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
 
@@ -558,6 +564,12 @@ document.getElementById('fee_type_id').addEventListener('change', function () {
 function toggleAddFeeForm() {
     var form = document.getElementById('addFeeTypeForm');
     form.style.display = form.style.display === 'none' ? '' : 'none';
+}
+
+// ── Toggle Record a Payment form ────────────────────────────────────────────
+function toggleRecordPaymentForm() {
+    var el = document.getElementById('recordPaymentWrapper');
+    el.style.display = el.style.display === 'none' ? '' : 'none';
 }
 
 // ── Edit fee type ────────────────────────────────────────────────────────
