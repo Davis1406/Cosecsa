@@ -503,107 +503,85 @@
                             </a>
                         </div>
 
-                        {{-- Programme Entry Fee (from trainees table) --}}
-                        <p class="sect-div">Programme Entry Fee</p>
-                        <div class="field-row"><span class="field-lbl">Invoice Number</span><span class="field-val">{{ $trainee->invoice_number ?: '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Invoice Date</span><span class="field-val">{{ $trainee->invoice_date ?: '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Invoice Amount</span>
-                            <span class="field-val">
-                                @if($invAmtFormatted)
-                                    <strong>{{ $invAmtFormatted }}</strong>
-                                @else —
-                                @endif
-                            </span>
-                        </div>
-                        <div class="field-row"><span class="field-lbl">Invoice Status</span>
-                            <span class="field-val">
-                                @php $is = $trainee->invoice_status ?? 'Pending'; @endphp
-                                <span class="badge" style="background:{{ in_array($is,['Sent','Paid']) ? '#d4edda' : '#fff3cd' }}; color:{{ in_array($is,['Sent','Paid']) ? '#155724' : '#856404' }};">{{ $is }}</span>
-                            </span>
-                        </div>
-                        <div class="field-row"><span class="field-lbl">Fee Paid</span>
-                            <span class="field-val">
-                                @if(($trainee->fee_paid ?? 'No') === 'Yes')
-                                    <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Yes</span>
-                                @else
-                                    <span class="badge badge-danger"><i class="fas fa-times mr-1"></i>No</span>
-                                @endif
-                            </span>
-                        </div>
-                        <div class="field-row"><span class="field-lbl">Amount Paid</span>
-                            <span class="field-val">
-                                @if($amountFormatted)
-                                    <strong style="color:#a02626;">{{ $amountFormatted }}</strong>
-                                @else —
-                                @endif
-                            </span>
-                        </div>
-                        <div class="field-row"><span class="field-lbl">Mode of Payment</span><span class="field-val">{{ (!$trainee->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $trainee->mode_of_payment)) ? '—' : $trainee->mode_of_payment }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Payment Date</span><span class="field-val">{{ $trainee->payment_date ?: '—' }}</span></div>
-                        @if($sponsor)
-                        <div class="field-row"><span class="field-lbl">Sponsor</span><span class="field-val">{{ $sponsor }}</span></div>
-                        @endif
-
-                        {{-- Examination Fee (from candidates table, if linked) --}}
-                        <p class="sect-div mt-3">Examination Fee</p>
-                        @if($linkedCandidate)
-                            <div class="field-row"><span class="field-lbl">Invoice Number</span><span class="field-val">{{ $linkedCandidate->invoice_number ?? '—' }}</span></div>
-                            <div class="field-row"><span class="field-lbl">Invoice Date</span>
-                                <span class="field-val">
-                                    @if(!empty($linkedCandidate->invoice_date))
-                                        {{ \Carbon\Carbon::parse($linkedCandidate->invoice_date)->format('d M Y') }}
-                                    @else —
-                                    @endif
-                                </span>
-                            </div>
+                        {{-- Programme Entry Fee(s) — one block per programme this person has applied for --}}
+                        @forelse(($entryFees ?? collect()) as $fee)
+                            <p class="sect-div mt-3">{{ $fee->programme_name ?: 'Programme' }} — Programme Entry Fee</p>
+                            <div class="field-row"><span class="field-lbl">Invoice Number</span><span class="field-val">{{ $fee->invoice_number ?: '—' }}</span></div>
                             <div class="field-row"><span class="field-lbl">Invoice Amount</span>
                                 <span class="field-val">
-                                    @if(!empty($linkedCandidate->invoice_amount))
-                                        <strong>${{ number_format($linkedCandidate->invoice_amount) }}</strong>
+                                    @if(!empty($fee->invoice_amount))
+                                        <strong>${{ number_format($fee->invoice_amount) }}</strong>
                                     @else —
                                     @endif
                                 </span>
                             </div>
                             <div class="field-row"><span class="field-lbl">Invoice Status</span>
                                 <span class="field-val">
-                                    @php $cs = $linkedCandidate->invoice_status ?? 'Pending'; @endphp
-                                    <span class="badge" style="background:{{ $cs==='Sent' ? '#cce5ff' : '#fff3cd' }}; color:{{ $cs==='Sent' ? '#004085' : '#856404' }};">{{ $cs }}</span>
-                                </span>
-                            </div>
-                            <div class="field-row"><span class="field-lbl">Fee Paid</span>
-                                <span class="field-val">
-                                    @if(($linkedCandidate->fee_paid ?? 'No') === 'Yes')
-                                        <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Yes</span>
-                                    @else
-                                        <span class="badge badge-danger"><i class="fas fa-times mr-1"></i>No</span>
-                                    @endif
+                                    @php $is = $fee->invoice_status ?? 'Pending'; @endphp
+                                    <span class="badge" style="background:{{ in_array($is,['Sent','Paid','Complete']) ? '#d4edda' : '#fff3cd' }}; color:{{ in_array($is,['Sent','Paid','Complete']) ? '#155724' : '#856404' }};">{{ $is }}</span>
                                 </span>
                             </div>
                             <div class="field-row"><span class="field-lbl">Amount Paid</span>
                                 <span class="field-val">
-                                    @if($candAmountFormatted)
-                                        <strong style="color:#a02626;">{{ $candAmountFormatted }}</strong>
+                                    @if(!empty($fee->amount_paid))
+                                        <strong style="color:#a02626;">${{ number_format($fee->amount_paid) }}</strong>
+                                    @else —
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="field-row"><span class="field-lbl">Mode of Payment</span><span class="field-val">{{ (!$fee->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $fee->mode_of_payment)) ? '—' : $fee->mode_of_payment }}</span></div>
+                            <div class="field-row"><span class="field-lbl">Payment Date</span><span class="field-val">{{ $fee->payment_date ?: '—' }}</span></div>
+                            @if($loop->first && $sponsor)
+                            <div class="field-row"><span class="field-lbl">Sponsor</span><span class="field-val">{{ $sponsor }}</span></div>
+                            @endif
+                        @empty
+                            <p class="sect-div">Programme Entry Fee</p>
+                            <div class="text-center py-3 text-muted" style="font-size:.83rem;">
+                                <i class="fas fa-info-circle mr-1"></i>No programme entry fee record found.
+                            </div>
+                        @endforelse
+
+                        {{-- Examination Fee(s) — one block per programme this person has sat exams for --}}
+                        @forelse(($examFees ?? collect()) as $fee)
+                            <p class="sect-div mt-3">{{ $fee->programme_name ?: 'Programme' }} — Examination Fee</p>
+                            <div class="field-row"><span class="field-lbl">Invoice Number</span><span class="field-val">{{ $fee->invoice_number ?? '—' }}</span></div>
+                            <div class="field-row"><span class="field-lbl">Invoice Amount</span>
+                                <span class="field-val">
+                                    @if(!empty($fee->invoice_amount))
+                                        <strong>${{ number_format($fee->invoice_amount) }}</strong>
+                                    @else —
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="field-row"><span class="field-lbl">Invoice Status</span>
+                                <span class="field-val">
+                                    @php $cs = $fee->invoice_status ?? 'Pending'; @endphp
+                                    <span class="badge" style="background:{{ $cs==='Sent' ? '#cce5ff' : '#fff3cd' }}; color:{{ $cs==='Sent' ? '#004085' : '#856404' }};">{{ $cs }}</span>
+                                </span>
+                            </div>
+                            <div class="field-row"><span class="field-lbl">Amount Paid</span>
+                                <span class="field-val">
+                                    @if(!empty($fee->amount_paid))
+                                        <strong style="color:#a02626;">${{ number_format($fee->amount_paid) }}</strong>
                                     @else —
                                     @endif
                                 </span>
                             </div>
                             <div class="field-row"><span class="field-lbl">Payment Date</span>
                                 <span class="field-val">
-                                    @if(!empty($linkedCandidate->payment_date))
-                                        {{ \Carbon\Carbon::parse($linkedCandidate->payment_date)->format('d M Y') }}
+                                    @if(!empty($fee->payment_date))
+                                        {{ \Carbon\Carbon::parse($fee->payment_date)->format('d M Y') }}
                                     @else —
                                     @endif
                                 </span>
                             </div>
-                            <div class="field-row"><span class="field-lbl">Mode of Payment</span><span class="field-val">{{ (!$linkedCandidate->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $linkedCandidate->mode_of_payment)) ? '—' : $linkedCandidate->mode_of_payment }}</span></div>
-                            @if(!empty($linkedCandidate->sponsor))
-                            <div class="field-row"><span class="field-lbl">Sponsor</span><span class="field-val">{{ $linkedCandidate->sponsor }}</span></div>
-                            @endif
-                        @else
+                            <div class="field-row"><span class="field-lbl">Mode of Payment</span><span class="field-val">{{ (!$fee->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $fee->mode_of_payment)) ? '—' : $fee->mode_of_payment }}</span></div>
+                        @empty
+                            <p class="sect-div mt-3">Examination Fee</p>
                             <div class="text-center py-3 text-muted" style="font-size:.83rem;">
                                 <i class="fas fa-info-circle mr-1"></i>No candidate exam fee record linked to this trainee.
                             </div>
-                        @endif
+                        @endforelse
                     </div>
 
                     {{-- ── TAB: Exam Results ── --}}

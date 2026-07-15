@@ -57,6 +57,62 @@ class TraineeController extends Controller
         $linkedCandidate = User::getCandidates()->firstWhere('user_id', $trainee->user_id)
             ?? \App\Models\Candidates::where('user_id', $trainee->user_id)->first();
 
+        // ── Fee history across every programme this person has applied for,
+        //    not just this trainee row's own programme — a trainee who's
+        //    moved from MCS to FCS (or applied for multiple specialties)
+        //    stays a single profile, with all their entry/exam fees listed
+        //    here rather than spawning a second trainee record. ──
+        $ownProgrammeName = DB::table('programmes')->where('id', $trainee->programme_id)->value('name');
+        $traineeEmail = strtolower(trim($trainee->personal_email ?? $trainee->email ?? ''));
+
+        $entryFees = collect();
+        if ($traineeEmail) {
+            $entryFees = DB::table('salesforce_applications')
+                ->whereRaw('LOWER(applicant_email) = ?', [$traineeEmail])
+                ->whereNotNull('entry_invoice_number')
+                ->select(
+                    'programme_name',
+                    'entry_invoice_number as invoice_number',
+                    'entry_invoice_amount as invoice_amount',
+                    'entry_invoice_status as invoice_status',
+                    'entry_payment_amount as amount_paid',
+                    'entry_payment_date as payment_date',
+                    'entry_payment_method as mode_of_payment'
+                )
+                ->get();
+        }
+        // Include this trainee's own stored entry-fee data if its programme
+        // isn't already covered by a Salesforce application record.
+        if (! $entryFees->contains(fn ($e) => $e->programme_name === $ownProgrammeName)
+            && ($trainee->invoice_amount || $trainee->amount_paid)) {
+            $entryFees->push((object) [
+                'programme_name'  => $ownProgrammeName,
+                'invoice_number'  => $trainee->invoice_number,
+                'invoice_amount'  => $trainee->invoice_amount,
+                'invoice_status'  => $trainee->invoice_status,
+                'amount_paid'     => $trainee->amount_paid,
+                'payment_date'    => $trainee->payment_date,
+                'mode_of_payment' => $trainee->mode_of_payment,
+            ]);
+        }
+        $entryFees = $entryFees->sortBy(fn ($e) => $e->programme_name === $ownProgrammeName ? 0 : 1)->values();
+
+        $examFees = collect();
+        if ($traineeEmail) {
+            $examFees = DB::table('candidates as c')
+                ->leftJoin('programmes as p', 'p.id', '=', 'c.programme_id')
+                ->whereRaw('LOWER(c.personal_email) = ?', [$traineeEmail])
+                ->where(fn ($w) => $w->where('c.amount_paid', '>', 0)->orWhere('c.fee_paid', 'Yes')->orWhereNotNull('c.invoice_number'))
+                ->select(
+                    'p.name as programme_name',
+                    'c.invoice_number', 'c.invoice_amount', 'c.invoice_status',
+                    'c.amount_paid', 'c.payment_date', 'c.mode_of_payment'
+                )
+                ->get()
+                ->sortBy(fn ($e) => $e->programme_name === $ownProgrammeName ? 0 : 1)
+                ->values();
+        }
+
         // Data for inline tag editors
         $programmes = DB::table('programmes')->orderBy('name')->get(['id', 'name']);
         $countries  = DB::table('countries')->orderBy('country_name')->get(['id', 'country_name']);
@@ -103,7 +159,7 @@ class TraineeController extends Controller
         return view('admin.associates.trainees.view',
             compact('trainee', 'header_title', 'linkedCandidate',
                     'programmes', 'countries', 'examYears', 'firstAdmissionYear',
-                    'capsuleExamResults'));
+                    'capsuleExamResults', 'entryFees', 'examFees'));
     }
 
     /**
