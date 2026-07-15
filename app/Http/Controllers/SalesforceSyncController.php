@@ -109,9 +109,14 @@ class SalesforceSyncController extends Controller
             $trendCounts = $trendLabels->map(fn ($y) => $byYear->get($y)->count());
         }
 
-        $receivedCount = $applications->where('application_received', true)->count();
-        $approvedCount = $applications->where('application_stage', 'Complete')->count();
-        $rejectedCount = $applications->whereIn('application_stage', ['Rejected', 'Withdrawn by applicant'])->count();
+        // Application_Received__c is a manual checkbox that lags the real stage
+        // (e.g. a brand-new application can already show stage "Application
+        // Received" with the checkbox still unticked) — every synced record has
+        // *some* stage, so "received" is better read as "still active in the
+        // pipeline", i.e. not Rejected or Withdrawn.
+        $rejectedCount  = $applications->whereIn('application_stage', ['Rejected', 'Withdrawn by applicant'])->count();
+        $receivedCount  = $total - $rejectedCount;
+        $approvedCount  = $applications->where('application_stage', 'Complete')->count();
 
         return view('admin.salesforce.index', compact(
             'applications', 'stages', 'programmes', 'countries', 'levels', 'years',

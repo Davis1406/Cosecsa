@@ -164,7 +164,7 @@
                     <div class="col-6 col-md-3">
                         <div class="stat-card st-good">
                             <div class="stat-number">{{ number_format($receivedCount) }}</div>
-                            <div class="stat-label">Received</div>
+                            <div class="stat-label">Active (not rejected/withdrawn)</div>
                         </div>
                     </div>
                     <div class="col-6 col-md-3">

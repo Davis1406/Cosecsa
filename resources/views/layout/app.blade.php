@@ -4,7 +4,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $header_title ?? '' }}-Cosecsa</title>
+    @php $pageTitle = trim($__env->yieldContent('title') ?: ($header_title ?? '')); @endphp
+    <title>{{ $pageTitle !== '' ? $pageTitle . '-Cosecsa' : 'Cosecsa' }}</title>
 
     <!-- Preconnect to external domains for faster DNS resolution -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
