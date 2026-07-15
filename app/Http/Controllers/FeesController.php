@@ -127,13 +127,18 @@ class FeesController extends Controller
             ->whereNotNull('entry_invoice_number')
             ->whereNull('trainee_id')
             // Skip applications whose applicant already has a trainee record
-            // (matched by email) — their entry fee is already represented via
-            // the trainees-sourced row above; without this a person can be
-            // double-counted once as a trainee and once as a bare applicant.
+            // for the SAME programme (matched by email + programme name) —
+            // that specific entry fee is already represented via the
+            // trainees-sourced row above. Matching on email alone would
+            // wrongly hide a genuinely separate enrollment in a different
+            // programme (e.g. General Surgery already a trainee, now also
+            // applying for Plastic Surgery).
             ->whereNotExists(function ($q) {
                 $q->select(DB::raw(1))
                     ->from('trainees')
+                    ->join('programmes', 'programmes.id', '=', 'trainees.programme_id')
                     ->whereRaw('trainees.personal_email COLLATE utf8mb4_unicode_ci = salesforce_applications.applicant_email COLLATE utf8mb4_unicode_ci')
+                    ->whereRaw('programmes.name COLLATE utf8mb4_unicode_ci = salesforce_applications.programme_name COLLATE utf8mb4_unicode_ci')
                     ->whereNotNull('salesforce_applications.applicant_email');
             })
             ->select([
