@@ -122,6 +122,26 @@ class SalesforceSyncController extends Controller
     }
 
     /**
+     * View a single synced Salesforce application in full detail.
+     */
+    public function show($id)
+    {
+        $application = DB::table('salesforce_applications')->find($id);
+        if (! $application) {
+            return redirect('admin/salesforce')->with('error', 'Application not found');
+        }
+
+        $intakeYear = $application->date_of_application ? self::intakeYearOf($application->date_of_application) : null;
+
+        // If this application already produced a trainee record, link to it.
+        $trainee = $application->trainee_id
+            ? DB::table('trainees')->find($application->trainee_id)
+            : ($application->pen ? DB::table('trainees')->where('entry_number', $application->pen)->first() : null);
+
+        return view('admin.salesforce.show', compact('application', 'intakeYear', 'trainee'));
+    }
+
+    /**
      * The [start, end] SQL date bounds for intake year $y: 1 Jul (y-1) → 30 Jun (y).
      */
     protected static function intakeWindow(int $y): array
@@ -136,6 +156,20 @@ class SalesforceSyncController extends Controller
     {
         $d = \Carbon\Carbon::parse($date);
         return $d->month >= 7 ? $d->year + 1 : $d->year;
+    }
+
+    /**
+     * Salesforce's Program_Entry_Number__c comes as "MW2023-73"; the MIS
+     * convention used everywhere else (fellows/trainees/candidates) is
+     * "MW/2023/73". Normalize so PEN matching works across tables.
+     */
+    protected static function normalizePen(?string $raw): ?string
+    {
+        if (! $raw) return null;
+        if (preg_match('/^([A-Za-z]{2,3})(\d{4})-(\d+)$/', trim($raw), $m)) {
+            return strtoupper($m[1]) . '/' . $m[2] . '/' . $m[3];
+        }
+        return $raw;
     }
 
     /**
@@ -173,13 +207,16 @@ class SalesforceSyncController extends Controller
                         'applicant_name'       => $r['Applicant__r']['Name'] ?? null,
                         'applicant_email'      => $r['Applicant__r']['Email__c'] ?? null,
                         'applicant_phone'      => $r['Applicant__r']['Phone_Number__c'] ?? null,
+                        'applicant_gender'     => $r['Applicant__r']['Gender__c'] ?? null,
                         'application_level'    => $r['Application_Level__c'] ?? null,
                         'application_stage'    => $r['Application_Stage__c'] ?? null,
                         'programme_name'       => $r['COSECSA_Programme_applied_for__r']['Name'] ?? null,
+                        'hospital_name'        => $r['Base_Hospital__r']['Name'] ?? null,
                         'country'              => $r['Country__c'] ?? null,
                         'exam_year'            => $r['Exam_Year__c'] ?? null,
                         'date_of_application'  => $r['Date_of_Application__c'] ?? null,
                         'entry_number'         => $r['Entry_Number__c'] ?? null,
+                        'pen'                  => self::normalizePen($r['Program_Entry_Number__c'] ?? null),
                         'application_received' => (bool) ($r['Application_Received__c'] ?? false),
                         'application_approved' => (bool) ($r['Application_Approved__c'] ?? false),
                         'sf_created_at'        => isset($r['CreatedDate']) ? \Carbon\Carbon::parse($r['CreatedDate']) : null,
@@ -208,5 +245,207 @@ class SalesforceSyncController extends Controller
 
             return redirect('admin/salesforce')->with('error', 'Salesforce sync failed: ' . $e->getMessage());
         }
+    }
+
+    // Country name aliases between Salesforce's picklist labels and our countries table.
+    protected const COUNTRY_ALIASES = [
+        'tanzania, united republic of' => 'tanzania',
+        'united republic of tanzania'  => 'tanzania',
+        'congo, the democratic republic of the' => 'drc',
+    ];
+
+    /**
+     * Resolve every "Complete" application that hasn't produced a trainee yet,
+     * without writing anything — used by both the preview page and (for the
+     * final resolved set) the apply action.
+     */
+    protected function resolveTraineeCandidates(): array
+    {
+        $programmesByName = DB::table('programmes')->pluck('id', 'name')
+            ->mapWithKeys(fn ($id, $name) => [strtolower(trim($name)) => $id]);
+        $countriesByName = DB::table('countries')->pluck('id', 'country_name')
+            ->mapWithKeys(fn ($id, $name) => [strtolower(trim($name)) => $id]);
+        $hospitalsByName = DB::table('hospitals')->pluck('id', 'name')
+            ->mapWithKeys(fn ($id, $name) => [strtolower(trim($name)) => $id]);
+
+        $existingPens   = DB::table('trainees')->whereNotNull('entry_number')->pluck('id', 'entry_number');
+        $existingEmails = DB::table('trainees')->whereNotNull('personal_email')->pluck('id', 'personal_email')
+            ->mapWithKeys(fn ($id, $email) => [strtolower($email) => $id]);
+
+        $applications = DB::table('salesforce_applications')
+            ->where('application_stage', 'Complete')
+            ->whereNull('trainee_id')
+            ->get();
+
+        $ready = [];
+        $skipped = [];
+        $unresolved = [];
+
+        foreach ($applications as $app) {
+            if (! $app->pen) {
+                $unresolved[] = ['app' => $app, 'reason' => 'No PEN (Program_Entry_Number__c) on the application'];
+                continue;
+            }
+            if (isset($existingPens[$app->pen])) {
+                $skipped[] = ['app' => $app, 'reason' => 'Trainee already exists with this PEN', 'trainee_id' => $existingPens[$app->pen]];
+                continue;
+            }
+            if ($app->applicant_email && isset($existingEmails[strtolower($app->applicant_email)])) {
+                $skipped[] = ['app' => $app, 'reason' => 'Trainee already exists with this email', 'trainee_id' => $existingEmails[strtolower($app->applicant_email)]];
+                continue;
+            }
+
+            $problems = [];
+
+            $programmeId = $app->programme_name ? ($programmesByName[strtolower(trim($app->programme_name))] ?? null) : null;
+            if (! $programmeId) $problems[] = "No programme match for \"{$app->programme_name}\"";
+
+            $countryKey = strtolower(trim($app->country ?? ''));
+            $countryKey = self::COUNTRY_ALIASES[$countryKey] ?? $countryKey;
+            $countryId = $countryKey ? ($countriesByName[$countryKey] ?? null) : null;
+            if (! $countryId) $problems[] = "No country match for \"{$app->country}\"";
+
+            $hospitalId = null;
+            if ($app->hospital_name) {
+                $hKey = strtolower(trim($app->hospital_name));
+                $hospitalId = $hospitalsByName[$hKey] ?? null;
+                if (! $hospitalId) {
+                    $best = null; $bestPct = 0;
+                    foreach ($hospitalsByName->keys() as $name) {
+                        similar_text($hKey, $name, $pct);
+                        if ($pct > $bestPct) { $bestPct = $pct; $best = $name; }
+                    }
+                    if ($best !== null && $bestPct >= 88) $hospitalId = $hospitalsByName[$best];
+                }
+            }
+            if (! $hospitalId) $problems[] = "No hospital match for \"{$app->hospital_name}\"";
+
+            $examYear = is_numeric($app->exam_year) ? (int) $app->exam_year : null;
+            $examYearSource = 'Salesforce';
+            if (! $examYear) {
+                $capsule = DB::table('capsule_exam_results')
+                    ->where('raw_note', 'like', "%PEN: {$app->pen}%")
+                    ->whereNotNull('exam_year')
+                    ->orderByDesc('exam_year')
+                    ->first();
+                if ($capsule) {
+                    $examYear = $capsule->exam_year;
+                    $examYearSource = 'Capsule';
+                }
+            }
+            if (! $examYear) $problems[] = 'No exam year on Salesforce or in Capsule exam history';
+
+            $intakeYear = $app->date_of_application ? self::intakeYearOf($app->date_of_application) : null;
+            if (! $intakeYear) $problems[] = 'No Date of Application to derive intake year from';
+
+            if ($problems) {
+                $unresolved[] = ['app' => $app, 'reason' => implode('; ', $problems)];
+                continue;
+            }
+
+            $ready[] = [
+                'app' => $app,
+                'programme_id' => $programmeId,
+                'country_id' => $countryId,
+                'hospital_id' => $hospitalId,
+                'exam_year' => $examYear,
+                'exam_year_source' => $examYearSource,
+                'admission_year' => $intakeYear,
+            ];
+        }
+
+        return compact('ready', 'skipped', 'unresolved');
+    }
+
+    /**
+     * Preview what "Populate Trainees" would do — no writes.
+     */
+    public function populateTraineesPreview()
+    {
+        ['ready' => $ready, 'skipped' => $skipped, 'unresolved' => $unresolved] = $this->resolveTraineeCandidates();
+
+        return view('admin.salesforce.populate_trainees', compact('ready', 'skipped', 'unresolved'));
+    }
+
+    /**
+     * Create trainee records for every resolved "Complete" application.
+     */
+    public function populateTraineesApply(Request $request)
+    {
+        ['ready' => $ready] = $this->resolveTraineeCandidates();
+
+        $created = 0;
+
+        foreach ($ready as $row) {
+            $app = $row['app'];
+
+            DB::beginTransaction();
+            try {
+                $fullName = trim($app->applicant_name ?? $app->name ?? '');
+                $parts = preg_split('/\s+/', $fullName);
+                $firstname = $parts[0] ?? $fullName;
+                $lastname  = count($parts) > 1 ? end($parts) : $firstname;
+                $middlename = count($parts) > 2 ? implode(' ', array_slice($parts, 1, -1)) : null;
+
+                $user = null;
+                if ($app->applicant_email) {
+                    $user = DB::table('users')->where('email', $app->applicant_email)->first();
+                }
+                if (! $user) {
+                    $userId = DB::table('users')->insertGetId([
+                        'name'       => $fullName,
+                        'email'      => $app->applicant_email,
+                        'password'   => bcrypt(\Illuminate\Support\Str::random(16)),
+                        'user_type'  => 2,
+                        'is_deleted' => 0,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                } else {
+                    $userId = $user->id;
+                }
+
+                DB::table('user_roles')->updateOrInsert(
+                    ['user_id' => $userId, 'role_type' => 2],
+                    ['is_active' => 1, 'updated_at' => now(), 'created_at' => now()]
+                );
+
+                $gender = in_array($app->applicant_gender, ['Male', 'Female']) ? $app->applicant_gender : null;
+
+                $traineeId = DB::table('trainees')->insertGetId([
+                    'entry_number'             => $app->pen,
+                    'user_id'                  => $userId,
+                    'admission_letter_status'  => 'Pending',
+                    'invitation_letter_status' => 'Pending',
+                    'firstname'                => $firstname,
+                    'middlename'               => $middlename,
+                    'lastname'                 => $lastname,
+                    'personal_email'           => $app->applicant_email,
+                    'gender'                   => $gender,
+                    'programme_id'             => $row['programme_id'],
+                    'hospital_id'              => $row['hospital_id'],
+                    'country_id'               => $row['country_id'],
+                    'exam_year'                => $row['exam_year'],
+                    'admission_year'           => $row['admission_year'],
+                    'training_year'            => 1,
+                    'programme_period'         => 1,
+                    'status'                   => 'Active',
+                    'amount_paid'              => 0,
+                    'is_promoted'              => '0',
+                    'created_at'               => now(),
+                    'updated_at'               => now(),
+                ]);
+
+                DB::table('salesforce_applications')->where('id', $app->id)->update(['trainee_id' => $traineeId]);
+
+                DB::commit();
+                $created++;
+            } catch (\Exception $e) {
+                DB::rollBack();
+                \Illuminate\Support\Facades\Log::error('populateTraineesApply failed for application ' . $app->id, ['error' => $e->getMessage()]);
+            }
+        }
+
+        return redirect('admin/salesforce')->with('success', "{$created} trainee(s) created from Complete applications");
     }
 }

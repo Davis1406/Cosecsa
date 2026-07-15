@@ -92,8 +92,9 @@ class SalesforceCrmService
     public function getApplications(?string $modifiedSince = null): array
     {
         $soql = "SELECT Id, Name, Applicant__r.Name, Applicant__r.Email__c, Applicant__r.Phone_Number__c, "
-              . "Application_Level__c, Application_Stage__c, COSECSA_Programme_applied_for__r.Name, "
-              . "Country__c, Exam_Year__c, Date_of_Application__c, Entry_Number__c, "
+              . "Applicant__r.Gender__c, Application_Level__c, Application_Stage__c, "
+              . "COSECSA_Programme_applied_for__r.Name, Base_Hospital__r.Name, "
+              . "Country__c, Exam_Year__c, Date_of_Application__c, Entry_Number__c, Program_Entry_Number__c, "
               . "Application_Received__c, Application_Approved__c, CreatedDate, LastModifiedDate "
               . "FROM Application__c ";
 

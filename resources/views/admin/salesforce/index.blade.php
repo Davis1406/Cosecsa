@@ -60,6 +60,9 @@
                         </div>
                     </div>
                     <div class="d-flex" style="gap:.5rem;">
+                        <a href="{{ url('admin/salesforce/populate-trainees') }}" class="btn btn-light btn-sm font-weight-bold" style="color:#a02626;">
+                            <i class="fas fa-user-graduate mr-1"></i>Populate Trainees
+                        </a>
                         <button type="button" onclick="window.print()" class="btn btn-light btn-sm font-weight-bold" style="color:#a02626;">
                             <i class="fas fa-print mr-1"></i>Print / Export Report
                         </button>
@@ -258,6 +261,7 @@
                                     <th>Stage</th>
                                     <th>Received</th>
                                     <th>Approved</th>
+                                    <th class="no-export">View</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -276,13 +280,18 @@
                                     <td>{{ $app->programme_name ?: '—' }}</td>
                                     <td>{{ $app->application_level ?: '—' }}</td>
                                     <td>{{ $app->country ?: '—' }}</td>
-                                    <td>{{ $app->entry_number ?: '—' }}</td>
+                                    <td>{{ $app->pen ?: $app->entry_number ?: '—' }}</td>
                                     <td data-order="{{ $app->date_of_application }}">
                                         {{ $app->date_of_application ? \Carbon\Carbon::parse($app->date_of_application)->format('d M Y') : '—' }}
                                     </td>
                                     <td><span class="stage-pill {{ $pillClass }}">{{ $app->application_stage ?: '—' }}</span></td>
                                     <td>{{ $app->application_received ? 'Yes' : 'No' }}</td>
                                     <td>{{ $app->application_approved ? 'Yes' : 'No' }}</td>
+                                    <td class="no-export">
+                                        <a href="{{ url('admin/salesforce/view/' . $app->id) }}" class="btn btn-xs btn-light border" title="View application">
+                                            <i class="fas fa-eye text-info"></i>
+                                        </a>
+                                    </td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -316,12 +325,13 @@ $(document).ready(function () {
     $('#applicationsTable').DataTable({
         dom: 'Bfrtip',
         buttons: [
-            { extend: 'copyHtml5',  className: 'btn-sm' },
-            { extend: 'csvHtml5',   className: 'btn-sm', title: 'salesforce_applications' },
-            { extend: 'excelHtml5', className: 'btn-sm', title: 'salesforce_applications' },
-            { extend: 'pdfHtml5',   className: 'btn-sm', title: 'Salesforce Applications', orientation: 'landscape', pageSize: 'A4' },
-            { extend: 'print',      className: 'btn-sm' }
+            { extend: 'copyHtml5',  className: 'btn-sm', exportOptions: { columns: ':not(.no-export)' } },
+            { extend: 'csvHtml5',   className: 'btn-sm', title: 'salesforce_applications', exportOptions: { columns: ':not(.no-export)' } },
+            { extend: 'excelHtml5', className: 'btn-sm', title: 'salesforce_applications', exportOptions: { columns: ':not(.no-export)' } },
+            { extend: 'pdfHtml5',   className: 'btn-sm', title: 'Salesforce Applications', orientation: 'landscape', pageSize: 'A4', exportOptions: { columns: ':not(.no-export)' } },
+            { extend: 'print',      className: 'btn-sm', exportOptions: { columns: ':not(.no-export)' } }
         ],
+        columnDefs: [{ orderable: false, targets: -1 }],
         pageLength: 25,
         order: [[6, 'desc']]
     });

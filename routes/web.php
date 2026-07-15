@@ -186,8 +186,11 @@ Route::post('admin/capsule/sync',            [CapsuleSyncController::class, 'syn
 Route::post('admin/capsule/sync/{id}',       [CapsuleSyncController::class, 'syncOne'])->name('admin.capsule.sync.one');
 
 // Salesforce CRM Integration
-Route::get('admin/salesforce',      [SalesforceSyncController::class, 'index'])->name('admin.salesforce.index');
-Route::post('admin/salesforce/sync', [SalesforceSyncController::class, 'sync'])->name('admin.salesforce.sync');
+Route::get('admin/salesforce',           [SalesforceSyncController::class, 'index'])->name('admin.salesforce.index');
+Route::post('admin/salesforce/sync',     [SalesforceSyncController::class, 'sync'])->name('admin.salesforce.sync');
+Route::get('admin/salesforce/view/{id}', [SalesforceSyncController::class, 'show'])->name('admin.salesforce.show');
+Route::get('admin/salesforce/populate-trainees',  [SalesforceSyncController::class, 'populateTraineesPreview'])->name('admin.salesforce.populate-trainees.preview');
+Route::post('admin/salesforce/populate-trainees', [SalesforceSyncController::class, 'populateTraineesApply'])->name('admin.salesforce.populate-trainees.apply');
 
 // Fellow Labels Settings (Admin)
 Route::get('admin/settings/fellow-labels',          [FellowLabelController::class,'index'])->name('admin.settings.fellow-labels');
