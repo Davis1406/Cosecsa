@@ -383,6 +383,13 @@
                     {{-- ── TAB: Fees & Payments ── --}}
                     <div class="tab-pane fade" id="ctab-fees">
 
+                        @php $cName = $candidate->name ?? trim(($candidate->firstname ?? '') . ' ' . ($candidate->lastname ?? '')); @endphp
+                        <div class="text-right mb-2">
+                            <a href="{{ url('admin/fees') }}?q={{ urlencode($cName) }}&year=all" class="btn btn-xs btn-outline-danger">
+                                <i class="fas fa-money-check-alt mr-1"></i>View in Fees Log
+                            </a>
+                        </div>
+
                         {{-- Exam Fee (from candidates table) --}}
                         <p class="sect-div">Examination Fee</p>
                         <div class="field-row"><span class="field-lbl">Invoice Number</span><span class="field-val">{{ $candidate->invoice_number ?? '—' }}</span></div>
@@ -431,7 +438,7 @@
                                 @endif
                             </span>
                         </div>
-                        <div class="field-row"><span class="field-lbl">Mode of Payment</span><span class="field-val">{{ $candidate->mode_of_payment ?? '—' }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Mode of Payment</span><span class="field-val">{{ (!$candidate->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $candidate->mode_of_payment)) ? '—' : $candidate->mode_of_payment }}</span></div>
                         @if($sponsor)
                         <div class="field-row"><span class="field-lbl">Sponsor</span><span class="field-val">{{ $sponsor }}</span></div>
                         @endif
@@ -454,7 +461,7 @@
                                     @endif
                                 </span>
                             </div>
-                            <div class="field-row"><span class="field-lbl">Mode of Payment</span><span class="field-val">{{ $linkedTrainee->mode_of_payment ?? '—' }}</span></div>
+                            <div class="field-row"><span class="field-lbl">Mode of Payment</span><span class="field-val">{{ (!$linkedTrainee->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $linkedTrainee->mode_of_payment)) ? '—' : $linkedTrainee->mode_of_payment }}</span></div>
                             <div class="field-row"><span class="field-lbl">Payment Date</span><span class="field-val">{{ $linkedTrainee->payment_date ?? '—' }}</span></div>
                             @if(!empty($linkedTrainee->sponsor) && $linkedTrainee->sponsor !== 'null')
                             <div class="field-row"><span class="field-lbl">Sponsor</span><span class="field-val">{{ $linkedTrainee->sponsor }}</span></div>

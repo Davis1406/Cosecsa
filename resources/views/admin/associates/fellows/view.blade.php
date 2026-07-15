@@ -579,12 +579,19 @@
 
                     {{-- ── TAB: Subscriptions ── --}}
                     <div class="tab-pane fade" id="tab-subs">
+                        @php $fellowName = trim(($fellow->title ?? '') . ' ' . ($fellow->firstname ?? '') . ' ' . ($fellow->lastname ?? '')); @endphp
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="sect-div mb-0" style="border:none;">Annual Dues</span>
-                            <a href="{{ url('admin/associates/fellows/subscriptions/' . $fellow->fellow_id) }}"
-                               class="btn btn-xs btn-outline-warning" style="font-size:.72rem; border-radius:10px;">
-                                <i class="fas fa-plus mr-1"></i> Manage
-                            </a>
+                            <div>
+                                <a href="{{ url('admin/fees') }}?q={{ urlencode($fellowName) }}&year=all"
+                                   class="btn btn-xs btn-outline-danger" style="font-size:.72rem; border-radius:10px;">
+                                    <i class="fas fa-money-check-alt mr-1"></i> View in Fees Log
+                                </a>
+                                <a href="{{ url('admin/associates/fellows/subscriptions/' . $fellow->fellow_id) }}"
+                                   class="btn btn-xs btn-outline-warning" style="font-size:.72rem; border-radius:10px;">
+                                    <i class="fas fa-plus mr-1"></i> Manage
+                                </a>
+                            </div>
                         </div>
                         @if($subscriptions->count())
                         <div class="table-responsive">
