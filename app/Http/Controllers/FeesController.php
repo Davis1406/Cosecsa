@@ -223,8 +223,7 @@ class FeesController extends Controller
                   ->orWhere('t.personal_email', 'like', $like)
                   ->orWhere('t.entry_number', 'like', $like);
             })
-            ->select('t.id', 'u.name', 't.entry_number', 'p.name as programme_name',
-                     'p.entry_fee', 'p.repeat_fee', 't.repeat_paper_one', 't.repeat_paper_two')
+            ->select('t.id', 'u.name', 't.entry_number', 'p.name as programme_name', 'p.entry_fee')
             ->limit(8)->get()
             ->map(fn ($r) => [
                 'type' => 'trainee', 'id' => $r->id, 'name' => $r->name,
@@ -232,7 +231,7 @@ class FeesController extends Controller
                 'category_name' => null,
                 'programme_fee' => $r->programme_name ? [
                     'label'  => "Entry Fee - {$r->programme_name}",
-                    'amount' => ($r->repeat_paper_one === 'Yes' || $r->repeat_paper_two === 'Yes') ? $r->repeat_fee : $r->entry_fee,
+                    'amount' => $r->entry_fee,
                 ] : null,
             ]);
 
