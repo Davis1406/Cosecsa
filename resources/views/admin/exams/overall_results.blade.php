@@ -75,6 +75,15 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div>
+                            <label class="d-block mb-1 small font-weight-bold text-muted">Result</label>
+                            <select name="result" class="form-control form-control-sm" style="width:120px;" onchange="this.form.submit()">
+                                <option value="">All results</option>
+                                <option value="Pass"   {{ $selectedResult == 'Pass'   ? 'selected' : '' }}>Pass</option>
+                                <option value="Fail"   {{ $selectedResult == 'Fail'   ? 'selected' : '' }}>Fail</option>
+                                <option value="Absent" {{ $selectedResult == 'Absent' ? 'selected' : '' }}>Absent</option>
+                            </select>
+                        </div>
                         <div class="d-flex" style="gap:.4rem;">
                             <a href="{{ url('admin/exams/overall_results') }}" class="btn btn-outline-secondary btn-sm">Clear</a>
                         </div>
@@ -195,6 +204,7 @@
                                         <tr>
                                             <th>#</th>
                                             <th>Name</th>
+                                            <th>Email</th>
                                             <th>Programme</th>
                                             <th>Year</th>
                                             <th class="text-center">Part I (%)</th>
@@ -218,6 +228,7 @@
                                         <tr>
                                             <td>{{ $i + 1 }}</td>
                                             <td>{{ $displayName }}</td>
+                                            <td>{{ $r->email ?? '—' }}</td>
                                             <td>{{ $r->programme_name ?? $r->specialty ?? '—' }}</td>
                                             <td>{{ $r->exam_year }}</td>
                                             <td class="text-center">
@@ -271,7 +282,7 @@ $(document).ready(function () {
     });
     $('#detailTable').DataTable({
         pageLength: 25,
-        order: [[3, 'desc'], [1, 'asc']]
+        order: [[4, 'desc'], [1, 'asc']]
     });
 });
 </script>

@@ -2197,10 +2197,13 @@ public function delete($id)
                 WHERE w2.wrn = 1
             ) as w");
 
+        $selectedResult = $request->input('result');
+
         $query = (clone $consolidated)
             ->leftJoin('programmes as p', 'p.id', '=', 'final.programme_id')
             ->leftJoin('trainees as t', 't.id', '=', 'final.trainee_id')
             ->leftJoin('users as u', 'u.id', '=', 't.user_id')
+            ->leftJoin('fellows as fe', 'fe.id', '=', 'final.fellow_id')
             ->leftJoin($writtenScores, function ($j) {
                 $j->on('w.group_key', '=', 'final.group_key')
                   ->on('w.specialty', '=', 'final.specialty')
@@ -2212,7 +2215,8 @@ public function delete($id)
                 w.score as part1_score,
                 final.trainee_id, u.name as trainee_name,
                 COALESCE(final.fellow_id, w.fellow_id) as fellow_id,
-                p.name as programme_name, final.programme_id
+                p.name as programme_name, final.programme_id,
+                COALESCE(u.email, fe.personal_email) as email
             ");
 
         if ($selectedYear) {
@@ -2220,6 +2224,9 @@ public function delete($id)
         }
         if ($selectedProgramme) {
             $query->where('final.programme_id', $selectedProgramme);
+        }
+        if ($selectedResult) {
+            $query->where('final.result', $selectedResult);
         }
 
         $results = $query->orderByDesc('final.exam_year')
@@ -2258,6 +2265,7 @@ public function delete($id)
             'years'             => $years,
             'selectedYear'      => $selectedYear,
             'selectedProgramme' => $selectedProgramme,
+            'selectedResult'    => $selectedResult,
         ];
         return view('admin.exams.overall_results', $data);
     }
