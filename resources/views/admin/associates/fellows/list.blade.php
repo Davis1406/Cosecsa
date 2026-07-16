@@ -286,7 +286,7 @@ $(document).ready(function () {
         var name = (r.name || '-').replace(/</g, '&lt;');
         var email = (r.email || '-').replace(/</g, '&lt;');
         var country = (r.country_name || '-').replace(/</g, '&lt;');
-        var specialty = (r.specialty || '-').replace(/</g, '&lt;');
+        var specialty = (r.specialty || '-').replace(/^FCS\s+/i, '').replace(/</g, '&lt;');
         return '<tr data-row-kind="extra" data-country="' + country + '" data-programme="" ' +
             'data-ftype="Fellow by Examination" data-year="' + (r.year || '') + '" data-gender="" data-alumni="1">' +
             '<td class="row-num"></td>' +
