@@ -119,8 +119,12 @@
                         <div class="form-row">
                             <div class="form-group col-md-4">
                                 <label class="form-label">Fellowship Type <span class="req">*</span></label>
-                                <select name="category_id" class="form-control form-control-sm" required>
-                                    <option value="" disabled>Select…</option>
+                                <select name="category_id" class="form-control form-control-sm">
+                                    <option value="" {{ empty($fellow->category_id) ? 'selected' : '' }}>(Blank / not yet confirmed)</option>
+                                    <option value="1"  {{ $fellow->category_id==1  ? 'selected':'' }}>Member</option>
+                                    <option value="2"  {{ $fellow->category_id==2  ? 'selected':'' }}>Associate Fellow</option>
+                                    <option value="3"  {{ $fellow->category_id==3  ? 'selected':'' }}>Affiliate Member</option>
+                                    <option value="4"  {{ $fellow->category_id==4  ? 'selected':'' }}>Associate Member</option>
                                     <option value="5"  {{ $fellow->category_id==5  ? 'selected':'' }}>Fellow by Examination</option>
                                     <option value="6"  {{ $fellow->category_id==6  ? 'selected':'' }}>Foundation Fellow</option>
                                     <option value="7"  {{ $fellow->category_id==7  ? 'selected':'' }}>Fellow By Election</option>
