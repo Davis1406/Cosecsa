@@ -2180,10 +2180,21 @@ public function delete($id)
             ) as final"))
             ->where('final.rn', 1);
 
+        // A candidate can have multiple "Written" stage rows on file (resits,
+        // or duplicate sync entries) — collapse to their single best attempt
+        // per specialty/year before joining, otherwise the join below fans
+        // the one "final" row out into one duplicate per Written match.
         $writtenScores = \DB::raw("(
-                SELECT cer.*, {$groupKeyExpr} AS group_key
-                FROM capsule_exam_results cer
-                WHERE cer.exam_type = 'Written'
+                SELECT w2.* FROM (
+                    SELECT cer.*, {$groupKeyExpr} AS group_key,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY {$groupKeyExpr}, cer.specialty, cer.exam_year
+                               ORDER BY cer.score DESC, cer.id DESC
+                           ) as wrn
+                    FROM capsule_exam_results cer
+                    WHERE cer.exam_type = 'Written'
+                ) as w2
+                WHERE w2.wrn = 1
             ) as w");
 
         $query = (clone $consolidated)
