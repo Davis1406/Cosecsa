@@ -42,7 +42,11 @@
                             ['id'=>'filterType',      'label'=>'Fellowship Type', 'options'=>$filterTypes,              'default'=>[], 'optLabels'=>[]],
                             ['id'=>'filterYear',      'label'=>'Year',            'options'=>$filterYears,              'default'=>[], 'optLabels'=>[]],
                             ['id'=>'filterGender',    'label'=>'Gender',          'options'=>collect(['Male','Female']), 'default'=>[], 'optLabels'=>[]],
-                            ['id'=>'filterAlumni',    'label'=>'Alumni',          'options'=>collect(['1','0']),         'default'=>[], 'optLabels'=>['1'=>'Alumni Only','0'=>'Non-Alumni Only']],
+                            ['id'=>'filterAlumni',    'label'=>'Alumni',          'options'=>collect(['unique','all','0']), 'default'=>[], 'optLabels'=>[
+                                'unique' => 'Unique Alumni (' . number_format($uniqueAlumniCount ?? 0) . ')',
+                                'all'    => 'All Alumni (' . number_format($allAlumniCount ?? 0) . ')',
+                                '0'      => 'Non-Alumni Only',
+                            ]],
                         ];
                         @endphp
                         <div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
@@ -56,9 +60,7 @@
                                 <div class="chk-filter-panel shadow" id="{{ $fd['id'] }}-panel" style="display:none;">
                                     @if($fd['id'] === 'filterAlumni')
                                     <div class="small text-muted mb-2" style="border-bottom:1px solid #eee;padding-bottom:.4rem;">
-                                        Fellow by Examination alumni:<br>
-                                        <strong>Unique alumni:</strong> {{ number_format($uniqueAlumniCount ?? 0) }} (one row per person)<br>
-                                        <strong>All alumni:</strong> {{ number_format($allAlumniCount ?? 0) }} (counts each extra FCS specialty separately)
+                                        "Unique" = one row per person. "All" also lists each additional FCS specialty as its own row, matching the source alumni spreadsheet.
                                     </div>
                                     @endif
                                     @if(collect($fd['options'])->count() > 6)
@@ -107,7 +109,8 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($getFellows as $value)
-                                        <tr data-country="{{ $value->country_name ?? '' }}"
+                                        <tr data-row-kind="primary"
+                                            data-country="{{ $value->country_name ?? '' }}"
                                             data-programme="{{ $value->programme_name ?? '' }}"
                                             data-ftype="{{ $value->fellowship_type ?? '' }}"
                                             data-year="{{ $value->fellowship_year ?? '' }}"
@@ -178,6 +181,7 @@
         </section>
     </div>
 </div>
+<script type="application/json" id="extraAlumniRowsData">{!! json_encode($extraAlumniRows ?? []) !!}</script>
 @endsection
 
 @push('styles')
@@ -263,9 +267,51 @@ $(document).ready(function () {
         if (chkType.length      && chkType.indexOf(String($row.data('ftype')          || '')) === -1) return false;
         if (chkYear.length      && chkYear.indexOf(String($row.data('year')           || '')) === -1) return false;
         if (chkGender.length    && chkGender.indexOf(String($row.data('gender')       || '')) === -1) return false;
-        if (chkAlumni.length    && chkAlumni.indexOf(String($row.data('alumni')))             === -1) return false;
+        if (chkAlumni.length) {
+            var wantsYes = chkAlumni.indexOf('unique') !== -1 || chkAlumni.indexOf('all') !== -1;
+            var wantsNo  = chkAlumni.indexOf('0') !== -1;
+            var rowAlumni = String($row.data('alumni'));
+            if (!((wantsYes && rowAlumni === '1') || (wantsNo && rowAlumni === '0'))) return false;
+        }
         return true;
     });
+
+    // ── "All Alumni" split-specialty rows — added/removed from the table
+    // (not just hidden), so the default row count never changes unless this
+    // view is actively selected. ──
+    var extraAlumniRows = JSON.parse(document.getElementById('extraAlumniRowsData').textContent || '[]');
+    var extraRowsAdded  = false;
+
+    function buildExtraRowHtml(r) {
+        var name = (r.name || '-').replace(/</g, '&lt;');
+        var email = (r.email || '-').replace(/</g, '&lt;');
+        var country = (r.country_name || '-').replace(/</g, '&lt;');
+        var specialty = (r.specialty || '-').replace(/</g, '&lt;');
+        return '<tr data-row-kind="extra" data-country="' + country + '" data-programme="" ' +
+            'data-ftype="Fellow by Examination" data-year="' + (r.year || '') + '" data-gender="" data-alumni="1">' +
+            '<td class="row-num"></td>' +
+            '<td><a href="' + '{{ url("admin/associates/fellows/view") }}' + '/' + r.fellow_id + '" style="color:#3a7a1a;text-decoration:none;">' + name + ' <span class="text-muted small">(add\'l specialty)</span></a></td>' +
+            '<td>' + email + '</td>' +
+            '<td>' + country + '</td>' +
+            '<td>' + specialty + '</td>' +
+            '<td>Fellow by Examination</td>' +
+            '<td>' + (r.year || '-') + '</td>' +
+            '<td></td>' +
+            '</tr>';
+    }
+
+    function syncExtraAlumniRows() {
+        var dt = $('#fellowstable').DataTable();
+        var wantsAll = getChecked('filterAlumni').indexOf('all') !== -1;
+        if (wantsAll && !extraRowsAdded) {
+            var nodes = extraAlumniRows.map(function (r) { return $(buildExtraRowHtml(r))[0]; });
+            dt.rows.add(nodes).draw(false);
+            extraRowsAdded = true;
+        } else if (!wantsAll && extraRowsAdded) {
+            dt.rows(function (idx, d, node) { return $(node).data('row-kind') === 'extra'; }).remove().draw(false);
+            extraRowsAdded = false;
+        }
+    }
 
     // Panel open/close
     $(document).on('click', '.chk-filter-btn', function (e) {
@@ -288,16 +334,30 @@ $(document).ready(function () {
 
     // Checkbox change
     $(document).on('change', '.chk-option', function () {
-        updateBadge($(this).data('filter'));
+        var filterId = $(this).data('filter');
+        // "Unique Alumni" and "All Alumni" are two views of the same set, not
+        // combinable filters — selecting one clears the other.
+        if (filterId === 'filterAlumni' && this.checked && (this.value === 'unique' || this.value === 'all')) {
+            var other = this.value === 'unique' ? 'all' : 'unique';
+            $('.chk-option[data-filter="filterAlumni"][value="' + other + '"]').prop('checked', false);
+        }
+        updateBadge(filterId);
+        if (filterId === 'filterAlumni') syncExtraAlumniRows();
         redraw();
     });
 
     // Select All / Clear per panel
     $(document).on('click', '.chk-select-all', function (e) {
         e.preventDefault();
-        var $panel = $(this).closest('.chk-filter-panel');
+        var $panel   = $(this).closest('.chk-filter-panel');
+        var filterId = $panel.closest('.chk-filter-wrap').data('filter');
         $panel.find('.chk-item:visible .chk-option').prop('checked', true);
-        updateBadge($panel.closest('.chk-filter-wrap').data('filter'));
+        if (filterId === 'filterAlumni') {
+            // "all" supersedes "unique" when both would otherwise be checked
+            $('.chk-option[data-filter="filterAlumni"][value="unique"]').prop('checked', false);
+        }
+        updateBadge(filterId);
+        if (filterId === 'filterAlumni') syncExtraAlumniRows();
         redraw();
     });
     $(document).on('click', '.chk-clear', function (e) {
@@ -306,6 +366,7 @@ $(document).ready(function () {
         var filterId = $panel.closest('.chk-filter-wrap').data('filter');
         $panel.find('.chk-option').prop('checked', false);
         updateBadge(filterId);
+        if (filterId === 'filterAlumni') syncExtraAlumniRows();
         redraw();
     });
 
@@ -313,6 +374,7 @@ $(document).ready(function () {
     $('#btnClearFilters').on('click', function () {
         $('.chk-option').prop('checked', false);
         $('.chk-badge').hide();
+        syncExtraAlumniRows();
         redraw();
         $('#filteredCount').text('');
     });

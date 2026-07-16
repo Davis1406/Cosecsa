@@ -41,6 +41,42 @@ class FellowsController extends Controller
             ->selectRaw("SUM(1 + (second_fcs_specialty IS NOT NULL AND second_fcs_specialty != '') + (third_fcs_specialty IS NOT NULL AND third_fcs_specialty != '')) as total")
             ->value('total');
 
+        // Extra virtual rows for the "All Alumni" view — one per additional
+        // FCS specialty a fellow holds, added into the table client-side only
+        // when that view is selected (so the default row count never changes).
+        $extraAlumniRows = [];
+        $multiSpecFellows = DB::table('fellows as f')
+            ->leftJoin('users as u', 'u.id', '=', 'f.user_id')
+            ->leftJoin('countries as c', 'c.id', '=', 'f.country_id')
+            ->where('f.category_id', 5)->where('f.is_alumni', 1)
+            ->where(function ($q) {
+                $q->whereNotNull('f.second_fcs_specialty')->where('f.second_fcs_specialty', '!=', '')
+                  ->orWhere(function ($q2) {
+                      $q2->whereNotNull('f.third_fcs_specialty')->where('f.third_fcs_specialty', '!=', '');
+                  });
+            })
+            ->select('f.id as fellow_id', 'u.name as fellow_name', 'f.personal_email', 'f.country_id',
+                     'c.country_name', 'f.second_fcs_specialty', 'f.second_fcs_year',
+                     'f.third_fcs_specialty', 'f.third_fcs_year')
+            ->get();
+        foreach ($multiSpecFellows as $f) {
+            if (!empty($f->second_fcs_specialty)) {
+                $extraAlumniRows[] = [
+                    'fellow_id' => $f->fellow_id, 'name' => $f->fellow_name, 'email' => $f->personal_email,
+                    'country_id' => $f->country_id, 'country_name' => $f->country_name,
+                    'specialty' => $f->second_fcs_specialty, 'year' => $f->second_fcs_year,
+                ];
+            }
+            if (!empty($f->third_fcs_specialty)) {
+                $extraAlumniRows[] = [
+                    'fellow_id' => $f->fellow_id, 'name' => $f->fellow_name, 'email' => $f->personal_email,
+                    'country_id' => $f->country_id, 'country_name' => $f->country_name,
+                    'specialty' => $f->third_fcs_specialty, 'year' => $f->third_fcs_year,
+                ];
+            }
+        }
+        $data['extraAlumniRows'] = $extraAlumniRows;
+
         return view('admin.associates.fellows.list', $data);
     }
 
