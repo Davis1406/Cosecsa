@@ -9,12 +9,27 @@ use Illuminate\Support\Facades\Auth;
 class FeesController extends Controller
 {
     /**
-     * Fee catalog + unified payments log (fee_payments plus fellow_subscriptions,
-     * since Annual Subscription payments for fellows live in the existing table).
+     * Fee Catalogues — the reference data (fee_types + per-programme entry/exam
+     * fees). Recording payments and the payments log live on Manage Fees.
      */
-    public function index(Request $request)
+    public function catalogue(Request $request)
     {
-        $header_title = 'Fees';
+        $header_title = 'Fee Catalogues';
+
+        $feeTypes   = DB::table('fee_types')->orderBy('fee_group')->orderBy('name')->get()->groupBy('fee_group');
+        $programmes = DB::table('programmes')->where('is_deleted', 0)->orderBy('name')->get();
+
+        return view('admin.fees.catalogue', compact('header_title', 'feeTypes', 'programmes'));
+    }
+
+    /**
+     * Manage Fees — unified payments log (fee_payments plus fellow_subscriptions,
+     * since Annual Subscription payments for fellows live in the existing table)
+     * plus the Record a Payment form.
+     */
+    public function manage(Request $request)
+    {
+        $header_title = 'Manage Fees';
 
         $feeTypes = DB::table('fee_types')->orderBy('fee_group')->orderBy('name')->get()->groupBy('fee_group');
 
@@ -174,7 +189,7 @@ class FeesController extends Controller
 
         $programmes = DB::table('programmes')->where('is_deleted', 0)->orderBy('name')->get();
 
-        return view('admin.fees.index', compact(
+        return view('admin.fees.manage', compact(
             'header_title', 'feeTypes', 'programmes', 'log', 'search', 'group', 'payerType', 'status', 'year', 'years',
             'totalCollected', 'totalDue', 'paidCount'
         ));

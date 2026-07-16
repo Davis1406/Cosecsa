@@ -499,14 +499,30 @@
                             </a>
                         </li>
 
-                        <li class="nav-item">
-                            <a href="{{ url('admin/fees') }}"
-                                class="nav-link @if (Request::segment(2) == 'fees') active @endif">
+                        <li class="nav-item @if (Request::segment(2) == 'fees') menu-open @endif">
+                            <a href="#" class="nav-link @if (Request::segment(2) == 'fees') active @endif">
                                 <i class="nav-icon fas fa-money-check-alt"></i>
                                 <p>
                                     Fees
+                                    <i class="right fas fa-angle-left"></i>
                                 </p>
                             </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.fees.catalogue') }}"
+                                        class="nav-link @if (Request::segment(2) == 'fees' && Request::segment(3) == 'catalogue') active @endif">
+                                        <i class="fas fa-list-ul nav-icon"></i>
+                                        <p>Fee Catalogues</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/fees') }}"
+                                        class="nav-link @if (Request::segment(2) == 'fees' && Request::segment(3) == null) active @endif">
+                                        <i class="fas fa-hand-holding-usd nav-icon"></i>
+                                        <p>Manage Fees</p>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
 
                         <li class="nav-item">

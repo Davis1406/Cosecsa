@@ -194,7 +194,8 @@ Route::get('admin/salesforce/populate-trainees',  [SalesforceSyncController::cla
 Route::post('admin/salesforce/populate-trainees', [SalesforceSyncController::class, 'populateTraineesApply'])->name('admin.salesforce.populate-trainees.apply');
 
 // Fees
-Route::get('admin/fees',                      [FeesController::class, 'index'])->name('admin.fees.index');
+Route::get('admin/fees',                      [FeesController::class, 'manage'])->name('admin.fees.index');
+Route::get('admin/fees/catalogue',            [FeesController::class, 'catalogue'])->name('admin.fees.catalogue');
 Route::get('admin/fees/search-payer',         [FeesController::class, 'searchPayer'])->name('admin.fees.search-payer');
 Route::post('admin/fees/record-payment',      [FeesController::class, 'recordPayment'])->name('admin.fees.record-payment');
 Route::put('admin/fees/payment/{rowKey}',     [FeesController::class, 'updatePayment'])->name('admin.fees.payment.update')->where('rowKey', '.*');
