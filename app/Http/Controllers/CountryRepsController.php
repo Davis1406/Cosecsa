@@ -27,8 +27,19 @@ class CountryRepsController extends Controller
         if (!$countryRep) {
             return redirect('admin/associates/reps/list')->with('error', 'CR not found');
         }
+
+        // Every rep is also a fellow — surface their fellow profile so the
+        // page can link out to it and show their category/specialty.
+        $linkedFellow = \Illuminate\Support\Facades\DB::table('fellows as f')
+            ->leftJoin('categories as c', 'c.id', '=', 'f.category_id')
+            ->leftJoin('programmes as p', 'p.id', '=', 'f.programme_id')
+            ->where('f.user_id', $countryRep->user_id)
+            ->select('f.id as fellow_id', 'f.current_specialty', 'f.admission_year',
+                     'c.category_name', 'p.name as programme_name')
+            ->first();
+
         $header_title = "View CR";
-        return view('admin.associates.reps.view', compact('countryRep', 'header_title'));
+        return view('admin.associates.reps.view', compact('countryRep', 'header_title', 'linkedFellow'));
     }
 
     public function add()

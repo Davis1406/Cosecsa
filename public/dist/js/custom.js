@@ -428,6 +428,7 @@ $(function () {
             "columns": [
                 { "visible": true  }, { "visible": true  }, { "visible": true  },
                 { "visible": true  }, { "visible": true  }, { "visible": true  },
+                { "visible": true  },
                 { "visible": true,  "orderable": false, "searchable": false }
             ],
             "initComplete": function () { hideLoader("crstable"); },

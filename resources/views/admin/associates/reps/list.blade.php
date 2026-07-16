@@ -31,6 +31,7 @@
                 {{-- Filter Bar --}}
                 @php
                 $crCountries = collect($getRecord)->pluck('country_name')->filter()->unique()->sort()->values();
+                $crPositions = collect($getRecord)->pluck('position')->filter()->unique()->sort()->values();
                 @endphp
                 <div class="card card-outline card-secondary mb-2 shadow-sm">
                     <div class="card-body py-2">
@@ -50,6 +51,27 @@
                                         <label class="chk-item">
                                             <input type="checkbox" class="chk-option" data-filter="crFilterCountry" value="{{ $c }}">
                                             {{ $c }}
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                    <div class="chk-footer">
+                                        <a href="#" class="chk-select-all small">All</a>
+                                        <a href="#" class="chk-clear small text-danger">Clear</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chk-filter-wrap" data-filter="crFilterPosition">
+                                <button type="button" class="btn btn-sm btn-outline-secondary chk-filter-btn" data-filter="crFilterPosition">
+                                    Position
+                                    <span class="badge badge-danger chk-badge ml-1" style="display:none;font-size:.65rem;"></span>
+                                    <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
+                                </button>
+                                <div class="chk-filter-panel shadow" id="crFilterPosition-panel" style="display:none;">
+                                    <div class="chk-list">
+                                        @foreach($crPositions as $pos)
+                                        <label class="chk-item">
+                                            <input type="checkbox" class="chk-option" data-filter="crFilterPosition" value="{{ $pos }}">
+                                            {{ $pos }}
                                         </label>
                                         @endforeach
                                     </div>
@@ -80,6 +102,7 @@
                                         <tr>
                                             <th>#</th>
                                             <th>Name</th>
+                                            <th>Position</th>
                                             <th>Email</th>
                                             <th>Country</th>
                                             <th>Mobile Number</th>
@@ -89,9 +112,13 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($getRecord as $value)
-                                        <tr class="user-row" data-country="{{ $value->country_name ?? '' }}">
+                                        <tr class="user-row" data-country="{{ $value->country_name ?? '' }}" data-position="{{ $value->position ?? 'Country Representative' }}">
                                             <td>{{$value->id}}</td>
                                             <td>{{$value->name}}</td>
+                                            <td>
+                                                @php $pos = $value->position ?? 'Country Representative'; @endphp
+                                                <span class="badge" style="background:{{ $pos === 'WiSA chair' ? '#f0d4e8' : ($pos === 'Overseas Representative' ? '#d4e0f0' : '#f0f0f0') }}; color:{{ $pos === 'WiSA chair' ? '#7a2a5c' : ($pos === 'Overseas Representative' ? '#2a4d7a' : '#555') }};">{{ $pos }}</span>
+                                            </td>
                                             <td>{{$value->user_email}}</td>
                                             <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{$value->country_name}}</a>@else{{$value->country_name}}@endif</td>
                                             <td>{{$value->mobile_no}}</td>
@@ -208,8 +235,10 @@ $(document).ready(function () {
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
         if (settings.nTable.id !== 'crstable') return true;
         var $row     = $($(settings.nTable).DataTable().row(dataIndex).node());
-        var chkCountry = getChecked('crFilterCountry');
+        var chkCountry  = getChecked('crFilterCountry');
+        var chkPosition = getChecked('crFilterPosition');
         if (chkCountry.length && chkCountry.indexOf(String($row.data('country') || '')) === -1) return false;
+        if (chkPosition.length && chkPosition.indexOf(String($row.data('position') || '')) === -1) return false;
         return true;
     });
 
