@@ -54,6 +54,13 @@
                                     <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
                                 </button>
                                 <div class="chk-filter-panel shadow" id="{{ $fd['id'] }}-panel" style="display:none;">
+                                    @if($fd['id'] === 'filterAlumni')
+                                    <div class="small text-muted mb-2" style="border-bottom:1px solid #eee;padding-bottom:.4rem;">
+                                        Fellow by Examination alumni:<br>
+                                        <strong>Unique alumni:</strong> {{ number_format($uniqueAlumniCount ?? 0) }} (one row per person)<br>
+                                        <strong>All alumni:</strong> {{ number_format($allAlumniCount ?? 0) }} (counts each extra FCS specialty separately)
+                                    </div>
+                                    @endif
                                     @if(collect($fd['options'])->count() > 6)
                                     <input type="text" class="form-control form-control-sm chk-search mb-1" placeholder="Search…" autocomplete="off">
                                     @endif

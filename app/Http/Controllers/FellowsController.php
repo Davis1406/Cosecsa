@@ -31,6 +31,16 @@ class FellowsController extends Controller
         $data['filterYears']       = DB::table('fellows')
             ->whereRaw("fellowship_year REGEXP '^[0-9]{4}$'")->select('fellowship_year')
             ->groupBy('fellowship_year')->orderByDesc('fellowship_year')->pluck('fellowship_year');
+
+        // Every alumni fellow is one row regardless of how many FCS specialties
+        // they hold — "unique" counts rows, "all" also counts each extra
+        // specialty (second_fcs_specialty/third_fcs_specialty) as its own entry,
+        // matching how the source alumni spreadsheet's pivot table counts them.
+        $data['uniqueAlumniCount'] = DB::table('fellows')->where('category_id', 5)->where('is_alumni', 1)->count();
+        $data['allAlumniCount']    = DB::table('fellows')->where('category_id', 5)->where('is_alumni', 1)
+            ->selectRaw("SUM(1 + (second_fcs_specialty IS NOT NULL AND second_fcs_specialty != '') + (third_fcs_specialty IS NOT NULL AND third_fcs_specialty != '')) as total")
+            ->value('total');
+
         return view('admin.associates.fellows.list', $data);
     }
 
