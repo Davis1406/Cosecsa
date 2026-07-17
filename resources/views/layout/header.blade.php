@@ -282,7 +282,7 @@
                                             <a href="{{ url('admin/associates/reps/list') }}"
                                                 class="nav-link @if (Request::segment(3) == 'reps') active @endif">
                                                 <i class="fas fa-flag nav-icon"></i>
-                                                <p>Country Representatives</p>
+                                                <p>Country Reps</p>
                                             </a>
                                         </li>
                                     </ul>
