@@ -31,7 +31,8 @@
                       <tr>
                         <th style="width: 10px">#</th>
                         <th>Role Name</th>
-                        <th>Description</th>
+                        <th>Can Manage</th>
+                        <th>Can View Only</th>
                         <th>Admins Assigned</th>
                         <th>Action</th>
                       </tr>
@@ -45,8 +46,12 @@
                             @if($value->is_system)
                               <span class="badge badge-secondary">System</span>
                             @endif
+                            @if($value->description)
+                              <br><small class="text-muted">{{ $value->description }}</small>
+                            @endif
                           </td>
-                          <td>{{ $value->description ?: '—' }}</td>
+                          <td style="font-size:.82rem;">{{ $value->manage_summary }}</td>
+                          <td style="font-size:.82rem;" class="text-muted">{{ $value->view_summary }}</td>
                           <td>{{ $value->users_count }}</td>
                           <td>
                             <a href="{{ url('admin/roles/edit/'.$value->id) }}" class="btn btn-primary btn-sm">
@@ -60,7 +65,7 @@
                         </tr>
                       @endforeach
                       @if($getRecord->isEmpty())
-                        <tr><td colspan="5" class="text-center text-muted py-3">No roles yet.</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-3">No roles yet.</td></tr>
                       @endif
                     </tbody>
                   </table>

@@ -59,11 +59,12 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // ── Permissions: one "view" + one "manage" per module ──
         $permissionIds = [];
-        foreach ($modules as $key => $label) {
+        foreach ($modules as $key => $module) {
             foreach (['view', 'manage'] as $suffix) {
+                $description = $module[$suffix] ?? null;
                 $permission = Permission::updateOrCreate(
                     ['key' => "{$key}.{$suffix}"],
-                    ['module' => $label, 'label' => ucfirst($suffix) . " {$label}"]
+                    ['module' => $module['label'], 'label' => $description ?: (ucfirst($suffix) . " {$module['label']}")]
                 );
                 $permissionIds["{$key}.{$suffix}"] = $permission->id;
             }

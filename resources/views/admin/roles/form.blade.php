@@ -42,32 +42,46 @@
 
               <h5 class="mt-3">Permissions</h5>
               <p class="text-muted" style="font-size:.85rem;">
-                <strong>View</strong> = read-only access to the module's pages.
-                <strong>Manage</strong> = create/edit/delete/import within the module (implies View).
+                Tick <strong>View</strong> to let this role see a module's pages, and <strong>Manage</strong> for
+                the specific actions listed under it (manage always implies view).
               </p>
 
               <div class="table-responsive">
-                <table class="table table-bordered table-sm">
+                <table class="table table-bordered table-sm" style="font-size:.85rem;">
                   <thead class="thead-light">
                     <tr>
-                      <th>Module</th>
-                      <th style="width:120px;" class="text-center">View</th>
-                      <th style="width:120px;" class="text-center">Manage</th>
+                      <th style="width:16%;">Module</th>
+                      <th style="width:34%;">View grants</th>
+                      <th style="width:8%;" class="text-center">View</th>
+                      <th style="width:34%;">Manage grants</th>
+                      <th style="width:8%;" class="text-center">Manage</th>
                     </tr>
                   </thead>
                   <tbody>
-                    @foreach($modules as $key => $label)
+                    @foreach($modules as $key => $module)
                       <tr>
-                        <td>{{ $label }}</td>
-                        <td class="text-center">
+                        <td class="font-weight-bold align-middle">{{ $module['label'] }}</td>
+                        <td class="text-muted align-middle">{{ $module['view'] ?? '—' }}</td>
+                        <td class="text-center align-middle">
                           <input type="checkbox" name="permissions[]" value="{{ $key }}.view"
                                  {{ ($role && $role->is_system) || in_array($key.'.view', $checkedKeys) ? 'checked' : '' }}
                                  {{ ($role && $role->is_system) ? 'disabled' : '' }}>
                         </td>
-                        <td class="text-center">
-                          <input type="checkbox" name="permissions[]" value="{{ $key }}.manage"
-                                 {{ ($role && $role->is_system) || in_array($key.'.manage', $checkedKeys) ? 'checked' : '' }}
-                                 {{ ($role && $role->is_system) ? 'disabled' : '' }}>
+                        <td class="text-muted align-middle">
+                          @if($module['manage'] ?? null)
+                            {{ $module['manage'] }}
+                          @else
+                            <span class="font-italic">No management actions for this module</span>
+                          @endif
+                        </td>
+                        <td class="text-center align-middle">
+                          @if($module['manage'] ?? null)
+                            <input type="checkbox" name="permissions[]" value="{{ $key }}.manage"
+                                   {{ ($role && $role->is_system) || in_array($key.'.manage', $checkedKeys) ? 'checked' : '' }}
+                                   {{ ($role && $role->is_system) ? 'disabled' : '' }}>
+                          @else
+                            —
+                          @endif
                         </td>
                       </tr>
                     @endforeach

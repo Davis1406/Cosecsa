@@ -12,7 +12,28 @@ class RoleController extends Controller
 {
     public function list()
     {
-        $data['getRecord'] = Role::withCount('users')->orderBy('name')->get();
+        $modules = config('admin_permissions.modules');
+
+        $roles = Role::withCount('users')->with('permissions')->orderBy('name')->get();
+        $roles->each(function ($role) use ($modules) {
+            if ($role->is_system) {
+                $role->manage_summary = 'Everything';
+                $role->view_summary = 'Everything';
+            } else {
+                $manageLabels = collect($modules)
+                    ->filter(fn ($m, $key) => in_array("{$key}.manage", $role->permissions->pluck('key')->all()))
+                    ->pluck('label');
+                $viewOnlyLabels = collect($modules)
+                    ->filter(fn ($m, $key) => in_array("{$key}.view", $role->permissions->pluck('key')->all())
+                        && ! in_array("{$key}.manage", $role->permissions->pluck('key')->all()))
+                    ->pluck('label');
+
+                $role->manage_summary = $manageLabels->isEmpty() ? '—' : $manageLabels->implode(', ');
+                $role->view_summary = $viewOnlyLabels->isEmpty() ? '—' : $viewOnlyLabels->implode(', ');
+            }
+        });
+
+        $data['getRecord'] = $roles;
         $data['header_title'] = "Roles & Permissions";
         return view('admin.roles.list', $data);
     }
