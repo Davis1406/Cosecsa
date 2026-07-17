@@ -217,11 +217,13 @@
                                                        class="dropdown-item">
                                                         <i class="fa fa-edit"></i> Edit
                                                     </a>
+                                                    @if(Auth::user()->isSuperAdmin())
                                                     <a href="{{ url('admin/exams/delete/' . $value->ex_id) }}"
                                                        class="dropdown-item text-danger"
                                                        onclick="return confirm('Are you sure?')">
                                                         <i class="fa fa-trash"></i> Delete
                                                     </a>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </td>

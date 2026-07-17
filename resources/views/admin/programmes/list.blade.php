@@ -56,7 +56,9 @@
                           <td>{{ $programme->repeat_fee }}</td>
                           <td>
                             <a href="{{ url('admin/programmes/edit_programmes/'.$programme->id) }}" class="btn btn-primary">Edit</a>
-                            <a href="{{ url('admin/programmes/delete/'.$programme->id) }}" class="btn btn-danger">Delete</a>
+                            @if(Auth::user()->isSuperAdmin())
+                              <a href="{{ url('admin/programmes/delete/'.$programme->id) }}" class="btn btn-danger">Delete</a>
+                            @endif
                           </td>
                         </tr>
                       @endforeach

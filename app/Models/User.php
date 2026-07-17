@@ -774,6 +774,13 @@ class User extends Authenticatable
         return $this->belongsTo(\App\Models\Role::class, 'role_id');
     }
 
+    // Deleting is restricted to Super Admin regardless of what a scoped
+    // role's "manage" permission covers — see PermissionMiddleware.
+    public function isSuperAdmin(): bool
+    {
+        return $this->user_type == 1 && is_null($this->role_id);
+    }
+
     public function hasPermission(string $key): bool
     {
         if ($this->user_type != 1) {

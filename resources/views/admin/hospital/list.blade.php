@@ -237,12 +237,14 @@
                                                         <a class="dropdown-item" href="{{ url('admin/hospital/edit_hospital/' . $value->id) }}">
                                                             <i class="fas fa-edit text-warning mr-2"></i> Edit
                                                         </a>
+                                                        @if(Auth::user()->isSuperAdmin())
                                                         <div class="dropdown-divider"></div>
                                                         <a class="dropdown-item text-danger"
                                                            href="{{ url('admin/hospital/delete/' . $value->id) }}"
                                                            onclick="return confirm('Delete {{ addslashes($value->name) }}?')">
                                                             <i class="fas fa-trash mr-2"></i> Delete
                                                         </a>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </td>

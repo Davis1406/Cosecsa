@@ -181,12 +181,14 @@
                                                            href="{{ url('admin/associates/candidates/edit/' . $cid) }}">
                                                             <i class="fas fa-edit text-warning mr-2"></i> Edit
                                                         </a>
+                                                        @if(Auth::user()->isSuperAdmin())
                                                         <div class="dropdown-divider"></div>
                                                         <a class="dropdown-item text-danger"
                                                            href="{{ url('admin/associates/candidates/delete/' . ($value->c_id ?? 0)) }}"
                                                            onclick="return confirm('Delete this candidate?')">
                                                             <i class="fas fa-trash mr-2"></i> Delete
                                                         </a>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </td>

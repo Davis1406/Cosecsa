@@ -27,15 +27,25 @@ class PermissionMiddleware
             return $next($request);
         }
 
-        // Most GET routes are read-only pages, but several destructive
-        // actions in this app are wired as plain GET links (e.g.
-        // admin/associates/fellows/delete/{id} deletes immediately, no POST
-        // confirmation step) — those must require "manage" too, or a
-        // view-only role could delete records just by following a link.
+        // Deleting is Super Admin only, full stop — regardless of what a
+        // scoped role's "manage" permission covers. Several delete actions
+        // in this app are wired as plain GET links (no POST confirmation
+        // step) rather than the DELETE verb, so check both.
         $segments = explode('/', trim($path, '/'));
-        $isDestructiveGet = (bool) array_intersect(['delete', 'destroy', 'impersonate'], $segments);
+        $isDelete = $request->isMethod('delete') || (bool) array_intersect(['delete', 'destroy'], $segments);
 
-        $suffix = (in_array($request->method(), ['GET', 'HEAD']) && ! $isDestructiveGet) ? 'view' : 'manage';
+        if ($isDelete) {
+            if (is_null($user->role_id)) {
+                return $next($request); // Super Admin (grandfathered null role_id)
+            }
+            return redirect('admin/dashboard')->with('error', 'Only Super Admin can delete records.');
+        }
+
+        // Impersonating is also treated as a "manage" action even though the
+        // start route is GET, so a view-only role can't reach it by URL.
+        $isImpersonate = in_array('impersonate', $segments);
+
+        $suffix = (in_array($request->method(), ['GET', 'HEAD']) && ! $isImpersonate) ? 'view' : 'manage';
         $key = "{$module}.{$suffix}";
 
         if ($user->hasPermission($key)) {

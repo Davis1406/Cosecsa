@@ -84,7 +84,9 @@
                             @if($value->id != Auth::id())
                               @include('admin._impersonate_button', ['userId' => $value->id])
                             @endif
-                            <a href="{{ url('admin/delete/'.$value->id) }}" class="btn btn-danger btn-md">Delete</a>
+                            @if(Auth::user()->isSuperAdmin())
+                              <a href="{{ url('admin/delete/'.$value->id) }}" class="btn btn-danger btn-md">Delete</a>
+                            @endif
                           </td>
                         </tr>
                       @endforeach

@@ -70,12 +70,14 @@
                                                         <a class="dropdown-item" href="{{ url('admin/associates/members/edit/' . $value->members_id) }}">
                                                             <i class="fas fa-edit text-warning mr-2"></i> Edit
                                                         </a>
+                                                        @if(Auth::user()->isSuperAdmin())
                                                         <div class="dropdown-divider"></div>
                                                         <a class="dropdown-item text-danger"
                                                            href="{{ url('admin/associates/members/delete/' . $value->m_id) }}"
                                                            onclick="return confirm('Delete this member?')">
                                                             <i class="fas fa-trash mr-2"></i> Delete
                                                         </a>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </td>

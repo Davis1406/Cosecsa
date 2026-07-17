@@ -235,12 +235,14 @@
                                                 <a class="dropdown-item" href="{{ url('admin/hospitalprogrammes/edit/' . $data->id) }}">
                                                     <i class="fas fa-edit text-warning mr-2"></i> Edit
                                                 </a>
+                                                @if(Auth::user()->isSuperAdmin())
                                                 <div class="dropdown-divider"></div>
                                                 <a class="dropdown-item text-danger"
                                                    href="{{ url('admin/hospitalprogrammes/delete/' . $data->id) }}"
                                                    onclick="return confirm('Delete this programme record?')">
                                                     <i class="fas fa-trash mr-2"></i> Delete
                                                 </a>
+                                                @endif
                                             </div>
                                         </div>
                                     </td>
