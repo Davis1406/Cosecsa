@@ -253,6 +253,38 @@ class ReportBuilderController extends Controller
                         'examiner_designation' => 'e.examiner_designation',
                     ],
                 ];
+            case 'exams':
+                return [
+                    DB::table('capsule_exam_results as ce')
+                        ->leftJoin('programmes as p', 'p.id', '=', 'ce.programme_id'),
+                    [
+                        'name'           => 'ce.contact_name',
+                        'specialty'      => 'ce.specialty',
+                        'programme_name' => 'p.name',
+                        'exam_year'      => 'ce.exam_year',
+                        'exam_type'      => 'ce.exam_type',
+                        'score'          => 'ce.score',
+                        'result'         => 'ce.result',
+                        'note_date'      => 'ce.note_date',
+                    ],
+                ];
+            case 'admission':
+                return [
+                    DB::table('salesforce_applications as sa'),
+                    [
+                        'applicant_name'       => 'sa.applicant_name',
+                        'applicant_email'      => 'sa.applicant_email',
+                        'programme_name'       => 'sa.programme_name',
+                        'country'              => 'sa.country',
+                        'hospital_name'        => 'sa.hospital_name',
+                        'application_level'    => 'sa.application_level',
+                        'application_stage'    => 'sa.application_stage',
+                        'date_of_application'  => 'sa.date_of_application',
+                        'exam_year'            => 'sa.exam_year',
+                        'pen'                  => 'sa.pen',
+                        'entry_invoice_status' => 'sa.entry_invoice_status',
+                    ],
+                ];
             default:
                 abort(404);
         }
@@ -270,6 +302,8 @@ class ReportBuilderController extends Controller
             'members'      => ['country_id' => 'm.country_id', 'category_id' => 'm.category_id', 'gender' => 'm.gender', 'status' => 'm.status'],
             'country_reps' => ['country_id' => 'cr.country_id'],
             'examiners'    => ['country_id' => 'e.country_id', 'gender' => 'e.gender', 'status' => 'e.status'],
+            'exams'        => ['programme_id' => 'ce.programme_id', 'exam_year' => 'ce.exam_year', 'exam_type' => 'ce.exam_type', 'result' => 'ce.result'],
+            'admission'    => ['programme_name' => 'sa.programme_name', 'country' => 'sa.country', 'application_stage' => 'sa.application_stage'],
         ];
 
         return $map[$type][$key] ?? $key;
@@ -288,6 +322,23 @@ class ReportBuilderController extends Controller
                 return ['Male' => 'Male', 'Female' => 'Female'];
             case 'status':
                 return ['Active' => 'Active', 'Inactive' => 'Inactive'];
+            case 'exam_years':
+                return DB::table('capsule_exam_results')->whereNotNull('exam_year')
+                    ->distinct()->orderByDesc('exam_year')->pluck('exam_year', 'exam_year')->all();
+            case 'exam_types':
+                return DB::table('capsule_exam_results')->whereNotNull('exam_type')->where('exam_type', '!=', '')
+                    ->distinct()->orderBy('exam_type')->pluck('exam_type', 'exam_type')->all();
+            case 'exam_results':
+                return ['Pass' => 'Pass', 'Fail' => 'Fail', 'Absent' => 'Absent'];
+            case 'sf_programme_names':
+                return DB::table('salesforce_applications')->whereNotNull('programme_name')
+                    ->distinct()->orderBy('programme_name')->pluck('programme_name', 'programme_name')->all();
+            case 'sf_country_names':
+                return DB::table('salesforce_applications')->whereNotNull('country')
+                    ->distinct()->orderBy('country')->pluck('country', 'country')->all();
+            case 'application_stages':
+                return DB::table('salesforce_applications')->whereNotNull('application_stage')
+                    ->distinct()->orderBy('application_stage')->pluck('application_stage', 'application_stage')->all();
             default:
                 return [];
         }
