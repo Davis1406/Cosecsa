@@ -66,6 +66,13 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::post('admin/roles/edit/{id}', [\App\Http\Controllers\RoleController::class, 'update']);
     Route::get('admin/roles/delete/{id}', [\App\Http\Controllers\RoleController::class, 'delete']);
 
+    Route::get('admin/logs', [\App\Http\Controllers\SystemLogsController::class, 'index'])->name('admin.logs.index');
+
+    Route::get('admin/reports', [\App\Http\Controllers\ReportBuilderController::class, 'index'])->name('admin.reports.index');
+    Route::get('admin/reports/fields/{type}', [\App\Http\Controllers\ReportBuilderController::class, 'fields'])->name('admin.reports.fields');
+    Route::post('admin/reports/generate', [\App\Http\Controllers\ReportBuilderController::class, 'generate'])->name('admin.reports.generate');
+    Route::get('admin/reports/export', [\App\Http\Controllers\ReportBuilderController::class, 'export'])->name('admin.reports.export');
+
     Route::get('admin/impersonate/{id}', [\App\Http\Controllers\ImpersonationController::class, 'start'])->name('admin.impersonate.start');
 
     Route::get('admin/global-search', [DashboardController::class,'globalSearch'])->name('admin.global.search');

@@ -93,6 +93,16 @@ return [
             'view'   => 'See fellow label and designation settings',
             'manage' => 'Add, edit, delete fellow labels and designations',
         ],
+        'system_logs' => [
+            'label'  => 'System Logs',
+            'view'   => 'See login history, record changes, and dispatched emails',
+            'manage' => null,
+        ],
+        'reports' => [
+            'label'  => 'College Reports',
+            'view'   => 'Build custom reports (choose type, fields, filters) and export to Excel',
+            'manage' => null,
+        ],
     ],
 
     // Longest prefix wins — order doesn't matter, matching sorts by length.
@@ -121,5 +131,7 @@ return [
         'admin/salesforce'              => 'salesforce',
         'admin/fees'                    => 'fees',
         'admin/settings'                => 'settings',
+        'admin/logs'                    => 'system_logs',
+        'admin/reports'                 => 'reports',
     ],
 ];

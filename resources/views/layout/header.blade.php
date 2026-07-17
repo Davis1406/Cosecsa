@@ -212,6 +212,30 @@
                         </li>
                         @endif
 
+                        @if (Auth::user()->hasPermission('system_logs.view'))
+                        <li class="nav-item">
+                            <a href="{{ url('admin/logs') }}"
+                                class="nav-link @if (Request::segment(2) == 'logs') active @endif">
+                                <i class="nav-icon fas fa-clipboard-list"></i>
+                                <p>
+                                    System Logs
+                                </p>
+                            </a>
+                        </li>
+                        @endif
+
+                        @if (Auth::user()->hasPermission('reports.view'))
+                        <li class="nav-item">
+                            <a href="{{ url('admin/reports') }}"
+                                class="nav-link @if (Request::segment(2) == 'reports') active @endif">
+                                <i class="nav-icon fas fa-chart-pie"></i>
+                                <p>
+                                    College Reports
+                                </p>
+                            </a>
+                        </li>
+                        @endif
+
                         @if (Auth::user()->hasPermission('lookups.view'))
                         <li class="nav-item">
                             <a href="{{ url('admin/hospital/list') }}"

@@ -45,7 +45,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ],
         'Chief Executive Officer' => [
             'manage' => [],
-            'view'   => ['dashboard', 'trainees', 'candidates', 'trainers', 'country_reps', 'fellows', 'members', 'examiners', 'promotions', 'capsule', 'salesforce', 'fees', 'settings', 'lookups'],
+            'view'   => ['dashboard', 'trainees', 'candidates', 'trainers', 'country_reps', 'fellows', 'members', 'examiners', 'promotions', 'capsule', 'salesforce', 'fees', 'settings', 'lookups', 'system_logs'],
         ],
         'IT and Examinations Assistant' => [
             'manage' => ['examiners', 'candidates', 'promotions', 'capsule', 'salesforce', 'settings', 'lookups'],
@@ -89,6 +89,11 @@ class RolesAndPermissionsSeeder extends Seeder
             foreach ($grants['view'] as $module) {
                 $keys[] = "{$module}.view";
             }
+            // Every role can build College Reports — view and manage are
+            // granted together since there's no lesser/greater tier for it
+            // (generating/exporting a report isn't a "destructive" action).
+            $keys[] = 'reports.view';
+            $keys[] = 'reports.manage';
             $keys = array_unique($keys);
 
             $ids = array_map(fn ($k) => $permissionIds[$k], array_filter($keys, fn ($k) => isset($permissionIds[$k])));
