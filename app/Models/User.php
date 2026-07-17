@@ -776,9 +776,18 @@ class User extends Authenticatable
 
     // Deleting is restricted to Super Admin regardless of what a scoped
     // role's "manage" permission covers — see PermissionMiddleware.
+    // Super Admin is either a null role_id (grandfathered) or an explicit
+    // assignment to the protected is_system Role row.
     public function isSuperAdmin(): bool
     {
-        return $this->user_type == 1 && is_null($this->role_id);
+        if ($this->user_type != 1) {
+            return false;
+        }
+        if (is_null($this->role_id)) {
+            return true;
+        }
+
+        return (bool) ($this->adminRole?->is_system ?? false);
     }
 
     public function hasPermission(string $key): bool

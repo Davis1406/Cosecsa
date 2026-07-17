@@ -35,8 +35,8 @@ class PermissionMiddleware
         $isDelete = $request->isMethod('delete') || (bool) array_intersect(['delete', 'destroy'], $segments);
 
         if ($isDelete) {
-            if (is_null($user->role_id)) {
-                return $next($request); // Super Admin (grandfathered null role_id)
+            if ($user->isSuperAdmin()) {
+                return $next($request);
             }
             return redirect('admin/dashboard')->with('error', 'Only Super Admin can delete records.');
         }
