@@ -108,4 +108,30 @@ class SalesforceCrmService
 
         return $this->query($soql);
     }
+
+    /**
+     * Ids of Application__c records deleted in Salesforce between $start and
+     * $end (ISO8601 timestamps). Uses the REST "get deleted" endpoint, which
+     * only retains deletions for a limited trailing window (~30 days), so
+     * this is only reliable for catching deletions since the last sync.
+     */
+    public function getDeletedApplications(string $start, string $end): array
+    {
+        $http = $this->http();
+        if (! $http) {
+            return [];
+        }
+
+        $url = "/services/data/{$this->apiVersion}/sobjects/Application__c/deleted/?"
+             . http_build_query(['start' => $start, 'end' => $end]);
+
+        $response = $http->get($url);
+
+        if (! $response->successful()) {
+            Log::error('Salesforce getDeleted failed', ['status' => $response->status(), 'body' => $response->body()]);
+            return [];
+        }
+
+        return collect($response->json('deletedRecords', []))->pluck('id')->all();
+    }
 }

@@ -202,6 +202,13 @@ class SalesforceSyncController extends Controller
                 }
             }
 
+            // Salesforce only retains deleted-record history for a trailing
+            // window (~30 days) — cap how far back we look so the request
+            // stays within that window even on a first/full sync.
+            $deletedSince = $modifiedSince
+                ? \Carbon\Carbon::parse($modifiedSince)
+                : now()->subDays(29);
+
             $records = $this->salesforce->getApplications($modifiedSince);
 
             foreach ($records as $r) {
@@ -240,6 +247,36 @@ class SalesforceSyncController extends Controller
                 );
             }
 
+            // ── Pick up deletions: an application removed in Salesforce is
+            //    removed from the local cache, and if it had already produced
+            //    a trainee, that trainee record is removed too. ──
+            $deletedSfIds = $this->salesforce->getDeletedApplications(
+                $deletedSince->toIso8601String(),
+                now()->toIso8601String()
+            );
+
+            $deletedApplications = 0;
+            $deletedTrainees = 0;
+
+            foreach ($deletedSfIds as $sfId) {
+                $application = DB::table('salesforce_applications')->where('sf_id', $sfId)->first();
+                if (! $application) {
+                    continue;
+                }
+
+                $trainee = $application->trainee_id
+                    ? DB::table('trainees')->find($application->trainee_id)
+                    : ($application->pen ? DB::table('trainees')->where('entry_number', $application->pen)->first() : null);
+
+                if ($trainee) {
+                    DB::table('trainees')->where('id', $trainee->id)->delete();
+                    $deletedTrainees++;
+                }
+
+                DB::table('salesforce_applications')->where('id', $application->id)->delete();
+                $deletedApplications++;
+            }
+
             DB::table('salesforce_sync_log')->where('id', $logId)->update([
                 'status'         => 'completed',
                 'records_synced' => count($records),
@@ -247,7 +284,15 @@ class SalesforceSyncController extends Controller
                 'updated_at'     => now(),
             ]);
 
-            return redirect('admin/salesforce')->with('success', count($records) . ' application(s) synced from Salesforce');
+            $msg = count($records) . ' application(s) synced from Salesforce';
+            if ($deletedApplications > 0) {
+                $msg .= ", {$deletedApplications} removed (deleted in Salesforce)";
+                if ($deletedTrainees > 0) {
+                    $msg .= " along with {$deletedTrainees} linked trainee record(s)";
+                }
+            }
+
+            return redirect('admin/salesforce')->with('success', $msg);
 
         } catch (\Exception $e) {
             DB::table('salesforce_sync_log')->where('id', $logId)->update([
