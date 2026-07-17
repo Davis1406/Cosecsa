@@ -48,6 +48,15 @@
                     <input type="password" class="form-control" name="password" required placeholder="Password">
                   </div>
                   <div class="form-group">
+                    <label>Role</label>
+                    <select class="form-control" name="role_id">
+                      <option value="">Super Admin (full access)</option>
+                      @foreach($roles as $r)
+                        <option value="{{ $r->id }}" {{ old('role_id') == $r->id ? 'selected' : '' }}>{{ $r->name }}</option>
+                      @endforeach
+                    </select>
+                  </div>
+                  <div class="form-group">
                     <label for="exampleInputFile">Profile Image</label>
                     <div class="input-group">
                       <div class="custom-file">

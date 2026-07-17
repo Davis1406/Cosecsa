@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Role;
 use App\Models\User;
 use Hash;
 use DB;
@@ -21,6 +22,7 @@ class AdminController extends Controller
     public function add()
     {
         $data['header_title'] = "Add New Admin";
+        $data['roles'] = Role::orderBy('name')->get();
         return view('admin.add', $data);
     }
 
@@ -37,6 +39,7 @@ class AdminController extends Controller
             $user->email = trim($request->email);
             $user->password = Hash::make($request->password);
             $user->user_type = 1; // Admin
+            $user->role_id = $request->role_id ?: null;
             $user->save();
 
             // ✅ Add to user_roles
@@ -60,6 +63,7 @@ class AdminController extends Controller
         $data['getRecord'] = User::getSingleId($id);
         if (!empty($data['getRecord'])) {
             $data['header_title'] = "Edit Admin";
+            $data['roles'] = Role::orderBy('name')->get();
             return view('admin.edit', $data);
         } else {
             abort(404);
@@ -78,6 +82,7 @@ class AdminController extends Controller
             $user->name = trim($request->name);
             $user->email = trim($request->email);
             $user->user_type = 1;
+            $user->role_id = $request->role_id ?: null;
 
             if (!empty($request->password)) {
                 // Assign plain text — setPasswordAttribute mutator bcrypts it for user_type=1
@@ -108,6 +113,7 @@ class AdminController extends Controller
             );
 
             DB::commit();
+            \Illuminate\Support\Facades\Cache::forget("user_permissions_{$user->id}");
             return redirect('admin/list')->with('success', "Information successfully updated");
         } catch (\Exception $e) {
             DB::rollBack();

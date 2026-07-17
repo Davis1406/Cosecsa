@@ -52,7 +52,14 @@ Route::post('examiner-availability', [ExamsController::class, 'availabilitySubmi
 Route::get('track/open/{token}', [ExamsController::class, 'trackEmailOpen'])->name('email.track.open');
 
 // Admin Routes
-Route::group(['middleware' => 'admin'], function(){
+Route::group(['middleware' => ['admin', 'permission']], function(){
+
+    Route::get('admin/roles/list', [\App\Http\Controllers\RoleController::class, 'list']);
+    Route::get('admin/roles/add',  [\App\Http\Controllers\RoleController::class, 'add']);
+    Route::post('admin/roles/add', [\App\Http\Controllers\RoleController::class, 'insert']);
+    Route::get('admin/roles/edit/{id}',  [\App\Http\Controllers\RoleController::class, 'edit']);
+    Route::post('admin/roles/edit/{id}', [\App\Http\Controllers\RoleController::class, 'update']);
+    Route::get('admin/roles/delete/{id}', [\App\Http\Controllers\RoleController::class, 'delete']);
 
     Route::get('admin/global-search', [DashboardController::class,'globalSearch'])->name('admin.global.search');
 

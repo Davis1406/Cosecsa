@@ -10,6 +10,7 @@
           <div class="col-sm-6">
           </div>
           <div class="col-sm-6 text-right">
+            <a href="{{url('admin/roles/list')}}" class="btn btn-outline-secondary">Roles & Permissions</a>
             <a href="{{url('admin/add')}}" class="btn btn-primary">Add New Admin</a>
           </div>
         </div>
@@ -65,6 +66,7 @@
                         <th style="width: 10px">#</th>
                         <th>Name</th>
                         <th>Email</th>
+                        <th>Role</th>
                         <th>Created Date</th>
                         <th>Action</th>
                       </tr>
@@ -75,6 +77,7 @@
                           <td>{{ $loop->iteration }}</td>
                           <td>{{ $value->name }}</td>
                           <td>{{ $value->email }}</td>
+                          <td>{{ $value->adminRole->name ?? 'Super Admin' }}</td>
                           <td>{{ date('d-m-y H:i A', strtotime($value->created_at)) }}</td>
                           <td>
                             <a href="{{ url('admin/edit/'.$value->id) }}" class="btn btn-primary btn-md">Edit</a> 

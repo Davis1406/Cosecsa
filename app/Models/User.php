@@ -764,4 +764,31 @@ class User extends Authenticatable
         // Return the role from session or default to first role
         return session('active_role', $this->roles()->where('is_active', 1)->first()->role_type ?? null);
     }
+
+    // ── Fine-grained admin permissions (Role/Permission), separate from the
+    //    coarse role_type/user_type buckets above. Only meaningful for
+    //    user_type=1 accounts. A null role_id is treated as Super Admin so
+    //    existing admin accounts aren't locked out by this being added later.
+    public function adminRole()
+    {
+        return $this->belongsTo(\App\Models\Role::class, 'role_id');
+    }
+
+    public function hasPermission(string $key): bool
+    {
+        if ($this->user_type != 1) {
+            return false;
+        }
+        if (is_null($this->role_id)) {
+            return true; // grandfathered Super Admin
+        }
+
+        $keys = \Illuminate\Support\Facades\Cache::remember(
+            "user_permissions_{$this->id}",
+            300,
+            fn () => $this->adminRole?->permissions()->pluck('key')->all() ?? []
+        );
+
+        return in_array($key, $keys, true);
+    }
 }
