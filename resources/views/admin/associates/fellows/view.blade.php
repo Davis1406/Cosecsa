@@ -203,6 +203,7 @@
                    class="btn btn-sm btn-info">
                     <i class="fas fa-receipt mr-1"></i> Subscriptions
                 </a>
+                @include('admin._impersonate_button', ['userId' => $fellow->user_id ?? null])
                 <a href="{{ url('admin/associates/fellows/list') }}"
                    class="btn btn-sm btn-secondary">
                     <i class="fas fa-arrow-left mr-1"></i> Back to List

@@ -18,6 +18,7 @@
                        class="btn btn-sm btn-warning mr-1">
                         <i class="fas fa-edit mr-1"></i> Edit
                     </a>
+                    <span class="mr-1">@include('admin._impersonate_button', ['userId' => $examiner->user_id ?? null])</span>
                     {{-- Reset Confirmation: direct POST with browser confirm --}}
                     <form method="POST"
                           action="{{ route('examiner.reset.confirmation', $examiner->examin_id) }}"

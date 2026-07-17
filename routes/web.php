@@ -43,6 +43,11 @@ Route::post('reset/{token}', [AuthController::class,'PostReset']);
 Route::get('select-role', [AuthController::class, 'showRoleSelection'])->name('select.role');
 Route::post('select-role', [AuthController::class, 'selectRole']);
 
+// Runs while logged in AS the impersonated (non-admin) user, so this can't
+// sit behind the 'admin' middleware — stop() itself checks the
+// impersonator_id session key set by ImpersonationController::start().
+Route::middleware('auth')->get('impersonate/stop', [\App\Http\Controllers\ImpersonationController::class, 'stop'])->name('impersonate.stop');
+
 
 // Public examiner availability form (no login required — shareable link)
 Route::get('examiner-availability', [ExamsController::class, 'availabilityForm'])->name('examiner.availability.form');
@@ -60,6 +65,8 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::get('admin/roles/edit/{id}',  [\App\Http\Controllers\RoleController::class, 'edit']);
     Route::post('admin/roles/edit/{id}', [\App\Http\Controllers\RoleController::class, 'update']);
     Route::get('admin/roles/delete/{id}', [\App\Http\Controllers\RoleController::class, 'delete']);
+
+    Route::get('admin/impersonate/{id}', [\App\Http\Controllers\ImpersonationController::class, 'start'])->name('admin.impersonate.start');
 
     Route::get('admin/global-search', [DashboardController::class,'globalSearch'])->name('admin.global.search');
 

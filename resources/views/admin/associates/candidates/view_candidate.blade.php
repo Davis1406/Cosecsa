@@ -157,6 +157,7 @@
                     <i class="fas fa-user-md mr-1"></i> View Trainee Profile
                 </a>
                 @endif
+                @include('admin._impersonate_button', ['userId' => $candidate->user_id ?? null])
                 <a href="{{ url('admin/associates/candidates/list') }}"
                    class="btn btn-sm btn-outline-secondary">
                     <i class="fas fa-arrow-left mr-1"></i> Back

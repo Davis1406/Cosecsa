@@ -87,6 +87,7 @@ body.dark-mode .info-text, body.dark-mode .field-val { color:#e0e0e0; }
                             <i class="fas fa-user-graduate mr-1"></i> View Fellow Profile
                         </a>
                         @endif
+                        @include('admin._impersonate_button', ['userId' => $countryRep->user_id ?? null])
                         <a href="{{ url('admin/associates/reps/list') }}" class="btn btn-sm btn-secondary">
                             <i class="fas fa-arrow-left mr-1"></i> Back to List
                         </a>

@@ -37,6 +37,7 @@ return [
         'admin/add'                     => 'admin_users',
         'admin/edit'                    => 'admin_users',
         'admin/delete'                  => 'admin_users',
+        'admin/impersonate'             => 'admin_users',
         'admin/countries'               => 'lookups',
         'admin/hospital'                => 'lookups',
         'admin/programmes'              => 'lookups',

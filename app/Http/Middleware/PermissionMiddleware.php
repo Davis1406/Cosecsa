@@ -33,7 +33,7 @@ class PermissionMiddleware
         // confirmation step) — those must require "manage" too, or a
         // view-only role could delete records just by following a link.
         $segments = explode('/', trim($path, '/'));
-        $isDestructiveGet = (bool) array_intersect(['delete', 'destroy'], $segments);
+        $isDestructiveGet = (bool) array_intersect(['delete', 'destroy', 'impersonate'], $segments);
 
         $suffix = (in_array($request->method(), ['GET', 'HEAD']) && ! $isDestructiveGet) ? 'view' : 'manage';
         $key = "{$module}.{$suffix}";

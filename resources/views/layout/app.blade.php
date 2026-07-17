@@ -64,6 +64,15 @@
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
+    @if(session('impersonator_id'))
+        <div style="background:#a02626;color:#fff;text-align:center;padding:8px 12px;font-size:.85rem;position:relative;z-index:1051;">
+            <i class="fas fa-user-secret mr-1"></i>
+            Viewing as <strong>{{ Auth::user()->name ?? '' }}</strong>
+            <a href="{{ route('impersonate.stop') }}" style="color:#fff;text-decoration:underline;margin-left:10px;">
+                Return to my admin account
+            </a>
+        </div>
+    @endif
     <div class="wrapper">
 
         <!-- Preloader — covers page until CSS + JS fully initialise, preventing FOUC -->
