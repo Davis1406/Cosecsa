@@ -188,6 +188,7 @@
                             </a>
                         </li>
 
+                        @if (Auth::user()->hasPermission('admin_users.view'))
                         <li class="nav-item">
                             <a href="{{ url('admin/list') }}"
                                 class="nav-link @if (Request::segment(2) == 'list') active @endif">
@@ -197,7 +198,21 @@
                                 </p>
                             </a>
                         </li>
+                        @endif
 
+                        @if (Auth::user()->hasPermission('roles.view'))
+                        <li class="nav-item">
+                            <a href="{{ url('admin/roles/list') }}"
+                                class="nav-link @if (Request::segment(2) == 'roles') active @endif">
+                                <i class="nav-icon fas fa-user-shield"></i>
+                                <p>
+                                    Roles &amp; Permissions
+                                </p>
+                            </a>
+                        </li>
+                        @endif
+
+                        @if (Auth::user()->hasPermission('lookups.view'))
                         <li class="nav-item">
                             <a href="{{ url('admin/hospital/list') }}"
                                 class="nav-link @if (Request::segment(2) == 'hospital') active @endif">
@@ -227,7 +242,9 @@
                                 </p>
                             </a>
                         </li>
+                        @endif
 
+                        @if (Auth::user()->hasPermission('trainees.view') || Auth::user()->hasPermission('candidates.view') || Auth::user()->hasPermission('members.view') || Auth::user()->hasPermission('fellows.view') || Auth::user()->hasPermission('trainers.view') || Auth::user()->hasPermission('country_reps.view') || Auth::user()->hasPermission('promotions.view'))
                         <li class="nav-item @if (Request::segment(2) == 'associates') menu-open @endif">
                             <a href="#" class="nav-link @if (Request::segment(2) == 'associates') active @endif">
                                 <i class="nav-icon fas fa-users"></i>
@@ -237,6 +254,7 @@
                                 </p>
                             </a>
                             <ul class="nav nav-treeview">
+                                @if (Auth::user()->hasPermission('trainees.view'))
                                 <li class="nav-item">
                                     <a href="{{ url('admin/associates/trainees/trainees') }}"
                                         class="nav-link @if (Request::segment(3) == 'trainees') active @endif">
@@ -244,6 +262,8 @@
                                         <p>Trainees</p>
                                     </a>
                                 </li>
+                                @endif
+                                @if (Auth::user()->hasPermission('candidates.view'))
                                 <li class="nav-item">
                                     <a href="{{ url('admin/associates/candidates/list') }}"
                                        class="nav-link @if (Request::segment(3) == 'candidates') active @endif">
@@ -251,6 +271,8 @@
                                         <p>Candidates</p>
                                     </a>
                                 </li>
+                                @endif
+                                @if (Auth::user()->hasPermission('members.view'))
                                 <li class="nav-item">
                                     <a href="{{ url('admin/associates/members/list') }}"
                                         class="nav-link @if (Request::segment(3) == 'members') active @endif">
@@ -258,6 +280,8 @@
                                         <p>Members</p>
                                     </a>
                                 </li>
+                                @endif
+                                @if (Auth::user()->hasPermission('fellows.view'))
                                 <li class="nav-item">
                                     <a href="{{ url('admin/associates/fellows/list') }}"
                                         class="nav-link @if (Request::segment(3) == 'fellows') active @endif">
@@ -265,12 +289,15 @@
                                         <p>Fellows</p>
                                     </a>
                                 </li>
+                                @endif
+                                @if (Auth::user()->hasPermission('trainers.view') || Auth::user()->hasPermission('country_reps.view'))
                                 <li class="nav-item @if (Request::segment(3) == 'trainers' || Request::segment(3) == 'reps') menu-open @endif">
                                     <a href="#" class="nav-link">
                                         <i class="fas fa-stethoscope nav-icon"></i>
                                         <p>PD's & Country Reps<i class="right fas fa-angle-left"></i></p>
                                     </a>
                                     <ul class="nav nav-treeview">
+                                        @if (Auth::user()->hasPermission('trainers.view'))
                                         <li class="nav-item">
                                             <a href="{{ url('admin/associates/trainers/list') }}"
                                                 class="nav-link @if (Request::segment(3) == 'trainers') active @endif">
@@ -278,6 +305,8 @@
                                                 <p>Programme Directors</p>
                                             </a>
                                         </li>
+                                        @endif
+                                        @if (Auth::user()->hasPermission('country_reps.view'))
                                         <li class="nav-item">
                                             <a href="{{ url('admin/associates/reps/list') }}"
                                                 class="nav-link @if (Request::segment(3) == 'reps') active @endif">
@@ -285,8 +314,11 @@
                                                 <p>Country Reps</p>
                                             </a>
                                         </li>
+                                        @endif
                                     </ul>
                                 </li>
+                                @endif
+                                @if (Auth::user()->hasPermission('promotions.view'))
                                 <li class="nav-item @if (Request::segment(3) == 'promotion') menu-open @endif">
                                     <a href="#" class="nav-link">
                                         <i class="fas fa-tasks nav-icon"></i>
@@ -316,9 +348,12 @@
                                         </li>
                                     </ul>
                                 </li>
+                                @endif
 
                             </ul>
                         </li>
+                        @endif
+                        @if (Auth::user()->hasPermission('examiners.view'))
                         <li class="nav-item @if (Request::segment(2) == 'exams') menu-open @endif">
                             <a href="#" class="nav-link @if (Request::segment(2) == 'exams') active @endif">
                                 <i class="nav-icon fas fa-book-open"></i>
@@ -488,7 +523,9 @@
                             </ul>
                         </li>
                         <!-- /.Examinations -->
+                        @endif
 
+                        @if (Auth::user()->hasPermission('salesforce.view'))
                         <li class="nav-item">
                             <a href="{{ url('admin/salesforce') }}"
                                 class="nav-link @if (Request::segment(2) == 'salesforce') active @endif">
@@ -498,7 +535,9 @@
                                 </p>
                             </a>
                         </li>
+                        @endif
 
+                        @if (Auth::user()->hasPermission('fees.view'))
                         <li class="nav-item @if (Request::segment(2) == 'fees') menu-open @endif">
                             <a href="#" class="nav-link @if (Request::segment(2) == 'fees') active @endif">
                                 <i class="nav-icon fas fa-money-check-alt"></i>
@@ -524,6 +563,7 @@
                                 </li>
                             </ul>
                         </li>
+                        @endif
 
                         <li class="nav-item">
                             <a href="{{ url('profile/change_password') }}"
