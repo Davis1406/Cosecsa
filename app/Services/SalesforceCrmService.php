@@ -46,7 +46,7 @@ class SalesforceCrmService
         });
     }
 
-    protected function http(): ?Http\PendingRequest
+    protected function http(): ?\Illuminate\Http\Client\PendingRequest
     {
         $auth = $this->auth();
         if (! $auth) {
