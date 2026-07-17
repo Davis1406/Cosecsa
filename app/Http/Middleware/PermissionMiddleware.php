@@ -27,7 +27,15 @@ class PermissionMiddleware
             return $next($request);
         }
 
-        $suffix = in_array($request->method(), ['GET', 'HEAD']) ? 'view' : 'manage';
+        // Most GET routes are read-only pages, but several destructive
+        // actions in this app are wired as plain GET links (e.g.
+        // admin/associates/fellows/delete/{id} deletes immediately, no POST
+        // confirmation step) — those must require "manage" too, or a
+        // view-only role could delete records just by following a link.
+        $segments = explode('/', trim($path, '/'));
+        $isDestructiveGet = (bool) array_intersect(['delete', 'destroy'], $segments);
+
+        $suffix = (in_array($request->method(), ['GET', 'HEAD']) && ! $isDestructiveGet) ? 'view' : 'manage';
         $key = "{$module}.{$suffix}";
 
         if ($user->hasPermission($key)) {
