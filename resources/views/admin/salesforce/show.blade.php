@@ -69,7 +69,7 @@
                             <div class="dl-row"><div class="dl-label">Stage</div><div class="dl-value"><span class="stage-pill {{ $pillClass }}">{{ $application->application_stage ?: '—' }}</span></div></div>
                             <div class="dl-row"><div class="dl-label">Level</div><div class="dl-value">{{ $application->application_level ?: '—' }}</div></div>
                             <div class="dl-row"><div class="dl-label">Programme</div><div class="dl-value">{{ $application->programme_name ?: '—' }}</div></div>
-                            <div class="dl-row"><div class="dl-label">PEN</div><div class="dl-value">{{ $application->pen ?: '—' }}</div></div>
+                            <div class="dl-row"><div class="dl-label">PEN</div><div class="dl-value">{{ $pillClass === 'stage-complete' ? ($application->pen ?: '—') : '— (assigned once Complete)' }}</div></div>
                             <div class="dl-row"><div class="dl-label">Date of Application</div><div class="dl-value">{{ $application->date_of_application ? \Carbon\Carbon::parse($application->date_of_application)->format('d M Y') : '—' }}</div></div>
                             <div class="dl-row"><div class="dl-label">Intake Year</div><div class="dl-value">{{ $intakeYear ?: '—' }} @if($intakeYear)<small class="text-muted">(Jul {{ $intakeYear - 1 }} – Jun {{ $intakeYear }})</small>@endif</div></div>
                             <div class="dl-row"><div class="dl-label">Exam Year (Salesforce)</div><div class="dl-value">{{ $application->exam_year ?: '—' }}</div></div>

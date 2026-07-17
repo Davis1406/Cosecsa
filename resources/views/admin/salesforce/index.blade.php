@@ -280,7 +280,7 @@
                                     <td>{{ $app->programme_name ?: '—' }}</td>
                                     <td>{{ $app->application_level ?: '—' }}</td>
                                     <td>{{ $app->country ?: '—' }}</td>
-                                    <td>{{ $app->pen ?: $app->entry_number ?: '—' }}</td>
+                                    <td>{{ $pillClass === 'stage-complete' ? ($app->pen ?: $app->entry_number ?: '—') : '—' }}</td>
                                     <td data-order="{{ $app->date_of_application }}">
                                         {{ $app->date_of_application ? \Carbon\Carbon::parse($app->date_of_application)->format('d M Y') : '—' }}
                                     </td>
