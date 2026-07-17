@@ -58,7 +58,8 @@ class ReportBuilderController extends Controller
             $groupBy = null;
         }
 
-        $rows = $this->runQuery($type, $selectedFields, $request->input('filters', []))->get();
+        $filters = $request->input('filters', []);
+        $rows = $this->runQuery($type, $selectedFields, $filters)->get();
 
         $chart = null;
         if ($groupBy && in_array($groupBy, $selectedFields, true)) {
@@ -67,16 +68,24 @@ class ReportBuilderController extends Controller
                 ->take(15);
         }
 
+        $filterDefs = $config['filters'];
+        foreach ($filterDefs as $key => &$def) {
+            $def['options'] = $this->filterOptions($def['source']);
+        }
+        unset($def);
+
         return view('admin.reports.result', [
-            'header_title'   => 'College Reports',
-            'type'           => $type,
-            'typeLabel'      => $config['label'],
-            'fields'         => $config['fields'],
-            'selectedFields' => $selectedFields,
-            'rows'           => $rows,
-            'groupBy'        => $groupBy,
-            'chart'          => $chart,
-            'filters'        => $request->input('filters', []),
+            'header_title'    => 'College Reports',
+            'type'            => $type,
+            'typeLabel'       => $config['label'],
+            'fields'          => $config['fields'],
+            'selectedFields'  => $selectedFields,
+            'rows'            => $rows,
+            'groupBy'         => $groupBy,
+            'groupByOptions'  => $config['group_by'],
+            'filterDefs'      => $filterDefs,
+            'chart'           => $chart,
+            'filters'         => $filters,
         ]);
     }
 

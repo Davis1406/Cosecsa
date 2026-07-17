@@ -8,8 +8,8 @@
           <div class="col-sm-12">
             <h1 style="font-size:1.4rem;">College Reports</h1>
             <p class="text-muted mb-0" style="font-size:.85rem;">
-              Pick a report type, choose the fields you need, optionally filter and group — then view the visual
-              report or export it to Excel.
+              Pick a report type below — it generates immediately with every field and a chart. You can then
+              change which fields show, filter, or re-chart from the results page.
             </p>
           </div>
         </div>
@@ -25,36 +25,16 @@
               @csrf
 
               <div class="form-group">
-                <label>1. Report Type</label>
+                <label>Report Type</label>
                 <select class="form-control" id="typeSelect" name="type" required style="max-width:400px;">
-                  <option value="">— Select —</option>
+                  <option value="">— Select a report type to generate it —</option>
                   @foreach($types as $key => $t)
                     <option value="{{ $key }}">{{ $t['label'] }}</option>
                   @endforeach
                 </select>
               </div>
-
-              <div id="fieldsSection" style="display:none;">
-                <div class="form-group">
-                  <label>2. Fields Needed</label>
-                  <div id="fieldsCheckboxes" class="border rounded p-3" style="columns:3;"></div>
-                </div>
-
-                <div class="form-group">
-                  <label>3. Filters (optional)</label>
-                  <div id="filtersRow" class="form-row"></div>
-                </div>
-
-                <div class="form-group">
-                  <label>4. Group / Chart By (optional)</label>
-                  <select class="form-control" name="group_by" id="groupBySelect" style="max-width:400px;">
-                    <option value="">No chart — table only</option>
-                  </select>
-                </div>
-
-                <button type="submit" class="btn btn-primary">
-                  <i class="fas fa-chart-bar mr-1"></i> Generate Report
-                </button>
+              <div id="loadingNote" class="text-muted" style="display:none; font-size:.85rem;">
+                <i class="fas fa-spinner fa-spin mr-1"></i> Generating…
               </div>
             </form>
           </div>
@@ -68,46 +48,36 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const typeSelect = document.getElementById('typeSelect');
-  const fieldsSection = document.getElementById('fieldsSection');
-  const fieldsBox = document.getElementById('fieldsCheckboxes');
-  const filtersRow = document.getElementById('filtersRow');
-  const groupBySelect = document.getElementById('groupBySelect');
+  const form = document.getElementById('reportForm');
+  const loadingNote = document.getElementById('loadingNote');
 
   typeSelect.addEventListener('change', function () {
     const type = this.value;
-    fieldsBox.innerHTML = '';
-    filtersRow.innerHTML = '';
-    groupBySelect.innerHTML = '<option value="">No chart — table only</option>';
+    if (!type) return;
 
-    if (!type) { fieldsSection.style.display = 'none'; return; }
+    loadingNote.style.display = 'block';
 
     fetch("{{ url('admin/reports/fields') }}/" + type)
       .then(r => r.json())
       .then(data => {
-        Object.entries(data.fields).forEach(([key, label]) => {
-          fieldsBox.insertAdjacentHTML('beforeend',
-            `<div class="form-check"><input class="form-check-input" type="checkbox" name="fields[]" value="${key}" id="f_${key}" checked>
-             <label class="form-check-label" for="f_${key}">${label}</label></div>`);
+        // Every field checked by default — the results page lets you
+        // narrow this down without re-picking from scratch.
+        Object.keys(data.fields).forEach(key => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'fields[]';
+          input.value = key;
+          form.appendChild(input);
         });
-
-        Object.entries(data.filters).forEach(([key, filter]) => {
-          let opts = '<option value="">All</option>';
-          Object.entries(filter.options).forEach(([val, label]) => {
-            opts += `<option value="${val}">${label}</option>`;
-          });
-          filtersRow.insertAdjacentHTML('beforeend',
-            `<div class="form-group col-md-3">
-               <label style="font-size:.8rem;">${filter.label}</label>
-               <select class="form-control form-control-sm" name="filters[${key}]">${opts}</select>
-             </div>`);
-        });
-
-        data.group_by.forEach(key => {
-          const label = data.fields[key] || key;
-          groupBySelect.insertAdjacentHTML('beforeend', `<option value="${key}">${label}</option>`);
-        });
-
-        fieldsSection.style.display = 'block';
+        // Chart on the first available group-by field, if any.
+        if (data.group_by.length) {
+          const gb = document.createElement('input');
+          gb.type = 'hidden';
+          gb.name = 'group_by';
+          gb.value = data.group_by[0];
+          form.appendChild(gb);
+        }
+        form.submit();
       });
   });
 });

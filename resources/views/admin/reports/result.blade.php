@@ -32,6 +32,64 @@
       <div class="container-fluid">
         @include('_message')
 
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-sliders-h mr-1"></i> Adjust This Report</h3>
+          </div>
+          <div class="card-body">
+            <form method="post" action="{{ url('admin/reports/generate') }}">
+              @csrf
+              <input type="hidden" name="type" value="{{ $type }}">
+
+              <div class="form-group">
+                <label style="font-size:.85rem;">Fields Shown</label>
+                <div class="border rounded p-2" style="columns:3; font-size:.85rem;">
+                  @foreach($fields as $key => $label)
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="fields[]" value="{{ $key }}"
+                             id="rf_{{ $key }}" {{ in_array($key, $selectedFields) ? 'checked' : '' }}>
+                      <label class="form-check-label" for="rf_{{ $key }}">{{ $label }}</label>
+                    </div>
+                  @endforeach
+                </div>
+              </div>
+
+              @if(count($filterDefs))
+                <div class="form-group">
+                  <label style="font-size:.85rem;">Filters</label>
+                  <div class="form-row">
+                    @foreach($filterDefs as $key => $def)
+                      <div class="form-group col-md-3">
+                        <label style="font-size:.78rem;" class="text-muted">{{ $def['label'] }}</label>
+                        <select class="form-control form-control-sm" name="filters[{{ $key }}]">
+                          <option value="">All</option>
+                          @foreach($def['options'] as $val => $optLabel)
+                            <option value="{{ $val }}" {{ (string)($filters[$key] ?? '') === (string)$val ? 'selected' : '' }}>{{ $optLabel }}</option>
+                          @endforeach
+                        </select>
+                      </div>
+                    @endforeach
+                  </div>
+                </div>
+              @endif
+
+              <div class="form-group" style="max-width:300px;">
+                <label style="font-size:.85rem;">Group / Chart By</label>
+                <select class="form-control form-control-sm" name="group_by">
+                  <option value="">No chart — table only</option>
+                  @foreach($groupByOptions as $key)
+                    <option value="{{ $key }}" {{ $groupBy === $key ? 'selected' : '' }}>{{ $fields[$key] }}</option>
+                  @endforeach
+                </select>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fas fa-sync mr-1"></i> Update Report
+              </button>
+            </form>
+          </div>
+        </div>
+
         @if($chart && $chart->isNotEmpty())
         <div class="card">
           <div class="card-header"><h3 class="card-title">By {{ $fields[$groupBy] }}</h3></div>
