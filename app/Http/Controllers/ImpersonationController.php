@@ -35,9 +35,6 @@ class ImpersonationController extends Controller
         if ($target->id === $admin->id) {
             return back()->with('error', 'You are already logged in as yourself.');
         }
-        if ($target->user_type == 1) {
-            return back()->with('error', 'Cannot impersonate another admin account.');
-        }
         if (session('impersonator_id')) {
             return back()->with('error', 'Already impersonating a user — return to your admin account first.');
         }

@@ -80,7 +80,10 @@
                           <td>{{ $value->adminRole->name ?? 'Super Admin' }}</td>
                           <td>{{ date('d-m-y H:i A', strtotime($value->created_at)) }}</td>
                           <td>
-                            <a href="{{ url('admin/edit/'.$value->id) }}" class="btn btn-primary btn-md">Edit</a> 
+                            <a href="{{ url('admin/edit/'.$value->id) }}" class="btn btn-primary btn-md">Edit</a>
+                            @if($value->id != Auth::id())
+                              @include('admin._impersonate_button', ['userId' => $value->id])
+                            @endif
                             <a href="{{ url('admin/delete/'.$value->id) }}" class="btn btn-danger btn-md">Delete</a>
                           </td>
                         </tr>
