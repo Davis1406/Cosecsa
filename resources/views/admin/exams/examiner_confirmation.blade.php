@@ -219,6 +219,8 @@
                                             <tr>
                                                 <th>#</th>
                                                 <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Fellow?</th>
                                                 <th>Country</th>
                                                 <th>Specialty</th>
                                                 <th>Availability</th>
@@ -260,6 +262,14 @@
                                                     @endphp
                                                     <td>{{ $index + 1 }}</td>
                                                     <td><a href="{{ url('admin/exams/view_examiner/'.$value->id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->examiner_name ?? '-' }}</a></td>
+                                                    <td>{{ $value->email ?? '-' }}</td>
+                                                    <td>
+                                                        @if($value->is_fellow)
+                                                            <span class="badge" style="background:#d4edda;color:#155724;">Fellow</span>
+                                                        @else
+                                                            <span class="badge" style="background:#f0f0f0;color:#777;">Not Fellow</span>
+                                                        @endif
+                                                    </td>
                                                     <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->country_name ?? '-' }}</a>@else{{ $value->country_name ?? '-' }}@endif</td>
                                                     <td>{{ $value->specialty ?? '-' }}</td>
                                                     <td>

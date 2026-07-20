@@ -379,6 +379,8 @@ $(function () {
             "columns": [
                 { "visible": true  }, // #
                 { "visible": true  }, // Name
+                { "visible": true  }, // Email
+                { "visible": true  }, // Fellow?
                 { "visible": true  }, // Country
                 { "visible": true  }, // Specialty
                 { "visible": true  }, // Availability
@@ -390,7 +392,7 @@ $(function () {
                 { "orderable": false } // Action
             ],
             "stateLoadParams": function (settings, data) {
-                if (!data || (data.columns && data.columns.length !== 11)) { return false; }
+                if (!data || (data.columns && data.columns.length !== 13)) { return false; }
             },
             "initComplete": function () { hideLoader("examinerconfirmationtable"); },
             "drawCallback": function () { reinitDropdowns(this); }

@@ -1270,6 +1270,7 @@ public function delete($id)
                      ->where('exams_shifts.year_id', '=', $yearId);
             })
             ->leftJoinSub($emailSub, 'et', 'et.exm_id', '=', 'examiners.id')
+            ->leftJoin('fellows', 'fellows.user_id', '=', 'examiners.user_id')
             ->select(
                 'examiners.id',
                 DB::raw('MAX(examiners.examiner_id) as examiner_id'),
@@ -1306,7 +1307,8 @@ public function delete($id)
                 DB::raw('TIMESTAMPDIFF(MINUTE, MAX(examiners_history.created_at), MAX(examiners_history.updated_at)) as history_time_diff_minutes'),
                 DB::raw('MAX(et.last_email_sent_at) as last_email_sent_at'),
                 DB::raw('MAX(et.last_email_opened_at) as last_email_opened_at'),
-                DB::raw('MAX(et.total_email_opens) as total_email_opens')
+                DB::raw('MAX(et.total_email_opens) as total_email_opens'),
+                DB::raw('MAX(CASE WHEN fellows.id IS NOT NULL THEN 1 ELSE 0 END) as is_fellow')
             )
             ->where(function ($query) {
                 $query->where('user_roles.role_type', 9)
