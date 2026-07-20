@@ -393,6 +393,11 @@ $(function () {
             ],
             "stateLoadParams": function (settings, data) {
                 if (!data || (data.columns && data.columns.length !== 13)) { return false; }
+                // One-time reset: browsers may have already cached a state
+                // from when Email/Fellowship Status (columns 2 and 3)
+                // defaulted to visible, before that default changed to
+                // hidden — discard that stale state so the new default applies.
+                if (data.columns && (data.columns[2]?.visible || data.columns[3]?.visible)) { return false; }
             },
             "initComplete": function () { hideLoader("examinerconfirmationtable"); },
             "drawCallback": function () { reinitDropdowns(this); }
