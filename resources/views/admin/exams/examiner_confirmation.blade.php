@@ -220,7 +220,7 @@
                                                 <th>#</th>
                                                 <th>Name</th>
                                                 <th>Email</th>
-                                                <th>Fellow?</th>
+                                                <th>Fellowship Status</th>
                                                 <th>Country</th>
                                                 <th>Specialty</th>
                                                 <th>Availability</th>

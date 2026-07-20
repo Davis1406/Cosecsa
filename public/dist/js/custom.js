@@ -379,8 +379,8 @@ $(function () {
             "columns": [
                 { "visible": true  }, // #
                 { "visible": true  }, // Name
-                { "visible": true  }, // Email
-                { "visible": true  }, // Fellow?
+                { "visible": false }, // Email
+                { "visible": false }, // Fellowship Status
                 { "visible": true  }, // Country
                 { "visible": true  }, // Specialty
                 { "visible": true  }, // Availability
