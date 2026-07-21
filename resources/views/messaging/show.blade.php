@@ -17,6 +17,11 @@
             @endif
           </div>
           <div class="col-sm-4 text-right">
+            @if($conversation->type === 'group' && Auth::user()->user_type == 1)
+              <a href="{{ url('messages/groups/'.$conversation->id.'/edit') }}" class="btn btn-outline-primary">
+                <i class="fas fa-user-cog mr-1"></i> Manage Members
+              </a>
+            @endif
             <a href="{{ url('messages') }}" class="btn btn-secondary">
               <i class="fas fa-arrow-left mr-1"></i> Back
             </a>

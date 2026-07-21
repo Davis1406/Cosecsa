@@ -248,47 +248,6 @@
                             </a>
                         </li>
 
-                        @if (Auth::user()->hasPermission('admin_users.view') || Auth::user()->hasPermission('roles.view') || Auth::user()->hasPermission('system_logs.view'))
-                        <li class="nav-item @if (in_array(Request::segment(2), ['list','roles','logs'])) menu-open @endif">
-                            <a href="#" class="nav-link @if (in_array(Request::segment(2), ['list','roles','logs'])) active @endif">
-                                <i class="nav-icon fas fa-cogs"></i>
-                                <p>
-                                    System Settings
-                                    <i class="right fas fa-angle-left"></i>
-                                </p>
-                            </a>
-                            <ul class="nav nav-treeview">
-                                @if (Auth::user()->hasPermission('admin_users.view'))
-                                <li class="nav-item">
-                                    <a href="{{ url('admin/list') }}"
-                                        class="nav-link @if (Request::segment(2) == 'list') active @endif">
-                                        <i class="fas fa-user nav-icon"></i>
-                                        <p>User Management</p>
-                                    </a>
-                                </li>
-                                @endif
-                                @if (Auth::user()->hasPermission('system_logs.view'))
-                                <li class="nav-item">
-                                    <a href="{{ url('admin/logs') }}"
-                                        class="nav-link @if (Request::segment(2) == 'logs') active @endif">
-                                        <i class="fas fa-clipboard-list nav-icon"></i>
-                                        <p>System Logs</p>
-                                    </a>
-                                </li>
-                                @endif
-                                @if (Auth::user()->hasPermission('roles.view'))
-                                <li class="nav-item">
-                                    <a href="{{ url('admin/roles/list') }}"
-                                        class="nav-link @if (Request::segment(2) == 'roles') active @endif">
-                                        <i class="fas fa-user-shield nav-icon"></i>
-                                        <p>Roles &amp; Permissions</p>
-                                    </a>
-                                </li>
-                                @endif
-                            </ul>
-                        </li>
-                        @endif
-
                         @if (Auth::user()->hasPermission('reports.view'))
                         <li class="nav-item">
                             <a href="{{ url('admin/reports') }}"
@@ -683,6 +642,47 @@
                                 </p>
                             </a>
                         </li>
+
+                        @if (Auth::user()->hasPermission('admin_users.view') || Auth::user()->hasPermission('roles.view') || Auth::user()->hasPermission('system_logs.view'))
+                        <li class="nav-item @if (in_array(Request::segment(2), ['list','roles','logs'])) menu-open @endif">
+                            <a href="#" class="nav-link @if (in_array(Request::segment(2), ['list','roles','logs'])) active @endif">
+                                <i class="nav-icon fas fa-cogs"></i>
+                                <p>
+                                    System Settings
+                                    <i class="right fas fa-angle-left"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                @if (Auth::user()->hasPermission('admin_users.view'))
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/list') }}"
+                                        class="nav-link @if (Request::segment(2) == 'list') active @endif">
+                                        <i class="fas fa-user nav-icon"></i>
+                                        <p>User Management</p>
+                                    </a>
+                                </li>
+                                @endif
+                                @if (Auth::user()->hasPermission('system_logs.view'))
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/logs') }}"
+                                        class="nav-link @if (Request::segment(2) == 'logs') active @endif">
+                                        <i class="fas fa-clipboard-list nav-icon"></i>
+                                        <p>System Logs</p>
+                                    </a>
+                                </li>
+                                @endif
+                                @if (Auth::user()->hasPermission('roles.view'))
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/roles/list') }}"
+                                        class="nav-link @if (Request::segment(2) == 'roles') active @endif">
+                                        <i class="fas fa-user-shield nav-icon"></i>
+                                        <p>Roles &amp; Permissions</p>
+                                    </a>
+                                </li>
+                                @endif
+                            </ul>
+                        </li>
+                        @endif
                     @elseif (Auth::user()->user_type == 2)
                         <li class="nav-item">
                             <a href="{{ url('trainee/dashboard') }}"
