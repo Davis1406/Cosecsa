@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <style>
-    @page { margin: 90px 50px 70px 50px; }
+    @page { margin: 165px 50px 70px 50px; }
     body { font-family: Arial, sans-serif; font-size: 10pt; color: #222; }
 
     .watermark { position: fixed; top: 260px; left: 150px; width: 300px; opacity: 0.08; z-index: -10; }
 
-    .letterhead { position: fixed; top: -80px; left: -30px; right: -30px; }
+    .letterhead { position: fixed; top: -155px; left: -30px; right: -30px; }
     .letterhead .generated-top { text-align: right; font-size: 8pt; color: #888; margin-bottom: 4px; }
     .letterhead table { width: 100%; border-collapse: collapse; }
     .letterhead .logo-cell { width: 70px; }
     .letterhead .logo-cell img { width: 60px; }
     .letterhead .title-cell { text-align: right; }
     .letterhead .name { font-weight: bold; font-size: 12pt; color: #a02626; }
-    .letterhead .address { font-size: 9pt; color: #444; width: 260px; margin-left: auto; }
+    .letterhead .address { font-size: 9pt; color: #444; width: 260px; margin-left: auto; line-height: 1.35; }
     .letterhead .rule { border-bottom: 2px solid #a02626; margin-top: 4px; }
 
     .page-footer { position: fixed; bottom: -55px; left: -30px; right: -30px; font-size: 8pt; color: #222; border-top: 1px solid #ccc; padding-top: 4px; }
