@@ -2,34 +2,86 @@
 
 @section('content')
   <style>
+    /* ── Header ── */
+    .thread-header-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+    .thread-header-actions form { margin: 0; }
+    .btn-cosecsa-yellow { background:#FEC503; border-color:#FEC503; color:#3a2a00; font-weight:600; }
+    .btn-cosecsa-yellow:hover, .btn-cosecsa-yellow:focus { background:#e6b200; border-color:#e6b200; color:#3a2a00; }
+    .chat-title-icon {
+      width:38px; height:38px; border-radius:50%; background:#a02626; color:#fff;
+      display:inline-flex; align-items:center; justify-content:center; font-size:.95rem; font-weight:700;
+      margin-right:10px; vertical-align:middle; flex-shrink:0;
+    }
+
+    /* ── Card / thread surface ── */
+    .chat-card { border: none; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 14px rgba(0,0,0,.07); }
+    #threadBody {
+      background: linear-gradient(180deg,#fafafa,#f2f3f5);
+      padding: 20px;
+    }
+    body.dark-mode #threadBody { background: linear-gradient(180deg,#1f2937,#161d29) !important; }
+
+    /* ── Message rows / avatars / bubbles ── */
+    .chat-row { display:flex; align-items:flex-end; margin-bottom:16px; }
+    .chat-row.theirs { justify-content:flex-start; }
+    .chat-row.mine { justify-content:flex-end; }
+    .chat-avatar {
+      width:30px; height:30px; border-radius:50%; background:#a02626; color:#fff;
+      display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700;
+      margin-right:8px; flex-shrink:0;
+    }
+    .chat-bubble-col { max-width:68%; }
     .message-bubble:hover .msg-actions { display: block !important; }
-    .msg-bubble-mine, .msg-bubble-theirs { position: relative; }
-    .msg-bubble-mine   { background: #a02626; color: #fff; }
-    .msg-bubble-theirs { background: #f1f1f1; color: #222; }
+    .msg-bubble-mine, .msg-bubble-theirs { position: relative; box-shadow: 0 1px 3px rgba(0,0,0,.09); }
+    .msg-bubble-mine   { background: #a02626; color: #fff; border-radius: 16px 16px 4px 16px; }
+    .msg-bubble-theirs { background: #ffffff; color: #222; border-radius: 16px 16px 16px 4px; }
     .msg-bubble-mine   .msg-attach-link { color: #fff; }
     .msg-bubble-theirs .msg-attach-link { color: #a02626; }
     body.dark-mode .msg-bubble-mine   { background: #a02626 !important; color: #fff !important; }
     body.dark-mode .msg-bubble-theirs { background: #374151 !important; color: #e0e0e0 !important; }
     body.dark-mode .msg-bubble-mine   .msg-attach-link { color: #fff !important; }
     body.dark-mode .msg-bubble-theirs .msg-attach-link { color: #fca5a5 !important; }
+    .msg-deleted-bubble { border-radius: 16px; }
     body.dark-mode .msg-deleted-bubble { background: #374151 !important; color: #9ca3af !important; }
-    .thread-header-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
-    .thread-header-actions form { margin: 0; }
+
+    /* ── Input footer ── */
+    .chat-footer { background:#fff; border-top:1px solid #ececec; }
+    body.dark-mode .chat-footer { border-top-color:#374151 !important; }
+    .chat-input-group {
+      border:1px solid #e2e2e2; border-radius:24px; overflow:hidden;
+      display:flex; align-items:center; background:#fff;
+    }
+    body.dark-mode .chat-input-group { border-color:#374151 !important; background:#1f2937 !important; }
+    .chat-input-group .form-control {
+      border:none !important; box-shadow:none !important; background:transparent !important; flex:1;
+    }
+    .chat-input-group .btn {
+      border:none !important; border-radius:0 !important; background:transparent !important; color:#a02626;
+    }
+    .chat-input-group .btn:hover { background:rgba(160,38,38,.08) !important; }
+    .chat-input-group .btn-send { color:#fff; background:#a02626 !important; border-radius:50% !important; width:38px; height:38px; padding:0; margin:4px; display:flex; align-items:center; justify-content:center; }
+    .chat-input-group .btn-send:hover { background:#8a1f1f !important; }
   </style>
   <div class="content-wrapper">
     <section class="content-header">
       <div class="container-fluid">
         <div class="row mb-2 align-items-center">
-          <div class="col-sm-7">
-            <h1 style="font-size:1.4rem;">
-              @if($conversation->type === 'group')<i class="fas fa-users mr-1"></i>@endif
-              {{ $title }}
-            </h1>
-            @if($conversation->type === 'group')
-              <p class="text-muted mb-0" style="font-size:.8rem;">
-                {{ $conversation->participants->pluck('user.name')->filter()->implode(', ') }}
-              </p>
-            @endif
+          <div class="col-sm-7 d-flex align-items-center">
+            <span class="chat-title-icon">
+              @if($conversation->type === 'group')
+                <i class="fas fa-users"></i>
+              @else
+                {{ strtoupper(substr($title, 0, 1)) }}
+              @endif
+            </span>
+            <div>
+              <h1 style="font-size:1.4rem;margin:0;">{{ $title }}</h1>
+              @if($conversation->type === 'group')
+                <p class="text-muted mb-0" style="font-size:.8rem;">
+                  {{ $conversation->participants->pluck('user.name')->filter()->implode(', ') }}
+                </p>
+              @endif
+            </div>
           </div>
           <div class="col-sm-5 text-right thread-header-actions">
             <button type="button" class="btn btn-cosecsa" data-toggle="modal" data-target="#assignTaskModal">
@@ -43,7 +95,7 @@
             @if($conversation->type === 'direct' || Auth::user()->user_type == 1)
               <form method="POST" action="{{ url('messages/'.$conversation->id.'/delete-conversation') }}" style="display:inline;" onsubmit="return confirm('Delete this entire chat? All messages and attachments will be permanently removed for everyone.')">
                 @csrf
-                <button type="submit" class="btn btn-danger">
+                <button type="submit" class="btn btn-cosecsa-yellow">
                   <i class="fas fa-trash mr-1"></i> Delete Chat
                 </button>
               </form>
@@ -60,13 +112,16 @@
       <div class="container-fluid">
         @include('_message')
 
-        <div class="card">
+        <div class="card chat-card">
           <div class="card-body" style="max-height:520px; overflow-y:auto;" id="threadBody"
                data-conversation-id="{{ $conversation->id }}" data-since="{{ now()->toDateTimeString() }}">
             @forelse($conversation->messages as $m)
               @php $mine = $m->sender_id == Auth::id(); @endphp
-              <div class="mb-3 d-flex {{ $mine ? 'justify-content-end' : 'justify-content-start' }}" data-row-id="{{ $m->id }}">
-                <div style="max-width:70%;">
+              <div class="chat-row {{ $mine ? 'mine' : 'theirs' }}" data-row-id="{{ $m->id }}">
+                @if(!$mine)
+                  <span class="chat-avatar">{{ strtoupper(substr($m->sender->name ?? '?', 0, 1)) }}</span>
+                @endif
+                <div class="chat-bubble-col">
                   @if(!$mine)
                     <div class="text-muted" style="font-size:.75rem;">{{ $m->sender->name ?? 'Unknown' }}</div>
                   @endif
@@ -126,24 +181,20 @@
               <div class="text-center text-muted py-4" id="noMessagesPlaceholder">No messages yet — say hello.</div>
             @endforelse
           </div>
-          <div class="card-footer">
+          <div class="card-footer chat-footer">
             <form method="POST" action="{{ url('messages/'.$conversation->id.'/send') }}" enctype="multipart/form-data" id="sendForm">
               @csrf
               <div id="attachPreview" class="mb-2" style="display:none;"></div>
-              <div class="input-group">
-                <div class="input-group-prepend">
-                  <label class="btn btn-cosecsa-outline mb-0" title="Attach file" style="cursor:pointer;">
-                    <i class="fas fa-paperclip"></i>
-                    <input type="file" name="attachments[]" id="attachInput" multiple style="display:none;">
-                  </label>
-                  <button type="button" class="btn btn-cosecsa-outline" id="voiceBtn" title="Record voice note">
-                    <i class="fas fa-microphone"></i>
-                  </button>
-                </div>
+              <div class="chat-input-group">
+                <label class="btn mb-0" title="Attach file" style="cursor:pointer;">
+                  <i class="fas fa-paperclip"></i>
+                  <input type="file" name="attachments[]" id="attachInput" multiple style="display:none;">
+                </label>
+                <button type="button" class="btn" id="voiceBtn" title="Record voice note">
+                  <i class="fas fa-microphone"></i>
+                </button>
                 <input type="text" name="body" class="form-control" placeholder="Type a message…" autocomplete="off">
-                <div class="input-group-append">
-                  <button type="submit" class="btn btn-cosecsa"><i class="fas fa-paper-plane"></i></button>
-                </div>
+                <button type="submit" class="btn btn-send" title="Send"><i class="fas fa-paper-plane"></i></button>
               </div>
               <div id="recordingIndicator" class="text-danger mt-1" style="display:none; font-size:.85rem;">
                 <i class="fas fa-circle fa-xs mr-1"></i> Recording… <a href="#" id="stopRecordingBtn">Stop</a>
@@ -211,10 +262,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderRow(m) {
     const wrap = document.createElement('div');
-    wrap.className = 'mb-3 d-flex ' + (m.mine ? 'justify-content-end' : 'justify-content-start');
+    wrap.className = 'chat-row ' + (m.mine ? 'mine' : 'theirs');
     wrap.setAttribute('data-row-id', m.id);
 
-    let html = '<div style="max-width:70%;">';
+    let html = '';
+    if (!m.mine) {
+      html += `<span class="chat-avatar">${escapeHtml((m.sender_name || '?').charAt(0).toUpperCase())}</span>`;
+    }
+    html += '<div class="chat-bubble-col">';
     if (!m.mine) {
       html += `<div class="text-muted" style="font-size:.75rem;">${escapeHtml(m.sender_name)}</div>`;
     }
