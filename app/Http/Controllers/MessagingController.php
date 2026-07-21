@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Message;
+use App\Models\MessageAttachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class MessagingController extends Controller
 {
@@ -86,7 +88,7 @@ class MessagingController extends Controller
 
     public function show($id)
     {
-        $conversation = Conversation::with(['messages.sender', 'participants.user'])->findOrFail($id);
+        $conversation = Conversation::with(['messages.sender', 'messages.attachments', 'participants.user'])->findOrFail($id);
         $this->authorizeParticipant($conversation);
 
         ConversationParticipant::where('conversation_id', $id)
@@ -102,19 +104,78 @@ class MessagingController extends Controller
 
     public function send(Request $request, $id)
     {
-        $request->validate(['body' => 'required|string|max:5000']);
+        $hasFiles = $request->hasFile('attachments') || $request->hasFile('voice_note');
+        $request->validate([
+            'body'          => $hasFiles ? 'nullable|string|max:5000' : 'required|string|max:5000',
+            'attachments.*' => 'nullable|file|max:20480', // 20MB per file
+            'voice_note'    => 'nullable|file|max:20480',
+        ]);
 
         $conversation = Conversation::findOrFail($id);
         $this->authorizeParticipant($conversation);
 
-        Message::create([
+        $message = Message::create([
             'conversation_id' => $id,
             'sender_id'       => Auth::id(),
-            'body'            => trim($request->body),
+            'body'            => trim((string) $request->body),
         ]);
+
+        foreach ($request->file('attachments', []) as $file) {
+            $this->storeAttachment($message, $file);
+        }
+        if ($request->hasFile('voice_note')) {
+            $this->storeAttachment($message, $request->file('voice_note'), 'audio');
+        }
+
         $conversation->update(['last_message_at' => now()]);
 
         return redirect("messages/{$id}");
+    }
+
+    public function editMessage(Request $request, $conversationId, $messageId)
+    {
+        $request->validate(['body' => 'required|string|max:5000']);
+
+        $message = Message::where('conversation_id', $conversationId)->findOrFail($messageId);
+        abort_unless($message->sender_id == Auth::id(), 403, 'You can only edit your own messages.');
+        abort_if($message->deleted_at, 404);
+
+        $message->update(['body' => trim($request->body), 'edited_at' => now()]);
+
+        return redirect("messages/{$conversationId}");
+    }
+
+    public function deleteMessage($conversationId, $messageId)
+    {
+        $message = Message::with('attachments')->where('conversation_id', $conversationId)->findOrFail($messageId);
+        abort_unless($message->sender_id == Auth::id(), 403, 'You can only delete your own messages.');
+
+        foreach ($message->attachments as $a) {
+            if (Storage::disk('public')->exists($a->path)) {
+                Storage::disk('public')->delete($a->path);
+            }
+        }
+        $message->attachments()->delete();
+        $message->update(['deleted_at' => now(), 'body' => '']);
+
+        return redirect("messages/{$conversationId}");
+    }
+
+    protected function storeAttachment(Message $message, $file, ?string $kindOverride = null): void
+    {
+        $mime = $file->getMimeType();
+        $kind = $kindOverride ?? (str_starts_with($mime, 'image/') ? 'image' : (str_starts_with($mime, 'audio/') ? 'audio' : 'file'));
+
+        $path = $file->store('messages/attachments', 'public');
+
+        MessageAttachment::create([
+            'message_id'    => $message->id,
+            'path'          => $path,
+            'original_name' => $kind === 'audio' ? 'Voice note' : $file->getClientOriginalName(),
+            'mime_type'     => $mime,
+            'size'          => $file->getSize(),
+            'kind'          => $kind,
+        ]);
     }
 
     // ── Groups (admin-created) ─────────────────────────────────────────────

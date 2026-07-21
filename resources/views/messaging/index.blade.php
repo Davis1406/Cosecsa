@@ -9,6 +9,9 @@
             <h1 style="font-size:1.4rem;">Messages</h1>
           </div>
           <div class="col-sm-6 text-right">
+            <a href="{{ url('messages/tasks') }}" class="btn btn-outline-success">
+              <i class="fas fa-tasks mr-1"></i> My Tasks
+            </a>
             @if(Auth::user()->user_type == 1)
               <a href="{{ url('messages/groups') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-users mr-1"></i> Discussion Groups

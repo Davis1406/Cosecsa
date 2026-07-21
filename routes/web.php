@@ -62,8 +62,14 @@ Route::middleware('auth')->group(function () {
     Route::post('messages/groups/{id}/edit', [\App\Http\Controllers\MessagingController::class, 'groupUpdate'])->name('messages.groups.update');
     Route::post('messages/groups/{id}/delete', [\App\Http\Controllers\MessagingController::class, 'groupDelete'])->name('messages.groups.delete');
 
+    Route::get('messages/tasks', [\App\Http\Controllers\TaskController::class, 'index'])->name('messages.tasks.index');
+    Route::post('messages/tasks/{id}/status', [\App\Http\Controllers\TaskController::class, 'updateStatus'])->name('messages.tasks.status');
+
     Route::get('messages/{id}', [\App\Http\Controllers\MessagingController::class, 'show'])->name('messages.show');
     Route::post('messages/{id}/send', [\App\Http\Controllers\MessagingController::class, 'send'])->name('messages.send');
+    Route::post('messages/{conversationId}/messages/{messageId}/edit', [\App\Http\Controllers\MessagingController::class, 'editMessage'])->name('messages.message.edit');
+    Route::post('messages/{conversationId}/messages/{messageId}/delete', [\App\Http\Controllers\MessagingController::class, 'deleteMessage'])->name('messages.message.delete');
+    Route::post('messages/{conversationId}/tasks', [\App\Http\Controllers\TaskController::class, 'store'])->name('messages.tasks.store');
 });
 
 
