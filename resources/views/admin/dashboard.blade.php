@@ -155,7 +155,7 @@
           <section class="col-lg-6 connectedSortable">
 
             <!-- Calendar -->
-            <div class="card bg-gradient-success">
+            <div class="card" style="background:linear-gradient(155deg,#a02626,#6e1a1a);color:#fff;">
               <div class="card-header border-0">
 
                 <h3 class="card-title">
@@ -166,7 +166,7 @@
                 <div class="card-tools">
                   <!-- button with a dropdown -->
                   <div class="btn-group">
-                    <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-toggle="dropdown" data-offset="-52">
+                    <button type="button" class="btn btn-sm dropdown-toggle" style="background:rgba(255,255,255,.15);color:#fff;border:none;" data-toggle="dropdown" data-offset="-52">
                       <i class="fas fa-bars"></i>
                     </button>
                     <div class="dropdown-menu" role="menu">
@@ -176,10 +176,10 @@
                       <a href="#" class="dropdown-item">View calendar</a>
                     </div>
                   </div>
-                  <button type="button" class="btn btn-success btn-sm" data-card-widget="collapse">
+                  <button type="button" class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:none;" data-card-widget="collapse">
                     <i class="fas fa-minus"></i>
                   </button>
-                  <button type="button" class="btn btn-success btn-sm" data-card-widget="remove">
+                  <button type="button" class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:none;" data-card-widget="remove">
                     <i class="fas fa-times"></i>
                   </button>
                 </div>

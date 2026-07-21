@@ -76,6 +76,12 @@
                             return $c;
                         });
                 }
+
+                $sidebarPendingTasksCount = \Illuminate\Support\Facades\DB::table('tasks')
+                    ->where('assigned_to', Auth::id())
+                    ->where('status', '!=', 'done')
+                    ->count();
+                $sidebarMsgBadgeTotal = $unreadConvoIds->count() + $sidebarPendingTasksCount;
             @endphp
             <li class="nav-item dropdown" id="notifBell">
                 <a class="nav-link" data-toggle="dropdown" href="#" title="Messages">
@@ -160,10 +166,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     tasksCard.textContent = data.pending_tasks_count;
                     tasksCard.style.color = data.pending_tasks_count > 0 ? '#dc3545' : '#333';
                 }
+
+                // Sidebar "Messages" nav badge (unread messages + pending tasks combined)
+                const sidebarTotal = data.unread_count + data.pending_tasks_count;
+                document.querySelectorAll('.sidebar-msg-badge').forEach(function (el) {
+                    el.textContent = sidebarTotal;
+                    el.style.display = sidebarTotal > 0 ? '' : 'none';
+                });
             })
             .catch(() => {});
     }
-    setInterval(pollNotifSummary, 15000);
+    pollNotifSummary();
+    setInterval(pollNotifSummary, 10000);
 });
 </script>
 @endpush
@@ -681,6 +695,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <i class="nav-icon fas fa-comments"></i>
                                 <p>
                                     Messages
+                                    <span class="badge badge-danger right sidebar-msg-badge" style="{{ $sidebarMsgBadgeTotal > 0 ? '' : 'display:none;' }}">{{ $sidebarMsgBadgeTotal }}</span>
                                 </p>
                             </a>
                         </li>
@@ -760,6 +775,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <i class="nav-icon fas fa-comments"></i>
                                 <p>
                                     Messages
+                                    <span class="badge badge-danger right sidebar-msg-badge" style="{{ $sidebarMsgBadgeTotal > 0 ? '' : 'display:none;' }}">{{ $sidebarMsgBadgeTotal }}</span>
                                 </p>
                             </a>
                         </li>
@@ -786,7 +802,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <a href="{{ url('messages') }}"
                                 class="nav-link @if (Request::segment(1) == 'messages') active @endif">
                                 <i class="nav-icon fas fa-comments"></i>
-                                <p>Messages</p>
+                                <p>Messages <span class="badge badge-danger right sidebar-msg-badge" style="{{ $sidebarMsgBadgeTotal > 0 ? '' : 'display:none;' }}">{{ $sidebarMsgBadgeTotal }}</span></p>
                             </a>
                         </li>
 
@@ -824,7 +840,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <a href="{{ url('messages') }}"
                                 class="nav-link @if (Request::segment(1) == 'messages') active @endif">
                                 <i class="nav-icon fas fa-comments"></i>
-                                <p>Messages</p>
+                                <p>Messages <span class="badge badge-danger right sidebar-msg-badge" style="{{ $sidebarMsgBadgeTotal > 0 ? '' : 'display:none;' }}">{{ $sidebarMsgBadgeTotal }}</span></p>
                             </a>
                         </li>
                     @endif

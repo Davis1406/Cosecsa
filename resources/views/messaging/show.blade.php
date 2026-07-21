@@ -1,7 +1,19 @@
 @extends('layout.app')
 
 @section('content')
-  <style>.message-bubble:hover .msg-actions { display: block !important; }</style>
+  <style>
+    .message-bubble:hover .msg-actions { display: block !important; }
+    .msg-bubble-mine, .msg-bubble-theirs { position: relative; }
+    .msg-bubble-mine   { background: #a02626; color: #fff; }
+    .msg-bubble-theirs { background: #f1f1f1; color: #222; }
+    .msg-bubble-mine   .msg-attach-link { color: #fff; }
+    .msg-bubble-theirs .msg-attach-link { color: #a02626; }
+    body.dark-mode .msg-bubble-mine   { background: #a02626 !important; color: #fff !important; }
+    body.dark-mode .msg-bubble-theirs { background: #374151 !important; color: #e0e0e0 !important; }
+    body.dark-mode .msg-bubble-mine   .msg-attach-link { color: #fff !important; }
+    body.dark-mode .msg-bubble-theirs .msg-attach-link { color: #fca5a5 !important; }
+    body.dark-mode .msg-deleted-bubble { background: #374151 !important; color: #9ca3af !important; }
+  </style>
   <div class="content-wrapper">
     <section class="content-header">
       <div class="container-fluid">
@@ -50,12 +62,11 @@
                   @endif
 
                   @if($m->deleted_at)
-                    <div class="p-2 rounded font-italic text-muted" style="background:#f1f1f1;">
+                    <div class="p-2 rounded font-italic text-muted msg-deleted-bubble" style="background:#f1f1f1;">
                       <i class="fas fa-ban mr-1"></i> This message was deleted.
                     </div>
                   @else
-                    <div class="p-2 rounded message-bubble" data-msg-id="{{ $m->id }}"
-                         style="background:{{ $mine ? '#a02626' : '#f1f1f1' }}; color:{{ $mine ? '#fff' : '#222' }}; position:relative;">
+                    <div class="p-2 rounded message-bubble {{ $mine ? 'msg-bubble-mine' : 'msg-bubble-theirs' }}" data-msg-id="{{ $m->id }}">
                       <span class="msg-body-text">{{ $m->body }}</span>
 
                       @foreach($m->attachments as $a)
@@ -67,7 +78,7 @@
                           @elseif($a->kind === 'audio')
                             <audio controls src="{{ asset('storage/'.$a->path) }}" style="max-width:220px;"></audio>
                           @else
-                            <a href="{{ asset('storage/'.$a->path) }}" target="_blank" style="color:{{ $mine ? '#fff' : '#a02626' }};text-decoration:underline;">
+                            <a href="{{ asset('storage/'.$a->path) }}" target="_blank" class="msg-attach-link" style="text-decoration:underline;">
                               <i class="fas fa-paperclip mr-1"></i>{{ $a->original_name }}
                             </a>
                           @endif
@@ -198,9 +209,9 @@ document.addEventListener('DOMContentLoaded', function () {
       html += `<div class="text-muted" style="font-size:.75rem;">${escapeHtml(m.sender_name)}</div>`;
     }
     if (m.deleted) {
-      html += `<div class="p-2 rounded font-italic text-muted" style="background:#f1f1f1;"><i class="fas fa-ban mr-1"></i> This message was deleted.</div>`;
+      html += `<div class="p-2 rounded font-italic text-muted msg-deleted-bubble" style="background:#f1f1f1;"><i class="fas fa-ban mr-1"></i> This message was deleted.</div>`;
     } else {
-      html += `<div class="p-2 rounded message-bubble" data-msg-id="${m.id}" style="background:${m.mine ? '#a02626' : '#f1f1f1'};color:${m.mine ? '#fff' : '#222'};position:relative;">`;
+      html += `<div class="p-2 rounded message-bubble ${m.mine ? 'msg-bubble-mine' : 'msg-bubble-theirs'}" data-msg-id="${m.id}">`;
       html += `<span class="msg-body-text">${escapeHtml(m.body)}</span>`;
       (m.attachments || []).forEach(a => {
         if (a.kind === 'image') {
@@ -208,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (a.kind === 'audio') {
           html += `<div class="mt-2"><audio controls src="${a.url}" style="max-width:220px;"></audio></div>`;
         } else {
-          html += `<div class="mt-2"><a href="${a.url}" target="_blank" style="color:${m.mine ? '#fff' : '#a02626'};text-decoration:underline;"><i class="fas fa-paperclip mr-1"></i>${escapeHtml(a.name)}</a></div>`;
+          html += `<div class="mt-2"><a href="${a.url}" target="_blank" class="msg-attach-link" style="text-decoration:underline;"><i class="fas fa-paperclip mr-1"></i>${escapeHtml(a.name)}</a></div>`;
         }
       });
       if (m.mine) {
@@ -264,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch(() => {});
   }
-  setInterval(pollThread, 3000);
+  setInterval(pollThread, 1500);
 
   // ── Event delegation for edit/delete (works for server-rendered and
   //    dynamically appended rows alike) ───────────────────────────────
@@ -315,7 +326,18 @@ document.addEventListener('DOMContentLoaded', function () {
     e.preventDefault();
     const formData = new FormData(sendForm);
     const bodyInput = sendForm.querySelector('input[name="body"]');
-    if (!formData.get('body') && !attachInput.files.length && !sendForm.querySelector('input[name="voice_note"]')) return;
+    const bodyText = formData.get('body');
+    const hasFiles = attachInput.files.length > 0 || !!sendForm.querySelector('input[name="voice_note"]');
+    if (!bodyText && !hasFiles) return;
+
+    // Optimistic render for plain-text sends so the message appears
+    // instantly instead of waiting on the round trip / next poll.
+    let tempId = null;
+    if (bodyText && !hasFiles) {
+      tempId = 'tmp-' + Date.now();
+      upsertMessage({ id: tempId, mine: true, sender_name: 'You', body: bodyText, deleted: false, edited: false, created_at: 'Sending…', attachments: [] }, true);
+      bodyInput.value = '';
+    }
 
     fetch(sendForm.action, {
       method: 'POST',
@@ -324,6 +346,10 @@ document.addEventListener('DOMContentLoaded', function () {
     })
       .then(r => r.json())
       .then(data => {
+        if (tempId) {
+          const tempRow = box.querySelector(`[data-row-id="${tempId}"]`);
+          if (tempRow) tempRow.remove();
+        }
         upsertMessage(data.message, true);
         bodyInput.value = '';
         attachInput.value = '';
@@ -332,7 +358,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const voiceInput = sendForm.querySelector('input[name="voice_note"]');
         if (voiceInput) voiceInput.remove();
       })
-      .catch(() => alert('Could not send message. Please try again.'));
+      .catch(() => {
+        if (tempId) {
+          const tempRow = box.querySelector(`[data-row-id="${tempId}"]`);
+          if (tempRow) tempRow.remove();
+        }
+        alert('Could not send message. Please try again.');
+      });
   });
 
   // Attachment preview (filenames chosen)
