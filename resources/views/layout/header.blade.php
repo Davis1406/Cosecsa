@@ -801,6 +801,15 @@
 </aside>
 
 <style>
+    /* ── COSECSA-branded buttons (use in place of btn-primary/btn-success/etc.
+       where the default Bootstrap blue/green would clash with the maroon
+       theme used throughout the admin panel) ── */
+    .btn-cosecsa { background:#a02626; border-color:#a02626; color:#fff; }
+    .btn-cosecsa:hover, .btn-cosecsa:focus { background:#841f1f; border-color:#841f1f; color:#fff; }
+    .btn-cosecsa-outline { background:#fff; border:1px solid #a02626; color:#a02626; }
+    .btn-cosecsa-outline:hover, .btn-cosecsa-outline:focus { background:#f5e6e6; color:#a02626; }
+    body.dark-mode .btn-cosecsa-outline, html.dark-mode .btn-cosecsa-outline { background:transparent; }
+
     /* ── Modern Minimal Sidebar ── */
     .main-sidebar {
         background-color: #363840 !important;

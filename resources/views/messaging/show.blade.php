@@ -17,15 +17,15 @@
             @endif
           </div>
           <div class="col-sm-5 text-right">
-            <button type="button" class="btn btn-outline-success" data-toggle="modal" data-target="#assignTaskModal">
+            <button type="button" class="btn btn-cosecsa" data-toggle="modal" data-target="#assignTaskModal">
               <i class="fas fa-tasks mr-1"></i> Assign Task
             </button>
             @if($conversation->type === 'group' && Auth::user()->user_type == 1)
-              <a href="{{ url('messages/groups/'.$conversation->id.'/edit') }}" class="btn btn-outline-primary">
+              <a href="{{ url('messages/groups/'.$conversation->id.'/edit') }}" class="btn btn-cosecsa-outline">
                 <i class="fas fa-user-cog mr-1"></i> Manage Members
               </a>
             @endif
-            <a href="{{ url('messages') }}" class="btn btn-secondary">
+            <a href="{{ url('messages') }}" class="btn btn-cosecsa-outline">
               <i class="fas fa-arrow-left mr-1"></i> Back
             </a>
           </div>
@@ -89,8 +89,8 @@
                         <div class="input-group input-group-sm">
                           <input type="text" name="body" class="form-control" value="{{ $m->body }}">
                           <div class="input-group-append">
-                            <button type="submit" class="btn btn-primary">Save</button>
-                            <button type="button" class="btn btn-secondary msg-edit-cancel">Cancel</button>
+                            <button type="submit" class="btn btn-cosecsa">Save</button>
+                            <button type="button" class="btn btn-cosecsa-outline msg-edit-cancel">Cancel</button>
                           </div>
                         </div>
                       </form>
@@ -113,17 +113,17 @@
               <div id="attachPreview" class="mb-2" style="display:none;"></div>
               <div class="input-group">
                 <div class="input-group-prepend">
-                  <label class="btn btn-outline-secondary mb-0" title="Attach file" style="cursor:pointer;">
+                  <label class="btn btn-cosecsa-outline mb-0" title="Attach file" style="cursor:pointer;">
                     <i class="fas fa-paperclip"></i>
                     <input type="file" name="attachments[]" id="attachInput" multiple style="display:none;">
                   </label>
-                  <button type="button" class="btn btn-outline-secondary" id="voiceBtn" title="Record voice note">
+                  <button type="button" class="btn btn-cosecsa-outline" id="voiceBtn" title="Record voice note">
                     <i class="fas fa-microphone"></i>
                   </button>
                 </div>
                 <input type="text" name="body" class="form-control" placeholder="Type a message…" autocomplete="off">
                 <div class="input-group-append">
-                  <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+                  <button type="submit" class="btn btn-cosecsa"><i class="fas fa-paper-plane"></i></button>
                 </div>
               </div>
               <div id="recordingIndicator" class="text-danger mt-1" style="display:none; font-size:.85rem;">
@@ -171,7 +171,7 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="submit" class="btn btn-primary">Assign Task</button>
+            <button type="submit" class="btn btn-cosecsa">Assign Task</button>
           </div>
         </form>
       </div>

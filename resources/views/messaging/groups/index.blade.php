@@ -9,10 +9,10 @@
             <h1 style="font-size:1.4rem;">Discussion Groups</h1>
           </div>
           <div class="col-sm-6 text-right">
-            <a href="{{ url('messages') }}" class="btn btn-secondary">
+            <a href="{{ url('messages') }}" class="btn btn-cosecsa-outline">
               <i class="fas fa-arrow-left mr-1"></i> Back to Messages
             </a>
-            <a href="{{ url('messages/groups/create') }}" class="btn btn-primary">
+            <a href="{{ url('messages/groups/create') }}" class="btn btn-cosecsa">
               <i class="fas fa-plus mr-1"></i> New Group
             </a>
           </div>
@@ -34,8 +34,8 @@
                       <td>{{ $g->name }}</td>
                       <td>{{ $g->participants_count }}</td>
                       <td>
-                        <a href="{{ url('messages/'.$g->id) }}" class="btn btn-sm btn-outline-primary">Open</a>
-                        <a href="{{ url('messages/groups/'.$g->id.'/edit') }}" class="btn btn-sm btn-primary">Edit</a>
+                        <a href="{{ url('messages/'.$g->id) }}" class="btn btn-sm btn-cosecsa-outline">Open</a>
+                        <a href="{{ url('messages/groups/'.$g->id.'/edit') }}" class="btn btn-sm btn-cosecsa">Edit</a>
                         <form method="POST" action="{{ url('messages/groups/'.$g->id.'/delete') }}" style="display:inline;"
                               onsubmit="return confirm('Delete this group and all its messages?')">
                           @csrf

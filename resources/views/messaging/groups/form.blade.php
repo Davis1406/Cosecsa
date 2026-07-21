@@ -43,8 +43,8 @@
                 </div>
               </div>
 
-              <button type="submit" class="btn btn-primary">{{ $group ? 'Save Changes' : 'Create Group' }}</button>
-              <a href="{{ url('messages/groups') }}" class="btn btn-secondary">Cancel</a>
+              <button type="submit" class="btn btn-cosecsa">{{ $group ? 'Save Changes' : 'Create Group' }}</button>
+              <a href="{{ url('messages/groups') }}" class="btn btn-cosecsa-outline">Cancel</a>
             </form>
           </div>
         </div>

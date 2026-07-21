@@ -9,7 +9,7 @@
             <h1 style="font-size:1.4rem;">My Tasks</h1>
           </div>
           <div class="col-sm-6 text-right">
-            <a href="{{ url('messages') }}" class="btn btn-secondary">
+            <a href="{{ url('messages') }}" class="btn btn-cosecsa-outline">
               <i class="fas fa-arrow-left mr-1"></i> Back to Messages
             </a>
           </div>
