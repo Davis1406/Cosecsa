@@ -34,25 +34,34 @@ class ProgressiveReportController extends Controller
         ]);
     }
 
-    // Jumps straight to "my" section of the current open period, so a
-    // regular staff member doesn't have to browse the period list to find
-    // their own report — mirrors the "Manage" landing page in index().
+    // A focused view showing only the current user's own section — even
+    // for a Super Admin / Administrative Officer, who otherwise see every
+    // section under "Manage Progress Reports". Reuses the same template
+    // as show(), just with the participants collection narrowed to one
+    // and the period-level manage actions (Consolidate/Share with CEO)
+    // hidden since those apply to the whole report, not a single section.
     public function myReport()
     {
-        $period = ProgressReportPeriod::where('status', 'open')->orderByDesc('period_month')->first();
+        $period = ProgressReportPeriod::with(['participants' => function ($q) {
+            $q->where('user_id', Auth::id());
+        }, 'participants.user', 'participants.tasks'])
+            ->where('status', 'open')->orderByDesc('period_month')->first();
 
         if (! $period) {
             return redirect('progressive-reports')->with('error', 'There is no open report period right now.');
         }
 
-        $participant = ProgressReportParticipant::where('period_id', $period->id)
-            ->where('user_id', Auth::id())->first();
-
-        if (! $participant) {
+        if ($period->participants->isEmpty()) {
             return redirect('progressive-reports')->with('error', 'You do not have a section on the current report period.');
         }
 
-        return redirect("progressive-reports/{$period->id}#participant-{$participant->id}");
+        return view('progressive_reports.show', [
+            'header_title' => 'My Progress Report',
+            'period'       => $period,
+            'canManage'    => false,
+            'myUserId'     => Auth::id(),
+            'backUrl'      => url('admin/dashboard'),
+        ]);
     }
 
     public function openPeriod(Request $request)

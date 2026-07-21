@@ -27,10 +27,10 @@
             </p>
           </div>
           <div class="col-12 col-lg-6 mt-2 mt-lg-0 pr-header-actions">
-            <a href="{{ url('progressive-reports/'.$period->id.'/download') }}" class="btn btn-cosecsa-outline" target="_blank">
-              <i class="fas fa-file-pdf mr-1"></i> Download PDF
-            </a>
             @if($canManage)
+              <a href="{{ url('progressive-reports/'.$period->id.'/download') }}" class="btn btn-cosecsa-outline" target="_blank">
+                <i class="fas fa-file-pdf mr-1"></i> Download PDF
+              </a>
               <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/share-ceo') }}">
                 @csrf
                 <button type="submit" class="btn btn-cosecsa-outline" onclick="return confirm('Generate the current PDF and send it to the CEO via Messages?')">
@@ -53,7 +53,7 @@
                 </form>
               @endif
             @endif
-            <a href="{{ url('progressive-reports') }}" class="btn btn-cosecsa-outline">
+            <a href="{{ $backUrl ?? url('progressive-reports') }}" class="btn btn-cosecsa-outline">
               <i class="fas fa-arrow-left mr-1"></i> Back
             </a>
           </div>
