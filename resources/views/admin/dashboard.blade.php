@@ -79,7 +79,44 @@
           <!-- ./col -->
         </div>
         <!-- /.row -->
-        
+
+        <!-- Messages / Tasks row -->
+        <div class="row">
+          <div class="col-lg-6 col-6">
+            <a href="{{ url('messages') }}" class="text-decoration-none">
+              <div class="small-box" style="background:#fff;border:1px solid #eee;">
+                <div class="inner">
+                  <h3 style="color:{{ $unreadConversationsCount > 0 ? '#dc3545' : '#333' }};">
+                    {{ $unreadConversationsCount }}
+                  </h3>
+                  <p>Unread Messages</p>
+                </div>
+                <div class="icon">
+                  <i class="far fa-comments" style="color:#a02626;"></i>
+                </div>
+                <span class="small-box-footer" style="color:#a02626;">Open Messages <i class="fas fa-arrow-circle-right"></i></span>
+              </div>
+            </a>
+          </div>
+          <div class="col-lg-6 col-6">
+            <a href="{{ url('messages/tasks') }}" class="text-decoration-none">
+              <div class="small-box" style="background:#fff;border:1px solid #eee;">
+                <div class="inner">
+                  <h3 style="color:{{ $pendingTasksCount > 0 ? '#dc3545' : '#333' }};">
+                    {{ $pendingTasksCount }}
+                  </h3>
+                  <p>Pending Tasks</p>
+                </div>
+                <div class="icon">
+                  <i class="fas fa-tasks" style="color:#a02626;"></i>
+                </div>
+                <span class="small-box-footer" style="color:#a02626;">Open Tasks <i class="fas fa-arrow-circle-right"></i></span>
+              </div>
+            </a>
+          </div>
+        </div>
+        <!-- /.row -->
+
         <!-- Main row -->
         <div class="row">
           <!-- Left col -->
@@ -94,17 +131,16 @@
                 <div class="card-tools">
                   <ul class="nav nav-pills ml-auto">
                     <li class="nav-item">
-                      <a class="nav-link active" href="#revenue-chart" data-toggle="tab">Area</a>
+                      <a class="nav-link active" href="#revenue-chart" data-toggle="tab">Fellows by Programme</a>
                     </li>
                     <li class="nav-item">
-                      <a class="nav-link" href="#sales-chart" data-toggle="tab">Donut</a>
+                      <a class="nav-link" href="#sales-chart" data-toggle="tab">Gender Split</a>
                     </li>
                   </ul>
                 </div>
               </div><!-- /.card-header -->
               <div class="card-body">
                 <div class="tab-content p-0">
-                  <!-- Morris chart - Sales -->
                   <div class="chart tab-pane active" id="revenue-chart"
                        style="position: relative; height: 300px;">
                       <canvas id="revenue-chart-canvas" height="300" style="height: 300px;"></canvas>
@@ -169,5 +205,43 @@
     <!-- /.content -->
   </div>
   <!-- /.content-wrapper -->
+
+  @push('scripts')
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const programmeLabels = {!! json_encode($admissionProgrammeLabels) !!};
+    const programmeTotals = {!! json_encode($admissionProgrammeTotals) !!};
+    const programmeFemale = {!! json_encode($admissionProgrammeFemale) !!};
+
+    new Chart(document.getElementById('revenue-chart-canvas').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: programmeLabels,
+        datasets: [
+          { label: 'Total Fellows', data: programmeTotals, backgroundColor: '#a02626' },
+          { label: 'Female Graduates', data: programmeFemale, backgroundColor: '#FEC503' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+
+    new Chart(document.getElementById('sales-chart-canvas').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Male', 'Female'],
+        datasets: [{
+          data: [{{ $fellowsMaleCount }}, {{ $fellowsFemaleCount }}],
+          backgroundColor: ['#a02626', '#FEC503']
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  });
+  </script>
+  @endpush
 
   @endsection

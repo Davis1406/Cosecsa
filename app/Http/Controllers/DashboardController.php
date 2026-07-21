@@ -30,12 +30,47 @@ public function dashboard()
                 $CandidateCount = User::getCandidates(date('Y'))->count();
                 $FellowsCount = User::getFellows()->count();
                 $accreditedHospitalCount = HospitalModel::where('status', 'active')->count();
-                
+
                 $data['traineeCount'] = $traineeCount;
                 $data['accreditedHospitalCount'] = $accreditedHospitalCount;
                 $data['CandidateCount'] = $CandidateCount;
                 $data['FellowsCount'] = $FellowsCount;
-                
+
+                // Unread messages / pending tasks — shown as a red count
+                // above the Admission Data / Calendar row.
+                $userId = Auth::id();
+                $data['unreadConversationsCount'] = DB::table('conversation_participants as cp')
+                    ->where('cp.user_id', $userId)
+                    ->whereRaw('EXISTS (
+                        SELECT 1 FROM messages m
+                        WHERE m.conversation_id = cp.conversation_id
+                        AND m.sender_id != ?
+                        AND (cp.last_read_at IS NULL OR m.created_at > cp.last_read_at)
+                    )', [$userId])
+                    ->count();
+                $data['pendingTasksCount'] = DB::table('tasks')
+                    ->where('assigned_to', $userId)
+                    ->where('status', '!=', 'done')
+                    ->count();
+
+                // Admission Data chart: fellows by programme (the "exam"
+                // they qualified through), split out by female graduates.
+                $byProgramme = DB::table('fellows as f')
+                    ->leftJoin('programmes as p', 'p.id', '=', 'f.programme_id')
+                    ->selectRaw("COALESCE(p.name, 'Unspecified') as programme_name,
+                                 COUNT(*) as total,
+                                 SUM(CASE WHEN f.gender = 'Female' THEN 1 ELSE 0 END) as female")
+                    ->groupBy('p.name')
+                    ->orderByDesc('total')
+                    ->get();
+
+                $data['admissionProgrammeLabels'] = $byProgramme->pluck('programme_name');
+                $data['admissionProgrammeTotals'] = $byProgramme->pluck('total');
+                $data['admissionProgrammeFemale'] = $byProgramme->pluck('female');
+
+                $data['fellowsMaleCount']   = DB::table('fellows')->where('gender', 'Male')->count();
+                $data['fellowsFemaleCount'] = DB::table('fellows')->where('gender', 'Female')->count();
+
                 return view('admin.dashboard', $data);
                 
             case 2:
