@@ -83,6 +83,7 @@ Route::middleware('auth')->prefix('progressive-reports')->group(function () {
     $prc = \App\Http\Controllers\ProgressiveReportController::class;
 
     Route::get('/', [$prc, 'index'])->name('progressive-reports.index');
+    Route::get('/my', [$prc, 'myReport'])->name('progressive-reports.my');
     Route::post('/open', [$prc, 'openPeriod'])->name('progressive-reports.open');
 
     Route::get('/templates', [$prc, 'templatesIndex'])->name('progressive-reports.templates.index');
@@ -96,6 +97,7 @@ Route::middleware('auth')->prefix('progressive-reports')->group(function () {
     Route::get('/{periodId}', [$prc, 'show'])->name('progressive-reports.show');
     Route::get('/{periodId}/download', [$prc, 'downloadPdf'])->name('progressive-reports.download');
     Route::post('/{periodId}/consolidate', [$prc, 'consolidate'])->name('progressive-reports.consolidate');
+    Route::post('/{periodId}/unconsolidate', [$prc, 'unconsolidate'])->name('progressive-reports.unconsolidate');
     Route::post('/{periodId}/share-ceo', [$prc, 'shareWithCeo'])->name('progressive-reports.share-ceo');
 
     Route::post('/{periodId}/tasks/{taskId}/update', [$prc, 'updateTask'])->name('progressive-reports.tasks.update');

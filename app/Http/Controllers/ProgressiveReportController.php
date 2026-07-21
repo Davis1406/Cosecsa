@@ -34,6 +34,27 @@ class ProgressiveReportController extends Controller
         ]);
     }
 
+    // Jumps straight to "my" section of the current open period, so a
+    // regular staff member doesn't have to browse the period list to find
+    // their own report — mirrors the "Manage" landing page in index().
+    public function myReport()
+    {
+        $period = ProgressReportPeriod::where('status', 'open')->orderByDesc('period_month')->first();
+
+        if (! $period) {
+            return redirect('progressive-reports')->with('error', 'There is no open report period right now.');
+        }
+
+        $participant = ProgressReportParticipant::where('period_id', $period->id)
+            ->where('user_id', Auth::id())->first();
+
+        if (! $participant) {
+            return redirect('progressive-reports')->with('error', 'You do not have a section on the current report period.');
+        }
+
+        return redirect("progressive-reports/{$period->id}#participant-{$participant->id}");
+    }
+
     public function openPeriod(Request $request)
     {
         $this->authorizeManage();
@@ -234,6 +255,15 @@ class ProgressiveReportController extends Controller
         return back()->with('success', 'Report consolidated.');
     }
 
+    public function unconsolidate(Request $request, $periodId)
+    {
+        $this->authorizeManage();
+        $period = ProgressReportPeriod::findOrFail($periodId);
+        $period->update(['status' => 'open', 'consolidated_at' => null, 'consolidated_by' => null]);
+
+        return back()->with('success', 'Report reopened for editing.');
+    }
+
     public function downloadPdf($periodId)
     {
         $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks'])->findOrFail($periodId);
@@ -396,10 +426,7 @@ class ProgressiveReportController extends Controller
     protected function canManage(): bool
     {
         $user = Auth::user();
-        if (! $user) return false;
-        if ($user->isSuperAdmin()) return true;
-
-        return $user->adminRole && $user->adminRole->name === 'Administrative Officer';
+        return $user && $user->isProgressReportManager();
     }
 
     protected function authorizeManage(): void

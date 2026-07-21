@@ -82,6 +82,25 @@
                     ->where('status', '!=', 'done')
                     ->count();
                 $sidebarMsgBadgeTotal = $unreadConvoIds->count() + $sidebarPendingTasksCount;
+
+                // Progressive Reports badge: my own section still pending on
+                // the current open period, plus (for the Administrative
+                // Officer / Super Admin) everyone else's still-pending
+                // sections they may need to chase up.
+                $prOpenPeriodId = \Illuminate\Support\Facades\DB::table('progress_report_periods')
+                    ->where('status', 'open')->orderByDesc('period_month')->value('id');
+                $progressReportBadgeCount = 0;
+                if ($prOpenPeriodId) {
+                    $progressReportBadgeCount += \Illuminate\Support\Facades\DB::table('progress_report_participants')
+                        ->where('period_id', $prOpenPeriodId)->where('user_id', Auth::id())
+                        ->where('status', 'pending')->count();
+
+                    if (Auth::user()->isProgressReportManager()) {
+                        $progressReportBadgeCount += \Illuminate\Support\Facades\DB::table('progress_report_participants')
+                            ->where('period_id', $prOpenPeriodId)->where('user_id', '!=', Auth::id())
+                            ->where('status', 'pending')->count();
+                    }
+                }
             @endphp
             <li class="nav-item dropdown" id="notifBell">
                 <a class="nav-link" data-toggle="dropdown" href="#" title="Messages">
@@ -310,28 +329,6 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <i class="nav-icon fas fa-tachometer-alt"></i>
                                 <p>
                                     Dashboard
-                                </p>
-                            </a>
-                        </li>
-
-                        @if (Auth::user()->hasPermission('reports.view'))
-                        <li class="nav-item">
-                            <a href="{{ url('admin/reports') }}"
-                                class="nav-link @if (Request::segment(2) == 'reports') active @endif">
-                                <i class="nav-icon fas fa-chart-pie"></i>
-                                <p>
-                                    College Reports
-                                </p>
-                            </a>
-                        </li>
-                        @endif
-
-                        <li class="nav-item">
-                            <a href="{{ url('progressive-reports') }}"
-                                class="nav-link @if (Request::segment(1) == 'progressive-reports') active @endif">
-                                <i class="nav-icon fas fa-tasks"></i>
-                                <p>
-                                    Progressive Reports
                                 </p>
                             </a>
                         </li>
@@ -698,6 +695,45 @@ document.addEventListener('DOMContentLoaded', function () {
                             </ul>
                         </li>
                         @endif
+
+                        @if (Auth::user()->hasPermission('reports.view'))
+                        <li class="nav-item">
+                            <a href="{{ url('admin/reports') }}"
+                                class="nav-link @if (Request::segment(2) == 'reports') active @endif">
+                                <i class="nav-icon fas fa-chart-pie"></i>
+                                <p>
+                                    College Reports
+                                </p>
+                            </a>
+                        </li>
+                        @endif
+
+                        <li class="nav-item {{ Request::segment(1) == 'progressive-reports' ? 'menu-open' : '' }}">
+                            <a href="#" class="nav-link {{ Request::segment(1) == 'progressive-reports' ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-tasks"></i>
+                                <p>
+                                    Progressive Reports
+                                    <i class="right fas fa-angle-left"></i>
+                                    <span class="badge badge-danger right" style="{{ $progressReportBadgeCount > 0 ? '' : 'display:none;' }}">{{ $progressReportBadgeCount }}</span>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a href="{{ url('progressive-reports/my') }}" class="nav-link">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>My Progress Report</p>
+                                    </a>
+                                </li>
+                                @if (Auth::user()->isProgressReportManager())
+                                <li class="nav-item">
+                                    <a href="{{ url('progressive-reports') }}" class="nav-link">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Manage Progress Reports</p>
+                                    </a>
+                                </li>
+                                @endif
+                            </ul>
+                        </li>
 
                         <li class="nav-item">
                             <a href="{{ url('messages') }}"

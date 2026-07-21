@@ -2,10 +2,13 @@
 
 @section('content')
   <style>
-    .pr-table textarea { min-height: 60px; resize: vertical; font-size: .82rem; }
-    .pr-table input.pr-activity { font-size: .85rem; font-weight: 600; }
+    .pr-table textarea { min-height: 60px; resize: vertical; font-size: .82rem; width: 100%; }
+    .pr-table textarea.pr-activity { min-height: 44px; font-size: .85rem; font-weight: 600; }
     .pr-section-card.mine { border-left: 4px solid #a02626; }
+    .pr-section-card { scroll-margin-top: 75px; }
     .pr-save-flash { display:none; }
+    .pr-header-actions > * { margin-left: 6px; }
+    .pr-header-actions > *:first-child { margin-left: 0; }
   </style>
   <div class="content-wrapper">
     <section class="content-header">
@@ -18,22 +21,29 @@
               <span class="badge {{ $period->status === 'consolidated' ? 'badge-success' : 'badge-secondary' }} ml-2">{{ ucfirst($period->status) }}</span>
             </p>
           </div>
-          <div class="col-sm-5 text-right">
+          <div class="col-sm-5 text-right pr-header-actions">
             <a href="{{ url('progressive-reports/'.$period->id.'/download') }}" class="btn btn-cosecsa-outline" target="_blank">
               <i class="fas fa-file-pdf mr-1"></i> Download PDF
             </a>
             @if($canManage)
-              <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/share-ceo') }}" style="display:inline;">
+              <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/share-ceo') }}" style="display:inline-block;">
                 @csrf
                 <button type="submit" class="btn btn-cosecsa-outline" onclick="return confirm('Generate the current PDF and send it to the CEO via Messages?')">
                   <i class="fas fa-paper-plane mr-1"></i> Share with CEO
                 </button>
               </form>
               @if($period->status !== 'consolidated')
-                <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/consolidate') }}" style="display:inline;">
+                <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/consolidate') }}" style="display:inline-block;">
                   @csrf
                   <button type="submit" class="btn btn-cosecsa" onclick="return confirm('Mark this period as consolidated?')">
                     <i class="fas fa-check-circle mr-1"></i> Consolidate
+                  </button>
+                </form>
+              @else
+                <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/unconsolidate') }}" style="display:inline-block;">
+                  @csrf
+                  <button type="submit" class="btn btn-cosecsa-outline" onclick="return confirm('Reopen this period for editing?')">
+                    <i class="fas fa-undo mr-1"></i> Unconsolidate
                   </button>
                 </form>
               @endif
@@ -52,7 +62,7 @@
 
         @foreach($period->participants as $participant)
           @php $isMine = $participant->user_id == $myUserId; $canEdit = $isMine || $canManage; @endphp
-          <div class="card pr-section-card {{ $isMine ? 'mine' : '' }}">
+          <div class="card pr-section-card {{ $isMine ? 'mine' : '' }}" id="participant-{{ $participant->id }}">
             <div class="card-header d-flex justify-content-between align-items-center">
               <h3 class="card-title" style="font-size:1rem;">
                 {{ $participant->section_label }}
@@ -76,10 +86,10 @@
                   <thead>
                     <tr>
                       <th style="width:3%;">No</th>
-                      <th style="width:18%;">Activity Description</th>
-                      <th style="width:24%;">Planned Activities</th>
-                      <th style="width:27%;">Current Status</th>
-                      <th style="width:24%;">Next Steps &amp; Time Frame</th>
+                      <th style="width:20%;">Activity Description</th>
+                      <th style="width:23%;">Planned Activities</th>
+                      <th style="width:26%;">Current Status</th>
+                      <th style="width:23%;">Next Steps &amp; Time Frame</th>
                       @if($canEdit)<th style="width:4%;"></th>@endif
                     </tr>
                   </thead>
@@ -88,7 +98,7 @@
                       <tr data-task-id="{{ $task->id }}">
                         <td>{{ $task->row_no }}</td>
                         @if($canEdit)
-                          <td><input type="text" class="form-control form-control-sm pr-field pr-activity" data-field="activity_description" value="{{ $task->activity_description }}"></td>
+                          <td><textarea class="form-control form-control-sm pr-field pr-activity" data-field="activity_description">{{ $task->activity_description }}</textarea></td>
                           <td><textarea class="form-control form-control-sm pr-field" data-field="planned_activities">{{ $task->planned_activities }}</textarea></td>
                           <td><textarea class="form-control form-control-sm pr-field" data-field="current_status">{{ $task->current_status }}</textarea></td>
                           <td><textarea class="form-control form-control-sm pr-field" data-field="next_steps">{{ $task->next_steps }}</textarea></td>
@@ -191,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tr.setAttribute('data-task-id', data.task.id);
         tr.innerHTML = `
           <td>${data.task.row_no}</td>
-          <td><input type="text" class="form-control form-control-sm pr-field pr-activity" data-field="activity_description" value=""></td>
+          <td><textarea class="form-control form-control-sm pr-field pr-activity" data-field="activity_description"></textarea></td>
           <td><textarea class="form-control form-control-sm pr-field" data-field="planned_activities"></textarea></td>
           <td><textarea class="form-control form-control-sm pr-field" data-field="current_status"></textarea></td>
           <td><textarea class="form-control form-control-sm pr-field" data-field="next_steps"></textarea></td>

@@ -790,6 +790,17 @@ class User extends Authenticatable
         return (bool) ($this->adminRole?->is_system ?? false);
     }
 
+    // Owns the Progressive Reports workflow: opening periods, editing the
+    // recurring task library, consolidating, and sharing with the CEO.
+    public function isProgressReportManager(): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        return (bool) ($this->adminRole && $this->adminRole->name === 'Administrative Officer');
+    }
+
     public function hasPermission(string $key): bool
     {
         if ($this->user_type != 1) {
