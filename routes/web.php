@@ -153,6 +153,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
   Route::get('profile/change_password', [UserController::class, 'changePassword']);
   Route::post('profile/change_password', [UserController::class, 'updatePassword']);
   Route::post('profile/signature', [UserController::class, 'updateSignature'])->name('profile.signature.update');
+  Route::post('profile/update', [UserController::class, 'updateProfile'])->name('profile.update');
 
   //Trainees Route
   Route::get('admin/associates/trainees/trainees',      [TraineeController::class,'list']);

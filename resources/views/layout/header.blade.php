@@ -43,6 +43,66 @@
 
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
+        @if(Auth::check())
+            @php
+                $unreadConvoIds = \Illuminate\Support\Facades\DB::table('conversation_participants as cp')
+                    ->where('cp.user_id', Auth::id())
+                    ->whereRaw('EXISTS (
+                        SELECT 1 FROM messages m
+                        WHERE m.conversation_id = cp.conversation_id
+                        AND m.sender_id != ?
+                        AND (cp.last_read_at IS NULL OR m.created_at > cp.last_read_at)
+                    )', [Auth::id()])
+                    ->pluck('cp.conversation_id');
+
+                $unreadPreview = [];
+                if ($unreadConvoIds->isNotEmpty()) {
+                    $unreadPreview = \Illuminate\Support\Facades\DB::table('conversations')
+                        ->whereIn('id', $unreadConvoIds)
+                        ->orderByDesc('last_message_at')
+                        ->limit(6)
+                        ->get()
+                        ->map(function ($c) {
+                            if ($c->type === 'group') {
+                                $c->title = $c->name ?: 'Group';
+                            } else {
+                                $other = \Illuminate\Support\Facades\DB::table('conversation_participants as cp')
+                                    ->join('users as u', 'u.id', '=', 'cp.user_id')
+                                    ->where('cp.conversation_id', $c->id)
+                                    ->where('cp.user_id', '!=', Auth::id())
+                                    ->value('u.name');
+                                $c->title = $other ?? 'Direct Message';
+                            }
+                            return $c;
+                        });
+                }
+            @endphp
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#" title="Messages">
+                    <i class="far fa-bell"></i>
+                    @if($unreadConvoIds->count() > 0)
+                        <span class="badge badge-danger navbar-badge">{{ $unreadConvoIds->count() }}</span>
+                    @endif
+                </a>
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                    <span class="dropdown-item dropdown-header">
+                        {{ $unreadConvoIds->count() }} Unread Conversation{{ $unreadConvoIds->count() == 1 ? '' : 's' }}
+                    </span>
+                    <div class="dropdown-divider"></div>
+                    @forelse($unreadPreview as $c)
+                        <a href="{{ url('messages/'.$c->id) }}" class="dropdown-item">
+                            <i class="fas {{ $c->type === 'group' ? 'fa-users' : 'fa-user' }} mr-2 text-muted"></i>
+                            {{ $c->title }}
+                        </a>
+                        <div class="dropdown-divider"></div>
+                    @empty
+                        <span class="dropdown-item text-muted">No unread messages.</span>
+                        <div class="dropdown-divider"></div>
+                    @endforelse
+                    <a href="{{ url('messages') }}" class="dropdown-item dropdown-footer">See All Messages</a>
+                </div>
+            </li>
+        @endif
         <!-- Dark Mode Toggle Button -->
         <li class="nav-item">
             <a class="nav-link" href="#" role="button" id="darkModeToggle" title="Toggle Dark Mode">
@@ -188,39 +248,44 @@
                             </a>
                         </li>
 
-                        @if (Auth::user()->hasPermission('admin_users.view'))
-                        <li class="nav-item">
-                            <a href="{{ url('admin/list') }}"
-                                class="nav-link @if (Request::segment(2) == 'list') active @endif">
-                                <i class="nav-icon fas fa-user"></i>
+                        @if (Auth::user()->hasPermission('admin_users.view') || Auth::user()->hasPermission('roles.view') || Auth::user()->hasPermission('system_logs.view'))
+                        <li class="nav-item @if (in_array(Request::segment(2), ['list','roles','logs'])) menu-open @endif">
+                            <a href="#" class="nav-link @if (in_array(Request::segment(2), ['list','roles','logs'])) active @endif">
+                                <i class="nav-icon fas fa-cogs"></i>
                                 <p>
-                                    Admin
+                                    System Settings
+                                    <i class="right fas fa-angle-left"></i>
                                 </p>
                             </a>
-                        </li>
-                        @endif
-
-                        @if (Auth::user()->hasPermission('roles.view'))
-                        <li class="nav-item">
-                            <a href="{{ url('admin/roles/list') }}"
-                                class="nav-link @if (Request::segment(2) == 'roles') active @endif">
-                                <i class="nav-icon fas fa-user-shield"></i>
-                                <p>
-                                    Roles &amp; Permissions
-                                </p>
-                            </a>
-                        </li>
-                        @endif
-
-                        @if (Auth::user()->hasPermission('system_logs.view'))
-                        <li class="nav-item">
-                            <a href="{{ url('admin/logs') }}"
-                                class="nav-link @if (Request::segment(2) == 'logs') active @endif">
-                                <i class="nav-icon fas fa-clipboard-list"></i>
-                                <p>
-                                    System Logs
-                                </p>
-                            </a>
+                            <ul class="nav nav-treeview">
+                                @if (Auth::user()->hasPermission('admin_users.view'))
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/list') }}"
+                                        class="nav-link @if (Request::segment(2) == 'list') active @endif">
+                                        <i class="fas fa-user nav-icon"></i>
+                                        <p>User Management</p>
+                                    </a>
+                                </li>
+                                @endif
+                                @if (Auth::user()->hasPermission('system_logs.view'))
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/logs') }}"
+                                        class="nav-link @if (Request::segment(2) == 'logs') active @endif">
+                                        <i class="fas fa-clipboard-list nav-icon"></i>
+                                        <p>System Logs</p>
+                                    </a>
+                                </li>
+                                @endif
+                                @if (Auth::user()->hasPermission('roles.view'))
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/roles/list') }}"
+                                        class="nav-link @if (Request::segment(2) == 'roles') active @endif">
+                                        <i class="fas fa-user-shield nav-icon"></i>
+                                        <p>Roles &amp; Permissions</p>
+                                    </a>
+                                </li>
+                                @endif
+                            </ul>
                         </li>
                         @endif
 

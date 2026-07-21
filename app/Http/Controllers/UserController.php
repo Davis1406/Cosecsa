@@ -6,11 +6,13 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Auth;
 use Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
     public function changePassword(){
-        $data['header_title'] = "Change Password";
+        $data['header_title'] = "Profile Settings";
         $data['user'] = User::getSingleId(Auth::user()->id);
         return view('profile.change_password', $data);
     }
@@ -40,5 +42,30 @@ class UserController extends Controller
         $user->save();
 
         return redirect()->back()->with('success', "Email signature updated");
+    }
+
+    public function updateProfile(Request $request){
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'bio'   => 'nullable|string|max:2000',
+        ]);
+
+        $user = User::getSingleId(Auth::user()->id);
+        $user->name = trim($request->name);
+        $user->bio  = $request->bio;
+
+        if ($request->hasFile('profile_image')) {
+            if ($user->profile_image && Storage::disk('public')->exists($user->profile_image)) {
+                Storage::disk('public')->delete($user->profile_image);
+            }
+            $file      = $request->file('profile_image');
+            $sanitized = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+            $finalName = 'user-' . $user->id . '-' . $sanitized . '.' . $file->getClientOriginalExtension();
+            $user->profile_image = $file->storeAs('profile_images/users', $finalName, 'public');
+        }
+
+        $user->save();
+
+        return redirect()->back()->with('success', "Profile updated");
     }
 }

@@ -27,7 +27,7 @@
                     <div class="container-fluid">
                         <div class="row mb-2">
                             <div class="col-sm-6">
-                                <h1>Change Password</h1>
+                                <h1>Profile Settings</h1>
                             </div>
                         </div>
                     </div><!-- /.container-fluid -->
@@ -40,10 +40,60 @@
                             <!-- left column -->
                             <div class="col-md-12">
                                 @include('_message')
-                                <!-- general form elements -->
+
+                                <!-- Profile Information -->
                                 <div class="card card-primary">
                                     <div class="card-header" style="background-color: darkred">
-                                        <h3 class="card-title">Fill in details</h3>
+                                        <h3 class="card-title">Profile Information</h3>
+                                    </div>
+                                    <form method="POST" action="{{ url('profile/update') }}" enctype="multipart/form-data">
+                                        @csrf
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-3 text-center">
+                                                    @if(!empty($user->profile_image))
+                                                        <img src="{{ asset('storage/'.$user->profile_image) }}" alt="Profile"
+                                                             style="width:120px;height:120px;object-fit:cover;border-radius:50%;border:3px solid #a02626;">
+                                                    @else
+                                                        <div style="width:120px;height:120px;border-radius:50%;background:#f5e6e6;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+                                                            <i class="fas fa-user" style="font-size:2.5rem;color:#a02626;"></i>
+                                                        </div>
+                                                    @endif
+                                                    <div class="form-group mt-3">
+                                                        <label>Profile Picture</label>
+                                                        <div class="custom-file">
+                                                            <input type="file" class="custom-file-input" id="profileImageInput" name="profile_image" accept="image/*">
+                                                            <label class="custom-file-label" for="profileImageInput">Choose photo</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <div class="form-group">
+                                                        <label>Full Name</label>
+                                                        <input type="text" name="name" class="form-control" required value="{{ old('name', $user->name) }}">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>Email <small class="text-muted">(login email — contact Super Admin to change)</small></label>
+                                                        <input type="text" class="form-control" value="{{ $user->email }}" readonly style="background:#f8f9fa;">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>Bio</label>
+                                                        <textarea name="bio" class="form-control" rows="4" placeholder="A short bio about yourself…">{{ old('bio', $user->bio) }}</textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer" style="background-color: white">
+                                            <button type="submit" class="btn btn-primary" style="background-color: #FEC503;border-color:#FEC503">Save Profile</button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <!-- /.card -->
+
+                                <!-- general form elements -->
+                                <div class="card card-primary mt-3">
+                                    <div class="card-header" style="background-color: darkred">
+                                        <h3 class="card-title">Change Password</h3>
                                     </div>
                                     <!-- /.card-header -->
                                     <!-- form start -->
@@ -147,6 +197,11 @@
         <script>
             $(function() {
                 bsCustomFileInput.init();
+
+                $('#profileImageInput').on('change', function () {
+                    var name = $(this).val().split('\\').pop();
+                    $(this).next('.custom-file-label').text(name || 'Choose photo');
+                });
 
                 $('#sig_title').on('input', function () {
                     $('#sig_preview_title').text($(this).val() || 'Job Title');
