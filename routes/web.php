@@ -71,6 +71,7 @@ Route::middleware('auth')->group(function () {
     Route::get('messages/{id}', [\App\Http\Controllers\MessagingController::class, 'show'])->name('messages.show');
     Route::get('messages/{id}/poll', [\App\Http\Controllers\MessagingController::class, 'pollThread'])->name('messages.poll-thread');
     Route::post('messages/{id}/send', [\App\Http\Controllers\MessagingController::class, 'send'])->name('messages.send');
+    Route::post('messages/{id}/delete-conversation', [\App\Http\Controllers\MessagingController::class, 'deleteConversation'])->name('messages.conversation.delete');
     Route::post('messages/{conversationId}/messages/{messageId}/edit', [\App\Http\Controllers\MessagingController::class, 'editMessage'])->name('messages.message.edit');
     Route::post('messages/{conversationId}/messages/{messageId}/delete', [\App\Http\Controllers\MessagingController::class, 'deleteMessage'])->name('messages.message.delete');
     Route::post('messages/{conversationId}/tasks', [\App\Http\Controllers\TaskController::class, 'store'])->name('messages.tasks.store');
@@ -98,6 +99,7 @@ Route::middleware('auth')->prefix('progressive-reports')->group(function () {
     Route::get('/{periodId}/download', [$prc, 'downloadPdf'])->name('progressive-reports.download');
     Route::post('/{periodId}/consolidate', [$prc, 'consolidate'])->name('progressive-reports.consolidate');
     Route::post('/{periodId}/unconsolidate', [$prc, 'unconsolidate'])->name('progressive-reports.unconsolidate');
+    Route::post('/{periodId}/delete', [$prc, 'deletePeriod'])->name('progressive-reports.delete');
     Route::post('/{periodId}/share-ceo', [$prc, 'shareWithCeo'])->name('progressive-reports.share-ceo');
 
     Route::post('/{periodId}/tasks/{taskId}/update', [$prc, 'updateTask'])->name('progressive-reports.tasks.update');

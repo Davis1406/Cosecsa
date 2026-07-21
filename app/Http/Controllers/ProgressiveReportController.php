@@ -40,27 +40,43 @@ class ProgressiveReportController extends Controller
     // as show(), just with the participants collection narrowed to one
     // and the period-level manage actions (Consolidate/Share with CEO)
     // hidden since those apply to the whole report, not a single section.
-    public function myReport()
+    // Accepts ?period_id=X so a past (or future) month can be selected
+    // instead of always defaulting to the latest open period.
+    public function myReport(Request $request)
     {
+        $myPeriods = ProgressReportPeriod::whereHas('participants', fn ($q) => $q->where('user_id', Auth::id()))
+            ->orderByDesc('period_month')->get();
+
+        if ($myPeriods->isEmpty()) {
+            return view('progressive_reports.show', [
+                'header_title' => 'My Progress Report',
+                'period'       => null,
+                'myPeriods'    => $myPeriods,
+                'selectedPeriodId' => null,
+                'canManage'    => false,
+                'isManager'    => $this->canManage(),
+                'myUserId'     => Auth::id(),
+                'backUrl'      => url('admin/dashboard'),
+            ]);
+        }
+
+        $requestedId = $request->query('period_id');
+        $selected = $requestedId ? $myPeriods->firstWhere('id', (int) $requestedId) : null;
+        $selected = $selected ?? $myPeriods->firstWhere('status', 'open') ?? $myPeriods->first();
+
         $period = ProgressReportPeriod::with(['participants' => function ($q) {
             $q->where('user_id', Auth::id());
-        }, 'participants.user', 'participants.tasks'])
-            ->where('status', 'open')->orderByDesc('period_month')->first();
-
-        if (! $period) {
-            return redirect('progressive-reports')->with('error', 'There is no open report period right now.');
-        }
-
-        if ($period->participants->isEmpty()) {
-            return redirect('progressive-reports')->with('error', 'You do not have a section on the current report period.');
-        }
+        }, 'participants.user', 'participants.tasks'])->findOrFail($selected->id);
 
         return view('progressive_reports.show', [
-            'header_title' => 'My Progress Report',
-            'period'       => $period,
-            'canManage'    => false,
-            'myUserId'     => Auth::id(),
-            'backUrl'      => url('admin/dashboard'),
+            'header_title'     => 'My Progress Report',
+            'period'           => $period,
+            'myPeriods'        => $myPeriods,
+            'selectedPeriodId' => $period->id,
+            'canManage'        => false,
+            'isManager'        => $this->canManage(),
+            'myUserId'         => Auth::id(),
+            'backUrl'          => url('admin/dashboard'),
         ]);
     }
 
@@ -271,6 +287,21 @@ class ProgressiveReportController extends Controller
         $period->update(['status' => 'open', 'consolidated_at' => null, 'consolidated_by' => null]);
 
         return back()->with('success', 'Report reopened for editing.');
+    }
+
+    // Deleting an entire report period (and every section's data with it)
+    // is deliberately stricter than the rest of the "manage" actions —
+    // only a Super Admin can do this, not the Administrative Officer and
+    // not the CEO, since it's irreversible and affects everyone's work.
+    public function deletePeriod(Request $request, $periodId)
+    {
+        abort_unless(Auth::user()->isSuperAdmin(), 403, 'Only a Super Admin can delete a report period.');
+
+        $period = ProgressReportPeriod::findOrFail($periodId);
+        $label = $period->period_month->format('F Y');
+        $period->delete(); // cascades participants/tasks/revisions via FK
+
+        return redirect('progressive-reports')->with('success', "Deleted the {$label} report period.");
     }
 
     public function downloadPdf($periodId)

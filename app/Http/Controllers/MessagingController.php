@@ -381,6 +381,38 @@ class MessagingController extends Controller
         return redirect('messages/groups')->with('success', 'Group deleted');
     }
 
+    // Deletes an entire conversation and every message/attachment in it —
+    // used from the main thread view (unlike groupDelete, which is
+    // specific to the Discussion Groups management page). A direct
+    // conversation can be deleted by either participant; a group only by
+    // an admin.
+    public function deleteConversation(Request $request, $id)
+    {
+        $conversation = Conversation::findOrFail($id);
+
+        if ($conversation->type === 'group') {
+            $this->authorizeAdmin();
+        } else {
+            $this->authorizeParticipant($conversation);
+        }
+
+        $messageIds = Message::where('conversation_id', $id)->pluck('id');
+        $attachments = MessageAttachment::whereIn('message_id', $messageIds)->get();
+        foreach ($attachments as $a) {
+            if (Storage::disk('public')->exists($a->path)) {
+                Storage::disk('public')->delete($a->path);
+            }
+        }
+
+        $conversation->delete(); // cascades participants/messages/attachments via FK
+
+        if ($request->wantsJson()) {
+            return response()->json(['ok' => true]);
+        }
+
+        return redirect('messages')->with('success', 'Conversation deleted.');
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
 
     protected function authorizeParticipant(Conversation $conversation): void

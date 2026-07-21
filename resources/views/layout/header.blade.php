@@ -719,14 +719,14 @@ document.addEventListener('DOMContentLoaded', function () {
                             </a>
                             <ul class="nav nav-treeview">
                                 <li class="nav-item">
-                                    <a href="{{ url('progressive-reports/my') }}" class="nav-link">
+                                    <a href="{{ url('progressive-reports/my') }}" class="nav-link {{ Request::is('progressive-reports/my') ? 'active' : '' }}">
                                         <i class="far fa-circle nav-icon"></i>
                                         <p>My Progress Report</p>
                                     </a>
                                 </li>
                                 @if (Auth::user()->isProgressReportManager())
                                 <li class="nav-item">
-                                    <a href="{{ url('progressive-reports') }}" class="nav-link">
+                                    <a href="{{ url('progressive-reports') }}" class="nav-link {{ (Request::is('progressive-reports') || (Request::is('progressive-reports/*') && ! Request::is('progressive-reports/my'))) ? 'active' : '' }}">
                                         <i class="far fa-circle nav-icon"></i>
                                         <p>Manage Progress Reports</p>
                                     </a>

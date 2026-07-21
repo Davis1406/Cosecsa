@@ -20,14 +20,35 @@
       <div class="container-fluid">
         <div class="row mb-2 align-items-center">
           <div class="col-12 col-lg-6">
-            <h1 style="font-size:1.4rem;">Secretariat Progress Report — {{ $period->period_month->format('F Y') }}</h1>
-            <p class="text-muted mb-0" style="font-size:.85rem;">
-              Due {{ $period->due_date->format('d M Y') }}
-              <span class="badge {{ $period->status === 'consolidated' ? 'badge-success' : 'badge-secondary' }} ml-2">{{ ucfirst($period->status) }}</span>
-            </p>
+            <h1 style="font-size:1.4rem;">
+              @if($period)
+                Secretariat Progress Report — {{ $period->period_month->format('F Y') }}
+              @else
+                My Progress Report
+              @endif
+            </h1>
+            @if($period)
+              <p class="text-muted mb-0" style="font-size:.85rem;">
+                Due {{ $period->due_date->format('d M Y') }}
+                <span class="badge {{ $period->status === 'consolidated' ? 'badge-success' : 'badge-secondary' }} ml-2">{{ ucfirst($period->status) }}</span>
+              </p>
+            @endif
+
+            @if(isset($myPeriods))
+              <form method="GET" action="{{ url('progressive-reports/my') }}" class="form-inline mt-2">
+                <label class="mr-2" style="font-size:.85rem;">Select month</label>
+                <select name="period_id" class="form-control form-control-sm" onchange="this.form.submit()" style="min-width:160px;">
+                  @foreach($myPeriods as $mp)
+                    <option value="{{ $mp->id }}" {{ $selectedPeriodId == $mp->id ? 'selected' : '' }}>
+                      {{ $mp->period_month->format('F Y') }} ({{ ucfirst($mp->status) }})
+                    </option>
+                  @endforeach
+                </select>
+              </form>
+            @endif
           </div>
           <div class="col-12 col-lg-6 mt-2 mt-lg-0 pr-header-actions">
-            @if($canManage)
+            @if($period && $canManage)
               <a href="{{ url('progressive-reports/'.$period->id.'/download') }}" class="btn btn-cosecsa-outline" target="_blank">
                 <i class="fas fa-file-pdf mr-1"></i> Download PDF
               </a>
@@ -52,17 +73,43 @@
                   </button>
                 </form>
               @endif
+              @if(Auth::user()->isSuperAdmin())
+                <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/delete') }}" onsubmit="return confirm('Permanently delete this report? This removes every section\'s data and cannot be undone.')">
+                  @csrf
+                  <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash mr-1"></i> Delete Report
+                  </button>
+                </form>
+              @endif
             @endif
             <a href="{{ $backUrl ?? url('progressive-reports') }}" class="btn btn-cosecsa-outline">
               <i class="fas fa-arrow-left mr-1"></i> Back
             </a>
           </div>
         </div>
+
+        @if(isset($isManager) && $isManager)
+          <div class="row">
+            <div class="col-12">
+              <form method="POST" action="{{ url('progressive-reports/open') }}" class="form-inline">
+                @csrf
+                <label class="mr-2" style="font-size:.85rem;">Need a new month? Open a report period for</label>
+                <input type="month" name="period_month" class="form-control form-control-sm mr-2" value="{{ now()->format('Y-m') }}" required>
+                <button type="submit" class="btn btn-sm btn-cosecsa-outline">Open Period</button>
+              </form>
+            </div>
+          </div>
+        @endif
       </div>
     </section>
 
     <section class="content">
       <div class="container-fluid">
+        @if(! $period)
+          <div class="card"><div class="card-body text-center text-muted py-4">
+            You don't have a section on any report period yet.
+          </div></div>
+        @else
         @include('_message')
 
         @foreach($period->participants as $participant)
@@ -142,6 +189,7 @@
             @endif
           </div>
         @endforeach
+        @endif
       </div>
     </section>
   </div>

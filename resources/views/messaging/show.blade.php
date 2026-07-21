@@ -13,6 +13,8 @@
     body.dark-mode .msg-bubble-mine   .msg-attach-link { color: #fff !important; }
     body.dark-mode .msg-bubble-theirs .msg-attach-link { color: #fca5a5 !important; }
     body.dark-mode .msg-deleted-bubble { background: #374151 !important; color: #9ca3af !important; }
+    .thread-header-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+    .thread-header-actions form { margin: 0; }
   </style>
   <div class="content-wrapper">
     <section class="content-header">
@@ -29,7 +31,7 @@
               </p>
             @endif
           </div>
-          <div class="col-sm-5 text-right">
+          <div class="col-sm-5 text-right thread-header-actions">
             <button type="button" class="btn btn-cosecsa" data-toggle="modal" data-target="#assignTaskModal">
               <i class="fas fa-tasks mr-1"></i> Assign Task
             </button>
@@ -37,6 +39,14 @@
               <a href="{{ url('messages/groups/'.$conversation->id.'/edit') }}" class="btn btn-cosecsa-outline">
                 <i class="fas fa-user-cog mr-1"></i> Manage Members
               </a>
+            @endif
+            @if($conversation->type === 'direct' || Auth::user()->user_type == 1)
+              <form method="POST" action="{{ url('messages/'.$conversation->id.'/delete-conversation') }}" style="display:inline;" onsubmit="return confirm('Delete this entire chat? All messages and attachments will be permanently removed for everyone.')">
+                @csrf
+                <button type="submit" class="btn btn-danger">
+                  <i class="fas fa-trash mr-1"></i> Delete Chat
+                </button>
+              </form>
             @endif
             <a href="{{ url('messages') }}" class="btn btn-cosecsa-outline">
               <i class="fas fa-arrow-left mr-1"></i> Back

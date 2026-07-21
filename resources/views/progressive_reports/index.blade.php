@@ -27,12 +27,12 @@
       <div class="container-fluid">
         @include('_message')
 
-        @if($canManage && !$currentPeriod)
+        @if($canManage)
           <div class="card">
             <div class="card-body">
               <form method="POST" action="{{ url('progressive-reports/open') }}" class="form-inline">
                 @csrf
-                <label class="mr-2">Open a new report period for</label>
+                <label class="mr-2">Open a report period for</label>
                 <input type="month" name="period_month" class="form-control mr-2" value="{{ now()->format('Y-m') }}" required>
                 <button type="submit" class="btn btn-cosecsa">Open Period</button>
               </form>
@@ -61,6 +61,12 @@
                       </td>
                       <td>
                         <a href="{{ url('progressive-reports/'.$p->id) }}" class="btn btn-sm btn-cosecsa-outline">Open</a>
+                        @if(Auth::user()->isSuperAdmin())
+                          <form method="POST" action="{{ url('progressive-reports/'.$p->id.'/delete') }}" style="display:inline;" onsubmit="return confirm('Permanently delete the {{ $p->period_month->format('F Y') }} report? This removes every section\'s data and cannot be undone.')">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                          </form>
+                        @endif
                       </td>
                     </tr>
                   @endforeach
