@@ -48,6 +48,24 @@ Route::post('select-role', [AuthController::class, 'selectRole']);
 // impersonator_id session key set by ImpersonationController::start().
 Route::middleware('auth')->get('impersonate/stop', [\App\Http\Controllers\ImpersonationController::class, 'stop'])->name('impersonate.stop');
 
+// Internal messaging — available to every logged-in user regardless of role
+// (staff, fellows, trainees, examiners, ...), not just admin-type accounts.
+Route::middleware('auth')->group(function () {
+    Route::get('messages', [\App\Http\Controllers\MessagingController::class, 'index'])->name('messages.index');
+    Route::get('messages/search-users', [\App\Http\Controllers\MessagingController::class, 'searchUsers'])->name('messages.search-users');
+    Route::post('messages/start', [\App\Http\Controllers\MessagingController::class, 'startDirect'])->name('messages.start');
+
+    Route::get('messages/groups', [\App\Http\Controllers\MessagingController::class, 'groupsIndex'])->name('messages.groups.index');
+    Route::get('messages/groups/create', [\App\Http\Controllers\MessagingController::class, 'groupCreate'])->name('messages.groups.create');
+    Route::post('messages/groups/create', [\App\Http\Controllers\MessagingController::class, 'groupStore'])->name('messages.groups.store');
+    Route::get('messages/groups/{id}/edit', [\App\Http\Controllers\MessagingController::class, 'groupEdit'])->name('messages.groups.edit');
+    Route::post('messages/groups/{id}/edit', [\App\Http\Controllers\MessagingController::class, 'groupUpdate'])->name('messages.groups.update');
+    Route::post('messages/groups/{id}/delete', [\App\Http\Controllers\MessagingController::class, 'groupDelete'])->name('messages.groups.delete');
+
+    Route::get('messages/{id}', [\App\Http\Controllers\MessagingController::class, 'show'])->name('messages.show');
+    Route::post('messages/{id}/send', [\App\Http\Controllers\MessagingController::class, 'send'])->name('messages.send');
+});
+
 
 // Public examiner availability form (no login required — shareable link)
 Route::get('examiner-availability', [ExamsController::class, 'availabilityForm'])->name('examiner.availability.form');

@@ -600,6 +600,16 @@
                         @endif
 
                         <li class="nav-item">
+                            <a href="{{ url('messages') }}"
+                                class="nav-link @if (Request::segment(1) == 'messages') active @endif">
+                                <i class="nav-icon fas fa-comments"></i>
+                                <p>
+                                    Messages
+                                </p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
                             <a href="{{ url('profile/change_password') }}"
                                 class="nav-link @if (Request::segment(2) == 'change_password') active @endif">
                                 <i class="nav-icon fas fa-cog"></i>
@@ -627,6 +637,15 @@
                                 </p>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ url('messages') }}"
+                                class="nav-link @if (Request::segment(1) == 'messages') active @endif">
+                                <i class="nav-icon fas fa-comments"></i>
+                                <p>
+                                    Messages
+                                </p>
+                            </a>
+                        </li>
 
                         {{-- Examiner Section --}}
                     @elseif (Auth::user()->user_type == 7)
@@ -644,6 +663,13 @@
                                onclick="localStorage.setItem('fellowActiveTab','#tab-account');">
                                 <i class="nav-icon fas fa-cog"></i>
                                 <p>Profile Settings</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url('messages') }}"
+                                class="nav-link @if (Request::segment(1) == 'messages') active @endif">
+                                <i class="nav-icon fas fa-comments"></i>
+                                <p>Messages</p>
                             </a>
                         </li>
 
@@ -675,6 +701,13 @@
                                 class="nav-link @if (Request::segment(2) == 'profile_settings' || Request::segment(2) == 'edit_info') active @endif">
                                 <i class="nav-icon fas fa-user-circle"></i>
                                 <p>Profile</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url('messages') }}"
+                                class="nav-link @if (Request::segment(1) == 'messages') active @endif">
+                                <i class="nav-icon fas fa-comments"></i>
+                                <p>Messages</p>
                             </a>
                         </li>
                     @endif
