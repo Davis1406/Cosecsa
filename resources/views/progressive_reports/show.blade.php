@@ -7,40 +7,45 @@
     .pr-section-card.mine { border-left: 4px solid #a02626; }
     .pr-section-card { scroll-margin-top: 75px; }
     .pr-save-flash { display:none; }
-    .pr-header-actions > * { margin-left: 6px; }
-    .pr-header-actions > *:first-child { margin-left: 0; }
+    .pr-header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .pr-header-actions form { margin: 0; }
   </style>
   <div class="content-wrapper">
     <section class="content-header">
       <div class="container-fluid">
         <div class="row mb-2 align-items-center">
-          <div class="col-sm-7">
+          <div class="col-12 col-lg-6">
             <h1 style="font-size:1.4rem;">Secretariat Progress Report — {{ $period->period_month->format('F Y') }}</h1>
             <p class="text-muted mb-0" style="font-size:.85rem;">
               Due {{ $period->due_date->format('d M Y') }}
               <span class="badge {{ $period->status === 'consolidated' ? 'badge-success' : 'badge-secondary' }} ml-2">{{ ucfirst($period->status) }}</span>
             </p>
           </div>
-          <div class="col-sm-5 text-right pr-header-actions">
+          <div class="col-12 col-lg-6 mt-2 mt-lg-0 pr-header-actions">
             <a href="{{ url('progressive-reports/'.$period->id.'/download') }}" class="btn btn-cosecsa-outline" target="_blank">
               <i class="fas fa-file-pdf mr-1"></i> Download PDF
             </a>
             @if($canManage)
-              <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/share-ceo') }}" style="display:inline-block;">
+              <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/share-ceo') }}">
                 @csrf
                 <button type="submit" class="btn btn-cosecsa-outline" onclick="return confirm('Generate the current PDF and send it to the CEO via Messages?')">
                   <i class="fas fa-paper-plane mr-1"></i> Share with CEO
                 </button>
               </form>
               @if($period->status !== 'consolidated')
-                <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/consolidate') }}" style="display:inline-block;">
+                <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/consolidate') }}">
                   @csrf
                   <button type="submit" class="btn btn-cosecsa" onclick="return confirm('Mark this period as consolidated?')">
                     <i class="fas fa-check-circle mr-1"></i> Consolidate
                   </button>
                 </form>
               @else
-                <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/unconsolidate') }}" style="display:inline-block;">
+                <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/unconsolidate') }}">
                   @csrf
                   <button type="submit" class="btn btn-cosecsa-outline" onclick="return confirm('Reopen this period for editing?')">
                     <i class="fas fa-undo mr-1"></i> Unconsolidate
