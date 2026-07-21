@@ -150,6 +150,19 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::get('admin/settings/transcript-templates/delete/{id}', [\App\Http\Controllers\TranscriptTemplateController::class, 'delete']);
     Route::get('admin/settings/transcript-templates/preview/{id}', [\App\Http\Controllers\TranscriptTemplateController::class, 'preview'])->name('admin.transcript_templates.preview');
 
+    Route::get('admin/letters/letterhead', [\App\Http\Controllers\LetterController::class, 'letterheadEdit'])->name('admin.letters.letterhead.edit');
+    Route::post('admin/letters/letterhead', [\App\Http\Controllers\LetterController::class, 'letterheadUpdate'])->name('admin.letters.letterhead.update');
+    Route::get('admin/letters/report', [\App\Http\Controllers\LetterController::class, 'report'])->name('admin.letters.report');
+    Route::get('admin/letters/sent/{id}/download', [\App\Http\Controllers\LetterController::class, 'downloadSentPdf'])->name('admin.letters.sent.download');
+    Route::get('admin/letters/create', [\App\Http\Controllers\LetterController::class, 'create'])->name('admin.letters.create');
+    Route::post('admin/letters', [\App\Http\Controllers\LetterController::class, 'store'])->name('admin.letters.store');
+    Route::get('admin/letters/{id}/edit', [\App\Http\Controllers\LetterController::class, 'edit'])->name('admin.letters.edit');
+    Route::post('admin/letters/{id}/update', [\App\Http\Controllers\LetterController::class, 'update'])->name('admin.letters.update');
+    Route::post('admin/letters/{id}/delete', [\App\Http\Controllers\LetterController::class, 'destroy'])->name('admin.letters.delete');
+    Route::get('admin/letters/{id}/recipients', [\App\Http\Controllers\LetterController::class, 'recipients'])->name('admin.letters.recipients');
+    Route::post('admin/letters/{id}/dispatch', [\App\Http\Controllers\LetterController::class, 'dispatch'])->name('admin.letters.dispatch');
+    Route::get('admin/letters', [\App\Http\Controllers\LetterController::class, 'index'])->name('admin.letters.index');
+
     Route::get('admin/global-search', [DashboardController::class,'globalSearch'])->name('admin.global.search');
 
     Route::get('admin/dashboard', [DashboardController::class,'dashboard']);

@@ -127,7 +127,7 @@
                                     <div class="card-header" style="background-color: darkred">
                                         <h3 class="card-title">Email Signature</h3>
                                     </div>
-                                    <form method="POST" action="{{ url('profile/signature') }}">
+                                    <form method="POST" action="{{ url('profile/signature') }}" enctype="multipart/form-data">
                                         @csrf
                                         <div class="card-body">
                                             <div class="row">
@@ -143,6 +143,14 @@
                                                         <input type="text" id="sig_phone" name="signature_phone" class="form-control"
                                                                value="{{ old('signature_phone', $user->signature_phone) }}"
                                                                placeholder="e.g. +255 27 2549362">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>Signature Image</label><br>
+                                                        @if($user->signature_image_path)
+                                                            <img src="{{ asset('storage/'.$user->signature_image_path) }}" style="height:50px;display:block;margin-bottom:8px;">
+                                                        @endif
+                                                        <input type="file" name="signature_image" class="form-control-file" accept="image/*">
+                                                        <small class="text-muted">A scanned/photographed signature used on College Letters PDFs.</small>
                                                     </div>
                                                     <small class="text-muted">
                                                         Name and email come from your account automatically. This signature is

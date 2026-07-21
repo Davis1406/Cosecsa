@@ -708,6 +708,18 @@ document.addEventListener('DOMContentLoaded', function () {
                         </li>
                         @endif
 
+                        @if (Auth::user()->hasPermission('letters.view'))
+                        <li class="nav-item">
+                            <a href="{{ url('admin/letters') }}"
+                                class="nav-link @if (Request::segment(2) == 'letters') active @endif">
+                                <i class="nav-icon fas fa-envelope-open-text"></i>
+                                <p>
+                                    College Letters
+                                </p>
+                            </a>
+                        </li>
+                        @endif
+
                         <li class="nav-item {{ Request::segment(1) == 'progressive-reports' ? 'menu-open' : '' }}">
                             <a href="#" class="nav-link {{ Request::segment(1) == 'progressive-reports' ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-tasks"></i>

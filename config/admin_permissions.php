@@ -108,6 +108,11 @@ return [
             'view'   => 'Build custom reports (choose type, fields, filters) and export to Excel',
             'manage' => null,
         ],
+        'letters' => [
+            'label'  => 'College Letters',
+            'view'   => 'See letter templates, dispatch history, and the sent-letters report',
+            'manage' => 'Create/edit letter templates, dispatch letters to recipients, manage the college letterhead',
+        ],
     ],
 
     // Longest prefix wins — order doesn't matter, matching sorts by length.
@@ -140,5 +145,6 @@ return [
         'admin/reports'                 => 'reports',
         'admin/transcripts'             => 'transcripts',
         'admin/settings/transcript-templates' => 'transcripts',
+        'admin/letters'                 => 'letters',
     ],
 ];

@@ -194,6 +194,18 @@
                             </div>
                         </div>
 
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>SFS / e-Logbook Username</label>
+                                <input type="text" name="sfs_username" class="form-control" value="{{ $trainee->sfs_username }}">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>SFS / e-Logbook Password</label>
+                                <input type="text" name="sfs_password" class="form-control" value="{{ $trainee->sfs_password }}">
+                                <small class="text-muted">Used to merge into the Invitation Letter — not the trainee's MIS login.</small>
+                            </div>
+                        </div>
+
                         <button type="button" class="action-button previous previous_button">Back</button>
                         <button type="button" class="next action-button">Continue</button>
                     </fieldset>

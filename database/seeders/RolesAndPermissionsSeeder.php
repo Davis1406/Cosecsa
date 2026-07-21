@@ -94,6 +94,12 @@ class RolesAndPermissionsSeeder extends Seeder
             // (generating/exporting a report isn't a "destructive" action).
             $keys[] = 'reports.view';
             $keys[] = 'reports.manage';
+            // Every role can also create and dispatch College Letters
+            // relevant to their own work (e.g. Admission Assistant sends
+            // admission/invitation letters) — actual template deletion is
+            // still Super-Admin-only via the global delete-route rule.
+            $keys[] = 'letters.view';
+            $keys[] = 'letters.manage';
             $keys = array_unique($keys);
 
             $ids = array_map(fn ($k) => $permissionIds[$k], array_filter($keys, fn ($k) => isset($permissionIds[$k])));

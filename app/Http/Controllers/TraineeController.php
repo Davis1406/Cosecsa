@@ -379,6 +379,8 @@ public function update(Request $request, $id)
     $trainee->entry_number            = $request->entry_number;
     $trainee->admission_letter_status = $request->admission_letter_status;
     $trainee->invitation_letter_status= $request->invitation_letter_status;
+    $trainee->sfs_username             = $request->sfs_username;
+    $trainee->sfs_password             = $request->sfs_password;
     $trainee->admission_year          = $request->admission_year ?: null;
     $trainee->exam_year               = $request->exam_year ?: 0;
     $trainee->training_year           = $request->training_year ?: null;

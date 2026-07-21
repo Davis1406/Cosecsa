@@ -34,11 +34,22 @@ class UserController extends Controller
         $request->validate([
             'signature_title' => 'nullable|string|max:255',
             'signature_phone' => 'nullable|string|max:50',
+            'signature_image' => 'nullable|image|max:2048',
         ]);
 
         $user = User::getSingleId(Auth::user()->id);
         $user->signature_title = $request->signature_title;
         $user->signature_phone = $request->signature_phone;
+
+        if ($request->hasFile('signature_image')) {
+            if ($user->signature_image_path && Storage::disk('public')->exists($user->signature_image_path)) {
+                Storage::disk('public')->delete($user->signature_image_path);
+            }
+            $user->signature_image_path = $request->file('signature_image')->storeAs(
+                'signatures', 'user-' . $user->id . '-' . time() . '.' . $request->file('signature_image')->getClientOriginalExtension(), 'public'
+            );
+        }
+
         $user->save();
 
         return redirect()->back()->with('success', "Email signature updated");
