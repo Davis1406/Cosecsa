@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <style>
     @page { margin: 90px 50px 70px 50px; }
-    body { font-family: Arial, sans-serif; font-size: 11px; color: #222; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; color: #222; }
 
     .watermark { position: fixed; top: 260px; left: 150px; width: 300px; opacity: 0.08; z-index: -10; }
 
@@ -12,20 +12,23 @@
     .letterhead table { width: 100%; border-collapse: collapse; }
     .letterhead .logo-cell { width: 70px; }
     .letterhead .logo-cell img { width: 60px; }
-    .letterhead .title-cell { text-align: center; }
-    .letterhead .name { font-weight: bold; font-size: 13px; color: #a02626; }
-    .letterhead .address { font-size: 9px; color: #444; }
+    .letterhead .title-cell { text-align: right; }
+    .letterhead .name { font-weight: bold; font-size: 12pt; color: #a02626; }
+    .letterhead .address { font-size: 9pt; color: #444; }
     .letterhead .rule { border-bottom: 2px solid #a02626; margin-top: 4px; }
 
-    .page-footer { position: fixed; bottom: -50px; left: -30px; right: -30px; font-size: 8px; color: #666; text-align: center; border-top: 1px solid #ccc; padding-top: 4px; }
+    .page-footer { position: fixed; bottom: -55px; left: -30px; right: -30px; font-size: 8pt; color: #222; border-top: 1px solid #ccc; padding-top: 4px; }
+    .page-footer table { width: 100%; border-collapse: collapse; }
+    .page-footer td { padding: 1px 6px; vertical-align: top; }
+    .page-footer b { color: #000; }
 
-    .generated { text-align: right; font-size: 9px; color: #666; margin-bottom: 10px; }
-    h1 { text-align: center; font-size: 16px; letter-spacing: 1px; margin-bottom: 18px; }
-    h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #999; padding-bottom: 3px; margin-top: 22px; }
-    table.details { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    .generated { text-align: right; font-size: 9pt; color: #666; margin: 6px 0 16px; }
+    h1 { text-align: center; font-size: 12pt; letter-spacing: 1px; margin-bottom: 18px; }
+    h2 { font-size: 12pt; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #999; padding-bottom: 3px; margin-top: 22px; }
+    table.details { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10pt; }
     table.details td { border: 1px solid #999; padding: 5px 8px; vertical-align: top; }
     table.details td.label { width: 30%; font-weight: bold; background: #f5f5f5; }
-    table.courses { width: 100%; border-collapse: collapse; margin-top: 6px; }
+    table.courses { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 10pt; }
     table.courses th, table.courses td { border: 1px solid #999; padding: 5px 8px; text-align: left; }
     table.courses th { background: #f5f5f5; }
     tr.section-row td { font-weight: bold; background: #eee; }
@@ -55,9 +58,6 @@
                         <div class="address">{{ $template->address_text }}</div>
                     @endif
                 </td>
-                @if(!empty($template->logo_path))
-                <td class="logo-cell"></td>
-                @endif
             </tr>
         </table>
         <div class="rule"></div>
@@ -65,10 +65,20 @@
     @endif
 
     @if(!empty($template->footer_text))
-    <div class="page-footer">{{ $template->footer_text }}</div>
+    <div class="page-footer">
+        <table>
+            @foreach(explode("\n", trim($template->footer_text)) as $footerRow)
+                @php $cols = explode('||', $footerRow); @endphp
+                <tr>
+                    @foreach($cols as $col)
+                        @php [$label, $rest] = array_pad(explode(':', $col, 2), 2, ''); @endphp
+                        <td><b>{{ trim($label) }}{{ $rest !== '' ? ':' : '' }}</b>{{ $rest }}</td>
+                    @endforeach
+                </tr>
+            @endforeach
+        </table>
+    </div>
     @endif
-
-    <div class="generated">Generated on: {{ now()->format('d/m/Y') }}</div>
 
     <h1>{{ $template->document_title ?? 'TRANSCRIPT OF TRAINING' }}</h1>
 
@@ -87,6 +97,8 @@
         <tr><td class="label">Completion Year</td><td>{{ $record->completion_period ?: '—' }}</td></tr>
         <tr><td class="label">Final Score (%)</td><td>{{ $record->final_score ?: '—' }}</td></tr>
     </table>
+
+    <div class="generated">Generated on: {{ now()->format('d/m/Y') }}</div>
 
     <h2>Programme Details</h2>
     <table class="courses">

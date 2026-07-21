@@ -102,8 +102,11 @@
               </div>
 
               <div class="form-group">
-                <label>Footer Text <small class="text-muted">(e.g. leadership names, shown at page bottom)</small></label>
-                <textarea name="footer_text" class="form-control" rows="2">{{ old('footer_text', $template->footer_text ?? '') }}</textarea>
+                <label>Footer Text <small class="text-muted">
+                  (shown at page bottom, one row per line, two columns per row separated by <code>||</code> —
+                  e.g. <code>President: Prof X, Country||Secretary General: Prof Y, Country</code>)
+                </small></label>
+                <textarea name="footer_text" class="form-control" rows="3">{{ old('footer_text', $template->footer_text ?? '') }}</textarea>
               </div>
 
               <div class="form-group form-check">
