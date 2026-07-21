@@ -258,8 +258,9 @@
 
                     <div class="form-group">
                         <label><strong>From</strong></label>
-                        <input type="text" class="form-control" value="{{ config('mail.from.address') }}" readonly
+                        <input type="text" class="form-control" value="{{ Auth::user()->name }} ({{ config('mail.from.address') }})" readonly
                                style="background:#f8f9fa; color:#6c757d;">
+                        <small class="text-muted">Sent as you — replies from examiners will go to your own email ({{ Auth::user()->email }}).</small>
                     </div>
                     <div class="form-group">
                         <label><strong>Subject</strong> <span class="text-danger">*</span></label>
