@@ -75,6 +75,18 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
 
     Route::get('admin/impersonate/{id}', [\App\Http\Controllers\ImpersonationController::class, 'start'])->name('admin.impersonate.start');
 
+    Route::get('admin/transcripts', [\App\Http\Controllers\TranscriptController::class, 'search'])->name('admin.transcripts.search');
+    Route::get('admin/transcripts/edit/{userId}', [\App\Http\Controllers\TranscriptController::class, 'edit'])->name('admin.transcripts.edit');
+    Route::post('admin/transcripts/edit/{userId}', [\App\Http\Controllers\TranscriptController::class, 'save'])->name('admin.transcripts.save');
+    Route::get('admin/transcripts/pdf/{userId}', [\App\Http\Controllers\TranscriptController::class, 'pdf'])->name('admin.transcripts.pdf');
+
+    Route::get('admin/settings/transcript-templates', [\App\Http\Controllers\TranscriptTemplateController::class, 'list'])->name('admin.transcript_templates.list');
+    Route::get('admin/settings/transcript-templates/add', [\App\Http\Controllers\TranscriptTemplateController::class, 'add']);
+    Route::post('admin/settings/transcript-templates/add', [\App\Http\Controllers\TranscriptTemplateController::class, 'insert']);
+    Route::get('admin/settings/transcript-templates/edit/{id}', [\App\Http\Controllers\TranscriptTemplateController::class, 'edit']);
+    Route::post('admin/settings/transcript-templates/edit/{id}', [\App\Http\Controllers\TranscriptTemplateController::class, 'update']);
+    Route::get('admin/settings/transcript-templates/delete/{id}', [\App\Http\Controllers\TranscriptTemplateController::class, 'delete']);
+
     Route::get('admin/global-search', [DashboardController::class,'globalSearch'])->name('admin.global.search');
 
     Route::get('admin/dashboard', [DashboardController::class,'dashboard']);

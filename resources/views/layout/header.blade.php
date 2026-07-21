@@ -236,6 +236,18 @@
                         </li>
                         @endif
 
+                        @if (Auth::user()->hasPermission('transcripts.view'))
+                        <li class="nav-item">
+                            <a href="{{ url('admin/transcripts') }}"
+                                class="nav-link @if (Request::segment(2) == 'transcripts') active @endif">
+                                <i class="nav-icon fas fa-file-signature"></i>
+                                <p>
+                                    Transcripts
+                                </p>
+                            </a>
+                        </li>
+                        @endif
+
                         @if (Auth::user()->hasPermission('lookups.view'))
                         <li class="nav-item">
                             <a href="{{ url('admin/hospital/list') }}"

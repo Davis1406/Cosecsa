@@ -12,7 +12,7 @@ class RolesAndPermissionsSeeder extends Seeder
     // role name => [module keys granted "manage" (implies view), module keys granted "view" only]
     protected const ROLE_GRANTS = [
         'Examinations Officer' => [
-            'manage' => ['examiners', 'candidates', 'promotions'],
+            'manage' => ['examiners', 'candidates', 'promotions', 'transcripts'],
             'view'   => ['dashboard', 'trainees'],
         ],
         'Education Officer' => [
@@ -28,7 +28,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view'   => ['dashboard', 'trainees'],
         ],
         'Academic Records Assistant' => [
-            'manage' => ['fellows', 'trainees', 'members'],
+            'manage' => ['fellows', 'trainees', 'members', 'transcripts'],
             'view'   => ['dashboard'],
         ],
         'Admissions Assistant' => [

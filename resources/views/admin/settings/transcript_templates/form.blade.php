@@ -1,0 +1,73 @@
+@extends('layout.app')
+
+@section('content')
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-12">
+            <h1 style="font-size:1.4rem;">{{ $header_title }}</h1>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        @include('_message')
+        <div class="card">
+          <div class="card-body">
+            <form method="post" action="{{ $template ? url('admin/settings/transcript-templates/edit/'.$template->id) : url('admin/settings/transcript-templates/add') }}">
+              @csrf
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label>Template Name</label>
+                  <input type="text" name="name" class="form-control" required value="{{ old('name', $template->name ?? '') }}">
+                </div>
+                <div class="form-group col-md-6">
+                  <label>Document Title</label>
+                  <input type="text" name="document_title" class="form-control" value="{{ old('document_title', $template->document_title ?? 'TRANSCRIPT OF TRAINING') }}">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Intro Text <small class="text-muted">(optional paragraph shown under the title)</small></label>
+                <textarea name="intro_text" class="form-control" rows="2">{{ old('intro_text', $template->intro_text ?? '') }}</textarea>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col-md-4">
+                  <label>Closing Salutation</label>
+                  <input type="text" name="closing_salutation" class="form-control" value="{{ old('closing_salutation', $template->closing_salutation ?? 'Yours Sincerely,') }}">
+                </div>
+                <div class="form-group col-md-4">
+                  <label>Signatory Name</label>
+                  <input type="text" name="signatory_name" class="form-control" required value="{{ old('signatory_name', $template->signatory_name ?? '') }}">
+                </div>
+                <div class="form-group col-md-4">
+                  <label>Signatory Title</label>
+                  <input type="text" name="signatory_title" class="form-control" required value="{{ old('signatory_title', $template->signatory_title ?? '') }}">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Institution Name</label>
+                <input type="text" name="institution_name" class="form-control"
+                       value="{{ old('institution_name', $template->institution_name ?? 'College of Surgeons of East, Central and Southern Africa') }}">
+              </div>
+
+              <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" name="is_default" id="is_default" value="1"
+                       {{ old('is_default', $template->is_default ?? false) ? 'checked' : '' }}>
+                <label class="form-check-label" for="is_default">Use as the default template for new transcripts</label>
+              </div>
+
+              <button type="submit" class="btn btn-primary">Save Template</button>
+              <a href="{{ url('admin/settings/transcript-templates') }}" class="btn btn-secondary">Back to List</a>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+@endsection

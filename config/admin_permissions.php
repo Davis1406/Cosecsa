@@ -98,6 +98,11 @@ return [
             'view'   => 'See login history, record changes, and dispatched emails',
             'manage' => null,
         ],
+        'transcripts' => [
+            'label'  => 'Transcripts',
+            'view'   => 'See and generate candidate transcript PDFs',
+            'manage' => 'Edit candidate transcript details and manage transcript templates (Settings)',
+        ],
         'reports' => [
             'label'  => 'College Reports',
             'view'   => 'Build custom reports (choose type, fields, filters) and export to Excel',
@@ -133,5 +138,7 @@ return [
         'admin/settings'                => 'settings',
         'admin/logs'                    => 'system_logs',
         'admin/reports'                 => 'reports',
+        'admin/transcripts'             => 'transcripts',
+        'admin/settings/transcript-templates' => 'transcripts',
     ],
 ];
