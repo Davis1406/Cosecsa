@@ -155,7 +155,37 @@
           <section class="col-lg-6 connectedSortable">
 
             <!-- Calendar -->
-            <div class="card" style="background:linear-gradient(155deg,#a02626,#6e1a1a);color:#fff;">
+            <style>
+              .cosecsa-calendar-card .bootstrap-datetimepicker-widget .table td,
+              .cosecsa-calendar-card .bootstrap-datetimepicker-widget .table th {
+                border: none;
+              }
+              .cosecsa-calendar-card .bootstrap-datetimepicker-widget table thead tr:first-child th:hover,
+              .cosecsa-calendar-card .bootstrap-datetimepicker-widget table td.day:hover,
+              .cosecsa-calendar-card .bootstrap-datetimepicker-widget table td.hour:hover,
+              .cosecsa-calendar-card .bootstrap-datetimepicker-widget table td.minute:hover,
+              .cosecsa-calendar-card .bootstrap-datetimepicker-widget table td.second:hover {
+                background-color: rgba(255,255,255,.15);
+                color: #fff;
+              }
+              .cosecsa-calendar-card .bootstrap-datetimepicker-widget table td.today {
+                background-color: #FEC503;
+                color: #3a2a00;
+              }
+              .cosecsa-calendar-card .bootstrap-datetimepicker-widget table td.today:before {
+                display: none;
+              }
+              .cosecsa-calendar-card .bootstrap-datetimepicker-widget table td.active,
+              .cosecsa-calendar-card .bootstrap-datetimepicker-widget table td.active:hover {
+                background-color: #FEC503;
+                color: #3a2a00;
+                text-shadow: none;
+              }
+              .cosecsa-calendar-card .bootstrap-datetimepicker-widget table td.active.today:before {
+                border-bottom-color: #FEC503;
+              }
+            </style>
+            <div class="card cosecsa-calendar-card" style="background:linear-gradient(155deg,#a02626,#6e1a1a);color:#fff;">
               <div class="card-header border-0">
 
                 <h3 class="card-title">
