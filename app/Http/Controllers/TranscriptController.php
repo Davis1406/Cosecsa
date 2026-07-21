@@ -150,7 +150,7 @@ class TranscriptController extends Controller
             'grouped'  => $grouped,
         ])->setPaper('a4');
 
-        $filename = 'Transcript-' . str_replace(' ', '-', $record->full_name) . '.pdf';
+        $filename = $record->full_name . '- COSECSA Transcript.pdf';
         $response = $pdf->stream($filename);
 
         // PHP's session cache-limiter defaults to "no-store", which some

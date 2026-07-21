@@ -10,8 +10,8 @@
 
     .letterhead { position: fixed; top: -155px; left: -30px; right: -30px; }
     .letterhead table { width: 100%; border-collapse: collapse; }
-    .letterhead .logo-cell { width: 70px; }
-    .letterhead .logo-cell img { width: 60px; }
+    .letterhead .logo-cell { width: 95px; }
+    .letterhead .logo-cell img { width: 85px; }
     .letterhead .title-cell { text-align: right; }
     .letterhead .name { font-weight: bold; font-size: 12pt; color: #a02626; }
     .letterhead .address { font-size: 9pt; color: #444; width: 340px; margin-left: auto; line-height: 1.35; white-space: nowrap; }
