@@ -76,6 +76,35 @@ Route::middleware('auth')->group(function () {
     Route::post('messages/{conversationId}/tasks', [\App\Http\Controllers\TaskController::class, 'store'])->name('messages.tasks.store');
 });
 
+// Progressive (Secretariat) Reports — available to every staff account with
+// a section on the report; fine-grained authorization happens inside the
+// controller (own section vs Administrative Officer / Super Admin).
+Route::middleware('auth')->prefix('progressive-reports')->group(function () {
+    $prc = \App\Http\Controllers\ProgressiveReportController::class;
+
+    Route::get('/', [$prc, 'index'])->name('progressive-reports.index');
+    Route::post('/open', [$prc, 'openPeriod'])->name('progressive-reports.open');
+
+    Route::get('/templates', [$prc, 'templatesIndex'])->name('progressive-reports.templates.index');
+    Route::post('/templates', [$prc, 'templateStore'])->name('progressive-reports.templates.store');
+    Route::post('/templates/{id}/update', [$prc, 'templateUpdate'])->name('progressive-reports.templates.update');
+    Route::post('/templates/{id}/delete', [$prc, 'templateDelete'])->name('progressive-reports.templates.delete');
+
+    Route::get('/settings', [$prc, 'settingsEdit'])->name('progressive-reports.settings.edit');
+    Route::post('/settings', [$prc, 'settingsUpdate'])->name('progressive-reports.settings.update');
+
+    Route::get('/{periodId}', [$prc, 'show'])->name('progressive-reports.show');
+    Route::get('/{periodId}/download', [$prc, 'downloadPdf'])->name('progressive-reports.download');
+    Route::post('/{periodId}/consolidate', [$prc, 'consolidate'])->name('progressive-reports.consolidate');
+    Route::post('/{periodId}/share-ceo', [$prc, 'shareWithCeo'])->name('progressive-reports.share-ceo');
+
+    Route::post('/{periodId}/tasks/{taskId}/update', [$prc, 'updateTask'])->name('progressive-reports.tasks.update');
+    Route::post('/{periodId}/tasks/{taskId}/delete', [$prc, 'deleteTaskRow'])->name('progressive-reports.tasks.delete');
+    Route::post('/{periodId}/participants/{participantId}/tasks/add', [$prc, 'addTaskRow'])->name('progressive-reports.tasks.add');
+    Route::post('/{periodId}/participants/{participantId}/submit', [$prc, 'submitSection'])->name('progressive-reports.submit');
+    Route::post('/{periodId}/participants/{participantId}/copy-forward', [$prc, 'copyForward'])->name('progressive-reports.copy-forward');
+});
+
 
 // Public examiner availability form (no login required — shareable link)
 Route::get('examiner-availability', [ExamsController::class, 'availabilityForm'])->name('examiner.availability.form');

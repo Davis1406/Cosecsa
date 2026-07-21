@@ -326,6 +326,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         </li>
                         @endif
 
+                        <li class="nav-item">
+                            <a href="{{ url('progressive-reports') }}"
+                                class="nav-link @if (Request::segment(1) == 'progressive-reports') active @endif">
+                                <i class="nav-icon fas fa-tasks"></i>
+                                <p>
+                                    Progressive Reports
+                                </p>
+                            </a>
+                        </li>
+
                         @if (Auth::user()->hasPermission('lookups.view'))
                         <li class="nav-item">
                             <a href="{{ url('admin/hospital/list') }}"

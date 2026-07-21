@@ -12,7 +12,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Checks daily whether today is N days before the open report
+        // period's due date, and if so emails everyone who hasn't yet
+        // submitted their section. Guarded by reminder_sent_at so it only
+        // fires once per period even if the server restarts mid-day.
+        $schedule->command('progress-reports:send-reminders')->dailyAt('08:00');
     }
 
     /**
