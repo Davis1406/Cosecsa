@@ -9,22 +9,24 @@
     .watermark { position: fixed; top: 260px; left: 150px; width: 300px; opacity: 0.08; z-index: -10; }
 
     .letterhead { position: fixed; top: -155px; left: -30px; right: -30px; }
-    .letterhead .generated-top { text-align: right; font-size: 8pt; color: #888; margin-bottom: 4px; }
     .letterhead table { width: 100%; border-collapse: collapse; }
     .letterhead .logo-cell { width: 70px; }
     .letterhead .logo-cell img { width: 60px; }
     .letterhead .title-cell { text-align: right; }
     .letterhead .name { font-weight: bold; font-size: 12pt; color: #a02626; }
-    .letterhead .address { font-size: 9pt; color: #444; width: 260px; margin-left: auto; line-height: 1.35; }
+    .letterhead .address { font-size: 9pt; color: #444; width: 340px; margin-left: auto; line-height: 1.35; white-space: nowrap; }
     .letterhead .rule { border-bottom: 2px solid #a02626; margin-top: 4px; }
 
     .page-footer { position: fixed; bottom: -55px; left: -30px; right: -30px; font-size: 8pt; color: #222; border-top: 1px solid #ccc; padding-top: 4px; }
-    .page-footer table { width: 100%; border-collapse: collapse; }
-    .page-footer td { padding: 1px 6px; vertical-align: top; }
+    .page-footer table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .page-footer td { padding: 1px 6px; vertical-align: top; width: 50%; }
+    .page-footer td:last-child { text-align: right; }
     .page-footer b { color: #000; }
 
+    .generated-bottom { text-align: right; font-size: 9pt; color: #666; margin-top: 6px; }
+
     h1 { text-align: center; font-size: 12pt; letter-spacing: 1px; margin-bottom: 12px; }
-    h2 { font-size: 12pt; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #999; padding-bottom: 2px; margin: 14px 0 6px; }
+    h2 { font-size: 11pt; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #999; padding-bottom: 2px; margin: 14px 0 6px; }
     table.details { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 10pt; }
     table.details td { border: 1px solid #999; padding: 3px 8px; vertical-align: top; }
     table.details td.label { width: 30%; font-weight: bold; background: #f5f5f5; }
@@ -46,7 +48,6 @@
     @endif
 
     <div class="letterhead">
-        <div class="generated-top">Generated on: {{ now()->format('d/m/Y') }}</div>
         @if(!empty($template->logo_path) || !empty($template->institution_name))
         <table>
             <tr>
@@ -124,6 +125,8 @@
             @endforelse
         </tbody>
     </table>
+
+    <div class="generated-bottom">Generated on: {{ now()->format('d/m/Y') }}</div>
 
     <div class="closing">
         <p>{{ $template->closing_salutation ?? 'Yours Sincerely,' }}</p>
