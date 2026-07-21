@@ -728,7 +728,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <li class="nav-item">
                                     <a href="{{ url('progressive-reports') }}" class="nav-link {{ (Request::is('progressive-reports') || (Request::is('progressive-reports/*') && ! Request::is('progressive-reports/my'))) ? 'active' : '' }}">
                                         <i class="far fa-circle nav-icon"></i>
-                                        <p>Manage Progress Reports</p>
+                                        <p>Manage Reports</p>
                                     </a>
                                 </li>
                                 @endif
