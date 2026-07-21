@@ -9,12 +9,13 @@
     .watermark { position: fixed; top: 260px; left: 150px; width: 300px; opacity: 0.08; z-index: -10; }
 
     .letterhead { position: fixed; top: -80px; left: -30px; right: -30px; }
+    .letterhead .generated-top { text-align: right; font-size: 8pt; color: #888; margin-bottom: 4px; }
     .letterhead table { width: 100%; border-collapse: collapse; }
     .letterhead .logo-cell { width: 70px; }
     .letterhead .logo-cell img { width: 60px; }
     .letterhead .title-cell { text-align: right; }
     .letterhead .name { font-weight: bold; font-size: 12pt; color: #a02626; }
-    .letterhead .address { font-size: 9pt; color: #444; }
+    .letterhead .address { font-size: 9pt; color: #444; width: 260px; margin-left: auto; }
     .letterhead .rule { border-bottom: 2px solid #a02626; margin-top: 4px; }
 
     .page-footer { position: fixed; bottom: -55px; left: -30px; right: -30px; font-size: 8pt; color: #222; border-top: 1px solid #ccc; padding-top: 4px; }
@@ -22,7 +23,6 @@
     .page-footer td { padding: 1px 6px; vertical-align: top; }
     .page-footer b { color: #000; }
 
-    .generated { text-align: right; font-size: 9pt; color: #666; margin: 4px 0 10px; }
     h1 { text-align: center; font-size: 12pt; letter-spacing: 1px; margin-bottom: 12px; }
     h2 { font-size: 12pt; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #999; padding-bottom: 2px; margin: 14px 0 6px; }
     table.details { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 10pt; }
@@ -45,8 +45,9 @@
         <img class="watermark" src="{{ storage_path('app/public/'.$template->watermark_path) }}">
     @endif
 
-    @if(!empty($template->logo_path) || !empty($template->institution_name))
     <div class="letterhead">
+        <div class="generated-top">Generated on: {{ now()->format('d/m/Y') }}</div>
+        @if(!empty($template->logo_path) || !empty($template->institution_name))
         <table>
             <tr>
                 @if(!empty($template->logo_path))
@@ -55,14 +56,14 @@
                 <td class="title-cell">
                     <div class="name">{{ $template->institution_name }}</div>
                     @if(!empty($template->address_text))
-                        <div class="address">{{ $template->address_text }}</div>
+                        <div class="address">{!! nl2br(e($template->address_text)) !!}</div>
                     @endif
                 </td>
             </tr>
         </table>
         <div class="rule"></div>
+        @endif
     </div>
-    @endif
 
     @if(!empty($template->footer_text))
     <div class="page-footer">
@@ -97,8 +98,6 @@
         <tr><td class="label">Completion Year</td><td>{{ $record->completion_period ?: '—' }}</td></tr>
         <tr><td class="label">Final Score (%)</td><td>{{ $record->final_score ?: '—' }}</td></tr>
     </table>
-
-    <div class="generated">Generated on: {{ now()->format('d/m/Y') }}</div>
 
     <h2>Programme Details</h2>
     <table class="courses">
