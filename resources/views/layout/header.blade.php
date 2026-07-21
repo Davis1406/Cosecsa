@@ -378,8 +378,8 @@
                         </li>
                         @endif
                         @if (Auth::user()->hasPermission('examiners.view') || Auth::user()->hasPermission('transcripts.view'))
-                        <li class="nav-item @if (Request::segment(2) == 'exams') menu-open @endif">
-                            <a href="#" class="nav-link @if (Request::segment(2) == 'exams') active @endif">
+                        <li class="nav-item @if (Request::segment(2) == 'exams' || Request::segment(2) == 'transcripts') menu-open @endif">
+                            <a href="#" class="nav-link @if (Request::segment(2) == 'exams' || Request::segment(2) == 'transcripts') active @endif">
                                 <i class="nav-icon fas fa-book-open"></i>
                                 <p>
                                     Examinations

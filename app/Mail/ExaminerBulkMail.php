@@ -17,6 +17,10 @@ class ExaminerBulkMail extends Mailable
     public string $emailSubject;
     public string $emailBody;   // HTML, may contain [Name] placeholder
     public ?string $trackingToken;
+    public ?string $senderName;
+    public ?string $senderTitle;
+    public ?string $senderPhone;
+    public ?string $senderEmail;
 
     public function __construct(string $recipientName, string $subject, string $body, ?string $trackingToken = null)
     {
@@ -25,6 +29,14 @@ class ExaminerBulkMail extends Mailable
         $this->trackingToken  = $trackingToken;
         // Replace [Name] placeholder with the actual recipient name
         $this->emailBody = str_replace('[Name]', $recipientName, $body);
+
+        // Captured at construction (not send time) so a queued mailable
+        // still carries the correct sender even after Auth::user() is gone.
+        $sender = \Illuminate\Support\Facades\Auth::user();
+        $this->senderName  = $sender?->name;
+        $this->senderTitle = $sender?->signature_title;
+        $this->senderPhone = $sender?->signature_phone;
+        $this->senderEmail = $sender?->email;
     }
 
     public function envelope(): Envelope
@@ -34,16 +46,13 @@ class ExaminerBulkMail extends Mailable
         // sending admin's name shows as the sender and replies go straight
         // to their own inbox — so recipients experience it as coming from
         // that staff member even though the technical envelope is shared.
-        $sender = \Illuminate\Support\Facades\Auth::user();
-        $fromName = $sender?->name ?: config('mail.from.name');
-
         return new Envelope(
             from: new \Illuminate\Mail\Mailables\Address(
                 config('mail.from.address'),
-                $fromName,
+                $this->senderName ?: config('mail.from.name'),
             ),
-            replyTo: $sender?->email
-                ? [new \Illuminate\Mail\Mailables\Address($sender->email, $sender->name)]
+            replyTo: $this->senderEmail
+                ? [new \Illuminate\Mail\Mailables\Address($this->senderEmail, $this->senderName)]
                 : [],
             subject: $this->emailSubject,
         );

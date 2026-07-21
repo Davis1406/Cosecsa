@@ -16,13 +16,13 @@ class TranscriptController extends Controller
     // MCS + FCS course structure) — admin edits/adds/removes rows per
     // candidate from there; this is just a starting point, not a rule.
     public const DEFAULT_COURSES = [
-        ['section' => 'MCS (Membership of college of surgeons)', 'subsection' => 'MCS', 'course_name' => 'MCS Case Studies', 'academic_year' => '', 'result' => 'Complete'],
-        ['section' => 'MCS (Membership of college of surgeons)', 'subsection' => 'MCS', 'course_name' => 'Surgery In Africa Journal Club module', 'academic_year' => '', 'result' => 'Complete'],
-        ['section' => 'MCS (Membership of college of surgeons)', 'subsection' => 'MCS', 'course_name' => 'Basic Surgical Science Course', 'academic_year' => '', 'result' => 'Complete'],
-        ['section' => 'MCS (Membership of college of surgeons)', 'subsection' => 'MCS', 'course_name' => 'Basic Surgical Skill Course', 'academic_year' => '', 'result' => 'Complete'],
-        ['section' => 'MCS (Membership of college of surgeons)', 'subsection' => 'MCS', 'course_name' => 'Operations Logbook', 'academic_year' => '', 'result' => 'Complete'],
-        ['section' => 'MCS (Membership of college of surgeons)', 'subsection' => 'MCS', 'course_name' => 'MCS Exam Part I', 'academic_year' => '', 'result' => 'Pass'],
-        ['section' => 'MCS (Membership of college of surgeons)', 'subsection' => 'MCS', 'course_name' => 'MCS Exam Part II', 'academic_year' => '', 'result' => 'Pass'],
+        ['section' => 'MCS (Membership of College of Surgeons)', 'subsection' => 'MCS', 'course_name' => 'MCS Case Studies', 'academic_year' => '', 'result' => 'Complete'],
+        ['section' => 'MCS (Membership of College of Surgeons)', 'subsection' => 'MCS', 'course_name' => 'Surgery In Africa Journal Club module', 'academic_year' => '', 'result' => 'Complete'],
+        ['section' => 'MCS (Membership of College of Surgeons)', 'subsection' => 'MCS', 'course_name' => 'Basic Surgical Science Course', 'academic_year' => '', 'result' => 'Complete'],
+        ['section' => 'MCS (Membership of College of Surgeons)', 'subsection' => 'MCS', 'course_name' => 'Basic Surgical Skill Course', 'academic_year' => '', 'result' => 'Complete'],
+        ['section' => 'MCS (Membership of College of Surgeons)', 'subsection' => 'MCS', 'course_name' => 'Operations Logbook', 'academic_year' => '', 'result' => 'Complete'],
+        ['section' => 'MCS (Membership of College of Surgeons)', 'subsection' => 'MCS', 'course_name' => 'MCS Exam Part I', 'academic_year' => '', 'result' => 'Pass'],
+        ['section' => 'MCS (Membership of College of Surgeons)', 'subsection' => 'MCS', 'course_name' => 'MCS Exam Part II', 'academic_year' => '', 'result' => 'Pass'],
         ['section' => 'FCS (Fellowship of College of Surgeons)', 'subsection' => 'FCS', 'course_name' => 'FCS Case Studies', 'academic_year' => '', 'result' => 'Complete'],
         ['section' => 'FCS (Fellowship of College of Surgeons)', 'subsection' => 'FCS', 'course_name' => 'Operations Logbook', 'academic_year' => '', 'result' => 'Complete'],
         ['section' => 'FCS (Fellowship of College of Surgeons)', 'subsection' => 'FCS', 'course_name' => 'FCS Exam Part I', 'academic_year' => '', 'result' => 'Pass'],
@@ -32,42 +32,46 @@ class TranscriptController extends Controller
     public function search(Request $request)
     {
         $q = trim((string) $request->input('q'));
-        $results = [];
-
-        if ($q) {
-            $like = "%{$q}%";
-
-            $fellows = DB::table('fellows')
-                ->where(function ($w) use ($like) {
-                    $w->where('firstname', 'like', $like)
-                      ->orWhere('lastname', 'like', $like)
-                      ->orWhere('candidate_number', 'like', $like);
-                })
-                ->select('user_id', DB::raw("TRIM(CONCAT(firstname,' ',lastname)) as name"), 'candidate_number as ref', DB::raw("'Fellow' as source"))
-                ->limit(20)->get();
-
-            $trainees = DB::table('trainees')
-                ->where(function ($w) use ($like) {
-                    $w->where('firstname', 'like', $like)
-                      ->orWhere('lastname', 'like', $like)
-                      ->orWhere('entry_number', 'like', $like);
-                })
-                ->select('user_id', DB::raw("TRIM(CONCAT(firstname,' ',lastname)) as name"), 'entry_number as ref', DB::raw("'Trainee' as source"))
-                ->limit(20)->get();
-
-            $results = $fellows->merge($trainees)->unique('user_id')->values();
-        }
 
         return view('admin.transcripts.search', [
             'header_title' => 'Transcripts',
             'q'            => $q,
-            'results'      => $results,
+            'results'      => $q ? $this->searchFellows($q) : collect(),
         ]);
+    }
+
+    // AJAX: live results as the admin types. Fellows only — transcripts are
+    // issued to completed candidates (fellows), not trainees/candidates.
+    public function searchLive(Request $request)
+    {
+        $q = trim((string) $request->input('q'));
+        return response()->json($q ? $this->searchFellows($q) : []);
+    }
+
+    protected function searchFellows(string $q)
+    {
+        $like = "%{$q}%";
+
+        return DB::table('fellows')
+            ->where(function ($w) use ($like) {
+                $w->where('firstname', 'like', $like)
+                  ->orWhere('lastname', 'like', $like)
+                  ->orWhere('candidate_number', 'like', $like);
+            })
+            ->select('user_id', DB::raw("TRIM(CONCAT(firstname,' ',lastname)) as name"), 'candidate_number as ref', DB::raw("'Fellow' as source"))
+            ->orderBy('lastname')
+            ->limit(20)->get();
     }
 
     public function edit($userId)
     {
         $record = TranscriptRecord::where('user_id', $userId)->first();
+
+        // Transcripts are only for fellows (they're the ones who completed
+        // and qualified) — block starting a new one for anyone else.
+        if (! $record && ! DB::table('fellows')->where('user_id', $userId)->exists()) {
+            return redirect('admin/transcripts')->with('error', 'Transcripts can only be issued to fellows.');
+        }
 
         if (! $record) {
             $record = $this->prefillFromExistingRecord($userId);
@@ -180,6 +184,7 @@ class TranscriptController extends Controller
                 'programme'              => $fellow->programme_name,
                 'entry_period'           => $fellow->admission_year,
                 'completion_period'      => $fellow->fellowship_year,
+                'final_score'            => $this->resolvePart2Score($fellow->id),
             ]);
         }
 
@@ -205,5 +210,26 @@ class TranscriptController extends Controller
             'user_id'   => $userId,
             'full_name' => $user->name ?? '',
         ]);
+    }
+
+    // Same "most final stage wins" priority used by Overall Results
+    // (FCS/MCS > Clinical > Local Exam > Written) — that stage's score is
+    // Part II, the one that actually determines qualification. Just a
+    // starting suggestion; the responsible officer edits it if needed.
+    protected function resolvePart2Score(int $fellowId): ?string
+    {
+        $row = DB::table('capsule_exam_results')
+            ->where('fellow_id', $fellowId)
+            ->whereNotNull('score')
+            ->orderByRaw("CASE exam_type
+                            WHEN 'FCS' THEN 1
+                            WHEN 'MCS' THEN 1
+                            WHEN 'Clinical' THEN 2
+                            WHEN 'Local Exam' THEN 3
+                            WHEN 'Written' THEN 4
+                            ELSE 5 END")
+            ->first();
+
+        return $row ? number_format((float) $row->score, 1) : null;
     }
 }

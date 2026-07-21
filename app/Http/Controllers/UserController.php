@@ -11,6 +11,7 @@ class UserController extends Controller
 {
     public function changePassword(){
         $data['header_title'] = "Change Password";
+        $data['user'] = User::getSingleId(Auth::user()->id);
         return view('profile.change_password', $data);
     }
 
@@ -25,5 +26,19 @@ class UserController extends Controller
         else{
             return redirect()->back()->with('error', "Old Password is not correct");
         }
-    } 
+    }
+
+    public function updateSignature(Request $request){
+        $request->validate([
+            'signature_title' => 'nullable|string|max:255',
+            'signature_phone' => 'nullable|string|max:50',
+        ]);
+
+        $user = User::getSingleId(Auth::user()->id);
+        $user->signature_title = $request->signature_title;
+        $user->signature_phone = $request->signature_phone;
+        $user->save();
+
+        return redirect()->back()->with('success', "Email signature updated");
+    }
 }

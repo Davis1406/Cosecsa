@@ -76,6 +76,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::get('admin/impersonate/{id}', [\App\Http\Controllers\ImpersonationController::class, 'start'])->name('admin.impersonate.start');
 
     Route::get('admin/transcripts', [\App\Http\Controllers\TranscriptController::class, 'search'])->name('admin.transcripts.search');
+    Route::get('admin/transcripts/search-live', [\App\Http\Controllers\TranscriptController::class, 'searchLive'])->name('admin.transcripts.search-live');
     Route::get('admin/transcripts/edit/{userId}', [\App\Http\Controllers\TranscriptController::class, 'edit'])->name('admin.transcripts.edit');
     Route::post('admin/transcripts/edit/{userId}', [\App\Http\Controllers\TranscriptController::class, 'save'])->name('admin.transcripts.save');
     Route::get('admin/transcripts/pdf/{userId}', [\App\Http\Controllers\TranscriptController::class, 'pdf'])->name('admin.transcripts.pdf');
@@ -133,6 +134,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
   //Profile Settings
   Route::get('profile/change_password', [UserController::class, 'changePassword']);
   Route::post('profile/change_password', [UserController::class, 'updatePassword']);
+  Route::post('profile/signature', [UserController::class, 'updateSignature'])->name('profile.signature.update');
 
   //Trainees Route
   Route::get('admin/associates/trainees/trainees',      [TraineeController::class,'list']);
