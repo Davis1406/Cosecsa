@@ -77,18 +77,17 @@
                         });
                 }
             @endphp
-            <li class="nav-item dropdown">
+            <li class="nav-item dropdown" id="notifBell">
                 <a class="nav-link" data-toggle="dropdown" href="#" title="Messages">
                     <i class="far fa-bell"></i>
-                    @if($unreadConvoIds->count() > 0)
-                        <span class="badge badge-danger navbar-badge">{{ $unreadConvoIds->count() }}</span>
-                    @endif
+                    <span id="notifBadge" class="badge badge-danger navbar-badge" style="{{ $unreadConvoIds->count() > 0 ? '' : 'display:none;' }}">{{ $unreadConvoIds->count() }}</span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                    <span class="dropdown-item dropdown-header">
+                    <span id="notifHeader" class="dropdown-item dropdown-header">
                         {{ $unreadConvoIds->count() }} Unread Conversation{{ $unreadConvoIds->count() == 1 ? '' : 's' }}
                     </span>
                     <div class="dropdown-divider"></div>
+                    <div id="notifList">
                     @forelse($unreadPreview as $c)
                         <a href="{{ url('messages/'.$c->id) }}" class="dropdown-item">
                             <i class="fas {{ $c->type === 'group' ? 'fa-users' : 'fa-user' }} mr-2 text-muted"></i>
@@ -99,6 +98,7 @@
                         <span class="dropdown-item text-muted">No unread messages.</span>
                         <div class="dropdown-divider"></div>
                     @endforelse
+                    </div>
                     <a href="{{ url('messages') }}" class="dropdown-item dropdown-footer">See All Messages</a>
                 </div>
             </li>
@@ -116,6 +116,58 @@
         </li>
     </ul>
 </nav>
+
+@if(Auth::check())
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function pollNotifSummary() {
+        fetch("{{ url('messages/poll-summary') }}", { headers: { 'Accept': 'application/json' } })
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (!data) return;
+
+                const badge = document.getElementById('notifBadge');
+                if (badge) {
+                    if (data.unread_count > 0) { badge.textContent = data.unread_count; badge.style.display = ''; }
+                    else { badge.style.display = 'none'; }
+                }
+                const header = document.getElementById('notifHeader');
+                if (header) {
+                    header.textContent = data.unread_count + ' Unread Conversation' + (data.unread_count == 1 ? '' : 's');
+                }
+                const list = document.getElementById('notifList');
+                if (list) {
+                    if ((data.unread_conversations || []).length === 0) {
+                        list.innerHTML = '<span class="dropdown-item text-muted">No unread messages.</span><div class="dropdown-divider"></div>';
+                    } else {
+                        list.innerHTML = data.unread_conversations.map(c =>
+                            `<a href="{{ url('messages') }}/${c.id}" class="dropdown-item">
+                                <i class="fas ${c.type === 'group' ? 'fa-users' : 'fa-user'} mr-2 text-muted"></i>${c.title}
+                             </a><div class="dropdown-divider"></div>`
+                        ).join('');
+                    }
+                }
+
+                // Dashboard stat cards (only present on the admin dashboard)
+                const unreadCard = document.getElementById('dashUnreadMessagesCount');
+                if (unreadCard) {
+                    unreadCard.textContent = data.unread_count;
+                    unreadCard.style.color = data.unread_count > 0 ? '#dc3545' : '#333';
+                }
+                const tasksCard = document.getElementById('dashPendingTasksCount');
+                if (tasksCard) {
+                    tasksCard.textContent = data.pending_tasks_count;
+                    tasksCard.style.color = data.pending_tasks_count > 0 ? '#dc3545' : '#333';
+                }
+            })
+            .catch(() => {});
+    }
+    setInterval(pollNotifSummary, 15000);
+});
+</script>
+@endpush
+@endif
 
 @if(Auth::check() && Auth::user()->user_type == 1)
 <style>

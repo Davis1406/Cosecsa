@@ -129,6 +129,14 @@ class MessagingController extends Controller
 
         $conversation->update(['last_message_at' => now()]);
 
+        ConversationParticipant::where('conversation_id', $id)
+            ->where('user_id', Auth::id())
+            ->update(['last_read_at' => now()]);
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => $this->formatMessage($message->fresh(['sender', 'attachments']))]);
+        }
+
         return redirect("messages/{$id}");
     }
 
@@ -142,10 +150,14 @@ class MessagingController extends Controller
 
         $message->update(['body' => trim($request->body), 'edited_at' => now()]);
 
+        if ($request->wantsJson()) {
+            return response()->json(['message' => $this->formatMessage($message->fresh(['sender', 'attachments']))]);
+        }
+
         return redirect("messages/{$conversationId}");
     }
 
-    public function deleteMessage($conversationId, $messageId)
+    public function deleteMessage(Request $request, $conversationId, $messageId)
     {
         $message = Message::with('attachments')->where('conversation_id', $conversationId)->findOrFail($messageId);
         abort_unless($message->sender_id == Auth::id(), 403, 'You can only delete your own messages.');
@@ -158,7 +170,126 @@ class MessagingController extends Controller
         $message->attachments()->delete();
         $message->update(['deleted_at' => now(), 'body' => '']);
 
+        if ($request->wantsJson()) {
+            return response()->json(['message' => $this->formatMessage($message->fresh(['sender', 'attachments']))]);
+        }
+
         return redirect("messages/{$conversationId}");
+    }
+
+    /**
+     * GET messages/{id}/poll?since=<Y-m-d H:i:s>
+     * Returns messages created/edited/deleted since the given timestamp,
+     * for the thread view to append/update without a full page reload.
+     */
+    public function pollThread(Request $request, $id)
+    {
+        $conversation = Conversation::findOrFail($id);
+        $this->authorizeParticipant($conversation);
+
+        $since = $request->input('since');
+        $query = Message::with(['sender', 'attachments'])->where('conversation_id', $id);
+        if ($since) {
+            $query->where('updated_at', '>', $since);
+        }
+        $messages = $query->orderBy('id')->get();
+
+        ConversationParticipant::where('conversation_id', $id)
+            ->where('user_id', Auth::id())
+            ->update(['last_read_at' => now()]);
+
+        return response()->json([
+            'server_time' => now()->toDateTimeString(),
+            'messages'    => $messages->map(fn ($m) => $this->formatMessage($m))->values(),
+        ]);
+    }
+
+    /**
+     * GET messages/poll-summary
+     * Lightweight summary for the navbar bell, dashboard cards, and
+     * conversation list — polled globally every ~10-15s.
+     */
+    public function pollSummary(Request $request)
+    {
+        $userId = Auth::id();
+
+        $unreadConvoIds = DB::table('conversation_participants as cp')
+            ->where('cp.user_id', $userId)
+            ->whereRaw('EXISTS (
+                SELECT 1 FROM messages m
+                WHERE m.conversation_id = cp.conversation_id
+                AND m.sender_id != ?
+                AND (cp.last_read_at IS NULL OR m.created_at > cp.last_read_at)
+            )', [$userId])
+            ->pluck('cp.conversation_id');
+
+        $unreadPreview = collect();
+        if ($unreadConvoIds->isNotEmpty()) {
+            $unreadPreview = DB::table('conversations')
+                ->whereIn('id', $unreadConvoIds)
+                ->orderByDesc('last_message_at')
+                ->limit(6)
+                ->get()
+                ->map(function ($c) use ($userId) {
+                    if ($c->type === 'group') {
+                        $title = $c->name ?: 'Group';
+                    } else {
+                        $title = DB::table('conversation_participants as cp')
+                            ->join('users as u', 'u.id', '=', 'cp.user_id')
+                            ->where('cp.conversation_id', $c->id)
+                            ->where('cp.user_id', '!=', $userId)
+                            ->value('u.name') ?? 'Direct Message';
+                    }
+                    return ['id' => $c->id, 'type' => $c->type, 'title' => $title];
+                })
+                ->values();
+        }
+
+        $pendingTasksCount = DB::table('tasks')
+            ->where('assigned_to', $userId)
+            ->where('status', '!=', 'done')
+            ->count();
+
+        $conversationPreviews = Conversation::whereHas('participants', fn ($q) => $q->where('user_id', $userId))
+            ->with('latestMessage')
+            ->orderByDesc('last_message_at')
+            ->get()
+            ->map(function ($c) use ($userId) {
+                $last = $c->latestMessage;
+                return [
+                    'id'         => $c->id,
+                    'last_at'    => $last?->created_at?->toDateTimeString(),
+                    'last_human' => $last?->created_at?->diffForHumans(),
+                    'preview'    => $last ? \Illuminate\Support\Str::limit(strip_tags($last->deleted_at ? 'This message was deleted.' : $last->body), 90) : 'No messages yet.',
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'unread_count'          => $unreadConvoIds->count(),
+            'unread_conversations'  => $unreadPreview,
+            'pending_tasks_count'   => $pendingTasksCount,
+            'conversation_previews' => $conversationPreviews,
+        ]);
+    }
+
+    protected function formatMessage(Message $m): array
+    {
+        return [
+            'id'         => $m->id,
+            'sender_id'  => $m->sender_id,
+            'mine'       => $m->sender_id == Auth::id(),
+            'sender_name'=> $m->sender->name ?? 'Unknown',
+            'body'       => $m->deleted_at ? '' : $m->body,
+            'deleted'    => (bool) $m->deleted_at,
+            'edited'     => (bool) $m->edited_at,
+            'created_at' => $m->created_at->format('d M, H:i'),
+            'attachments'=> $m->attachments->map(fn ($a) => [
+                'kind' => $a->kind,
+                'url'  => asset('storage/' . $a->path),
+                'name' => $a->original_name,
+            ])->values(),
+        ];
     }
 
     protected function storeAttachment(Message $message, $file, ?string $kindOverride = null): void

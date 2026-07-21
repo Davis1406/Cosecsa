@@ -85,7 +85,7 @@
           <div class="col-lg-6 col-6">
             <div class="small-box" style="background:#fff;border:1px solid #eee;">
               <div class="inner">
-                <h3 style="color:{{ $unreadConversationsCount > 0 ? '#dc3545' : '#333' }};">
+                <h3 id="dashUnreadMessagesCount" style="color:{{ $unreadConversationsCount > 0 ? '#dc3545' : '#333' }};">
                   {{ $unreadConversationsCount }}
                 </h3>
                 <p>Unread Messages</p>
@@ -99,7 +99,7 @@
           <div class="col-lg-6 col-6">
             <div class="small-box" style="background:#fff;border:1px solid #eee;">
               <div class="inner">
-                <h3 style="color:{{ $pendingTasksCount > 0 ? '#dc3545' : '#333' }};">
+                <h3 id="dashPendingTasksCount" style="color:{{ $pendingTasksCount > 0 ? '#dc3545' : '#333' }};">
                   {{ $pendingTasksCount }}
                 </h3>
                 <p>Pending Tasks</p>

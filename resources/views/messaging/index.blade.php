@@ -39,24 +39,24 @@
         <div class="card">
           <div class="card-header"><h3 class="card-title">Conversations</h3></div>
           <div class="card-body p-0">
-            <div class="list-group list-group-flush">
+            <div class="list-group list-group-flush" id="conversationList">
               @foreach($conversations as $c)
                 @php $last = $c->latestMessage; @endphp
-                <a href="{{ url('messages/'.$c->id) }}" class="list-group-item list-group-item-action">
+                <a href="{{ url('messages/'.$c->id) }}" class="list-group-item list-group-item-action" data-conv-id="{{ $c->id }}">
                   <div class="d-flex justify-content-between">
                     <strong>
                       @if($c->type === 'group')<i class="fas fa-users text-muted mr-1"></i>@endif
                       {{ $c->display_name }}
                     </strong>
-                    <small class="text-muted">{{ $last ? $last->created_at->diffForHumans() : '' }}</small>
+                    <small class="text-muted conv-time">{{ $last ? $last->created_at->diffForHumans() : '' }}</small>
                   </div>
-                  <div class="text-muted" style="font-size:.85rem;">
+                  <div class="text-muted conv-preview" style="font-size:.85rem;">
                     {{ $last ? \Illuminate\Support\Str::limit(strip_tags($last->body), 90) : 'No messages yet.' }}
                   </div>
                 </a>
               @endforeach
               @if($conversations->isEmpty())
-                <div class="text-center text-muted py-4">No conversations yet — search above to start one.</div>
+                <div class="text-center text-muted py-4" id="noConversationsPlaceholder">No conversations yet — search above to start one.</div>
               @endif
             </div>
           </div>
@@ -102,6 +102,25 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }, 300);
   });
+
+  // ── Poll for live-updated previews/timestamps/ordering ──────────────
+  const list = document.getElementById('conversationList');
+  function pollConversations() {
+    fetch("{{ url('messages/poll-summary') }}")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data) return;
+        (data.conversation_previews || []).forEach(c => {
+          const row = list.querySelector(`[data-conv-id="${c.id}"]`);
+          if (!row) return;
+          row.querySelector('.conv-time').textContent = c.last_human || '';
+          row.querySelector('.conv-preview').textContent = c.preview;
+          list.appendChild(row); // re-append in server order (newest last_message_at first)
+        });
+      })
+      .catch(() => {});
+  }
+  if (list) setInterval(pollConversations, 10000);
 });
 </script>
 @endpush

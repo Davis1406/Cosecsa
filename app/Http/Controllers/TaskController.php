@@ -61,6 +61,43 @@ class TaskController extends Controller
 
         $task->update(['status' => $request->status]);
 
+        if ($request->wantsJson()) {
+            return response()->json(['ok' => true, 'status' => $task->status]);
+        }
+
         return back()->with('success', 'Task updated');
+    }
+
+    /**
+     * GET messages/tasks/poll
+     * Refreshes both task lists for the "My Tasks" page without a reload.
+     */
+    public function poll(Request $request)
+    {
+        $userId = Auth::id();
+
+        $format = fn ($t, $withAssignee = false) => [
+            'id'          => $t->id,
+            'title'       => $t->title,
+            'description' => $t->description,
+            'from'        => $t->creator->name ?? '—',
+            'assignee'    => $withAssignee ? ($t->assignee->name ?? '—') : null,
+            'conversation_url' => $t->conversation_id ? url('messages/' . $t->conversation_id) : null,
+            'due_date'    => $t->due_date ? \Carbon\Carbon::parse($t->due_date)->format('d M Y') : null,
+            'status'      => $t->status,
+        ];
+
+        $assignedToMe = Task::with(['creator', 'conversation'])->where('assigned_to', $userId)
+            ->orderByRaw("status = 'done'")->orderBy('due_date')->get()
+            ->map(fn ($t) => $format($t));
+
+        $assignedByMe = Task::with(['assignee', 'conversation'])->where('created_by', $userId)
+            ->where('assigned_to', '!=', $userId)->orderByDesc('created_at')->get()
+            ->map(fn ($t) => $format($t, true));
+
+        return response()->json([
+            'assigned_to_me' => $assignedToMe->values(),
+            'assigned_by_me' => $assignedByMe->values(),
+        ]);
     }
 }

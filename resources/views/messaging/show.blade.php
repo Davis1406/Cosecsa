@@ -1,6 +1,7 @@
 @extends('layout.app')
 
 @section('content')
+  <style>.message-bubble:hover .msg-actions { display: block !important; }</style>
   <div class="content-wrapper">
     <section class="content-header">
       <div class="container-fluid">
@@ -38,10 +39,11 @@
         @include('_message')
 
         <div class="card">
-          <div class="card-body" style="max-height:520px; overflow-y:auto;" id="threadBody">
+          <div class="card-body" style="max-height:520px; overflow-y:auto;" id="threadBody"
+               data-conversation-id="{{ $conversation->id }}" data-since="{{ now()->toDateTimeString() }}">
             @forelse($conversation->messages as $m)
               @php $mine = $m->sender_id == Auth::id(); @endphp
-              <div class="mb-3 d-flex {{ $mine ? 'justify-content-end' : 'justify-content-start' }}">
+              <div class="mb-3 d-flex {{ $mine ? 'justify-content-end' : 'justify-content-start' }}" data-row-id="{{ $m->id }}">
                 <div style="max-width:70%;">
                   @if(!$mine)
                     <div class="text-muted" style="font-size:.75rem;">{{ $m->sender->name ?? 'Unknown' }}</div>
@@ -75,17 +77,13 @@
                       @if($mine)
                         <div class="msg-actions" style="position:absolute; top:2px; right:6px; display:none;">
                           <a href="#" class="text-white msg-edit-btn" title="Edit" style="margin-right:6px;"><i class="fas fa-edit"></i></a>
-                          <form method="POST" action="{{ url('messages/'.$conversation->id.'/messages/'.$m->id.'/delete') }}" style="display:inline;" onsubmit="return confirm('Delete this message?')">
-                            @csrf
-                            <button type="submit" class="btn btn-link p-0 text-white" title="Delete"><i class="fas fa-trash"></i></button>
-                          </form>
+                          <a href="#" class="text-white msg-delete-btn" title="Delete"><i class="fas fa-trash"></i></a>
                         </div>
                       @endif
                     </div>
 
                     @if($mine)
-                      <form method="POST" action="{{ url('messages/'.$conversation->id.'/messages/'.$m->id.'/edit') }}" class="msg-edit-form mt-1" style="display:none;">
-                        @csrf
+                      <form class="msg-edit-form mt-1" style="display:none;" data-msg-id="{{ $m->id }}">
                         <div class="input-group input-group-sm">
                           <input type="text" name="body" class="form-control" value="{{ $m->body }}">
                           <div class="input-group-append">
@@ -98,13 +96,13 @@
                   @endif
 
                   <div class="text-muted text-right" style="font-size:.7rem;">
-                    {{ $m->created_at->format('d M, H:i') }}
-                    @if($m->edited_at && !$m->deleted_at) <span class="font-italic">(edited)</span> @endif
+                    <span class="msg-time">{{ $m->created_at->format('d M, H:i') }}</span>
+                    <span class="msg-edited-tag font-italic" style="{{ ($m->edited_at && !$m->deleted_at) ? '' : 'display:none;' }}"> (edited)</span>
                   </div>
                 </div>
               </div>
             @empty
-              <div class="text-center text-muted py-4">No messages yet — say hello.</div>
+              <div class="text-center text-muted py-4" id="noMessagesPlaceholder">No messages yet — say hello.</div>
             @endforelse
           </div>
           <div class="card-footer">
@@ -183,35 +181,158 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const box = document.getElementById('threadBody');
+  const conversationId = box.dataset.conversationId;
   if (box) box.scrollTop = box.scrollHeight;
 
-  // Show edit/delete actions on hover
-  document.querySelectorAll('.message-bubble').forEach(function (bubble) {
-    bubble.addEventListener('mouseenter', function () {
-      const a = this.querySelector('.msg-actions');
-      if (a) a.style.display = 'block';
-    });
-    bubble.addEventListener('mouseleave', function () {
-      const a = this.querySelector('.msg-actions');
-      if (a) a.style.display = 'none';
-    });
-  });
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
 
-  // Inline edit toggle
-  document.querySelectorAll('.msg-edit-btn').forEach(function (btn) {
-    btn.addEventListener('click', function (e) {
+  function renderRow(m) {
+    const wrap = document.createElement('div');
+    wrap.className = 'mb-3 d-flex ' + (m.mine ? 'justify-content-end' : 'justify-content-start');
+    wrap.setAttribute('data-row-id', m.id);
+
+    let html = '<div style="max-width:70%;">';
+    if (!m.mine) {
+      html += `<div class="text-muted" style="font-size:.75rem;">${escapeHtml(m.sender_name)}</div>`;
+    }
+    if (m.deleted) {
+      html += `<div class="p-2 rounded font-italic text-muted" style="background:#f1f1f1;"><i class="fas fa-ban mr-1"></i> This message was deleted.</div>`;
+    } else {
+      html += `<div class="p-2 rounded message-bubble" data-msg-id="${m.id}" style="background:${m.mine ? '#a02626' : '#f1f1f1'};color:${m.mine ? '#fff' : '#222'};position:relative;">`;
+      html += `<span class="msg-body-text">${escapeHtml(m.body)}</span>`;
+      (m.attachments || []).forEach(a => {
+        if (a.kind === 'image') {
+          html += `<div class="mt-2"><a href="${a.url}" target="_blank"><img src="${a.url}" style="max-width:220px;max-height:220px;border-radius:6px;display:block;"></a></div>`;
+        } else if (a.kind === 'audio') {
+          html += `<div class="mt-2"><audio controls src="${a.url}" style="max-width:220px;"></audio></div>`;
+        } else {
+          html += `<div class="mt-2"><a href="${a.url}" target="_blank" style="color:${m.mine ? '#fff' : '#a02626'};text-decoration:underline;"><i class="fas fa-paperclip mr-1"></i>${escapeHtml(a.name)}</a></div>`;
+        }
+      });
+      if (m.mine) {
+        html += `<div class="msg-actions" style="position:absolute;top:2px;right:6px;display:none;">
+          <a href="#" class="text-white msg-edit-btn" title="Edit" style="margin-right:6px;"><i class="fas fa-edit"></i></a>
+          <a href="#" class="text-white msg-delete-btn" title="Delete"><i class="fas fa-trash"></i></a>
+        </div>`;
+      }
+      html += `</div>`;
+      if (m.mine) {
+        html += `<form class="msg-edit-form mt-1" style="display:none;" data-msg-id="${m.id}">
+          <div class="input-group input-group-sm">
+            <input type="text" name="body" class="form-control" value="${escapeHtml(m.body)}">
+            <div class="input-group-append">
+              <button type="submit" class="btn btn-cosecsa">Save</button>
+              <button type="button" class="btn btn-cosecsa-outline msg-edit-cancel">Cancel</button>
+            </div>
+          </div>
+        </form>`;
+      }
+    }
+    html += `<div class="text-muted text-right" style="font-size:.7rem;">
+      <span class="msg-time">${m.created_at}</span>
+      <span class="msg-edited-tag font-italic" style="${(m.edited && !m.deleted) ? '' : 'display:none;'}"> (edited)</span>
+    </div></div>`;
+    wrap.innerHTML = html;
+    return wrap;
+  }
+
+  function upsertMessage(m, scroll) {
+    const placeholder = document.getElementById('noMessagesPlaceholder');
+    if (placeholder) placeholder.remove();
+
+    const existing = box.querySelector(`[data-row-id="${m.id}"]`);
+    const row = renderRow(m);
+    if (existing) {
+      existing.replaceWith(row);
+    } else {
+      box.appendChild(row);
+    }
+    if (scroll) box.scrollTop = box.scrollHeight;
+  }
+
+  // ── Polling for new/edited/deleted messages ─────────────────────────
+  function pollThread() {
+    fetch(`{{ url('messages') }}/${conversationId}/poll?since=${encodeURIComponent(box.dataset.since)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data) return;
+        const wasAtBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 40;
+        (data.messages || []).forEach(m => upsertMessage(m, wasAtBottom));
+        box.dataset.since = data.server_time;
+      })
+      .catch(() => {});
+  }
+  setInterval(pollThread, 3000);
+
+  // ── Event delegation for edit/delete (works for server-rendered and
+  //    dynamically appended rows alike) ───────────────────────────────
+  box.addEventListener('click', function (e) {
+    const editBtn = e.target.closest('.msg-edit-btn');
+    if (editBtn) {
       e.preventDefault();
-      const bubble = this.closest('.message-bubble');
+      const bubble = editBtn.closest('.message-bubble');
       bubble.style.display = 'none';
-      bubble.nextElementSibling.style.display = 'block'; // the edit form
-    });
-  });
-  document.querySelectorAll('.msg-edit-cancel').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      const form = this.closest('.msg-edit-form');
+      bubble.nextElementSibling.style.display = 'block';
+      return;
+    }
+    const cancelBtn = e.target.closest('.msg-edit-cancel');
+    if (cancelBtn) {
+      const form = cancelBtn.closest('.msg-edit-form');
       form.style.display = 'none';
       form.previousElementSibling.style.display = 'block';
-    });
+      return;
+    }
+    const delBtn = e.target.closest('.msg-delete-btn');
+    if (delBtn) {
+      e.preventDefault();
+      if (!confirm('Delete this message?')) return;
+      const msgId = delBtn.closest('.message-bubble').dataset.msgId;
+      fetch(`{{ url('messages') }}/${conversationId}/messages/${msgId}/delete`, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+      }).then(r => r.json()).then(data => upsertMessage(data.message, false));
+    }
+  });
+
+  box.addEventListener('submit', function (e) {
+    const form = e.target.closest('.msg-edit-form');
+    if (!form) return;
+    e.preventDefault();
+    const msgId = form.dataset.msgId;
+    const body = form.querySelector('input[name="body"]').value;
+    fetch(`{{ url('messages') }}/${conversationId}/messages/${msgId}/edit`, {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body }),
+    }).then(r => r.json()).then(data => upsertMessage(data.message, false));
+  });
+
+  // ── Send message via AJAX (no page reload) ──────────────────────────
+  const sendForm = document.getElementById('sendForm');
+  sendForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const formData = new FormData(sendForm);
+    const bodyInput = sendForm.querySelector('input[name="body"]');
+    if (!formData.get('body') && !attachInput.files.length && !sendForm.querySelector('input[name="voice_note"]')) return;
+
+    fetch(sendForm.action, {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+      body: formData,
+    })
+      .then(r => r.json())
+      .then(data => {
+        upsertMessage(data.message, true);
+        bodyInput.value = '';
+        attachInput.value = '';
+        attachPreview.style.display = 'none';
+        attachPreview.innerHTML = '';
+        const voiceInput = sendForm.querySelector('input[name="voice_note"]');
+        if (voiceInput) voiceInput.remove();
+      })
+      .catch(() => alert('Could not send message. Please try again.'));
   });
 
   // Attachment preview (filenames chosen)
@@ -229,7 +350,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const voiceBtn = document.getElementById('voiceBtn');
   const recordingIndicator = document.getElementById('recordingIndicator');
   const stopBtn = document.getElementById('stopRecordingBtn');
-  const sendForm = document.getElementById('sendForm');
 
   voiceBtn.addEventListener('click', function () {
     if (!navigator.mediaDevices || !window.MediaRecorder) {

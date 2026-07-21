@@ -63,9 +63,13 @@ Route::middleware('auth')->group(function () {
     Route::post('messages/groups/{id}/delete', [\App\Http\Controllers\MessagingController::class, 'groupDelete'])->name('messages.groups.delete');
 
     Route::get('messages/tasks', [\App\Http\Controllers\TaskController::class, 'index'])->name('messages.tasks.index');
+    Route::get('messages/tasks/poll', [\App\Http\Controllers\TaskController::class, 'poll'])->name('messages.tasks.poll');
     Route::post('messages/tasks/{id}/status', [\App\Http\Controllers\TaskController::class, 'updateStatus'])->name('messages.tasks.status');
 
+    Route::get('messages/poll-summary', [\App\Http\Controllers\MessagingController::class, 'pollSummary'])->name('messages.poll-summary');
+
     Route::get('messages/{id}', [\App\Http\Controllers\MessagingController::class, 'show'])->name('messages.show');
+    Route::get('messages/{id}/poll', [\App\Http\Controllers\MessagingController::class, 'pollThread'])->name('messages.poll-thread');
     Route::post('messages/{id}/send', [\App\Http\Controllers\MessagingController::class, 'send'])->name('messages.send');
     Route::post('messages/{conversationId}/messages/{messageId}/edit', [\App\Http\Controllers\MessagingController::class, 'editMessage'])->name('messages.message.edit');
     Route::post('messages/{conversationId}/messages/{messageId}/delete', [\App\Http\Controllers\MessagingController::class, 'deleteMessage'])->name('messages.message.delete');
