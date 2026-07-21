@@ -53,23 +53,54 @@ public function dashboard()
                     ->where('status', '!=', 'done')
                     ->count();
 
-                // Admission Data chart: fellows by programme (the "exam"
-                // they qualified through), split out by female graduates.
-                $byProgramme = DB::table('fellows as f')
-                    ->leftJoin('programmes as p', 'p.id', '=', 'f.programme_id')
-                    ->selectRaw("COALESCE(p.name, 'Unspecified') as programme_name,
-                                 COUNT(*) as total,
-                                 SUM(CASE WHEN f.gender = 'Female' THEN 1 ELSE 0 END) as female")
-                    ->groupBy('p.name')
-                    ->orderByDesc('total')
+                // Admission Data chart: Alumni (Fellow by Exam, category_id=5
+                // + is_alumni=1) by graduation year, split out by female
+                // graduates. "All Alumni" also counts each additional FCS
+                // specialty as its own entry in its own year — same logic
+                // used by the "All Alumni" filter on the Fellows list, so
+                // the totals here reconcile with that page.
+                $primaryAlumni = DB::table('fellows')
+                    ->where('category_id', 5)->where('is_alumni', 1)
+                    ->select('fellowship_year as year', 'gender')
                     ->get();
 
-                $data['admissionProgrammeLabels'] = $byProgramme->pluck('programme_name');
-                $data['admissionProgrammeTotals'] = $byProgramme->pluck('total');
-                $data['admissionProgrammeFemale'] = $byProgramme->pluck('female');
+                $extraSpecialtyAlumni = DB::table('fellows')
+                    ->where('category_id', 5)->where('is_alumni', 1)
+                    ->where(function ($q) {
+                        $q->whereNotNull('second_fcs_specialty')->where('second_fcs_specialty', '!=', '')
+                          ->orWhere(function ($q2) {
+                              $q2->whereNotNull('third_fcs_specialty')->where('third_fcs_specialty', '!=', '');
+                          });
+                    })
+                    ->select('second_fcs_specialty', 'second_fcs_year', 'third_fcs_specialty', 'third_fcs_year', 'gender')
+                    ->get();
 
-                $data['fellowsMaleCount']   = DB::table('fellows')->where('gender', 'Male')->count();
-                $data['fellowsFemaleCount'] = DB::table('fellows')->where('gender', 'Female')->count();
+                $alumniEntries = collect();
+                foreach ($primaryAlumni as $p) {
+                    $alumniEntries->push((object) ['year' => $p->year, 'gender' => $p->gender]);
+                }
+                foreach ($extraSpecialtyAlumni as $e) {
+                    if (!empty($e->second_fcs_specialty)) {
+                        $alumniEntries->push((object) ['year' => $e->second_fcs_year, 'gender' => $e->gender]);
+                    }
+                    if (!empty($e->third_fcs_specialty)) {
+                        $alumniEntries->push((object) ['year' => $e->third_fcs_year, 'gender' => $e->gender]);
+                    }
+                }
+
+                $byYear = $alumniEntries
+                    ->groupBy(fn ($e) => $e->year ?: 'Unknown')
+                    ->sortKeys()
+                    ->map(fn ($group) => [
+                        'total'  => $group->count(),
+                        'female' => $group->where('gender', 'Female')->count(),
+                    ]);
+
+                $data['alumniYearLabels'] = $byYear->keys();
+                $data['alumniYearTotals'] = $byYear->pluck('total');
+                $data['alumniYearFemale'] = $byYear->pluck('female');
+                $data['allAlumniCount']   = $alumniEntries->count();
+                $data['femaleAlumniCount'] = $alumniEntries->where('gender', 'Female')->count();
 
                 return view('admin.dashboard', $data);
                 

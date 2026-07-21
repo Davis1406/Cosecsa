@@ -83,36 +83,32 @@
         <!-- Messages / Tasks row -->
         <div class="row">
           <div class="col-lg-6 col-6">
-            <a href="{{ url('messages') }}" class="text-decoration-none">
-              <div class="small-box" style="background:#fff;border:1px solid #eee;">
-                <div class="inner">
-                  <h3 style="color:{{ $unreadConversationsCount > 0 ? '#dc3545' : '#333' }};">
-                    {{ $unreadConversationsCount }}
-                  </h3>
-                  <p>Unread Messages</p>
-                </div>
-                <div class="icon">
-                  <i class="far fa-comments" style="color:#a02626;"></i>
-                </div>
-                <span class="small-box-footer" style="color:#a02626;">Open Messages <i class="fas fa-arrow-circle-right"></i></span>
+            <div class="small-box" style="background:#fff;border:1px solid #eee;">
+              <div class="inner">
+                <h3 style="color:{{ $unreadConversationsCount > 0 ? '#dc3545' : '#333' }};">
+                  {{ $unreadConversationsCount }}
+                </h3>
+                <p>Unread Messages</p>
               </div>
-            </a>
+              <div class="icon">
+                <i class="far fa-comments" style="color:#a02626;font-size:1.8rem;"></i>
+              </div>
+              <a href="{{ url('messages') }}" class="small-box-footer" style="color:#a02626 !important;">Open Messages <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
           </div>
           <div class="col-lg-6 col-6">
-            <a href="{{ url('messages/tasks') }}" class="text-decoration-none">
-              <div class="small-box" style="background:#fff;border:1px solid #eee;">
-                <div class="inner">
-                  <h3 style="color:{{ $pendingTasksCount > 0 ? '#dc3545' : '#333' }};">
-                    {{ $pendingTasksCount }}
-                  </h3>
-                  <p>Pending Tasks</p>
-                </div>
-                <div class="icon">
-                  <i class="fas fa-tasks" style="color:#a02626;"></i>
-                </div>
-                <span class="small-box-footer" style="color:#a02626;">Open Tasks <i class="fas fa-arrow-circle-right"></i></span>
+            <div class="small-box" style="background:#fff;border:1px solid #eee;">
+              <div class="inner">
+                <h3 style="color:{{ $pendingTasksCount > 0 ? '#dc3545' : '#333' }};">
+                  {{ $pendingTasksCount }}
+                </h3>
+                <p>Pending Tasks</p>
               </div>
-            </a>
+              <div class="icon">
+                <i class="fas fa-tasks" style="color:#a02626;font-size:1.8rem;"></i>
+              </div>
+              <a href="{{ url('messages/tasks') }}" class="small-box-footer" style="color:#a02626 !important;">Open Tasks <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
           </div>
         </div>
         <!-- /.row -->
@@ -126,12 +122,12 @@
               <div class="card-header">
                 <h3 class="card-title">
                   <i class="fas fa-chart-pie mr-1"></i>
-                  Admission Data
+                  Admission Data <small class="text-muted">(All Alumni: {{ $allAlumniCount }}, Female: {{ $femaleAlumniCount }})</small>
                 </h3>
                 <div class="card-tools">
                   <ul class="nav nav-pills ml-auto">
                     <li class="nav-item">
-                      <a class="nav-link active" href="#revenue-chart" data-toggle="tab">Fellows by Programme</a>
+                      <a class="nav-link active" href="#revenue-chart" data-toggle="tab">Alumni by Year</a>
                     </li>
                     <li class="nav-item">
                       <a class="nav-link" href="#sales-chart" data-toggle="tab">Gender Split</a>
@@ -209,17 +205,17 @@
   @push('scripts')
   <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const programmeLabels = {!! json_encode($admissionProgrammeLabels) !!};
-    const programmeTotals = {!! json_encode($admissionProgrammeTotals) !!};
-    const programmeFemale = {!! json_encode($admissionProgrammeFemale) !!};
+    const yearLabels = {!! json_encode($alumniYearLabels) !!};
+    const yearTotals = {!! json_encode($alumniYearTotals) !!};
+    const yearFemale = {!! json_encode($alumniYearFemale) !!};
 
     new Chart(document.getElementById('revenue-chart-canvas').getContext('2d'), {
       type: 'bar',
       data: {
-        labels: programmeLabels,
+        labels: yearLabels,
         datasets: [
-          { label: 'Total Fellows', data: programmeTotals, backgroundColor: '#a02626' },
-          { label: 'Female Graduates', data: programmeFemale, backgroundColor: '#FEC503' }
+          { label: 'Total Alumni', data: yearTotals, backgroundColor: '#a02626', borderColor: '#a02626', type: 'bar' },
+          { label: 'Female Graduates', data: yearFemale, backgroundColor: '#FEC503', borderColor: '#FEC503', type: 'line', fill: false, tension: 0.3 }
         ]
       },
       options: {
@@ -232,9 +228,9 @@
     new Chart(document.getElementById('sales-chart-canvas').getContext('2d'), {
       type: 'doughnut',
       data: {
-        labels: ['Male', 'Female'],
+        labels: ['Male Alumni', 'Female Alumni'],
         datasets: [{
-          data: [{{ $fellowsMaleCount }}, {{ $fellowsFemaleCount }}],
+          data: [{{ $allAlumniCount - $femaleAlumniCount }}, {{ $femaleAlumniCount }}],
           backgroundColor: ['#a02626', '#FEC503']
         }]
       },
