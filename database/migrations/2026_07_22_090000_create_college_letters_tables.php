@@ -61,8 +61,8 @@ return new class extends Migration
             $table->timestamp('sent_at')->nullable();
             $table->timestamps();
 
-            $table->index(['recipient_source', 'recipient_id']);
-            $table->index(['letter_template_id', 'recipient_source', 'recipient_id']);
+            $table->index(['recipient_source', 'recipient_id'], 'ldr_source_id_idx');
+            $table->index(['letter_template_id', 'recipient_source', 'recipient_id'], 'ldr_template_source_id_idx');
         });
     }
 
