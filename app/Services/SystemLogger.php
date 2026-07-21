@@ -87,13 +87,20 @@ class SystemLogger
 
     public static function logEmail(MessageSent $event): void
     {
-        $to = $event->message->getTo();
-        $toAddress = $to ? implode(', ', array_keys($to)) : 'unknown';
+        // getTo() returns Symfony Address objects on a plain indexed array
+        // (not an associative array keyed by email) — array_keys() here was
+        // silently logging "0" for every send instead of the real address.
+        $toAddress = collect($event->message->getTo())
+            ->map(fn ($addr) => $addr->getAddress())
+            ->implode(', ') ?: 'unknown';
 
         DB::table('email_logs')->insert([
             'to_address' => substr($toAddress, 0, 255),
             'subject'    => substr((string) $event->message->getSubject(), 0, 255),
-            'mailable'   => $event->data['__laravel_mailable'] ?? null,
+            // Laravel's MessageSent event carries the Mailable's public
+            // properties (via buildViewData()) but not its class name, so
+            // this is left blank rather than guessed.
+            'mailable'   => null,
             'sent_at'    => now(),
             'created_at' => now(),
             'updated_at' => now(),
