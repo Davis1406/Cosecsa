@@ -22,21 +22,21 @@
     .page-footer td { padding: 1px 6px; vertical-align: top; }
     .page-footer b { color: #000; }
 
-    .generated { text-align: right; font-size: 9pt; color: #666; margin: 6px 0 16px; }
-    h1 { text-align: center; font-size: 12pt; letter-spacing: 1px; margin-bottom: 18px; }
-    h2 { font-size: 12pt; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #999; padding-bottom: 3px; margin-top: 22px; }
-    table.details { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10pt; }
-    table.details td { border: 1px solid #999; padding: 5px 8px; vertical-align: top; }
+    .generated { text-align: right; font-size: 9pt; color: #666; margin: 4px 0 10px; }
+    h1 { text-align: center; font-size: 12pt; letter-spacing: 1px; margin-bottom: 12px; }
+    h2 { font-size: 12pt; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #999; padding-bottom: 2px; margin: 14px 0 6px; }
+    table.details { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 10pt; }
+    table.details td { border: 1px solid #999; padding: 3px 8px; vertical-align: top; }
     table.details td.label { width: 30%; font-weight: bold; background: #f5f5f5; }
-    table.courses { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 10pt; }
-    table.courses th, table.courses td { border: 1px solid #999; padding: 5px 8px; text-align: left; }
+    table.courses { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 10pt; }
+    table.courses th, table.courses td { border: 1px solid #999; padding: 3px 8px; text-align: left; }
     table.courses th { background: #f5f5f5; }
     tr.section-row td { font-weight: bold; background: #eee; }
-    .closing { margin-top: 40px; }
-    .sign-block { margin-top: 10px; }
-    .sign-block img.signature { height: 45px; }
-    .sign-block img.stamp { height: 70px; margin-left: 30px; }
-    .signatory { margin-top: 6px; }
+    .closing { margin-top: 16px; }
+    .sign-block { margin-top: 6px; }
+    .sign-block img.signature { height: 40px; }
+    .sign-block img.stamp { height: 60px; margin-left: 30px; }
+    .signatory p { margin: 2px 0; }
     .signatory .name { font-weight: bold; }
 </style>
 </head>
