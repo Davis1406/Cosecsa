@@ -160,6 +160,12 @@
                                                            href="{{ url('admin/associates/fellows/edit/' . ($value->fellow_id ?? 0)) }}">
                                                             <i class="fas fa-edit text-warning mr-2"></i> Edit
                                                         </a>
+                                                        @if(Auth::user()->hasPermission('transcripts.view'))
+                                                        <a class="dropdown-item"
+                                                           href="{{ url('admin/transcripts/edit/' . $value->user_id) }}">
+                                                            <i class="fas fa-file-signature text-secondary mr-2"></i> Issue Transcript
+                                                        </a>
+                                                        @endif
                                                         @if(Auth::user()->isSuperAdmin())
                                                         <div class="dropdown-divider"></div>
                                                         <a class="dropdown-item text-danger"

@@ -126,7 +126,16 @@ class TranscriptController extends Controller
         ])->setPaper('a4');
 
         $filename = 'Transcript-' . str_replace(' ', '-', $record->full_name) . '.pdf';
-        return $pdf->stream($filename);
+        $response = $pdf->stream($filename);
+
+        // PHP's session cache-limiter defaults to "no-store", which some
+        // browsers refuse to render inline (the PDF just fails to open even
+        // though the bytes are a valid file) — override with a permissive
+        // but still private/no-cache-shared value.
+        $response->headers->set('Cache-Control', 'private, max-age=0, must-revalidate');
+        $response->headers->remove('Pragma');
+
+        return $response;
     }
 
     protected function prefillFromExistingRecord($userId): TranscriptRecord

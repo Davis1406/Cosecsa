@@ -236,18 +236,6 @@
                         </li>
                         @endif
 
-                        @if (Auth::user()->hasPermission('transcripts.view'))
-                        <li class="nav-item">
-                            <a href="{{ url('admin/transcripts') }}"
-                                class="nav-link @if (Request::segment(2) == 'transcripts') active @endif">
-                                <i class="nav-icon fas fa-file-signature"></i>
-                                <p>
-                                    Transcripts
-                                </p>
-                            </a>
-                        </li>
-                        @endif
-
                         @if (Auth::user()->hasPermission('lookups.view'))
                         <li class="nav-item">
                             <a href="{{ url('admin/hospital/list') }}"
@@ -389,7 +377,7 @@
                             </ul>
                         </li>
                         @endif
-                        @if (Auth::user()->hasPermission('examiners.view'))
+                        @if (Auth::user()->hasPermission('examiners.view') || Auth::user()->hasPermission('transcripts.view'))
                         <li class="nav-item @if (Request::segment(2) == 'exams') menu-open @endif">
                             <a href="#" class="nav-link @if (Request::segment(2) == 'exams') active @endif">
                                 <i class="nav-icon fas fa-book-open"></i>
@@ -433,6 +421,16 @@
                                         <p>Attendance</p>
                                     </a>
                                 </li>
+
+                                @if (Auth::user()->hasPermission('transcripts.view'))
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/transcripts') }}"
+                                        class="nav-link @if(Request::segment(2) == 'transcripts') active @endif">
+                                        <i class="fas fa-file-signature nav-icon"></i>
+                                        <p>Transcripts</p>
+                                    </a>
+                                </li>
+                                @endif
 
                                 <!-- Results Section (Parent) -->
                                 <li class="nav-item @if (Request::segment(3) == 'exam_results' ||
