@@ -33,6 +33,9 @@
                       <td>{{ $t->signatory_name }} — {{ $t->signatory_title }}</td>
                       <td>@if($t->is_default)<span class="badge badge-success">Default</span>@endif</td>
                       <td>
+                        <a href="{{ url('admin/settings/transcript-templates/preview/'.$t->id) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                          <i class="fas fa-eye mr-1"></i>Preview
+                        </a>
                         <a href="{{ url('admin/settings/transcript-templates/edit/'.$t->id) }}" class="btn btn-sm btn-primary">Edit</a>
                         @if(Auth::user()->isSuperAdmin())
                           <a href="{{ url('admin/settings/transcript-templates/delete/'.$t->id) }}" class="btn btn-sm btn-danger"

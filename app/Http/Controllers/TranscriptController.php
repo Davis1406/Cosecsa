@@ -12,6 +12,23 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class TranscriptController extends Controller
 {
+    // Prefilled onto every new transcript (matches the college's standard
+    // MCS + FCS course structure) — admin edits/adds/removes rows per
+    // candidate from there; this is just a starting point, not a rule.
+    public const DEFAULT_COURSES = [
+        ['section' => 'MCS (Membership of college of surgeons)', 'subsection' => 'MCS', 'course_name' => 'MCS Case Studies', 'academic_year' => '', 'result' => 'Complete'],
+        ['section' => 'MCS (Membership of college of surgeons)', 'subsection' => 'MCS', 'course_name' => 'Surgery In Africa Journal Club module', 'academic_year' => '', 'result' => 'Complete'],
+        ['section' => 'MCS (Membership of college of surgeons)', 'subsection' => 'MCS', 'course_name' => 'Basic Surgical Science Course', 'academic_year' => '', 'result' => 'Complete'],
+        ['section' => 'MCS (Membership of college of surgeons)', 'subsection' => 'MCS', 'course_name' => 'Basic Surgical Skill Course', 'academic_year' => '', 'result' => 'Complete'],
+        ['section' => 'MCS (Membership of college of surgeons)', 'subsection' => 'MCS', 'course_name' => 'Operations Logbook', 'academic_year' => '', 'result' => 'Complete'],
+        ['section' => 'MCS (Membership of college of surgeons)', 'subsection' => 'MCS', 'course_name' => 'MCS Exam Part I', 'academic_year' => '', 'result' => 'Pass'],
+        ['section' => 'MCS (Membership of college of surgeons)', 'subsection' => 'MCS', 'course_name' => 'MCS Exam Part II', 'academic_year' => '', 'result' => 'Pass'],
+        ['section' => 'FCS (Fellowship of College of Surgeons)', 'subsection' => 'FCS', 'course_name' => 'FCS Case Studies', 'academic_year' => '', 'result' => 'Complete'],
+        ['section' => 'FCS (Fellowship of College of Surgeons)', 'subsection' => 'FCS', 'course_name' => 'Operations Logbook', 'academic_year' => '', 'result' => 'Complete'],
+        ['section' => 'FCS (Fellowship of College of Surgeons)', 'subsection' => 'FCS', 'course_name' => 'FCS Exam Part I', 'academic_year' => '', 'result' => 'Pass'],
+        ['section' => 'FCS (Fellowship of College of Surgeons)', 'subsection' => 'FCS', 'course_name' => 'FCS Exam Part II', 'academic_year' => '', 'result' => 'Pass'],
+    ];
+
     public function search(Request $request)
     {
         $q = trim((string) $request->input('q'));
@@ -56,8 +73,14 @@ class TranscriptController extends Controller
             $record = $this->prefillFromExistingRecord($userId);
         }
 
+        $courses = $record->exists ? $record->courses : collect();
+        if ($courses->isEmpty()) {
+            $courses = collect(self::DEFAULT_COURSES)->map(fn ($c) => (object) $c);
+        }
+
         $data['header_title'] = 'Issue Transcript';
         $data['record'] = $record;
+        $data['courses'] = $courses;
         $data['templates'] = TranscriptTemplate::orderBy('name')->get();
         $data['userId'] = $userId;
 
@@ -115,7 +138,9 @@ class TranscriptController extends Controller
     public function pdf($userId)
     {
         $record = TranscriptRecord::with(['courses', 'template'])->where('user_id', $userId)->firstOrFail();
-        $template = $record->template ?? TranscriptTemplate::where('is_default', true)->first();
+        $template = $record->template
+            ?? TranscriptTemplate::where('is_default', true)->first()
+            ?? new TranscriptTemplate(['document_title' => 'TRANSCRIPT OF TRAINING', 'closing_salutation' => 'Yours Sincerely,']);
 
         $grouped = $record->courses->groupBy(fn ($c) => $c->section . '|' . $c->subsection);
 

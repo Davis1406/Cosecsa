@@ -86,6 +86,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::get('admin/settings/transcript-templates/edit/{id}', [\App\Http\Controllers\TranscriptTemplateController::class, 'edit']);
     Route::post('admin/settings/transcript-templates/edit/{id}', [\App\Http\Controllers\TranscriptTemplateController::class, 'update']);
     Route::get('admin/settings/transcript-templates/delete/{id}', [\App\Http\Controllers\TranscriptTemplateController::class, 'delete']);
+    Route::get('admin/settings/transcript-templates/preview/{id}', [\App\Http\Controllers\TranscriptTemplateController::class, 'preview'])->name('admin.transcript_templates.preview');
 
     Route::get('admin/global-search', [DashboardController::class,'globalSearch'])->name('admin.global.search');
 

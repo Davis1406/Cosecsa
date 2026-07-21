@@ -1,9 +1,5 @@
 @extends('layout.app')
 
-@php
-    $courses = $record->exists ? $record->courses : collect();
-@endphp
-
 @section('content')
   <div class="content-wrapper">
     <section class="content-header">
@@ -32,8 +28,9 @@
 
         @if(!$record->exists)
           <div class="alert alert-info" style="font-size:.85rem;">
-            <i class="fas fa-info-circle mr-1"></i> Pre-filled from their existing record where available — review, adjust,
-            add course rows, then save. The PDF option appears once saved.
+            <i class="fas fa-info-circle mr-1"></i> Candidate details pre-filled from their existing record where available,
+            and the course table below pre-filled with the standard MCS/FCS course list — review, edit, add, or remove
+            rows as needed, then save. The PDF option appears once saved.
           </div>
         @endif
 
