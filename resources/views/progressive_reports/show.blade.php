@@ -34,8 +34,18 @@
               </p>
             @endif
 
+            @if(isset($isManager) && $isManager)
+              <form method="POST" action="{{ url('progressive-reports/open') }}" class="form-inline mt-2">
+                @csrf
+                <label class="mr-2 font-weight-bold" style="font-size:.85rem;">Add a new month report:</label>
+                <label class="mr-2" style="font-size:.85rem;">Choose month</label>
+                <input type="month" name="period_month" class="form-control form-control-sm mr-2" value="{{ now()->format('Y-m') }}" required>
+                <button type="submit" class="btn btn-sm btn-cosecsa-outline"><i class="fas fa-plus mr-1"></i> Add Month</button>
+              </form>
+            @endif
+
             @if(isset($myPeriods))
-              <form method="GET" action="{{ url('progressive-reports/my') }}" class="form-inline mt-2">
+              <form method="GET" action="{{ url('progressive-reports/my') }}" class="form-inline mt-3">
                 <label class="mr-2" style="font-size:.85rem;">Select month</label>
                 <select name="period_id" class="form-control form-control-sm" onchange="this.form.submit()" style="min-width:160px;">
                   @foreach($myPeriods as $mp)
@@ -87,20 +97,6 @@
             </a>
           </div>
         </div>
-
-        @if(isset($isManager) && $isManager)
-          <div class="row">
-            <div class="col-12">
-              <form method="POST" action="{{ url('progressive-reports/open') }}" class="form-inline">
-                @csrf
-                <label class="mr-2 font-weight-bold" style="font-size:.85rem;">Add a new month report:</label>
-                <label class="mr-2" style="font-size:.85rem;">Choose month</label>
-                <input type="month" name="period_month" class="form-control form-control-sm mr-2" value="{{ now()->format('Y-m') }}" required>
-                <button type="submit" class="btn btn-sm btn-cosecsa-outline"><i class="fas fa-plus mr-1"></i> Add Month</button>
-              </form>
-            </div>
-          </div>
-        @endif
       </div>
     </section>
 
@@ -204,7 +200,8 @@
           @php
             $isMine = $participant->user_id == $myUserId;
             $canEdit = $isMine || $canManage;
-            $isLocked = $participant->status === 'submitted' && ! $participant->edit_unlocked;
+            $isLocked = $participant->isLocked();
+            $isPastMonth = $isLocked && $participant->status !== 'submitted';
             $canEditNow = $canEdit && ! $isLocked;
           @endphp
           <div class="card pr-section-card {{ $isMine ? 'mine' : '' }}" id="participant-{{ $participant->id }}">
@@ -218,7 +215,7 @@
                   {{ $participant->status === 'submitted' ? 'Submitted '.$participant->submitted_at->format('d M, H:i') : 'Pending' }}
                 </span>
                 @if($isLocked)
-                  <span class="badge badge-warning ml-1"><i class="fas fa-lock"></i> Locked</span>
+                  <span class="badge badge-warning ml-1"><i class="fas fa-lock"></i> {{ $isPastMonth ? 'Locked — past month' : 'Locked' }}</span>
                 @endif
                 @if($canEditNow)
                   <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/participants/'.$participant->id.'/copy-forward') }}" style="display:inline;">

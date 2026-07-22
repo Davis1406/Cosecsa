@@ -77,7 +77,7 @@ class ProgressiveReportController extends Controller
 
         $period = ProgressReportPeriod::with(['participants' => function ($q) {
             $q->where('user_id', Auth::id());
-        }, 'participants.user', 'participants.tasks', 'participants.pendingAccessRequest'])->findOrFail($selected->id);
+        }, 'participants.user', 'participants.tasks', 'participants.pendingAccessRequest', 'participants.period'])->findOrFail($selected->id);
 
         $myTemplates = ProgressReportTaskTemplate::where('user_id', Auth::id())->orderBy('sort_order')->get();
         $isManager = $this->canManage();
@@ -121,6 +121,13 @@ class ProgressiveReportController extends Controller
             'created_by'   => Auth::id(),
         ]);
 
+        // Only the single most recent period (by month, not creation order —
+        // covers backfilling an older month later) is ever "current"; every
+        // other period's pending sections become locked as a side effect.
+        $latestId = ProgressReportPeriod::orderByDesc('period_month')->value('id');
+        ProgressReportPeriod::where('id', '!=', $latestId)->update(['is_current' => false]);
+        ProgressReportPeriod::where('id', $latestId)->update(['is_current' => true]);
+
         // Seed one participant per configured section, and pre-populate
         // their task rows from the recurring task template library.
         $previousPeriod = ProgressReportPeriod::where('period_month', '<', $monthStart->toDateString())
@@ -158,7 +165,7 @@ class ProgressiveReportController extends Controller
 
     public function show($periodId)
     {
-        $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks', 'participants.pendingAccessRequest'])->findOrFail($periodId);
+        $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks', 'participants.pendingAccessRequest', 'participants.period'])->findOrFail($periodId);
 
         $templatesByUser = ProgressReportTaskTemplate::whereIn('user_id', $period->participants->pluck('user_id'))
             ->where('is_active', true)->orderBy('sort_order')->get()->groupBy('user_id');
