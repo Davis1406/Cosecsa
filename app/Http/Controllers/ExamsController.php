@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ExaminersImport;
 use App\Models\User;
+use App\Models\FellowsModel;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Country;
 use App\Models\ExamsModel;
@@ -1329,7 +1330,70 @@ public function delete($id)
             })
             ->groupBy('examiners.id')
             ->orderBy('examiners.id', 'desc')
-            ->get();
+            ->get()
+            ->pipe(fn ($rows) => $this->resolveFellowMatches($rows));
+    }
+
+    // examiners.user_id = fellows.user_id (the join above) only catches a
+    // fellow when the person's examiner account and fellow record share the
+    // same `users` row. In practice they're frequently two separate `users`
+    // rows for the same human (e.g. one created at examiner registration,
+    // another during fellow onboarding, often with different emails) — the
+    // straight join then misses a real fellow and the page shows "Not
+    // Fellow" incorrectly. Fall back to email, then an unambiguous exact
+    // name match, before accepting "not a fellow".
+    private function resolveFellowMatches($rows)
+    {
+        $fellows = FellowsModel::select('id', 'user_id', 'firstname', 'middlename', 'lastname', 'personal_email', 'second_email', 'fellow_id_number')->get();
+        $fellowsByUserId = $fellows->keyBy('user_id');
+
+        $fellowsByEmail = [];
+        foreach ($fellows as $f) {
+            foreach ([$f->personal_email, $f->second_email] as $email) {
+                if ($email) {
+                    $fellowsByEmail[strtolower(trim($email))] = $f;
+                }
+            }
+        }
+
+        $normalize = function ($s) {
+            $s = strtolower(trim((string) $s));
+            $s = preg_replace('/[^a-z\s]/', '', $s);
+            return preg_replace('/\s+/', ' ', $s);
+        };
+
+        $fellowsByName = [];
+        foreach ($fellows as $f) {
+            foreach ([
+                $normalize($f->firstname . ' ' . $f->middlename . ' ' . $f->lastname),
+                $normalize($f->firstname . ' ' . $f->lastname),
+            ] as $key) {
+                if ($key) {
+                    $fellowsByName[$key][] = $f;
+                }
+            }
+        }
+
+        foreach ($rows as $row) {
+            $match = $fellowsByUserId->get($row->user_id);
+
+            if (! $match && $row->email) {
+                $match = $fellowsByEmail[strtolower(trim($row->email))] ?? null;
+            }
+
+            if (! $match && $row->examiner_name) {
+                $candidates = $fellowsByName[$normalize($row->examiner_name)] ?? [];
+                if (count(array_unique(array_column($candidates, 'id'))) === 1) {
+                    $match = $candidates[0];
+                }
+            }
+
+            $row->is_fellow = $match ? 1 : (int) $row->is_fellow;
+            $row->matched_fellow_id = $match->id ?? null;
+            $row->matched_fellow_id_number = $match->fellow_id_number ?? null;
+        }
+
+        return $rows;
     }
 
     private function processAvailabilityData($examiners)

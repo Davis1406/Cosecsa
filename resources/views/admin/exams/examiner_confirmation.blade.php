@@ -265,7 +265,10 @@
                                                     <td>{{ $value->email ?? '-' }}</td>
                                                     <td>
                                                         @if($value->is_fellow)
-                                                            <span class="badge" style="background:#d4edda;color:#155724;">Fellow</span>
+                                                            <span class="badge" style="background:#d4edda;color:#155724;" title="{{ $value->matched_fellow_id_number ? 'Fellow ID '.$value->matched_fellow_id_number : '' }}">Fellow</span>
+                                                            @if(!empty($value->matched_fellow_id))
+                                                                <a href="{{ url('admin/associates/fellows/view/'.$value->matched_fellow_id) }}" style="font-size:11px;color:#a02626;text-decoration:none;display:block;">view fellow</a>
+                                                            @endif
                                                         @else
                                                             <span class="badge" style="background:#f0f0f0;color:#777;">Not Fellow</span>
                                                         @endif
