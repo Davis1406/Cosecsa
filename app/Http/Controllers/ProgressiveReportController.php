@@ -323,6 +323,13 @@ class ProgressiveReportController extends Controller
     {
         $myId = Auth::id();
 
+        // Acting on your own request (e.g. Master Admin approving their own
+        // access request) has no one to notify — and a self/self lookup
+        // below would otherwise match any conversation you're part of.
+        if ($toUserId == $myId) {
+            return;
+        }
+
         $conversation = Conversation::where('type', 'direct')
             ->whereHas('participants', fn ($q) => $q->where('user_id', $myId))
             ->whereHas('participants', fn ($q) => $q->where('user_id', $toUserId))
