@@ -1,6 +1,15 @@
-@extends('layout.app')  
+@extends('layout.app')
 
 @section('content')
+  <style>
+    .admin-list-table .action-btn { padding:2px 8px; line-height:1.4; border-radius:4px; }
+    .admin-list-table .action-btn:hover { background-color:#f0f0f0; }
+    .admin-list-table .dropdown-menu { min-width:170px; font-size:.875rem; }
+    .admin-list-table .dropdown-item { padding:6px 14px; }
+    .admin-list-table .dropdown-item:hover { background-color:#f8f0f0; }
+    body.dark-mode .admin-list-table .action-btn:hover { background-color:#4a5568 !important; }
+    body.dark-mode .admin-list-table .dropdown-item:hover { background-color:#4a5568 !important; color:#fff !important; }
+  </style>
   <!-- Content Wrapper. Contains page content -->
   <div class="content-wrapper">
     <!-- Content Header (Page header) -->
@@ -60,7 +69,7 @@
               <!-- Card body with responsive table -->
               <div class="card-body p-0">
                 <div class="table-responsive">
-                  <table class="table table-striped">
+                  <table class="table table-striped admin-list-table">
                     <thead>
                       <tr>
                         <th style="width: 10px">#</th>
@@ -68,7 +77,7 @@
                         <th>Email</th>
                         <th>Role</th>
                         <th>Created Date</th>
-                        <th>Action</th>
+                        <th class="text-center">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -79,14 +88,32 @@
                           <td>{{ $value->email }}</td>
                           <td>{{ $value->adminRole->name ?? 'Super Admin' }}</td>
                           <td>{{ date('d-m-y H:i A', strtotime($value->created_at)) }}</td>
-                          <td>
-                            <a href="{{ url('admin/edit/'.$value->id) }}" class="btn btn-primary btn-md">Edit</a>
-                            @if($value->id != Auth::id())
-                              @include('admin._impersonate_button', ['userId' => $value->id])
-                            @endif
-                            @if(Auth::user()->isSuperAdmin())
-                              <a href="{{ url('admin/delete/'.$value->id) }}" class="btn btn-danger btn-md">Delete</a>
-                            @endif
+                          <td class="text-center" style="white-space:nowrap;">
+                            <div class="dropdown">
+                              <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
+                                      type="button" data-toggle="dropdown"
+                                      aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                              </button>
+                              <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                <a class="dropdown-item" href="{{ url('admin/edit/'.$value->id) }}">
+                                  <i class="fas fa-edit text-warning mr-2"></i> Edit
+                                </a>
+                                @if($value->id != Auth::id() && Auth::user()->hasPermission('admin_users.manage'))
+                                  <a class="dropdown-item" href="{{ url('admin/impersonate/'.$value->id) }}"
+                                     onclick="return confirm('Log in as this user? You can return to your admin account anytime from the banner at the top of the page.')">
+                                    <i class="fas fa-user-secret text-info mr-2"></i> Login as User
+                                  </a>
+                                @endif
+                                @if(Auth::user()->isSuperAdmin())
+                                  <div class="dropdown-divider"></div>
+                                  <a class="dropdown-item text-danger" href="{{ url('admin/delete/'.$value->id) }}"
+                                     onclick="return confirm('Delete this admin account?')">
+                                    <i class="fas fa-trash mr-2"></i> Delete
+                                  </a>
+                                @endif
+                              </div>
+                            </div>
                           </td>
                         </tr>
                       @endforeach
