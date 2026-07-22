@@ -309,7 +309,8 @@ class ProgressiveReportController extends Controller
                     Auth::user()->name,
                     $participant->section_label,
                     $participant->period->period_month->format('F Y'),
-                    url('progressive-reports/' . $periodId)
+                    url('progressive-reports/' . $periodId),
+                    Auth::user()->email
                 ));
             }
         }
