@@ -16,6 +16,8 @@
   .col-planned { width: 26%; }
   .col-status { width: 27%; }
   .col-next { width: 26%; }
+  ul.pr-bullets { margin: 0; padding-left: 14px; }
+  ul.pr-bullets li { margin-bottom: 2px; }
 </style>
 </head>
 <body>
@@ -41,7 +43,18 @@
           <tr>
             <td>{{ $task->row_no }}</td>
             <td>{{ $task->activity_description }}</td>
-            <td>{{ $task->planned_activities }}</td>
+            <td>
+              @php $plannedLines = array_values(array_filter(preg_split('/\r\n|\r|\n/', (string) $task->planned_activities), fn($l) => trim($l) !== '')); @endphp
+              @if(count($plannedLines) > 1)
+                <ul class="pr-bullets">
+                  @foreach($plannedLines as $line)
+                    <li>{{ $line }}</li>
+                  @endforeach
+                </ul>
+              @else
+                {{ $task->planned_activities }}
+              @endif
+            </td>
             <td>{{ $task->current_status }}</td>
             <td>{{ $task->next_steps }}</td>
           </tr>

@@ -93,9 +93,10 @@
             <div class="col-12">
               <form method="POST" action="{{ url('progressive-reports/open') }}" class="form-inline">
                 @csrf
-                <label class="mr-2" style="font-size:.85rem;">Need a new month? Open a report period for</label>
+                <label class="mr-2 font-weight-bold" style="font-size:.85rem;">Add a new month report:</label>
+                <label class="mr-2" style="font-size:.85rem;">Choose month</label>
                 <input type="month" name="period_month" class="form-control form-control-sm mr-2" value="{{ now()->format('Y-m') }}" required>
-                <button type="submit" class="btn btn-sm btn-cosecsa-outline">Open Period</button>
+                <button type="submit" class="btn btn-sm btn-cosecsa-outline"><i class="fas fa-plus mr-1"></i> Add Month</button>
               </form>
             </div>
           </div>
@@ -105,12 +106,66 @@
 
     <section class="content">
       <div class="container-fluid">
+        @include('_message')
+
+        @if(isset($myPeriods))
+          <div class="card">
+            <div class="card-header" style="cursor:pointer;" data-toggle="collapse" data-target="#myTemplatesBody">
+              <h3 class="card-title" style="font-size:1rem;"><i class="fas fa-redo mr-2"></i>My Recurring Tasks</h3>
+              <div class="card-tools"><i class="fas fa-chevron-down"></i></div>
+            </div>
+            <div class="collapse" id="myTemplatesBody">
+              <div class="card-body">
+                <p class="text-muted" style="font-size:.82rem;">
+                  These are activities you report on every month. Add them here once, then pick them from the
+                  "Activity Description" dropdown on any row below instead of retyping. Remove any you no longer need.
+                </p>
+                <table class="table table-sm table-bordered mb-3">
+                  <thead><tr><th style="width:35%;">Activity Description</th><th>Default Planned Activities</th><th style="width:8%;">Active</th><th style="width:10%;"></th></tr></thead>
+                  <tbody>
+                    @forelse($myTemplates as $tpl)
+                      <tr>
+                        <form method="POST" action="{{ url('progressive-reports/templates/'.$tpl->id.'/update') }}">
+                          @csrf
+                          <td><input type="text" name="activity_description" class="form-control form-control-sm" value="{{ $tpl->activity_description }}" required></td>
+                          <td><input type="text" name="default_planned_activities" class="form-control form-control-sm" value="{{ $tpl->default_planned_activities }}" placeholder="One per line"></td>
+                          <td class="text-center"><input type="checkbox" name="is_active" value="1" {{ $tpl->is_active ? 'checked' : '' }}></td>
+                          <td class="text-center" style="white-space:nowrap;">
+                            <button type="submit" class="btn btn-sm btn-cosecsa-outline" title="Save"><i class="fas fa-save"></i></button>
+                        </form>
+                        <form method="POST" action="{{ url('progressive-reports/templates/'.$tpl->id.'/delete') }}" style="display:inline;" onsubmit="return confirm('Remove this recurring task?')">
+                              @csrf
+                              <button type="submit" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                            </form>
+                          </td>
+                      </tr>
+                    @empty
+                      <tr><td colspan="4" class="text-center text-muted py-2">No recurring tasks yet — add one below.</td></tr>
+                    @endforelse
+                  </tbody>
+                </table>
+                <form method="POST" action="{{ url('progressive-reports/templates') }}" class="form-row align-items-center">
+                  @csrf
+                  <div class="col-md-4 mb-1">
+                    <input type="text" name="activity_description" class="form-control form-control-sm" placeholder="New activity description" required>
+                  </div>
+                  <div class="col-md-6 mb-1">
+                    <input type="text" name="default_planned_activities" class="form-control form-control-sm" placeholder="Default planned activities (one per line)">
+                  </div>
+                  <div class="col-md-2 mb-1">
+                    <button type="submit" class="btn btn-sm btn-cosecsa btn-block"><i class="fas fa-plus mr-1"></i> Add</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        @endif
+
         @if(! $period)
           <div class="card"><div class="card-body text-center text-muted py-4">
             You don't have a section on any report period yet.
           </div></div>
         @else
-        @include('_message')
 
         @foreach($period->participants as $participant)
           @php $isMine = $participant->user_id == $myUserId; $canEdit = $isMine || $canManage; @endphp
@@ -150,8 +205,18 @@
                       <tr data-task-id="{{ $task->id }}">
                         <td>{{ $task->row_no }}</td>
                         @if($canEdit)
-                          <td><textarea class="form-control form-control-sm pr-field pr-activity" data-field="activity_description">{{ $task->activity_description }}</textarea></td>
-                          <td><textarea class="form-control form-control-sm pr-field" data-field="planned_activities">{{ $task->planned_activities }}</textarea></td>
+                          <td>
+                            @if(! empty($templatesByUser[$participant->user_id]))
+                              <select class="form-control form-control-sm pr-activity-picker mb-1">
+                                <option value="">— select from my recurring tasks —</option>
+                                @foreach($templatesByUser[$participant->user_id] as $tpl)
+                                  <option value="{{ $tpl->activity_description }}" data-planned="{{ $tpl->default_planned_activities }}">{{ $tpl->activity_description }}</option>
+                                @endforeach
+                              </select>
+                            @endif
+                            <textarea class="form-control form-control-sm pr-field pr-activity" data-field="activity_description">{{ $task->activity_description }}</textarea>
+                          </td>
+                          <td><textarea class="form-control form-control-sm pr-field" data-field="planned_activities" placeholder="One activity per line">{{ $task->planned_activities }}</textarea></td>
                           <td><textarea class="form-control form-control-sm pr-field" data-field="current_status">{{ $task->current_status }}</textarea></td>
                           <td><textarea class="form-control form-control-sm pr-field" data-field="next_steps">{{ $task->next_steps }}</textarea></td>
                           <td class="text-center">
@@ -173,7 +238,8 @@
             </div>
             @if($canEdit)
               <div class="card-footer d-flex justify-content-between align-items-center">
-                <button type="button" class="btn btn-sm btn-cosecsa-outline pr-add-row" data-participant-id="{{ $participant->id }}">
+                <button type="button" class="btn btn-sm btn-cosecsa-outline pr-add-row" data-participant-id="{{ $participant->id }}"
+                        data-templates="{{ json_encode(($templatesByUser[$participant->user_id] ?? collect())->map(fn($t) => ['activity_description' => $t->activity_description, 'default_planned_activities' => $t->default_planned_activities])->values()) }}">
                   <i class="fas fa-plus mr-1"></i> Add Row
                 </button>
                 <div>
@@ -198,7 +264,7 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  const periodId = {{ $period->id }};
+  const periodId = {{ $period->id ?? 'null' }};
   const csrf = '{{ csrf_token() }}';
 
   function saveField(taskId, field, value, cardFooterFlash) {
@@ -226,6 +292,22 @@ document.addEventListener('DOMContentLoaded', function () {
       saveField(taskId, field.dataset.field, field.value, flash);
     });
 
+    table.addEventListener('change', function (e) {
+      const picker = e.target.closest('.pr-activity-picker');
+      if (!picker || !picker.value) return;
+      const row = picker.closest('tr');
+      const opt = picker.options[picker.selectedIndex];
+      const activityField = row.querySelector('.pr-field[data-field="activity_description"]');
+      const plannedField = row.querySelector('.pr-field[data-field="planned_activities"]');
+      activityField.value = picker.value;
+      activityField.dispatchEvent(new Event('change', { bubbles: true }));
+      if (opt.dataset.planned && plannedField && !plannedField.value) {
+        plannedField.value = opt.dataset.planned;
+        plannedField.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      picker.value = '';
+    });
+
     table.addEventListener('click', function (e) {
       const delBtn = e.target.closest('.pr-delete-row');
       if (!delBtn) return;
@@ -243,6 +325,8 @@ document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('.pr-add-row').forEach(function (btn) {
     btn.addEventListener('click', function () {
       const participantId = btn.dataset.participantId;
+      let templates = [];
+      try { templates = JSON.parse(btn.dataset.templates || '[]'); } catch (e) {}
       fetch(`{{ url('progressive-reports') }}/${periodId}/participants/${participantId}/tasks/add`, {
         method: 'POST',
         headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
@@ -252,10 +336,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (placeholder) placeholder.closest('tr').remove();
         const tr = document.createElement('tr');
         tr.setAttribute('data-task-id', data.task.id);
+        const pickerHtml = templates.length ? `
+          <select class="form-control form-control-sm pr-activity-picker mb-1">
+            <option value="">— select from my recurring tasks —</option>
+            ${templates.map(t => `<option value="${t.activity_description.replace(/"/g, '&quot;')}" data-planned="${(t.default_planned_activities || '').replace(/"/g, '&quot;')}">${t.activity_description}</option>`).join('')}
+          </select>` : '';
         tr.innerHTML = `
           <td>${data.task.row_no}</td>
-          <td><textarea class="form-control form-control-sm pr-field pr-activity" data-field="activity_description"></textarea></td>
-          <td><textarea class="form-control form-control-sm pr-field" data-field="planned_activities"></textarea></td>
+          <td>${pickerHtml}<textarea class="form-control form-control-sm pr-field pr-activity" data-field="activity_description"></textarea></td>
+          <td><textarea class="form-control form-control-sm pr-field" data-field="planned_activities" placeholder="One activity per line"></textarea></td>
           <td><textarea class="form-control form-control-sm pr-field" data-field="current_status"></textarea></td>
           <td><textarea class="form-control form-control-sm pr-field" data-field="next_steps"></textarea></td>
           <td class="text-center"><a href="#" class="text-danger pr-delete-row" title="Delete row"><i class="fas fa-trash"></i></a></td>

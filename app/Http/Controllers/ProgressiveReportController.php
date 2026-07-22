@@ -48,6 +48,8 @@ class ProgressiveReportController extends Controller
             ->orderByDesc('period_month')->get();
 
         if ($myPeriods->isEmpty()) {
+            $myTemplates = ProgressReportTaskTemplate::where('user_id', Auth::id())->orderBy('sort_order')->get();
+
             return view('progressive_reports.show', [
                 'header_title' => 'My Progress Report',
                 'period'       => null,
@@ -57,6 +59,8 @@ class ProgressiveReportController extends Controller
                 'isManager'    => $this->canManage(),
                 'myUserId'     => Auth::id(),
                 'backUrl'      => url('admin/dashboard'),
+                'myTemplates'  => $myTemplates,
+                'templatesByUser' => $myTemplates->where('is_active', true)->groupBy('user_id'),
             ]);
         }
 
@@ -68,6 +72,8 @@ class ProgressiveReportController extends Controller
             $q->where('user_id', Auth::id());
         }, 'participants.user', 'participants.tasks'])->findOrFail($selected->id);
 
+        $myTemplates = ProgressReportTaskTemplate::where('user_id', Auth::id())->orderBy('sort_order')->get();
+
         return view('progressive_reports.show', [
             'header_title'     => 'My Progress Report',
             'period'           => $period,
@@ -77,6 +83,8 @@ class ProgressiveReportController extends Controller
             'isManager'        => $this->canManage(),
             'myUserId'         => Auth::id(),
             'backUrl'          => url('admin/dashboard'),
+            'myTemplates'      => $myTemplates,
+            'templatesByUser'  => $myTemplates->where('is_active', true)->groupBy('user_id'),
         ]);
     }
 
@@ -139,11 +147,15 @@ class ProgressiveReportController extends Controller
     {
         $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks'])->findOrFail($periodId);
 
+        $templatesByUser = ProgressReportTaskTemplate::whereIn('user_id', $period->participants->pluck('user_id'))
+            ->where('is_active', true)->orderBy('sort_order')->get()->groupBy('user_id');
+
         return view('progressive_reports.show', [
             'header_title' => 'Progressive Reports',
             'period'       => $period,
             'canManage'    => $this->canManage(),
             'myUserId'     => Auth::id(),
+            'templatesByUser' => $templatesByUser,
         ]);
     }
 
@@ -383,19 +395,20 @@ class ProgressiveReportController extends Controller
 
     public function templateStore(Request $request)
     {
-        $this->authorizeManage();
         $request->validate([
-            'user_id'                    => 'required|integer',
+            'user_id'                    => 'nullable|integer',
             'activity_description'       => 'required|string|max:1000',
             'default_planned_activities' => 'nullable|string|max:5000',
         ]);
 
+        $userId = ($this->canManage() && $request->filled('user_id')) ? (int) $request->user_id : Auth::id();
+
         ProgressReportTaskTemplate::create([
-            'user_id'                    => $request->user_id,
+            'user_id'                    => $userId,
             'activity_description'       => $request->activity_description,
             'default_planned_activities' => $request->default_planned_activities,
             'is_active'                  => true,
-            'sort_order'                 => ProgressReportTaskTemplate::where('user_id', $request->user_id)->max('sort_order') + 1,
+            'sort_order'                 => ProgressReportTaskTemplate::where('user_id', $userId)->max('sort_order') + 1,
             'created_by'                 => Auth::id(),
         ]);
 
@@ -404,8 +417,9 @@ class ProgressiveReportController extends Controller
 
     public function templateUpdate(Request $request, $id)
     {
-        $this->authorizeManage();
         $template = ProgressReportTaskTemplate::findOrFail($id);
+        abort_unless($this->canManage() || $template->user_id == Auth::id(), 403, 'You can only edit your own recurring tasks.');
+
         $request->validate([
             'activity_description'       => 'required|string|max:1000',
             'default_planned_activities' => 'nullable|string|max:5000',
@@ -423,8 +437,9 @@ class ProgressiveReportController extends Controller
 
     public function templateDelete($id)
     {
-        $this->authorizeManage();
-        ProgressReportTaskTemplate::findOrFail($id)->delete();
+        $template = ProgressReportTaskTemplate::findOrFail($id);
+        abort_unless($this->canManage() || $template->user_id == Auth::id(), 403, 'You can only remove your own recurring tasks.');
+        $template->delete();
 
         return back()->with('success', 'Recurring task removed.');
     }
