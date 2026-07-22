@@ -5,8 +5,6 @@
     /* ── Header ── */
     .thread-header-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
     .thread-header-actions form { margin: 0; }
-    .btn-cosecsa-yellow { background:#FEC503; border-color:#FEC503; color:#3a2a00; font-weight:600; }
-    .btn-cosecsa-yellow:hover, .btn-cosecsa-yellow:focus { background:#e6b200; border-color:#e6b200; color:#3a2a00; }
     .chat-title-icon {
       width:38px; height:38px; border-radius:50%; background:#a02626; color:#fff;
       display:inline-flex; align-items:center; justify-content:center; font-size:.95rem; font-weight:700;

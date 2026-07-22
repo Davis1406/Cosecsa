@@ -919,12 +919,43 @@ document.addEventListener('DOMContentLoaded', function () {
 <style>
     /* ── COSECSA-branded buttons (use in place of btn-primary/btn-success/etc.
        where the default Bootstrap blue/green would clash with the maroon
-       theme used throughout the admin panel) ── */
+       theme used throughout the admin panel). Sized down from Bootstrap's
+       default .btn — the default padding/font-size reads oversized once
+       several of these sit next to each other in a page toolbar. ── */
+    .btn-cosecsa, .btn-cosecsa-outline, .btn-cosecsa-yellow {
+        font-size: .82rem;
+        font-weight: 500;
+        padding: .38rem .85rem;
+        border-radius: 5px;
+        line-height: 1.4;
+        letter-spacing: .01em;
+        transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+    }
+    .btn-cosecsa.btn-sm, .btn-cosecsa-outline.btn-sm, .btn-cosecsa-yellow.btn-sm {
+        font-size: .75rem;
+        padding: .22rem .55rem;
+        border-radius: 4px;
+    }
+    .btn-cosecsa, .btn-cosecsa-outline, .btn-cosecsa-yellow { box-shadow: none; }
+    .btn-cosecsa i, .btn-cosecsa-outline i, .btn-cosecsa-yellow i { font-size: .9em; }
+
     .btn-cosecsa { background:#a02626; border-color:#a02626; color:#fff; }
     .btn-cosecsa:hover, .btn-cosecsa:focus { background:#841f1f; border-color:#841f1f; color:#fff; }
     .btn-cosecsa-outline { background:#fff; border:1px solid #a02626; color:#a02626; }
     .btn-cosecsa-outline:hover, .btn-cosecsa-outline:focus { background:#f5e6e6; color:#a02626; }
     body.dark-mode .btn-cosecsa-outline, html.dark-mode .btn-cosecsa-outline { background:transparent; }
+    .btn-cosecsa-yellow { background:#FEC503; border-color:#FEC503; color:#3a2a00; }
+    .btn-cosecsa-yellow:hover, .btn-cosecsa-yellow:focus { background:#e6b200; border-color:#e6b200; color:#3a2a00; }
+
+    /* Safety net for plain Bootstrap-colored buttons (btn-danger, etc.)
+       sitting in a page toolbar — same compact sizing as the cosecsa
+       buttons above, so a page mixing both doesn't look mismatched. */
+    .content-header .btn:not(.btn-sm):not(.btn-xs),
+    .card-header .btn:not(.btn-sm):not(.btn-xs) {
+        font-size: .82rem;
+        padding: .38rem .85rem;
+        border-radius: 5px;
+    }
 
     /* ── Modern Minimal Sidebar ── */
     .main-sidebar {
