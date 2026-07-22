@@ -349,12 +349,19 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   attachBulletBehavior(document.querySelectorAll('.pr-bullet-field'));
 
-  function saveField(taskId, field, value, cardFooterFlash) {
+  function saveField(taskId, fieldName, value, cardFooterFlash, fieldEl) {
     fetch(`{{ url('progressive-reports') }}/${periodId}/tasks/${taskId}/update`, {
       method: 'POST',
       headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ [field]: value }),
-    }).then(r => r.json()).then(() => {
+      body: JSON.stringify({ [fieldName]: value }),
+    }).then(r => r.json()).then(data => {
+      // Bullet fields get a "❖ " prefix normalized server-side even if the
+      // live typing behavior didn't add one (pasted text, select-all retype,
+      // etc.) — sync the textarea so the bullet is visible immediately
+      // instead of only appearing after a reload.
+      if (fieldEl && data.task && data.task[fieldName] !== undefined && data.task[fieldName] !== value) {
+        fieldEl.value = data.task[fieldName] || '';
+      }
       if (cardFooterFlash) {
         cardFooterFlash.style.display = 'inline';
         setTimeout(() => cardFooterFlash.style.display = 'none', 1500);
@@ -371,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!field) return;
       const row = field.closest('tr');
       const taskId = row.dataset.taskId;
-      saveField(taskId, field.dataset.field, field.value, flash);
+      saveField(taskId, field.dataset.field, field.value, flash, field);
     });
 
     table.addEventListener('change', function (e) {

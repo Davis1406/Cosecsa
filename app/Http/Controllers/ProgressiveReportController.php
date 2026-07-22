@@ -202,6 +202,12 @@ class ProgressiveReportController extends Controller
         $old = $task->only(['activity_description', 'planned_activities', 'current_status', 'next_steps']);
         $new = $request->only(['activity_description', 'planned_activities', 'current_status', 'next_steps']);
 
+        foreach (['planned_activities', 'current_status', 'next_steps'] as $bulletField) {
+            if (array_key_exists($bulletField, $new)) {
+                $new[$bulletField] = $this->normalizeBullets($new[$bulletField]);
+            }
+        }
+
         $task->update(array_merge($new, ['updated_by' => Auth::id()]));
 
         if ($old != $new) {
@@ -633,6 +639,28 @@ class ProgressiveReportController extends Controller
     protected function authorizeParticipantOwnerOrManager(ProgressReportParticipant $participant): void
     {
         abort_unless($participant->user_id == Auth::id() || $this->canManage(), 403, 'You can only request access to your own section.');
+    }
+
+    // Guarantees every non-empty line is bulleted regardless of how it was
+    // typed — via the live "Enter inserts ❖" JS, pasted in, or a select-all
+    // retype that wiped the auto-inserted marker — since relying on the
+    // client-side keystroke behavior alone proved unreliable in practice.
+    protected function normalizeBullets(?string $text): ?string
+    {
+        if ($text === null || trim($text) === '') {
+            return $text;
+        }
+
+        $lines = preg_split('/\r\n|\r|\n/', $text);
+        $lines = array_map(function ($line) {
+            $trimmed = trim($line);
+            if ($trimmed === '') {
+                return null;
+            }
+            return str_starts_with($trimmed, '❖') ? $trimmed : '❖ ' . $trimmed;
+        }, $lines);
+
+        return implode("\n", array_filter($lines, fn ($l) => $l !== null));
     }
 
     protected function authorizeTaskEdit(ProgressReportTask $task): void
