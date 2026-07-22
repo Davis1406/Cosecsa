@@ -34,28 +34,30 @@
               </p>
             @endif
 
-            @if(isset($isManager) && $isManager)
-              <form method="POST" action="{{ url('progressive-reports/open') }}" class="form-inline mt-2">
-                @csrf
-                <label class="mr-2 font-weight-bold" style="font-size:.85rem;">Add a new month report:</label>
-                <label class="mr-2" style="font-size:.85rem;">Choose month</label>
-                <input type="month" name="period_month" class="form-control form-control-sm mr-2" value="{{ now()->format('Y-m') }}" required>
-                <button type="submit" class="btn btn-sm btn-cosecsa-outline"><i class="fas fa-plus mr-1"></i> Add Month</button>
-              </form>
-            @endif
+            <div class="d-flex flex-wrap align-items-center mt-2" style="gap:20px;">
+              @if(isset($myPeriods))
+                <form method="GET" action="{{ url('progressive-reports/my') }}" class="form-inline mb-0">
+                  <label class="mr-2" style="font-size:.85rem;">Past reports:</label>
+                  <select name="period_id" class="form-control form-control-sm" onchange="this.form.submit()" style="min-width:160px;">
+                    @foreach($myPeriods as $mp)
+                      <option value="{{ $mp->id }}" {{ $selectedPeriodId == $mp->id ? 'selected' : '' }}>
+                        {{ $mp->period_month->format('F Y') }} ({{ ucfirst($mp->status) }})
+                      </option>
+                    @endforeach
+                  </select>
+                </form>
+              @endif
 
-            @if(isset($myPeriods))
-              <form method="GET" action="{{ url('progressive-reports/my') }}" class="form-inline mt-3">
-                <label class="mr-2" style="font-size:.85rem;">Select month</label>
-                <select name="period_id" class="form-control form-control-sm" onchange="this.form.submit()" style="min-width:160px;">
-                  @foreach($myPeriods as $mp)
-                    <option value="{{ $mp->id }}" {{ $selectedPeriodId == $mp->id ? 'selected' : '' }}>
-                      {{ $mp->period_month->format('F Y') }} ({{ ucfirst($mp->status) }})
-                    </option>
-                  @endforeach
-                </select>
-              </form>
-            @endif
+              @if(isset($isManager) && $isManager)
+                <form method="POST" action="{{ url('progressive-reports/open') }}" class="form-inline mb-0">
+                  @csrf
+                  <label class="mr-2 font-weight-bold" style="font-size:.85rem;">Add a new month report:</label>
+                  <label class="mr-2" style="font-size:.85rem;">Choose month</label>
+                  <input type="month" name="period_month" class="form-control form-control-sm mr-2" value="{{ now()->format('Y-m') }}" required>
+                  <button type="submit" class="btn btn-sm btn-cosecsa-outline"><i class="fas fa-plus mr-1"></i> Add Month</button>
+                </form>
+              @endif
+            </div>
           </div>
           <div class="col-12 col-lg-6 mt-2 mt-lg-0 pr-header-actions">
             @if($period && $canManage)
