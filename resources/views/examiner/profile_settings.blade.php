@@ -387,7 +387,7 @@
                             padding:20px 20px 30px;position:relative;background:#fff;">
                     <div>
                         <div class="mb-3">
-                            <img src="{{ asset('/public/dist/img/cosecsa_Logo.png') }}"
+                            <img src="{{ asset('/public/dist/img/Cosecsa_Logo.png') }}"
                                  alt="COSECSA Logo" style="width:100px;height:auto;">
                         </div>
                         <div class="mb-3">

@@ -63,26 +63,7 @@
     <div class="body">
       {!! $emailBody !!}
 
-      @if(!empty($senderName))
-      <div style="margin-top:28px; font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#a02626;">
-        <p style="margin:0;">Best Regards,<br>{{ $senderName }}.</p>
-        @if(!empty($senderTitle))
-          <p style="font-weight:bold; margin:4px 0 10px;">{{ $senderTitle }}</p>
-        @endif
-        <img src="{{ $message->embed(\Illuminate\Mail\Mailables\Attachment::fromPath(public_path('dist/img/Cosecsa_Logo_email.png'))->as('cosecsa-logo.png')->withMime('image/png')) }}" alt="COSECSA" width="60" height="60" style="display:block; object-fit:contain;">
-        <p style="margin:10px 0 0; font-weight:bold;">The College of Surgeons of East, Central and Southern Africa (COSECSA)</p>
-        <p style="margin:2px 0;">ECSA-HC, P.O. Box 1009<br>Arusha, Tanzania.</p>
-        @if(!empty($senderPhone))
-          <p style="margin:2px 0;">Tel: {{ $senderPhone }}</p>
-        @endif
-        <p style="margin:6px 0 0;">
-          <span style="color:#c99400;">Email:</span>
-          <a href="mailto:{{ $senderEmail }}" style="color:#2a6ebb; text-decoration:none;">{{ $senderEmail }}</a>
-          &nbsp;<span style="color:#c99400;">W:</span>
-          <a href="https://www.cosecsa.org" style="color:#2a6ebb; text-decoration:none;">www.cosecsa.org</a>
-        </p>
-      </div>
-      @endif
+      @include('emails._signature')
     </div>
 
     {{-- ── Footer ── --}}
