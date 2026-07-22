@@ -1359,7 +1359,11 @@ public function delete($id)
         $normalize = function ($s) {
             $s = strtolower(trim((string) $s));
             $s = preg_replace('/[^a-z\s]/', '', $s);
-            return preg_replace('/\s+/', ' ', $s);
+            $s = preg_replace('/\s+/', ' ', trim($s));
+            // Examiner display names carry titles (Dr, Prof, Mr, ...) that
+            // fellow records never have — strip them before comparing.
+            $s = preg_replace('/^(dr|prof|professor|mr|mrs|ms|miss)\s+/', '', $s);
+            return trim($s);
         };
 
         $fellowsByName = [];
