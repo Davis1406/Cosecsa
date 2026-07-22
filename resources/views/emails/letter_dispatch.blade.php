@@ -35,6 +35,7 @@
         @if(!empty($senderTitle))
           <p style="font-weight:bold; margin:4px 0 10px;">{{ $senderTitle }}</p>
         @endif
+        <img src="{{ $message->embed(\Illuminate\Mail\Mailables\Attachment::fromPath(public_path('dist/img/Cosecsa_Logo_email.png'))->as('cosecsa-logo.png')->withMime('image/png')) }}" alt="COSECSA" width="60" height="60" style="display:block; object-fit:contain; margin:6px 0;">
         <p style="margin:10px 0 0; font-weight:bold;">The College of Surgeons of East, Central and Southern Africa (COSECSA)</p>
         @if(!empty($senderPhone))
           <p style="margin:2px 0;">Tel: {{ $senderPhone }}</p>

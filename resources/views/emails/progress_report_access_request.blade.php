@@ -41,6 +41,19 @@
           Review Request
         </a>
       </p>
+
+      <div style="margin-top:28px; font-size:13px; color:#a02626;">
+        <p style="margin:0;">Kind Regards,</p>
+        <img src="{{ $message->embed(\Illuminate\Mail\Mailables\Attachment::fromPath(public_path('dist/img/Cosecsa_Logo_email.png'))->as('cosecsa-logo.png')->withMime('image/png')) }}" alt="COSECSA" width="60" height="60" style="display:block; object-fit:contain; margin:6px 0;">
+        <p style="margin:10px 0 0; font-weight:bold;">COSECSA – College of Surgeons of East, Central and Southern Africa</p>
+        <p style="margin:2px 0;">ECSA-HC, P.O.Box 1009<br>Arusha, Tanzania</p>
+        <p style="margin:6px 0 0;">
+          <span style="color:#c99400;">E:</span>
+          <a href="mailto:info@cosecsa.org" style="color:#2a6ebb; text-decoration:none;">info@cosecsa.org</a>
+          &nbsp;<span style="color:#c99400;">W:</span>
+          <a href="https://www.cosecsa.org" style="color:#2a6ebb; text-decoration:none;">www.cosecsa.org</a>
+        </p>
+      </div>
     </div>
 
     <div style="background:#f9f9f9; border-top:1px solid #e8e8e8; padding:20px 32px;">
