@@ -295,6 +295,7 @@ class FellowsController extends Controller
     public function insert(Request $request)
     {
         $fullName = trim("{$request->firstname} {$request->middlename} {$request->lastname}");
+        $fellowIdNumber = $request->fellow_id_number ?: $this->nextFellowIdNumber();
 
         $profileImagePath = null;
         if ($request->hasFile('profile_image')) {
@@ -328,7 +329,7 @@ class FellowsController extends Controller
             'address'                       => $request->address,
             'country_id'                    => $request->country_id,
             'programme_id'                  => $request->programme_id,
-            'fellow_id_number'              => $request->fellow_id_number ?: null,
+            'fellow_id_number'              => $fellowIdNumber,
             'category_id'                   => $request->category_id ?: null,
             'organization'                  => $request->organization,
             'profile_image'                 => $profileImagePath,
@@ -643,5 +644,20 @@ class FellowsController extends Controller
             ->update(['is_active' => 0, 'updated_at' => now()]);
 
         return redirect('admin/associates/fellows/list')->with('success', 'Fellow successfully Deleted');
+    }
+
+    // Simple sequential Fellow ID, zero-padded to 4 digits, continuing from
+    // the current highest — the unique College Fellow ID, distinct from
+    // candidate_number (programme/exam entry number).
+    protected function nextFellowIdNumber(): string
+    {
+        $max = FellowsModel::whereNotNull('fellow_id_number')
+            ->get()
+            ->pluck('fellow_id_number')
+            ->filter(fn ($v) => preg_match('/^\d+$/', trim($v)))
+            ->map(fn ($v) => (int) trim($v))
+            ->max() ?? 0;
+
+        return str_pad($max + 1, 4, '0', STR_PAD_LEFT);
     }
 }
