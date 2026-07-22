@@ -64,6 +64,7 @@ class MembersController extends Controller
 {
     // Concatenate names
     $fullName = trim("{$request->firstname} {$request->middlename} {$request->lastname}");
+    $memberIdNumber = $request->member_id_number ?: $this->nextMemberIdNumber();
 
     // Handle profile image upload
     $profileImagePath = null;
@@ -96,6 +97,7 @@ class MembersController extends Controller
         'lastname' => $request->lastname,
         'password' => bcrypt($request->password), // Hash the password
         'category_id' => $request->category_id,
+        'member_id_number' => $memberIdNumber,
         'personal_email' => $request->personal_email,
         'gender' => $request->gender,
         'status' => $request->status,
@@ -169,6 +171,7 @@ class MembersController extends Controller
     $member->gender = $request->gender;
     $member->status = $request->status;
     $member->category_id = $request->category_id;
+    $member->member_id_number = $request->member_id_number ?: $member->member_id_number;
     $member->country_id = $request->country_id;
     $member->profile_image = $profileImagePath;
     $member->admission_year = $request->admission_year;
@@ -221,4 +224,17 @@ public function delete($id)
     return redirect('admin/associates/members/list')->with('error', 'Failed to delete member information');
 }
 
+    // Simple sequential Member ID, zero-padded to 4 digits, continuing from
+    // the current highest — mirrors FellowsController::nextFellowIdNumber().
+    protected function nextMemberIdNumber(): string
+    {
+        $max = MembersModel::whereNotNull('member_id_number')
+            ->get()
+            ->pluck('member_id_number')
+            ->filter(fn ($v) => preg_match('/^\d+$/', trim($v)))
+            ->map(fn ($v) => (int) trim($v))
+            ->max() ?? 0;
+
+        return str_pad($max + 1, 4, '0', STR_PAD_LEFT);
+    }
 }

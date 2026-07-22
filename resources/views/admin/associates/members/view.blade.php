@@ -68,6 +68,11 @@
                             </tr>
 
                             <tr>
+                                <th>Member ID</th>
+                                <td><strong>{{ $member->member_id_number ?? '—' }}</strong></td>
+                            </tr>
+
+                            <tr>
                                 <th>Membership Year</th>
                                 <td>{{ $member->membership_year }}</td>
                             </tr>

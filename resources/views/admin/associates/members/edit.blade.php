@@ -104,6 +104,13 @@
                             </div>
                         </div>
 
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Member ID</label>
+                                <input type="text" name="member_id_number" class="form-control" value="{{ $member->member_id_number }}" placeholder="Unique College Member ID">
+                            </div>
+                        </div>
+
                         <button type="button" class="action-button previous previous_button">Back</button>
                         <button type="submit" class="action-button">Submit</button>
                     </fieldset>
