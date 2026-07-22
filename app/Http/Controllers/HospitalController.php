@@ -65,7 +65,7 @@ class HospitalController extends Controller
         $trainersByHospital = DB::table('trainers as t')
             ->join('users as u', 'u.id', '=', 't.user_id')
             ->where('u.is_deleted', 0)
-            ->select('t.id as trainer_id', 't.hospital_id', 't.programme_id', 't.phone_number', 'u.email', 'u.name')
+            ->select('t.id as trainer_id', 't.hospital_id', 't.programme_id', 't.phone_number', 'u.email', 'u.name', 't.assistant_pd', 't.assistant_email')
             ->get()
             ->groupBy('hospital_id');
 
@@ -89,6 +89,8 @@ class HospitalController extends Controller
             $r->assigned_trainer_name = $assigned->name ?? '';
             $r->assigned_trainer_email = $assigned->email ?? '';
             $r->assigned_trainer_phone = $assigned->phone_number ?? '';
+            $r->assigned_trainer_assistant_pd = $assigned->assistant_pd ?? '';
+            $r->assigned_trainer_assistant_email = $assigned->assistant_email ?? '';
 
             return $r;
         });
@@ -116,10 +118,12 @@ class HospitalController extends Controller
     public function savePd(Request $request, $hospitalProgrammeId)
     {
         $request->validate([
-            'trainer_id' => 'nullable|integer',
-            'name'       => 'required|string|max:255',
-            'email'      => 'required|email|max:255',
-            'phone'      => 'nullable|string|max:50',
+            'trainer_id'      => 'nullable|integer',
+            'name'            => 'required|string|max:255',
+            'email'           => 'required|email|max:255',
+            'phone'           => 'nullable|string|max:50',
+            'assistant_pd'    => 'nullable|string|max:255',
+            'assistant_email' => 'nullable|email|max:255',
         ]);
 
         $hp = DB::table('hospital_programmes')->where('id', $hospitalProgrammeId)->first();
@@ -140,6 +144,8 @@ class HospitalController extends Controller
             $trainer->phone_number = $request->phone;
             $trainer->hospital_id = $hp->hospital_id;
             $trainer->programme_id = $hp->programme_id;
+            $trainer->assistant_pd = $request->assistant_pd;
+            $trainer->assistant_email = $request->assistant_email;
             $trainer->save();
 
             return back()->with('success', 'Programme Director updated.');
@@ -154,10 +160,12 @@ class HospitalController extends Controller
         ]);
         \App\Models\UserRole::create(['user_id' => $user->id, 'role_type' => 4, 'is_active' => 1]);
         \App\Models\Trainer::create([
-            'user_id'      => $user->id,
-            'hospital_id'  => $hp->hospital_id,
-            'programme_id' => $hp->programme_id,
-            'phone_number' => $request->phone,
+            'user_id'         => $user->id,
+            'hospital_id'     => $hp->hospital_id,
+            'programme_id'    => $hp->programme_id,
+            'phone_number'    => $request->phone,
+            'assistant_pd'    => $request->assistant_pd,
+            'assistant_email' => $request->assistant_email,
         ]);
 
         return back()->with('success', 'Programme Director added.');
