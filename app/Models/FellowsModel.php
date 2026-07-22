@@ -23,6 +23,7 @@ class FellowsModel extends Model
         'status',
         'profile_image',
         'programme_id',
+        'fellow_id_number',
         'country_id',
         'phone_number',
         'is_promoted',

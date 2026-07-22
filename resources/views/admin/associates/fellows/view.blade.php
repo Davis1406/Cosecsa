@@ -484,6 +484,7 @@
                         </div>
                         <div class="field-row"><span class="field-lbl">Fellowship Type</span><span class="field-val">{{ $fellow->fellowship_type ?? '—' }}</span></div>
                         <div class="field-row"><span class="field-lbl">Fellowship Programme</span><span class="field-val">@if($fellow->programme_id ?? null)<a href="{{ url('admin/programmes/view/'.$fellow->programme_id) }}" style="color:#a02626;">{{ $fellow->programme_name }}</a>@else{{ $fellow->programme_name ?? '—' }}@endif</span></div>
+                        <div class="field-row"><span class="field-lbl">Fellow ID</span><span class="field-val"><strong>{{ $fellow->fellow_id_number ?? '—' }}</strong></span></div>
                         <div class="field-row"><span class="field-lbl">Promoted to Fellow</span>
                             <span class="field-val">
                                 @if($fellow->is_promoted == '1')

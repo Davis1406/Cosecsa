@@ -139,6 +139,13 @@
                             </div>
                         </div>
                         <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label class="form-label">Fellow ID</label>
+                                <input type="text" name="fellow_id_number" class="form-control form-control-sm"
+                                       placeholder="Unique College Fellow ID">
+                            </div>
+                        </div>
+                        <div class="form-row">
                             <div class="form-group col-md-3">
                                 <label class="form-label">Intake / Admission Year</label>
                                 <input type="text" name="admission_year" class="form-control form-control-sm" placeholder="e.g. 2015">
