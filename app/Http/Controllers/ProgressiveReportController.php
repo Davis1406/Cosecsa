@@ -292,6 +292,20 @@ class ProgressiveReportController extends Controller
                     Auth::user()->name . ' is requesting edit access to the submitted "' . $participant->section_label . '" section for ' . $participant->period->period_month->format('F Y') . '.'
                 );
             }
+
+            if ($adminOfficer) {
+                // TEMPORARY: routed to a test address while the Admin Officer
+                // email is being verified (logo rendering, formatting) — switch
+                // back to $adminOfficer->email once confirmed.
+                $recipientEmail = 'dkondo146@gmail.com';
+
+                \Illuminate\Support\Facades\Mail::to($recipientEmail)->send(new \App\Mail\ProgressReportAccessRequestMail(
+                    Auth::user()->name,
+                    $participant->section_label,
+                    $participant->period->period_month->format('F Y'),
+                    url('progressive-reports/' . $periodId)
+                ));
+            }
         }
 
         return back()->with('success', 'Access request sent to the Administrative Officer.');

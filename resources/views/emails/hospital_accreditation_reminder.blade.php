@@ -13,7 +13,7 @@
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="padding:18px 28px; vertical-align:middle; width:76px;">
-            <img src="https://cosecsamis.org/public/dist/img/Cosecsa_Logo.png" alt="COSECSA" width="60" height="60" style="display:block; border:0;">
+            <img src="{{ $message->embed(public_path('dist/img/Cosecsa_Logo.png')) }}" alt="COSECSA" width="60" height="60" style="display:block; border:0;">
           </td>
           <td style="padding:18px 12px 18px 0; vertical-align:middle;">
             <div style="color:#ffffff;">

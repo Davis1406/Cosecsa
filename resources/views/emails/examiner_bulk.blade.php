@@ -42,7 +42,7 @@
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="padding:18px 28px; vertical-align:middle; width:76px;">
-            <img src="https://cosecsamis.org/public/dist/img/Cosecsa_Logo.png"
+            <img src="{{ $message->embed(public_path('dist/img/Cosecsa_Logo.png')) }}"
                  alt="COSECSA" width="60" height="60"
                  style="display:block; border:0;">
           </td>
@@ -69,7 +69,7 @@
         @if(!empty($senderTitle))
           <p style="font-weight:bold; margin:4px 0 10px;">{{ $senderTitle }}</p>
         @endif
-        <img src="https://cosecsamis.org/public/dist/img/Cosecsa_Logo.png" alt="COSECSA" width="60" height="60" style="display:block; object-fit:contain;">
+        <img src="{{ $message->embed(public_path('dist/img/Cosecsa_Logo.png')) }}" alt="COSECSA" width="60" height="60" style="display:block; object-fit:contain;">
         <p style="margin:10px 0 0; font-weight:bold;">The College of Surgeons of East, Central and Southern Africa (COSECSA)</p>
         <p style="margin:2px 0;">ECSA-HC, P.O. Box 1009<br>Arusha, Tanzania.</p>
         @if(!empty($senderPhone))
@@ -90,7 +90,7 @@
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="width:46px; vertical-align:middle; padding-right:10px;">
-            <img src="https://cosecsamis.org/public/dist/img/Cosecsa_Logo.png"
+            <img src="{{ $message->embed(public_path('dist/img/Cosecsa_Logo.png')) }}"
                  alt="COSECSA" width="36" height="36"
                  style="display:block; border:0;">
           </td>
