@@ -22,8 +22,20 @@ class AdminController extends Controller
     public function add()
     {
         $data['header_title'] = "Add New Admin";
-        $data['roles'] = Role::orderBy('name')->get();
+        $data['roles'] = $this->assignableRoles();
         return view('admin.add', $data);
+    }
+
+    // Master Admin is a one-off role reserved for its current holder — it
+    // isn't offered when assigning roles unless the acting user already
+    // holds it themselves.
+    protected function assignableRoles()
+    {
+        $roles = Role::orderBy('name')->get();
+        if (! (auth()->user()?->isMasterAdmin())) {
+            $roles = $roles->reject(fn ($r) => $r->name === 'Master Admin')->values();
+        }
+        return $roles;
     }
 
     public function insert(Request $request)
@@ -61,9 +73,10 @@ class AdminController extends Controller
     public function edit($id)
     {
         $data['getRecord'] = User::getSingleId($id);
+        abort_if($data['getRecord'] && $data['getRecord']->isMasterAdmin() && ! (auth()->user()?->isMasterAdmin()), 404);
         if (!empty($data['getRecord'])) {
             $data['header_title'] = "Edit Admin";
-            $data['roles'] = Role::orderBy('name')->get();
+            $data['roles'] = $this->assignableRoles();
             return view('admin.edit', $data);
         } else {
             abort(404);
@@ -76,9 +89,11 @@ class AdminController extends Controller
             'email' => 'required|email|unique:users,email,' . $id
         ]);
 
+        $user = User::getSingleId($id);
+        abort_if($user && $user->isMasterAdmin() && ! (auth()->user()?->isMasterAdmin()), 404);
+
         DB::beginTransaction();
         try {
-            $user = User::getSingleId($id);
             $user->name = trim($request->name);
             $user->email = trim($request->email);
             $user->user_type = 1;
@@ -129,6 +144,7 @@ class AdminController extends Controller
         if (!$user) {
             return redirect('admin/list')->with('error', 'Admin not found');
         }
+        abort_if($user->isMasterAdmin() && ! (auth()->user()?->isMasterAdmin()), 404);
 
         \DB::beginTransaction();
         try {

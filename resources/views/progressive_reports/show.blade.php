@@ -161,7 +161,7 @@
           </div>
         @endif
 
-        @if(isset($isManager) && $isManager && isset($pendingAccessRequests) && $pendingAccessRequests->isNotEmpty())
+        @if(isset($canApproveAccess) && $canApproveAccess && isset($pendingAccessRequests) && $pendingAccessRequests->isNotEmpty())
           <div class="card card-outline card-warning">
             <div class="card-header">
               <h3 class="card-title" style="font-size:1rem;"><i class="fas fa-unlock-alt mr-2"></i>Pending Edit-Access Requests</h3>

@@ -58,6 +58,13 @@ class User extends Authenticatable
             ->where('users.is_deleted', '=', '0')
             ->where('user_roles.is_active', 1);
 
+        // Master Admin is hidden from the Admin List for everyone except
+        // another Master Admin — plain Super Admins should not see it.
+        $viewer = Auth::user();
+        if (! ($viewer && $viewer->isMasterAdmin())) {
+            $return->whereDoesntHave('adminRole', fn ($q) => $q->where('name', 'Master Admin'));
+        }
+
         if (!empty(Request::get('email'))) {
             $return = $return->where('users.email', 'like', '%' . Request::get('email') . '%');
         }
@@ -799,6 +806,26 @@ class User extends Authenticatable
         }
 
         return (bool) ($this->adminRole && $this->adminRole->name === 'Administrative Officer');
+    }
+
+    // A Master Admin has every Super Admin capability (is_system role) plus
+    // a few exclusive ones — approving Progressive Reports edit-access
+    // requests, and being hidden from the Admin List that other Super
+    // Admins see. Deliberately narrower than isSuperAdmin(): a plain
+    // Super Admin should NOT match this.
+    public function isMasterAdmin(): bool
+    {
+        return (bool) ($this->adminRole && $this->adminRole->name === 'Master Admin');
+    }
+
+    // Only the Administrative Officer (the role that owns the Progressive
+    // Reports workflow day-to-day) or the Master Admin may approve/deny a
+    // request to edit a locked, already-submitted section — a plain Super
+    // Admin cannot, even though isProgressReportManager() lets them manage
+    // periods/templates/consolidation.
+    public function canApproveProgressReportAccess(): bool
+    {
+        return $this->isMasterAdmin() || ($this->adminRole && $this->adminRole->name === 'Administrative Officer');
     }
 
     public function hasPermission(string $key): bool

@@ -15,6 +15,9 @@ class RoleController extends Controller
         $modules = config('admin_permissions.modules');
 
         $roles = Role::withCount('users')->with('permissions')->orderBy('name')->get();
+        if (! (auth()->user()?->isMasterAdmin())) {
+            $roles = $roles->reject(fn ($r) => $r->name === 'Master Admin')->values();
+        }
         $roles->each(function ($role) use ($modules) {
             if ($role->is_system) {
                 $role->manage_summary = 'Everything';

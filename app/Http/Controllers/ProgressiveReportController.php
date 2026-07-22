@@ -51,6 +51,7 @@ class ProgressiveReportController extends Controller
         if ($myPeriods->isEmpty()) {
             $myTemplates = ProgressReportTaskTemplate::where('user_id', Auth::id())->orderBy('sort_order')->get();
             $isManager = $this->canManage();
+            $canApproveAccess = Auth::user()->canApproveProgressReportAccess();
 
             return view('progressive_reports.show', [
                 'header_title' => 'My Progress Report',
@@ -59,11 +60,12 @@ class ProgressiveReportController extends Controller
                 'selectedPeriodId' => null,
                 'canManage'    => false,
                 'isManager'    => $isManager,
+                'canApproveAccess' => $canApproveAccess,
                 'myUserId'     => Auth::id(),
                 'backUrl'      => url('admin/dashboard'),
                 'myTemplates'  => $myTemplates,
                 'templatesByUser' => $myTemplates->where('is_active', true)->groupBy('user_id'),
-                'pendingAccessRequests' => $isManager
+                'pendingAccessRequests' => $canApproveAccess
                     ? ProgressReportAccessRequest::with(['participant.period', 'requester'])->where('status', 'pending')->latest()->get()
                     : collect(),
             ]);
@@ -79,6 +81,7 @@ class ProgressiveReportController extends Controller
 
         $myTemplates = ProgressReportTaskTemplate::where('user_id', Auth::id())->orderBy('sort_order')->get();
         $isManager = $this->canManage();
+        $canApproveAccess = Auth::user()->canApproveProgressReportAccess();
 
         return view('progressive_reports.show', [
             'header_title'     => 'My Progress Report',
@@ -87,11 +90,12 @@ class ProgressiveReportController extends Controller
             'selectedPeriodId' => $period->id,
             'canManage'        => false,
             'isManager'        => $isManager,
+            'canApproveAccess' => $canApproveAccess,
             'myUserId'         => Auth::id(),
             'backUrl'          => url('admin/dashboard'),
             'myTemplates'      => $myTemplates,
             'templatesByUser'  => $myTemplates->where('is_active', true)->groupBy('user_id'),
-            'pendingAccessRequests' => $isManager
+            'pendingAccessRequests' => $canApproveAccess
                 ? ProgressReportAccessRequest::with(['participant.period', 'requester'])->where('status', 'pending')->latest()->get()
                 : collect(),
         ]);
@@ -160,15 +164,17 @@ class ProgressiveReportController extends Controller
             ->where('is_active', true)->orderBy('sort_order')->get()->groupBy('user_id');
 
         $isManager = $this->canManage();
+        $canApproveAccess = Auth::user()->canApproveProgressReportAccess();
 
         return view('progressive_reports.show', [
             'header_title' => 'Progressive Reports',
             'period'       => $period,
             'canManage'    => $isManager,
             'isManager'    => $isManager,
+            'canApproveAccess' => $canApproveAccess,
             'myUserId'     => Auth::id(),
             'templatesByUser' => $templatesByUser,
-            'pendingAccessRequests' => $isManager
+            'pendingAccessRequests' => $canApproveAccess
                 ? ProgressReportAccessRequest::with(['participant.period', 'requester'])->where('status', 'pending')->latest()->get()
                 : collect(),
         ]);
@@ -286,7 +292,7 @@ class ProgressiveReportController extends Controller
 
     public function approveAccessRequest(Request $request, $id)
     {
-        $this->authorizeManage();
+        $this->authorizeAccessApproval();
         $accessRequest = ProgressReportAccessRequest::with('participant')->findOrFail($id);
         $accessRequest->update(['status' => 'approved', 'decided_by' => Auth::id(), 'decided_at' => now()]);
         $accessRequest->participant->update(['edit_unlocked' => true]);
@@ -301,7 +307,7 @@ class ProgressiveReportController extends Controller
 
     public function denyAccessRequest(Request $request, $id)
     {
-        $this->authorizeManage();
+        $this->authorizeAccessApproval();
         $accessRequest = ProgressReportAccessRequest::with('participant')->findOrFail($id);
         $accessRequest->update(['status' => 'denied', 'decided_by' => Auth::id(), 'decided_at' => now()]);
 
@@ -580,6 +586,11 @@ class ProgressiveReportController extends Controller
     protected function authorizeManage(): void
     {
         abort_unless($this->canManage(), 403, 'Only the Administrative Officer or a Super Admin can do this.');
+    }
+
+    protected function authorizeAccessApproval(): void
+    {
+        abort_unless(Auth::user()->canApproveProgressReportAccess(), 403, 'Only the Administrative Officer or the Master Admin can approve edit-access requests.');
     }
 
     protected function authorizeParticipantEdit(ProgressReportParticipant $participant): void
