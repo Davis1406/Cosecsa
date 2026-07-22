@@ -72,6 +72,11 @@
                                                 </select>
                                             </div>
 
+                                            <div class="form-group">
+                                                <label>Contact Email</label>
+                                                <input type="email" name="contact_email" class="form-control" placeholder="Used for accreditation reminders">
+                                            </div>
+
                                         </div>
                                         <!-- /.card-body -->
 

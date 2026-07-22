@@ -6,10 +6,153 @@ use Illuminate\Http\Request;
 use Auth;
 use App\Models\HospitalModel;
 use App\Models\Country;
+use App\Mail\HospitalAccreditationReminderMail;
+use Illuminate\Support\Facades\Mail;
 use DB;
 
 class HospitalController extends Controller
 {
+    // Unified "Hospital Accreditation" hub — merges what used to be two
+    // separate menu items (Accredited Hospitals / Hospital Programmes)
+    // into one follow-up-focused landing page: every accreditation row,
+    // flagged by how close it is to expiring, with a reminder action.
+    public function dashboard(Request $request)
+    {
+        $warningDays = 90;
+        $today = now()->toDateString();
+        $warningDate = now()->addDays($warningDays)->toDateString();
+
+        $query = DB::table('hospital_programmes as hp')
+            ->join('hospitals as h', 'h.id', '=', 'hp.hospital_id')
+            ->join('programmes as p', 'p.id', '=', 'hp.programme_id')
+            ->leftJoin('countries as c', 'c.id', '=', 'h.country_id')
+            ->where('hp.is_delete', 0)
+            ->where('h.is_deleted', 0)
+            ->select(
+                'hp.id', 'hp.hospital_id', 'hp.programme_id', 'hp.accredited_date', 'hp.expiry_date',
+                'hp.status', 'hp.last_reminder_sent_at',
+                'h.name as hospital_name', 'h.contact_email',
+                'p.name as programme_name', 'c.country_name'
+            );
+
+        if ($request->filled('country_id')) $query->where('h.country_id', $request->country_id);
+        if ($request->filled('programme_id')) $query->where('hp.programme_id', $request->programme_id);
+        if ($request->filled('search')) {
+            $like = '%' . $request->search . '%';
+            $query->where('h.name', 'like', $like);
+        }
+
+        $rows = $query->orderBy('hp.expiry_date')->get()->map(function ($r) use ($today, $warningDate) {
+            if ($r->status === 'Expired' || $r->expiry_date < $today) {
+                $r->flag = 'expired';
+            } elseif ($r->expiry_date <= $warningDate) {
+                $r->flag = 'expiring_soon';
+            } else {
+                $r->flag = 'active';
+            }
+            return $r;
+        });
+
+        if ($request->filled('flag')) {
+            $rows = $rows->where('flag', $request->flag)->values();
+        }
+
+        // Programme director email(s) per hospital, for the "Send Reminder" action.
+        $pdEmailsByHospital = DB::table('trainers as t')
+            ->join('users as u', 'u.id', '=', 't.user_id')
+            ->where('u.is_deleted', 0)
+            ->select('t.hospital_id', 'u.email', 'u.name')
+            ->get()
+            ->groupBy('hospital_id');
+
+        $rows = $rows->map(function ($r) use ($pdEmailsByHospital) {
+            $pds = $pdEmailsByHospital->get($r->hospital_id, collect());
+            $r->reminder_emails = $r->contact_email
+                ? array_merge([$r->contact_email], $pds->pluck('email')->all())
+                : $pds->pluck('email')->all();
+            $r->pd_names = $pds->pluck('name')->implode(', ');
+            return $r;
+        });
+
+        return view('admin.hospital.dashboard', [
+            'header_title'   => 'Hospital Accreditation',
+            'rows'           => $rows,
+            'countries'      => Country::orderBy('country_name')->get(),
+            'programmes'     => \App\Models\Programme::orderBy('name')->get(),
+            'filters'        => $request->only(['country_id', 'programme_id', 'flag', 'search']),
+            'warningDays'    => $warningDays,
+            'totalHospitals' => DB::table('hospitals')->where('is_deleted', 0)->count(),
+            'totalAccreditations' => $rows->count(),
+            'countActive'    => $rows->where('flag', 'active')->count(),
+            'countExpiringSoon' => $rows->where('flag', 'expiring_soon')->count(),
+            'countExpired'   => $rows->where('flag', 'expired')->count(),
+        ]);
+    }
+
+    public function sendReminder($hospitalProgrammeId)
+    {
+        $row = DB::table('hospital_programmes as hp')
+            ->join('hospitals as h', 'h.id', '=', 'hp.hospital_id')
+            ->join('programmes as p', 'p.id', '=', 'hp.programme_id')
+            ->where('hp.id', $hospitalProgrammeId)
+            ->select('hp.*', 'h.name as hospital_name', 'h.contact_email', 'p.name as programme_name')
+            ->first();
+
+        if (! $row) {
+            return back()->with('error', 'Accreditation record not found.');
+        }
+
+        $pdEmails = DB::table('trainers as t')->join('users as u', 'u.id', '=', 't.user_id')
+            ->where('t.hospital_id', $row->hospital_id)->where('u.is_deleted', 0)->pluck('u.email')->all();
+        $emails = array_unique(array_filter(array_merge([$row->contact_email], $pdEmails)));
+
+        if (empty($emails)) {
+            return back()->with('error', 'No contact email on file for ' . $row->hospital_name . ' — add one via Edit Hospital.');
+        }
+
+        foreach ($emails as $email) {
+            Mail::to($email)->send(new HospitalAccreditationReminderMail($row->hospital_name, $row->programme_name, $row->expiry_date, Auth::user()));
+        }
+
+        DB::table('hospital_programmes')->where('id', $hospitalProgrammeId)->update(['last_reminder_sent_at' => now()]);
+
+        return back()->with('success', "Reminder sent to {$row->hospital_name} ({$row->programme_name}).");
+    }
+
+    public function sendBulkReminders(Request $request)
+    {
+        $ids = $request->input('hospital_programme_ids', []);
+        $sent = 0;
+        $skipped = 0;
+
+        foreach ($ids as $id) {
+            $row = DB::table('hospital_programmes as hp')
+                ->join('hospitals as h', 'h.id', '=', 'hp.hospital_id')
+                ->join('programmes as p', 'p.id', '=', 'hp.programme_id')
+                ->where('hp.id', $id)
+                ->select('hp.*', 'h.name as hospital_name', 'h.contact_email', 'p.name as programme_name')
+                ->first();
+            if (! $row) continue;
+
+            $pdEmails = DB::table('trainers as t')->join('users as u', 'u.id', '=', 't.user_id')
+                ->where('t.hospital_id', $row->hospital_id)->where('u.is_deleted', 0)->pluck('u.email')->all();
+            $emails = array_unique(array_filter(array_merge([$row->contact_email], $pdEmails)));
+
+            if (empty($emails)) {
+                $skipped++;
+                continue;
+            }
+
+            foreach ($emails as $email) {
+                Mail::to($email)->send(new HospitalAccreditationReminderMail($row->hospital_name, $row->programme_name, $row->expiry_date, Auth::user()));
+            }
+            DB::table('hospital_programmes')->where('id', $id)->update(['last_reminder_sent_at' => now()]);
+            $sent++;
+        }
+
+        return back()->with('success', "Sent {$sent} reminder(s)." . ($skipped ? " {$skipped} skipped (no contact email on file)." : ''));
+    }
+
     public function hospital(){
 
         $allHospitals = HospitalModel::select('hospitals.*', 'countries.country_name as country_name')
@@ -129,6 +272,7 @@ class HospitalController extends Controller
         $save->country_id    = $request->country_id;
         $save->hospital_type = $request->hospital_type ?? 1;
         $save->status        = $request->status;
+        $save->contact_email = $request->contact_email;
         $save->save();
         return redirect('admin/hospital/list')->with('success', "Hospital successfully created");
     }
@@ -150,6 +294,7 @@ class HospitalController extends Controller
         $update->country_id    = $request->country_id;
         $update->hospital_type = $request->hospital_type ?? $update->hospital_type;
         $update->status        = $request->status;
+        $update->contact_email = $request->contact_email;
         $update->save();
         return redirect('admin/hospital/list')->with('success', "Hospital successfully updated");
     }

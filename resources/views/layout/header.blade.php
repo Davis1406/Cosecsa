@@ -335,11 +335,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         @if (Auth::user()->hasPermission('lookups.view'))
                         <li class="nav-item">
-                            <a href="{{ url('admin/hospital/list') }}"
-                                class="nav-link @if (Request::segment(2) == 'hospital') active @endif">
+                            <a href="{{ url('admin/hospital/dashboard') }}"
+                                class="nav-link @if (Request::segment(2) == 'hospital' || Request::segment(2) == 'hospitalprogrammes') active @endif">
                                 <i class="nav-icon fas fa-hospital"></i>
                                 <p>
-                                    Accredited Hospitals
+                                    Hospital Accreditation
                                 </p>
                             </a>
                         </li>
@@ -350,16 +350,6 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <i class="nav-icon fas fa-book"></i>
                                 <p>
                                     Programmes
-                                </p>
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a href="{{ url('admin/hospitalprogrammes/list') }}"
-                                class="nav-link @if (Request::segment(2) == 'hospitalprogrammes') active @endif">
-                                <i class="nav-icon fas fa-edit"></i>
-                                <p>
-                                    Hospital Programmes
                                 </p>
                             </a>
                         </li>

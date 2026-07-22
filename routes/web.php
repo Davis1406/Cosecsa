@@ -178,6 +178,9 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::get('admin/countries/view/{id}', [CountryController::class, 'view']);
 
     //Hospital Routes;
+    Route::get('admin/hospital/dashboard', [HospitalController::class,'dashboard']);
+    Route::post('admin/hospital/reminders/send-bulk', [HospitalController::class,'sendBulkReminders']);
+    Route::post('admin/hospital/reminders/{id}/send', [HospitalController::class,'sendReminder']);
     Route::get('admin/hospital/list ', [HospitalController::class,'hospital']);
     Route::get('admin/hospital/add ',  [HospitalController::class,'add']);
     Route::post('admin/hospital/add', [HospitalController::class,'insert']);

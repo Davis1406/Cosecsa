@@ -69,6 +69,11 @@
                            <option value="1" {{ $getRecord->status == 'inactive' ? 'selected' : '' }}>Inactive</option>
                        </select>
                    </div>
+
+                   <div class="form-group">
+                      <label>Contact Email</label>
+                      <input type="email" name="contact_email" class="form-control" value="{{ $getRecord->contact_email }}" placeholder="Used for accreditation reminders">
+                   </div>
                 </div>
                 <!-- /.card-body -->
 
