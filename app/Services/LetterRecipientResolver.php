@@ -26,6 +26,14 @@ class LetterRecipientResolver
         return DB::table('programmes')->orderBy('name')->pluck('name', 'id');
     }
 
+    // Accepts either a single id or an array of ids (multi-select filter
+    // panels submit arrays) and applies a whereIn when non-empty.
+    protected function applyIn($q, string $col, $value): void
+    {
+        $ids = array_filter((array) $value);
+        if (! empty($ids)) $q->whereIn($col, $ids);
+    }
+
     /**
      * Returns a Collection of normalized stdClass rows:
      * source, id, user_id, name, email, country, programme, hospital,
@@ -54,8 +62,8 @@ class LetterRecipientResolver
             ->where('t.status', '!=', 'Inactive')
             ->select('t.*', 'co.country_name', 'p.name as programme_name', 'h.name as hospital_name');
 
-        if (! empty($filters['country_id'])) $q->where('t.country_id', $filters['country_id']);
-        if (! empty($filters['programme_id'])) $q->where('t.programme_id', $filters['programme_id']);
+        $this->applyIn($q, 't.country_id', $filters['country_id'] ?? null);
+        $this->applyIn($q, 't.programme_id', $filters['programme_id'] ?? null);
         if (! empty($filters['year'])) $q->where('t.admission_year', $filters['year']);
         if (! empty($filters['search'])) {
             $like = '%' . $filters['search'] . '%';
@@ -89,8 +97,8 @@ class LetterRecipientResolver
             ->leftJoin('hospitals as h', 'h.id', '=', 'c.hospital_id')
             ->select('c.*', 'co.country_name', 'p.name as programme_name', 'h.name as hospital_name');
 
-        if (! empty($filters['country_id'])) $q->where('c.country_id', $filters['country_id']);
-        if (! empty($filters['programme_id'])) $q->where('c.programme_id', $filters['programme_id']);
+        $this->applyIn($q, 'c.country_id', $filters['country_id'] ?? null);
+        $this->applyIn($q, 'c.programme_id', $filters['programme_id'] ?? null);
         if (! empty($filters['year'])) $q->where('c.exam_year', $filters['year']);
         if (! empty($filters['search'])) {
             $like = '%' . $filters['search'] . '%';
@@ -118,8 +126,8 @@ class LetterRecipientResolver
             ->leftJoin('programmes as p', 'p.id', '=', 'f.programme_id')
             ->select('f.*', 'co.country_name', 'p.name as programme_name');
 
-        if (! empty($filters['country_id'])) $q->where('f.country_id', $filters['country_id']);
-        if (! empty($filters['programme_id'])) $q->where('f.programme_id', $filters['programme_id']);
+        $this->applyIn($q, 'f.country_id', $filters['country_id'] ?? null);
+        $this->applyIn($q, 'f.programme_id', $filters['programme_id'] ?? null);
         if (! empty($filters['year'])) $q->where('f.fellowship_year', $filters['year']);
         if (! empty($filters['search'])) {
             $like = '%' . $filters['search'] . '%';
@@ -147,7 +155,7 @@ class LetterRecipientResolver
             ->leftJoin('countries as co', 'co.id', '=', 'e.country_id')
             ->select('e.*', 'u.name as user_name', 'u.email as user_email', 'co.country_name');
 
-        if (! empty($filters['country_id'])) $q->where('e.country_id', $filters['country_id']);
+        $this->applyIn($q, 'e.country_id', $filters['country_id'] ?? null);
         if (! empty($filters['search'])) {
             $like = '%' . $filters['search'] . '%';
             $q->where('u.name', 'like', $like);
@@ -171,7 +179,7 @@ class LetterRecipientResolver
             ->leftJoin('countries as co', 'co.id', '=', 'cr.country_id')
             ->select('cr.*', 'u.name as user_name', 'u.email as user_email', 'co.country_name');
 
-        if (! empty($filters['country_id'])) $q->where('cr.country_id', $filters['country_id']);
+        $this->applyIn($q, 'cr.country_id', $filters['country_id'] ?? null);
         if (! empty($filters['search'])) {
             $like = '%' . $filters['search'] . '%';
             $q->where('u.name', 'like', $like);
@@ -196,7 +204,7 @@ class LetterRecipientResolver
             ->leftJoin('countries as co', 'co.id', '=', 'h.country_id')
             ->select('tr.*', 'u.name as user_name', 'u.email as user_email', 'h.name as hospital_name', 'co.country_name');
 
-        if (! empty($filters['country_id'])) $q->where('co.id', $filters['country_id']);
+        $this->applyIn($q, 'co.id', $filters['country_id'] ?? null);
         if (! empty($filters['search'])) {
             $like = '%' . $filters['search'] . '%';
             $q->where('u.name', 'like', $like);
