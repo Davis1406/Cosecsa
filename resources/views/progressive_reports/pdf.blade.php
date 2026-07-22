@@ -43,19 +43,8 @@
           <tr>
             <td>{{ $task->row_no }}</td>
             <td>{{ $task->activity_description }}</td>
-            <td>
-              @php $plannedLines = array_values(array_filter(preg_split('/\r\n|\r|\n/', (string) $task->planned_activities), fn($l) => trim($l) !== '')); @endphp
-              @if(count($plannedLines) > 1)
-                <ul class="pr-bullets">
-                  @foreach($plannedLines as $line)
-                    <li>{{ $line }}</li>
-                  @endforeach
-                </ul>
-              @else
-                {{ $task->planned_activities }}
-              @endif
-            </td>
-            <td>{{ $task->current_status }}</td>
+            <td>@include('progressive_reports._bulleted', ['text' => $task->planned_activities])</td>
+            <td>@include('progressive_reports._bulleted', ['text' => $task->current_status])</td>
             <td>{{ $task->next_steps }}</td>
           </tr>
         @empty

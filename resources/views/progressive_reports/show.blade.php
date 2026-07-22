@@ -14,6 +14,8 @@
       gap: 10px;
     }
     .pr-header-actions form { margin: 0; }
+    .pr-bullets { margin: 0; padding-left: 18px; }
+    .pr-bullets li { margin-bottom: 2px; }
   </style>
   <div class="content-wrapper">
     <section class="content-header">
@@ -203,7 +205,9 @@
             $isMine = $participant->user_id == $myUserId;
             $canEdit = $isMine || $canManage;
             $isLocked = $participant->isLocked();
-            $isPastMonth = $isLocked && $participant->status !== 'submitted';
+            $lockReason = ! $isLocked ? null
+              : ($participant->status === 'submitted' ? 'submitted'
+                : (! $participant->period->is_current ? 'past-month' : 'deadline'));
             $canEditNow = $canEdit && ! $isLocked;
           @endphp
           <div class="card pr-section-card {{ $isMine ? 'mine' : '' }}" id="participant-{{ $participant->id }}">
@@ -217,7 +221,12 @@
                   {{ $participant->status === 'submitted' ? 'Submitted '.$participant->submitted_at->format('d M, H:i') : 'Pending' }}
                 </span>
                 @if($isLocked)
-                  <span class="badge badge-warning ml-1"><i class="fas fa-lock"></i> {{ $isPastMonth ? 'Locked — past month' : 'Locked' }}</span>
+                  <span class="badge badge-warning ml-1"><i class="fas fa-lock"></i>
+                    @if($lockReason === 'past-month') Locked — past month
+                    @elseif($lockReason === 'deadline') Locked — deadline passed
+                    @else Locked
+                    @endif
+                  </span>
                 @endif
                 @if($canEditNow)
                   <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/participants/'.$participant->id.'/copy-forward') }}" style="display:inline;">
@@ -266,15 +275,15 @@
                             <textarea class="form-control form-control-sm pr-field pr-activity" data-field="activity_description">{{ $task->activity_description }}</textarea>
                           </td>
                           <td><textarea class="form-control form-control-sm pr-field" data-field="planned_activities" placeholder="One activity per line">{{ $task->planned_activities }}</textarea></td>
-                          <td><textarea class="form-control form-control-sm pr-field" data-field="current_status">{{ $task->current_status }}</textarea></td>
+                          <td><textarea class="form-control form-control-sm pr-field" data-field="current_status" placeholder="One item per line">{{ $task->current_status }}</textarea></td>
                           <td><textarea class="form-control form-control-sm pr-field" data-field="next_steps">{{ $task->next_steps }}</textarea></td>
                           <td class="text-center">
                             <a href="#" class="text-danger pr-delete-row" title="Delete row"><i class="fas fa-trash"></i></a>
                           </td>
                         @else
                           <td>{{ $task->activity_description }}</td>
-                          <td style="white-space:pre-line;">{{ $task->planned_activities }}</td>
-                          <td style="white-space:pre-line;">{{ $task->current_status }}</td>
+                          <td>@include('progressive_reports._bulleted', ['text' => $task->planned_activities])</td>
+                          <td>@include('progressive_reports._bulleted', ['text' => $task->current_status])</td>
                           <td style="white-space:pre-line;">{{ $task->next_steps }}</td>
                         @endif
                       </tr>
@@ -394,7 +403,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <td>${data.task.row_no}</td>
           <td>${pickerHtml}<textarea class="form-control form-control-sm pr-field pr-activity" data-field="activity_description"></textarea></td>
           <td><textarea class="form-control form-control-sm pr-field" data-field="planned_activities" placeholder="One activity per line"></textarea></td>
-          <td><textarea class="form-control form-control-sm pr-field" data-field="current_status"></textarea></td>
+          <td><textarea class="form-control form-control-sm pr-field" data-field="current_status" placeholder="One item per line"></textarea></td>
           <td><textarea class="form-control form-control-sm pr-field" data-field="next_steps"></textarea></td>
           <td class="text-center"><a href="#" class="text-danger pr-delete-row" title="Delete row"><i class="fas fa-trash"></i></a></td>
         `;

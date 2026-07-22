@@ -34,16 +34,21 @@ class ProgressReportParticipant extends Model
         return $this->hasOne(ProgressReportAccessRequest::class, 'participant_id')->where('status', 'pending')->latestOfMany();
     }
 
-    // A section is locked once submitted, or once its period is no longer
-    // the current reporting month (a pending section on a past period is
-    // just as stale as a submitted one) — until the Administrative Officer
-    // grants a fresh edit request. Approval is cleared on the next submit.
+    // A section is locked once submitted, once its period is no longer the
+    // current reporting month, or once the period's own due date has passed
+    // (staff can freely edit up to the deadline, even on the current month)
+    // — until the Administrative Officer grants a fresh edit request.
+    // Approval is cleared on the next submit.
     public function isLocked(): bool
     {
         if ($this->edit_unlocked) {
             return false;
         }
 
-        return $this->status === 'submitted' || ! $this->period->is_current;
+        if ($this->status === 'submitted' || ! $this->period->is_current) {
+            return true;
+        }
+
+        return now()->startOfDay()->gt($this->period->due_date);
     }
 }
