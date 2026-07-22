@@ -152,11 +152,13 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
 
     Route::get('admin/letters/letterhead', [\App\Http\Controllers\LetterController::class, 'letterheadEdit'])->name('admin.letters.letterhead.edit');
     Route::post('admin/letters/letterhead', [\App\Http\Controllers\LetterController::class, 'letterheadUpdate'])->name('admin.letters.letterhead.update');
+    Route::get('admin/letters/letterhead/preview', [\App\Http\Controllers\LetterController::class, 'letterheadPreview'])->name('admin.letters.letterhead.preview');
     Route::get('admin/letters/report', [\App\Http\Controllers\LetterController::class, 'report'])->name('admin.letters.report');
     Route::get('admin/letters/sent/{id}/download', [\App\Http\Controllers\LetterController::class, 'downloadSentPdf'])->name('admin.letters.sent.download');
     Route::get('admin/letters/create', [\App\Http\Controllers\LetterController::class, 'create'])->name('admin.letters.create');
     Route::post('admin/letters', [\App\Http\Controllers\LetterController::class, 'store'])->name('admin.letters.store');
     Route::get('admin/letters/{id}/edit', [\App\Http\Controllers\LetterController::class, 'edit'])->name('admin.letters.edit');
+    Route::get('admin/letters/{id}/preview', [\App\Http\Controllers\LetterController::class, 'templatePreview'])->name('admin.letters.preview');
     Route::post('admin/letters/{id}/update', [\App\Http\Controllers\LetterController::class, 'update'])->name('admin.letters.update');
     Route::post('admin/letters/{id}/delete', [\App\Http\Controllers\LetterController::class, 'destroy'])->name('admin.letters.delete');
     Route::get('admin/letters/{id}/recipients', [\App\Http\Controllers\LetterController::class, 'recipients'])->name('admin.letters.recipients');

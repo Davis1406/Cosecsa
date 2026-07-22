@@ -7,6 +7,9 @@
         <div class="row mb-2 align-items-center">
           <div class="col-sm-6"><h1 style="font-size:1.4rem;">College Letterhead</h1></div>
           <div class="col-sm-6 text-right">
+            <a href="{{ url('admin/letters/letterhead/preview') }}" class="btn btn-cosecsa-outline" target="_blank">
+              <i class="fas fa-eye mr-1"></i> Preview
+            </a>
             <a href="{{ url('admin/letters') }}" class="btn btn-cosecsa-outline"><i class="fas fa-arrow-left mr-1"></i> Back</a>
           </div>
         </div>

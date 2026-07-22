@@ -98,6 +98,68 @@ class LetterController extends Controller
         ]);
     }
 
+    // A generic sample recipient used for previews — never sent anywhere,
+    // just fills in the merge fields so a preview looks like a real letter.
+    protected function sampleRecipient(): object
+    {
+        return (object) [
+            'source' => 'preview', 'id' => 0, 'user_id' => null,
+            'name' => 'Jane Sample Doe', 'email' => 'jane.doe@example.com',
+            'country' => 'Kenya', 'programme' => 'MCS', 'hospital' => 'Sample Teaching Hospital',
+            'entry_number' => 'KE/2026/99', 'exam_year' => 2027, 'admission_year' => 2026,
+            'sfs_username' => 'janedoe@rcsi.com', 'sfs_password' => 'Sample123',
+        ];
+    }
+
+    public function letterheadPreview(LetterRecipientResolver $resolver)
+    {
+        $letterhead = CollegeLetterheadSetting::current();
+        $recipient = $this->sampleRecipient();
+        $body = "This is a sample letter body used to preview the College Letterhead.\n\n"
+              . "Dear {{name}}, this paragraph shows how merge fields like your programme ({{programme}}) "
+              . "and hospital ({{hospital}}) would render once a real letter template is applied.\n\n"
+              . "Kind Regards,";
+        $fields = $resolver->mergeFields($recipient);
+        $bodyHtml = $resolver->render($body, $fields);
+
+        $pdf = Pdf::loadView('letters.pdf', [
+            'letterhead' => $letterhead,
+            'letterDate' => now(),
+            'recipient'  => $recipient,
+            'bodyHtml'   => $bodyHtml,
+            'sender'     => Auth::user(),
+        ])->setPaper('a4');
+
+        $response = $pdf->stream('Letterhead-Preview.pdf');
+        $response->headers->set('Cache-Control', 'private, max-age=0, must-revalidate');
+        $response->headers->remove('Pragma');
+
+        return $response;
+    }
+
+    public function templatePreview($id, LetterRecipientResolver $resolver)
+    {
+        $template = LetterTemplate::findOrFail($id);
+        $letterhead = CollegeLetterheadSetting::current();
+        $recipient = $this->sampleRecipient();
+        $fields = $resolver->mergeFields($recipient);
+        $bodyHtml = $resolver->render($template->pdf_body, $fields);
+
+        $pdf = Pdf::loadView('letters.pdf', [
+            'letterhead' => $letterhead,
+            'letterDate' => now(),
+            'recipient'  => $recipient,
+            'bodyHtml'   => $bodyHtml,
+            'sender'     => Auth::user(),
+        ])->setPaper('a4');
+
+        $response = $pdf->stream($template->name . ' - Preview.pdf');
+        $response->headers->set('Cache-Control', 'private, max-age=0, must-revalidate');
+        $response->headers->remove('Pragma');
+
+        return $response;
+    }
+
     public function letterheadUpdate(Request $request)
     {
         $request->validate([

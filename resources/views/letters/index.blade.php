@@ -46,12 +46,29 @@
                         <span class="badge {{ $t->is_active ? 'badge-success' : 'badge-secondary' }}">{{ $t->is_active ? 'Active' : 'Inactive' }}</span>
                       </td>
                       <td>
-                        <a href="{{ url('admin/letters/'.$t->id.'/recipients') }}" class="btn btn-sm btn-cosecsa">Send</a>
-                        <a href="{{ url('admin/letters/'.$t->id.'/edit') }}" class="btn btn-sm btn-cosecsa-outline">Edit</a>
-                        <form method="POST" action="{{ url('admin/letters/'.$t->id.'/delete') }}" style="display:inline;" onsubmit="return confirm('Delete this letter template?')">
-                          @csrf
-                          <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                        </form>
+                        <div class="dropdown">
+                          <button type="button" class="btn btn-sm btn-cosecsa-outline" data-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v"></i>
+                          </button>
+                          <div class="dropdown-menu dropdown-menu-right">
+                            <a class="dropdown-item" href="{{ url('admin/letters/'.$t->id.'/recipients') }}">
+                              <i class="fas fa-paper-plane mr-1"></i> Send
+                            </a>
+                            <a class="dropdown-item" href="{{ url('admin/letters/'.$t->id.'/preview') }}" target="_blank">
+                              <i class="fas fa-eye mr-1"></i> Preview
+                            </a>
+                            <a class="dropdown-item" href="{{ url('admin/letters/'.$t->id.'/edit') }}">
+                              <i class="fas fa-edit mr-1"></i> Edit
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <form method="POST" action="{{ url('admin/letters/'.$t->id.'/delete') }}" onsubmit="return confirm('Delete this letter template?')">
+                              @csrf
+                              <button type="submit" class="dropdown-item text-danger">
+                                <i class="fas fa-trash mr-1"></i> Delete
+                              </button>
+                            </form>
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   @endforeach
