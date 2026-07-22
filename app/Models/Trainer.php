@@ -14,6 +14,7 @@ class Trainer extends Model
     protected $fillable = [
         'user_id',
         'hospital_id',
+        'programme_id',
         'phone_number',
         'profile_image',
         'assistant_pd',

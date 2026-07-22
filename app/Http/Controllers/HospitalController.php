@@ -57,20 +57,39 @@ class HospitalController extends Controller
             $rows = $rows->where('flag', $request->flag)->values();
         }
 
-        // Programme director email(s) per hospital, for the "Send Reminder" action.
-        $pdEmailsByHospital = DB::table('trainers as t')
+        // Programme directors per hospital, for the PD column, the "Send
+        // Reminder" action, and the quick Edit/Add PD modal. Prefer a PD
+        // scoped to this exact programme (trainers.programme_id); fall back
+        // to hospital-wide PDs (programme_id null) so existing untagged
+        // trainer records keep showing up everywhere they used to.
+        $trainersByHospital = DB::table('trainers as t')
             ->join('users as u', 'u.id', '=', 't.user_id')
             ->where('u.is_deleted', 0)
-            ->select('t.hospital_id', 'u.email', 'u.name')
+            ->select('t.id as trainer_id', 't.hospital_id', 't.programme_id', 't.phone_number', 'u.email', 'u.name')
             ->get()
             ->groupBy('hospital_id');
 
-        $rows = $rows->map(function ($r) use ($pdEmailsByHospital) {
-            $pds = $pdEmailsByHospital->get($r->hospital_id, collect());
-            $r->reminder_emails = $r->contact_email
-                ? array_merge([$r->contact_email], $pds->pluck('email')->all())
-                : $pds->pluck('email')->all();
+        $rows = $rows->map(function ($r) use ($trainersByHospital) {
+            $atHospital = $trainersByHospital->get($r->hospital_id, collect());
+            $specific = $atHospital->where('programme_id', $r->programme_id);
+            $pds = $specific->isNotEmpty() ? $specific : $atHospital->whereNull('programme_id');
+
             $r->pd_names = $pds->pluck('name')->implode(', ');
+            $r->pd_is_specific = $specific->isNotEmpty();
+            $r->reminder_emails = array_unique(array_filter(array_merge(
+                $r->contact_email ? [$r->contact_email] : [], $pds->pluck('email')->all()
+            )));
+
+            // For the quick Edit/Add PD modal: only pre-fill from a PD
+            // already scoped to this exact programme, never from a
+            // hospital-wide one (editing that would silently rescope it
+            // away from every other programme it currently covers).
+            $assigned = $specific->first();
+            $r->assigned_trainer_id = $assigned->trainer_id ?? null;
+            $r->assigned_trainer_name = $assigned->name ?? '';
+            $r->assigned_trainer_email = $assigned->email ?? '';
+            $r->assigned_trainer_phone = $assigned->phone_number ?? '';
+
             return $r;
         });
 
@@ -87,6 +106,61 @@ class HospitalController extends Controller
             'countExpiringSoon' => $rows->where('flag', 'expiring_soon')->count(),
             'countExpired'   => $rows->where('flag', 'expired')->count(),
         ]);
+    }
+
+    // Quick add/edit of the Programme Director for one hospital-programme
+    // accreditation row, from the Hospital Accreditation dashboard. Writes
+    // straight to the trainers table (creating the backing user account for
+    // a brand-new PD, exactly like the standalone Trainers admin page does)
+    // so the change shows up there too, not just on this dashboard.
+    public function savePd(Request $request, $hospitalProgrammeId)
+    {
+        $request->validate([
+            'trainer_id' => 'nullable|integer',
+            'name'       => 'required|string|max:255',
+            'email'      => 'required|email|max:255',
+            'phone'      => 'nullable|string|max:50',
+        ]);
+
+        $hp = DB::table('hospital_programmes')->where('id', $hospitalProgrammeId)->first();
+        if (! $hp) {
+            return back()->with('error', 'Accreditation record not found.');
+        }
+
+        if ($request->filled('trainer_id')) {
+            $trainer = \App\Models\Trainer::find($request->trainer_id);
+            if (! $trainer) {
+                return back()->with('error', 'Programme Director record not found.');
+            }
+            $user = \App\Models\User::find($trainer->user_id);
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->save();
+
+            $trainer->phone_number = $request->phone;
+            $trainer->hospital_id = $hp->hospital_id;
+            $trainer->programme_id = $hp->programme_id;
+            $trainer->save();
+
+            return back()->with('success', 'Programme Director updated.');
+        }
+
+        // New PD, scoped to this hospital + this specific programme only.
+        $user = \App\Models\User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => bcrypt(str()->random(16)),
+            'user_type' => 4,
+        ]);
+        \App\Models\UserRole::create(['user_id' => $user->id, 'role_type' => 4, 'is_active' => 1]);
+        \App\Models\Trainer::create([
+            'user_id'      => $user->id,
+            'hospital_id'  => $hp->hospital_id,
+            'programme_id' => $hp->programme_id,
+            'phone_number' => $request->phone,
+        ]);
+
+        return back()->with('success', 'Programme Director added.');
     }
 
     public function sendReminder($hospitalProgrammeId)

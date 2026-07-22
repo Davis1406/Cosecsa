@@ -120,7 +120,12 @@
                         <td><a href="{{ url('admin/hospital/view_hospital/'.$r->hospital_id) }}">{{ $r->hospital_name }}</a></td>
                         <td>{{ $r->country_name ?: '—' }}</td>
                         <td>{{ $r->programme_name }}</td>
-                        <td style="font-size:.8rem;">{{ $r->pd_names ?: 'No PD on file' }}</td>
+                        <td style="font-size:.8rem;">
+                          {{ $r->pd_names ?: 'No PD on file' }}
+                          @if($r->pd_names && !$r->pd_is_specific)
+                            <span class="text-muted d-block" style="font-size:.72rem;">(hospital-wide)</span>
+                          @endif
+                        </td>
                         <td>{{ \Carbon\Carbon::parse($r->accredited_date)->format('d M Y') }}</td>
                         <td>{{ \Carbon\Carbon::parse($r->expiry_date)->format('d M Y') }}</td>
                         <td>
@@ -136,13 +141,35 @@
                           {{ $r->last_reminder_sent_at ? \Carbon\Carbon::parse($r->last_reminder_sent_at)->diffForHumans() : '—' }}
                         </td>
                         <td>
-                          <a href="{{ url('admin/hospitalprogrammes/edit/'.$r->id) }}" class="btn btn-sm btn-cosecsa-outline">Edit</a>
-                          @if(count($r->reminder_emails))
-                            <form method="POST" action="{{ url('admin/hospital/reminders/'.$r->id.'/send') }}" style="display:inline;">
-                              @csrf
-                              <button type="submit" class="btn btn-sm btn-cosecsa" style="background:#FEC503;border-color:#FEC503;color:#3a2a00;">Remind</button>
-                            </form>
-                          @endif
+                          <div class="dropdown">
+                            <button type="button" class="btn btn-sm btn-cosecsa-outline" data-toggle="dropdown" aria-expanded="false">
+                              <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                              <a class="dropdown-item" href="{{ url('admin/hospitalprogrammes/edit/'.$r->id) }}">
+                                <i class="fas fa-edit mr-1"></i> Edit Accreditation
+                              </a>
+                              <a class="dropdown-item pd-modal-trigger" href="#" data-toggle="modal" data-target="#pdModal"
+                                 data-hp-id="{{ $r->id }}"
+                                 data-hospital="{{ $r->hospital_name }}"
+                                 data-programme="{{ $r->programme_name }}"
+                                 data-trainer-id="{{ $r->assigned_trainer_id }}"
+                                 data-name="{{ $r->assigned_trainer_name }}"
+                                 data-email="{{ $r->assigned_trainer_email }}"
+                                 data-phone="{{ $r->assigned_trainer_phone }}">
+                                <i class="fas fa-user-md mr-1"></i> {{ $r->assigned_trainer_id ? 'Edit' : 'Add' }} PD
+                              </a>
+                              @if(count($r->reminder_emails))
+                                <div class="dropdown-divider"></div>
+                                <form method="POST" action="{{ url('admin/hospital/reminders/'.$r->id.'/send') }}">
+                                  @csrf
+                                  <button type="submit" class="dropdown-item" style="color:#a05a00;">
+                                    <i class="fas fa-paper-plane mr-1"></i> Send Reminder
+                                  </button>
+                                </form>
+                              @endif
+                            </div>
+                          </div>
                         </td>
                       </tr>
                     @endforeach
@@ -155,6 +182,40 @@
             </div>
           </div>
         </form>
+
+        <!-- Shared Edit/Add PD modal, populated per-row via JS -->
+        <div class="modal fade" id="pdModal" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <form method="POST" id="pdModalForm" action="">
+                @csrf
+                <input type="hidden" name="trainer_id" id="pdTrainerId">
+                <div class="modal-header" style="background:#a02626;color:#fff;">
+                  <h5 class="modal-title" id="pdModalTitle">Programme Director</h5>
+                  <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                  <p class="text-muted" id="pdModalSubtitle" style="font-size:.85rem;"></p>
+                  <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" name="name" id="pdName" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" id="pdEmail" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" name="phone" id="pdPhone" class="form-control">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-cosecsa">Save</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   </div>
@@ -164,6 +225,20 @@
 <script>
 document.getElementById('checkAll').addEventListener('change', function () {
   document.querySelectorAll('input[name="hospital_programme_ids[]"]').forEach(cb => cb.checked = this.checked);
+});
+
+document.querySelectorAll('.pd-modal-trigger').forEach(function (link) {
+  link.addEventListener('click', function (e) {
+    e.preventDefault();
+    const d = this.dataset;
+    document.getElementById('pdModalForm').action = "{{ url('admin/hospital/pd') }}/" + d.hpId + "/save";
+    document.getElementById('pdModalTitle').textContent = (d.trainerId ? 'Edit' : 'Add') + ' Programme Director';
+    document.getElementById('pdModalSubtitle').textContent = d.hospital + ' — ' + d.programme;
+    document.getElementById('pdTrainerId').value = d.trainerId || '';
+    document.getElementById('pdName').value = d.name || '';
+    document.getElementById('pdEmail').value = d.email || '';
+    document.getElementById('pdPhone').value = d.phone || '';
+  });
 });
 </script>
 @endpush
