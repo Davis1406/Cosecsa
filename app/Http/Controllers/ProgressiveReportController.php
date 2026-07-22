@@ -6,6 +6,7 @@ use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Message;
 use App\Models\MessageAttachment;
+use App\Models\ProgressReportAccessRequest;
 use App\Models\ProgressReportParticipant;
 use App\Models\ProgressReportPeriod;
 use App\Models\ProgressReportSetting;
@@ -49,6 +50,7 @@ class ProgressiveReportController extends Controller
 
         if ($myPeriods->isEmpty()) {
             $myTemplates = ProgressReportTaskTemplate::where('user_id', Auth::id())->orderBy('sort_order')->get();
+            $isManager = $this->canManage();
 
             return view('progressive_reports.show', [
                 'header_title' => 'My Progress Report',
@@ -56,11 +58,14 @@ class ProgressiveReportController extends Controller
                 'myPeriods'    => $myPeriods,
                 'selectedPeriodId' => null,
                 'canManage'    => false,
-                'isManager'    => $this->canManage(),
+                'isManager'    => $isManager,
                 'myUserId'     => Auth::id(),
                 'backUrl'      => url('admin/dashboard'),
                 'myTemplates'  => $myTemplates,
                 'templatesByUser' => $myTemplates->where('is_active', true)->groupBy('user_id'),
+                'pendingAccessRequests' => $isManager
+                    ? ProgressReportAccessRequest::with(['participant.period', 'requester'])->where('status', 'pending')->latest()->get()
+                    : collect(),
             ]);
         }
 
@@ -70,9 +75,10 @@ class ProgressiveReportController extends Controller
 
         $period = ProgressReportPeriod::with(['participants' => function ($q) {
             $q->where('user_id', Auth::id());
-        }, 'participants.user', 'participants.tasks'])->findOrFail($selected->id);
+        }, 'participants.user', 'participants.tasks', 'participants.pendingAccessRequest'])->findOrFail($selected->id);
 
         $myTemplates = ProgressReportTaskTemplate::where('user_id', Auth::id())->orderBy('sort_order')->get();
+        $isManager = $this->canManage();
 
         return view('progressive_reports.show', [
             'header_title'     => 'My Progress Report',
@@ -80,11 +86,14 @@ class ProgressiveReportController extends Controller
             'myPeriods'        => $myPeriods,
             'selectedPeriodId' => $period->id,
             'canManage'        => false,
-            'isManager'        => $this->canManage(),
+            'isManager'        => $isManager,
             'myUserId'         => Auth::id(),
             'backUrl'          => url('admin/dashboard'),
             'myTemplates'      => $myTemplates,
             'templatesByUser'  => $myTemplates->where('is_active', true)->groupBy('user_id'),
+            'pendingAccessRequests' => $isManager
+                ? ProgressReportAccessRequest::with(['participant.period', 'requester'])->where('status', 'pending')->latest()->get()
+                : collect(),
         ]);
     }
 
@@ -145,17 +154,23 @@ class ProgressiveReportController extends Controller
 
     public function show($periodId)
     {
-        $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks'])->findOrFail($periodId);
+        $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks', 'participants.pendingAccessRequest'])->findOrFail($periodId);
 
         $templatesByUser = ProgressReportTaskTemplate::whereIn('user_id', $period->participants->pluck('user_id'))
             ->where('is_active', true)->orderBy('sort_order')->get()->groupBy('user_id');
 
+        $isManager = $this->canManage();
+
         return view('progressive_reports.show', [
             'header_title' => 'Progressive Reports',
             'period'       => $period,
-            'canManage'    => $this->canManage(),
+            'canManage'    => $isManager,
+            'isManager'    => $isManager,
             'myUserId'     => Auth::id(),
             'templatesByUser' => $templatesByUser,
+            'pendingAccessRequests' => $isManager
+                ? ProgressReportAccessRequest::with(['participant.period', 'requester'])->where('status', 'pending')->latest()->get()
+                : collect(),
         ]);
     }
 
@@ -184,13 +199,6 @@ class ProgressiveReportController extends Controller
                 'new_values' => $new,
                 'created_at' => now(),
             ]);
-
-            // Editing after submission means it needs another look —
-            // reset the section back to pending so it's clear a revision
-            // is in progress and a resubmit is expected.
-            if ($task->participant->status === 'submitted') {
-                $task->participant->update(['status' => 'pending', 'submitted_at' => null]);
-            }
         }
 
         if ($request->wantsJson()) {
@@ -240,9 +248,94 @@ class ProgressiveReportController extends Controller
         $participant = ProgressReportParticipant::where('period_id', $periodId)->findOrFail($participantId);
         $this->authorizeParticipantEdit($participant);
 
-        $participant->update(['status' => 'submitted', 'submitted_at' => now()]);
+        $participant->update(['status' => 'submitted', 'submitted_at' => now(), 'edit_unlocked' => false]);
 
         return back()->with('success', 'Section submitted.');
+    }
+
+    // ── Edit-access requests (submitted sections are locked) ──────────
+
+    public function requestAccess(Request $request, $periodId, $participantId)
+    {
+        $participant = ProgressReportParticipant::where('period_id', $periodId)->findOrFail($participantId);
+        $this->authorizeParticipantOwnerOrManager($participant);
+
+        if (! $participant->isLocked()) {
+            return back()->with('error', 'This section is not locked.');
+        }
+
+        if (! $participant->accessRequests()->where('status', 'pending')->exists()) {
+            ProgressReportAccessRequest::create([
+                'participant_id' => $participant->id,
+                'requested_by'   => Auth::id(),
+                'status'         => 'pending',
+                'reason'         => $request->input('reason'),
+            ]);
+
+            $adminOfficer = \App\Models\User::whereHas('adminRole', fn ($q) => $q->where('name', 'Administrative Officer'))->first();
+            if ($adminOfficer && $adminOfficer->id != Auth::id()) {
+                $this->sendProgressReportNotice(
+                    $adminOfficer->id,
+                    Auth::user()->name . ' is requesting edit access to the submitted "' . $participant->section_label . '" section for ' . $participant->period->period_month->format('F Y') . '.'
+                );
+            }
+        }
+
+        return back()->with('success', 'Access request sent to the Administrative Officer.');
+    }
+
+    public function approveAccessRequest(Request $request, $id)
+    {
+        $this->authorizeManage();
+        $accessRequest = ProgressReportAccessRequest::with('participant')->findOrFail($id);
+        $accessRequest->update(['status' => 'approved', 'decided_by' => Auth::id(), 'decided_at' => now()]);
+        $accessRequest->participant->update(['edit_unlocked' => true]);
+
+        $this->sendProgressReportNotice(
+            $accessRequest->requested_by,
+            'Your edit access request for "' . $accessRequest->participant->section_label . '" has been approved — you can now edit that section again.'
+        );
+
+        return back()->with('success', 'Access request approved.');
+    }
+
+    public function denyAccessRequest(Request $request, $id)
+    {
+        $this->authorizeManage();
+        $accessRequest = ProgressReportAccessRequest::with('participant')->findOrFail($id);
+        $accessRequest->update(['status' => 'denied', 'decided_by' => Auth::id(), 'decided_at' => now()]);
+
+        $this->sendProgressReportNotice(
+            $accessRequest->requested_by,
+            'Your edit access request for "' . $accessRequest->participant->section_label . '" was declined by the Administrative Officer.'
+        );
+
+        return back()->with('success', 'Access request declined.');
+    }
+
+    protected function sendProgressReportNotice(int $toUserId, string $body): void
+    {
+        $myId = Auth::id();
+
+        $conversation = Conversation::where('type', 'direct')
+            ->whereHas('participants', fn ($q) => $q->where('user_id', $myId))
+            ->whereHas('participants', fn ($q) => $q->where('user_id', $toUserId))
+            ->first();
+
+        if (! $conversation) {
+            $conversation = Conversation::create(['type' => 'direct', 'created_by' => $myId]);
+            ConversationParticipant::insert([
+                ['conversation_id' => $conversation->id, 'user_id' => $myId, 'created_at' => now(), 'updated_at' => now()],
+                ['conversation_id' => $conversation->id, 'user_id' => $toUserId, 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+
+        Message::create([
+            'conversation_id' => $conversation->id,
+            'sender_id'       => $myId,
+            'body'            => $body,
+        ]);
+        $conversation->update(['last_message_at' => now()]);
     }
 
     public function copyForward(Request $request, $periodId, $participantId)
@@ -492,6 +585,15 @@ class ProgressiveReportController extends Controller
     protected function authorizeParticipantEdit(ProgressReportParticipant $participant): void
     {
         abort_unless($participant->user_id == Auth::id() || $this->canManage(), 403, 'You can only edit your own section.');
+        abort_if($participant->isLocked(), 403, 'This section has been submitted and is locked. Request edit access from the Administrative Officer.');
+    }
+
+    // Only checks ownership/management — used when requesting access to an
+    // already-submitted (locked) section, where authorizeParticipantEdit's
+    // lock check would otherwise always block the request itself.
+    protected function authorizeParticipantOwnerOrManager(ProgressReportParticipant $participant): void
+    {
+        abort_unless($participant->user_id == Auth::id() || $this->canManage(), 403, 'You can only request access to your own section.');
     }
 
     protected function authorizeTaskEdit(ProgressReportTask $task): void

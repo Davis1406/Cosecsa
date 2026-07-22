@@ -95,6 +95,9 @@ Route::middleware('auth')->prefix('progressive-reports')->group(function () {
     Route::get('/settings', [$prc, 'settingsEdit'])->name('progressive-reports.settings.edit');
     Route::post('/settings', [$prc, 'settingsUpdate'])->name('progressive-reports.settings.update');
 
+    Route::post('/access-requests/{id}/approve', [$prc, 'approveAccessRequest'])->name('progressive-reports.access.approve');
+    Route::post('/access-requests/{id}/deny', [$prc, 'denyAccessRequest'])->name('progressive-reports.access.deny');
+
     Route::get('/{periodId}', [$prc, 'show'])->name('progressive-reports.show');
     Route::get('/{periodId}/download', [$prc, 'downloadPdf'])->name('progressive-reports.download');
     Route::post('/{periodId}/consolidate', [$prc, 'consolidate'])->name('progressive-reports.consolidate');
@@ -107,6 +110,7 @@ Route::middleware('auth')->prefix('progressive-reports')->group(function () {
     Route::post('/{periodId}/participants/{participantId}/tasks/add', [$prc, 'addTaskRow'])->name('progressive-reports.tasks.add');
     Route::post('/{periodId}/participants/{participantId}/submit', [$prc, 'submitSection'])->name('progressive-reports.submit');
     Route::post('/{periodId}/participants/{participantId}/copy-forward', [$prc, 'copyForward'])->name('progressive-reports.copy-forward');
+    Route::post('/{periodId}/participants/{participantId}/request-access', [$prc, 'requestAccess'])->name('progressive-reports.request-access');
 });
 
 

@@ -161,6 +161,39 @@
           </div>
         @endif
 
+        @if(isset($isManager) && $isManager && isset($pendingAccessRequests) && $pendingAccessRequests->isNotEmpty())
+          <div class="card card-outline card-warning">
+            <div class="card-header">
+              <h3 class="card-title" style="font-size:1rem;"><i class="fas fa-unlock-alt mr-2"></i>Pending Edit-Access Requests</h3>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-sm mb-0">
+                <thead><tr><th>Requested By</th><th>Section</th><th>Period</th><th>Requested</th><th class="text-center">Action</th></tr></thead>
+                <tbody>
+                  @foreach($pendingAccessRequests as $ar)
+                    <tr>
+                      <td>{{ $ar->requester->name ?? '—' }}</td>
+                      <td>{{ $ar->participant->section_label ?? '—' }}</td>
+                      <td>{{ $ar->participant->period->period_month->format('F Y') ?? '—' }}</td>
+                      <td>{{ $ar->created_at->format('d M, H:i') }}</td>
+                      <td class="text-center" style="white-space:nowrap;">
+                        <form method="POST" action="{{ url('progressive-reports/access-requests/'.$ar->id.'/approve') }}" style="display:inline;">
+                          @csrf
+                          <button type="submit" class="btn btn-sm btn-cosecsa">Approve</button>
+                        </form>
+                        <form method="POST" action="{{ url('progressive-reports/access-requests/'.$ar->id.'/deny') }}" style="display:inline;">
+                          @csrf
+                          <button type="submit" class="btn btn-sm btn-danger">Deny</button>
+                        </form>
+                      </td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            </div>
+          </div>
+        @endif
+
         @if(! $period)
           <div class="card"><div class="card-body text-center text-muted py-4">
             You don't have a section on any report period yet.
@@ -168,7 +201,12 @@
         @else
 
         @foreach($period->participants as $participant)
-          @php $isMine = $participant->user_id == $myUserId; $canEdit = $isMine || $canManage; @endphp
+          @php
+            $isMine = $participant->user_id == $myUserId;
+            $canEdit = $isMine || $canManage;
+            $isLocked = $participant->status === 'submitted' && ! $participant->edit_unlocked;
+            $canEditNow = $canEdit && ! $isLocked;
+          @endphp
           <div class="card pr-section-card {{ $isMine ? 'mine' : '' }}" id="participant-{{ $participant->id }}">
             <div class="card-header d-flex justify-content-between align-items-center">
               <h3 class="card-title" style="font-size:1rem;">
@@ -179,11 +217,23 @@
                 <span class="badge {{ $participant->status === 'submitted' ? 'badge-success' : 'badge-secondary' }}">
                   {{ $participant->status === 'submitted' ? 'Submitted '.$participant->submitted_at->format('d M, H:i') : 'Pending' }}
                 </span>
-                @if($canEdit)
+                @if($isLocked)
+                  <span class="badge badge-warning ml-1"><i class="fas fa-lock"></i> Locked</span>
+                @endif
+                @if($canEditNow)
                   <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/participants/'.$participant->id.'/copy-forward') }}" style="display:inline;">
                     @csrf
                     <button type="submit" class="btn btn-sm btn-cosecsa-outline ml-1">Copy Last Month</button>
                   </form>
+                @elseif($canEdit && $isLocked)
+                  @if($participant->pendingAccessRequest)
+                    <span class="badge badge-secondary ml-1">Access request pending Administrative Officer approval</span>
+                  @else
+                    <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/participants/'.$participant->id.'/request-access') }}" style="display:inline;">
+                      @csrf
+                      <button type="submit" class="btn btn-sm btn-cosecsa-outline ml-1"><i class="fas fa-unlock mr-1"></i> Request Edit Access</button>
+                    </form>
+                  @endif
                 @endif
               </div>
             </div>
@@ -197,14 +247,14 @@
                       <th style="width:23%;">Planned Activities</th>
                       <th style="width:26%;">Current Status</th>
                       <th style="width:23%;">Next Steps &amp; Time Frame</th>
-                      @if($canEdit)<th style="width:4%;"></th>@endif
+                      @if($canEditNow)<th style="width:4%;"></th>@endif
                     </tr>
                   </thead>
                   <tbody data-participant-id="{{ $participant->id }}">
                     @forelse($participant->tasks as $task)
                       <tr data-task-id="{{ $task->id }}">
                         <td>{{ $task->row_no }}</td>
-                        @if($canEdit)
+                        @if($canEditNow)
                           <td>
                             @if(! empty($templatesByUser[$participant->user_id]))
                               <select class="form-control form-control-sm pr-activity-picker mb-1">
@@ -230,13 +280,13 @@
                         @endif
                       </tr>
                     @empty
-                      <tr><td colspan="{{ $canEdit ? 6 : 5 }}" class="text-center text-muted py-2">No tasks yet.</td></tr>
+                      <tr><td colspan="{{ $canEditNow ? 6 : 5 }}" class="text-center text-muted py-2">No tasks yet.</td></tr>
                     @endforelse
                   </tbody>
                 </table>
               </div>
             </div>
-            @if($canEdit)
+            @if($canEditNow)
               <div class="card-footer d-flex justify-content-between align-items-center">
                 <button type="button" class="btn btn-sm btn-cosecsa-outline pr-add-row" data-participant-id="{{ $participant->id }}"
                         data-templates="{{ json_encode(($templatesByUser[$participant->user_id] ?? collect())->map(fn($t) => ['activity_description' => $t->activity_description, 'default_planned_activities' => $t->default_planned_activities])->values()) }}">
