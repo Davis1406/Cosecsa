@@ -205,8 +205,7 @@
             $canEdit = $isMine || $canManage;
             $isLocked = $participant->isLocked();
             $lockReason = ! $isLocked ? null
-              : ($participant->status === 'submitted' ? 'submitted'
-                : (! $participant->period->is_current ? 'past-month' : 'deadline'));
+              : (! $participant->period->is_current ? 'past-month' : 'deadline');
             $canEditNow = $canEdit && ! $isLocked;
           @endphp
           <div class="card pr-section-card {{ $isMine ? 'mine' : '' }}" id="participant-{{ $participant->id }}">
