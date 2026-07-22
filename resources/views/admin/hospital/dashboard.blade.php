@@ -17,8 +17,6 @@
             <p class="text-muted mb-0" style="font-size:.85rem;">Follow up on accreditations across all hospitals — flagged {{ $warningDays }} days before expiry.</p>
           </div>
           <div class="col-sm-6 text-right">
-            <a href="{{ url('admin/hospital/list') }}" class="btn btn-cosecsa-outline"><i class="fas fa-hospital mr-1"></i> All Hospitals</a>
-            <a href="{{ url('admin/hospitalprogrammes/list') }}" class="btn btn-cosecsa-outline"><i class="fas fa-list mr-1"></i> All Accreditations</a>
             <a href="{{ url('admin/hospitalprogrammes/add') }}" class="btn btn-cosecsa"><i class="fas fa-plus mr-1"></i> Accredit Programme</a>
           </div>
         </div>
@@ -28,6 +26,27 @@
     <section class="content">
       <div class="container-fluid">
         @include('_message')
+
+        <ul class="nav nav-tabs mb-3" id="hospHubTabs" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="tab-followup-trigger" data-toggle="tab" href="#tab-followup" role="tab">
+              <i class="fas fa-bell mr-1"></i> Follow Up
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="tab-hospitals-trigger" data-toggle="tab" href="#tab-hospitals" role="tab">
+              <i class="fas fa-hospital mr-1"></i> All Hospitals
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="tab-accreditations-trigger" data-toggle="tab" href="#tab-accreditations" role="tab">
+              <i class="fas fa-list mr-1"></i> All Accreditations
+            </a>
+          </li>
+        </ul>
+
+        <div class="tab-content" id="hospHubTabContent">
+        <div class="tab-pane fade show active" id="tab-followup" role="tabpanel">
 
         <div class="row">
           <div class="col-lg-3 col-6">
@@ -189,6 +208,20 @@
           </div>
         </form>
 
+        </div>
+        {{-- /#tab-followup --}}
+
+        <div class="tab-pane fade" id="tab-hospitals" role="tabpanel">
+          @include('admin.hospital._list_content', $hospListData)
+        </div>
+
+        <div class="tab-pane fade" id="tab-accreditations" role="tabpanel">
+          @include('admin.hospitalprogrammes._list_content', $hpListData)
+        </div>
+
+        </div>
+        {{-- /.tab-content --}}
+
         <!-- Shared Edit/Add PD modal, populated per-row via JS -->
         <div class="modal fade" id="pdModal" tabindex="-1" role="dialog">
           <div class="modal-dialog" role="document">
@@ -274,6 +307,19 @@ document.getElementById('pdHasAssistant').addEventListener('change', function ()
     document.getElementById('pdAssistantName').value = '';
     document.getElementById('pdAssistantEmail').value = '';
   }
+});
+
+// The "All Hospitals" / "All Accreditations" tables are initialized while
+// their tab-pane is still hidden (display:none), so DataTables can get the
+// column widths wrong until the pane is actually shown — recalculate once
+// each tab becomes visible.
+$('#hospHubTabs a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+  var target = $(e.target).attr('href');
+  $(target).find('table').each(function () {
+    if ($.fn.DataTable.isDataTable(this)) {
+      $(this).DataTable().columns.adjust().responsive.recalc();
+    }
+  });
 });
 </script>
 @endpush

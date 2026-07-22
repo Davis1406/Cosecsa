@@ -107,7 +107,50 @@ class HospitalController extends Controller
             'countActive'    => $rows->where('flag', 'active')->count(),
             'countExpiringSoon' => $rows->where('flag', 'expiring_soon')->count(),
             'countExpired'   => $rows->where('flag', 'expired')->count(),
+
+            // For the "All Hospitals" / "All Accreditations" tabs — same
+            // data the two standalone pages show, so switching tabs is an
+            // instant client-side swap instead of a full page navigation.
+            'hospListData' => $this->buildHospitalListData(),
+            'hpListData'   => $this->buildHospitalProgrammesListData(),
         ]);
+    }
+
+    protected function buildHospitalListData(): array
+    {
+        $allHospitals = HospitalModel::select('hospitals.*', 'countries.country_name as country_name')
+            ->join('countries', 'countries.id', 'hospitals.country_id')
+            ->where('hospitals.is_deleted', 0)
+            ->orderBy('countries.country_name')
+            ->orderBy('hospitals.name')
+            ->get();
+
+        return [
+            'getRecord'        => $allHospitals,
+            'totalHospitals'   => $allHospitals->count(),
+            'totalActive'      => $allHospitals->where('status', 0)->count(),
+            'totalInactive'    => $allHospitals->where('status', 1)->count(),
+            'countGovt'        => $allHospitals->where('hospital_type', 1)->count(),
+            'countNGO'         => $allHospitals->where('hospital_type', 2)->count(),
+            'countPrivate'     => $allHospitals->where('hospital_type', 3)->count(),
+            'countUniversity'  => $allHospitals->where('hospital_type', 4)->count(),
+            'byCountry'        => $allHospitals->groupBy('country_name')->map(fn ($g) => $g->count())->sortDesc(),
+            'byType'           => $allHospitals->groupBy('hospital_type')->map(fn ($g) => $g->count()),
+        ];
+    }
+
+    protected function buildHospitalProgrammesListData(): array
+    {
+        $all = \App\Models\HospitalProgrammesModel::getHospitalProgrammes(new Request());
+
+        return [
+            'getHospitalProgrammes' => $all,
+            'totalAccreditations'   => $all->count(),
+            'totalActive'           => $all->where('status', 'Active')->count(),
+            'totalExpired'          => $all->where('status', 'Expired')->count(),
+            'byProgramme'           => $all->groupBy('programme_name')->map(fn ($g) => $g->count())->sortDesc(),
+            'byCountry'             => $all->groupBy('country_name')->map(fn ($g) => $g->count())->sortDesc(),
+        ];
     }
 
     // Quick add/edit of the Programme Director for one hospital-programme
