@@ -16,8 +16,6 @@
   .col-planned { width: 26%; }
   .col-status { width: 27%; }
   .col-next { width: 26%; }
-  ul.pr-bullets { margin: 0; padding-left: 14px; }
-  ul.pr-bullets li { margin-bottom: 2px; }
 </style>
 </head>
 <body>
@@ -43,9 +41,9 @@
           <tr>
             <td>{{ $task->row_no }}</td>
             <td>{{ $task->activity_description }}</td>
-            <td>@include('progressive_reports._bulleted', ['text' => $task->planned_activities])</td>
-            <td>@include('progressive_reports._bulleted', ['text' => $task->current_status])</td>
-            <td>{{ $task->next_steps }}</td>
+            <td style="white-space:pre-line;">{{ $task->planned_activities }}</td>
+            <td style="white-space:pre-line;">{{ $task->current_status }}</td>
+            <td style="white-space:pre-line;">{{ $task->next_steps }}</td>
           </tr>
         @empty
           <tr><td colspan="5" style="color:#888;">No tasks recorded.</td></tr>

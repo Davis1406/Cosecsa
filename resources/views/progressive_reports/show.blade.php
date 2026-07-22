@@ -14,8 +14,7 @@
       gap: 10px;
     }
     .pr-header-actions form { margin: 0; }
-    .pr-bullets { margin: 0; padding-left: 18px; }
-    .pr-bullets li { margin-bottom: 2px; }
+    .pr-table td[style*="pre-line"] { line-height: 1.5; }
   </style>
   <div class="content-wrapper">
     <section class="content-header">
@@ -274,16 +273,16 @@
                             @endif
                             <textarea class="form-control form-control-sm pr-field pr-activity" data-field="activity_description">{{ $task->activity_description }}</textarea>
                           </td>
-                          <td><textarea class="form-control form-control-sm pr-field" data-field="planned_activities" placeholder="One activity per line">{{ $task->planned_activities }}</textarea></td>
-                          <td><textarea class="form-control form-control-sm pr-field" data-field="current_status" placeholder="One item per line">{{ $task->current_status }}</textarea></td>
-                          <td><textarea class="form-control form-control-sm pr-field" data-field="next_steps">{{ $task->next_steps }}</textarea></td>
+                          <td><textarea class="form-control form-control-sm pr-field pr-bullet-field" data-field="planned_activities" placeholder="Press Enter for a new bullet point">{{ $task->planned_activities }}</textarea></td>
+                          <td><textarea class="form-control form-control-sm pr-field pr-bullet-field" data-field="current_status" placeholder="Press Enter for a new bullet point">{{ $task->current_status }}</textarea></td>
+                          <td><textarea class="form-control form-control-sm pr-field pr-bullet-field" data-field="next_steps" placeholder="Press Enter for a new bullet point">{{ $task->next_steps }}</textarea></td>
                           <td class="text-center">
                             <a href="#" class="text-danger pr-delete-row" title="Delete row"><i class="fas fa-trash"></i></a>
                           </td>
                         @else
                           <td>{{ $task->activity_description }}</td>
-                          <td>@include('progressive_reports._bulleted', ['text' => $task->planned_activities])</td>
-                          <td>@include('progressive_reports._bulleted', ['text' => $task->current_status])</td>
+                          <td style="white-space:pre-line;">{{ $task->planned_activities }}</td>
+                          <td style="white-space:pre-line;">{{ $task->current_status }}</td>
                           <td style="white-space:pre-line;">{{ $task->next_steps }}</td>
                         @endif
                       </tr>
@@ -324,6 +323,31 @@
 document.addEventListener('DOMContentLoaded', function () {
   const periodId = {{ $period->id ?? 'null' }};
   const csrf = '{{ csrf_token() }}';
+
+  // Planned Activities / Current Status / Next Steps are bulleted lists —
+  // Enter starts a new "❖ " point instead of a bare newline, and an empty
+  // field gets its first bullet as soon as the user starts typing.
+  function attachBulletBehavior(fields) {
+    fields.forEach(function (field) {
+      field.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        const start = field.selectionStart;
+        const end = field.selectionEnd;
+        const insert = '\n❖ ';
+        field.value = field.value.slice(0, start) + insert + field.value.slice(end);
+        const pos = start + insert.length;
+        field.selectionStart = field.selectionEnd = pos;
+      });
+      field.addEventListener('focus', function () {
+        if (! field.value) {
+          field.value = '❖ ';
+          field.selectionStart = field.selectionEnd = field.value.length;
+        }
+      });
+    });
+  }
+  attachBulletBehavior(document.querySelectorAll('.pr-bullet-field'));
 
   function saveField(taskId, field, value, cardFooterFlash) {
     fetch(`{{ url('progressive-reports') }}/${periodId}/tasks/${taskId}/update`, {
@@ -402,11 +426,12 @@ document.addEventListener('DOMContentLoaded', function () {
         tr.innerHTML = `
           <td>${data.task.row_no}</td>
           <td>${pickerHtml}<textarea class="form-control form-control-sm pr-field pr-activity" data-field="activity_description"></textarea></td>
-          <td><textarea class="form-control form-control-sm pr-field" data-field="planned_activities" placeholder="One activity per line"></textarea></td>
-          <td><textarea class="form-control form-control-sm pr-field" data-field="current_status" placeholder="One item per line"></textarea></td>
-          <td><textarea class="form-control form-control-sm pr-field" data-field="next_steps"></textarea></td>
+          <td><textarea class="form-control form-control-sm pr-field pr-bullet-field" data-field="planned_activities" placeholder="Press Enter for a new bullet point"></textarea></td>
+          <td><textarea class="form-control form-control-sm pr-field pr-bullet-field" data-field="current_status" placeholder="Press Enter for a new bullet point"></textarea></td>
+          <td><textarea class="form-control form-control-sm pr-field pr-bullet-field" data-field="next_steps" placeholder="Press Enter for a new bullet point"></textarea></td>
           <td class="text-center"><a href="#" class="text-danger pr-delete-row" title="Delete row"><i class="fas fa-trash"></i></a></td>
         `;
+        attachBulletBehavior(tr.querySelectorAll('.pr-bullet-field'));
         tbody.appendChild(tr);
       });
     });
