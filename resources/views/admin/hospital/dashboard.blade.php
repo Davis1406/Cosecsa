@@ -2,9 +2,13 @@
 
 @section('content')
   <style>
-    .accred-table .dropdown-menu { font-size:.82rem; min-width:180px; }
-    .accred-table .dropdown-item { padding:.4rem .9rem; }
-    .accred-table .dropdown-item i { width:16px; }
+    .accred-table .action-btn { padding:2px 8px; line-height:1.4; border-radius:4px; }
+    .accred-table .action-btn:hover { background-color:#f0f0f0; }
+    .accred-table .dropdown-menu { min-width:190px; font-size:.875rem; }
+    .accred-table .dropdown-item { padding:6px 14px; }
+    .accred-table .dropdown-item:hover { background-color:#f8f0f0; }
+    body.dark-mode .accred-table .action-btn:hover { background-color:#4a5568 !important; }
+    body.dark-mode .accred-table .dropdown-item:hover { background-color:#4a5568 !important; color:#fff !important; }
 
     #hospHubTabs.nav-tabs .nav-link { color:#a02626; border-color:transparent; }
     #hospHubTabs.nav-tabs .nav-link:hover { color:#841f1f; border-color:#eee #eee #dee2e6; }
@@ -238,12 +242,14 @@
                         </td>
                         <td>
                           <div class="dropdown">
-                            <button type="button" class="btn btn-sm btn-cosecsa-outline" data-toggle="dropdown" aria-expanded="false">
+                            <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
+                                    type="button" data-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false">
                               <i class="fas fa-ellipsis-v"></i>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-right">
+                            <div class="dropdown-menu dropdown-menu-right shadow-sm">
                               <a class="dropdown-item" href="{{ url('admin/hospitalprogrammes/edit/'.$r->id) }}">
-                                <i class="fas fa-edit mr-1"></i> Edit Accreditation
+                                <i class="fas fa-edit text-warning mr-2"></i> Edit Accreditation
                               </a>
                               <a class="dropdown-item pd-modal-trigger" href="#" data-toggle="modal" data-target="#pdModal"
                                  data-hp-id="{{ $r->id }}"
@@ -255,14 +261,14 @@
                                  data-phone="{{ $r->assigned_trainer_phone }}"
                                  data-assistant-pd="{{ $r->assigned_trainer_assistant_pd }}"
                                  data-assistant-email="{{ $r->assigned_trainer_assistant_email }}">
-                                <i class="fas fa-user-md mr-1"></i> {{ $r->assigned_trainer_id ? 'Edit' : 'Add' }} PD
+                                <i class="fas fa-user-md text-primary mr-2"></i> {{ $r->assigned_trainer_id ? 'Edit' : 'Add' }} PD
                               </a>
                               @if(count($r->reminder_emails))
                                 <div class="dropdown-divider"></div>
                                 <form method="POST" action="{{ url('admin/hospital/reminders/'.$r->id.'/send') }}">
                                   @csrf
-                                  <button type="submit" class="dropdown-item" style="color:#a05a00;">
-                                    <i class="fas fa-paper-plane mr-1"></i> Send Reminder
+                                  <button type="submit" class="dropdown-item">
+                                    <i class="fas fa-paper-plane mr-2" style="color:#a05a00;"></i> Send Reminder
                                   </button>
                                 </form>
                               @endif

@@ -54,7 +54,9 @@
 
               <div class="alert alert-light border" style="font-size:.82rem;">
                 <strong>Available merge fields:</strong>
-                {{ '{{name}} {{first_name}} {{email}} {{country}} {{programme}} {{hospital}} {{entry_number}} {{exam_year}} {{admission_year}} {{sfs_username}} {{sfs_password}} {{date}}' }}
+                @verbatim
+                {{name}} {{first_name}} {{email}} {{country}} {{programme}} {{hospital}} {{entry_number}} {{exam_year}} {{admission_year}} {{sfs_username}} {{sfs_password}} {{date}}
+                @endverbatim
               </div>
 
               <div class="form-group">
@@ -62,9 +64,17 @@
                 <textarea name="pdf_body" class="form-control" rows="14" required>{{ old('pdf_body', $template->pdf_body ?? '') }}</textarea>
               </div>
 
+              @php
+                // Kept out of the inline Blade echo below — a literal
+                // "{{first_name}}" merge-field token inside a {{ }} Blade
+                // expression breaks the compiler, since it finds the first
+                // "}}" it sees (right after "first_name") and truncates the
+                // expression there.
+                $defaultEmailBody = $template->email_body ?? ('Dear ' . '{{first_name}}' . ",\n\nPlease find attached your letter from COSECSA.");
+              @endphp
               <div class="form-group">
                 <label>Accompanying Email Body</label>
-                <textarea name="email_body" class="form-control" rows="6" required>{{ old('email_body', $template->email_body ?? "Dear {{first_name}},\n\nPlease find attached your letter from COSECSA.") }}</textarea>
+                <textarea name="email_body" class="form-control" rows="6" required>{{ old('email_body', $defaultEmailBody) }}</textarea>
               </div>
 
               <div class="form-group form-check">

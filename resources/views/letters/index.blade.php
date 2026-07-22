@@ -1,6 +1,15 @@
 @extends('layout.app')
 
 @section('content')
+  <style>
+    .letters-table .action-btn { padding:2px 8px; line-height:1.4; border-radius:4px; }
+    .letters-table .action-btn:hover { background-color:#f0f0f0; }
+    .letters-table .dropdown-menu { min-width:150px; font-size:.875rem; }
+    .letters-table .dropdown-item { padding:6px 14px; }
+    .letters-table .dropdown-item:hover { background-color:#f8f0f0; }
+    body.dark-mode .letters-table .action-btn:hover { background-color:#4a5568 !important; }
+    body.dark-mode .letters-table .dropdown-item:hover { background-color:#4a5568 !important; color:#fff !important; }
+  </style>
   <div class="content-wrapper">
     <section class="content-header">
       <div class="container-fluid">
@@ -32,9 +41,9 @@
           <div class="card-header"><h3 class="card-title">Letter Templates</h3></div>
           <div class="card-body p-0">
             <div class="table-responsive">
-              <table class="table table-striped table-sm">
+              <table class="table table-striped table-sm letters-table">
                 <thead>
-                  <tr><th>Name</th><th>Recipients</th><th>Times Sent</th><th>Status</th><th></th></tr>
+                  <tr><th>Name</th><th>Recipients</th><th>Times Sent</th><th>Status</th><th class="text-center">Action</th></tr>
                 </thead>
                 <tbody>
                   @foreach($templates as $t)
@@ -45,26 +54,28 @@
                       <td>
                         <span class="badge {{ $t->is_active ? 'badge-success' : 'badge-secondary' }}">{{ $t->is_active ? 'Active' : 'Inactive' }}</span>
                       </td>
-                      <td>
+                      <td class="text-center" style="white-space:nowrap;">
                         <div class="dropdown">
-                          <button type="button" class="btn btn-sm btn-cosecsa-outline" data-toggle="dropdown" aria-expanded="false">
+                          <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
+                                  type="button" data-toggle="dropdown"
+                                  aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-ellipsis-v"></i>
                           </button>
-                          <div class="dropdown-menu dropdown-menu-right">
+                          <div class="dropdown-menu dropdown-menu-right shadow-sm">
                             <a class="dropdown-item" href="{{ url('admin/letters/'.$t->id.'/recipients') }}">
-                              <i class="fas fa-paper-plane mr-1"></i> Send
+                              <i class="fas fa-paper-plane text-success mr-2"></i> Send
                             </a>
                             <a class="dropdown-item" href="{{ url('admin/letters/'.$t->id.'/preview') }}" target="_blank">
-                              <i class="fas fa-eye mr-1"></i> Preview
+                              <i class="fas fa-eye text-info mr-2"></i> Preview
                             </a>
                             <a class="dropdown-item" href="{{ url('admin/letters/'.$t->id.'/edit') }}">
-                              <i class="fas fa-edit mr-1"></i> Edit
+                              <i class="fas fa-edit text-warning mr-2"></i> Edit
                             </a>
                             <div class="dropdown-divider"></div>
                             <form method="POST" action="{{ url('admin/letters/'.$t->id.'/delete') }}" onsubmit="return confirm('Delete this letter template?')">
                               @csrf
                               <button type="submit" class="dropdown-item text-danger">
-                                <i class="fas fa-trash mr-1"></i> Delete
+                                <i class="fas fa-trash mr-2"></i> Delete
                               </button>
                             </form>
                           </div>
