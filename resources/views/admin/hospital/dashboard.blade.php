@@ -2,11 +2,36 @@
 
 @section('content')
   <style>
-    .accred-table a.hospital-link { color:#a02626; font-weight:600; }
-    .accred-table a.hospital-link:hover { color:#841f1f; text-decoration:underline; }
     .accred-table .dropdown-menu { font-size:.82rem; min-width:180px; }
     .accred-table .dropdown-item { padding:.4rem .9rem; }
     .accred-table .dropdown-item i { width:16px; }
+
+    #hospHubTabs.nav-tabs .nav-link { color:#a02626; border-color:transparent; }
+    #hospHubTabs.nav-tabs .nav-link:hover { color:#841f1f; border-color:#eee #eee #dee2e6; }
+    #hospHubTabs.nav-tabs .nav-link.active { color:#fff; background:#a02626; border-color:#a02626 #a02626 #a02626; font-weight:600; }
+    body.dark-mode #hospHubTabs.nav-tabs .nav-link { color:#e0a5a5 !important; }
+    body.dark-mode #hospHubTabs.nav-tabs .nav-link.active { color:#fff !important; background:#a02626 !important; }
+
+    .fchk-filter-wrap  { position:relative; display:inline-block; }
+    .fchk-filter-panel { position:absolute; top:calc(100% + 4px); left:0; z-index:1055;
+                        background:#fff; border:1px solid #ced4da; border-radius:6px;
+                        min-width:200px; max-width:260px; padding:8px;
+                        box-shadow:0 4px 12px rgba(0,0,0,.12); }
+    .fchk-list  { max-height:220px; overflow-y:auto; }
+    .fchk-item  { display:flex; align-items:center; gap:6px; padding:3px 2px;
+                 font-size:.82rem; font-weight:normal; cursor:pointer; white-space:nowrap; margin:0; }
+    .fchk-item:hover { background:#f8f0f0; border-radius:4px; }
+    .fchk-item input[type="checkbox"] { margin:0; cursor:pointer; accent-color:#a02626; }
+    .fchk-footer { display:flex; justify-content:space-between; border-top:1px solid #eee;
+                  margin-top:6px; padding-top:5px; font-size:.78rem; }
+    .fchk-footer a { color:#6c757d; }
+    .fchk-footer a:hover { color:#a02626; text-decoration:none; }
+    .fchk-filter-btn { white-space:nowrap; }
+    body.dark-mode .fchk-filter-panel { background:#374151 !important; border-color:#4a5568 !important; }
+    body.dark-mode .fchk-item { color:#e0e0e0 !important; }
+    body.dark-mode .fchk-item:hover { background:#4a5568 !important; }
+    body.dark-mode .fchk-footer { border-top-color:#4a5568 !important; }
+    body.dark-mode .fchk-footer a { color:#9ca3af !important; }
   </style>
   <div class="content-wrapper">
     <section class="content-header">
@@ -75,43 +100,91 @@
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-body">
-            <form method="GET" action="{{ url('admin/hospital/dashboard') }}" class="form-row align-items-end">
-              <div class="form-group col-md-3">
-                <label>Country</label>
-                <select name="country_id" class="form-control">
-                  <option value="">All</option>
-                  @foreach($countries as $c)
-                    <option value="{{ $c->id }}" {{ ($filters['country_id'] ?? '') == $c->id ? 'selected' : '' }}>{{ $c->country_name }}</option>
-                  @endforeach
-                </select>
+        @php
+          $selectedCountryIds = array_map('strval', (array) ($filters['country_id'] ?? []));
+          $selectedProgrammeIds = array_map('strval', (array) ($filters['programme_id'] ?? []));
+          $selectedFlags = (array) ($filters['flag'] ?? []);
+          $flagOptions = ['active' => 'Active', 'expiring_soon' => 'Expiring Soon', 'expired' => 'Expired'];
+        @endphp
+        <div class="card card-outline card-secondary mb-2 shadow-sm">
+          <div class="card-body py-2">
+            <form method="GET" action="{{ url('admin/hospital/dashboard') }}" id="followUpFilterForm" class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
+              <div class="fchk-filter-wrap">
+                <button type="button" class="btn btn-sm btn-outline-secondary fchk-filter-btn" data-filter="fFilterCountry">
+                  Country
+                  <span class="badge badge-danger fchk-badge ml-1" style="{{ count($selectedCountryIds) ? '' : 'display:none;' }}font-size:.65rem;">{{ count($selectedCountryIds) }}</span>
+                  <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
+                </button>
+                <div class="fchk-filter-panel shadow" id="fFilterCountry-panel" style="display:none;">
+                  <input type="text" class="form-control form-control-sm fchk-search mb-1" placeholder="Search…" autocomplete="off">
+                  <div class="fchk-list">
+                    @foreach($countries as $c)
+                      <label class="fchk-item">
+                        <input type="checkbox" name="country_id[]" value="{{ $c->id }}" {{ in_array((string) $c->id, $selectedCountryIds) ? 'checked' : '' }}>
+                        {{ $c->country_name }}
+                      </label>
+                    @endforeach
+                  </div>
+                  <div class="fchk-footer">
+                    <a href="#" class="fchk-select-all small">All</a>
+                    <a href="#" class="fchk-clear small text-danger">Clear</a>
+                  </div>
+                </div>
               </div>
-              <div class="form-group col-md-3">
-                <label>Programme</label>
-                <select name="programme_id" class="form-control">
-                  <option value="">All</option>
-                  @foreach($programmes as $p)
-                    <option value="{{ $p->id }}" {{ ($filters['programme_id'] ?? '') == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
-                  @endforeach
-                </select>
+
+              <div class="fchk-filter-wrap">
+                <button type="button" class="btn btn-sm btn-outline-secondary fchk-filter-btn" data-filter="fFilterProgramme">
+                  Programme
+                  <span class="badge badge-danger fchk-badge ml-1" style="{{ count($selectedProgrammeIds) ? '' : 'display:none;' }}font-size:.65rem;">{{ count($selectedProgrammeIds) }}</span>
+                  <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
+                </button>
+                <div class="fchk-filter-panel shadow" id="fFilterProgramme-panel" style="display:none;">
+                  <input type="text" class="form-control form-control-sm fchk-search mb-1" placeholder="Search…" autocomplete="off">
+                  <div class="fchk-list">
+                    @foreach($programmes as $p)
+                      <label class="fchk-item">
+                        <input type="checkbox" name="programme_id[]" value="{{ $p->id }}" {{ in_array((string) $p->id, $selectedProgrammeIds) ? 'checked' : '' }}>
+                        {{ $p->name }}
+                      </label>
+                    @endforeach
+                  </div>
+                  <div class="fchk-footer">
+                    <a href="#" class="fchk-select-all small">All</a>
+                    <a href="#" class="fchk-clear small text-danger">Clear</a>
+                  </div>
+                </div>
               </div>
-              <div class="form-group col-md-2">
-                <label>Flag</label>
-                <select name="flag" class="form-control">
-                  <option value="">All</option>
-                  <option value="active" {{ ($filters['flag'] ?? '') == 'active' ? 'selected' : '' }}>Active</option>
-                  <option value="expiring_soon" {{ ($filters['flag'] ?? '') == 'expiring_soon' ? 'selected' : '' }}>Expiring Soon</option>
-                  <option value="expired" {{ ($filters['flag'] ?? '') == 'expired' ? 'selected' : '' }}>Expired</option>
-                </select>
+
+              <div class="fchk-filter-wrap">
+                <button type="button" class="btn btn-sm btn-outline-secondary fchk-filter-btn" data-filter="fFilterFlag">
+                  Flag
+                  <span class="badge badge-danger fchk-badge ml-1" style="{{ count($selectedFlags) ? '' : 'display:none;' }}font-size:.65rem;">{{ count($selectedFlags) }}</span>
+                  <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
+                </button>
+                <div class="fchk-filter-panel shadow" id="fFilterFlag-panel" style="display:none;">
+                  <div class="fchk-list">
+                    @foreach($flagOptions as $val => $label)
+                      <label class="fchk-item">
+                        <input type="checkbox" name="flag[]" value="{{ $val }}" {{ in_array($val, $selectedFlags) ? 'checked' : '' }}>
+                        {{ $label }}
+                      </label>
+                    @endforeach
+                  </div>
+                  <div class="fchk-footer">
+                    <a href="#" class="fchk-select-all small">All</a>
+                    <a href="#" class="fchk-clear small text-danger">Clear</a>
+                  </div>
+                </div>
               </div>
-              <div class="form-group col-md-3">
-                <label>Search Hospital</label>
-                <input type="text" name="search" class="form-control" value="{{ $filters['search'] ?? '' }}">
-              </div>
-              <div class="form-group col-md-1">
-                <button type="submit" class="btn btn-cosecsa-outline">Filter</button>
-              </div>
+
+              <input type="text" name="search" class="form-control form-control-sm" style="max-width:220px;" placeholder="Search hospital…" value="{{ $filters['search'] ?? '' }}">
+
+              <button type="submit" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-filter mr-1"></i>Apply
+              </button>
+              <a href="{{ url('admin/hospital/dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-times mr-1"></i>Clear All
+              </a>
             </form>
           </div>
         </div>
@@ -143,7 +216,7 @@
                             <input type="checkbox" name="hospital_programme_ids[]" value="{{ $r->id }}">
                           @endif
                         </td>
-                        <td><a href="{{ url('admin/hospital/view_hospital/'.$r->hospital_id) }}" class="hospital-link">{{ $r->hospital_name }}</a></td>
+                        <td><a href="{{ url('admin/hospital/view_hospital/'.$r->hospital_id) }}" class="entity-link">{{ $r->hospital_name }}</a></td>
                         <td>{{ $r->country_name ?: '—' }}</td>
                         <td>{{ $r->programme_name }}</td>
                         <td style="font-size:.8rem;">
@@ -320,6 +393,33 @@ $('#hospHubTabs a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
       $(this).DataTable().columns.adjust().responsive.recalc();
     }
   });
+});
+
+// Follow Up filter panel — same checkbox-dropdown look as the other two
+// tabs, but submits the existing GET filter form (server-side) since this
+// table already needs a full query for the flag/reminder logic.
+$(document).on('click', '.fchk-filter-btn', function (e) {
+  e.stopPropagation();
+  var filterId = $(this).data('filter');
+  var $panel = $('#' + filterId + '-panel');
+  $('.fchk-filter-panel').not($panel).hide();
+  $panel.toggle();
+});
+$(document).on('click', '.fchk-filter-panel', function (e) { e.stopPropagation(); });
+$(document).on('click', function () { $('.fchk-filter-panel').hide(); });
+$(document).on('input', '.fchk-search', function () {
+  var q = $(this).val().toLowerCase();
+  $(this).closest('.fchk-filter-panel').find('.fchk-item').each(function () {
+    $(this).toggle($(this).text().toLowerCase().indexOf(q) !== -1);
+  });
+});
+$(document).on('click', '.fchk-select-all', function (e) {
+  e.preventDefault();
+  $(this).closest('.fchk-filter-panel').find('.fchk-item:visible input[type="checkbox"]').prop('checked', true);
+});
+$(document).on('click', '.fchk-clear', function (e) {
+  e.preventDefault();
+  $(this).closest('.fchk-filter-panel').find('input[type="checkbox"]').prop('checked', false);
 });
 </script>
 @endpush

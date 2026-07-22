@@ -35,8 +35,12 @@ class HospitalController extends Controller
                 'p.name as programme_name', 'c.country_name'
             );
 
-        if ($request->filled('country_id')) $query->where('h.country_id', $request->country_id);
-        if ($request->filled('programme_id')) $query->where('hp.programme_id', $request->programme_id);
+        $countryIds = array_filter((array) $request->input('country_id', []));
+        $programmeIds = array_filter((array) $request->input('programme_id', []));
+        $flags = array_filter((array) $request->input('flag', []));
+
+        if (! empty($countryIds)) $query->whereIn('h.country_id', $countryIds);
+        if (! empty($programmeIds)) $query->whereIn('hp.programme_id', $programmeIds);
         if ($request->filled('search')) {
             $like = '%' . $request->search . '%';
             $query->where('h.name', 'like', $like);
@@ -53,8 +57,8 @@ class HospitalController extends Controller
             return $r;
         });
 
-        if ($request->filled('flag')) {
-            $rows = $rows->where('flag', $request->flag)->values();
+        if (! empty($flags)) {
+            $rows = $rows->whereIn('flag', $flags)->values();
         }
 
         // Programme directors per hospital, for the PD column, the "Send
