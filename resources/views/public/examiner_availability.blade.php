@@ -228,8 +228,9 @@
                         <option value="">— Search by name or examiner ID —</option>
                         @foreach($examiners as $ex)
                             <option value="{{ $ex->exm_id }}"
+                                data-search="{{ $ex->examiner_id }}"
                                 {{ old('exm_id') == $ex->exm_id ? 'selected' : '' }}>
-                                {{ $ex->name }}
+                                {{ $ex->name }}{{ $ex->specialty ? ' — ' . $ex->specialty : '' }} ({{ $ex->examiner_id }})
                             </option>
                         @endforeach
                     </select>
@@ -377,7 +378,14 @@ $(function () {
         theme: 'bootstrap4',
         placeholder: '— Search by name or examiner ID —',
         allowClear: false,
-        width: '100%'
+        width: '100%',
+        matcher: function(params, data) {
+            if (!params.term || params.term.trim() === '') return data;
+            var term = params.term.trim().toLowerCase();
+            var text = (data.text || '').toLowerCase();
+            var id   = ($(data.element).data('search') || '').toLowerCase();
+            return (text.indexOf(term) > -1 || id.indexOf(term) > -1) ? data : null;
+        }
     });
 
     // ── Availability logic ────────────────────────────────────────────────────
