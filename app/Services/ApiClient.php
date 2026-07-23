@@ -11,7 +11,7 @@ use Illuminate\Http\Client\Response;
 class ApiClient
 {
     private string $baseUrl;
-    private string $token;
+    private ?string $token;
 
     public function __construct()
     {
