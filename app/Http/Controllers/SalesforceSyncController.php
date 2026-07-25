@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 
 class SalesforceSyncController extends Controller
 {
+    // Must match Api\SalesforceSyncController::DEFAULT_APPLICATION_YEAR
+    const DEFAULT_APPLICATION_YEAR = 2027;
+
     public function __construct(private ApiClient $api) {}
 
     public function index(Request $request)
