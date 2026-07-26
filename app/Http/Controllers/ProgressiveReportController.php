@@ -17,6 +17,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\Settings;
 
 class ProgressiveReportController extends Controller
 {
@@ -462,6 +465,90 @@ class ProgressiveReportController extends Controller
         $response->headers->remove('Pragma');
 
         return $response;
+    }
+
+    /**
+     * Download the progressive report as a DOCX file.
+     */
+    public function downloadDocx($periodId)
+    {
+        $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks'])->findOrFail($periodId);
+
+        // Configure PHPWord
+        Settings::setPdfRendererName('DomPDF');
+        Settings::setPdfRendererPath(base_path('vendor/dompdf/dompdf'));
+
+        // Create new PHPWord document
+        $phpWord = new PhpWord();
+        $section = $phpWord->addSection([
+            'marginLeft' => 720,   // 1 inch = 1440 twips, so 0.5 inch = 720
+            'marginRight' => 720,
+            'marginTop' => 720,
+            'marginBottom' => 720,
+        ]);
+
+        // Add title
+        $titleStyle = ['size' => 16, 'bold' => true, 'align' => 'center'];
+        $section->addText('COSECSA SECRETARIAT MONTHLY REPORT', $titleStyle);
+
+        // Add subtitle
+        $subtitleStyle = ['size' => 12, 'align' => 'center', 'color' => '555555'];
+        $section->addText(strtoupper($period->period_month->format('F Y')) . ' • Due ' . $period->due_date->format('d M Y'), $subtitleStyle);
+        $section->addTextBreak(2); // Add some space
+
+        // Create table
+        $table = $section->addTable([
+            'borderSize' => 6,
+            'borderColor' => '999999',
+            'cellMargin' => 40,
+        ]);
+
+        // Add table header
+        $headerStyle = ['size' => 9, 'bold' => true, 'bgColor' => 'F1F1F1'];
+        $firstCellStyle = ['size' => 9, 'bold' => true, 'bgColor' => 'A02626', 'color' => 'FFFFFF'];
+
+        $table->addRow();
+        $table->addCell(420, $firstCellStyle)->addText('No');
+        $table->addCell(2520, $firstCellStyle)->addText('Activity');
+        $table->addCell(3780, $firstCellStyle)->addText('Planned Activities');
+        $table->addCell(3780, $firstCellStyle)->addText('Current Status');
+        $table->addCell(3780, $firstCellStyle)->addText('Next Steps');
+
+        // Add table rows
+        $rowStyle = ['size' => 9];
+        foreach ($period->participants as $participant) {
+            // Add section header row
+            $sectionHeaderStyle = [$headerStyle, 'bgColor' => 'A02626', 'color' => 'FFFFFF'];
+            $table->addRow();
+            $table->addCell(14700, $sectionHeaderStyle)->addText($participant->section_label, ['bold' => true]);
+
+            foreach ($participant->tasks as $task) {
+                $table->addRow();
+                $table->addCell(420, $rowStyle)->addText($task->row_no ?: '');
+                $table->addCell(2520, $rowStyle)->addText($task->activity_description ?: '');
+                $table->addCell(3780, $rowStyle)->addText($task->planned_activities ?: '');
+                $table->addCell(3780, $rowStyle)->addText($task->current_status ?: '');
+                $table->addCell(3780, $rowStyle)->addText($task->next_steps ?: '');
+            }
+        }
+
+        // Save to temporary file
+        $filename = 'COSECSA Secretariat Report - ' . $period->period_month->format('F Y') . '.docx';
+        $filePath = storage_path('app/public/' . $filename);
+
+        // Ensure directory exists
+        Storage::disk('public')->makeDirectory('');
+
+        // Save the document
+        $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
+        $objWriter->save($filePath);
+
+        // Return as download
+        $file = Storage::disk('public')->get($filename);
+        return response($file)
+            ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'private, max-age=0, must-revalidate');
     }
 
     public function shareWithCeo(Request $request, $periodId)
