@@ -546,11 +546,17 @@ class ProgressiveReportController extends Controller
 
         $filename = 'COSECSA Secretariat Report - ' . $period->period_month->format('F Y') . '.docx';
 
-        // Write to temp file and stream back (avoids disk persistence issues)
         $tempPath = tempnam(sys_get_temp_dir(), 'docx_') . '.docx';
         IOFactory::createWriter($phpWord, 'Word2007')->save($tempPath);
 
-        return response()->download($tempPath, $filename)->deleteFileAfterSend(true);
+        $contents = file_get_contents($tempPath);
+        @unlink($tempPath);
+
+        return response()->streamDownload(function () use ($contents) {
+            echo $contents;
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ]);
     }
 
     public function shareWithCeo(Request $request, $periodId)
