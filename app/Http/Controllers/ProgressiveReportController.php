@@ -455,7 +455,9 @@ class ProgressiveReportController extends Controller
 
     public function downloadPdf($periodId)
     {
-        $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks'])->findOrFail($periodId);
+        $period = ProgressReportPeriod::with(['participants' => function ($q) {
+            $q->where('user_id', Auth::id());
+        }, 'participants.user', 'participants.tasks'])->findOrFail($periodId);
 
         $pdf = Pdf::loadView('progressive_reports.pdf', ['period' => $period])->setPaper('a4', 'landscape');
 
@@ -472,83 +474,83 @@ class ProgressiveReportController extends Controller
      */
     public function downloadDocx($periodId)
     {
-        $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks'])->findOrFail($periodId);
+        $period = ProgressReportPeriod::with(['participants' => function ($q) {
+            $q->where('user_id', Auth::id());
+        }, 'participants.user', 'participants.tasks'])->findOrFail($periodId);
 
-        // Configure PHPWord
-        Settings::setPdfRendererName('DomPDF');
-        Settings::setPdfRendererPath(base_path('vendor/dompdf/dompdf'));
-
-        // Create new PHPWord document
         $phpWord = new PhpWord();
+        $phpWord->setDefaultFontName('Arial');
+        $phpWord->setDefaultFontSize(9);
+
         $section = $phpWord->addSection([
-            'marginLeft' => 720,   // 1 inch = 1440 twips, so 0.5 inch = 720
-            'marginRight' => 720,
-            'marginTop' => 720,
-            'marginBottom' => 720,
+            'orientation'   => 'landscape',
+            'pageSizeW'     => 14400,  // 10 inches in twips
+            'pageSizeH'     => 10800,  // 7.5 inches in twips
+            'marginLeft'    => 720,
+            'marginRight'   => 720,
+            'marginTop'     => 720,
+            'marginBottom'  => 720,
         ]);
 
-        // Add title
-        $titleStyle = ['size' => 16, 'bold' => true, 'align' => 'center'];
-        $section->addText('COSECSA SECRETARIAT MONTHLY REPORT', $titleStyle);
+        // Title
+        $section->addText('COSECSA SECRETARIAT MONTHLY REPORT', [
+            'size'  => 14,
+            'bold'  => true,
+            'align' => 'center',
+        ]);
 
-        // Add subtitle
-        $subtitleStyle = ['size' => 12, 'align' => 'center', 'color' => '555555'];
-        $section->addText(strtoupper($period->period_month->format('F Y')) . ' • Due ' . $period->due_date->format('d M Y'), $subtitleStyle);
-        $section->addTextBreak(2); // Add some space
+        // Subtitle — use plain ASCII dash instead of bullet char
+        $section->addText(
+            strtoupper($period->period_month->format('F Y')) . '  -  Due ' . $period->due_date->format('d M Y'),
+            ['size' => 10, 'color' => '555555', 'align' => 'center']
+        );
+        $section->addParagraph();
 
-        // Create table
+        // Table
         $table = $section->addTable([
-            'borderSize' => 6,
+            'borderSize'  => 6,
             'borderColor' => '999999',
-            'cellMargin' => 40,
+            'cellMargin'  => 40,
         ]);
 
-        // Add table header
+        // Header row
         $headerStyle = ['size' => 9, 'bold' => true, 'bgColor' => 'F1F1F1'];
-        $firstCellStyle = ['size' => 9, 'bold' => true, 'bgColor' => 'A02626', 'color' => 'FFFFFF'];
-
         $table->addRow();
-        $table->addCell(420, $firstCellStyle)->addText('No');
-        $table->addCell(2520, $firstCellStyle)->addText('Activity');
-        $table->addCell(3780, $firstCellStyle)->addText('Planned Activities');
-        $table->addCell(3780, $firstCellStyle)->addText('Current Status');
-        $table->addCell(3780, $firstCellStyle)->addText('Next Steps');
+        $table->addCell(420, $headerStyle)->addText('No');
+        $table->addCell(2520, $headerStyle)->addText('Activity');
+        $table->addCell(3780, $headerStyle)->addText('Planned Activities');
+        $table->addCell(3780, $headerStyle)->addText('Current Status');
+        $table->addCell(3780, $headerStyle)->addText('Next Steps');
 
-        // Add table rows
         $rowStyle = ['size' => 9];
         foreach ($period->participants as $participant) {
-            // Add section header row
-            $sectionHeaderStyle = [$headerStyle, 'bgColor' => 'A02626', 'color' => 'FFFFFF'];
+            // Section header row
+            $sectionStyle = ['size' => 9, 'bold' => true, 'bgColor' => 'A02626', 'color' => 'FFFFFF'];
             $table->addRow();
-            $table->addCell(14700, $sectionHeaderStyle)->addText($participant->section_label, ['bold' => true]);
+            $table->addCell(14700, $sectionStyle)->addText($participant->section_label);
 
-            foreach ($participant->tasks as $task) {
+            if ($participant->tasks->isEmpty()) {
                 $table->addRow();
-                $table->addCell(420, $rowStyle)->addText($task->row_no ?: '');
-                $table->addCell(2520, $rowStyle)->addText($task->activity_description ?: '');
-                $table->addCell(3780, $rowStyle)->addText($task->planned_activities ?: '');
-                $table->addCell(3780, $rowStyle)->addText($task->current_status ?: '');
-                $table->addCell(3780, $rowStyle)->addText($task->next_steps ?: '');
+                $table->addCell(14700, $rowStyle)->addText('No tasks recorded.');
+            } else {
+                foreach ($participant->tasks as $task) {
+                    $table->addRow();
+                    $table->addCell(420, $rowStyle)->addText($task->row_no ? (string) $task->row_no : '');
+                    $table->addCell(2520, $rowStyle)->addText($task->activity_description ?: '');
+                    $table->addCell(3780, $rowStyle)->addText($task->planned_activities ?: '');
+                    $table->addCell(3780, $rowStyle)->addText($task->current_status ?: '');
+                    $table->addCell(3780, $rowStyle)->addText($task->next_steps ?: '');
+                }
             }
         }
 
-        // Save to temporary file
         $filename = 'COSECSA Secretariat Report - ' . $period->period_month->format('F Y') . '.docx';
-        $filePath = storage_path('app/public/' . $filename);
 
-        // Ensure directory exists
-        Storage::disk('public')->makeDirectory('');
+        // Write to temp file and stream back (avoids disk persistence issues)
+        $tempPath = tempnam(sys_get_temp_dir(), 'docx_') . '.docx';
+        IOFactory::createWriter($phpWord, 'Word2007')->save($tempPath);
 
-        // Save the document
-        $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
-        $objWriter->save($filePath);
-
-        // Return as download
-        $file = Storage::disk('public')->get($filename);
-        return response($file)
-            ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
-            ->header('Cache-Control', 'private, max-age=0, must-revalidate');
+        return response()->download($tempPath, $filename)->deleteFileAfterSend(true);
     }
 
     public function shareWithCeo(Request $request, $periodId)

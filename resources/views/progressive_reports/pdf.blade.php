@@ -20,7 +20,7 @@
 </head>
 <body>
   <h1>COSECSA SECRETARIAT MONTHLY REPORT</h1>
-  <div class="subtitle">{{ strtoupper($period->period_month->format('F Y')) }} &nbsp;•&nbsp; Due {{ $period->due_date->format('d M Y') }}</div>
+  <div class="subtitle">{{ strtoupper($period->period_month->format('F Y')) }} &nbsp;-&nbsp; Due {{ $period->due_date->format('d M Y') }}</div>
 
   <table>
     <thead>
