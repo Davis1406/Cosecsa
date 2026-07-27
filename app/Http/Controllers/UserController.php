@@ -18,10 +18,13 @@ class UserController extends Controller
     }
 
     public function updatePassword(Request $request){
+        $request->validate(['new_password' => 'required|string|min:8']);
+
         $user = User::getSingleId(Auth::user()->id);
         if (Hash::check($request->old_password, $user->password)){
 
             $user->password = $request->new_password; // mutator bcrypts for admin (user_type=1)
+            $user->must_change_password = false;
             $user->save();
             return redirect()->back()->with('success', "Password successfully updated");
         }

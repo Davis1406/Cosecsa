@@ -91,6 +91,12 @@
                                 <!-- /.card -->
 
                                 <!-- general form elements -->
+                                @if($user->must_change_password ?? false)
+                                <div class="alert alert-warning mt-3" style="border-left:4px solid #FEC503;">
+                                    <strong>Action required:</strong> you're signed in with a temporary password.
+                                    Please set your own password below before continuing to use the system.
+                                </div>
+                                @endif
                                 <div class="card card-primary mt-3">
                                     <div class="card-header" style="background-color: darkred">
                                         <h3 class="card-title">Change Password</h3>

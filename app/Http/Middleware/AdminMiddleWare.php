@@ -35,6 +35,15 @@ class AdminMiddleware
           if (Auth::check()) {
             $user = Auth::user();
             if ($user->hasRole(1) && $user->getActiveRole() == 1) {
+                // Force a password change before anything else is reachable —
+                // used for temporary passwords issued to staff. The change
+                // page itself (and its POST target) must stay reachable, or
+                // no one could ever get past this redirect.
+                if ($user->must_change_password && ! $request->is('profile/change_password')) {
+                    return redirect('profile/change_password')
+                        ->with('error', 'Please set a new password before continuing.');
+                }
+
                 return $next($request);
             } else {
                 Auth::logout();
