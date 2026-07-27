@@ -21,6 +21,7 @@
         @include('_message')
 
         <ul class="nav nav-tabs mb-3">
+        <style>.nav-tabs .nav-link.active{background-color:#a02626!important;color:#fff!important;border-color:#a02626!important;}.nav-tabs .nav-link{color:#a02626!important;}.nav-tabs .nav-link:hover{background-color:#FEC503!important;color:#000!important;border-color:#FEC503!important;}</style>
           <li class="nav-item">
             <a class="nav-link {{ $tab === 'logins' ? 'active' : '' }}" href="{{ url('admin/logs?tab=logins') }}">
               <i class="fas fa-sign-in-alt mr-1"></i> Logins
@@ -58,8 +59,8 @@
                   <option value="deleted" {{ request('action')==='deleted'?'selected':'' }}>Deleted</option>
                 </select>
               @endif
-              <button type="submit" class="btn btn-primary mr-2">Filter</button>
-              <a href="{{ url('admin/logs?tab='.$tab) }}" class="btn btn-secondary">Clear</a>
+              <button type="submit" class="btn mr-2" style="background-color:#FEC503;border-color:#FEC503;color:#000;">Filter</button>
+              <a href="{{ url('admin/logs?tab='.$tab) }}" class="btn" style="background-color:#a02626;border-color:#a02626;color:#fff;">Clear</a>
             </form>
 
             @if($tab === 'logins')

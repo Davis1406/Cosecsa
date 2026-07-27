@@ -65,6 +65,9 @@
               <a href="{{ url('progressive-reports/'.$period->id.'/download') }}" class="btn btn-cosecsa-outline" target="_blank">
                 <i class="fas fa-file-pdf mr-1"></i> Download PDF
               </a>
+              <a href="{{ url('progressive-reports/'.$period->id.'/download-docx') }}" class="btn btn-cosecsa-outline" target="_blank">
+                <i class="fas fa-file-word mr-1"></i> Download DOCX
+              </a>
               <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/share-ceo') }}">
                 @csrf
                 <button type="submit" class="btn btn-cosecsa-outline" onclick="return confirm('Generate the current PDF and send it to the CEO via Messages?')">
@@ -94,6 +97,14 @@
                   </button>
                 </form>
               @endif
+            @endif
+            @if($period && ! $canManage)
+              <a href="{{ url('progressive-reports/'.$period->id.'/download') }}" class="btn btn-cosecsa-outline" target="_blank">
+                <i class="fas fa-file-pdf mr-1"></i> Download PDF
+              </a>
+              <a href="{{ url('progressive-reports/'.$period->id.'/download-docx') }}" class="btn btn-cosecsa-outline" target="_blank">
+                <i class="fas fa-file-word mr-1"></i> Download DOCX
+              </a>
             @endif
             <a href="{{ $backUrl ?? url('progressive-reports') }}" class="btn btn-cosecsa-outline">
               <i class="fas fa-arrow-left mr-1"></i> Back

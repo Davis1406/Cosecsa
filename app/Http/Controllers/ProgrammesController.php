@@ -2,151 +2,94 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ApiClient;
 use Illuminate\Http\Request;
-use App\Models\Programme;
-use App\Models\HospitalModel;
-use Illuminate\Support\Facades\DB;
 
 class ProgrammesController extends Controller
 {
-    // List all programmes
+    public function __construct(private ApiClient $api) {}
+
     public function list()
     {
-        $data['getRecord'] = Programme::getRecord();
-        $data ['header_title'] = 'Programmes';
-        return view('admin.programmes.list', $data);
+        $response = $this->api->get('admin/programmes');
+        $data = $response->object();
+
+        return view('admin.programmes.list', [
+            'getRecord'    => collect($data->programmes ?? []),
+            'header_title' => 'Programmes',
+        ]);
     }
 
-      //Add New Programme View
-      public function add(){
-        $data['getHospital'] = HospitalModel::getHospital();
-        $data['getProgramme'] = Programme::getProgramme();
-        $data['header_title'] = "Add New Programme";
-        return view('admin.programmes.add_programmes',$data);
-    }
-
-
-    //Posting Hospital Data
-    public function insert(Request $request){
-
-        // dd($request-> all());
-        $save = new Programme;
-        $save->name = trim($request->name);
-        $save->programme_type = $request->programme_type;
-        $save->duration = $request->duration;
-        $save->entry_fee = $request->entry_fee;
-        $save->exam_fee = $request->exam_fee;
-        $save->repeat_fee = $request->repeat_fee;
-        $save->save();
-        return redirect('admin/programmes/list')->with('success',"Programme successfully created");
-    }
-
-    // Show edit programme form
-    public function edit($id)
+    public function add()
     {
-        $data['getRecord'] = Programme::getSingleId($id);
-        if(!empty($data['getRecord'])){
-
-            $data['header_title'] = "Edit Hospital";
-            return view('admin.programmes.edit_programmes',$data);
-            
-        }else{
-
-            abort(404);
-        }
+        return view('admin.programmes.add_programmes', [
+            'header_title' => 'Add New Programme',
+        ]);
     }
 
-    // Update programme data
-       public function update(Request $request, $id)
-       {
-            // dd($request)->all();
-           $update = Programme::find($id);
-           $update->name = trim($request->name);
-           $update->programme_type = $request->programme_type;
-           $update->duration = $request->duration;
-           $update->entry_fee = $request->entry_fee;
-           $update->exam_fee = $request->exam_fee;
-           $update->repeat_fee = $request->repeat_fee;
-           $update->save();
-           return redirect('admin/programmes/list')->with('success', "Programme successfully updated");
-       }
+    public function insert(Request $request)
+    {
+        $this->api->post('admin/programmes', $request->only([
+            'name', 'programme_type', 'duration', 'entry_fee', 'exam_fee', 'repeat_fee',
+        ]));
 
-
+        return redirect('admin/programmes/list')->with('success', 'Programme successfully created');
+    }
 
     public function view($id)
     {
-        $programme = Programme::getSingleId($id);
-        if (!$programme || $programme->is_deleted) {
+        $response = $this->api->get("admin/programmes/{$id}");
+
+        if ($response->status() === 404) {
             return redirect('admin/programmes/list')->with('error', 'Programme not found');
         }
 
-        // Accredited hospitals for this programme
-        $hospitals = DB::table('hospital_programmes')
-            ->join('hospitals', 'hospitals.id', '=', 'hospital_programmes.hospital_id')
-            ->leftJoin('countries', 'countries.id', '=', 'hospitals.country_id')
-            ->where('hospital_programmes.programme_id', $id)
-            ->where('hospital_programmes.is_delete', 0)
-            ->where('hospitals.is_deleted', 0)
-            ->select('hospital_programmes.*',
-                     'hospitals.id as hospital_id', 'hospitals.name as hospital_name',
-                     'countries.country_name')
-            ->orderBy('hospitals.name')
-            ->get();
+        $data = $response->object();
 
-        // Trainees enrolled in this programme
-        $trainees = DB::table('trainees')
-            ->join('users', 'users.id', '=', 'trainees.user_id')
-            ->leftJoin('hospitals', 'hospitals.id', '=', 'trainees.hospital_id')
-            ->where('trainees.programme_id', $id)
-            ->where('users.is_deleted', 0)
-            ->select('trainees.id as trainee_id', 'users.name', 'users.email',
-                     'hospitals.name as hospital_name', 'hospitals.id as hospital_id',
-                     'trainees.admission_year', 'trainees.status')
-            ->orderBy('users.name')
-            ->get();
+        // examResultsByYear comes back as a JSON object keyed by year — each
+        // value is an array of {exam_year, result, n} rows.
+        $examResultsByYear = collect((array) ($data->examResultsByYear ?? []));
 
-        // Fellows who completed this programme
-        $fellows = DB::table('fellows')
-            ->join('users', 'users.id', '=', 'fellows.user_id')
-            ->where('fellows.programme_id', $id)
-            ->where('users.is_deleted', 0)
-            ->select('fellows.id as fellow_id', 'users.name', 'users.email',
-                     'fellows.fellowship_year', 'fellows.status', 'fellows.country_id')
-            ->leftJoin('countries', 'countries.id', '=', 'fellows.country_id')
-            ->addSelect('countries.country_name')
-            ->orderBy('users.name')
-            ->get();
-
-        // Capsule exam results for this programme (by year)
-        $examResultsByYear = \DB::table('capsule_exam_results')
-            ->where('programme_id', $id)
-            ->selectRaw("exam_year, result, COUNT(*) as n")
-            ->groupBy('exam_year', 'result')
-            ->orderByDesc('exam_year')
-            ->get()
-            ->groupBy('exam_year');
-
-        $examResultsAll = \DB::table('capsule_exam_results as cer')
-            ->where('cer.programme_id', $id)
-            ->leftJoin('trainees as t', 't.id', '=', 'cer.trainee_id')
-            ->leftJoin('users as u', 'u.id', '=', 't.user_id')
-            ->select('cer.contact_name', 'cer.exam_year', 'cer.exam_type',
-                     'cer.score', 'cer.result', 'cer.trainee_id', 'u.name as trainee_name')
-            ->orderByDesc('cer.exam_year')
-            ->orderBy('cer.contact_name')
-            ->get();
-
-        $data = compact('programme', 'hospitals', 'trainees', 'fellows',
-                        'examResultsByYear', 'examResultsAll');
-        $data['header_title'] = $programme->name;
-        return view('admin.programmes.view', $data);
+        return view('admin.programmes.view', [
+            'header_title'     => $data->programme->name ?? 'Programme',
+            'programme'        => $data->programme,
+            'hospitals'        => collect($data->hospitals ?? []),
+            'trainees'         => collect($data->trainees ?? []),
+            'fellows'          => collect($data->fellows ?? []),
+            'examResultsByYear' => $examResultsByYear,
+            'examResultsAll'   => collect($data->examResultsAll ?? []),
+        ]);
     }
 
-       public function delete($id){
-      
-        $data = Programme::getSingleId($id);
-        $data->is_deleted = 1;
-        $data->save();
-        return redirect('admin/programmes/list')->with('success',"Information successfully Deleted");
-      }
+    public function edit($id)
+    {
+        $response = $this->api->get("admin/programmes/{$id}");
+
+        if ($response->status() === 404) {
+            abort(404);
+        }
+
+        $data = $response->object();
+
+        return view('admin.programmes.edit_programmes', [
+            'header_title' => 'Edit Programme',
+            'getRecord'    => $data->programme,
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $this->api->put("admin/programmes/{$id}", $request->only([
+            'name', 'programme_type', 'duration', 'entry_fee', 'exam_fee', 'repeat_fee',
+        ]));
+
+        return redirect('admin/programmes/list')->with('success', 'Programme successfully updated');
+    }
+
+    public function delete($id)
+    {
+        $this->api->delete("admin/programmes/{$id}");
+
+        return redirect('admin/programmes/list')->with('success', 'Information successfully Deleted');
+    }
 }

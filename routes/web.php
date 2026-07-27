@@ -100,6 +100,7 @@ Route::middleware('auth')->prefix('progressive-reports')->group(function () {
 
     Route::get('/{periodId}', [$prc, 'show'])->name('progressive-reports.show');
     Route::get('/{periodId}/download', [$prc, 'downloadPdf'])->name('progressive-reports.download');
+    Route::get('/{periodId}/download-docx', [$prc, 'downloadDocx'])->name('progressive-reports.download-docx');
     Route::post('/{periodId}/consolidate', [$prc, 'consolidate'])->name('progressive-reports.consolidate');
     Route::post('/{periodId}/unconsolidate', [$prc, 'unconsolidate'])->name('progressive-reports.unconsolidate');
     Route::post('/{periodId}/delete', [$prc, 'deletePeriod'])->name('progressive-reports.delete');

@@ -2,29 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\LetterDispatchMail;
-use App\Models\CollegeLetterheadSetting;
-use App\Models\LetterDispatch;
-use App\Models\LetterDispatchRecipient;
-use App\Models\LetterTemplate;
+use App\Services\ApiClient;
 use App\Services\LetterRecipientResolver;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 
 class LetterController extends Controller
 {
+    public function __construct(private ApiClient $api) {}
+
     public function index()
     {
-        $templates = LetterTemplate::withCount('dispatches')->orderBy('name')->get();
-        $recentDispatches = LetterDispatch::with(['template', 'sender'])->orderByDesc('sent_at')->limit(10)->get();
+        $response = $this->api->get('letters/');
+        $data = $response->object();
 
         return view('letters.index', [
-            'header_title' => 'College Letters',
-            'templates'    => $templates,
-            'recentDispatches' => $recentDispatches,
+            'header_title'     => 'College Letters',
+            'templates'        => collect($data->templates ?? []),
+            'recentDispatches' => collect($data->recent_dispatches ?? []),
         ]);
     }
 
@@ -39,298 +35,186 @@ class LetterController extends Controller
 
     public function store(Request $request)
     {
-        $data = $this->validateTemplate($request);
-        $data['created_by'] = Auth::id();
-        LetterTemplate::create($data);
+        $response = $this->api->post('letters/', $request->except('_token'));
+
+        if ($response->failed()) {
+            return back()->withInput()->with('error', $response->json('message') ?? 'Error creating template.');
+        }
 
         return redirect('admin/letters')->with('success', 'Letter template created.');
     }
 
     public function edit($id)
     {
-        $template = LetterTemplate::findOrFail($id);
+        $response = $this->api->get("letters/{$id}/edit");
+        $data = $response->object();
 
         return view('letters.form', [
             'header_title' => 'Edit Letter Template',
-            'template'     => $template,
-            'sources'      => LetterRecipientResolver::SOURCES,
+            'template'     => $data->template,
+            'sources'      => (array) ($data->sources ?? []),
         ]);
     }
 
     public function update(Request $request, $id)
     {
-        $template = LetterTemplate::findOrFail($id);
-        $template->update($this->validateTemplate($request));
+        $response = $this->api->post("letters/{$id}/update", $request->except('_token'));
+
+        if ($response->failed()) {
+            return back()->withInput()->with('error', $response->json('message') ?? 'Error updating template.');
+        }
 
         return redirect('admin/letters')->with('success', 'Letter template updated.');
     }
 
     public function destroy($id)
     {
-        LetterTemplate::findOrFail($id)->delete();
+        $response = $this->api->post("letters/{$id}/delete", []);
+
+        if ($response->failed()) {
+            return back()->with('error', $response->json('message') ?? 'Could not delete template.');
+        }
 
         return redirect('admin/letters')->with('success', 'Letter template deleted.');
-    }
-
-    protected function validateTemplate(Request $request): array
-    {
-        $data = $request->validate([
-            'name'                 => 'required|string|max:255',
-            'subject'              => 'required|string|max:255',
-            'pdf_body'             => 'required|string',
-            'email_body'           => 'required|string',
-            'recipient_source'     => 'required|in:' . implode(',', array_keys(LetterRecipientResolver::SOURCES)),
-            'legacy_status_field'  => 'nullable|in:admission_letter_status,invitation_letter_status',
-            'is_active'            => 'nullable|boolean',
-        ]);
-        $data['is_active'] = $request->boolean('is_active', true);
-
-        return $data;
     }
 
     // ── Letterhead settings ───────────────────────────────────────────
 
     public function letterheadEdit()
     {
+        $response = $this->api->get('letters/letterhead');
+        $data = $response->object();
+
         return view('letters.letterhead', [
             'header_title' => 'College Letterhead',
-            'settings'     => CollegeLetterheadSetting::current(),
+            'settings'     => $data->settings,
         ]);
-    }
-
-    // A generic sample recipient used for previews — never sent anywhere,
-    // just fills in the merge fields so a preview looks like a real letter.
-    protected function sampleRecipient(): object
-    {
-        return (object) [
-            'source' => 'preview', 'id' => 0, 'user_id' => null,
-            'name' => 'Jane Sample Doe', 'email' => 'jane.doe@example.com',
-            'country' => 'Kenya', 'programme' => 'MCS', 'hospital' => 'Sample Teaching Hospital',
-            'entry_number' => 'KE/2026/99', 'exam_year' => 2027, 'admission_year' => 2026,
-            'sfs_username' => 'janedoe@rcsi.com', 'sfs_password' => 'Sample123',
-        ];
-    }
-
-    public function letterheadPreview(LetterRecipientResolver $resolver)
-    {
-        $letterhead = CollegeLetterheadSetting::current();
-        $recipient = $this->sampleRecipient();
-        $body = "This is a sample letter body used to preview the College Letterhead.\n\n"
-              . "Dear {{name}}, this paragraph shows how merge fields like your programme ({{programme}}) "
-              . "and hospital ({{hospital}}) would render once a real letter template is applied.\n\n"
-              . "Kind Regards,";
-        $fields = $resolver->mergeFields($recipient);
-        $bodyHtml = $resolver->render($body, $fields);
-
-        $pdf = Pdf::loadView('letters.pdf', [
-            'letterhead' => $letterhead,
-            'letterDate' => now(),
-            'recipient'  => $recipient,
-            'bodyHtml'   => $bodyHtml,
-            'sender'     => Auth::user(),
-        ])->setPaper('a4');
-
-        $response = $pdf->stream('Letterhead-Preview.pdf');
-        $response->headers->set('Cache-Control', 'private, max-age=0, must-revalidate');
-        $response->headers->remove('Pragma');
-
-        return $response;
-    }
-
-    public function templatePreview($id, LetterRecipientResolver $resolver)
-    {
-        $template = LetterTemplate::findOrFail($id);
-        $letterhead = CollegeLetterheadSetting::current();
-        $recipient = $this->sampleRecipient();
-        $fields = $resolver->mergeFields($recipient);
-        $bodyHtml = $resolver->render($template->pdf_body, $fields);
-
-        $pdf = Pdf::loadView('letters.pdf', [
-            'letterhead' => $letterhead,
-            'letterDate' => now(),
-            'recipient'  => $recipient,
-            'bodyHtml'   => $bodyHtml,
-            'sender'     => Auth::user(),
-        ])->setPaper('a4');
-
-        $response = $pdf->stream($template->name . ' - Preview.pdf');
-        $response->headers->set('Cache-Control', 'private, max-age=0, must-revalidate');
-        $response->headers->remove('Pragma');
-
-        return $response;
     }
 
     public function letterheadUpdate(Request $request)
     {
-        $request->validate([
-            'institution_name' => 'required|string|max:255',
-            'address_text'     => 'nullable|string|max:2000',
-            'footer_text'      => 'nullable|string|max:2000',
-            'logo'              => 'nullable|image|max:4096',
-            'watermark'         => 'nullable|image|max:4096',
-        ]);
-
-        $settings = CollegeLetterheadSetting::current();
-        $settings->institution_name = $request->institution_name;
-        $settings->address_text = $request->address_text;
-        $settings->footer_text = $request->footer_text;
-
-        if ($request->hasFile('logo')) {
-            if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {
-                Storage::disk('public')->delete($settings->logo_path);
+        $files = [];
+        foreach (['logo', 'watermark'] as $field) {
+            if ($request->hasFile($field)) {
+                $files[$field] = $request->file($field);
             }
-            $settings->logo_path = $request->file('logo')->store('letterhead', 'public');
-        }
-        if ($request->hasFile('watermark')) {
-            if ($settings->watermark_path && Storage::disk('public')->exists($settings->watermark_path)) {
-                Storage::disk('public')->delete($settings->watermark_path);
-            }
-            $settings->watermark_path = $request->file('watermark')->store('letterhead', 'public');
         }
 
-        $settings->updated_by = Auth::id();
-        $settings->save();
+        $response = $this->api->postWithFile(
+            'letters/letterhead',
+            $request->only(['institution_name', 'address_text', 'footer_text']),
+            $files
+        );
+
+        if ($response->failed()) {
+            return back()->withInput()->with('error', $response->json('message') ?? 'Error updating letterhead.');
+        }
 
         return redirect('admin/letters/letterhead')->with('success', 'Letterhead updated.');
     }
 
-    // ── Recipient selection + dispatch ───────────────────────────────
-
-    public function recipients(Request $request, $id, LetterRecipientResolver $resolver)
+    public function letterheadPreview()
     {
-        $template = LetterTemplate::findOrFail($id);
+        $response = $this->api->get('letters/letterhead/preview');
 
-        $filters = $request->only(['country_id', 'programme_id', 'year', 'search', 'unsent_only']);
-        $recipients = $resolver->query($template->recipient_source, $filters, $template->legacy_status_field);
-
-        // Mark anyone who's already received THIS letter (via the generic
-        // dispatch log, not just the trainees legacy status field), so the
-        // "hasn't received yet" story works for every recipient source.
-        $recipients = $recipients->map(function ($r) use ($resolver, $template) {
-            $r->already_sent = $resolver->alreadySent($template->id, $r->source, $r->id);
-            return $r;
-        });
-
-        return view('letters.recipients', [
-            'header_title' => 'Send: ' . $template->name,
-            'template'     => $template,
-            'recipients'   => $recipients,
-            'countries'    => $resolver->countries(),
-            'programmes'   => $resolver->programmes(),
-            'filters'      => $filters,
+        return response($response->body(), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="Letterhead-Preview.pdf"',
+            'Cache-Control'       => 'private, max-age=0, must-revalidate',
         ]);
     }
 
-    public function dispatch(Request $request, $id, LetterRecipientResolver $resolver)
+    public function templatePreview($id)
     {
-        $template = LetterTemplate::findOrFail($id);
-        $request->validate([
-            'recipient_ids'   => 'required|array|min:1',
-            'letter_date'     => 'nullable|date',
+        $response = $this->api->get("letters/{$id}/preview");
+
+        return response($response->body(), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="Template-Preview.pdf"',
+            'Cache-Control'       => 'private, max-age=0, must-revalidate',
         ]);
+    }
 
-        $letterDate = $request->filled('letter_date') ? \Carbon\Carbon::parse($request->letter_date) : now();
-        $filters = $request->only(['country_id', 'programme_id', 'year', 'search', 'unsent_only']);
-        $allMatching = $resolver->query($template->recipient_source, $filters, $template->legacy_status_field);
-        $selectedIds = array_map('intval', $request->input('recipient_ids'));
-        $selected = $allMatching->whereIn('id', $selectedIds);
+    // ── Recipient selection + dispatch ───────────────────────────────
 
-        $letterhead = CollegeLetterheadSetting::current();
-        $sender = Auth::user();
+    public function recipients(Request $request, $id)
+    {
+        $response = $this->api->get(
+            "letters/{$id}/recipients",
+            $request->only(['country_id', 'programme_id', 'year', 'search', 'unsent_only'])
+        );
+        $data = $response->object();
 
-        $dispatch = LetterDispatch::create([
-            'letter_template_id' => $template->id,
-            'sent_by'            => Auth::id(),
-            'sent_at'            => now(),
+        return view('letters.recipients', [
+            'header_title' => 'Send: ' . ($data->template->name ?? ''),
+            'template'     => $data->template,
+            'recipients'   => collect($data->recipients ?? []),
+            'countries'    => collect($data->countries ?? []),
+            'programmes'   => collect($data->programmes ?? []),
+            'filters'      => (array) ($data->filters ?? []),
         ]);
+    }
 
-        $sentCount = 0;
-        foreach ($selected as $r) {
-            $fields = $resolver->mergeFields($r, $letterDate);
-            $subject = $resolver->render($template->subject, $fields);
-            $pdfBody = $resolver->render($template->pdf_body, $fields);
-            $emailBody = $resolver->render($template->email_body, $fields);
+    public function dispatch(Request $request, $id)
+    {
+        $user = Auth::user();
+        $response = $this->api->post("letters/{$id}/dispatch", array_merge(
+            $request->except('_token'),
+            [
+                'sender_name'  => $user?->name,
+                'sender_email' => $user?->email,
+            ]
+        ));
 
-            $status = 'sent';
-            $error = null;
-            $pdfPath = null;
-
-            try {
-                $pdf = Pdf::loadView('letters.pdf', [
-                    'letterhead'  => $letterhead,
-                    'letterDate'  => $letterDate,
-                    'recipient'   => $r,
-                    'bodyHtml'    => $pdfBody,
-                    'sender'      => $sender,
-                ])->setPaper('a4');
-
-                $pdfContent = $pdf->output();
-                $safeName = preg_replace('/[^A-Za-z0-9]+/', '_', $r->name ?: 'recipient');
-                $pdfPath = "letters/dispatch/{$template->id}/{$dispatch->id}_{$safeName}.pdf";
-                Storage::disk('public')->put($pdfPath, $pdfContent);
-
-                if ($r->email) {
-                    Mail::to($r->email)->send(new LetterDispatchMail($subject, $emailBody, $pdfContent, $safeName . '.pdf', $sender));
-                }
-
-                if ($template->legacy_status_field && $r->source === 'trainees') {
-                    \Illuminate\Support\Facades\DB::table('trainees')->where('id', $r->id)
-                        ->update([$template->legacy_status_field => 'Sent']);
-                }
-
-                $sentCount++;
-            } catch (\Throwable $e) {
-                $status = 'failed';
-                $error = $e->getMessage();
-            }
-
-            LetterDispatchRecipient::create([
-                'dispatch_id'        => $dispatch->id,
-                'letter_template_id' => $template->id,
-                'recipient_source'   => $r->source,
-                'recipient_id'       => $r->id,
-                'recipient_name'     => $r->name,
-                'recipient_email'    => $r->email,
-                'pdf_path'           => $pdfPath,
-                'status'             => $status,
-                'error_message'      => $error,
-                'sent_at'            => now(),
-            ]);
+        if ($response->failed()) {
+            return back()->with('error', $response->json('message') ?? 'Dispatch failed.');
         }
 
-        $dispatch->update(['recipient_count' => $sentCount]);
-
-        return redirect('admin/letters')->with('success', "Dispatched {$sentCount} of " . $selected->count() . ' letter(s).');
+        return redirect('admin/letters')->with('success', $response->json('message'));
     }
 
     // ── Report ────────────────────────────────────────────────────────
 
     public function report(Request $request)
     {
-        $q = LetterDispatchRecipient::with(['template', 'dispatch.sender'])->orderByDesc('sent_at');
+        $response = $this->api->get('letters/report', $request->only(['template_id', 'status', 'search']));
+        $data = $response->object();
 
-        if ($request->filled('template_id')) $q->where('letter_template_id', $request->template_id);
-        if ($request->filled('status')) $q->where('status', $request->status);
-        if ($request->filled('search')) {
-            $like = '%' . $request->search . '%';
-            $q->where(function ($w) use ($like) {
-                $w->where('recipient_name', 'like', $like)->orWhere('recipient_email', 'like', $like);
-            });
-        }
+        $rawRows = $data->rows ?? null;
+        $rows = new LengthAwarePaginator(
+            collect($rawRows->data ?? []),
+            $rawRows->total ?? 0,
+            $rawRows->per_page ?? 50,
+            $rawRows->current_page ?? 1,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         return view('letters.report', [
             'header_title' => 'Sent Letters Report',
-            'rows'         => $q->paginate(50)->withQueryString(),
-            'templates'    => LetterTemplate::orderBy('name')->get(),
-            'filters'      => $request->only(['template_id', 'status', 'search']),
+            'rows'         => $rows,
+            'templates'    => collect($data->templates ?? []),
+            'filters'      => (array) ($data->filters ?? []),
         ]);
     }
 
     public function downloadSentPdf($id)
     {
-        $row = LetterDispatchRecipient::findOrFail($id);
-        abort_unless($row->pdf_path && Storage::disk('public')->exists($row->pdf_path), 404);
+        $response = $this->api->get("letters/sent/{$id}/download");
 
-        return Storage::disk('public')->download($row->pdf_path, ($row->recipient_name ?: 'letter') . '.pdf');
+        if ($response->status() === 404) {
+            abort(404);
+        }
+
+        $filename = 'letter.pdf';
+        if ($cd = $response->header('Content-Disposition')) {
+            if (preg_match('/filename=["\']?([^"\';\s]+)/', $cd, $m)) {
+                $filename = $m[1];
+            }
+        }
+
+        return response($response->body(), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 }

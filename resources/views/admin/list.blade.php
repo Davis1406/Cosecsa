@@ -20,7 +20,7 @@
           </div>
           <div class="col-sm-6 text-right">
             <a href="{{url('admin/roles/list')}}" class="btn btn-outline-secondary">Roles & Permissions</a>
-            <a href="{{url('admin/add')}}" class="btn btn-primary">Add New Admin</a>
+            <a href="{{url('admin/add')}}" class="btn btn-primary" style="background-color:#FEC503;border-color:#FEC503;">Add New Admin</a>
           </div>
         </div>
       </div><!-- /.container-fluid -->
@@ -49,8 +49,8 @@
                 <input type="date" class="form-control" value="{{ Request::get('date') }}" name="date">
               </div>
               <div class="form-group col-md-3 d-flex align-items-end">
-                <button class="btn btn-primary mr-2" type="submit">Search</button>
-                <a href="{{ url('admin/list') }}" class="btn btn-success">Clear</a>
+                <button class="btn btn-primary mr-2" style="background-color:#FEC503;border-color:#FEC503;" type="submit">Search</button>
+                <a href="{{ url('admin/list') }}" class="btn" style="background-color:#a02626;border-color:#a02626;color:#fff;">Clear</a>
               </div>
             </div>
           </div>

@@ -2,182 +2,117 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\User;
-use App\Models\Trainer;
-use App\Models\UserRole;
+use App\Services\ApiClient;
 use App\Models\HospitalModel;
-use App\Models\Programme;
-use App\Models\Country;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Imports\TrainersImport;
+use Illuminate\Http\Request;
 
 class TrainerController extends Controller
 {
+    public function __construct(private ApiClient $api) {}
+
     public function list()
     {
-        $data['getRecord'] = User::getTrainers();
-        $data['header_title'] = "Trainers List";
-        return view('admin.associates.trainers.list', $data);
+        $response = $this->api->get('trainers/list-data');
+        $data = $response->object();
+
+        return view('admin.associates.trainers.list', [
+            'getRecord'    => collect($data->trainers ?? []),
+            'header_title' => 'Trainers List',
+        ]);
     }
 
     public function view($id)
     {
-        $trainer = User::getTrainers()->firstWhere('trainer_id', $id);
-        if (!$trainer) {
+        $response = $this->api->get("trainers/{$id}/detail");
+        if ($response->status() === 404) {
             return redirect('admin/associates/trainers/list')->with('error', 'Trainer not found');
         }
-        $header_title = "View Trainer";
-        return view('admin.associates.trainers.view', compact('trainer', 'header_title'));
+        $data = $response->object();
+
+        return view('admin.associates.trainers.view', [
+            'trainer'      => $data->trainer,
+            'header_title' => 'View Trainer',
+        ]);
     }
 
     public function add()
     {
-        $data['getHospital'] = HospitalModel::getHospital();
-        $data['getProgramme'] = Programme::getProgramme();
-        $data['getCountry'] = Country::getCountry();
-        $data['header_title'] = "Add New Trainer";
-        return view('admin.associates.trainers.add', $data);
+        return view('admin.associates.trainers.add', [
+            'getHospital'  => HospitalModel::getHospital(),
+            'getCountry'   => collect([]),
+            'getProgramme' => collect([]),
+            'header_title' => 'Add New Trainer',
+        ]);
     }
 
     public function import()
     {
-        $data['header_title'] = "Import Trainers";
-        return view('admin.associates.trainers.import', $data);
+        return view('admin.associates.trainers.import', [
+            'header_title' => 'Import Trainers',
+        ]);
     }
 
     public function importData(Request $request)
     {
-        $request->validate([
-            'file' => 'required|mimes:csv,xlsx,xls|max:2048',
-        ]);
+        $request->validate(['file' => 'required|mimes:csv,xlsx,xls|max:2048']);
 
-        $file = $request->file('file');
-        Excel::import(new TrainersImport, $file);
+        $this->api->postWithFile('trainers/import', [], ['file' => $request->file('file')]);
 
         return redirect('admin/associates/trainers/list')->with('success', 'Trainers imported successfully');
     }
 
     public function insert(Request $request)
     {
-        // Handle profile image upload
-        $profileImagePath = null;
+        $fields = $request->only([
+            'name', 'email', 'password', 'phone_number', 'hospital_id',
+            'assistant_pd', 'assistant_email', 'mobile_no',
+        ]);
+
         if ($request->hasFile('profile_image')) {
-            $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
+            $this->api->postWithFile('trainers/', $fields, ['profile_image' => $request->file('profile_image')]);
+        } else {
+            $this->api->post('trainers/', $fields);
         }
-
-        $userType = 4; // '4' represents trainers
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password), // Hash the password
-            'user_type' => $userType
-        ]);
-
-        // Assign role in user_roles table
-        UserRole::create([
-            'user_id' => $user->id,
-            'role_type' => $userType,
-            'is_active' => 1
-        ]);
-
-        $trainerData = [
-            'user_id' => $user->id,
-            'phone_number' => $request['phone_number'],
-            'hospital_id' => $request['hospital_id'],
-            'profile_image' => $profileImagePath,
-            'assistant_pd' => $request['assistant_pd'],
-            'assistant_email' => $request['assistant_email'],
-            'mobile_no' => $request['mobile_no'],
-        ];
-
-        Trainer::create($trainerData);
 
         return redirect('admin/associates/trainers/list')->with('success', 'Trainer added successfully');
     }
+
     public function edit($id)
     {
-        $trainer = User::getTrainers()->firstWhere('trainer_id', $id);
-        $data['getHospital'] = HospitalModel::getHospital();
-        $data['getProgramme'] = Programme::getProgramme();
-        $data['getCountry'] = Country::getCountry();
-        $data['header_title'] = "Edit Trainer";
-        $data['trainer'] = $trainer;
-        return view('admin.associates.trainers.edit', $data);
+        $response = $this->api->get("trainers/{$id}/detail");
+        if ($response->status() === 404) {
+            return redirect('admin/associates/trainers/list')->with('error', 'Trainer not found');
+        }
+        $data = $response->object();
+
+        return view('admin.associates.trainers.edit', [
+            'trainer'      => $data->trainer,
+            'getHospital'  => HospitalModel::getHospital(),
+            'getCountry'   => collect([]),
+            'getProgramme' => collect([]),
+            'header_title' => 'Edit Trainer',
+        ]);
     }
 
     public function update(Request $request, $id)
     {
-        $trainer = Trainer::find($id);
-        if (!$trainer) {
-            return redirect('admin/associates/trainers/list')->with('error', 'Trainer not found');
-        }
+        $fields = $request->only([
+            'name', 'email', 'password', 'phone_number', 'hospital_id',
+            'assistant_pd', 'assistant_email', 'mobile_no',
+        ]);
 
-        $user = User::find($trainer->user_id);
-
-        // Handle profile image upload
         if ($request->hasFile('profile_image')) {
-            $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
+            $this->api->postWithFile("trainers/{$id}", $fields, ['profile_image' => $request->file('profile_image')]);
         } else {
-            $profileImagePath = $trainer->profile_image; // keep the old image if no new one is uploaded
+            $this->api->post("trainers/{$id}", $fields);
         }
-
-        $user->name = $request->name;
-        $user->email = $request->email;
-        if (!empty($request->password)) {
-            $user->password = bcrypt($request->password); // Hash the password
-        }
-        $user->save();
-
-        // Update user role if needed (ensure it exists and is active)
-        $userRole = UserRole::where('user_id', $user->id)
-            ->where('role_type', $user->user_type)
-            ->first();
-
-        if (!$userRole) {
-            // Create user role if it doesn't exist
-            UserRole::create([
-                'user_id' => $user->id,
-                'role_type' => $user->user_type,
-                'is_active' => 1
-            ]);
-        } else {
-            // Ensure the role is active
-            $userRole->is_active = 1;
-            $userRole->save();
-        }
-
-        $trainer->phone_number = $request->phone_number;
-        $trainer->hospital_id = $request->hospital_id;
-        $trainer->profile_image = $profileImagePath;
-        $trainer->assistant_pd = $request->assistant_pd;
-        $trainer->assistant_email = $request->assistant_email;
-        $trainer->mobile_no = $request->mobile_no;
-
-        $trainer->save();
 
         return redirect('admin/associates/trainers/list')->with('success', 'Trainer updated successfully');
     }
 
     public function delete($id)
     {
-        $user = User::find($id);
-
-        if (!$user) {
-            return redirect('admin/associates/trainers/list')->with('error', 'User not found');
-        }
-
-        $trainer = Trainer::where('user_id', $user->id)->first();
-
-        if (!$trainer) {
-            return redirect('admin/associates/trainers/list')->with('error', 'Trainer not found');
-        }
-
-        // ✅ Deactivate the user from user_roles table
-        \DB::table('user_roles')
-            ->where('user_id', $user->id)
-            ->update(['is_active' => 0, 'updated_at' => now()]);
+        $this->api->delete("trainers/{$id}");
 
         return redirect('admin/associates/trainers/list')->with('success', 'Trainer information successfully deleted');
     }

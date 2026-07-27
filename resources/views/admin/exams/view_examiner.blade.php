@@ -96,6 +96,9 @@
                                 <span><i class="fas fa-id-badge mr-1"></i>{{ $examiner->examiner_id }}</span>
                             @endif
                             <span><i class="fas fa-envelope mr-1"></i>{{ $examiner->email }}</span>
+                            @if(!empty($examiner->secondary_email))
+                                <span><i class="fas fa-envelope mr-1 text-muted"></i>{{ $examiner->secondary_email }}</span>
+                            @endif
                         </div>
                     </div>
 
@@ -122,7 +125,12 @@
                             <table class="table table-sm mb-0 info-table">
                                 <tr>
                                     <th><i class="fas fa-envelope text-muted mr-1"></i> Email</th>
-                                    <td>{{ $examiner->email }}</td>
+                                    <td>
+                                        {{ $examiner->email }}
+                                        @if(!empty($examiner->secondary_email))
+                                            <br><span class="text-muted" style="font-size:.85em;">{{ $examiner->secondary_email }}</span>
+                                        @endif
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th><i class="fas fa-phone text-muted mr-1"></i> Mobile</th>
@@ -171,7 +179,7 @@
                                 <tr>
                                     <th><i class="fas fa-users text-muted mr-1"></i> Groups</th>
                                     <td>
-                                        @if(isset($examiner->groups) && $examiner->groups->isNotEmpty())
+                                        @if(!empty($examiner->groups))
                                             @foreach($examiner->groups as $group)
                                                 <span class="badge badge-pill mb-1"
                                                       style="background:#a02626;color:#fff;">
@@ -186,7 +194,7 @@
                                 <tr>
                                     <th><i class="fas fa-clock text-muted mr-1"></i> Shifts</th>
                                     <td>
-                                        @if(isset($examiner->shifts) && $examiner->shifts->isNotEmpty())
+                                        @if(!empty($examiner->shifts))
                                             @foreach($examiner->shifts as $shift)
                                                 <span class="badge badge-pill badge-info mb-1">
                                                     {{ App\Models\User::getShiftName($shift->shift) }}

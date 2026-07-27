@@ -17,6 +17,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\Settings;
 
 class ProgressiveReportController extends Controller
 {
@@ -452,7 +455,9 @@ class ProgressiveReportController extends Controller
 
     public function downloadPdf($periodId)
     {
-        $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks'])->findOrFail($periodId);
+        $period = ProgressReportPeriod::with(['participants' => function ($q) {
+            $q->where('user_id', Auth::id());
+        }, 'participants.user', 'participants.tasks'])->findOrFail($periodId);
 
         $pdf = Pdf::loadView('progressive_reports.pdf', ['period' => $period])->setPaper('a4', 'landscape');
 
@@ -462,6 +467,108 @@ class ProgressiveReportController extends Controller
         $response->headers->remove('Pragma');
 
         return $response;
+    }
+
+    /**
+     * Download the progressive report as a DOCX file.
+     */
+    public function downloadDocx($periodId)
+    {
+        $period = ProgressReportPeriod::with(['participants' => function ($q) {
+            $q->where('user_id', Auth::id());
+        }, 'participants.user', 'participants.tasks'])->findOrFail($periodId);
+
+        // Without this, PHPWord writes raw text into document.xml instead of
+        // escaping it, so any "&", "<", or ">" in the data (e.g. "MCS & FCS")
+        // produces invalid XML that Word refuses to open.
+        Settings::setOutputEscapingEnabled(true);
+
+        $phpWord = new PhpWord();
+        $phpWord->setDefaultFontName('Arial');
+        $phpWord->setDefaultFontSize(9);
+
+        $section = $phpWord->addSection([
+            'orientation'   => 'landscape',
+            'pageSizeW'     => 14400,  // 10 inches in twips
+            'pageSizeH'     => 10800,  // 7.5 inches in twips
+            'marginLeft'    => 720,
+            'marginRight'   => 720,
+            'marginTop'     => 720,
+            'marginBottom'  => 720,
+        ]);
+
+        // Title
+        $section->addText('COSECSA SECRETARIAT MONTHLY REPORT', [
+            'size'  => 14,
+            'bold'  => true,
+            'align' => 'center',
+        ]);
+
+        // Subtitle — use plain ASCII dash instead of bullet char
+        $section->addText(
+            strtoupper($period->period_month->format('F Y')) . '  -  Due ' . $period->due_date->format('d M Y'),
+            ['size' => 10, 'color' => '555555', 'align' => 'center']
+        );
+        $section->addParagraph();
+
+        // Table
+        $table = $section->addTable([
+            'borderSize'  => 6,
+            'borderColor' => '999999',
+            'cellMargin'  => 40,
+        ]);
+
+        // Header row
+        $headerStyle = ['size' => 9, 'bold' => true, 'bgColor' => 'F1F1F1'];
+        $table->addRow();
+        $table->addCell(420, $headerStyle)->addText('No');
+        $table->addCell(2520, $headerStyle)->addText('Activity');
+        $table->addCell(3780, $headerStyle)->addText('Planned Activities');
+        $table->addCell(3780, $headerStyle)->addText('Current Status');
+        $table->addCell(3780, $headerStyle)->addText('Next Steps');
+
+        $rowStyle = ['size' => 9];
+        foreach ($period->participants as $participant) {
+            // Section header row
+            $sectionStyle = ['size' => 9, 'bold' => true, 'bgColor' => 'A02626', 'color' => 'FFFFFF'];
+            $table->addRow();
+            $table->addCell(14700, $sectionStyle)->addText($participant->section_label);
+
+            if ($participant->tasks->isEmpty()) {
+                $table->addRow();
+                $table->addCell(14700, $rowStyle)->addText('No tasks recorded.');
+            } else {
+                foreach ($participant->tasks as $task) {
+                    $table->addRow();
+                    $table->addCell(420, $rowStyle)->addText($task->row_no ? (string) $task->row_no : '');
+                    $table->addCell(2520, $rowStyle)->addText($task->activity_description ?: '');
+                    $table->addCell(3780, $rowStyle)->addText($task->planned_activities ?: '');
+                    $table->addCell(3780, $rowStyle)->addText($task->current_status ?: '');
+                    $table->addCell(3780, $rowStyle)->addText($task->next_steps ?: '');
+                }
+            }
+        }
+
+        $filename = 'COSECSA Secretariat Report - ' . $period->period_month->format('F Y') . '.docx';
+
+        $tempPath = tempnam(sys_get_temp_dir(), 'docx_') . '.docx';
+        IOFactory::createWriter($phpWord, 'Word2007')->save($tempPath);
+
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        $path   = $tempPath;
+        $binary = file_get_contents($tempPath);
+        @unlink($tempPath);
+
+        return response()->streamDownload(function () use ($binary) {
+            echo $binary;
+        }, $filename, [
+            'Content-Type'              => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'Content-Disposition'       => 'attachment; filename="' . $filename . '"',
+            'Content-Length'             => strlen($binary),
+        ]);
     }
 
     public function shareWithCeo(Request $request, $periodId)

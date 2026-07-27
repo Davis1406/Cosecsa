@@ -2,280 +2,99 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\CapsuleCrmService;
+use App\Services\ApiClient;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class CapsuleSyncController extends Controller
 {
-    protected CapsuleCrmService $capsule;
+    public function __construct(private ApiClient $api) {}
 
-    public function __construct(CapsuleCrmService $capsule)
-    {
-        $this->capsule = $capsule;
-    }
-
-    /**
-     * Show the Capsule CRM sync dashboard.
-     */
     public function index()
     {
-        $totalFellows = DB::table('fellows')->count();
-        $withEmail    = DB::table('fellows')
-            ->whereNotNull('personal_email')
-            ->where('personal_email', '!=', '')
-            ->count();
-        $withoutEmail = $totalFellows - $withEmail;
+        $response = $this->api->get('capsule/');
+        $data = $response->object();
 
-        // Last completed sync (for counts)
-        $lastSync = DB::table('capsule_sync_log')
-            ->whereIn('status', ['completed', 'failed'])
-            ->orderByDesc('synced_at')
-            ->first();
-
-        // Currently running sync (for progress bar)
-        $running = DB::table('capsule_sync_log')
-            ->where('status', 'running')
-            ->orderByDesc('id')
-            ->first();
-
-        // Local import of Davis Fellows list from Capsule
-        $capsuleTotal = DB::table('capsule_contacts')->count() ?: null;
-        $lastImport   = DB::table('capsule_contacts')->max('imported_at');
-        $difference   = ($capsuleTotal !== null) ? ($totalFellows - $capsuleTotal) : null;
-
-        return view('admin.capsule.index', compact(
-            'totalFellows', 'withEmail', 'withoutEmail',
-            'lastSync', 'running', 'capsuleTotal', 'lastImport', 'difference'
-        ));
-    }
-
-    /**
-     * Show MIS fellows not found in the local Capsule contacts table.
-     */
-    public function differences(Request $request)
-    {
-        $search = $request->input('q');
-
-        // Fellows with no email match AND no name match in capsule_contacts
-        // COLLATE clause needed because fellows uses utf8mb4_general_ci and capsule_contacts uses utf8mb4_unicode_ci
-        $possibleMatch = DB::raw("(
-            SELECT GROUP_CONCAT(CONCAT(cc.first_name, ' ', cc.last_name) ORDER BY cc.last_name SEPARATOR '  |  ')
-            FROM capsule_contacts cc
-            WHERE (
-                LOWER(TRIM(cc.last_name))  COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', LOWER(TRIM(f.lastname))  COLLATE utf8mb4_unicode_ci, '%')
-             OR LOWER(TRIM(f.lastname))    COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', LOWER(TRIM(cc.last_name)) COLLATE utf8mb4_unicode_ci, '%')
-            )
-            AND (
-                LOWER(TRIM(cc.first_name))  COLLATE utf8mb4_unicode_ci LIKE CONCAT(LOWER(TRIM(f.firstname)) COLLATE utf8mb4_unicode_ci, '%')
-             OR LOWER(TRIM(f.firstname))    COLLATE utf8mb4_unicode_ci LIKE CONCAT(LOWER(TRIM(cc.first_name)) COLLATE utf8mb4_unicode_ci, '%')
-            )
-            LIMIT 3
-        ) as possible_match");
-
-        $query = DB::table('fellows as f')
-            ->join('categories as cat', 'f.category_id', '=', 'cat.id')
-            ->leftJoin('countries as co', 'f.country_id', '=', 'co.id')
-            ->select([
-                'f.id', 'f.firstname', 'f.lastname', 'f.personal_email',
-                'f.phone_number', 'f.status', 'f.fellowship_year',
-                'cat.category_name', 'co.country_name',
-                $possibleMatch,
-            ])
-            ->whereNotExists(function ($q) {
-                $q->from('capsule_contacts as cc')
-                  ->whereRaw("f.personal_email IS NOT NULL AND f.personal_email != ''")
-                  ->whereRaw('LOWER(TRIM(f.personal_email)) COLLATE utf8mb4_unicode_ci = LOWER(TRIM(cc.email)) COLLATE utf8mb4_unicode_ci');
-            })
-            ->whereNotExists(function ($q) {
-                $q->from('capsule_contacts as cc')
-                  ->whereRaw('LOWER(TRIM(f.firstname)) COLLATE utf8mb4_unicode_ci = LOWER(TRIM(cc.first_name)) COLLATE utf8mb4_unicode_ci')
-                  ->whereRaw('LOWER(TRIM(f.lastname)) COLLATE utf8mb4_unicode_ci = LOWER(TRIM(cc.last_name)) COLLATE utf8mb4_unicode_ci');
-            });
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('f.firstname',      'like', "%{$search}%")
-                  ->orWhere('f.lastname',     'like', "%{$search}%")
-                  ->orWhere('f.personal_email','like', "%{$search}%")
-                  ->orWhere('co.country_name', 'like', "%{$search}%");
-            });
-        }
-
-        $fellows      = $query->orderBy('f.lastname')->orderBy('f.firstname')->paginate(50)->withQueryString();
-        $totalMis     = DB::table('fellows')->count();
-        $totalCapsule = DB::table('capsule_contacts')->count();
-
-        return view('admin.capsule.differences', compact('fellows', 'totalMis', 'totalCapsule', 'search'));
-    }
-
-    /**
-     * Launch the sync as a background Artisan command so PHP's 30s web limit doesn't kill it.
-     */
-    public function sync(Request $request)
-    {
-        // Block if already running
-        $running = DB::table('capsule_sync_log')->where('status', 'running')->exists();
-        if ($running) {
-            return response()->json(['success' => false, 'message' => 'A sync is already running.'], 409);
-        }
-
-        $artisan = base_path('artisan');
-        $log     = storage_path('logs/capsule-sync.log');
-
-        // Run in background — PHP web process returns immediately
-        exec("nohup php {$artisan} capsule:sync-fellows >> {$log} 2>&1 &");
-
-        // Small pause to let the command insert its log row
-        usleep(500000);
-
-        $row = DB::table('capsule_sync_log')
-            ->where('status', 'running')
-            ->orderByDesc('id')
-            ->first();
-
-        return response()->json([
-            'success' => true,
-            'log_id'  => $row->id ?? null,
-            'message' => 'Sync started in background.',
+        return view('admin.capsule.index', [
+            'totalFellows' => $data->totalFellows ?? 0,
+            'withEmail'    => $data->withEmail ?? 0,
+            'withoutEmail' => $data->withoutEmail ?? 0,
+            'lastSync'     => $data->lastSync ?? null,
+            'running'      => $data->running ?? null,
+            'capsuleTotal' => $data->capsuleTotal ?? null,
+            'lastImport'   => $data->lastImport ?? null,
+            'difference'   => $data->difference ?? null,
         ]);
     }
 
-    /**
-     * Poll endpoint — frontend calls this every 5s to get progress.
-     */
+    public function differences(Request $request)
+    {
+        $response = $this->api->get('capsule/differences', $request->only(['q']));
+        $data = $response->object();
+
+        return view('admin.capsule.differences', [
+            'fellows'      => $this->rebuildPaginator($data->fellows ?? null, $request),
+            'totalMis'     => $data->total_mis ?? 0,
+            'totalCapsule' => $data->total_capsule ?? 0,
+            'search'       => $data->search ?? '',
+        ]);
+    }
+
+    public function sync(Request $request)
+    {
+        $response = $this->api->post('capsule/sync', []);
+
+        return response()->json($response->json(), $response->status());
+    }
+
     public function status()
     {
-        $running = DB::table('capsule_sync_log')
-            ->where('status', 'running')
-            ->orderByDesc('id')
-            ->first();
+        $response = $this->api->get('capsule/status');
 
-        if ($running) {
-            $pct = $running->total > 0
-                ? round(($running->progress / $running->total) * 100)
-                : 0;
+        return response()->json($response->json(), $response->status());
+    }
 
-            return response()->json([
-                'status'   => 'running',
-                'progress' => $running->progress,
-                'total'    => $running->total,
-                'percent'  => $pct,
-                'created'  => $running->created,
-                'updated'  => $running->updated,
-                'failed'   => $running->failed,
+    public function contacts(Request $request)
+    {
+        $response = $this->api->get('capsule/contacts', $request->only(['q']));
+        $data = $response->object();
+
+        return view('admin.capsule.contacts', [
+            'contacts'   => $this->rebuildPaginator($data->contacts ?? null, $request),
+            'totalLocal' => $data->total_local ?? 0,
+            'lastImport' => $data->last_import ?? null,
+            'search'     => $data->search ?? '',
+        ]);
+    }
+
+    public function importContacts(Request $request)
+    {
+        $response = $this->api->post('capsule/import-contacts', []);
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    public function syncOne(int $fellowId)
+    {
+        $response = $this->api->post("capsule/sync/{$fellowId}", []);
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    private function rebuildPaginator(?object $raw, Request $request): LengthAwarePaginator
+    {
+        if (! $raw) {
+            return new LengthAwarePaginator([], 0, 50, 1, [
+                'path' => $request->url(), 'query' => $request->query(),
             ]);
         }
 
-        $last = DB::table('capsule_sync_log')
-            ->whereIn('status', ['completed', 'failed'])
-            ->orderByDesc('synced_at')
-            ->first();
-
-        return response()->json([
-            'status'  => $last->status ?? 'idle',
-            'total'   => $last->total   ?? 0,
-            'created' => $last->created ?? 0,
-            'updated' => $last->updated ?? 0,
-            'failed'  => $last->failed  ?? 0,
-        ]);
-    }
-
-    /**
-     * List imported Capsule contacts from local table.
-     */
-    public function contacts(Request $request)
-    {
-        $search = $request->input('q');
-
-        $query = DB::table('capsule_contacts')->orderBy('last_name')->orderBy('first_name');
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name',  'like', "%{$search}%")
-                  ->orWhere('email',      'like', "%{$search}%")
-                  ->orWhere('tags',       'like', "%{$search}%");
-            });
-        }
-
-        $contacts    = $query->paginate(50)->withQueryString();
-        $totalLocal  = DB::table('capsule_contacts')->count();
-        $lastImport  = DB::table('capsule_contacts')->max('imported_at');
-
-        return view('admin.capsule.contacts', compact('contacts', 'totalLocal', 'lastImport', 'search'));
-    }
-
-    /**
-     * Launch the contact import as a background Artisan command.
-     */
-    public function importContacts(Request $request)
-    {
-        $artisan = base_path('artisan');
-        $log     = storage_path('logs/capsule-import.log');
-        exec("nohup php {$artisan} capsule:import-contacts >> {$log} 2>&1 &");
-
-        return response()->json(['success' => true, 'message' => 'Import started in background.']);
-    }
-
-    /**
-     * Sync a single fellow to Capsule CRM.
-     */
-    public function syncOne(int $fellowId)
-    {
-        $fellow = DB::table('fellows')
-            ->join('categories', 'fellows.category_id', '=', 'categories.id')
-            ->leftJoin('countries', 'fellows.country_id', '=', 'countries.id')
-            ->where('fellows.id', $fellowId)
-            ->select([
-                'fellows.id', 'fellows.firstname', 'fellows.lastname',
-                'fellows.personal_email', 'fellows.phone_number',
-                'fellows.organization', 'fellows.current_specialty',
-                'fellows.address', 'fellows.cosecsa_region',
-                'fellows.status', 'fellows.is_promoted',
-                'fellows.fellowship_year', 'fellows.candidate_number',
-                'fellows.fcs_certificate_number', 'fellows.mcs_certificate_number',
-                'categories.category_name', 'countries.country_name',
-            ])
-            ->first();
-
-        if (! $fellow) {
-            return response()->json(['success' => false, 'message' => 'Fellow not found'], 404);
-        }
-
-        $payload  = CapsuleCrmService::fellowToPayload($fellow);
-        $tags     = CapsuleCrmService::fellowTags($fellow);
-        $existing = null;
-
-        if (! empty($fellow->personal_email)) {
-            $existing = $this->capsule->findByEmail($fellow->personal_email);
-        }
-        if (! $existing) {
-            $existing = $this->capsule->findByName($fellow->firstname, $fellow->lastname);
-        }
-        if (! $existing) {
-            $existing = $this->capsule->findByNameFuzzy($fellow->firstname, $fellow->lastname);
-        }
-
-        if ($existing) {
-            $ok = $this->capsule->updateContact($existing['id'], $payload);
-            if ($ok && $tags) {
-                $existingTagNames = array_column($existing['tags'] ?? [], 'name');
-                $this->capsule->setTags($existing['id'], array_unique(array_merge($existingTagNames, $tags)));
-            }
-            $action = $ok ? 'updated' : 'failed';
-        } else {
-            $created_party = $this->capsule->createContact($payload);
-            if (! $created_party) {
-                return response()->json(['success' => false, 'message' => 'Failed to create contact in Capsule']);
-            }
-            if ($tags) {
-                $this->capsule->setTags($created_party['id'], $tags);
-            }
-            $action = 'created';
-        }
-
-        return response()->json(['success' => true, 'action' => $action]);
+        return new LengthAwarePaginator(
+            collect($raw->data ?? []),
+            $raw->total ?? 0,
+            $raw->per_page ?? 50,
+            $raw->current_page ?? 1,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
     }
 }

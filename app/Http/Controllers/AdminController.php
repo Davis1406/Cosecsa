@@ -2,168 +2,103 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ApiClient;
 use Illuminate\Http\Request;
-use App\Models\Role;
-use App\Models\User;
-use Hash;
-use DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
+    public function __construct(private ApiClient $api) {}
+
     public function list()
     {
-        $data['getRecord'] = User::getAdmin();
-        $data['header_title'] = "Admin List";
-        return view('admin.list', $data);
+        $response = $this->api->get('admin/users');
+        $data = $response->object();
+        $admins = collect($data->admins ?? []);
+
+        return view('admin.list', [
+            'getRecord' => new \Illuminate\Pagination\LengthAwarePaginator(
+                $admins,
+                $admins->count(),
+                25,
+                \Illuminate\Pagination\Paginator::resolveCurrentPage(),
+                ['path' => url('admin/list')]
+            ),
+            'header_title' => 'Admin List',
+        ]);
     }
 
     public function add()
     {
-        $data['header_title'] = "Add New Admin";
-        $data['roles'] = $this->assignableRoles();
-        return view('admin.add', $data);
-    }
+        $response = $this->api->get('admin/users/assignable-roles');
+        $data = $response->object();
 
-    // Master Admin is a one-off role reserved for its current holder — it
-    // isn't offered when assigning roles unless the acting user already
-    // holds it themselves.
-    protected function assignableRoles()
-    {
-        $roles = Role::orderBy('name')->get();
-        if (! (auth()->user()?->isMasterAdmin())) {
-            $roles = $roles->reject(fn ($r) => $r->name === 'Master Admin')->values();
-        }
-        return $roles;
+        return view('admin.add', [
+            'header_title' => 'Add New Admin',
+            'roles'        => collect($data->roles ?? []),
+        ]);
     }
 
     public function insert(Request $request)
     {
-        request()->validate([
-            'email' => 'required|email|unique:users'
-        ]);
+        $response = $this->api->post('admin/users', $request->only([
+            'name', 'email', 'password', 'role_id',
+        ]));
 
-        DB::beginTransaction();
-        try {
-            $user = new User;
-            $user->name = trim($request->name);
-            $user->email = trim($request->email);
-            $user->password = Hash::make($request->password);
-            $user->user_type = 1; // Admin
-            $user->role_id = $request->role_id ?: null;
-            $user->save();
-
-            // ✅ Add to user_roles
-            DB::table('user_roles')->insert([
-                'user_id' => $user->id,
-                'role_type' => 1, // Admin
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            DB::commit();
-            return redirect('admin/list')->with('success', "Admin successfully created");
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Error creating admin: ' . $e->getMessage());
+        if ($response->failed()) {
+            return back()->withInput()->with('error', $response->json('message'));
         }
+
+        return redirect('admin/list')->with('success', 'Admin successfully created');
     }
 
     public function edit($id)
     {
-        $data['getRecord'] = User::getSingleId($id);
-        abort_if($data['getRecord'] && $data['getRecord']->isMasterAdmin() && ! (auth()->user()?->isMasterAdmin()), 404);
-        if (!empty($data['getRecord'])) {
-            $data['header_title'] = "Edit Admin";
-            $data['roles'] = $this->assignableRoles();
-            return view('admin.edit', $data);
-        } else {
+        $userRes  = $this->api->get("admin/users/{$id}");
+        $rolesRes = $this->api->get('admin/users/assignable-roles');
+
+        if ($userRes->status() === 404) {
             abort(404);
         }
+
+        $userData  = $userRes->object();
+        $rolesData = $rolesRes->object();
+
+        return view('admin.edit', [
+            'header_title' => 'Edit Admin',
+            'getRecord'    => $userData->admin,
+            'roles'        => collect($rolesData->roles ?? []),
+        ]);
     }
 
     public function update($id, Request $request)
     {
-        request()->validate([
-            'email' => 'required|email|unique:users,email,' . $id
-        ]);
+        $fields = $request->only(['name', 'email', 'role_id', 'password']);
 
-        $user = User::getSingleId($id);
-        abort_if($user && $user->isMasterAdmin() && ! (auth()->user()?->isMasterAdmin()), 404);
-
-        DB::beginTransaction();
-        try {
-            $user->name = trim($request->name);
-            $user->email = trim($request->email);
-            $user->user_type = 1;
-            $user->role_id = $request->role_id ?: null;
-
-            if (!empty($request->password)) {
-                // Assign plain text — setPasswordAttribute mutator bcrypts it for user_type=1
-                $user->password = $request->password;
-            }
-
-            if ($request->hasFile('profile_image')) {
-                // Delete old image if present
-                if ($user->profile_image && Storage::disk('public')->exists($user->profile_image)) {
-                    Storage::disk('public')->delete($user->profile_image);
-                }
-                $file      = $request->file('profile_image');
-                $sanitized = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
-                $finalName = 'admin-' . $user->id . '-' . $sanitized . '.' . $file->getClientOriginalExtension();
-                $user->profile_image = $file->storeAs('profile_images/admins', $finalName, 'public');
-            }
-
-            $user->save();
-
-            // ✅ Ensure user_roles entry is updated or inserted
-            DB::table('user_roles')->updateOrInsert(
-                ['user_id' => $user->id],
-                [
-                    'role_type' => 1,
-                    'updated_at' => now(),
-                    'created_at' => now()
-                ]
+        if ($request->hasFile('profile_image')) {
+            $response = $this->api->postWithFile(
+                "admin/users/{$id}",
+                $fields,
+                ['profile_image' => $request->file('profile_image')]
             );
-
-            DB::commit();
-            \Illuminate\Support\Facades\Cache::forget("user_permissions_{$user->id}");
-            return redirect('admin/list')->with('success', "Information successfully updated");
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Error updating admin: ' . $e->getMessage());
+        } else {
+            $response = $this->api->post("admin/users/{$id}", $fields);
         }
-    }
 
+        if ($response->failed()) {
+            return back()->withInput()->with('error', $response->json('message'));
+        }
+
+        return redirect('admin/list')->with('success', 'Information successfully updated');
+    }
 
     public function delete($id)
     {
-        $user = User::getSingleId($id);
+        $response = $this->api->delete("admin/users/{$id}");
 
-        if (!$user) {
-            return redirect('admin/list')->with('error', 'Admin not found');
+        if ($response->failed()) {
+            return redirect('admin/list')->with('error', $response->json('message'));
         }
-        abort_if($user->isMasterAdmin() && ! (auth()->user()?->isMasterAdmin()), 404);
 
-        \DB::beginTransaction();
-        try {
-            $user->is_deleted = 1;
-            $user->save();
-
-            // ✅ Deactivate user role
-            \DB::table('user_roles')
-                ->where('user_id', $user->id)
-                ->update([
-                    'is_active' => 0,
-                    'updated_at' => now(),
-                ]);
-
-            \DB::commit();
-            return redirect('admin/list')->with('success', "Information successfully Deleted");
-        } catch (\Exception $e) {
-            \DB::rollBack();
-            return redirect('admin/list')->with('error', 'Error deleting admin: ' . $e->getMessage());
-        }
+        return redirect('admin/list')->with('success', 'Information successfully Deleted');
     }
 }

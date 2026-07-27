@@ -3,51 +3,44 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Pagination\LengthAwarePaginator;
+use App\Services\ApiClient;
 
 class SystemLogsController extends Controller
 {
+    public function __construct(private ApiClient $api) {}
+
     public function index(Request $request)
     {
-        $tab = $request->input('tab', 'logins');
+        $response = $this->api->get('admin/logs', $request->only(['tab', 'q', 'model_type', 'action']));
+        $data = $response->object();
 
-        $data['tab'] = $tab;
-        $data['header_title'] = 'System Logs';
+        $records = $this->rebuildPaginator($data->records ?? null, $request);
 
-        if ($tab === 'changes') {
-            $q = DB::table('activity_logs')->orderByDesc('id');
-            if ($request->filled('model_type')) $q->where('model_type', $request->model_type);
-            if ($request->filled('action'))     $q->where('action', $request->action);
-            if ($request->filled('q')) {
-                $like = '%' . $request->q . '%';
-                $q->where(function ($w) use ($like) {
-                    $w->where('summary', 'like', $like)->orWhere('user_name', 'like', $like);
-                });
-            }
-            $data['records'] = $q->paginate(50)->withQueryString();
-            $data['modelTypes'] = DB::table('activity_logs')->distinct()->orderBy('model_type')->pluck('model_type');
-        } elseif ($tab === 'emails') {
-            $q = DB::table('email_logs')->orderByDesc('id');
-            if ($request->filled('q')) {
-                $like = '%' . $request->q . '%';
-                $q->where(function ($w) use ($like) {
-                    $w->where('to_address', 'like', $like)->orWhere('subject', 'like', $like);
-                });
-            }
-            $data['records'] = $q->paginate(50)->withQueryString();
-        } else {
-            $tab = 'logins';
-            $data['tab'] = 'logins';
-            $q = DB::table('login_logs')->orderByDesc('id');
-            if ($request->filled('q')) {
-                $like = '%' . $request->q . '%';
-                $q->where(function ($w) use ($like) {
-                    $w->where('name', 'like', $like)->orWhere('email', 'like', $like);
-                });
-            }
-            $data['records'] = $q->paginate(50)->withQueryString();
+        return view('admin.logs.index', [
+            'header_title' => 'System Logs',
+            'tab'          => $data->tab ?? 'logins',
+            'records'      => $records,
+            'modelTypes'   => collect($data->model_types ?? []),
+        ]);
+    }
+
+    // Reconstruct a LengthAwarePaginator from the JSON paginator shape the
+    // API returns, so Blade can call $records->links() as usual.
+    private function rebuildPaginator(?object $raw, Request $request): LengthAwarePaginator
+    {
+        if (! $raw) {
+            return new LengthAwarePaginator([], 0, 50, 1, [
+                'path' => $request->url(), 'query' => $request->query(),
+            ]);
         }
 
-        return view('admin.logs.index', $data);
+        return new LengthAwarePaginator(
+            collect($raw->data ?? []),
+            $raw->total ?? 0,
+            $raw->per_page ?? 50,
+            $raw->current_page ?? 1,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
     }
 }

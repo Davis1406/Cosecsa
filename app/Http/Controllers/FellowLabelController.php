@@ -2,56 +2,58 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ApiClient;
 use Illuminate\Http\Request;
-use App\Models\FellowLabel;
 
 class FellowLabelController extends Controller
 {
+    public function __construct(private ApiClient $api) {}
+
     public function index()
     {
-        $labels = FellowLabel::orderBy('name')->get();
-        $header_title = 'Fellow Labels – Settings';
-        return view('admin.settings.fellow_labels.index', compact('labels', 'header_title'));
+        $response = $this->api->get('settings/fellow-labels');
+        $data = $response->object();
+
+        return view('admin.settings.fellow_labels.index', [
+            'labels'       => collect($data->labels ?? []),
+            'header_title' => 'Fellow Labels – Settings',
+        ]);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name'  => 'required|string|max:80|unique:fellow_labels,name',
-            'color' => 'required|string|max:20',
-        ]);
+        $response = $this->api->post('settings/fellow-labels', $request->only([
+            'name', 'color', 'description',
+        ]));
 
-        FellowLabel::create([
-            'name'        => $request->name,
-            'color'       => $request->color,
-            'description' => $request->description,
-            'is_active'   => 1,
-        ]);
+        if ($response->failed()) {
+            return back()->withInput()->withErrors($response->json('errors') ?? ['error' => $response->json('message')]);
+        }
 
-        return redirect('admin/settings/fellow-labels')->with('success', 'Label "' . $request->name . '" created.');
+        return redirect('admin/settings/fellow-labels')->with('success', $response->json('message'));
     }
 
     public function update(Request $request, $id)
     {
-        $label = FellowLabel::findOrFail($id);
-        $request->validate([
-            'name'  => 'required|string|max:80|unique:fellow_labels,name,' . $id,
-            'color' => 'required|string|max:20',
-        ]);
+        $response = $this->api->put("settings/fellow-labels/{$id}", $request->only([
+            'name', 'color', 'description', 'is_active',
+        ]));
 
-        $label->update([
-            'name'        => $request->name,
-            'color'       => $request->color,
-            'description' => $request->description,
-            'is_active'   => $request->has('is_active') ? 1 : 0,
-        ]);
+        if ($response->failed()) {
+            return back()->withInput()->withErrors($response->json('errors') ?? ['error' => $response->json('message')]);
+        }
 
-        return redirect('admin/settings/fellow-labels')->with('success', 'Label updated.');
+        return redirect('admin/settings/fellow-labels')->with('success', $response->json('message'));
     }
 
     public function destroy($id)
     {
-        FellowLabel::findOrFail($id)->delete();
-        return redirect('admin/settings/fellow-labels')->with('success', 'Label deleted.');
+        $response = $this->api->delete("settings/fellow-labels/{$id}");
+
+        if ($response->failed()) {
+            return redirect('admin/settings/fellow-labels')->with('error', $response->json('message'));
+        }
+
+        return redirect('admin/settings/fellow-labels')->with('success', $response->json('message'));
     }
 }

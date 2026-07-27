@@ -31,6 +31,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'cosecsa_api' => [
+        'url'   => env('COSECSA_API_URL', 'http://api.cosecsamis.org'),
+        'token' => env('COSECSA_API_TOKEN'),
+    ],
+
     'capsule' => [
         'token' => env('CAPSULE_API_TOKEN'),
     ],
