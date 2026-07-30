@@ -99,10 +99,10 @@
                                                 <!-- Clinical Stations -->
                                                 @for ($i = 1; $i <= 8; $i++)
                                                     <td style="background-color: #ffe6e6;">
-                                                        @if(isset($value->clinical_stations[$i]))
+                                                        @if(isset($value->clinical_stations->{$i}))
                                                             <a href="{{ url('admin/exams/fcs-station-results/' . $value->cnd_id . '/' . $i . '/clinical/' . $tableRoute) }}"
                                                                style="color: inherit; text-decoration: none;">
-                                                                {{ $value->clinical_stations[$i] }}
+                                                                {{ $value->clinical_stations->{$i} }}
                                                             </a>
                                                         @else
                                                             -
@@ -113,10 +113,10 @@
                                                 <!-- Viva Stations -->
                                                 @for ($i = 1; $i <= 8; $i++)
                                                     <td style="background-color: #fff9e6;">
-                                                        @if(isset($value->viva_stations[$i]))
+                                                        @if(isset($value->viva_stations->{$i}))
                                                             <a href="{{ url('admin/exams/fcs-station-results/' . $value->cnd_id . '/' . $i . '/viva/' . $tableRoute) }}"
                                                                style="color: inherit; text-decoration: none;">
-                                                                {{ $value->viva_stations[$i] }}
+                                                                {{ $value->viva_stations->{$i} }}
                                                             </a>
                                                         @else
                                                             -
