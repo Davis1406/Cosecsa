@@ -55,7 +55,7 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($getResults as $value)
-                                        @php $gsTotal = array_sum(array_column($value->stations, 'total_sum')); @endphp
+                                        @php $gsTotal = collect($value->stations)->sum('total_sum'); @endphp
                                         <tr data-total="{{ $gsTotal }}">
                                             <td>{{ $value->candidate_id }}</td>
                                             <td>{{ $value->fullname }}</td>
@@ -65,17 +65,16 @@
                                                         $station = collect($value->stations)->firstWhere('station_id', $i);
                                                     @endphp
                                                     @if ($station)
-                                                        <a href="{{ url('admin/exams/gs_station_results/' . $value->cnd_id . '/' . $station['station_id']) }}" 
+                                                        <a href="{{ url('admin/exams/gs_station_results/' . $value->cnd_id . '/' . $station->station_id) }}"
                                                            style="color: inherit; text-decoration: none;">
-                                                           {{ $station['total_sum'] }}
+                                                           {{ $station->total_sum }}
                                                         </a>
                                                     @else
-                                                        <!-- Display a placeholder if no data is available for this station -->
                                                         {{ ' ' }}
                                                     @endif
                                                 </td>
                                             @endfor
-                                            <td><b>{{ array_sum(array_column($value->stations, 'total_sum')) }}</b></td> <!-- Sum of all station totals -->
+                                            <td><b>{{ collect($value->stations)->sum('total_sum') }}</b></td>
                                         </tr>
                                         @endforeach                                        
                                         
