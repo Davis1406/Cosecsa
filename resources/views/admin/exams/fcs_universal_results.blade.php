@@ -91,6 +91,10 @@
                                         </thead>
                                         <tbody>
                                         @foreach ($getResults as $value)
+                                            @php
+                                                $clinicalStations = (array) ($value->clinical_stations ?? []);
+                                                $vivaStations     = (array) ($value->viva_stations ?? []);
+                                            @endphp
                                             <tr data-group="{{ $value->group_name ?? '' }}">
                                                 <td>{{ $value->candidate_id }}</td>
                                                 <td>{{ $value->fullname }}</td>
@@ -99,10 +103,10 @@
                                                 <!-- Clinical Stations -->
                                                 @for ($i = 1; $i <= 8; $i++)
                                                     <td style="background-color: #ffe6e6;">
-                                                        @if(isset($value->clinical_stations->{$i}))
+                                                        @if(isset($clinicalStations[$i]))
                                                             <a href="{{ url('admin/exams/fcs-station-results/' . $value->cnd_id . '/' . $i . '/clinical/' . $tableRoute) }}"
                                                                style="color: inherit; text-decoration: none;">
-                                                                {{ $value->clinical_stations->{$i} }}
+                                                                {{ $clinicalStations[$i] }}
                                                             </a>
                                                         @else
                                                             -
@@ -113,10 +117,10 @@
                                                 <!-- Viva Stations -->
                                                 @for ($i = 1; $i <= 8; $i++)
                                                     <td style="background-color: #fff9e6;">
-                                                        @if(isset($value->viva_stations->{$i}))
+                                                        @if(isset($vivaStations[$i]))
                                                             <a href="{{ url('admin/exams/fcs-station-results/' . $value->cnd_id . '/' . $i . '/viva/' . $tableRoute) }}"
                                                                style="color: inherit; text-decoration: none;">
-                                                                {{ $value->viva_stations->{$i} }}
+                                                                {{ $vivaStations[$i] }}
                                                             </a>
                                                         @else
                                                             -
