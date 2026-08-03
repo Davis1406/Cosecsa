@@ -57,9 +57,7 @@
                         <div class="position-relative" style="display:inline-block;cursor:pointer;"
                              data-toggle="modal" data-target="#uploadPhotoModal"
                              title="Click to update profile photo">
-                            <img src="{{ !empty($examiner->passport_image)
-                                        ? asset('storage/' . $examiner->passport_image)
-                                        : asset('/public/dist/img/user.png') }}"
+                            <img src="{{ $examiner->profile_image_url ?? asset('/public/dist/img/user.png') }}"
                                  alt="{{ $examiner->examiner_name }}"
                                  class="profile-photo">
                             <div style="position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.5);
@@ -472,16 +470,6 @@
             {{-- ── Participation Summary ─────────────────────────────────────── --}}
             @php
                 $hasHistory = !is_null($examiner->history);
-
-                // examination_years is double-encoded in DB (json_encode called on save
-                // despite the Eloquent array cast, so raw value is a JSON string wrapping
-                // another JSON array). Decode twice to get the actual array.
-                $exYears = [];
-                if ($hasHistory && !empty($examiner->examination_years)) {
-                    $d = json_decode($examiner->examination_years, true);
-                    if (is_string($d)) { $d = json_decode($d, true); }
-                    $exYears = is_array($d) ? $d : [];
-                }
             @endphp
 
             @if($hasHistory)
@@ -1027,9 +1015,7 @@ function showVEDeleteModal() {
                             <h6 style="color:#a02626;font-weight:bold;">EXAMINER IDENTIFICATION</h6>
                         </div>
                         <div class="mb-3">
-                            <img src="{{ !empty($examiner->passport_image)
-                                        ? asset('storage/'.$examiner->passport_image)
-                                        : asset('/public/dist/img/user.png') }}"
+                            <img src="{{ $examiner->profile_image_url ?? asset('/public/dist/img/user.png') }}"
                                  alt="{{ $examiner->examiner_name }}"
                                  class="rounded-circle"
                                  style="width:120px;height:120px;object-fit:cover;border:2px solid #a02626;">
@@ -1077,13 +1063,7 @@ function showVEDeleteModal() {
                 @php
                     $hasHistory = !is_null($examiner->history);
 
-                    // Double-decode examination_years (double-encoded in DB)
-                    $modalYears = [];
-                    if ($hasHistory && !empty($examiner->examination_years)) {
-                        $d = json_decode($examiner->examination_years, true);
-                        if (is_string($d)) { $d = json_decode($d, true); }
-                        $modalYears = is_array($d) ? $d : [];
-                    }
+                    $modalYears = $exYears;
 
                     // Double-decode exam_availability (same double-encoding issue)
                     $selectedAvailability = [];
@@ -1399,7 +1379,7 @@ function showVEDeleteModal() {
                 <div class="modal-body">
                     <div class="text-center mb-3">
                         <img id="photoPreviewImg"
-                             src="{{ !empty($examiner->passport_image) ? asset('storage/' . $examiner->passport_image) : asset('/public/dist/img/user.png') }}"
+                             src="{{ $examiner->profile_image_url ?? asset('/public/dist/img/user.png') }}"
                              alt="Current photo"
                              style="width:120px;height:120px;object-fit:cover;border-radius:50%;border:3px solid #a02626;">
                     </div>
