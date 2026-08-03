@@ -49,6 +49,8 @@
     <section class="content">
         <div class="container-fluid">
 
+            @include('admin._role_switcher', ['relatedProfiles' => $relatedProfiles ?? null, 'currentRole' => 'examiner'])
+
             {{-- ── Profile Hero ────────────────────────────────────────────────── --}}
             <div class="card mb-4 overflow-hidden">
                 <div class="profile-hero-banner d-flex align-items-center flex-wrap p-4" style="gap:1.5rem;">

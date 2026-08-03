@@ -240,6 +240,7 @@ class ExamsController extends Controller
             'candidatesExamined' => collect($d->candidates_examined ?? []),
             'designationOptions' => collect($d->designation_options ?? []),
             'examinerDocuments'  => collect($d->examiner_documents ?? []),
+            'relatedProfiles'    => $d->relatedProfiles ?? null,
         ]);
     }
 

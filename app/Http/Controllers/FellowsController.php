@@ -61,6 +61,10 @@ class FellowsController extends Controller
 
         $data = $response->object();
 
+        if (empty($data->fellow)) {
+            return redirect('admin/associates/fellows/list')->with('error', 'Fellow not found or failed to load.');
+        }
+
         return view('admin.associates.fellows.view', [
             'header_title'       => 'View Fellow',
             'fellow'             => $data->fellow,
@@ -70,6 +74,7 @@ class FellowsController extends Controller
             'allLabels'          => collect($data->allLabels ?? []),
             'assignedLabels'     => collect($data->assignedLabels ?? []),
             'currentLabelIds'    => $data->currentLabelIds ?? [],
+            'relatedProfiles'    => $data->relatedProfiles ?? null,
         ]);
     }
 

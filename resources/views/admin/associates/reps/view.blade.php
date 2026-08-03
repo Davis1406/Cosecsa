@@ -94,6 +94,8 @@ body.dark-mode .info-text, body.dark-mode .field-val { color:#e0e0e0; }
                     </div>
                 </div>
 
+                @include('admin._role_switcher', ['relatedProfiles' => $relatedProfiles ?? null, 'currentRole' => 'country_rep'])
+
                 <div class="row">
                     {{-- ══ LEFT PANEL ══ --}}
                     <div class="col-md-3">

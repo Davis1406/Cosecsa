@@ -18,6 +18,9 @@
     </section>
     <!-- Main content -->
     <section class="content">
+        <div class="container-fluid">
+            @include('admin._role_switcher', ['relatedProfiles' => $relatedProfiles ?? null, 'currentRole' => 'trainer'])
+        </div>
         <!-- general form elements -->
         <div class="card">
             <div class="card-header">

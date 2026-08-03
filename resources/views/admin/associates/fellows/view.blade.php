@@ -211,13 +211,15 @@
             </div>
         </div>
 
+        @include('admin._role_switcher', ['relatedProfiles' => $relatedProfiles ?? null, 'currentRole' => 'fellow'])
+
         <div class="row">
             {{-- ══ LEFT PANEL ══ --}}
             <div class="col-md-3">
                 <div class="card" style="border-top:3px solid #a02626;">
                     <div class="card-body text-center pt-4 pb-2">
-                        @if(!empty($fellow->profile_image))
-                            <img src="{{ asset('storage/app/public/' . $fellow->profile_image) }}"
+                        @if(!empty($fellow->profile_image_url))
+                            <img src="{{ $fellow->profile_image_url }}"
                                  alt="Profile" class="fellow-avatar mb-2">
                         @else
                             <div class="fellow-avatar d-flex align-items-center justify-content-center mx-auto mb-2"

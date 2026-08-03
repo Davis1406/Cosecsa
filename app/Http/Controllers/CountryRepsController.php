@@ -30,9 +30,10 @@ class CountryRepsController extends Controller
         $data = $response->object();
 
         return view('admin.associates.reps.view', [
-            'countryRep'   => $data->countryRep,
-            'linkedFellow' => $data->linkedFellow ?? null,
-            'header_title' => 'View CR',
+            'countryRep'      => $data->countryRep,
+            'linkedFellow'    => $data->linkedFellow ?? null,
+            'header_title'    => 'View CR',
+            'relatedProfiles' => $data->relatedProfiles ?? null,
         ]);
     }
 

@@ -30,8 +30,9 @@ class TrainerController extends Controller
         $data = $response->object();
 
         return view('admin.associates.trainers.view', [
-            'trainer'      => $data->trainer,
-            'header_title' => 'View Trainer',
+            'trainer'         => $data->trainer,
+            'header_title'    => 'View Trainer',
+            'relatedProfiles' => $data->relatedProfiles ?? null,
         ]);
     }
 
