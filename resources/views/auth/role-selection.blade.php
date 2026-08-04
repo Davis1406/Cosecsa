@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Select Role | COSECSA MIS</title>
-    <link rel="stylesheet" href="{{ url('public/plugins/fontawesome-free/css/all.min.css') }}">
-    <link rel="stylesheet" href="{{ url('public/dist/css/adminlte.min.css') }}">
-    <link rel="icon" href="{{ url('public/dist/img/Cosecsa_Logo.png') }}">
+    <link rel="stylesheet" href="{{ asset('plugins/fontawesome-free/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('dist/css/adminlte.min.css') }}">
+    <link rel="icon" href="{{ asset('dist/img/Cosecsa_Logo.png') }}">
     
     <style>
         .login-box {
@@ -157,7 +157,7 @@
 <div class="login-box">
     <div class="card card-outline card-primary">
         <div class="card-header text-center">
-            <img src="{{ url('public/dist/img/Cosecsa_Logo.png') }}" alt="COSECSA Logo">
+            <img src="{{ asset('dist/img/Cosecsa_Logo.png') }}" alt="COSECSA Logo">
             <br>
             <a href="#" class="h1" style="color: #a02626;"><b>COSECSA-MIS</b></a>
         </div>

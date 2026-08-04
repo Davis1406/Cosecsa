@@ -10,7 +10,7 @@
     body.dark-mode .accred-table .action-btn:hover { background-color:#4a5568 !important; }
     body.dark-mode .accred-table .dropdown-item:hover { background-color:#4a5568 !important; color:#fff !important; }
 
-    #hospHubTabs.nav-tabs .nav-link { color:#a02626; border-color:transparent; }
+    #hospHubTabs.nav-tabs .nav-link { color:#a02626; border-color:transparent; font-size:.82rem; padding:.35rem .85rem; }
     #hospHubTabs.nav-tabs .nav-link:hover { color:#841f1f; border-color:#eee #eee #dee2e6; }
     #hospHubTabs.nav-tabs .nav-link.active { color:#fff; background:#a02626; border-color:#a02626 #a02626 #a02626; font-weight:600; }
     body.dark-mode #hospHubTabs.nav-tabs .nav-link { color:#e0a5a5 !important; }
@@ -31,6 +31,9 @@
     .fchk-footer a { color:#6c757d; }
     .fchk-footer a:hover { color:#a02626; text-decoration:none; }
     .fchk-filter-btn { white-space:nowrap; }
+    .tile-clickable { cursor:pointer; transition:transform .15s, box-shadow .15s, outline .15s; }
+    .tile-clickable:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,.22); }
+    .tile-clickable.tile-active { outline:3px solid rgba(255,255,255,.85); outline-offset:2px; transform:translateY(-2px); }
     body.dark-mode .fchk-filter-panel { background:#374151 !important; border-color:#4a5568 !important; }
     body.dark-mode .fchk-item { color:#e0e0e0 !important; }
     body.dark-mode .fchk-item:hover { background:#4a5568 !important; }
@@ -77,29 +80,33 @@
         <div class="tab-content" id="hospHubTabContent">
         <div class="tab-pane fade show active" id="tab-followup" role="tabpanel">
 
-        <div class="row">
-          <div class="col-lg-3 col-6">
-            <div class="small-box bg-info">
-              <div class="inner"><h3>{{ $totalHospitals }}</h3><p>Hospitals</p></div>
-              <div class="icon"><i class="ion ion-medkit"></i></div>
+        <div class="row mb-3">
+          <div class="col-lg-3 col-6 mb-3">
+            <div class="stitch-tile stitch-tile-teal tile-clickable" data-tile="hospitals" title="Click to view all hospitals">
+              <div class="stitch-tile-label">Hospitals <i class="fas fa-mouse-pointer ml-1" style="font-size:.65rem;opacity:.6;"></i></div>
+              <div class="stitch-tile-value">{{ $totalHospitals }}</div>
+              <div class="stitch-tile-bar"><div class="stitch-tile-fill" style="width:100%"></div></div>
             </div>
           </div>
-          <div class="col-lg-3 col-6">
-            <div class="small-box bg-success">
-              <div class="inner"><h3>{{ $countActive }}</h3><p>Active Accreditations</p></div>
-              <div class="icon"><i class="ion ion-checkmark-circled"></i></div>
+          <div class="col-lg-3 col-6 mb-3">
+            <div class="stitch-tile stitch-tile-green tile-clickable" data-tile="active" title="Click to filter active accreditations">
+              <div class="stitch-tile-label">Active Accreditations <i class="fas fa-mouse-pointer ml-1" style="font-size:.65rem;opacity:.6;"></i></div>
+              <div class="stitch-tile-value">{{ $countActive }}</div>
+              <div class="stitch-tile-bar"><div class="stitch-tile-fill" style="width:{{ $totalHospitals > 0 ? round($countActive/$totalHospitals*100) : 0 }}%"></div></div>
             </div>
           </div>
-          <div class="col-lg-3 col-6">
-            <div class="small-box" style="background:#FEC503;color:#3a2a00;">
-              <div class="inner"><h3>{{ $countExpiringSoon }}</h3><p>Expiring Soon</p></div>
-              <div class="icon"><i class="ion ion-alert-circled"></i></div>
+          <div class="col-lg-3 col-6 mb-3">
+            <div class="stitch-tile stitch-tile-gold tile-clickable" data-tile="expiring_soon" title="Click to filter expiring soon">
+              <div class="stitch-tile-label">Expiring Soon <i class="fas fa-mouse-pointer ml-1" style="font-size:.65rem;opacity:.6;"></i></div>
+              <div class="stitch-tile-value">{{ $countExpiringSoon }}</div>
+              <div class="stitch-tile-bar"><div class="stitch-tile-fill" style="width:{{ $totalHospitals > 0 ? round($countExpiringSoon/$totalHospitals*100) : 0 }}%"></div></div>
             </div>
           </div>
-          <div class="col-lg-3 col-6">
-            <div class="small-box bg-danger">
-              <div class="inner"><h3>{{ $countExpired }}</h3><p>Expired</p></div>
-              <div class="icon"><i class="ion ion-close-circled"></i></div>
+          <div class="col-lg-3 col-6 mb-3">
+            <div class="stitch-tile stitch-tile-maroon tile-clickable" data-tile="expired" title="Click to filter expired">
+              <div class="stitch-tile-label">Expired <i class="fas fa-mouse-pointer ml-1" style="font-size:.65rem;opacity:.6;"></i></div>
+              <div class="stitch-tile-value">{{ $countExpired }}</div>
+              <div class="stitch-tile-bar"><div class="stitch-tile-fill" style="width:{{ $totalHospitals > 0 ? round($countExpired/$totalHospitals*100) : 0 }}%"></div></div>
             </div>
           </div>
         </div>
@@ -204,7 +211,7 @@
             </div>
             <div class="card-body p-0">
               <div class="table-responsive">
-                <table class="table table-striped table-sm mb-0 accred-table">
+                <table id="followUpTable" class="table table-striped table-sm mb-0 accred-table">
                   <thead>
                     <tr>
                       <th style="width:3%;"><input type="checkbox" id="checkAll"></th>
@@ -356,6 +363,43 @@
 
 @push('scripts')
 <script>
+$(function () {
+  var followUpDt = $('#followUpTable').DataTable({
+    pageLength: 25,
+    lengthMenu: [10, 25, 50, 100],
+    order: [],
+    columnDefs: [
+      { orderable: false, targets: [0, 8] }
+    ],
+    language: { search: '', searchPlaceholder: 'Search…' },
+    initComplete: function () { $('#followUpTable').css('opacity', 1); }
+  });
+
+  // Tile click → instant filter (no page reload)
+  $('.tile-clickable').on('click', function () {
+    var tile = $(this).data('tile');
+
+    $('.tile-clickable').removeClass('tile-active');
+    $(this).addClass('tile-active');
+
+    if (tile === 'hospitals') {
+      // Switch to the All Hospitals tab
+      $('#tab-hospitals-trigger').tab('show');
+      return;
+    }
+
+    var searchTerm = tile === 'active'       ? 'Active'
+                   : tile === 'expiring_soon' ? 'Expiring'
+                   : tile === 'expired'       ? 'Expired'
+                   : '';
+
+    followUpDt.column(7).search(searchTerm).draw();
+
+    // Scroll to table
+    $('html, body').animate({ scrollTop: $('#followUpTable').closest('.card').offset().top - 80 }, 300);
+  });
+});
+
 document.getElementById('checkAll').addEventListener('change', function () {
   document.querySelectorAll('input[name="hospital_programme_ids[]"]').forEach(cb => cb.checked = this.checked);
 });

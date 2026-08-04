@@ -15,7 +15,7 @@ class ProgrammesController extends Controller
         $data = $response->object();
 
         return view('admin.programmes.list', [
-            'getRecord'    => collect($data->programmes ?? []),
+            'getRecord'    => collect($data->programmes->data ?? $data->programmes ?? []),
             'header_title' => 'Programmes',
         ]);
     }

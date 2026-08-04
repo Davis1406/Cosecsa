@@ -92,7 +92,7 @@
 @endsection
 
 @push('styles')
-<link rel="stylesheet" href="{{ url('public/plugins/summernote/summernote-bs4.min.css') }}">
+<link rel="stylesheet" href="{{ asset('plugins/summernote/summernote-bs4.min.css') }}">
 <style>
     .note-editor.note-frame { border: 1px solid #ced4da; border-radius: .25rem; }
     .note-toolbar { background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
@@ -101,7 +101,7 @@
 @endpush
 
 @push('scripts')
-<script src="{{ url('public/plugins/summernote/summernote-bs4.min.js') }}"></script>
+<script src="{{ asset('plugins/summernote/summernote-bs4.min.js') }}"></script>
 <script>
 $(function () {
 
@@ -125,7 +125,7 @@ $(function () {
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#a02626;">
         <tr>
           <td style="padding:18px 28px; vertical-align:middle; width:76px;">
-            <img src="{{ url('public/dist/img/Cosecsa_Logo.png') }}" width="56" height="56" style="display:block; border:0;">
+            <img src="{{ asset('dist/img/Cosecsa_Logo.png') }}" width="56" height="56" style="display:block; border:0;">
           </td>
           <td style="padding:18px 12px 18px 0; vertical-align:middle;">
             <div style="color:#fff; font-family:Arial,sans-serif;">
@@ -141,7 +141,7 @@ $(function () {
       <div style="background:#f9f9f9; border-top:1px solid #e8e8e8; padding:20px 28px; font-family:Arial,sans-serif;">
         <table cellpadding="0" cellspacing="0" border="0"><tr>
           <td style="width:44px; vertical-align:middle; padding-right:10px;">
-            <img src="{{ url('public/dist/img/Cosecsa_Logo.png') }}" width="34" height="34" style="display:block;">
+            <img src="{{ asset('dist/img/Cosecsa_Logo.png') }}" width="34" height="34" style="display:block;">
           </td>
           <td style="vertical-align:middle; font-size:13px; font-weight:700; color:#a02626;">
             COSECSA — Examinations Office

@@ -58,6 +58,14 @@ class ReportBuilderController extends Controller
             $groupBy = null;
         }
 
+        // Ensure group_by column is always fetched so countBy() can work
+        if ($groupBy && ! in_array($groupBy, $selectedFields, true)) {
+            $selectedFields[] = $groupBy;
+        }
+
+        $chartType = in_array($request->input('chart_type'), ['bar', 'horizontalBar', 'line', 'pie', 'doughnut'], true)
+            ? $request->input('chart_type') : 'bar';
+
         $filters = $request->input('filters', []);
         $rows = $this->runQuery($type, $selectedFields, $filters)->get();
 
@@ -86,6 +94,7 @@ class ReportBuilderController extends Controller
             'filterDefs'      => $filterDefs,
             'chart'           => $chart,
             'filters'         => $filters,
+            'chartType'       => $chartType,
         ]);
     }
 

@@ -168,7 +168,7 @@
                                                     <div style="font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#a02626; border:1px solid #eee; border-radius:6px; padding:16px;">
                                                         <p style="margin:0;">Best Regards,<br>{{ $user->name }}.</p>
                                                         <p id="sig_preview_title" style="font-weight:bold; margin:4px 0 10px;">{{ $user->signature_title ?: 'Job Title' }}</p>
-                                                        <img src="{{ url('public/dist/img/Cosecsa_Logo.png') }}" alt="COSECSA" style="width:60px; height:60px; object-fit:contain;">
+                                                        <img src="{{ asset('dist/img/Cosecsa_Logo.png') }}" alt="COSECSA" style="width:60px; height:60px; object-fit:contain;">
                                                         <p style="margin:10px 0 0; font-weight:bold;">
                                                             The College of Surgeons of East, Central and Southern Africa (COSECSA)
                                                         </p>

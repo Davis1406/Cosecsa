@@ -65,9 +65,6 @@
                     </tbody>
                   </table>
                 </div>
-                <div class="d-flex justify-content-end p-2">
-                  {!! $getRecord->appends(Illuminate\Support\Facades\Request::except('page'))->links() !!}
-                </div>
               </div>
               <!-- /.card-body -->
             </div>

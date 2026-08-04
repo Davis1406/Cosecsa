@@ -261,19 +261,19 @@
                                                         $displayEmailOpened = $value->last_email_opened_at || $emailedBefore;
                                                     @endphp
                                                     <td>{{ $index + 1 }}</td>
-                                                    <td><a href="{{ url('admin/exams/view_examiner/'.$value->id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->examiner_name ?? '-' }}</a></td>
+                                                    <td><a href="{{ url('admin/exams/view_examiner/'.$value->id) }}" class="cosecsa-link">{{ $value->examiner_name ?? '-' }}</a></td>
                                                     <td>{{ $value->email ?? '-' }}</td>
                                                     <td>
                                                         @if($value->is_fellow)
                                                             <span class="badge" style="background:#d4edda;color:#155724;" title="{{ $value->matched_fellow_id_number ? 'Fellow ID '.$value->matched_fellow_id_number : '' }}">Fellow</span>
                                                             @if(!empty($value->matched_fellow_id))
-                                                                <a href="{{ url('admin/associates/fellows/view/'.$value->matched_fellow_id) }}" style="font-size:11px;color:#a02626;text-decoration:none;display:block;">view fellow</a>
+                                                                <a href="{{ url('admin/associates/fellows/view/'.$value->matched_fellow_id) }}" class="cosecsa-link" style="font-size:11px;display:block;">view fellow</a>
                                                             @endif
                                                         @else
                                                             <span class="badge" style="background:#f0f0f0;color:#777;">Not Fellow</span>
                                                         @endif
                                                     </td>
-                                                    <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->country_name ?? '-' }}</a>@else{{ $value->country_name ?? '-' }}@endif</td>
+                                                    <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" class="cosecsa-link">{{ $value->country_name ?? '-' }}</a>@else{{ $value->country_name ?? '-' }}@endif</td>
                                                     <td>{{ $value->specialty ?? '-' }}</td>
                                                     <td>
                                                         @php

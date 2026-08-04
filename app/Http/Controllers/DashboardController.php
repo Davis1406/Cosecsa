@@ -109,6 +109,21 @@ public function dashboard()
                 
             case 7:
                 $fellow = User::getFellows()->firstWhere('user_id', Auth::id());
+                if ($fellow) {
+                    $examinerPassport = DB::table('examiners')
+                        ->where('user_id', Auth::id())
+                        ->value('passport_image');
+                    $imagePath = null;
+                    foreach ([$fellow->profile_image, $examinerPassport] as $p) {
+                        if (!empty($p) && !str_starts_with(basename($p), 'capsule_')) {
+                            $imagePath = $p;
+                            break;
+                        }
+                    }
+                    $fellow->profile_image_url = $imagePath
+                        ? 'https://cosecsamis.org/storage/' . ltrim($imagePath, '/')
+                        : null;
+                }
                 $data['fellow'] = $fellow;
 
                 // Load subscriptions if fellow record exists

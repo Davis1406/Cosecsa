@@ -167,6 +167,41 @@ body.dark-mode .stat-chip     { background:#2d3748 !important; }
     <section class="content">
         <div class="container-fluid">
 
+        {{-- ═══════ ROLE SWITCHER (multi-role users only) ═══════ --}}
+        @php
+            $roleNames = [1=>'Admin',2=>'Trainee',4=>'Trainer',5=>'Country Rep',7=>'Fellow',8=>'Member',9=>'Examiner'];
+            $roleIcons = [1=>'fa-shield-alt',2=>'fa-user-graduate',4=>'fa-chalkboard-teacher',5=>'fa-globe-africa',7=>'fa-award',8=>'fa-id-badge',9=>'fa-user-md'];
+        @endphp
+        @if(count($userRoles) > 1)
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card mb-0" style="border-left:4px solid #a02626;border-radius:8px;">
+                    <div class="card-body py-2 px-3 d-flex align-items-center flex-wrap gap-2">
+                        <span style="font-size:.8rem;font-weight:700;color:#a02626;letter-spacing:.5px;text-transform:uppercase;margin-right:10px;">
+                            <i class="fas fa-exchange-alt mr-1"></i>Switch Role
+                        </span>
+                        @foreach($userRoles as $r)
+                            @if($r != $activeRole)
+                            <form action="{{ route('switch.role') }}" method="POST" class="d-inline">
+                                @csrf
+                                <input type="hidden" name="role" value="{{ $r }}">
+                                <button type="submit" class="btn btn-sm mr-1"
+                                    style="background:#fff8e1;border:1px solid #e8d48b;color:#856404;font-size:.78rem;border-radius:20px;padding:3px 12px;">
+                                    <i class="fas {{ $roleIcons[$r] ?? 'fa-user' }} mr-1"></i>
+                                    {{ $roleNames[$r] ?? 'Role '.$r }}
+                                </button>
+                            </form>
+                            @endif
+                        @endforeach
+                        <span class="ml-auto" style="font-size:.75rem;color:#999;">
+                            Currently: <strong style="color:#a02626;">{{ $roleNames[$activeRole] ?? 'Fellow' }}</strong>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
         @if($fellow)
 
         {{-- ═══════ STAT CHIPS ═══════ --}}
@@ -226,11 +261,11 @@ body.dark-mode .stat-chip     { background:#2d3748 !important; }
                     <div class="card-body text-center px-3 pt-4 pb-3">
 
                         {{-- Avatar --}}
-                        @if(!empty($fellow->profile_image))
-                            <img src="{{ asset('storage/app/public/' . $fellow->profile_image) }}"
+                        @if(!empty($fellow->profile_image_url))
+                            <img src="{{ $fellow->profile_image_url }}"
                                  alt="{{ $fellow->fellow_name }}" class="fellow-avatar mb-2">
                         @else
-                            <img src="{{ url('public/dist/img/user.png') }}"
+                            <img src="{{ asset('dist/img/user.png') }}"
                                  alt="{{ $fellow->fellow_name }}" class="fellow-avatar mb-2">
                         @endif
 
@@ -240,6 +275,15 @@ body.dark-mode .stat-chip     { background:#2d3748 !important; }
                                 <i class="fas fa-hospital-alt mr-1" style="color:#a02626;"></i>
                                 {{ $fellow->organization }}
                             </p>
+                        @endif
+
+                        {{-- Fellow ID --}}
+                        @if(!empty($fellow->fellow_id_number))
+                        <div class="mt-1 mb-1">
+                            <span style="font-size:.78rem;background:#a02626;color:#fff;padding:3px 12px;border-radius:12px;font-weight:700;letter-spacing:.5px;">
+                                ID: {{ $fellow->fellow_id_number }}
+                            </span>
+                        </div>
                         @endif
 
                         {{-- Status --}}
@@ -372,6 +416,11 @@ body.dark-mode .stat-chip     { background:#2d3748 !important; }
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#tab-college" role="tab">
+                            <i class="fas fa-university mr-1"></i>College
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" data-toggle="tab" href="#tab-account" role="tab">
                             <i class="fas fa-cog mr-1"></i>Account
                         </a>
@@ -386,6 +435,14 @@ body.dark-mode .stat-chip     { background:#2d3748 !important; }
                             <div class="card-body">
 
                                 <p class="sect-div">Identity</p>
+                                @if(!empty($fellow->fellow_id_number))
+                                <div class="field-row">
+                                    <span class="field-lbl">Fellow ID</span>
+                                    <span class="field-val">
+                                        <span class="badge px-3" style="background:#a02626;color:#fff;border-radius:11px;font-size:.8rem;">{{ $fellow->fellow_id_number }}</span>
+                                    </span>
+                                </div>
+                                @endif
                                 <div class="field-row">
                                     <span class="field-lbl">Full Name</span>
                                     <span class="field-val">{{ $fellow->fellow_name }}</span>
@@ -680,9 +737,6 @@ body.dark-mode .stat-chip     { background:#2d3748 !important; }
                                         @if($sub->mode_of_payment)
                                             <span class="ml-3 text-muted" style="font-size:.78rem;">{{ $sub->mode_of_payment }}</span>
                                         @endif
-                                        @if($sub->receipt_number)
-                                            <span class="ml-3 text-muted" style="font-size:.78rem;">Rcpt: {{ $sub->receipt_number }}</span>
-                                        @endif
                                     </div>
                                     @endforeach
 
@@ -790,7 +844,117 @@ body.dark-mode .stat-chip     { background:#2d3748 !important; }
                         </div>
                     </div>
 
-                    {{-- ═══ TAB 6: ACCOUNT ═══ --}}
+                    {{-- ═══ TAB 6: COLLEGE INFO ═══ --}}
+                    <div class="tab-pane fade" id="tab-college" role="tabpanel">
+                        <div class="card" style="border-top-left-radius:0;border-top-right-radius:0;">
+                            <div class="card-body">
+
+                                {{-- College banner --}}
+                                <div class="d-flex align-items-center mb-3 p-3 rounded"
+                                     style="background:linear-gradient(135deg,#a02626 0%,#c0392b 100%);color:#fff;border-radius:8px;">
+                                    <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.15);
+                                                display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;margin-right:14px;">
+                                        <i class="fas fa-university"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:1rem;font-weight:700;line-height:1.1;">College of Surgeons of East, Central and Southern Africa</div>
+                                        <div style="font-size:.8rem;opacity:.85;margin-top:3px;">COSECSA — Advancing Surgical Care across the Region</div>
+                                    </div>
+                                </div>
+
+                                <p class="sect-div">About COSECSA</p>
+                                <p style="font-size:.875rem;color:#444;line-height:1.6;">
+                                    COSECSA is an independent, not-for-profit organisation that sets standards for and promotes quality surgical training and care in East, Central and Southern Africa. It brings together surgical professionals, training hospitals, and national associations across 14 countries to expand access to safe surgical care.
+                                </p>
+
+                                <p class="sect-div">Key Facts</p>
+                                <div class="row">
+                                    <div class="col-6 col-md-3 mb-2">
+                                        <div class="stat-chip bg-white" style="flex-direction:column;align-items:flex-start;padding:12px 14px;">
+                                            <div class="chip-val" style="color:#a02626;">14</div>
+                                            <div class="chip-label">Member Countries</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3 mb-2">
+                                        <div class="stat-chip bg-white" style="flex-direction:column;align-items:flex-start;padding:12px 14px;">
+                                            <div class="chip-val" style="color:#28a745;">1,800+</div>
+                                            <div class="chip-label">Fellows</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3 mb-2">
+                                        <div class="stat-chip bg-white" style="flex-direction:column;align-items:flex-start;padding:12px 14px;">
+                                            <div class="chip-val" style="color:#17a2b8;">120+</div>
+                                            <div class="chip-label">Training Hospitals</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3 mb-2">
+                                        <div class="stat-chip bg-white" style="flex-direction:column;align-items:flex-start;padding:12px 14px;">
+                                            <div class="chip-val" style="color:#856404;">1993</div>
+                                            <div class="chip-label">Founded</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p class="sect-div">Programmes</p>
+                                @php
+                                    $programmes = [
+                                        ['icon'=>'fa-stethoscope','name'=>'MCS','full'=>'Membership of the College of Surgeons','desc'=>'Core surgical training qualification'],
+                                        ['icon'=>'fa-award','name'=>'FCS','full'=>'Fellowship of the College of Surgeons','desc'=>'Advanced surgical specialty fellowship'],
+                                        ['icon'=>'fa-user-md','name'=>'FCS (GS)','full'=>'General Surgery','desc'=>''],
+                                        ['icon'=>'fa-bone','name'=>'FCS (Orth)','full'=>'Orthopaedic Surgery','desc'=>''],
+                                        ['icon'=>'fa-baby','name'=>'FCS (Paed)','full'=>'Paediatric Surgery','desc'=>''],
+                                        ['icon'=>'fa-heartbeat','name'=>'FCS (CT)','full'=>'Cardiothoracic Surgery','desc'=>''],
+                                    ];
+                                @endphp
+                                <div class="row">
+                                    @foreach($programmes as $prog)
+                                    <div class="col-6 col-md-4 mb-2">
+                                        <div class="d-flex align-items-center p-2 rounded" style="background:#fafafa;border:1px solid #efefef;font-size:.82rem;">
+                                            <span style="width:28px;height:28px;border-radius:50%;background:#f0d4d4;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px;">
+                                                <i class="fas {{ $prog['icon'] }}" style="color:#a02626;font-size:.75rem;"></i>
+                                            </span>
+                                            <div>
+                                                <div style="font-weight:700;color:#333;">{{ $prog['name'] }}</div>
+                                                <div style="font-size:.72rem;color:#888;">{{ $prog['full'] }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+
+                                <p class="sect-div">Secretariat Contact</p>
+                                <div class="field-row">
+                                    <span class="field-lbl"><i class="fas fa-map-marker-alt mr-1" style="color:#a02626;"></i>Headquarters</span>
+                                    <span class="field-val">Plot 1, 5th Street Industrial Area, Blantyre, Malawi</span>
+                                </div>
+                                <div class="field-row">
+                                    <span class="field-lbl"><i class="fas fa-envelope mr-1" style="color:#a02626;"></i>Email</span>
+                                    <span class="field-val"><a href="mailto:info@cosecsa.org">info@cosecsa.org</a></span>
+                                </div>
+                                <div class="field-row">
+                                    <span class="field-lbl"><i class="fas fa-globe mr-1" style="color:#a02626;"></i>Website</span>
+                                    <span class="field-val"><a href="https://www.cosecsa.org" target="_blank">www.cosecsa.org</a></span>
+                                </div>
+                                <div class="field-row">
+                                    <span class="field-lbl"><i class="fas fa-phone mr-1" style="color:#a02626;"></i>Phone</span>
+                                    <span class="field-val">+265 1 671 672</span>
+                                </div>
+
+                                <p class="sect-div">Member Countries</p>
+                                @php
+                                    $countries = ['Botswana','Burundi','Ethiopia','Kenya','Lesotho','Malawi','Mozambique','Rwanda','South Sudan','Tanzania','Uganda','Zambia','Zimbabwe','Eswatini'];
+                                @endphp
+                                <div class="d-flex flex-wrap" style="gap:6px;">
+                                    @foreach($countries as $c)
+                                        <span class="tag-pill tag-grey"><i class="fas fa-flag mr-1" style="font-size:.6rem;"></i>{{ $c }}</span>
+                                    @endforeach
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ═══ TAB 7: ACCOUNT ═══ --}}
                     <div class="tab-pane fade" id="tab-account" role="tabpanel">
                         <div class="card" style="border-top-left-radius:0;border-top-right-radius:0;">
                             <div class="card-body">

@@ -38,7 +38,7 @@ Route::post('reset/{token}', [AuthController::class,'PostReset']);
 // ADD THESE NEW ROUTES:
 // Route::get('select-role', [AuthController::class, 'showRoleSelection'])->middleware('auth')->name('select.role');
 // Route::post('select-role', [AuthController::class, 'selectRole'])->middleware('auth');
-// Route::post('switch-role', [AuthController::class, 'switchRole'])->middleware('auth')->name('switch.role');
+Route::post('switch-role', [AuthController::class, 'switchRole'])->middleware('auth')->name('switch.role');
 
 Route::get('select-role', [AuthController::class, 'showRoleSelection'])->name('select.role');
 Route::post('select-role', [AuthController::class, 'selectRole']);

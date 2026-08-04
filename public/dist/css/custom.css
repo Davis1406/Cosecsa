@@ -1,5 +1,345 @@
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   STITCH DESIGN SYSTEM — Light-mode sidebar, minimalist navbar, modern tiles
+   Applied only when body does NOT have .dark-mode; dark mode is untouched.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Google Font: Source Sans 3 (replaces Source Sans Pro in light mode) ── */
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700;900&display=swap');
+
+/* ── Light-mode sidebar ─────────────────────────────────────────────────── */
+body:not(.dark-mode) .main-sidebar {
+    background-color: #ffffff !important;
+    box-shadow: 1px 0 0 #e0e9f2, 2px 0 6px rgba(0,0,0,0.04) !important;
+}
+
+body:not(.dark-mode) .brand-link {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #e0e9f2 !important;
+    padding: 14px 18px !important;
+}
+
+body:not(.dark-mode) .brand-text {
+    color: #a02626 !important;
+    font-family: 'Source Sans 3', sans-serif !important;
+    font-size: .92rem !important;
+    font-weight: 700 !important;
+    letter-spacing: .2px;
+}
+
+body:not(.dark-mode) .brand-image {
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    width: 28px !important; height: 28px !important;
+}
+
+body:not(.dark-mode) .user-panel {
+    border-bottom: 1px solid #e0e9f2 !important;
+    padding: 10px 16px !important;
+}
+
+body:not(.dark-mode) .user-panel .image img {
+    border: 2px solid rgba(160,38,38,0.25) !important;
+}
+
+body:not(.dark-mode) .user-panel .info a {
+    color: #141d23 !important;
+    font-size: .87rem !important;
+    font-weight: 600 !important;
+}
+
+/* Section labels */
+body:not(.dark-mode) .nav-sidebar > .nav-header {
+    color: #6b7280 !important;
+    font-size: .6rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 1.4px !important;
+    text-transform: uppercase !important;
+    padding: 14px 18px 4px !important;
+}
+
+/* Nav links — default state */
+body:not(.dark-mode) .nav-sidebar .nav-link {
+    color: #2d3748 !important;
+    border-left: 3px solid transparent !important;
+    border-radius: 0 !important;
+    padding: 9px 18px !important;
+    font-size: .875rem !important;
+    font-weight: 500 !important;
+    font-family: 'Source Sans 3', sans-serif !important;
+    transition: background .14s, border-color .14s, color .14s !important;
+}
+
+body:not(.dark-mode) .nav-sidebar .nav-link .nav-icon {
+    color: #6b7280 !important;
+    font-size: .88rem !important;
+    width: 1.4rem !important;
+    margin-right: 8px !important;
+}
+
+/* Hover */
+body:not(.dark-mode) .nav-sidebar .nav-link:hover {
+    background: #ecf5fe !important;
+    color: #141d23 !important;
+    border-left-color: rgba(160,38,38,0.35) !important;
+}
+
+body:not(.dark-mode) .nav-sidebar .nav-link:hover .nav-icon {
+    color: #a02626 !important;
+}
+
+/* Active top-level */
+body:not(.dark-mode) .nav-pills .nav-link.active,
+body:not(.dark-mode) .nav-pills .show > .nav-link {
+    background: rgba(160,38,38,0.07) !important;
+    color: #a02626 !important;
+    border-left: 3px solid #a02626 !important;
+    font-weight: 700 !important;
+}
+
+body:not(.dark-mode) .nav-pills .nav-link.active .nav-icon,
+body:not(.dark-mode) .nav-pills .show > .nav-link .nav-icon {
+    color: #a02626 !important;
+}
+
+/* Active sub-item */
+body:not(.dark-mode) .nav-treeview .nav-link.active {
+    background: rgba(160,38,38,0.06) !important;
+    color: #a02626 !important;
+    border-left: 3px solid #a02626 !important;
+    font-weight: 600 !important;
+}
+
+body:not(.dark-mode) .nav-treeview .nav-link.active .nav-icon {
+    color: #a02626 !important;
+}
+
+/* Sub-item default */
+body:not(.dark-mode) .nav-treeview .nav-link {
+    color: #2d3748 !important;
+    font-size: .845rem !important;
+}
+
+/* Angle chevron */
+body:not(.dark-mode) .nav-sidebar .nav-link .right,
+body:not(.dark-mode) .nav-sidebar .nav-link > .fa-angle-left {
+    color: #6b7280 !important;
+}
+
+/* Sidebar badges — prevent parent nav-link color override from bleeding in */
+body:not(.dark-mode) .nav-sidebar .nav-link .badge {
+    color: #ffffff !important;
+    font-size: .6rem !important;
+    padding: .18em .4em !important;
+    min-width: 1.4em !important;
+}
+body:not(.dark-mode) .nav-sidebar .nav-link .badge-danger {
+    background-color: #a02626 !important;
+}
+
+/* Pagination — maroon instead of Bootstrap blue */
+body:not(.dark-mode) .pagination .page-link {
+    color: #a02626 !important;
+    border-color: #dee2e6 !important;
+}
+body:not(.dark-mode) .pagination .page-link:hover {
+    color: #7f0a12 !important;
+    background-color: #f8d0d0 !important;
+    border-color: #dee2e6 !important;
+}
+body:not(.dark-mode) .pagination .page-item.active .page-link {
+    background-color: #a02626 !important;
+    border-color: #a02626 !important;
+    color: #ffffff !important;
+}
+body:not(.dark-mode) .pagination .page-item.disabled .page-link {
+    color: #adb5bd !important;
+}
+
+/* Sidebar scrollbar */
+body:not(.dark-mode) .sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: #dbe4ed transparent;
+}
+body:not(.dark-mode) .sidebar::-webkit-scrollbar { width: 5px; }
+body:not(.dark-mode) .sidebar::-webkit-scrollbar-thumb {
+    background: #dbe4ed; border-radius: 3px;
+}
+
+/* ── Minimalist Navbar ───────────────────────────────────────────────────── */
+body:not(.dark-mode) .main-header.navbar {
+    background: rgba(246,250,255,0.88) !important;
+    backdrop-filter: blur(18px) saturate(1.4) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(1.4) !important;
+    border-bottom: 1px solid #e0e9f2 !important;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.04) !important;
+}
+
+/* Search pill */
+body:not(.dark-mode) .navbar-search-wrapper .form-control {
+    background: #ecf5fe !important;
+    border-color: #e0e9f2 !important;
+    border-right: none !important;
+    color: #141d23 !important;
+    font-size: .85rem !important;
+    padding: .3rem .85rem !important;
+}
+body:not(.dark-mode) .navbar-search-wrapper .form-control:focus {
+    background: #fff !important;
+    border-color: #a02626 !important;
+    box-shadow: none !important;
+}
+body:not(.dark-mode) .navbar-search-wrapper .input-group-text {
+    background: #ecf5fe !important;
+    border-color: #e0e9f2 !important;
+    border-left: none !important;
+}
+body:not(.dark-mode) .navbar-search-wrapper .form-control:focus
+  ~ .input-group-append .input-group-text {
+    border-color: #a02626 !important;
+    background: #fff !important;
+}
+
+/* Navbar icon buttons */
+body:not(.dark-mode) .main-header.navbar .nav-link {
+    color: #2d3748 !important;
+    padding: .45rem .65rem !important;
+    border-radius: 6px !important;
+    transition: background .13s !important;
+}
+body:not(.dark-mode) .main-header.navbar .nav-link:hover {
+    background: #e6eff8 !important;
+    color: #141d23 !important;
+}
+
+/* Notification badge — gold dot style */
+body:not(.dark-mode) .navbar-badge.badge-danger {
+    background-color: #FEC503 !important;
+    color: #3a2a00 !important;
+    font-size: .6rem !important;
+    padding: .18em .35em !important;
+    border-radius: 9999px !important;
+    top: 3px !important;
+    right: 3px !important;
+}
+
+/* ── Stitch summary tiles (.stitch-tile) ────────────────────────────────── */
+/* Drop-in replacement for AdminLTE .info-box on any page.
+   Usage:
+     <div class="stitch-tile stitch-tile-teal">
+       <div class="stitch-tile-label">Total Hospitals</div>
+       <div class="stitch-tile-value">154</div>
+       <div class="stitch-tile-trend">↑ 4%</div>
+       <div class="stitch-tile-bar"><div class="stitch-tile-fill" style="width:75%"></div></div>
+     </div>
+*/
+.stitch-tile {
+    background: #ffffff;
+    border-radius: 8px;
+    border-left: 4px solid #004356;
+    padding: 16px 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    transition: transform .15s, box-shadow .15s;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+.stitch-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 16px rgba(0,0,0,0.10);
+}
+.stitch-tile-label {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .01em;
+    color: #59413f;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.stitch-tile-value {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: #141d23;
+    letter-spacing: -.02em;
+}
+.stitch-tile-trend {
+    font-size: .75rem;
+    font-weight: 600;
+    color: #28a745;
+    margin-top: 2px;
+    margin-bottom: 8px;
+}
+.stitch-tile-trend.down { color: #a02626; }
+.stitch-tile-bar {
+    height: 3px;
+    background: #e6eff8;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: auto;
+}
+.stitch-tile-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: currentColor;
+}
+
+/* Colour variants — border + fill colour */
+.stitch-tile-teal   { border-left-color: #004356; color: #004356; }
+.stitch-tile-green  { border-left-color: #28a745; color: #28a745; }
+.stitch-tile-gold   { border-left-color: #FEC503; color: #FEC503; }
+.stitch-tile-maroon { border-left-color: #a02626; color: #a02626; }
+.stitch-tile-blue   { border-left-color: #2980b9; color: #2980b9; }
+
+/* Dark mode tiles */
+body.dark-mode .stitch-tile,
+html.dark-mode .stitch-tile {
+    background: #2d3748 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2) !important;
+}
+body.dark-mode .stitch-tile-label,
+html.dark-mode .stitch-tile-label { color: #9ca3af !important; }
+body.dark-mode .stitch-tile-value,
+html.dark-mode .stitch-tile-value { color: #f1f5f9 !important; }
+body.dark-mode .stitch-tile-bar,
+html.dark-mode .stitch-tile-bar { background: #374151 !important; }
+
+/* ── AdminLTE .info-box light-mode freshen-up ────────────────────────────── */
+/* Makes existing info-box components inherit the cleaner card aesthetic     */
+body:not(.dark-mode) .info-box {
+    border-radius: 8px !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07) !important;
+    background: #ffffff !important;
+    transition: transform .15s, box-shadow .15s !important;
+}
+body:not(.dark-mode) .info-box:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.09) !important;
+}
+body:not(.dark-mode) .info-box-text  { color: #59413f !important; font-weight: 600 !important; }
+body:not(.dark-mode) .info-box-number { color: #141d23 !important; }
+
 /********DATATABLE CUSTOMIZATION*******/
+
+/* Breathing room for "Show X entries" and "Showing X to Y of Z entries" */
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_length {
+    padding-left: 5px !important;
+}
+
+/* Space between top border and the length/search controls row */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+    margin-top: 10px !important;
+}
+
+/* Padding right on the search box */
+.dataTables_wrapper .dataTables_filter {
+    padding-right: 5px !important;
+}
 
 /* Hide all managed DataTables before JS initialises them.
    CSS loads in <head> so the raw table is never visible.
@@ -74,4 +414,54 @@
         .form-row{
             gap: 0px !important;
         }
+}
+
+/* ── COSECSA brand link — readable in light and dark mode ─────────────────── */
+.cosecsa-link {
+    color: #a02626;
+    font-weight: 500;
+    text-decoration: none;
+}
+.cosecsa-link:hover { color: #7f0a12; text-decoration: none; }
+
+body.dark-mode .cosecsa-link,
+body.dark-mode table a.cosecsa-link {
+    color: #f48a8a !important;
+}
+body.dark-mode .cosecsa-link:hover,
+body.dark-mode table a.cosecsa-link:hover {
+    color: #ffb3b3 !important;
+}
+
+/* Any table link that still uses the inline burgundy — lift it in dark mode */
+body.dark-mode table a[href] {
+    color: #f48a8a !important;
+}
+body.dark-mode table a[href]:hover {
+    color: #ffb3b3 !important;
+}
+
+/* ── Global search dropdown — dark-mode readable ──────────────────────────── */
+body.dark-mode #globalSearchResults {
+    background: #2b2d42 !important;
+    border-color: #444 !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4) !important;
+}
+body.dark-mode #globalSearchResults .gs-section-title {
+    color: #f48a8a !important;
+    border-top-color: #3d3f57 !important;
+}
+body.dark-mode #globalSearchResults .gs-item {
+    color: #e2e8f0 !important;
+}
+body.dark-mode #globalSearchResults .gs-item:hover {
+    background: #3a2a3a !important;
+    color: #f48a8a !important;
+}
+body.dark-mode #globalSearchResults .gs-sub {
+    color: #94a3b8 !important;
+}
+body.dark-mode #globalSearchResults .gs-empty,
+body.dark-mode #globalSearchResults .gs-loading {
+    color: #94a3b8 !important;
 }

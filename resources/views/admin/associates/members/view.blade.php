@@ -29,7 +29,7 @@
                     @if ($member)
                     <div class="col-md-3">
                         <div class="text-center">
-                            <img src="{{ url('public/dist/img/user.png') }}" alt="Profile Image" class="img-fluid img-thumbnail" style="width: 50%; height:50%">
+                            <img src="{{ asset('dist/img/user.png') }}" alt="Profile Image" class="img-fluid img-thumbnail" style="width: 50%; height:50%">
                             <h5 class="mt-2">{{ $member->member_name }}</h5>
                         </div>
                     </div>

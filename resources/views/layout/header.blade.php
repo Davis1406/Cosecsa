@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <aside class="main-sidebar sidebar-dark-primary elevation-4" id="main-sidebar">
     <!-- Brand Logo -->
     <a href="" class="brand-link">
-        <img src="{{ url('public/dist/img/Cosecsa_Logo.png') }}" alt="Cosecsa Logo"
+        <img src="{{ asset('dist/img/Cosecsa_Logo.png') }}" alt="Cosecsa Logo"
             class="brand-image img-circle elevation-3" style="opacity: .8">
         <span class="brand-text font-weight-light">COSECSA-MIS</span>
     </a>
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                 <div class="image">
                     @php $authPhoto = Auth::user()->profile_image ?? null; @endphp
-                    <img src="{{ $authPhoto ? asset('storage/' . $authPhoto) : url('public/dist/img/user.png') }}"
+                    <img src="{{ $authPhoto ? asset('storage/' . $authPhoto) : asset('dist/img/user.png') }}"
                          class="img-circle elevation-2" alt="User Image"
                          style="width:34px;height:34px;object-fit:cover;">
                 </div>
@@ -829,7 +829,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         </li>
 
                         {{-- Examiner Section --}}
-                    @elseif (Auth::user()->user_type == 7)
+                    @elseif (in_array(Auth::user()->getActiveRole(), [7, 9]) && Auth::user()->getActiveRole() == 7)
                         {{-- ── Fellow Navigation ── --}}
                         <li class="nav-item">
                             <a href="{{ url('fellow/dashboard') }}"
@@ -854,7 +854,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </a>
                         </li>
 
-                    @elseif (Auth::user()->user_type == 9)
+                    @elseif (Auth::user()->getActiveRole() == 9)
                         <li class="nav-item">
                             <a href="{{ url('examiner/dashboard') }}"
                                 class="nav-link @if (Request::segment(2) == 'dashboard' ||
@@ -1113,6 +1113,27 @@ document.addEventListener('DOMContentLoaded', function () {
         color: #ffffff !important;
     }
 
+    /* Dark mode navbar search input */
+    body.dark-mode #globalSearchInput,
+    html.dark-mode #globalSearchInput {
+        background-color: #374151 !important;
+        border-color: #4a5568 !important;
+        color: #e0e0e0 !important;
+    }
+
+    body.dark-mode #globalSearchBtn,
+    html.dark-mode #globalSearchBtn {
+        background-color: #374151 !important;
+        border-color: #4a5568 !important;
+        color: #9ca3af !important;
+    }
+
+    body.dark-mode #globalSearchResults,
+    html.dark-mode #globalSearchResults {
+        background-color: #2d3748 !important;
+        border-color: #4a5568 !important;
+    }
+
     /* Dark mode sidebar adjustments */
     body.dark-mode .main-sidebar,
     html.dark-mode .main-sidebar {
@@ -1281,6 +1302,73 @@ document.addEventListener('DOMContentLoaded', function () {
     body.dark-mode .page-item.active .page-link {
         background-color: #a02626;
         border-color: #a02626;
+    }
+
+    /* Dark mode modern tiles */
+    body.dark-mode .modern-tile,
+    html.dark-mode .modern-tile {
+        background-color: #2d3748 !important;
+        border-color: #4a5568 !important;
+    }
+
+    body.dark-mode .modern-tile-label,
+    html.dark-mode .modern-tile-label {
+        color: #9ca3af !important;
+    }
+
+    body.dark-mode .modern-tile-value,
+    html.dark-mode .modern-tile-value {
+        color: #f1f5f9 !important;
+    }
+
+    body.dark-mode .modern-tile-icon,
+    html.dark-mode .modern-tile-icon {
+        background-color: rgba(255,255,255,0.1) !important;
+    }
+
+    body.dark-mode .modern-tile-link,
+    html.dark-mode .modern-tile-link {
+        opacity: 0.9;
+    }
+
+    /* Dark mode modern cards */
+    body.dark-mode .modern-card,
+    html.dark-mode .modern-card {
+        background-color: #2d3748 !important;
+        border-color: #4a5568 !important;
+    }
+
+    body.dark-mode .modern-card h3,
+    html.dark-mode .modern-card h3 {
+        color: #f1f5f9 !important;
+    }
+
+    body.dark-mode .modern-card p,
+    html.dark-mode .modern-card p {
+        color: #9ca3af !important;
+    }
+
+    body.dark-mode .modern-card-btn,
+    html.dark-mode .modern-card-btn {
+        background-color: rgba(255,255,255,0.1) !important;
+        color: #e0e0e0 !important;
+    }
+
+    /* Dark mode chart tab pills */
+    body.dark-mode .chart-tab-pills,
+    html.dark-mode .chart-tab-pills {
+        background-color: #1a202c !important;
+    }
+
+    body.dark-mode .chart-tab-pill,
+    html.dark-mode .chart-tab-pill {
+        color: #9ca3af !important;
+    }
+
+    body.dark-mode .chart-tab-pill.active,
+    html.dark-mode .chart-tab-pill.active {
+        background-color: #374151 !important;
+        color: #f1f5f9 !important;
     }
 
     /* Dark mode toggle button styling */

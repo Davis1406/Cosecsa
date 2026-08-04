@@ -4,11 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>{{ $year }} Examination Availability | COSECSA</title>
-    <link rel="stylesheet" href="{{ url('public/plugins/fontawesome-free/css/all.min.css') }}">
-    <link rel="stylesheet" href="{{ url('public/dist/css/adminlte.min.css') }}">
-    <link rel="stylesheet" href="{{ url('public/plugins/select2/css/select2.min.css') }}">
-    <link rel="stylesheet" href="{{ url('public/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}">
-    <link rel="icon" href="{{ url('public/dist/img/Cosecsa_Logo.png') }}">
+    <link rel="stylesheet" href="{{ asset('plugins/fontawesome-free/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('dist/css/adminlte.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('plugins/select2/css/select2.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}">
+    <link rel="icon" href="{{ asset('dist/img/Cosecsa_Logo.png') }}">
     <style>
         body.availability-page {
             min-height: 100vh;
@@ -181,7 +181,7 @@
 
         {{-- Header --}}
         <div class="card-header">
-            <img src="{{ url('public/dist/img/Cosecsa_Logo.png') }}" alt="COSECSA Logo">
+            <img src="{{ asset('dist/img/Cosecsa_Logo.png') }}" alt="COSECSA Logo">
             <h4>COSECSA {{ $year }} Examination</h4>
             <p>Examiner Availability Confirmation</p>
         </div>
@@ -367,9 +367,9 @@
 </div>
 
 {{-- JS --}}
-<script src="{{ url('public/plugins/jquery/jquery.min.js') }}"></script>
-<script src="{{ url('public/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ url('public/plugins/select2/js/select2.full.min.js') }}"></script>
+<script src="{{ asset('plugins/jquery/jquery.min.js') }}"></script>
+<script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ asset('plugins/select2/js/select2.full.min.js') }}"></script>
 <script>
 $(function () {
 

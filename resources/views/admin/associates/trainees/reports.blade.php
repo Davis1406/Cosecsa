@@ -13,6 +13,7 @@
     .kpi-gold   { background: linear-gradient(135deg,#b8860b,#8a6408); }
     .kpi-green  { background: linear-gradient(135deg,#2a7a3b,#1d5629); }
     .kpi-slate  { background: linear-gradient(135deg,#4a5568,#2d3748); }
+    .kpi-purple { background: linear-gradient(135deg,#6b2d8b,#4a1a6b); }
     .chart-card { background:#fff; border-radius:8px; box-shadow:0 1px 8px rgba(0,0,0,.08); padding:16px; margin-bottom:18px; }
     .chart-card h6 { font-weight:700; font-size:.82rem; text-transform:uppercase; letter-spacing:.5px; color:#555; margin-bottom:12px; border-bottom:2px solid #a02626; padding-bottom:6px; }
     #error-banner { display:none; }
@@ -41,11 +42,12 @@
 
         {{-- Row 1: KPIs --}}
         <div class="row mb-2" id="kpi-row">
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-red"   data-filter="all"     title="Show all trainees"><i class="fas fa-users kpi-icon"></i><div><div class="kpi-val" id="kpi-total">…</div><div class="kpi-lbl">Total Trainees</div></div></div></div>
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-green" data-filter="active"   title="Show active trainees"><i class="fas fa-user-check kpi-icon"></i><div><div class="kpi-val" id="kpi-active">…</div><div class="kpi-lbl">Active</div></div></div></div>
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-slate" data-filter="inactive" title="Show inactive trainees"><i class="fas fa-user-slash kpi-icon"></i><div><div class="kpi-val" id="kpi-inactive">…</div><div class="kpi-lbl">Inactive</div></div></div></div>
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-blue"  data-filter="male"     title="Show male trainees"><i class="fas fa-mars kpi-icon"></i><div><div class="kpi-val" id="kpi-male">…</div><div class="kpi-lbl">Male</div></div></div></div>
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-gold"  data-filter="female"   title="Show female trainees"><i class="fas fa-venus kpi-icon"></i><div><div class="kpi-val" id="kpi-female">…</div><div class="kpi-lbl">Female</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-red"    data-filter="all"        title="Show all trainees"><i class="fas fa-users kpi-icon"></i><div><div class="kpi-val" id="kpi-total">…</div><div class="kpi-lbl">Total Trainees</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-green"  data-filter="active"     title="Show active trainees"><i class="fas fa-user-check kpi-icon"></i><div><div class="kpi-val" id="kpi-active">…</div><div class="kpi-lbl">Active</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-slate"  data-filter="inactive"   title="Show inactive trainees"><i class="fas fa-user-slash kpi-icon"></i><div><div class="kpi-val" id="kpi-inactive">…</div><div class="kpi-lbl">Inactive</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-blue"   data-filter="male"       title="Show male trainees"><i class="fas fa-mars kpi-icon"></i><div><div class="kpi-val" id="kpi-male">…</div><div class="kpi-lbl">Male</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-gold"   data-filter="female"     title="Show female trainees"><i class="fas fa-venus kpi-icon"></i><div><div class="kpi-val" id="kpi-female">…</div><div class="kpi-lbl">Female</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-purple" data-filter="cumulative" title="Fellows by exam + all trainees"><i class="fas fa-layer-group kpi-icon"></i><div><div class="kpi-val" id="kpi-cumulative">…</div><div class="kpi-lbl">Cumulative</div></div></div></div>
         </div>
 
         {{-- Drill-down panel (hidden until a tile is clicked) --}}
@@ -144,7 +146,7 @@
                     <h6><i class="fas fa-table mr-1"></i> Country Summary</h6>
                     <table id="countryTable" class="table table-sm table-bordered table-striped" style="font-size:.88rem;">
                         <thead class="thead-dark">
-                            <tr><th>#</th><th>Country</th><th>Total</th><th>Male</th><th>Female</th><th>Active</th></tr>
+                            <tr><th>#</th><th>Country</th><th>Total</th><th>Male</th><th>Female</th><th>Active</th><th>Fellows by Exam</th><th>Cumulative</th></tr>
                         </thead>
                         <tbody id="country-tbody"></tbody>
                     </table>
@@ -206,7 +208,8 @@ $(document).ready(function () {
 
     var filterLabels = {
         all: 'All Trainees', active: 'Active Trainees',
-        inactive: 'Inactive Trainees', male: 'Male Trainees', female: 'Female Trainees'
+        inactive: 'Inactive Trainees', male: 'Male Trainees', female: 'Female Trainees',
+        cumulative: 'Cumulative (Fellows by Exam + Trainees)'
     };
 
     function loadDrilldown(filter) {
@@ -287,11 +290,12 @@ $(document).ready(function () {
         .then(function (r) { return r.json(); })
         .then(function (d) {
             // KPIs
-            document.getElementById('kpi-total').textContent    = d.total.toLocaleString();
-            document.getElementById('kpi-active').textContent   = d.active.toLocaleString();
-            document.getElementById('kpi-inactive').textContent = d.inactive.toLocaleString();
-            document.getElementById('kpi-male').textContent     = d.male.toLocaleString();
-            document.getElementById('kpi-female').textContent   = d.female.toLocaleString();
+            document.getElementById('kpi-total').textContent      = d.total.toLocaleString();
+            document.getElementById('kpi-active').textContent     = d.active.toLocaleString();
+            document.getElementById('kpi-inactive').textContent   = d.inactive.toLocaleString();
+            document.getElementById('kpi-male').textContent       = d.male.toLocaleString();
+            document.getElementById('kpi-female').textContent     = d.female.toLocaleString();
+            document.getElementById('kpi-cumulative').textContent = d.cumulative.toLocaleString();
 
             var lbl = function (arr) { return arr.map(function (i) { return i.label; }); };
             var val = function (arr) { return arr.map(function (i) { return i.value; }); };
@@ -307,7 +311,7 @@ $(document).ready(function () {
             // Country table with DataTable + export
             var tbody = '';
             d.countryTable.forEach(function (r, i) {
-                tbody += '<tr><td>' + (i+1) + '</td><td>' + r.country_name + '</td><td><strong>' + r.total + '</strong></td><td>' + r.male + '</td><td>' + r.female + '</td><td>' + r.active + '</td></tr>';
+                tbody += '<tr><td>' + (i+1) + '</td><td>' + r.country_name + '</td><td>' + r.total + '</td><td>' + r.male + '</td><td>' + r.female + '</td><td>' + r.active + '</td><td>' + (r.fellows_by_exam||0) + '</td><td><strong>' + (r.cumulative||0) + '</strong></td></tr>';
             });
             document.getElementById('country-tbody').innerHTML = tbody;
 
