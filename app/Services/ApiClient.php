@@ -55,7 +55,13 @@ class ApiClient
         $request = Http::withToken($this->token)->timeout(60)->asMultipart();
 
         foreach ($data as $key => $value) {
-            if ($value !== null) {
+            if ($value === null) continue;
+
+            if (is_array($value)) {
+                // Recursively attach nested arrays using bracket notation
+                // e.g. examination_years[] or year_programme[2024][] or year_role[2024][Specialty]
+                $request = $this->attachArray($request, $key, $value);
+            } else {
                 $request = $request->attach($key, (string) $value);
             }
         }
@@ -93,6 +99,23 @@ class ApiClient
     public function postPublic(string $path, array $data = []): Response
     {
         return Http::timeout(30)->post($this->publicUrl($path), $data);
+    }
+
+    // Recursively attach a (possibly nested) array as multipart fields.
+    // Scalar leaves become individual attach() calls with bracket-notation keys,
+    // preserving the exact same structure PHP's $_POST would reconstruct on the
+    // receiving end (e.g. year_role[2024][General Surgery] => 'Examiner').
+    private function attachArray($request, string $key, array $value)
+    {
+        foreach ($value as $subKey => $subValue) {
+            $fullKey = "{$key}[{$subKey}]";
+            if (is_array($subValue)) {
+                $request = $this->attachArray($request, $fullKey, $subValue);
+            } elseif ($subValue !== null) {
+                $request = $request->attach($fullKey, (string) $subValue);
+            }
+        }
+        return $request;
     }
 
     private function publicUrl(string $path): string
