@@ -129,7 +129,7 @@
             </div>
           </div>
 
-          <button type="submit" class="btn btn-primary">
+          <button type="submit" class="btn btn-primary mb-4">
             <i class="fas fa-save mr-1"></i> Save Transcript
           </button>
         </form>

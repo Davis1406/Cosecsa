@@ -465,3 +465,207 @@ body.dark-mode #globalSearchResults .gs-empty,
 body.dark-mode #globalSearchResults .gs-loading {
     color: #94a3b8 !important;
 }
+/* ── Dark-mode form controls ─────────────────────────────────────────────── */
+/* AdminLTE dark mode leaves inputs near-black on near-black — fix contrast. */
+body.dark-mode .form-control,
+body.dark-mode .custom-select,
+body.dark-mode select.form-control,
+body.dark-mode textarea.form-control,
+body.dark-mode input.form-control {
+    background-color: #2b3040 !important;
+    border-color: #4a5568 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .form-control::placeholder {
+    color: #718096 !important;
+    opacity: 1 !important;
+}
+
+body.dark-mode .form-control:focus,
+body.dark-mode select.form-control:focus,
+body.dark-mode textarea.form-control:focus {
+    background-color: #323849 !important;
+    border-color: #a02626 !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 0 0 0.2rem rgba(160, 38, 38, 0.25) !important;
+}
+
+body.dark-mode .form-control:disabled,
+body.dark-mode .form-control[readonly] {
+    background-color: #1e2330 !important;
+    color: #94a3b8 !important;
+    border-color: #374151 !important;
+}
+
+/* Select dropdowns */
+body.dark-mode select.form-control option,
+body.dark-mode .custom-select option {
+    background-color: #2b3040 !important;
+    color: #e2e8f0 !important;
+}
+
+/* Input groups (e.g. file upload Browse button row) */
+body.dark-mode .input-group-text {
+    background-color: #374151 !important;
+    border-color: #4a5568 !important;
+    color: #e2e8f0 !important;
+}
+
+/* Custom file input label */
+body.dark-mode .custom-file-label {
+    background-color: #2b3040 !important;
+    border-color: #4a5568 !important;
+    color: #e2e8f0 !important;
+}
+body.dark-mode .custom-file-label::after {
+    background-color: #374151 !important;
+    border-color: #4a5568 !important;
+    color: #e2e8f0 !important;
+}
+
+/* Labels */
+body.dark-mode label,
+body.dark-mode .form-group label {
+    color: #cbd5e0 !important;
+}
+
+/* Card and content area background in dark mode */
+body.dark-mode .card {
+    background-color: #1e2330 !important;
+    border-color: #2d3748 !important;
+}
+body.dark-mode .card-header {
+    background-color: #252c3b !important;
+    border-color: #2d3748 !important;
+    color: #e2e8f0 !important;
+}
+body.dark-mode .card-body {
+    color: #e2e8f0 !important;
+}
+
+/* Wizard step progress bar (multi-step form) */
+body.dark-mode .content-wrapper {
+    background-color: #141921 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ms2 — Modern Multi-Step Form  (shared by all edit/add wizards)
+   Dark-first; light-mode overrides at bottom.
+═══════════════════════════════════════════════════════════════════ */
+.ms2-wrap { padding: 28px 32px 48px; }
+.ms2-page-title { font-size: 1.55rem; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; line-height: 1.25; }
+.ms2-page-sub   { font-size: .875rem; color: #6b7280; margin-bottom: 24px; }
+
+.ms2-card { background: #1e2330; border: 1px solid #2d3748; border-radius: 12px; overflow: hidden; }
+
+/* Stepper */
+.ms2-stepper { display: flex; align-items: flex-start; padding: 28px 48px 22px; border-bottom: 1px solid #2d3748; }
+.ms2-step    { display: flex; flex-direction: column; align-items: center; position: relative; z-index: 1; }
+.ms2-step-circle {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: #2d3748; border: 2px solid #374151; color: #6b7280;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .9rem; font-weight: 700;
+    transition: background .25s, border-color .25s, color .25s;
+}
+.ms2-step.active .ms2-step-circle { background: #a02626; border-color: #a02626; color: #fff; box-shadow: 0 0 0 4px rgba(160,38,38,.2); }
+.ms2-step.done   .ms2-step-circle { background: #a02626; border-color: #a02626; color: #fff; }
+.ms2-step-label  { font-size: .7rem; font-weight: 600; letter-spacing: .4px; color: #4a5568; margin-top: 8px; text-align: center; white-space: nowrap; transition: color .25s; }
+.ms2-step.active .ms2-step-label { color: #a02626; }
+.ms2-step.done   .ms2-step-label { color: #94a3b8; }
+.ms2-line { flex: 1; height: 2px; background: #2d3748; margin-top: 17px; transition: background .3s; }
+.ms2-line.done   { background: #a02626; }
+
+/* Body */
+.ms2-body { padding: 32px 48px 8px; }
+.ms2-label { display: block; font-size: .67rem; font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; color: #8892a4; margin-bottom: 7px; }
+.ms2-label .req  { color: #e53e3e; margin-left: 2px; }
+.ms2-label .hint { font-size: .65rem; font-weight: 400; letter-spacing: 0; text-transform: none; color: #4a5568; margin-left: 6px; }
+
+.ms2-input {
+    display: block; width: 100%; height: 44px;
+    background: #252d3b; border: 1px solid #374151; border-radius: 7px;
+    color: #e2e8f0; font-size: .9rem; padding: 0 14px;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+    -webkit-appearance: none; appearance: none;
+}
+.ms2-input::placeholder { color: #3d4a5c; }
+.ms2-input:focus { outline: none; border-color: #a02626; background: #2a3349; box-shadow: 0 0 0 3px rgba(160,38,38,.18); color: #f1f5f9; }
+.ms2-input[disabled], .ms2-input[readonly] { background: #1a1f2e; color: #3d4a5c; cursor: not-allowed; }
+textarea.ms2-input { height: auto; min-height: 90px; padding: 10px 14px; resize: vertical; }
+select.ms2-input {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238892a4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer;
+}
+select.ms2-input option { background: #252d3b; color: #e2e8f0; }
+.ms2-input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(.5); cursor: pointer; }
+
+.ms2-input-group { position: relative; }
+.ms2-input-group .ms2-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: #4a5568; font-size: .82rem; pointer-events: none; }
+.ms2-input-group .ms2-input { padding-left: 36px; }
+
+.ms2-file-row { display: flex; height: 44px; background: #252d3b; border: 1px solid #374151; border-radius: 7px; overflow: hidden; }
+.ms2-file-row label.ms2-file-name { flex: 1; display: flex; align-items: center; gap: 8px; padding: 0 14px; color: #4a5568; font-size: .875rem; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+.ms2-file-row label.ms2-file-btn  { flex-shrink: 0; display: flex; align-items: center; padding: 0 18px; background: #374151; border-left: 1px solid #4a5568; color: #e2e8f0; font-size: .8rem; font-weight: 700; letter-spacing: .4px; cursor: pointer; transition: background .2s; margin: 0; }
+.ms2-file-row label.ms2-file-btn:hover { background: #4a5568; }
+.ms2-file-row input[type="file"] { display: none; }
+
+.ms2-row  { display: flex; gap: 20px; margin-bottom: 22px; }
+.ms2-col  { flex: 1; min-width: 0; }
+.ms2-col-3 { flex: 0 0 calc(33.333% - 14px); min-width: 0; }
+.ms2-hint-text { font-size: .72rem; color: #4a5568; margin-top: 5px; display: block; }
+
+.ms2-fieldset { display: none; }
+.ms2-fieldset.active { display: block; }
+
+/* Footer */
+.ms2-footer { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 20px 48px 28px; border-top: 1px solid #2d3748; margin-top: 10px; }
+.ms2-btn-back { background: #2d3748; color: #cbd5e0; border: none; border-radius: 7px; padding: 0 28px; height: 42px; font-size: .82rem; font-weight: 700; letter-spacing: .6px; cursor: pointer; transition: background .2s; }
+.ms2-btn-back:hover { background: #374151; color: #f1f5f9; }
+.ms2-btn-next, .ms2-btn-submit { background: #a02626; color: #fff; border: none; border-radius: 7px; padding: 0 28px; height: 42px; font-size: .82rem; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background .2s, box-shadow .2s; }
+.ms2-btn-next:hover, .ms2-btn-submit:hover { background: #870f0f; box-shadow: 0 4px 16px rgba(160,38,38,.45); }
+
+/* Light-mode overrides */
+body:not(.dark-mode) .ms2-page-title { color: #141d23; }
+body:not(.dark-mode) .ms2-page-sub   { color: #6b7280; }
+body:not(.dark-mode) .ms2-card       { background: #ffffff; border-color: #e0e9f2; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+body:not(.dark-mode) .ms2-stepper    { border-bottom-color: #e0e9f2; }
+body:not(.dark-mode) .ms2-step-circle { background: #f1f5f9; border-color: #e0e9f2; color: #9ca3af; }
+body:not(.dark-mode) .ms2-step.active .ms2-step-circle,
+body:not(.dark-mode) .ms2-step.done  .ms2-step-circle { background: #a02626; border-color: #a02626; color: #fff; }
+body:not(.dark-mode) .ms2-step-label      { color: #adb5bd; }
+body:not(.dark-mode) .ms2-step.done  .ms2-step-label { color: #6b7280; }
+body:not(.dark-mode) .ms2-line            { background: #e0e9f2; }
+body:not(.dark-mode) .ms2-line.done       { background: #a02626; }
+body:not(.dark-mode) .ms2-label           { color: #6b7280; }
+body:not(.dark-mode) .ms2-label .hint     { color: #adb5bd; }
+body:not(.dark-mode) .ms2-input           { background: #f8fafc; border-color: #dde3ec; color: #141d23; }
+body:not(.dark-mode) .ms2-input::placeholder { color: #b0bcc8; }
+body:not(.dark-mode) .ms2-input:focus     { background: #fff; border-color: #a02626; box-shadow: 0 0 0 3px rgba(160,38,38,.12); color: #141d23; }
+body:not(.dark-mode) select.ms2-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E"); }
+body:not(.dark-mode) select.ms2-input option { background: #fff; color: #141d23; }
+body:not(.dark-mode) .ms2-input-group .ms2-icon { color: #9ca3af; }
+body:not(.dark-mode) .ms2-file-row        { background: #f8fafc; border-color: #dde3ec; }
+body:not(.dark-mode) .ms2-file-row label.ms2-file-name { color: #9ca3af; }
+body:not(.dark-mode) .ms2-file-row label.ms2-file-btn  { background: #e0e9f2; border-left-color: #dde3ec; color: #374151; }
+body:not(.dark-mode) .ms2-file-row label.ms2-file-btn:hover { background: #d1dce8; }
+body:not(.dark-mode) .ms2-footer          { border-top-color: #e0e9f2; }
+body:not(.dark-mode) .ms2-btn-back        { background: #f1f5f9; color: #374151; border: 1px solid #dde3ec; }
+body:not(.dark-mode) .ms2-btn-back:hover  { background: #e0e9f2; }
+body:not(.dark-mode) .ms2-hint-text       { color: #9ca3af; }
+body:not(.dark-mode) .ms2-input[type="date"]::-webkit-calendar-picker-indicator { filter: none; }
+
+@media (max-width: 900px) {
+    .ms2-stepper { padding: 20px 24px 16px; }
+    .ms2-step-label { display: none; }
+    .ms2-body, .ms2-footer { padding-left: 24px; padding-right: 24px; }
+}
+@media (max-width: 640px) {
+    .ms2-wrap { padding: 16px 12px 32px; }
+    .ms2-row  { flex-direction: column; gap: 0; margin-bottom: 0; }
+    .ms2-col, .ms2-col-3 { flex: 1 1 100%; margin-bottom: 18px; }
+    .ms2-body { padding: 20px 16px 4px; }
+    .ms2-footer { padding: 16px; flex-wrap: wrap; }
+    .ms2-btn-back, .ms2-btn-next, .ms2-btn-submit { flex: 1; justify-content: center; }
+}
