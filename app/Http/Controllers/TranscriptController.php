@@ -46,11 +46,12 @@ class TranscriptController extends Controller
         $data = $response->object();
 
         return view('admin.transcripts.edit', [
-            'header_title' => 'Issue Transcript',
-            'record'       => $data->record,
-            'courses'      => collect($data->courses ?? []),
-            'templates'    => collect($data->templates ?? []),
-            'userId'       => $userId,
+            'header_title'  => 'Issue Transcript',
+            'record'        => $data->record,
+            'recordExists'  => $data->record_exists ?? false,
+            'courses'       => collect($data->courses ?? []),
+            'templates'     => collect($data->templates ?? []),
+            'userId'        => $userId,
         ]);
     }
 

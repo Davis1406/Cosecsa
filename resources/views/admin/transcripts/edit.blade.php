@@ -12,7 +12,7 @@
             <a href="{{ url('admin/transcripts') }}" class="btn btn-secondary">
               <i class="fas fa-arrow-left mr-1"></i> Back to Search
             </a>
-            @if($record->exists)
+            @if($recordExists)
               <a href="{{ url('admin/transcripts/pdf/'.$userId) }}" target="_blank" class="btn btn-success">
                 <i class="fas fa-file-pdf mr-1"></i> View / Download PDF
               </a>
@@ -26,7 +26,7 @@
       <div class="container-fluid">
         @include('_message')
 
-        @if(!$record->exists)
+        @if(!$recordExists)
           <div class="alert alert-info" style="font-size:.85rem;">
             <i class="fas fa-info-circle mr-1"></i> Candidate details pre-filled from their existing record where available,
             and the course table below pre-filled with the standard MCS/FCS course list — review, edit, add, or remove
