@@ -36,7 +36,7 @@
                     {{-- Avatar --}}
                     <div class="flex-shrink-0">
                         <img src="{{ !empty($examiner->passport_image)
-                                    ? asset('storage/' . $examiner->passport_image)
+                                    ? \App\Support\ApiAsset::url($examiner->passport_image)
                                     : asset('/public/dist/img/user.png') }}"
                              alt="{{ $examiner->examiner_name }}"
                              class="profile-photo">
@@ -198,7 +198,7 @@
                             <div class="mt-1 mb-3">
                                 @if(!empty($examiner->curriculum_vitae))
                                     @php $cvName = basename($examiner->curriculum_vitae); @endphp
-                                    <a href="{{ asset('storage/' . $examiner->curriculum_vitae) }}"
+                                    <a href="{{ \App\Support\ApiAsset::url($examiner->curriculum_vitae) }}"
                                        target="_blank"
                                        class="btn btn-sm btn-outline-danger btn-block">
                                         <i class="fas fa-download mr-1"></i> {{ $cvName }}
@@ -398,7 +398,7 @@
                         </div>
                         <div class="mb-3">
                             <img src="{{ !empty($examiner->passport_image)
-                                        ? asset('storage/' . $examiner->passport_image)
+                                        ? \App\Support\ApiAsset::url($examiner->passport_image)
                                         : asset('/public/dist/img/user.png') }}"
                                  alt="{{ $examiner->examiner_name }}"
                                  class="rounded-circle"

@@ -106,7 +106,7 @@
                         <div class="ms2-col" style="flex:1 1 100%;">
                             <label class="ms2-label">Profile Photo
                                 @if($fellow->profile_image)
-                                    <img src="{{ asset('storage/app/public/'.$fellow->profile_image) }}"
+                                    <img src="{{ \App\Support\ApiAsset::url($fellow->profile_image) }}"
                                          style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid #a02626;vertical-align:middle;margin-left:8px;">
                                 @endif
                             </label>

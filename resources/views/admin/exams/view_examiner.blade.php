@@ -300,7 +300,7 @@
                             <div class="mt-1 mb-3">
                                 @if($examiner->curriculum_vitae)
                                     @php $cvName = basename($examiner->curriculum_vitae); @endphp
-                                    <a href="{{ asset('storage/' . $examiner->curriculum_vitae) }}"
+                                    <a href="{{ \App\Support\ApiAsset::url($examiner->curriculum_vitae) }}"
                                        target="_blank"
                                        class="btn btn-sm btn-outline-danger btn-block">
                                         <i class="fas fa-download mr-1"></i> {{ $cvName }}
@@ -341,7 +341,7 @@
                                 @endphp
                                 <div class="d-flex align-items-center mb-1" style="gap:.4rem;">
                                     <i class="{{ $docIcon }}" style="font-size:1rem;flex-shrink:0;"></i>
-                                    <a href="{{ asset('storage/' . $doc->file_path) }}"
+                                    <a href="{{ \App\Support\ApiAsset::url($doc->file_path) }}"
                                        target="_blank"
                                        class="text-truncate flex-grow-1"
                                        style="font-size:.8rem;color:#333;max-width:160px;"

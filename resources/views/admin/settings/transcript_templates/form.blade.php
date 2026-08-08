@@ -43,28 +43,28 @@
                 <div class="form-group col-md-3">
                   <label>Logo <small class="text-muted">(header)</small></label>
                   @if($template && $template->logo_path)
-                    <div class="mb-1"><img src="{{ asset('storage/'.$template->logo_path) }}" style="height:50px;"></div>
+                    <div class="mb-1"><img src="{{ \App\Support\ApiAsset::url($template->logo_path) }}" style="height:50px;"></div>
                   @endif
                   <input type="file" name="logo_path" class="form-control-file" accept="image/*">
                 </div>
                 <div class="form-group col-md-3">
                   <label>Watermark <small class="text-muted">(faded background)</small></label>
                   @if($template && $template->watermark_path)
-                    <div class="mb-1"><img src="{{ asset('storage/'.$template->watermark_path) }}" style="height:50px;"></div>
+                    <div class="mb-1"><img src="{{ \App\Support\ApiAsset::url($template->watermark_path) }}" style="height:50px;"></div>
                   @endif
                   <input type="file" name="watermark_path" class="form-control-file" accept="image/*">
                 </div>
                 <div class="form-group col-md-3">
                   <label>Signature</label>
                   @if($template && $template->signature_path)
-                    <div class="mb-1"><img src="{{ asset('storage/'.$template->signature_path) }}" style="height:50px;"></div>
+                    <div class="mb-1"><img src="{{ \App\Support\ApiAsset::url($template->signature_path) }}" style="height:50px;"></div>
                   @endif
                   <input type="file" name="signature_path" class="form-control-file" accept="image/*">
                 </div>
                 <div class="form-group col-md-3">
                   <label>Stamp / Seal</label>
                   @if($template && $template->stamp_path)
-                    <div class="mb-1"><img src="{{ asset('storage/'.$template->stamp_path) }}" style="height:50px;"></div>
+                    <div class="mb-1"><img src="{{ \App\Support\ApiAsset::url($template->stamp_path) }}" style="height:50px;"></div>
                   @endif
                   <input type="file" name="stamp_path" class="form-control-file" accept="image/*">
                 </div>

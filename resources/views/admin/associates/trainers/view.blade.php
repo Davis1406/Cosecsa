@@ -32,7 +32,7 @@
                     @if ($trainer)
                     <div class="col-md-3">
                         <div class="text-center">
-                            <img src="{{ asset('storage/' . $trainer->profile_image) }}" alt="Profile Image" class="img-fluid img-thumbnail">
+                            <img src="{{ \App\Support\ApiAsset::url($trainer->profile_image) }}" alt="Profile Image" class="img-fluid img-thumbnail">
                             <h5 class="mt-2">{{ $trainer->name }}</h5>
                         </div>
                     </div>

@@ -57,7 +57,7 @@
                         <label class="ms2-label">Profile Photo</label>
                         @if(!empty($getRecord->profile_image))
                             <div style="margin-bottom:8px;">
-                                <img src="{{ asset('storage/' . $getRecord->profile_image) }}"
+                                <img src="{{ \App\Support\ApiAsset::url($getRecord->profile_image) }}"
                                      style="width:56px;height:56px;object-fit:cover;border-radius:50%;border:2px solid #a02626;">
                             </div>
                         @endif

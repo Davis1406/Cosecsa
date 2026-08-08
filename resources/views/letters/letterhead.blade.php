@@ -44,14 +44,14 @@
                 <div class="form-group col-md-6">
                   <label>Logo</label><br>
                   @if($settings->logo_path)
-                    <img src="{{ asset('storage/'.$settings->logo_path) }}" style="height:70px;display:block;margin-bottom:8px;">
+                    <img src="{{ \App\Support\ApiAsset::url($settings->logo_path) }}" style="height:70px;display:block;margin-bottom:8px;">
                   @endif
                   <input type="file" name="logo" class="form-control-file" accept="image/*">
                 </div>
                 <div class="form-group col-md-6">
                   <label>Watermark</label><br>
                   @if($settings->watermark_path)
-                    <img src="{{ asset('storage/'.$settings->watermark_path) }}" style="height:70px;display:block;margin-bottom:8px;">
+                    <img src="{{ \App\Support\ApiAsset::url($settings->watermark_path) }}" style="height:70px;display:block;margin-bottom:8px;">
                   @endif
                   <input type="file" name="watermark" class="form-control-file" accept="image/*">
                 </div>

@@ -102,7 +102,7 @@ body.dark-mode .info-text, body.dark-mode .field-val { color:#e0e0e0; }
                         <div class="card" style="border-top:3px solid #a02626;">
                             <div class="card-body text-center pt-4 pb-2">
                                 @if(!empty($countryRep->profile_image))
-                                    <img src="{{ asset('storage/' . $countryRep->profile_image) }}"
+                                    <img src="{{ \App\Support\ApiAsset::url($countryRep->profile_image) }}"
                                          alt="Profile" class="rep-avatar mb-2">
                                 @else
                                     <div class="rep-avatar d-flex align-items-center justify-content-center mx-auto mb-2"
