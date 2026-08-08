@@ -158,13 +158,18 @@ class LetterController extends Controller
     public function dispatch(Request $request, $id)
     {
         $user = Auth::user();
-        $response = $this->api->post("letters/{$id}/dispatch", array_merge(
-            $request->except('_token'),
+        $fields = array_merge(
+            $request->except('_token', 'attachments'),
             [
                 'sender_name'  => $user?->name,
                 'sender_email' => $user?->email,
             ]
-        ));
+        );
+
+        $attachments = $request->file('attachments', []);
+        $response = $attachments
+            ? $this->api->postWithFile("letters/{$id}/dispatch", $fields, ['attachments' => $attachments])
+            : $this->api->post("letters/{$id}/dispatch", $fields);
 
         if ($response->failed()) {
             return back()->with('error', $response->json('message') ?? 'Dispatch failed.');

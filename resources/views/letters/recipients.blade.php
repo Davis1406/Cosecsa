@@ -112,7 +112,7 @@
           </div>
         </div>
 
-        <form method="POST" action="{{ url('admin/letters/'.$template->id.'/dispatch') }}" id="dispatchForm">
+        <form method="POST" action="{{ url('admin/letters/'.$template->id.'/dispatch') }}" id="dispatchForm" enctype="multipart/form-data">
           @csrf
           @foreach($selectedCountryIds as $cid)
             <input type="hidden" name="country_id[]" value="{{ $cid }}">
@@ -125,11 +125,17 @@
           <input type="hidden" name="unsent_only" value="{{ !empty($filters['unsent_only']) ? '1' : '' }}">
 
           <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <h3 class="card-title">Recipients ({{ $recipients->count() }})</h3>
-              <div>
-                <label class="mr-2 mb-0" style="font-size:.85rem;">Letter date</label>
-                <input type="date" name="letter_date" class="form-control d-inline-block" style="width:170px;" value="{{ now()->format('Y-m-d') }}">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="gap:.5rem;">
+              <h3 class="card-title mb-0">Recipients ({{ $recipients->count() }})</h3>
+              <div class="d-flex align-items-center flex-wrap" style="gap:.75rem;">
+                <div>
+                  <label class="mr-2 mb-0" style="font-size:.85rem;">Attach extra file(s)</label>
+                  <input type="file" name="attachments[]" class="d-inline-block" multiple style="font-size:.82rem;">
+                </div>
+                <div>
+                  <label class="mr-2 mb-0" style="font-size:.85rem;">Letter date</label>
+                  <input type="date" name="letter_date" class="form-control d-inline-block" style="width:170px;" value="{{ now()->format('Y-m-d') }}">
+                </div>
               </div>
             </div>
             <div class="card-body p-0">
