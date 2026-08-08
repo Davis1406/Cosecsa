@@ -1,169 +1,187 @@
 @extends('layout.app')
-
 @section('content')
-<div class="wrapper">
-    <div class="content-wrapper">
-        <section class="content">
-            <section class="multi_step_form">
-                <form id="msform" method="POST" action="{{ url('admin/associates/members/edit/' . $member->members_id) }}" enctype="multipart/form-data">
-                    {{ csrf_field() }}
-                    
-                    <div class="tittle">
-                        <h2>Edit Member</h2>
+<div class="content-wrapper">
+<div class="ms2-wrap">
+
+    <div class="ms2-page-title">Edit Member</div>
+    <div class="ms2-page-sub">Update personal information and membership details.</div>
+
+    <div class="ms2-card">
+
+        {{-- ── Stepper ──────────────────────────────────────────── --}}
+        <div class="ms2-stepper">
+            <div class="ms2-step active" id="step-1">
+                <div class="ms2-step-circle">1</div>
+                <div class="ms2-step-label">Personal Information</div>
+            </div>
+            <div class="ms2-line" id="line-1-2"></div>
+            <div class="ms2-step" id="step-2">
+                <div class="ms2-step-circle">2</div>
+                <div class="ms2-step-label">Additional Details</div>
+            </div>
+        </div>
+
+        <form id="ms2form" method="POST"
+              action="{{ url('admin/associates/members/edit/' . $member->members_id) }}"
+              enctype="multipart/form-data">
+            @csrf
+
+            {{-- ══ Step 1: Personal Information ══════════════════ --}}
+            <div class="ms2-fieldset active" id="fieldset-1">
+                <div class="ms2-body">
+
+                    <div class="ms2-row">
+                        <div class="ms2-col">
+                            <label class="ms2-label">First Name <span class="req">*</span></label>
+                            <input type="text" name="firstname" class="ms2-input"
+                                   value="{{ $member->firstname }}" required>
+                        </div>
+                        <div class="ms2-col">
+                            <label class="ms2-label">Middle Name</label>
+                            <input type="text" name="middlename" class="ms2-input"
+                                   value="{{ $member->middlename }}">
+                        </div>
                     </div>
-                    <ul id="progressbar">
-                        <li class="active">Personal Information</li>
-                        <li>Additional Details</li>
-                    </ul>
-                    
-                    <fieldset>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>First Name</label>
-                                <input type="text" name="firstname" class="form-control" value="{{ $member->firstname }}" required>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>Middle Name</label>
-                                <input type="text" name="middlename" class="form-control" value="{{ $member->middlename }}">
+
+                    <div class="ms2-row">
+                        <div class="ms2-col">
+                            <label class="ms2-label">Last Name <span class="req">*</span></label>
+                            <input type="text" name="lastname" class="ms2-input"
+                                   value="{{ $member->lastname }}" required>
+                        </div>
+                        <div class="ms2-col">
+                            <label class="ms2-label">Gender <span class="req">*</span></label>
+                            <select name="gender" class="ms2-input" required>
+                                <option value="Male"   {{ $member->gender=='Male'   ? 'selected':'' }}>Male</option>
+                                <option value="Female" {{ $member->gender=='Female' ? 'selected':'' }}>Female</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="ms2-row">
+                        <div class="ms2-col">
+                            <label class="ms2-label">Email <span class="req">*</span></label>
+                            <div class="ms2-input-group">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" name="personal_email" class="ms2-input"
+                                       value="{{ $member->personal_email }}" required placeholder="member@email.com">
                             </div>
                         </div>
-
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>Last Name</label>
-                                <input type="text" name="lastname" class="form-control" value="{{ $member->lastname }}" required>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>Gender</label>
-                                <input type="text" name="gender" class="form-control" value="{{ $member->gender }}" required>
+                        <div class="ms2-col">
+                            <label class="ms2-label">Password <span style="font-weight:400;opacity:.6;">(blank = keep current)</span></label>
+                            <div class="ms2-input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" name="password" class="ms2-input" placeholder="New password">
                             </div>
                         </div>
+                    </div>
 
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>Email</label>
-                                <input type="email" name="personal_email" class="form-control" value="{{ $member->personal_email }}" required>
-                            </div>
+                    <div class="ms2-row">
+                        <div class="ms2-col">
+                            <label class="ms2-label">Member Type <span class="req">*</span></label>
+                            <select name="category_id" class="ms2-input" required>
+                                <option value="" disabled>Select Type…</option>
+                                <option value="1" {{ $member->category_id == 1 ? 'selected' : '' }}>Member</option>
+                                <option value="2" {{ $member->category_id == 2 ? 'selected' : '' }}>Member Specialist</option>
+                            </select>
+                        </div>
+                        <div class="ms2-col">
+                            <label class="ms2-label">Profile Image</label>
+                            <label class="ms2-file-row" id="photoLabel">
+                                <i class="fas fa-camera"></i>
+                                <span id="photoName">{{ $member->profile_image ? 'Replace photo…' : 'Choose photo…' }}</span>
+                                <input type="file" name="profile_image" accept="image/*" style="display:none"
+                                       onchange="document.getElementById('photoName').textContent = this.files[0]?.name || 'Choose photo…'">
+                            </label>
+                        </div>
+                    </div>
 
-                            <div class="form-group col-md-6">
-                                <label>Password</label>
-                                <input type="password" name="password" class="form-control" placeholder="Leave blank if not changing">
+                </div>
+                <div class="ms2-footer">
+                    <span></span>
+                    <button type="button" class="ms2-btn-next" onclick="goToStep(2)">
+                        Continue <i class="fas fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            {{-- ══ Step 2: Additional Details ══════════════════ --}}
+            <div class="ms2-fieldset" id="fieldset-2">
+                <div class="ms2-body">
+
+                    <div class="ms2-row">
+                        <div class="ms2-col">
+                            <label class="ms2-label">Phone Number</label>
+                            <div class="ms2-input-group">
+                                <i class="fas fa-phone"></i>
+                                <input type="text" name="phone_number" class="ms2-input"
+                                       value="{{ $member->phone_number }}" placeholder="+000 000 000 000">
                             </div>
                         </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group col-md-12">
-                                <label>Member Type</label>
-                                <select name="category_id" class="form-control" required>
-                                    <option value="" disabled>Select Type...</option>
-                                    <option value="1" {{ $member->category_id == 1 ? 'selected' : '' }}>Member</option>
-                                    <option value="2" {{ $member->category_id == 2 ? 'selected' : '' }}>Member Specialist</option>
-                                </select>
-                            </div>
+                        <div class="ms2-col">
+                            <label class="ms2-label">Country <span class="req">*</span></label>
+                            <select name="country_id" class="ms2-input" required>
+                                <option value="">Select Country</option>
+                                @foreach($getCountry as $country)
+                                    <option value="{{ $country->id }}" {{ $member->country_id == $country->id ? 'selected' : '' }}>
+                                        {{ $country->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
+                    </div>
 
-                        <div class="input-group col-md-12">
-                            <div class="custom-file">
-                                <input type="file" class="custom-file-input" id="upload" name="profile_image">
-                                <label class="custom-file-label" for="upload">
-                                    <i class="ion-android-cloud-outline"></i> Upload Profile Image
-                                </label>
-                            </div>
+                    <div class="ms2-row">
+                        <div class="ms2-col">
+                            <label class="ms2-label">Membership Year</label>
+                            <input type="text" name="membership_year" class="ms2-input"
+                                   value="{{ $member->membership_year }}" placeholder="e.g. 2020">
                         </div>
-
-                        <button type="button" class="action-button previous_button">Back</button>
-                        <button type="button" class="next action-button">Continue</button>
-                    </fieldset>
-
-                    <fieldset>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>Phone Number</label>
-                                <input type="text" name="phone_number" class="form-control" value="{{ $member->phone_number }}">
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>Country</label>
-                                <select name="country_id" class="form-control" required>
-                                    <option value="">Select Country</option>
-                                    @foreach($getCountry as $country)
-                                        <option value="{{ $country->id }}" {{ $member->country_id == $country->id ? 'selected' : '' }}>{{ $country->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                        <div class="ms2-col">
+                            <label class="ms2-label">Admission Year</label>
+                            <input type="text" name="admission_year" class="ms2-input"
+                                   value="{{ $member->admission_year }}" placeholder="e.g. 2019">
                         </div>
+                    </div>
 
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>Membership Year</label>
-                                <input type="text" name="membership_year" class="form-control" value="{{ $member->membership_year }}">
-                            </div>
-
-                            <div class="form-group col-md-6">
-                                <label>Admission Year</label>
-                                <input type="text" name="admission_year" class="form-control" value="{{ $member->admission_year }}">
-                            </div>
+                    <div class="ms2-row">
+                        <div class="ms2-col">
+                            <label class="ms2-label">Member ID</label>
+                            <input type="text" name="member_id_number" class="ms2-input"
+                                   value="{{ $member->member_id_number }}" placeholder="Unique College Member ID">
                         </div>
+                    </div>
 
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>Member ID</label>
-                                <input type="text" name="member_id_number" class="form-control" value="{{ $member->member_id_number }}" placeholder="Unique College Member ID">
-                            </div>
-                        </div>
+                </div>
+                <div class="ms2-footer">
+                    <button type="button" class="ms2-btn-back" onclick="goToStep(1)">
+                        <i class="fas fa-arrow-left mr-1"></i> Back
+                    </button>
+                    <button type="submit" class="ms2-btn-submit">
+                        <i class="fas fa-save mr-1"></i> Save Changes
+                    </button>
+                </div>
+            </div>
 
-                        <button type="button" class="action-button previous previous_button">Back</button>
-                        <button type="submit" class="action-button">Submit</button>
-                    </fieldset>
-                </form>
-            </section>
-        </section>
+        </form>
     </div>
+
+</div>
 </div>
 
-<style>
-    #progressbar {
-        margin-bottom: 30px;
-        overflow: hidden;
-    }
-    #progressbar li {
-        list-style-type: none;
-        color: #99a2a8;
-        font-size: 9px;
-        width: calc(100%/2) !important;
-        float: left;
-        position: relative;
-        font: 500 13px/1 $roboto;
-    }
-    fieldset {
-        border: 0;
-        padding: 20px 105px 0;
-    }
-</style>
-
 <script>
-    $(function () {
-        bsCustomFileInput.init();
-
-        $('.next').click(function() {
-            var currentFieldset = $(this).closest('fieldset');
-            var isValid = true;
-            currentFieldset.find('input, select').each(function() {
-                if (!this.checkValidity()) {
-                    isValid = false;
-                }
-            });
-
-            if (isValid) {
-                currentFieldset.hide();
-                currentFieldset.next('fieldset').show();
-            }
-        });
-
-        $('.previous').click(function() {
-            var currentFieldset = $(this).closest('fieldset');
-            currentFieldset.hide();
-            currentFieldset.prev('fieldset').show();
-        });
-    });
+function goToStep(n) {
+    var total = 2;
+    for (var i = 1; i <= total; i++) {
+        var fs   = document.getElementById('fieldset-' + i);
+        var step = document.getElementById('step-' + i);
+        if (fs)   fs.classList.toggle('active', i === n);
+        if (step) step.classList.toggle('active', i === n);
+    }
+    for (var j = 1; j < total; j++) {
+        var line = document.getElementById('line-' + j + '-' + (j + 1));
+        if (line) line.style.background = j < n ? '#a02626' : '';
+    }
+}
 </script>
 @endsection

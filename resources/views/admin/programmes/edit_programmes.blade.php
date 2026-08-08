@@ -1,112 +1,77 @@
-@extends('layout.app')  
-
+@extends('layout.app')
 @section('content')
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AdminLTE 3 | General Form Elements</title>
+<div class="content-wrapper">
+<div class="ms2-wrap">
 
-  <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css">
-  <!-- Theme style -->
-  <link rel="stylesheet" href="../../dist/css/adminlte.min.css">
-</head>
-<body class="hold-transition sidebar-mini">
-<div class="wrapper">
+    <div class="ms2-page-title">Edit Programme</div>
+    <div class="ms2-page-sub">Update programme name, type, duration and fee information.</div>
 
+    <div class="ms2-card">
+        <form method="POST" action="{{ url('admin/programmes/edit_programmes/' . $getRecord->id) }}">
+            @csrf
+            <div class="ms2-body">
 
-  <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    <section class="content-header">
-      <div class="container-fluid">
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <h1>Edit Programmes</h1>
-          </div>
-        </div>
-      </div><!-- /.container-fluid -->
-    </section>
-
-    <!-- Main content -->
-    <section class="content">
-      <div class="container-fluid">
-        <div class="row">
-          <!-- left column -->
-           <div class="col-md-12">
-             <!-- general form elements -->
-              <div class="card card-primary">
-                <div class="card-header" style="background-color: darkred">
-                <h3 class="card-title">Fill in details</h3>
-              </div>
-              <!-- /.card-header -->
-              <!-- form start -->
-            
-              <form method="POST" action="">
-                {{ csrf_field() }}
-                <div class="card-body">
-                     <div class="form-group">
-                        <label>Programme Name</label>
-                        <input type="text" class="form-control" name="name" value="{{old  ('name',$getRecord->name)}}" required placeholder="Hospital Name">
-                      </div>
-                      
-                      <div class="form-group">
-                        <label>Programme Type</label>
-                        <input type="text" class="form-control" name="programme_type" value="{{old  ('programme_type',$getRecord->programme_type)}}" required placeholder="Programme Type">
-                      </div>
-
-                      <div class="form-group">
-                        <label>Duration</label>
-                        <input type="text" class="form-control" name="duration" value="{{old  ('duration',$getRecord->duration)}}" required placeholder="Duration">
-                      </div>
-
-                      <div class="form-group">
-                         <label>Entry Fee</label>
-                         <input type="text" class="form-control" name="entry_fee" value="{{old  ('entry_fee',$getRecord->entry_fee)}}" required placeholder="Entry Fee">
-                      </div>
-
-                      <div class="form-group">
-                        <label>Exam Fee</label>
-                        <input type="text" class="form-control" name="exam_fee" value="{{old  ('exam_fee',$getRecord->exam_fee)}}" required placeholder="Exam Fee">
-                     </div>
-
-                     <div class="form-group">
-                        <label>Repeat Fee</label>
-                        <input type="text" class="form-control" name="repeat_fee" value="{{old  ('repeat_fee',$getRecord->repeat_fee)}}" required placeholder="Repeat Fee">
-                     </div>
-
+                <div class="ms2-row">
+                    <div class="ms2-col">
+                        <label class="ms2-label">Programme Name <span class="req">*</span></label>
+                        <div class="ms2-input-group">
+                            <i class="fas fa-graduation-cap"></i>
+                            <input type="text" name="name" class="ms2-input"
+                                   value="{{ old('name', $getRecord->name) }}" required placeholder="Programme name">
+                        </div>
+                    </div>
+                    <div class="ms2-col">
+                        <label class="ms2-label">Programme Type <span class="req">*</span></label>
+                        <input type="text" name="programme_type" class="ms2-input"
+                               value="{{ old('programme_type', $getRecord->programme_type) }}" required placeholder="e.g. Surgical">
+                    </div>
                 </div>
-                <!-- /.card-body -->
 
-                <div class="card-footer" style="background-color: white">
-                  <button type="submit" class="btn btn-primary" style="background-color: #FEC503;border-color:#FEC503">Submit</button>
+                <div class="ms2-row">
+                    <div class="ms2-col">
+                        <label class="ms2-label">Duration <span class="req">*</span></label>
+                        <input type="text" name="duration" class="ms2-input"
+                               value="{{ old('duration', $getRecord->duration) }}" required placeholder="e.g. 5 years">
+                    </div>
+                    <div class="ms2-col">
+                        <label class="ms2-label">Entry Fee <span class="req">*</span></label>
+                        <div class="ms2-input-group">
+                            <i class="fas fa-dollar-sign"></i>
+                            <input type="text" name="entry_fee" class="ms2-input"
+                                   value="{{ old('entry_fee', $getRecord->entry_fee) }}" required placeholder="USD amount">
+                        </div>
+                    </div>
                 </div>
-               </form>
-              </div>
-            <!-- /.card -->
-          </div>
-          <!--/.col (left) -->
-        </div>
-        <!-- /.row -->
-      </div>
-      <!-- /.container-fluid -->
-    </section>
-    <!-- /.content -->
-  </div>
 
+                <div class="ms2-row">
+                    <div class="ms2-col">
+                        <label class="ms2-label">Exam Fee <span class="req">*</span></label>
+                        <div class="ms2-input-group">
+                            <i class="fas fa-dollar-sign"></i>
+                            <input type="text" name="exam_fee" class="ms2-input"
+                                   value="{{ old('exam_fee', $getRecord->exam_fee) }}" required placeholder="USD amount">
+                        </div>
+                    </div>
+                    <div class="ms2-col">
+                        <label class="ms2-label">Repeat Fee <span class="req">*</span></label>
+                        <div class="ms2-input-group">
+                            <i class="fas fa-dollar-sign"></i>
+                            <input type="text" name="repeat_fee" class="ms2-input"
+                                   value="{{ old('repeat_fee', $getRecord->repeat_fee) }}" required placeholder="USD amount">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="ms2-footer">
+                <a href="{{ url('admin/programmes') }}" class="ms2-btn-back">Cancel</a>
+                <button type="submit" class="ms2-btn-submit">
+                    <i class="fas fa-save mr-1"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
 
 </div>
-
-<script>
-$(function () {
-  bsCustomFileInput.init();
-});
-</script>
-</body>
-</html>
-
-  @endsection
+</div>
+@endsection

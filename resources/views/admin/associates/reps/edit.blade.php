@@ -1,157 +1,109 @@
 @extends('layout.app')
-
 @section('content')
-<div class="wrapper">
-    <!-- Content Wrapper. Contains page content -->
-    <div class="content-wrapper">
- 
-        <!-- Main content -->
-        <section class="content">
-            <!-- Multi step form -->
-            <section class="multi_step_form">
-                <form id="msform" method="POST" action="{{ url('admin/associates/reps/edit/'.$countryRep->reps_id) }}" enctype="multipart/form-data">
-                    {{ csrf_field() }}
-                    <!-- Tittle -->
-                    <div class="tittle">
-                        <h2>Edit Coutry Representative</h2>
+<div class="content-wrapper">
+<div class="ms2-wrap">
+
+    <div class="ms2-page-title">Edit Country Representative</div>
+    <div class="ms2-page-sub">Update personal and contact information for this country representative.</div>
+
+    <div class="ms2-card">
+        <form id="ms2form" method="POST"
+              action="{{ url('admin/associates/reps/edit/' . $countryRep->reps_id) }}"
+              enctype="multipart/form-data">
+            @csrf
+            <div class="ms2-body">
+
+                <div class="ms2-row">
+                    <div class="ms2-col">
+                        <label class="ms2-label">Full Name <span class="req">*</span></label>
+                        <div class="ms2-input-group">
+                            <i class="fas fa-user"></i>
+                            <input type="text" name="name" class="ms2-input"
+                                   value="{{ $countryRep->name }}" required placeholder="Full name">
+                        </div>
                     </div>
-                    <!-- progressbar -->
-                    <ul id="progressbar">
-                        <li class="active">Personal Information</li>
-                    </ul>
-                    <!-- fieldsets -->
-                    <fieldset>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>Full Name</label>
-                                <input type="text" name="name" class="form-control" value="{{ $countryRep->name }}" required>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>Email</label>
-                                <input type="email" name="email" class="form-control" value="{{ $countryRep->user_email }}" required>
-                            </div>
+                    <div class="ms2-col">
+                        <label class="ms2-label">Email <span class="req">*</span></label>
+                        <div class="ms2-input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" name="email" class="ms2-input"
+                                   value="{{ $countryRep->user_email }}" required placeholder="Login email">
                         </div>
+                    </div>
+                </div>
 
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>Password</label>
-                                <input type="password" name="password" class="form-control" placeholder="Leave blank if not changing">
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>Phone Number</label>
-                                <input type="text" name="mobile_no" class="form-control" value="{{ $countryRep->mobile_no }}" required>
-                            </div>
+                <div class="ms2-row">
+                    <div class="ms2-col">
+                        <label class="ms2-label">Password <span style="font-weight:400;opacity:.6;">(blank = keep current)</span></label>
+                        <div class="ms2-input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" name="password" class="ms2-input" placeholder="New password">
                         </div>
-
-                        <div class="form-row">
-
-                                <div class="form-group col-md-6">
-                                    <label>Country Name</label>
-                                    <select name="country_id" class="form-control" required>
-                                        <option value="" disabled>Select Country</option>
-                                        @foreach($getCountry as $country)
-                                            <option value="{{ $country->id }}" {{ $country->id == $countryRep->id ? 'selected' : '' }}>{{ $country->country_name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="form-group col-md-6">
-                                    <label> Cosecsa Email</label>
-                                    <input type="email" name="cosecsa_email" class="form-control" placeholder="" value="{{ $countryRep->cosecsa_email }}" required>
-                                </div>
+                    </div>
+                    <div class="ms2-col">
+                        <label class="ms2-label">Phone Number <span class="req">*</span></label>
+                        <div class="ms2-input-group">
+                            <i class="fas fa-phone"></i>
+                            <input type="text" name="mobile_no" class="ms2-input"
+                                   value="{{ $countryRep->mobile_no }}" required placeholder="+000 000 000 000">
                         </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group col-md-12">
-                                <label>Associate Type</label>
-                                <select name="user_type" class="form-control" required>
-                                    <option value="" disabled>Select Type...</option>
-                                    <option value="2" {{ $countryRep->user_type == 2 ? 'selected' : '' }}>Trainee</option>
-                                    <option value="3" {{ $countryRep->user_type == 3 ? 'selected' : '' }}>Candidate</option>
-                                    <option value="4" {{ $countryRep->user_type == 4 ? 'selected' : '' }}>Programme Director</option>
-                                    <option value="5" {{ $countryRep->user_type == 5 ? 'selected' : '' }}>Country Representative</option>
-                                </select>
-                            </div>
-                        </div>
+                    </div>
+                </div>
 
-                        <div class="input-group col-md-12">
-                            <div class="custom-file">
-                                <input type="file" class="custom-file-input" id="upload" name="profile_image">
-                                <label class="custom-file-label" for="upload">
-                                    <i class="ion-android-cloud-outline"></i> Upload Profile Image
-                                </label>
-                            </div>
+                <div class="ms2-row">
+                    <div class="ms2-col">
+                        <label class="ms2-label">Country <span class="req">*</span></label>
+                        <select name="country_id" class="ms2-input" required>
+                            <option value="" disabled>Select Country…</option>
+                            @foreach($getCountry as $country)
+                                <option value="{{ $country->id }}" {{ $country->id == $countryRep->country_id ? 'selected' : '' }}>
+                                    {{ $country->country_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="ms2-col">
+                        <label class="ms2-label">COSECSA Email <span class="req">*</span></label>
+                        <div class="ms2-input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" name="cosecsa_email" class="ms2-input"
+                                   value="{{ $countryRep->cosecsa_email }}" required placeholder="rep@cosecsamis.org">
                         </div>
-                    
-                        <button type="button" class="action-button previous_button">Back</button>
-                        <button type="submit" class="action-button">Submit</button>
-                    </fieldset>
-                </form>
-            </section>
-            <!-- End Multi step form -->
-        </section>
-        <!-- /.content -->
+                    </div>
+                </div>
+
+                <div class="ms2-row">
+                    <div class="ms2-col">
+                        <label class="ms2-label">Associate Type <span class="req">*</span></label>
+                        <select name="user_type" class="ms2-input" required>
+                            <option value="" disabled>Select Type…</option>
+                            <option value="2" {{ $countryRep->user_type == 2 ? 'selected' : '' }}>Trainee</option>
+                            <option value="3" {{ $countryRep->user_type == 3 ? 'selected' : '' }}>Candidate</option>
+                            <option value="4" {{ $countryRep->user_type == 4 ? 'selected' : '' }}>Programme Director</option>
+                            <option value="5" {{ $countryRep->user_type == 5 ? 'selected' : '' }}>Country Representative</option>
+                        </select>
+                    </div>
+                    <div class="ms2-col">
+                        <label class="ms2-label">Profile Image</label>
+                        <label class="ms2-file-row" id="photoLabel">
+                            <i class="fas fa-camera"></i>
+                            <span id="photoName">{{ $countryRep->profile_image ? 'Replace photo…' : 'Choose photo…' }}</span>
+                            <input type="file" name="profile_image" accept="image/*" style="display:none"
+                                   onchange="document.getElementById('photoName').textContent = this.files[0]?.name || 'Choose photo…'">
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+            <div class="ms2-footer">
+                <a href="{{ url('admin/associates/reps') }}" class="ms2-btn-back">Cancel</a>
+                <button type="submit" class="ms2-btn-submit">
+                    <i class="fas fa-save mr-1"></i> Save Changes
+                </button>
+            </div>
+        </form>
     </div>
+
 </div>
-
-<style>
-    #progressbar {
-        margin-bottom: 30px;
-        overflow: hidden;
-    }
-    #progressbar li {
-        list-style-type: none;
-        color: #99a2a8;
-        font-size: 9px;
-        width: calc(100%) !important;
-        float: left;
-        position: relative;
-        font: 500 13px/1 $roboto;
-    }
-    fieldset {
-        border: 0;
-        padding: 20px 105px 0;
-    }
-</style>
-
-<script>
-    $(function () {
-        bsCustomFileInput.init();
-
-        $('.next').click(function() {
-            var currentFieldset = $(this).closest('fieldset');
-            var isValid = true;
-            currentFieldset.find('input, select').each(function() {
-                if ($(this).prop('required') && !$(this).val()) {
-                    isValid = false;
-                    $(this).addClass('is-invalid');
-                } else {
-                    $(this).removeClass('is-invalid');
-                }
-            });
-            if (isValid) {
-                currentFieldset.hide();
-                currentFieldset.next().show();
-                updateProgressBar();
-            }
-        });
-
-        $('.previous').click(function() {
-            var currentFieldset = $(this).closest('fieldset');
-            currentFieldset.hide();
-            currentFieldset.prev().show();
-            updateProgressBar();
-        });
-
-        function updateProgressBar() {
-            var activeIndex = $('fieldset:visible').index();
-            $('#progressbar li').removeClass('active');
-            $('#progressbar li').eq(activeIndex).addClass('active');
-        }
-
-        $('fieldset:first').show();
-        $('fieldset').not(':first').hide();
-    });
-</script>
-
+</div>
 @endsection

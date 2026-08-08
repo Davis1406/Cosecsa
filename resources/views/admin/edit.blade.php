@@ -1,125 +1,85 @@
-@extends('layout.app')  
-
+@extends('layout.app')
 @section('content')
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AdminLTE 3 | General Form Elements</title>
+<div class="content-wrapper">
+<div class="ms2-wrap">
 
-  <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css">
-  <!-- Theme style -->
-  <link rel="stylesheet" href="../../dist/css/adminlte.min.css">
-</head>
-<body class="hold-transition sidebar-mini">
-<div class="wrapper">
+    <div class="ms2-page-title">Edit Admin User</div>
+    <div class="ms2-page-sub">Update account information for this administrator.</div>
 
+    <div class="ms2-card">
+        <form method="POST" action="{{ url('admin/edit/' . $getRecord->id) }}" enctype="multipart/form-data">
+            @csrf
+            <div class="ms2-body">
 
-  <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    <section class="content-header">
-      <div class="container-fluid">
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <h1>Edit Information</h1>
-          </div>
-        </div>
-      </div><!-- /.container-fluid -->
-    </section>
-
-    <!-- Main content -->
-    <section class="content">
-      <div class="container-fluid">
-        <div class="row">
-          <!-- left column -->
-          <div class="col-md-12">
-            <!-- general form elements -->
-            <div class="card card-primary">
-              <div class="card-header" style="background-color: darkred">
-                <h3 class="card-title">Fill in details</h3>
-              </div>
-              <!-- /.card-header -->
-              <!-- form start -->
-            
-              <form method="POST" action="{{ url('admin/edit/' . $getRecord->id) }}"
-                    enctype="multipart/form-data">
-                {{ csrf_field() }}
-                <div class="card-body">
-                    <div class="form-group">
-                        <label>Name</label>
-                        <input type="text" class="form-control" name="name" value="{{ old('name', $getRecord->name) }}" required placeholder="Enter full name">
+                <div class="ms2-row">
+                    <div class="ms2-col">
+                        <label class="ms2-label">Full Name <span class="req">*</span></label>
+                        <div class="ms2-input-group">
+                            <i class="fas fa-user"></i>
+                            <input type="text" name="name" class="ms2-input"
+                                   value="{{ old('name', $getRecord->name) }}" required placeholder="Full name">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Email address</label>
-                        <input type="email" class="form-control" name="email" value="{{ old('email', $getRecord->email) }}" required placeholder="Enter email">
-                        <div style="color: red">{{ $errors->first('email') }}</div>
+                    <div class="ms2-col">
+                        <label class="ms2-label">Email Address <span class="req">*</span></label>
+                        <div class="ms2-input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" name="email" class="ms2-input"
+                                   value="{{ old('email', $getRecord->email) }}" required placeholder="admin@email.com">
+                        </div>
+                        @if($errors->has('email'))
+                            <div style="color:#a02626;font-size:.8rem;margin-top:4px;">{{ $errors->first('email') }}</div>
+                        @endif
                     </div>
-                    <div class="form-group">
-                        <label>Password <small class="text-muted">(leave blank to keep current)</small></label>
-                        <input type="password" class="form-control" name="password" placeholder="New password">
+                </div>
+
+                <div class="ms2-row">
+                    <div class="ms2-col">
+                        <label class="ms2-label">Password <span style="font-weight:400;opacity:.6;">(leave blank to keep current)</span></label>
+                        <div class="ms2-input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" name="password" class="ms2-input" placeholder="New password">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Role</label>
-                        <select class="form-control" name="role_id">
+                    <div class="ms2-col">
+                        <label class="ms2-label">Role</label>
+                        <select name="role_id" class="ms2-input">
                             <option value="" {{ old('role_id', $getRecord->role_id) == null ? 'selected' : '' }}>Super Admin (full access)</option>
                             @foreach($roles as $r)
                                 <option value="{{ $r->id }}" {{ old('role_id', $getRecord->role_id) == $r->id ? 'selected' : '' }}>{{ $r->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>Profile Photo</label>
+                </div>
+
+                <div class="ms2-row">
+                    <div class="ms2-col">
+                        <label class="ms2-label">Profile Photo</label>
                         @if(!empty($getRecord->profile_image))
-                            <div class="mb-2">
+                            <div style="margin-bottom:8px;">
                                 <img src="{{ asset('storage/' . $getRecord->profile_image) }}"
-                                     alt="Current Photo"
-                                     style="width:80px;height:80px;object-fit:cover;border-radius:50%;border:2px solid #ddd;">
-                                <small class="d-block text-muted mt-1">Current photo</small>
+                                     style="width:56px;height:56px;object-fit:cover;border-radius:50%;border:2px solid #a02626;">
                             </div>
                         @endif
-                        <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="profileImageInput"
-                                   name="profile_image" accept="image/*">
-                            <label class="custom-file-label" for="profileImageInput">Choose new photo</label>
-                        </div>
+                        <label class="ms2-file-row" id="photoLabel">
+                            <i class="fas fa-camera"></i>
+                            <span id="photoName">{{ $getRecord->profile_image ? 'Replace photo…' : 'Choose photo…' }}</span>
+                            <input type="file" name="profile_image" accept="image/*" style="display:none"
+                                   onchange="document.getElementById('photoName').textContent = this.files[0]?.name || 'Choose photo…'">
+                        </label>
                     </div>
                 </div>
-                <!-- /.card-body -->
 
-                <div class="card-footer" style="background-color: white">
-                    <button type="submit" class="btn btn-primary" style="background-color: #FEC503;border-color:#FEC503">Save Changes</button>
-                </div>
-              </form>
             </div>
-            <!-- /.card -->
-          </div>
-          <!--/.col (left) -->
-        </div>
-        <!-- /.row -->
-      </div>
-      <!-- /.container-fluid -->
-    </section>
-    <!-- /.content -->
-  </div>
-
+            <div class="ms2-footer">
+                <a href="{{ url('admin/list') }}" class="ms2-btn-back">Cancel</a>
+                <button type="submit" class="ms2-btn-submit">
+                    <i class="fas fa-save mr-1"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
 
 </div>
-
-<script>
-$(function () {
-    if (typeof bsCustomFileInput !== 'undefined') { bsCustomFileInput.init(); }
-    $('#profileImageInput').on('change', function () {
-        var name = $(this).val().split('\\').pop();
-        $(this).next('.custom-file-label').text(name || 'Choose new photo');
-    });
-});
-</script>
-</body>
-</html>
-
-  @endsection
+</div>
+@endsection

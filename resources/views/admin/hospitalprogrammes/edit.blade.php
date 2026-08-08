@@ -1,141 +1,104 @@
 @extends('layout.app')
-
 @section('content')
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Edit Hospital Programme</title>
+<div class="content-wrapper">
+<div class="ms2-wrap">
 
-    <!-- Google Font: Source Sans Pro -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css">
-    <!-- Theme style -->
-    <link rel="stylesheet" href="../../dist/css/adminlte.min.css">
-</head>
-<body class="hold-transition sidebar-mini">
-    <div class="wrapper">
-        <!-- Content Wrapper. Contains page content -->
-        <div class="content-wrapper">
-            <!-- Content Header (Page header) -->
-            <section class="content-header">
-                <div class="container-fluid">
-                    <div class="row mb-2">
-                        <div class="col-sm-6">
-                            <h1>Edit Hospital Programme</h1>
+    <div class="ms2-page-title">Edit Hospital Programme</div>
+    <div class="ms2-page-sub">Update assigned programmes and accreditation dates for this hospital.</div>
+
+    <div class="ms2-card">
+        <form method="POST" action="{{ url('admin/hospitalprogrammes/edit/' . $hospitalProgramme->id) }}"
+              onsubmit="return validateForm()">
+            @csrf
+            <div class="ms2-body">
+
+                {{-- Hospital (read-only) --}}
+                <div class="ms2-row">
+                    <div class="ms2-col" style="flex:1 1 100%;">
+                        <label class="ms2-label">Hospital</label>
+                        <div class="ms2-input-group">
+                            <i class="fas fa-hospital"></i>
+                            <select name="hospital_id_display" class="ms2-input" disabled>
+                                @foreach($getHospital as $hospital)
+                                    <option value="{{ $hospital->id }}" {{ $hospitalProgramme->hospital_id == $hospital->id ? 'selected' : '' }}>
+                                        {{ $hospital->name }} — {{ $hospital->country_name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
+                        <input type="hidden" name="hospital_id" value="{{ $hospitalProgramme->hospital_id }}">
+                        <div style="font-size:.75rem;color:#94a3b8;margin-top:3px;">Hospital cannot be changed here.</div>
                     </div>
-                </div><!-- /.container-fluid -->
-            </section>
-
-            <!-- Main content -->
-            <section class="content">
-                <div class="container-fluid">
-                    <div class="row">
-                        <!-- left column -->
-                        <div class="col-md-12">
-                            <!-- general form elements -->
-                            <div class="card card-primary">
-                                <div class="card-header" style="background-color: darkred">
-                                    <h3 class="card-title">Fill in details</h3>
-                                </div>
-                                <!-- /.card-header -->
-                                <!-- form start -->
-                                <form method="POST" action="{{ url('admin/hospitalprogrammes/edit/' . $hospitalProgramme->id) }}" onsubmit="return validateForm()">
-                                    @csrf
-                                    <div class="card-body">
-
-                                        <div class="form-group">
-                                            <label>Hospital Name</label>
-                                            <select name="hospital_id" class="form-control" required disabled> 
-                                                <option value="">Select Hospital</option>
-                                                @foreach($getHospital as $hospital)
-                                                    <option value="{{ $hospital->id }}" {{ $hospitalProgramme->hospital_id == $hospital->id ? 'selected' : '' }}>
-                                                        {{ $hospital->name }} - {{ $hospital->country_name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <!-- Hidden input to pass hospital_id value -->
-                                            <input type="hidden" name="hospital_id" value="{{ $hospitalProgramme->hospital_id }}">
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <label for="programme_id">Programme Name</label>
-                                            @foreach($getProgramme as $programme)
-                                            <div>
-                                                <label style="font-weight: normal;">
-                                                    <input type="checkbox" name="programme_id[]" value="{{ $programme->id }}"
-                                                           {{ in_array($programme->id, $assignedProgrammes) ? 'checked' : '' }}>
-                                                    {{ $programme->name }}
-                                                </label>
-                                                @if(in_array($programme->id, $assignedProgrammes))
-                                                    <input type="hidden" name="existing_programme_id[]" value="{{ $programme->id }}">
-                                                @endif
-                                            </div>
-                                            @endforeach
-                                        </div>
-                                                              
-                                        <div class="form-row">
-                                            <div class="form-group col-md-6">
-                                                <label for="accredited_date">Accredited Date</label>
-                                                <input type="month" name="accredited_date" class="form-control" value="{{ \Carbon\Carbon::parse($hospitalProgramme->accredited_date)->format('Y-m') }}">
-                                            </div>
-                                            <div class="form-group col-md-6">
-                                                <label for="expiry_date">Expiry Date</label>
-                                                <input type="month" name="expiry_date" class="form-control" id="expiry_date" value="{{ \Carbon\Carbon::parse($hospitalProgramme->expiry_date)->format('Y-m') }}">
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label>Status</label>
-                                            <select name="status" class="form-control">
-                                                <option value="Active" {{ $hospitalProgramme->status == 'Active' ? 'selected' : '' }}>Active</option>
-                                                <option value="Expired" {{ $hospitalProgramme->status == 'Expired' ? 'selected' : '' }}>Expired</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <!-- /.card-body -->
-
-                                    <div class="card-footer" style="background-color: white">
-                                        <button type="submit" class="btn btn-primary" style="background-color: #FEC503;border-color:#FEC503">Submit</button>
-                                    </div>
-                                </form>
-                            </div>
-                            <!-- /.card -->
-                        </div>
-                        <!--/.col (left) -->
-                    </div>
-                    <!-- /.row -->
                 </div>
-                <!-- /.container-fluid -->
-            </section>
-            <!-- /.content -->
-        </div>
+
+                {{-- Programme checkboxes --}}
+                <div class="ms2-row">
+                    <div class="ms2-col" style="flex:1 1 100%;">
+                        <label class="ms2-label">Assigned Programmes <span class="req">*</span></label>
+                        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;">
+                            @foreach($getProgramme as $programme)
+                                <label style="display:flex;align-items:center;gap:6px;font-size:.88rem;cursor:pointer;
+                                              padding:6px 14px;border-radius:6px;border:1px solid #4a5568;
+                                              background:{{ in_array($programme->id, $assignedProgrammes) ? 'rgba(160,38,38,0.12)' : 'transparent' }};">
+                                    <input type="checkbox" name="programme_id[]" value="{{ $programme->id }}"
+                                           {{ in_array($programme->id, $assignedProgrammes) ? 'checked' : '' }}
+                                           style="accent-color:#a02626;">
+                                    {{ $programme->name }}
+                                </label>
+                                @if(in_array($programme->id, $assignedProgrammes))
+                                    <input type="hidden" name="existing_programme_id[]" value="{{ $programme->id }}">
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Dates --}}
+                <div class="ms2-row">
+                    <div class="ms2-col">
+                        <label class="ms2-label">Accredited Date</label>
+                        <input type="month" name="accredited_date" class="ms2-input"
+                               value="{{ \Carbon\Carbon::parse($hospitalProgramme->accredited_date)->format('Y-m') }}">
+                    </div>
+                    <div class="ms2-col">
+                        <label class="ms2-label">Expiry Date</label>
+                        <input type="month" name="expiry_date" class="ms2-input"
+                               value="{{ \Carbon\Carbon::parse($hospitalProgramme->expiry_date)->format('Y-m') }}">
+                    </div>
+                </div>
+
+                {{-- Status --}}
+                <div class="ms2-row">
+                    <div class="ms2-col">
+                        <label class="ms2-label">Status</label>
+                        <select name="status" class="ms2-input">
+                            <option value="Active"   {{ $hospitalProgramme->status == 'Active'   ? 'selected' : '' }}>Active</option>
+                            <option value="Expired"  {{ $hospitalProgramme->status == 'Expired'  ? 'selected' : '' }}>Expired</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+            <div class="ms2-footer">
+                <a href="{{ url('admin/hospitalprogrammes') }}" class="ms2-btn-back">Cancel</a>
+                <button type="submit" class="ms2-btn-submit">
+                    <i class="fas fa-save mr-1"></i> Save Changes
+                </button>
+            </div>
+        </form>
     </div>
 
-    <script>
-        function validateForm() {
-            const checkboxes = document.querySelectorAll('input[name="programme_id[]"]');
-            let isChecked = false;
-            checkboxes.forEach(checkbox => {
-                if (checkbox.checked) {
-                    isChecked = true;
-                }
-            });
+</div>
+</div>
 
-            if (!isChecked) {
-                alert('Please select at least one programme.');
-                return false;
-            }
-            return true;
-        }
-
-        $(function() {
-            bsCustomFileInput.init();
-        });
-    </script>
-</body>
-</html>
+<script>
+function validateForm() {
+    var checked = document.querySelectorAll('input[name="programme_id[]"]:checked');
+    if (checked.length === 0) {
+        alert('Please select at least one programme.');
+        return false;
+    }
+    return true;
+}
+</script>
 @endsection
