@@ -581,6 +581,8 @@ $(document).on('click', '.toggle-status-btn', function () {
     $('#toggleYears').val(0);
     $('#toggleMonths').val(0);
   }
+
+  $('#toggleStatusModal').modal('show');
 });
 </script>
 @endpush
