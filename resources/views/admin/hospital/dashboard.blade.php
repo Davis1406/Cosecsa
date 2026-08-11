@@ -251,6 +251,7 @@
                             data-hp-id="{{ $r->id }}"
                             data-hospital="{{ $r->hospital_name }}"
                             data-programme="{{ $r->programme_name }}"
+                            data-accredited="{{ $r->accredited_date }}"
                             data-expiry="{{ $r->expiry_date }}"
                             data-flag="{{ $r->flag }}"
                             title="@if($r->flag === 'expired') Activate accreditation @else Mark as expired @endif">
@@ -380,6 +381,17 @@
                 </div>
                 <div class="modal-body">
                   <p class="text-muted" id="toggleModalSubtitle" style="font-size:.85rem;"></p>
+
+                  <div class="row mb-3">
+                    <div class="col-6">
+                      <small class="text-muted d-block">Accredited</small>
+                      <strong id="toggleAccreditedDisplay">—</strong>
+                    </div>
+                    <div class="col-6">
+                      <small class="text-muted d-block">Current Expiry</small>
+                      <strong id="toggleExpiryDisplay">—</strong>
+                    </div>
+                  </div>
 
                   <div id="toggleDeactivateMsg" style="display:none;" class="alert alert-warning py-2 mb-3">
                     <i class="fas fa-exclamation-triangle mr-1"></i>
@@ -549,16 +561,27 @@ function calcToggleExpiry() {
 
 $('#toggleYears, #toggleMonths').on('input', calcToggleExpiry);
 
+function formatMmYy(dateStr) {
+  if (!dateStr) return '—';
+  var d = new Date(dateStr);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[d.getMonth()] + ' ' + d.getFullYear();
+}
+
 $(document).on('click', '.toggle-status-btn', function () {
   var btn = $(this);
   var hpId = btn.data('hpId');
   var hospital = btn.data('hospital');
   var programme = btn.data('programme');
+  var accredited = btn.data('accredited');
+  var expiry = btn.data('expiry');
   var flag = btn.data('flag');
   var isExpired = (flag === 'expired');
 
   $('#toggleHpId').val(hpId);
   $('#toggleModalSubtitle').text(hospital + ' — ' + programme);
+  $('#toggleAccreditedDisplay').text(formatMmYy(accredited));
+  $('#toggleExpiryDisplay').text(formatMmYy(expiry));
 
   if (isExpired) {
     // Activating: show year/month fields, default 3 years
