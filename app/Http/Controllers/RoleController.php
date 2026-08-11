@@ -54,9 +54,17 @@ class RoleController extends Controller
 
         $data = $response->object();
 
+        // ->object() decodes JSON recursively into stdClass, so a shallow
+        // (array) cast here left each module as a stdClass — the form partial
+        // indexes modules with array syntax ($module['label']), which threw
+        // "Cannot use object of type stdClass as array". ->json() decodes the
+        // same payload as nested associative arrays, matching what the
+        // add() action already passes (config('admin_permissions.modules')).
+        $modules = $response->json('modules');
+
         return view('admin.roles.form', [
             'header_title' => 'Edit Role',
-            'modules'      => (array) ($data->modules ?? config('admin_permissions.modules')),
+            'modules'      => $modules ?? config('admin_permissions.modules'),
             'role'         => $data->role,
             'checkedKeys'  => $data->checked_keys ?? [],
         ]);

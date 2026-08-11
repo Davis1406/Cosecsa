@@ -40,8 +40,8 @@
                     <tbody>
                       @foreach ($getRecord as $value)
                         <tr>
-                          <td>{{ $loop->iteration }}</td>
-                          <td>
+                          <td class="align-middle">{{ $loop->iteration }}</td>
+                          <td class="align-middle">
                             {{ $value->name }}
                             @if($value->is_system)
                               <span class="badge badge-secondary">System</span>
@@ -50,13 +50,11 @@
                               <br><small class="text-muted">{{ $value->description }}</small>
                             @endif
                           </td>
-                          <td style="font-size:.82rem;">{{ $value->manage_summary }}</td>
-                          <td style="font-size:.82rem;" class="text-muted">{{ $value->view_summary }}</td>
-                          <td>{{ $value->users_count }}</td>
-                          <td>
-                            <a href="{{ url('admin/roles/edit/'.$value->id) }}" class="btn btn-primary btn-sm">
-                              {{ $value->is_system ? 'View' : 'Edit' }}
-                            </a>
+                          <td class="align-middle" style="font-size:.82rem;">{{ $value->manage_summary }}</td>
+                          <td class="align-middle text-muted" style="font-size:.82rem;">{{ $value->view_summary }}</td>
+                          <td class="align-middle">{{ $value->users_count }}</td>
+                          <td class="align-middle text-nowrap">
+                            <a href="{{ url('admin/roles/edit/'.$value->id) }}" class="btn btn-primary btn-sm mr-1">{{ $value->is_system ? 'View' : 'Edit' }}</a>
                             @if(!$value->is_system)
                               <a href="{{ url('admin/roles/delete/'.$value->id) }}" class="btn btn-danger btn-sm"
                                  onclick="return confirm('Delete this role?')">Delete</a>
