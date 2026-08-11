@@ -657,6 +657,32 @@ body:not(.dark-mode) .ms2-btn-back:hover  { background: #e0e9f2; }
 body:not(.dark-mode) .ms2-hint-text       { color: #9ca3af; }
 body:not(.dark-mode) .ms2-input[type="date"]::-webkit-calendar-picker-indicator { filter: none; }
 
+/* Dark-mode overrides — higher specificity to beat adminlte's input[type] rules */
+body.dark-mode .ms2-card,
+html.dark-mode .ms2-card              { background: #1e2330; border-color: #2d3748; }
+body.dark-mode .ms2-label,
+html.dark-mode .ms2-label             { color: #8892a4; }
+body.dark-mode .ms2-label .req,
+html.dark-mode .ms2-label .req        { color: #e53e3e; }
+body.dark-mode .ms2-input,
+html.dark-mode .ms2-input             { background-color: #252d3b; border-color: #374151; color: #e2e8f0; -webkit-appearance: none; appearance: none; }
+body.dark-mode .ms2-input::placeholder,
+html.dark-mode .ms2-input::placeholder { color: #3d4a5c; }
+body.dark-mode .ms2-input:focus,
+html.dark-mode .ms2-input:focus        { background-color: #2a3349; border-color: #a02626; box-shadow: 0 0 0 3px rgba(160,38,38,.18); color: #f1f5f9; outline: none; }
+body.dark-mode select.ms2-input,
+html.dark-mode select.ms2-input        { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238892a4'/%3E%3C/svg%3E"); background-color: #252d3b; color: #e2e8f0; }
+body.dark-mode select.ms2-input option,
+html.dark-mode select.ms2-input option { background: #252d3b; color: #e2e8f0; }
+body.dark-mode .ms2-input-group .ms2-icon,
+html.dark-mode .ms2-input-group .ms2-icon { color: #4a5568; }
+body.dark-mode .ms2-footer,
+html.dark-mode .ms2-footer             { border-top-color: #2d3748; }
+body.dark-mode .ms2-btn-back,
+html.dark-mode .ms2-btn-back           { background: #2d3748; color: #cbd5e0; }
+body.dark-mode .ms2-btn-back:hover,
+html.dark-mode .ms2-btn-back:hover     { background: #374151; color: #f1f5f9; }
+
 @media (max-width: 900px) {
     .ms2-stepper { padding: 20px 24px 16px; }
     .ms2-step-label { display: none; }
