@@ -592,7 +592,8 @@ body.dark-mode .content-wrapper {
 }
 .ms2-input::placeholder { color: #3d4a5c; }
 .ms2-input:focus { outline: none; border-color: #a02626; background: #2a3349; box-shadow: 0 0 0 3px rgba(160,38,38,.18); color: #f1f5f9; }
-.ms2-input[disabled], .ms2-input[readonly] { background: #1a1f2e; color: #3d4a5c; cursor: not-allowed; }
+.ms2-input[disabled], .ms2-input[readonly] { background: #1a1f2e; color: #e2e8f0; opacity: 1; cursor: not-allowed; }
+select.ms2-input[disabled], select.ms2-input[readonly] { background-repeat: no-repeat; background-position: right 14px center; }
 textarea.ms2-input { height: auto; min-height: 90px; padding: 10px 14px; resize: vertical; }
 select.ms2-input {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238892a4'/%3E%3C/svg%3E");
@@ -640,9 +641,9 @@ body:not(.dark-mode) .ms2-line            { background: #e0e9f2; }
 body:not(.dark-mode) .ms2-line.done       { background: #a02626; }
 body:not(.dark-mode) .ms2-label           { color: #6b7280; }
 body:not(.dark-mode) .ms2-label .hint     { color: #adb5bd; }
-body:not(.dark-mode) .ms2-input           { background: #f8fafc; border-color: #dde3ec; color: #141d23; }
+body:not(.dark-mode) .ms2-input           { background-color: #f8fafc; border-color: #dde3ec; color: #141d23; }
 body:not(.dark-mode) .ms2-input::placeholder { color: #b0bcc8; }
-body:not(.dark-mode) .ms2-input:focus     { background: #fff; border-color: #a02626; box-shadow: 0 0 0 3px rgba(160,38,38,.12); color: #141d23; }
+body:not(.dark-mode) .ms2-input:focus     { background-color: #fff; border-color: #a02626; box-shadow: 0 0 0 3px rgba(160,38,38,.12); color: #141d23; }
 body:not(.dark-mode) select.ms2-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E"); }
 body:not(.dark-mode) select.ms2-input option { background: #fff; color: #141d23; }
 body:not(.dark-mode) .ms2-input-group .ms2-icon { color: #9ca3af; }
