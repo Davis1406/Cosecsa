@@ -175,9 +175,13 @@ class HospitalController extends Controller
 
     public function insert(Request $request)
     {
-        $this->api->post('admin/hospitals', $request->only([
+        $response = $this->api->post('admin/hospitals', $request->only([
             'name', 'country_id', 'hospital_type', 'status', 'contact_email',
         ]));
+
+        if ($response->failed()) {
+            return back()->withInput()->with('error', $response->json('message', 'Failed to create hospital'));
+        }
 
         return redirect('admin/hospital/list')->with('success', 'Hospital successfully created');
     }
@@ -201,16 +205,24 @@ class HospitalController extends Controller
 
     public function update(Request $request, $id)
     {
-        $this->api->post("admin/hospitals/{$id}", $request->only([
+        $response = $this->api->post("admin/hospitals/{$id}", $request->only([
             'name', 'country_id', 'hospital_type', 'status', 'contact_email',
         ]));
+
+        if ($response->failed()) {
+            return back()->withInput()->with('error', $response->json('message', 'Failed to update hospital'));
+        }
 
         return redirect('admin/hospital/list')->with('success', 'Hospital successfully updated');
     }
 
     public function delete($id)
     {
-        $this->api->delete("admin/hospitals/{$id}");
+        $response = $this->api->delete("admin/hospitals/{$id}");
+
+        if ($response->failed()) {
+            return back()->with('error', $response->json('message', 'Failed to delete hospital'));
+        }
 
         return redirect('admin/hospital/list')->with('success', 'Hospital successfully deleted');
     }

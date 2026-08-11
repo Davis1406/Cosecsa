@@ -15,7 +15,7 @@
                     <div class="ms2-col">
                         <label class="ms2-label">Hospital Name <span class="req">*</span></label>
                         <div class="ms2-input-group">
-                            <i class="fas fa-hospital"></i>
+                            <i class="ms2-icon fas fa-hospital"></i>
                             <input type="text" name="name" class="ms2-input"
                                    value="{{ old('name', $getRecord->name) }}" required placeholder="Hospital name">
                         </div>
@@ -37,14 +37,14 @@
                     <div class="ms2-col">
                         <label class="ms2-label">Status <span class="req">*</span></label>
                         <select name="status" class="ms2-input" required>
-                            <option value="active"   {{ $getRecord->status == 'active'   ? 'selected' : '' }}>Active</option>
-                            <option value="inactive" {{ $getRecord->status == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                            <option value="0" {{ $getRecord->status == 0 ? 'selected' : '' }}>Active</option>
+                            <option value="1" {{ $getRecord->status == 1 ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
                     <div class="ms2-col">
                         <label class="ms2-label">Contact Email</label>
                         <div class="ms2-input-group">
-                            <i class="fas fa-envelope"></i>
+                            <i class="ms2-icon fas fa-envelope"></i>
                             <input type="email" name="contact_email" class="ms2-input"
                                    value="{{ $getRecord->contact_email }}" placeholder="Used for accreditation reminders">
                         </div>
@@ -53,7 +53,7 @@
 
             </div>
             <div class="ms2-footer">
-                <a href="{{ url('admin/hospital') }}" class="ms2-btn-back">Cancel</a>
+                <a href="{{ url('admin/hospital/list') }}" class="ms2-btn-back">Cancel</a>
                 <button type="submit" class="ms2-btn-submit">
                     <i class="fas fa-save mr-1"></i> Save Changes
                 </button>

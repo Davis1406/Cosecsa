@@ -80,7 +80,7 @@
 
             </div>
             <div class="ms2-footer">
-                <a href="{{ url('admin/hospitalprogrammes') }}" class="ms2-btn-back">Cancel</a>
+                <a href="{{ url('admin/hospitalprogrammes/list') }}" class="ms2-btn-back">Cancel</a>
                 <button type="submit" class="ms2-btn-submit">
                     <i class="fas fa-save mr-1"></i> Save Changes
                 </button>
