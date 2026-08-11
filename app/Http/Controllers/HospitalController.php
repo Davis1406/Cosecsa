@@ -101,6 +101,28 @@ class HospitalController extends Controller
         return back()->with('success', $response->json('message'));
     }
 
+    public function toggleStatus(Request $request)
+    {
+        $validated = $request->validate([
+            'hospital_programme_id' => 'required|integer',
+            'months'                => 'required|integer|min:0|max:11',
+            'years'                 => 'required|integer|min:0',
+        ]);
+
+        $expiryDate = now()->addYears($validated['years'])->addMonths($validated['months'])->format('Y-m-d');
+
+        $response = $this->api->put(
+            "admin/hospital-programmes/{$validated['hospital_programme_id']}/toggle-status",
+            ['expiry_date' => $expiryDate, 'status' => 'Active']
+        );
+
+        if ($response->failed()) {
+            return back()->with('error', $response->json('message', 'Update failed'));
+        }
+
+        return back()->with('success', $response->json('message'));
+    }
+
     public function hospital()
     {
         $response = $this->api->get('admin/hospitals');

@@ -246,6 +246,16 @@
                           @else
                             <span class="badge badge-success">Active</span>
                           @endif
+                          <button type="button" class="btn btn-xs toggle-status-btn ml-1
+                            @if($r->flag === 'expired') btn-outline-success @else btn-outline-danger @endif"
+                            data-hp-id="{{ $r->id }}"
+                            data-hospital="{{ $r->hospital_name }}"
+                            data-programme="{{ $r->programme_name }}"
+                            data-expiry="{{ $r->expiry_date }}"
+                            data-flag="{{ $r->flag }}"
+                            title="@if($r->flag === 'expired') Activate accreditation @else Mark as expired @endif">
+                            <i class="fas fa-sync-alt"></i>
+                          </button>
                         </td>
                         <td>
                           <div class="dropdown">
@@ -351,6 +361,52 @@
                 </div>
                 <div class="modal-footer">
                   <button type="submit" class="btn btn-cosecsa">Save</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toggle Status modal -->
+        <div class="modal fade" id="toggleStatusModal" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <form method="POST" action="{{ url('admin/hospital/toggle-status') }}" id="toggleStatusForm">
+                @csrf
+                <input type="hidden" name="hospital_programme_id" id="toggleHpId">
+                <div class="modal-header" id="toggleModalHeader" style="background:#a02626;color:#fff;">
+                  <h5 class="modal-title" id="toggleModalTitle">Set Accreditation Duration</h5>
+                  <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                  <p class="text-muted" id="toggleModalSubtitle" style="font-size:.85rem;"></p>
+
+                  <div id="toggleDeactivateMsg" style="display:none;" class="alert alert-warning py-2 mb-3">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    This will mark the accreditation as <strong>Expired</strong>.
+                  </div>
+
+                  <div id="toggleActivateFields">
+                    <div class="form-row">
+                      <div class="form-group col-md-6">
+                        <label>Years</label>
+                        <input type="number" name="years" id="toggleYears" class="form-control" min="0" max="10" value="3">
+                      </div>
+                      <div class="form-group col-md-6">
+                        <label>Months</label>
+                        <input type="number" name="months" id="toggleMonths" class="form-control" min="0" max="11" value="0">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label>New Expiry Date</label>
+                      <input type="text" id="toggleNewExpiry" class="form-control" readonly style="background:#f8f9fa;">
+                      <small class="form-text text-muted" id="toggleExpiryNote"></small>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-cosecsa" id="toggleSubmitBtn">Activate</button>
                 </div>
               </form>
             </div>
@@ -470,6 +526,61 @@ $(document).on('click', '.fchk-select-all', function (e) {
 $(document).on('click', '.fchk-clear', function (e) {
   e.preventDefault();
   $(this).closest('.fchk-filter-panel').find('input[type="checkbox"]').prop('checked', false);
+});
+
+// Toggle Status modal
+function calcToggleExpiry() {
+  var y = parseInt($('#toggleYears').val()) || 0;
+  var m = parseInt($('#toggleMonths').val()) || 0;
+  if (y === 0 && m === 0) {
+    $('#toggleNewExpiry').val('');
+    $('#toggleExpiryNote').text('Set years or months to calculate a new expiry date.');
+    return;
+  }
+  var d = new Date();
+  d.setFullYear(d.getFullYear() + y);
+  d.setMonth(d.getMonth() + m);
+  var yyyy = d.getFullYear();
+  var mm = String(d.getMonth() + 1).padStart(2, '0');
+  var dd = String(d.getDate()).padStart(2, '0');
+  $('#toggleNewExpiry').val(yyyy + '-' + mm + '-' + dd);
+  $('#toggleExpiryNote').text('Accreditation will expire on ' + d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + '.');
+}
+
+$('#toggleYears, #toggleMonths').on('input', calcToggleExpiry);
+
+$(document).on('click', '.toggle-status-btn', function () {
+  var btn = $(this);
+  var hpId = btn.data('hpId');
+  var hospital = btn.data('hospital');
+  var programme = btn.data('programme');
+  var flag = btn.data('flag');
+  var isExpired = (flag === 'expired');
+
+  $('#toggleHpId').val(hpId);
+  $('#toggleModalSubtitle').text(hospital + ' — ' + programme);
+
+  if (isExpired) {
+    // Activating: show year/month fields, default 3 years
+    $('#toggleActivateFields').show();
+    $('#toggleDeactivateMsg').hide();
+    $('#toggleModalHeader').css('background', '#28a745');
+    $('#toggleModalTitle').text('Activate Accreditation');
+    $('#toggleSubmitBtn').text('Activate').removeClass('btn-danger').addClass('btn-cosecsa');
+    $('#toggleYears').val(3);
+    $('#toggleMonths').val(0);
+    calcToggleExpiry();
+  } else {
+    // Deactivating: confirm then send immediately (no duration needed)
+    $('#toggleActivateFields').hide();
+    $('#toggleDeactivateMsg').show();
+    $('#toggleModalHeader').css('background', '#dc3545');
+    $('#toggleModalTitle').text('Deactivate Accreditation');
+    $('#toggleSubmitBtn').text('Mark as Expired').removeClass('btn-cosecsa').addClass('btn-danger');
+    $('#toggleNewExpiry').val(new Date().toISOString().slice(0, 10));
+    $('#toggleYears').val(0);
+    $('#toggleMonths').val(0);
+  }
 });
 </script>
 @endpush

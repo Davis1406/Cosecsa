@@ -189,6 +189,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::post('admin/hospital/reminders/send-bulk', [HospitalController::class,'sendBulkReminders']);
     Route::post('admin/hospital/reminders/{id}/send', [HospitalController::class,'sendReminder']);
     Route::post('admin/hospital/pd/{id}/save', [HospitalController::class,'savePd']);
+    Route::post('admin/hospital/toggle-status', [HospitalController::class,'toggleStatus']);
     Route::get('admin/hospital/list ', [HospitalController::class,'hospital']);
     Route::get('admin/hospital/add ',  [HospitalController::class,'add']);
     Route::post('admin/hospital/add', [HospitalController::class,'insert']);
