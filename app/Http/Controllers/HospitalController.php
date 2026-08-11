@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Country;
 use App\Services\ApiClient;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class HospitalController extends Controller
@@ -105,11 +106,12 @@ class HospitalController extends Controller
     {
         $validated = $request->validate([
             'hospital_programme_id' => 'required|integer',
-            'months'                => 'required|integer|min:0|max:11',
-            'years'                 => 'required|integer|min:0',
+            'month'                 => 'required|integer|min:1|max:12',
+            'year'                  => 'required|integer|min:2020|max:2040',
         ]);
 
-        $expiryDate = now()->addYears($validated['years'])->addMonths($validated['months'])->format('Y-m-d');
+        $lastDay = Carbon::createFromDate($validated['year'], $validated['month'], 1)->endOfMonth()->format('Y-m-d');
+        $expiryDate = $lastDay;
 
         $response = $this->api->put(
             "admin/hospital-programmes/{$validated['hospital_programme_id']}/toggle-status",

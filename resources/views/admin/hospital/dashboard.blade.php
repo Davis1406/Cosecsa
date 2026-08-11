@@ -401,12 +401,20 @@
                   <div id="toggleActivateFields">
                     <div class="form-row">
                       <div class="form-group col-md-6">
-                        <label>Years</label>
-                        <input type="number" name="years" id="toggleYears" class="form-control" min="0" max="10" value="3">
+                        <label>Month</label>
+                        <select name="month" id="toggleMonth" class="form-control">
+                          @foreach(['January','February','March','April','May','June','July','August','September','October','November','December'] as $i => $m)
+                            <option value="{{ $i + 1 }}">{{ $m }}</option>
+                          @endforeach
+                        </select>
                       </div>
                       <div class="form-group col-md-6">
-                        <label>Months</label>
-                        <input type="number" name="months" id="toggleMonths" class="form-control" min="0" max="11" value="0">
+                        <label>Year</label>
+                        <select name="year" id="toggleYear" class="form-control">
+                          @foreach(range(date('Y'), date('Y') + 10) as $y)
+                            <option value="{{ $y }}" {{ $y == date('Y') + 3 ? 'selected' : '' }}>{{ $y }}</option>
+                          @endforeach
+                        </select>
                       </div>
                     </div>
                     <div class="form-group">
@@ -541,32 +549,30 @@ $(document).on('click', '.fchk-clear', function (e) {
 });
 
 // Toggle Status modal
+var toggleMonthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
 function calcToggleExpiry() {
-  var y = parseInt($('#toggleYears').val()) || 0;
-  var m = parseInt($('#toggleMonths').val()) || 0;
-  if (y === 0 && m === 0) {
+  var m = parseInt($('#toggleMonth').val());
+  var y = parseInt($('#toggleYear').val());
+  if (!m || !y) {
     $('#toggleNewExpiry').val('');
-    $('#toggleExpiryNote').text('Set years or months to calculate a new expiry date.');
+    $('#toggleExpiryNote').text('Select a month and year for the new expiry date.');
     return;
   }
-  var d = new Date();
-  d.setFullYear(d.getFullYear() + y);
-  d.setMonth(d.getMonth() + m);
-  var yyyy = d.getFullYear();
-  var mm = String(d.getMonth() + 1).padStart(2, '0');
-  var dd = String(d.getDate()).padStart(2, '0');
-  $('#toggleNewExpiry').val(yyyy + '-' + mm + '-' + dd);
-  $('#toggleExpiryNote').text('Accreditation will expire on ' + d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + '.');
+  var lastDay = new Date(y, m, 0).getDate();
+  var mm = String(m).padStart(2, '0');
+  var dd = String(lastDay).padStart(2, '0');
+  $('#toggleNewExpiry').val(y + '-' + mm + '-' + dd);
+  $('#toggleExpiryNote').text('Accreditation will expire on ' + lastDay + ' ' + toggleMonthNames[m - 1] + ' ' + y + '.');
 }
-
-$('#toggleYears, #toggleMonths').on('input', calcToggleExpiry);
 
 function formatMmYy(dateStr) {
   if (!dateStr) return '—';
   var d = new Date(dateStr);
-  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return months[d.getMonth()] + ' ' + d.getFullYear();
+  return toggleMonthNames[d.getMonth()] + ' ' + d.getFullYear();
 }
+
+$('#toggleMonth, #toggleYear').on('change', calcToggleExpiry);
 
 $(document).on('click', '.toggle-status-btn', function () {
   var btn = $(this);
@@ -584,25 +590,24 @@ $(document).on('click', '.toggle-status-btn', function () {
   $('#toggleExpiryDisplay').text(formatMmYy(expiry));
 
   if (isExpired) {
-    // Activating: show year/month fields, default 3 years
     $('#toggleActivateFields').show();
     $('#toggleDeactivateMsg').hide();
     $('#toggleModalHeader').css('background', '#28a745');
     $('#toggleModalTitle').text('Activate Accreditation');
     $('#toggleSubmitBtn').text('Activate').removeClass('btn-danger').addClass('btn-cosecsa');
-    $('#toggleYears').val(3);
-    $('#toggleMonths').val(0);
+    // Default: 3 years from now
+    var def = new Date();
+    def.setFullYear(def.getFullYear() + 3);
+    $('#toggleMonth').val(def.getMonth() + 1);
+    $('#toggleYear').val(def.getFullYear());
     calcToggleExpiry();
   } else {
-    // Deactivating: confirm then send immediately (no duration needed)
     $('#toggleActivateFields').hide();
     $('#toggleDeactivateMsg').show();
     $('#toggleModalHeader').css('background', '#dc3545');
     $('#toggleModalTitle').text('Deactivate Accreditation');
     $('#toggleSubmitBtn').text('Mark as Expired').removeClass('btn-cosecsa').addClass('btn-danger');
     $('#toggleNewExpiry').val(new Date().toISOString().slice(0, 10));
-    $('#toggleYears').val(0);
-    $('#toggleMonths').val(0);
   }
 
   $('#toggleStatusModal').modal('show');
