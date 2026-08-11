@@ -591,9 +591,10 @@ body.dark-mode .content-wrapper {
     -webkit-appearance: none; appearance: none;
 }
 .ms2-input::placeholder { color: #3d4a5c; }
-.ms2-input:focus { outline: none; border-color: #a02626; background: #2a3349; box-shadow: 0 0 0 3px rgba(160,38,38,.18); color: #f1f5f9; }
+.ms2-input:focus { outline: none; border-color: #a02626; background-color: #2a3349; box-shadow: 0 0 0 3px rgba(160,38,38,.18); color: #f1f5f9; }
 .ms2-input[disabled], .ms2-input[readonly] { background: #1a1f2e; color: #e2e8f0; opacity: 1; cursor: not-allowed; }
-select.ms2-input[disabled], select.ms2-input[readonly] { background-repeat: no-repeat; background-position: right 14px center; }
+select.ms2-input[disabled], select.ms2-input[readonly],
+select.ms2-input:focus { background-repeat: no-repeat; background-position: right 14px center; }
 textarea.ms2-input { height: auto; min-height: 90px; padding: 10px 14px; resize: vertical; }
 select.ms2-input {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238892a4'/%3E%3C/svg%3E");
