@@ -249,7 +249,7 @@ class ExamsController extends Controller
 
     public function sendConfirmationEmail(Request $request, $id)
     {
-        $response = $this->api->post("examiners/{$id}/send-confirmation", []);
+        $response = $this->api->post("examiners/{$id}/send-confirmation", $this->emailSenderPayload());
 
         if ($response->failed()) {
             return redirect()->back()->with('error', $response->json('message') ?? 'Failed to send email.');
@@ -1255,13 +1255,28 @@ class ExamsController extends Controller
 
     public function sendBulkEmail(Request $request)
     {
-        $response = $this->api->post('examiners/send-bulk-email', $request->except('_token'));
+        $response = $this->api->post('examiners/send-bulk-email', array_merge(
+            $request->except('_token'),
+            $this->emailSenderPayload(),
+        ));
 
         if ($response->failed()) {
             return redirect()->back()->with('error', $response->json('message') ?? 'Bulk email failed.');
         }
 
         return redirect()->back()->with('success', $response->json('message') ?? 'Bulk email sent.');
+    }
+
+    private function emailSenderPayload(): array
+    {
+        $sender = Auth::user();
+
+        return [
+            'sender_name'  => $sender?->name,
+            'sender_title' => $sender?->signature_title,
+            'sender_phone' => $sender?->signature_phone,
+            'sender_email' => $sender?->personal_email ?: $sender?->email,
+        ];
     }
 
     // ── Email open tracking pixel ─────────────────────────────────────────────
