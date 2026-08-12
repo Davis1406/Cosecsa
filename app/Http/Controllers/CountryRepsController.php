@@ -34,7 +34,18 @@ class CountryRepsController extends Controller
             'linkedFellow'    => $data->linkedFellow ?? null,
             'header_title'    => 'View CR',
             'relatedProfiles' => $data->relatedProfiles ?? null,
+            'countries'       => Country::getCountry(),
         ]);
+    }
+
+    public function quickUpdate(Request $request, $id)
+    {
+        $response = $this->api->post("country-reps/{$id}/quick-update", [
+            'field' => $request->input('field'),
+            'value' => $request->input('value'),
+        ]);
+
+        return response()->json($response->json(), $response->status());
     }
 
     public function add()

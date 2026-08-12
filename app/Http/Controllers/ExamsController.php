@@ -247,6 +247,16 @@ class ExamsController extends Controller
 
 
 
+    public function quickUpdate(Request $request, $id)
+    {
+        $response = $this->api->post("examiners/{$id}/quick-update", [
+            'field' => $request->input('field'),
+            'value' => $request->input('value'),
+        ]);
+
+        return response()->json($response->json(), $response->status());
+    }
+
     public function sendConfirmationEmail(Request $request, $id)
     {
         $response = $this->api->post("examiners/{$id}/send-confirmation", $this->emailSenderPayload());

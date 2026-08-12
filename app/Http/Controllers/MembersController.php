@@ -39,7 +39,18 @@ class MembersController extends Controller
         return view('admin.associates.members.view', [
             'member'       => $data->member,
             'header_title' => 'View Member',
+            'countries'    => Country::getCountry(),
         ]);
+    }
+
+    public function quickUpdate(Request $request, $id)
+    {
+        $response = $this->api->post("members/{$id}/quick-update", [
+            'field' => $request->input('field'),
+            'value' => $request->input('value'),
+        ]);
+
+        return response()->json($response->json(), $response->status());
     }
 
     public function importMembers(Request $request)

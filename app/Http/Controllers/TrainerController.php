@@ -33,7 +33,18 @@ class TrainerController extends Controller
             'trainer'         => $data->trainer,
             'header_title'    => 'View Trainer',
             'relatedProfiles' => $data->relatedProfiles ?? null,
+            'hospitals'       => HospitalModel::getHospital(),
         ]);
+    }
+
+    public function quickUpdate(Request $request, $id)
+    {
+        $response = $this->api->post("trainers/{$id}/quick-update", [
+            'field' => $request->input('field'),
+            'value' => $request->input('value'),
+        ]);
+
+        return response()->json($response->json(), $response->status());
     }
 
     public function add()

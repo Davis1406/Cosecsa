@@ -149,13 +149,29 @@ body.dark-mode .info-text, body.dark-mode .field-val { color:#e0e0e0; }
                                 @if($countryRep->cosecsa_email)
                                 <div class="info-row">
                                     <span class="info-icon"><i class="fas fa-envelope-open"></i></span>
-                                    <span><span class="info-label">Cosecsa Email</span><span class="info-text">{{ $countryRep->cosecsa_email }}</span></span>
+                                    <span><span class="info-label">Cosecsa Email</span>
+                                        <span class="ie-field" data-ie="cosecsa_email" data-ie-type="email"
+                                              data-ie-value="{{ $countryRep->cosecsa_email }}"
+                                              data-ie-url="{{ url('admin/associates/reps/'.$countryRep->reps_id.'/quick-update') }}"
+                                              data-ie-csrf="{{ csrf_token() }}">
+                                            <span class="info-text ie-value">{{ $countryRep->cosecsa_email }}</span>
+                                            <button class="ie-pencil" type="button" title="Edit cosecsa email"><i class="fas fa-pen"></i></button>
+                                        </span>
+                                    </span>
                                 </div>
                                 @endif
                                 @if($countryRep->mobile_no)
                                 <div class="info-row">
                                     <span class="info-icon"><i class="fas fa-phone"></i></span>
-                                    <span><span class="info-label">Mobile</span><span class="info-text">{{ $countryRep->mobile_no }}</span></span>
+                                    <span><span class="info-label">Mobile</span>
+                                        <span class="ie-field" data-ie="mobile_no" data-ie-type="text"
+                                              data-ie-value="{{ $countryRep->mobile_no }}"
+                                              data-ie-url="{{ url('admin/associates/reps/'.$countryRep->reps_id.'/quick-update') }}"
+                                              data-ie-csrf="{{ csrf_token() }}">
+                                            <span class="info-text ie-value">{{ $countryRep->mobile_no }}</span>
+                                            <button class="ie-pencil" type="button" title="Edit mobile"><i class="fas fa-pen"></i></button>
+                                        </span>
+                                    </span>
                                 </div>
                                 @endif
                             </div>
@@ -173,16 +189,26 @@ body.dark-mode .info-text, body.dark-mode .field-val { color:#e0e0e0; }
                                 </div>
                                 <div class="field-row">
                                     <span class="field-lbl">Position</span>
-                                    <span class="field-val">{{ $countryRep->position ?? 'Country Representative' }}</span>
+                                    <span class="field-val ie-field" data-ie="position" data-ie-type="select"
+                                          data-ie-value="{{ $countryRep->position ?? 'Country Representative' }}"
+                                          data-ie-options='{"Country Representative":"Country Representative","WiSA chair":"WiSA chair","Overseas Representative":"Overseas Representative"}'
+                                          data-ie-url="{{ url('admin/associates/reps/'.$countryRep->reps_id.'/quick-update') }}"
+                                          data-ie-csrf="{{ csrf_token() }}">
+                                        <span class="ie-value">{{ $countryRep->position ?? 'Country Representative' }}</span>
+                                        <button class="ie-pencil" type="button" title="Edit position"><i class="fas fa-pen"></i></button>
+                                    </span>
                                 </div>
                                 <div class="field-row">
                                     <span class="field-lbl">Country</span>
-                                    <span class="field-val">
-                                        @if($countryRep->country_id)
-                                            <a href="{{ url('admin/countries/view/'.$countryRep->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">
-                                                {{ $countryRep->country_name }}
-                                            </a>
-                                        @else {{ $countryRep->country_name ?: '—' }} @endif
+                                    <span class="field-val ie-field" data-ie="country_id" data-ie-type="select"
+                                          data-ie-value="{{ $countryRep->country_id ?? '' }}"
+                                          data-ie-options="{{ json_encode($countries->pluck('country_name','id')) }}"
+                                          data-ie-url="{{ url('admin/associates/reps/'.$countryRep->reps_id.'/quick-update') }}"
+                                          data-ie-csrf="{{ csrf_token() }}">
+                                        <span class="ie-value">
+                                            @if($countryRep->country_id)<a href="{{ url('admin/countries/view/'.$countryRep->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $countryRep->country_name }}</a>@else{{ $countryRep->country_name ?: '—' }}@endif
+                                        </span>
+                                        <button class="ie-pencil" type="button" title="Edit country"><i class="fas fa-pen"></i></button>
                                     </span>
                                 </div>
                                 <div class="field-row">
@@ -191,11 +217,23 @@ body.dark-mode .info-text, body.dark-mode .field-val { color:#e0e0e0; }
                                 </div>
                                 <div class="field-row">
                                     <span class="field-lbl">Cosecsa Email</span>
-                                    <span class="field-val">{{ $countryRep->cosecsa_email ?: '—' }}</span>
+                                    <span class="field-val ie-field" data-ie="cosecsa_email" data-ie-type="email"
+                                          data-ie-value="{{ $countryRep->cosecsa_email ?? '' }}"
+                                          data-ie-url="{{ url('admin/associates/reps/'.$countryRep->reps_id.'/quick-update') }}"
+                                          data-ie-csrf="{{ csrf_token() }}">
+                                        <span class="ie-value">{{ $countryRep->cosecsa_email ?: '—' }}</span>
+                                        <button class="ie-pencil" type="button" title="Edit cosecsa email"><i class="fas fa-pen"></i></button>
+                                    </span>
                                 </div>
                                 <div class="field-row">
                                     <span class="field-lbl">Mobile Number</span>
-                                    <span class="field-val">{{ $countryRep->mobile_no ?: '—' }}</span>
+                                    <span class="field-val ie-field" data-ie="mobile_no" data-ie-type="text"
+                                          data-ie-value="{{ $countryRep->mobile_no ?? '' }}"
+                                          data-ie-url="{{ url('admin/associates/reps/'.$countryRep->reps_id.'/quick-update') }}"
+                                          data-ie-csrf="{{ csrf_token() }}">
+                                        <span class="ie-value">{{ $countryRep->mobile_no ?: '—' }}</span>
+                                        <button class="ie-pencil" type="button" title="Edit mobile number"><i class="fas fa-pen"></i></button>
+                                    </span>
                                 </div>
 
                                 @if($linkedFellow)

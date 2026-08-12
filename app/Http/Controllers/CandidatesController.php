@@ -66,7 +66,20 @@ class CandidatesController extends Controller
             'candidate'     => $data->candidate,
             'header_title'  => 'View Candidate',
             'linkedTrainee' => $data->linkedTrainee ?? null,
+            'hospitals'     => HospitalModel::getHospital(),
+            'countries'     => Country::getCountry(),
+            'programmes'    => Programme::getProgramme(),
         ]);
+    }
+
+    public function quickUpdate(Request $request, $id)
+    {
+        $response = $this->api->post("candidates/{$id}/quick-update", [
+            'field' => $request->input('field'),
+            'value' => $request->input('value'),
+        ]);
+
+        return response()->json($response->json(), $response->status());
     }
 
     public function add()

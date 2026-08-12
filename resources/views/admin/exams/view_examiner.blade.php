@@ -144,23 +144,60 @@
                                 <tr>
                                     <th><i class="fas fa-envelope text-muted mr-1"></i> Email</th>
                                     <td>
-                                        {{ $examiner->email }}
-                                        @if(!empty($examiner->secondary_email))
-                                            <br><span class="text-muted" style="font-size:.85em;">{{ $examiner->secondary_email }}</span>
-                                        @endif
+                                        <span class="ie-field" data-ie="email" data-ie-type="email"
+                                              data-ie-value="{{ $examiner->email ?? '' }}"
+                                              data-ie-url="{{ url('admin/exams/examiner/'.$examiner->examin_id.'/quick-update') }}"
+                                              data-ie-csrf="{{ csrf_token() }}">
+                                            <span class="ie-value">{{ $examiner->email }}</span>
+                                            <button class="ie-pencil" type="button" title="Edit email"><i class="fas fa-pen"></i></button>
+                                        </span>
+                                        <br>
+                                        <span class="ie-field" data-ie="secondary_email" data-ie-type="email"
+                                              data-ie-value="{{ $examiner->secondary_email ?? '' }}"
+                                              data-ie-url="{{ url('admin/exams/examiner/'.$examiner->examin_id.'/quick-update') }}"
+                                              data-ie-csrf="{{ csrf_token() }}">
+                                            <span class="text-muted ie-value" style="font-size:.85em;">{{ $examiner->secondary_email ?: 'Add secondary email' }}</span>
+                                            <button class="ie-pencil" type="button" title="Edit secondary email"><i class="fas fa-pen"></i></button>
+                                        </span>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th><i class="fas fa-phone text-muted mr-1"></i> Mobile</th>
-                                    <td>{{ $examiner->mobile ?: '—' }}</td>
+                                    <td>
+                                        <span class="ie-field" data-ie="mobile" data-ie-type="text"
+                                              data-ie-value="{{ $examiner->mobile ?? '' }}"
+                                              data-ie-url="{{ url('admin/exams/examiner/'.$examiner->examin_id.'/quick-update') }}"
+                                              data-ie-csrf="{{ csrf_token() }}">
+                                            <span class="ie-value">{{ $examiner->mobile ?: '—' }}</span>
+                                            <button class="ie-pencil" type="button" title="Edit mobile"><i class="fas fa-pen"></i></button>
+                                        </span>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th><i class="fas fa-globe text-muted mr-1"></i> Country</th>
-                                    <td>@if($examiner->country_id ?? null)<a href="{{ url('admin/countries/view/'.$examiner->country_id) }}" style="color:#a02626;">{{ $examiner->country_name }}</a>@else{{ $examiner->country_name ?: '—' }}@endif</td>
+                                    <td>
+                                        <span class="ie-field" data-ie="country_id" data-ie-type="select"
+                                              data-ie-value="{{ $examiner->country_id ?? '' }}"
+                                              data-ie-options="{{ json_encode($getCountry->pluck('country_name','id')) }}"
+                                              data-ie-url="{{ url('admin/exams/examiner/'.$examiner->examin_id.'/quick-update') }}"
+                                              data-ie-csrf="{{ csrf_token() }}">
+                                            <span class="ie-value">@if($examiner->country_id ?? null)<a href="{{ url('admin/countries/view/'.$examiner->country_id) }}" style="color:#a02626;">{{ $examiner->country_name }}</a>@else{{ $examiner->country_name ?: '—' }}@endif</span>
+                                            <button class="ie-pencil" type="button" title="Edit country"><i class="fas fa-pen"></i></button>
+                                        </span>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th><i class="fas fa-venus-mars text-muted mr-1"></i> Gender</th>
-                                    <td>{{ $examiner->gender ?: '—' }}</td>
+                                    <td>
+                                        <span class="ie-field" data-ie="gender" data-ie-type="select"
+                                              data-ie-value="{{ $examiner->gender ?? '' }}"
+                                              data-ie-options='{"Male":"Male","Female":"Female"}'
+                                              data-ie-url="{{ url('admin/exams/examiner/'.$examiner->examin_id.'/quick-update') }}"
+                                              data-ie-csrf="{{ csrf_token() }}">
+                                            <span class="ie-value">{{ $examiner->gender ?: '—' }}</span>
+                                            <button class="ie-pencil" type="button" title="Edit gender"><i class="fas fa-pen"></i></button>
+                                        </span>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th><i class="fas fa-id-card text-muted mr-1"></i> Examiner ID</th>
@@ -169,16 +206,25 @@
                                 <tr>
                                     <th><i class="fas fa-circle text-muted mr-1"></i> Status</th>
                                     <td>
-                                        @php $status = $examiner->status ?? 'Active'; @endphp
-                                        @if($status === 'Active')
-                                            <span class="badge badge-pill badge-success">Active</span>
-                                        @elseif($status === 'Inactive')
-                                            <span class="badge badge-pill badge-warning">Inactive</span>
-                                        @elseif($status === 'Deceased')
-                                            <span class="badge badge-pill badge-secondary">Deceased</span>
-                                        @else
-                                            <span class="badge badge-pill badge-light">{{ $status }}</span>
-                                        @endif
+                                        <span class="ie-field" data-ie="status" data-ie-type="select"
+                                              data-ie-value="{{ $examiner->status ?? 'Active' }}"
+                                              data-ie-options='{"Active":"Active","Inactive":"Inactive","Deceased":"Deceased"}'
+                                              data-ie-url="{{ url('admin/exams/examiner/'.$examiner->examin_id.'/quick-update') }}"
+                                              data-ie-csrf="{{ csrf_token() }}">
+                                            @php $status = $examiner->status ?? 'Active'; @endphp
+                                            <span class="ie-value">
+                                                @if($status === 'Active')
+                                                    <span class="badge badge-pill badge-success">Active</span>
+                                                @elseif($status === 'Inactive')
+                                                    <span class="badge badge-pill badge-warning">Inactive</span>
+                                                @elseif($status === 'Deceased')
+                                                    <span class="badge badge-pill badge-secondary">Deceased</span>
+                                                @else
+                                                    <span class="badge badge-pill badge-light">{{ $status }}</span>
+                                                @endif
+                                            </span>
+                                            <button class="ie-pencil" type="button" title="Edit status"><i class="fas fa-pen"></i></button>
+                                        </span>
                                     </td>
                                 </tr>
                             </table>
@@ -242,11 +288,27 @@
                                 </tr>
                                 <tr>
                                     <th><i class="fas fa-stethoscope text-muted mr-1"></i> Specialty</th>
-                                    <td>{{ $examiner->specialty ?: '—' }}</td>
+                                    <td>
+                                        <span class="ie-field" data-ie="specialty" data-ie-type="text"
+                                              data-ie-value="{{ $examiner->specialty ?? '' }}"
+                                              data-ie-url="{{ url('admin/exams/examiner/'.$examiner->examin_id.'/quick-update') }}"
+                                              data-ie-csrf="{{ csrf_token() }}">
+                                            <span class="ie-value">{{ $examiner->specialty ?: '—' }}</span>
+                                            <button class="ie-pencil" type="button" title="Edit specialty"><i class="fas fa-pen"></i></button>
+                                        </span>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th><i class="fas fa-microscope text-muted mr-1"></i> Sub-Specialty</th>
-                                    <td>{{ $examiner->subspecialty ?: '—' }}</td>
+                                    <td>
+                                        <span class="ie-field" data-ie="subspecialty" data-ie-type="text"
+                                              data-ie-value="{{ $examiner->subspecialty ?? '' }}"
+                                              data-ie-url="{{ url('admin/exams/examiner/'.$examiner->examin_id.'/quick-update') }}"
+                                              data-ie-csrf="{{ csrf_token() }}">
+                                            <span class="ie-value">{{ $examiner->subspecialty ?: '—' }}</span>
+                                            <button class="ie-pencil" type="button" title="Edit sub-specialty"><i class="fas fa-pen"></i></button>
+                                        </span>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th style="vertical-align:top;padding-top:.5rem;">

@@ -41,26 +41,56 @@
                             </tr>
                             <tr>
                                 <th>Email</th>
-                                <td>{{ $member->personal_email }}</td>
+                                <td>
+                                    <span class="ie-field" data-ie="personal_email" data-ie-type="email"
+                                          data-ie-value="{{ $member->personal_email ?? '' }}"
+                                          data-ie-url="{{ url('admin/associates/members/'.$member->members_id.'/quick-update') }}"
+                                          data-ie-csrf="{{ csrf_token() }}">
+                                        <span class="ie-value">{{ $member->personal_email ?? '—' }}</span>
+                                        <button class="ie-pencil" type="button" title="Edit email"><i class="fas fa-pen"></i></button>
+                                    </span>
+                                </td>
                             </tr>
                             <tr>
                                 <th>Country</th>
                                 <td>
-                                    @if($member->country_id)
-                                    <a href="{{ url('admin/countries/view/'.$member->country_id) }}" style="color:#a02626;font-weight:500;">
-                                        {{ $member->country_name }}
-                                    </a>
-                                    @else {{ $member->country_name }} @endif
+                                    <span class="ie-field" data-ie="country_id" data-ie-type="select"
+                                          data-ie-value="{{ $member->country_id ?? '' }}"
+                                          data-ie-options="{{ json_encode($countries->pluck('country_name','id')) }}"
+                                          data-ie-url="{{ url('admin/associates/members/'.$member->members_id.'/quick-update') }}"
+                                          data-ie-csrf="{{ csrf_token() }}">
+                                        <span class="ie-value">
+                                            @if($member->country_id)<a href="{{ url('admin/countries/view/'.$member->country_id) }}" style="color:#a02626;font-weight:500;">{{ $member->country_name }}</a>@else{{ $member->country_name }}@endif
+                                        </span>
+                                        <button class="ie-pencil" type="button" title="Edit country"><i class="fas fa-pen"></i></button>
+                                    </span>
                                 </td>
                             </tr>
                             <tr>
                                 <th>Gender</th>
-                                <td>{{ $member->gender }}</td>
+                                <td>
+                                    <span class="ie-field" data-ie="gender" data-ie-type="select"
+                                          data-ie-value="{{ $member->gender ?? '' }}"
+                                          data-ie-options='{"Male":"Male","Female":"Female"}'
+                                          data-ie-url="{{ url('admin/associates/members/'.$member->members_id.'/quick-update') }}"
+                                          data-ie-csrf="{{ csrf_token() }}">
+                                        <span class="ie-value">{{ $member->gender ?? '—' }}</span>
+                                        <button class="ie-pencil" type="button" title="Edit gender"><i class="fas fa-pen"></i></button>
+                                    </span>
+                                </td>
                             </tr>
 
                             <tr>
                                 <th>Mobile Number</th>
-                                <td>{{ $member->phone_number }}</td>
+                                <td>
+                                    <span class="ie-field" data-ie="phone_number" data-ie-type="text"
+                                          data-ie-value="{{ $member->phone_number ?? '' }}"
+                                          data-ie-url="{{ url('admin/associates/members/'.$member->members_id.'/quick-update') }}"
+                                          data-ie-csrf="{{ csrf_token() }}">
+                                        <span class="ie-value">{{ $member->phone_number ?? '—' }}</span>
+                                        <button class="ie-pencil" type="button" title="Edit mobile number"><i class="fas fa-pen"></i></button>
+                                    </span>
+                                </td>
                             </tr>
                             <tr>
                                 <th>Membership Type</th>
@@ -74,22 +104,55 @@
 
                             <tr>
                                 <th>Membership Year</th>
-                                <td>{{ $member->membership_year }}</td>
+                                <td>
+                                    <span class="ie-field" data-ie="membership_year" data-ie-type="number"
+                                          data-ie-value="{{ $member->membership_year ?? '' }}"
+                                          data-ie-url="{{ url('admin/associates/members/'.$member->members_id.'/quick-update') }}"
+                                          data-ie-csrf="{{ csrf_token() }}">
+                                        <span class="ie-value">{{ $member->membership_year ?? '—' }}</span>
+                                        <button class="ie-pencil" type="button" title="Edit membership year"><i class="fas fa-pen"></i></button>
+                                    </span>
+                                </td>
                             </tr>
 
                             <tr>
                                 <th>Admission Year</th>
-                                <td>{{ $member->admission_year }}</td>
+                                <td>
+                                    <span class="ie-field" data-ie="admission_year" data-ie-type="number"
+                                          data-ie-value="{{ $member->admission_year ?? '' }}"
+                                          data-ie-url="{{ url('admin/associates/members/'.$member->members_id.'/quick-update') }}"
+                                          data-ie-csrf="{{ csrf_token() }}">
+                                        <span class="ie-value">{{ $member->admission_year ?? '—' }}</span>
+                                        <button class="ie-pencil" type="button" title="Edit admission year"><i class="fas fa-pen"></i></button>
+                                    </span>
+                                </td>
                             </tr>
 
                             <tr>
                                 <th>Address</th>
-                                <td>{{ $member->address }}</td>
+                                <td>
+                                    <span class="ie-field" data-ie="address" data-ie-type="text"
+                                          data-ie-value="{{ $member->address ?? '' }}"
+                                          data-ie-url="{{ url('admin/associates/members/'.$member->members_id.'/quick-update') }}"
+                                          data-ie-csrf="{{ csrf_token() }}">
+                                        <span class="ie-value">{{ $member->address ?? '—' }}</span>
+                                        <button class="ie-pencil" type="button" title="Edit address"><i class="fas fa-pen"></i></button>
+                                    </span>
+                                </td>
                             </tr>
 
                             <tr>
                                 <th>Status</th>
-                                <td>{{ $member->status }}</td>
+                                <td>
+                                    <span class="ie-field" data-ie="status" data-ie-type="select"
+                                          data-ie-value="{{ $member->status ?? '' }}"
+                                          data-ie-options='{"Active":"Active","Inactive":"Inactive"}'
+                                          data-ie-url="{{ url('admin/associates/members/'.$member->members_id.'/quick-update') }}"
+                                          data-ie-csrf="{{ csrf_token() }}">
+                                        <span class="ie-value">{{ $member->status ?? '—' }}</span>
+                                        <button class="ie-pencil" type="button" title="Edit status"><i class="fas fa-pen"></i></button>
+                                    </span>
+                                </td>
                             </tr>
                         </table>
                     </div>

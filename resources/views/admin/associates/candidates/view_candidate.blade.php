@@ -225,7 +225,14 @@
                         <div class="info-row">
                             <span class="info-icon"><i class="fas fa-envelope"></i></span>
                             <span><span class="info-label">Personal Email</span>
-                                  <span class="info-text">{{ $candidate->personal_email }}</span></span>
+                                  <span class="ie-field" data-ie="personal_email" data-ie-type="email"
+                                        data-ie-value="{{ $candidate->personal_email }}"
+                                        data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                        data-ie-csrf="{{ csrf_token() }}">
+                                      <span class="info-text ie-value">{{ $candidate->personal_email }}</span>
+                                      <button class="ie-pencil" type="button" title="Edit email"><i class="fas fa-pen"></i></button>
+                                  </span>
+                            </span>
                         </div>
                         @endif
                         @if($candidate->user_email)
@@ -239,14 +246,34 @@
                         <div class="info-row">
                             <span class="info-icon"><i class="fas fa-flag"></i></span>
                             <span><span class="info-label">Country</span>
-                                  <span class="info-text">@if($candidate->country_id ?? null)<a href="{{ url('admin/countries/view/'.$candidate->country_id) }}" style="color:#a02626;">{{ $candidate->country_name }}</a>@else{{ $candidate->country_name }}@endif</span></span>
+                                  <span class="ie-field" data-ie="country_id" data-ie-type="select"
+                                        data-ie-value="{{ $candidate->country_id ?? '' }}"
+                                        data-ie-options="{{ json_encode($countries->pluck('country_name','id')) }}"
+                                        data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                        data-ie-csrf="{{ csrf_token() }}">
+                                      <span class="info-text ie-value">
+                                          @if($candidate->country_id ?? null)<a href="{{ url('admin/countries/view/'.$candidate->country_id) }}" style="color:#a02626;">{{ $candidate->country_name }}</a>@else{{ $candidate->country_name }}@endif
+                                      </span>
+                                      <button class="ie-pencil" type="button" title="Edit country"><i class="fas fa-pen"></i></button>
+                                  </span>
+                            </span>
                         </div>
                         @endif
                         @if($candidate->hospital_name)
                         <div class="info-row">
                             <span class="info-icon"><i class="fas fa-hospital"></i></span>
                             <span><span class="info-label">Hospital</span>
-                                  <span class="info-text">@if($candidate->hospital_id ?? null)<a href="{{ url('admin/hospital/view_hospital/'.$candidate->hospital_id) }}" style="color:#a02626;">{{ $candidate->hospital_name }}</a>@else{{ $candidate->hospital_name }}@endif</span></span>
+                                  <span class="ie-field" data-ie="hospital_id" data-ie-type="select"
+                                        data-ie-value="{{ $candidate->hospital_id ?? '' }}"
+                                        data-ie-options="{{ json_encode($hospitals->pluck('name','id')) }}"
+                                        data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                        data-ie-csrf="{{ csrf_token() }}">
+                                      <span class="info-text ie-value">
+                                          @if($candidate->hospital_id ?? null)<a href="{{ url('admin/hospital/view_hospital/'.$candidate->hospital_id) }}" style="color:#a02626;">{{ $candidate->hospital_name }}</a>@else{{ $candidate->hospital_name }}@endif
+                                      </span>
+                                      <button class="ie-pencil" type="button" title="Edit hospital"><i class="fas fa-pen"></i></button>
+                                  </span>
+                            </span>
                         </div>
                         @endif
                     </div>
@@ -307,28 +334,59 @@
                         @endif
                         <div class="field-row"><span class="field-lbl">Last Name</span><span class="field-val">{{ $candidate->lastname ?? '—' }}</span></div>
                         <div class="field-row"><span class="field-lbl">Gender</span>
-                            <span class="field-val">
-                                @if(($candidate->gender ?? '') === 'Female')
-                                    <span class="badge badge-warning" style="color:#333;">Female</span>
-                                @elseif(($candidate->gender ?? '') === 'Male')
-                                    <span class="badge badge-info">Male</span>
-                                @else —
-                                @endif
+                            <span class="field-val ie-field" data-ie="gender" data-ie-type="select"
+                                  data-ie-value="{{ $candidate->gender ?? '' }}"
+                                  data-ie-options='{"Male":"Male","Female":"Female"}'
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">
+                                    @if(($candidate->gender ?? '') === 'Female')
+                                        <span class="badge badge-warning" style="color:#333;">Female</span>
+                                    @elseif(($candidate->gender ?? '') === 'Male')
+                                        <span class="badge badge-info">Male</span>
+                                    @else —
+                                    @endif
+                                </span>
+                                <button class="ie-pencil" type="button" title="Edit gender"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
 
                         <p class="sect-div">Contact</p>
                         <div class="field-row"><span class="field-lbl">Personal Email</span>
-                            <span class="field-val">
-                                @if(!empty($candidate->personal_email))
-                                    <a href="mailto:{{ $candidate->personal_email }}">{{ $candidate->personal_email }}</a>
-                                @else —
-                                @endif
+                            <span class="field-val ie-field" data-ie="personal_email" data-ie-type="email"
+                                  data-ie-value="{{ $candidate->personal_email ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">
+                                    @if(!empty($candidate->personal_email))
+                                        <a href="mailto:{{ $candidate->personal_email }}">{{ $candidate->personal_email }}</a>
+                                    @else —
+                                    @endif
+                                </span>
+                                <button class="ie-pencil" type="button" title="Edit email"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">SFS Username</span><span class="field-val"><code>{{ $candidate->user_email ?? '—' }}</code></span></div>
-                        <div class="field-row"><span class="field-lbl">Country</span><span class="field-val">@if($candidate->country_id ?? null)<a href="{{ url('admin/countries/view/'.$candidate->country_id) }}" style="color:#a02626;">{{ $candidate->country_name }}</a>@else{{ $candidate->country_name ?? '—' }}@endif</span></div>
-                        <div class="field-row"><span class="field-lbl">Hospital</span><span class="field-val">@if($candidate->hospital_id ?? null)<a href="{{ url('admin/hospital/view_hospital/'.$candidate->hospital_id) }}" style="color:#a02626;">{{ $candidate->hospital_name }}</a>@else{{ $candidate->hospital_name ?? '—' }}@endif</span></div>
+                        <div class="field-row"><span class="field-lbl">Country</span>
+                            <span class="field-val ie-field" data-ie="country_id" data-ie-type="select"
+                                  data-ie-value="{{ $candidate->country_id ?? '' }}"
+                                  data-ie-options="{{ json_encode($countries->pluck('country_name','id')) }}"
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">@if($candidate->country_id ?? null)<a href="{{ url('admin/countries/view/'.$candidate->country_id) }}" style="color:#a02626;">{{ $candidate->country_name }}</a>@else{{ $candidate->country_name ?? '—' }}@endif</span>
+                                <button class="ie-pencil" type="button" title="Edit country"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">Hospital</span>
+                            <span class="field-val ie-field" data-ie="hospital_id" data-ie-type="select"
+                                  data-ie-value="{{ $candidate->hospital_id ?? '' }}"
+                                  data-ie-options="{{ json_encode($hospitals->pluck('name','id')) }}"
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">@if($candidate->hospital_id ?? null)<a href="{{ url('admin/hospital/view_hospital/'.$candidate->hospital_id) }}" style="color:#a02626;">{{ $candidate->hospital_name }}</a>@else{{ $candidate->hospital_name ?? '—' }}@endif</span>
+                                <button class="ie-pencil" type="button" title="Edit hospital"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                     </div>
 
                     {{-- ── TAB: Exam Info ── --}}
@@ -346,39 +404,91 @@
                         <div class="field-row"><span class="field-lbl">Exam Number</span><span class="field-val">{{ $candidate->exam_number ?? '—' }}</span></div>
 
                         <p class="sect-div">Programme &amp; Year</p>
-                        <div class="field-row"><span class="field-lbl">Programme</span><span class="field-val">@if($candidate->programme_id ?? null)<a href="{{ url('admin/programmes/view/'.$candidate->programme_id) }}" style="color:#a02626;">{{ $candidate->programme_name }}</a>@else{{ $candidate->programme_name ?? '—' }}@endif</span></div>
-                        <div class="field-row"><span class="field-lbl">Admission Year</span><span class="field-val">{{ $candidate->admission_year ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Exam Year</span><span class="field-val">{{ $candidate->exam_year ?? '—' }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Programme</span>
+                            <span class="field-val ie-field" data-ie="programme_id" data-ie-type="select"
+                                  data-ie-value="{{ $candidate->programme_id ?? '' }}"
+                                  data-ie-options="{{ json_encode($programmes->pluck('name','id')) }}"
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">@if($candidate->programme_id ?? null)<a href="{{ url('admin/programmes/view/'.$candidate->programme_id) }}" style="color:#a02626;">{{ $candidate->programme_name }}</a>@else{{ $candidate->programme_name ?? '—' }}@endif</span>
+                                <button class="ie-pencil" type="button" title="Edit programme"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">Admission Year</span>
+                            <span class="field-val ie-field" data-ie="admission_year" data-ie-type="number"
+                                  data-ie-value="{{ $candidate->admission_year ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $candidate->admission_year ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit admission year"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">Exam Year</span>
+                            <span class="field-val ie-field" data-ie="exam_year" data-ie-type="number"
+                                  data-ie-value="{{ $candidate->exam_year ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $candidate->exam_year ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit exam year"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                         <div class="field-row"><span class="field-lbl">Exam Group</span><span class="field-val">{{ $candidate->group_name ?? '—' }}</span></div>
 
                         <p class="sect-div">Exam Status</p>
                         <div class="field-row"><span class="field-lbl">Repeat Paper 1</span>
-                            <span class="field-val">
-                                @if(($candidate->repeat_paper_one ?? 'No') === 'Yes')
-                                    <span class="badge badge-warning" style="color:#333;">Yes</span>
-                                @else <span class="text-muted">No</span>
-                                @endif
+                            <span class="field-val ie-field" data-ie="repeat_paper_one" data-ie-type="select"
+                                  data-ie-value="{{ $candidate->repeat_paper_one ?? 'No' }}"
+                                  data-ie-options='{"No":"No","Yes":"Yes"}'
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">
+                                    @if(($candidate->repeat_paper_one ?? 'No') === 'Yes')
+                                        <span class="badge badge-warning" style="color:#333;">Yes</span>
+                                    @else <span class="text-muted">No</span>
+                                    @endif
+                                </span>
+                                <button class="ie-pencil" type="button" title="Edit repeat paper 1"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Repeat Paper 2</span>
-                            <span class="field-val">
-                                @if(($candidate->repeat_paper_two ?? 'No') === 'Yes')
-                                    <span class="badge badge-warning" style="color:#333;">Yes</span>
-                                @else <span class="text-muted">No</span>
-                                @endif
+                            <span class="field-val ie-field" data-ie="repeat_paper_two" data-ie-type="select"
+                                  data-ie-value="{{ $candidate->repeat_paper_two ?? 'No' }}"
+                                  data-ie-options='{"No":"No","Yes":"Yes"}'
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">
+                                    @if(($candidate->repeat_paper_two ?? 'No') === 'Yes')
+                                        <span class="badge badge-warning" style="color:#333;">Yes</span>
+                                    @else <span class="text-muted">No</span>
+                                    @endif
+                                </span>
+                                <button class="ie-pencil" type="button" title="Edit repeat paper 2"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">MMed Qualified</span>
-                            <span class="field-val">
-                                @if(($candidate->mmed ?? 'No') === 'Yes')
-                                    <span class="badge badge-success">Yes</span>
-                                @else <span class="text-muted">No</span>
-                                @endif
+                            <span class="field-val ie-field" data-ie="mmed" data-ie-type="select"
+                                  data-ie-value="{{ $candidate->mmed ?? 'No' }}"
+                                  data-ie-options='{"No":"No","Yes":"Yes"}'
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">
+                                    @if(($candidate->mmed ?? 'No') === 'Yes')
+                                        <span class="badge badge-success">Yes</span>
+                                    @else <span class="text-muted">No</span>
+                                    @endif
+                                </span>
+                                <button class="ie-pencil" type="button" title="Edit MMed qualified"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
-                        @if(!empty($candidate->remarks))
-                        <div class="field-row"><span class="field-lbl">Remarks</span><span class="field-val">{{ $candidate->remarks }}</span></div>
-                        @endif
+                        <div class="field-row"><span class="field-lbl">Remarks</span>
+                            <span class="field-val ie-field" data-ie="remarks" data-ie-type="text"
+                                  data-ie-value="{{ $candidate->remarks ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $candidate->remarks ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit remarks"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                     </div>
 
                     {{-- ── TAB: Fees & Payments ── --}}
@@ -410,9 +520,16 @@
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Invoice Status</span>
-                            <span class="field-val">
+                            <span class="field-val ie-field" data-ie="invoice_status" data-ie-type="select"
+                                  data-ie-value="{{ $candidate->invoice_status ?? 'Pending' }}"
+                                  data-ie-options='{"Pending":"Pending","Sent":"Sent"}'
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
                                 @php $cs = $candidate->invoice_status ?? 'Pending'; @endphp
-                                <span class="badge" style="background:{{ $cs==='Sent' ? '#cce5ff' : '#fff3cd' }}; color:{{ $cs==='Sent' ? '#004085' : '#856404' }};">{{ $cs }}</span>
+                                <span class="ie-value">
+                                    <span class="badge" style="background:{{ $cs==='Sent' ? '#cce5ff' : '#fff3cd' }}; color:{{ $cs==='Sent' ? '#004085' : '#856404' }};">{{ $cs }}</span>
+                                </span>
+                                <button class="ie-pencil" type="button" title="Edit invoice status"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Fee Paid</span>

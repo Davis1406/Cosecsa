@@ -247,6 +247,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
   Route::get('admin/associates/candidates/import',  [CandidatesController::class,'import']);
   Route::post('admin/associates/candidates/import', [CandidatesController::class, 'importData'])->name('candidates.import.data');
   Route::get('admin/associates/candidates/view/{id}',  [CandidatesController::class,'view'])->name('candidates.view');
+  Route::post('admin/associates/candidates/{id}/quick-update', [CandidatesController::class,'quickUpdate'])->name('candidates.quick.update');
   Route::get('admin/associates/candidates/edit/{id} ', [CandidatesController::class,'edit']);
   Route::post('admin/associates/candidates/edit/{id} ', [CandidatesController::class,'update']);
   Route::get('admin/associates/candidates/delete/{id}', [CandidatesController::class,'delete']);
@@ -260,6 +261,7 @@ Route::post('admin/associates/trainers/add', [TrainerController::class,'insert']
 Route::get('admin/associates/trainers/import',  [TrainerController::class,'import']);
 Route::post('admin/associates/trainers/import', [TrainerController::class, 'importData'])->name('trainers.import.data');
 Route::get('admin/associates/trainers/view/{id}',  [TrainerController::class,'view'])->name('trainers.view');
+Route::post('admin/associates/trainers/{id}/quick-update', [TrainerController::class,'quickUpdate'])->name('trainers.quick.update');
 Route::get('admin/associates/trainers/edit/{id} ', [TrainerController::class,'edit']);
 Route::post('admin/associates/trainers/edit/{id} ', [TrainerController::class,'update']);
 Route::get('admin/associates/trainers/delete/{id}', [TrainerController::class,'delete']);
@@ -272,6 +274,7 @@ Route::post('admin/associates/reps/add', [CountryRepsController::class,'insert']
 Route::get('admin/associates/reps/import',  [CountryRepsController::class,'import']);
 Route::post('admin/associates/reps/import', [CountryRepsController::class, 'importData'])->name('reps.import.data');
 Route::get('admin/associates/reps/view/{id}',  [CountryRepsController::class,'view'])->name('reps.view');
+Route::post('admin/associates/reps/{id}/quick-update', [CountryRepsController::class,'quickUpdate'])->name('reps.quick.update');
 Route::get('admin/associates/reps/edit/{id} ', [CountryRepsController::class,'edit']);
 Route::post('admin/associates/reps/edit/{id} ', [CountryRepsController::class,'update']);
 Route::get('admin/associates/reps/delete/{id}', [CountryRepsController::class,'delete']);
@@ -342,6 +345,7 @@ Route::post('admin/associates/members/add', [MembersController::class,'insert'])
 Route::get('admin/associates/members/import_members', [MembersController::class,'import']);
 Route::post('admin/associates/members/import', [MembersController::class, 'importMembers'])->name('members.import.data');
 Route::get('admin/associates/members/view/{id}',  [MembersController::class,'view'])->name('members.view');
+Route::post('admin/associates/members/{id}/quick-update', [MembersController::class,'quickUpdate'])->name('members.quick.update');
 Route::get('admin/associates/members/edit/{id}', [MembersController::class,'edit']);
 Route::post('admin/associates/members/edit/{id}', [MembersController::class,'update']);
 Route::get('admin/associates/members/delete/{id}', [MembersController::class,'delete']);
@@ -358,6 +362,7 @@ Route::post('admin/exams/edit_examiner/{id}', [ExamsController::class,'update'])
 Route::get('admin/exams/examiner-confirmation', [ExamsController::class, 'ExaminerconfirmationView'])->name('examiner.examiner_confirmation');
 Route::post('admin/exams/send-bulk-email', [ExamsController::class, 'sendBulkEmail'])->name('examiners.bulk.email');
 Route::post('admin/exams/examiner/{id}/send-confirmation', [ExamsController::class, 'sendConfirmationEmail'])->name('examiner.send.confirmation');
+Route::post('admin/exams/examiner/{id}/quick-update', [ExamsController::class, 'quickUpdate'])->name('examiner.quick.update');
 Route::get('admin/exams/email-template',  [ExamsController::class, 'emailTemplate'])->name('exams.email.template');
 Route::post('admin/exams/email-template', [ExamsController::class, 'saveEmailTemplate'])->name('exams.email.template.save');
 Route::get('admin/exams/upload-confirmation',  [ExamsController::class, 'uploadConfirmationForm'])->name('exams.upload.confirmation');
