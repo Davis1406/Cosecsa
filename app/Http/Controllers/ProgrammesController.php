@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\ApiClient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class ProgrammesController extends Controller
 {
@@ -32,6 +33,8 @@ class ProgrammesController extends Controller
         $this->api->post('admin/programmes', $request->only([
             'name', 'programme_type', 'duration', 'entry_fee', 'exam_fee', 'repeat_fee',
         ]));
+
+        Cache::forget('lookup:programmes');
 
         return redirect('admin/programmes/list')->with('success', 'Programme successfully created');
     }
@@ -83,12 +86,16 @@ class ProgrammesController extends Controller
             'name', 'programme_type', 'duration', 'entry_fee', 'exam_fee', 'repeat_fee',
         ]));
 
+        Cache::forget('lookup:programmes');
+
         return redirect('admin/programmes/list')->with('success', 'Programme successfully updated');
     }
 
     public function delete($id)
     {
         $this->api->delete("admin/programmes/{$id}");
+
+        Cache::forget('lookup:programmes');
 
         return redirect('admin/programmes/list')->with('success', 'Information successfully Deleted');
     }

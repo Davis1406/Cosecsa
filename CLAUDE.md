@@ -29,6 +29,11 @@ rsync -avz --delete \
   /Applications/XAMPP/xamppfiles/htdocs/Cosecsa/ \
   root@cosecsamis.org:/var/www/html/Cosecsa/
 
-ssh root@cosecsamis.org "php /var/www/html/Cosecsa/artisan view:clear && \
-  php /var/www/html/Cosecsa/artisan cache:clear"
+ssh root@cosecsamis.org "cd /var/www/html/Cosecsa && \
+  php artisan cache:clear && php artisan config:clear && \
+  php artisan route:clear && php artisan view:clear && \
+  php artisan config:cache && php artisan route:cache && php artisan view:cache"
 ```
+Production always redeploys with config/route/view **cached**, not just cleared — see
+`~/cosecsa/HANDOFF.md` § Performance notes. If you edit `.env` on the server, you must
+run `config:cache` afterward (a bare `config:clear` alone silently loses the perf win).

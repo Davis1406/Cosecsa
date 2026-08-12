@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Request;
 
 class HospitalModel extends Model
@@ -37,16 +38,18 @@ class HospitalModel extends Model
       
     }
 
+    // Full active-hospital list — used to populate the hospital dropdown on
+    // nearly every trainee/candidate/trainer add/edit/view page. Rarely
+    // changes, so cache it instead of re-joining on every request.
     static public function getHospital(){
 
-        $return = HospitalModel:: select('hospitals.*', 'countries.country_name as country_name')
-        ->join('countries', 'countries.id', 'hospitals.country_id')
-        ->where('hospitals.is_deleted', '=', 0)
-        ->orderBy('hospitals.name', 'asc')
-        ->get();
-
-        return $return;
-
+        return Cache::remember('lookup:hospitals', 3600, function () {
+            return HospitalModel::select('hospitals.*', 'countries.country_name as country_name')
+                ->join('countries', 'countries.id', 'hospitals.country_id')
+                ->where('hospitals.is_deleted', '=', 0)
+                ->orderBy('hospitals.name', 'asc')
+                ->get();
+        });
     }
 
 }

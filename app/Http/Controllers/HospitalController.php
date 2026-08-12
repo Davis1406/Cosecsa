@@ -6,6 +6,7 @@ use App\Models\Country;
 use App\Services\ApiClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class HospitalController extends Controller
 {
@@ -183,6 +184,8 @@ class HospitalController extends Controller
             return back()->withInput()->with('error', $response->json('message', 'Failed to create hospital'));
         }
 
+        Cache::forget('lookup:hospitals');
+
         return redirect('admin/hospital/list')->with('success', 'Hospital successfully created');
     }
 
@@ -213,6 +216,8 @@ class HospitalController extends Controller
             return back()->withInput()->with('error', $response->json('message', 'Failed to update hospital'));
         }
 
+        Cache::forget('lookup:hospitals');
+
         return redirect('admin/hospital/list')->with('success', 'Hospital successfully updated');
     }
 
@@ -223,6 +228,8 @@ class HospitalController extends Controller
         if ($response->failed()) {
             return back()->with('error', $response->json('message', 'Failed to delete hospital'));
         }
+
+        Cache::forget('lookup:hospitals');
 
         return redirect('admin/hospital/list')->with('success', 'Hospital successfully deleted');
     }
