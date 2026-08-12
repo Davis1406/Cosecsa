@@ -10,10 +10,11 @@ use App\Models\HospitalModel;
 use App\Models\YearModel;
 use App\Models\ExaminerGroup;
 use App\Models\FellowsModel;
+use App\Services\ApiClient;
 
 class DashboardController extends Controller
 {
-   
+    public function __construct(private ApiClient $api) {}
 
 public function dashboard()
     {
@@ -25,16 +26,21 @@ public function dashboard()
 
         switch ($activeRole) {
             case 1:
-                // Admin dashboard logic
-                $traineeCount = User::getTrainee()->count();
-                $CandidateCount = User::getCandidates(date('Y'))->count();
-                $FellowsCount = User::getFellows()->count();
-                $accreditedHospitalCount = HospitalModel::where('status', 'active')->count();
+                // Admin dashboard logic. Counts are sourced from the same API
+                // endpoints the list pages use, so the tiles reconcile with the
+                // respective tables (trainees, candidates, fellows, hospitals).
+                // Trainees use the reports drill-down endpoint (filter=all) so
+                // the tile matches the "Showing X of Y" total on the reports
+                // table, which includes trainees promoted to Fellow.
+                $trainees   = collect($this->api->get('trainees/reports/list', ['filter' => 'all'])->object() ?? []);
+                $candidates = collect($this->api->get('candidates/list-data')->object()->candidates ?? []);
+                $fellows    = collect($this->api->get('fellows/list-data')->object()->fellows ?? []);
+                $hospitals  = $this->api->get('admin/hospitals')->object();
 
-                $data['traineeCount'] = $traineeCount;
-                $data['accreditedHospitalCount'] = $accreditedHospitalCount;
-                $data['CandidateCount'] = $CandidateCount;
-                $data['FellowsCount'] = $FellowsCount;
+                $data['traineeCount']            = $trainees->count();
+                $data['CandidateCount']          = $candidates->where('exam_year', (string) date('Y'))->count();
+                $data['FellowsCount']            = $fellows->count();
+                $data['accreditedHospitalCount'] = $hospitals->total_active ?? 0;
 
                 // Unread messages / pending tasks — shown as a red count
                 // above the Admission Data / Calendar row.
@@ -58,28 +64,15 @@ public function dashboard()
                 // graduates. "All Alumni" also counts each additional FCS
                 // specialty as its own entry in its own year — same logic
                 // used by the "All Alumni" filter on the Fellows list, so
-                // the totals here reconcile with that page.
-                $primaryAlumni = DB::table('fellows')
-                    ->where('category_id', 5)->where('is_alumni', 1)
-                    ->select('fellowship_year as year', 'gender')
-                    ->get();
-
-                $extraSpecialtyAlumni = DB::table('fellows')
-                    ->where('category_id', 5)->where('is_alumni', 1)
-                    ->where(function ($q) {
-                        $q->whereNotNull('second_fcs_specialty')->where('second_fcs_specialty', '!=', '')
-                          ->orWhere(function ($q2) {
-                              $q2->whereNotNull('third_fcs_specialty')->where('third_fcs_specialty', '!=', '');
-                          });
-                    })
-                    ->select('second_fcs_specialty', 'second_fcs_year', 'third_fcs_specialty', 'third_fcs_year', 'gender')
-                    ->get();
+                // the totals here reconcile with that page. Built from the
+                // API fellows payload (same source as the Fellows list).
+                $primaryAlumni = $fellows->where('category_id', 5)->where('is_alumni', 1);
 
                 $alumniEntries = collect();
                 foreach ($primaryAlumni as $p) {
-                    $alumniEntries->push((object) ['year' => $p->year, 'gender' => $p->gender]);
+                    $alumniEntries->push((object) ['year' => $p->fellowship_year, 'gender' => $p->gender]);
                 }
-                foreach ($extraSpecialtyAlumni as $e) {
+                foreach ($primaryAlumni as $e) {
                     if (!empty($e->second_fcs_specialty)) {
                         $alumniEntries->push((object) ['year' => $e->second_fcs_year, 'gender' => $e->gender]);
                     }
