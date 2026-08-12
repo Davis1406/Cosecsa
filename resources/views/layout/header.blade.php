@@ -259,10 +259,13 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderResults(data, q) {
         var html = '';
         var sections = [
-            { key: 'trainees',   label: 'Trainees',   icon: 'fas fa-user-graduate' },
-            { key: 'candidates', label: 'Candidates',  icon: 'fas fa-user-check' },
-            { key: 'examiners',  label: 'Examiners',   icon: 'fas fa-user-md' },
-            { key: 'fellows',    label: 'Fellows',      icon: 'fas fa-award' },
+            { key: 'trainees',     label: 'Trainees',     icon: 'fas fa-user-graduate' },
+            { key: 'candidates',   label: 'Candidates',   icon: 'fas fa-user-check' },
+            { key: 'examiners',    label: 'Examiners',    icon: 'fas fa-user-md' },
+            { key: 'fellows',      label: 'Fellows',      icon: 'fas fa-award' },
+            { key: 'trainers',     label: 'Trainers',     icon: 'fas fa-chalkboard-teacher' },
+            { key: 'members',      label: 'Members',      icon: 'fas fa-id-badge' },
+            { key: 'country_reps', label: 'Country Reps', icon: 'fas fa-flag' },
         ];
         var total = 0;
         sections.forEach(function (s) {

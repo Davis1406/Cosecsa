@@ -160,25 +160,38 @@ public function dashboard()
 
     /**
      * GET admin/global-search?q=...
-     * Returns JSON: { trainees: [...], candidates: [...], examiners: [...], fellows: [...] }
+     * Returns JSON: { trainees, candidates, examiners, fellows, trainers, members, country_reps }
      */
     public function globalSearch(Request $request)
     {
+        $empty = [
+            'trainees' => [], 'candidates' => [], 'examiners' => [], 'fellows' => [],
+            'trainers' => [], 'members' => [], 'country_reps' => [],
+        ];
+
         $q = trim($request->input('q', ''));
         if (strlen($q) < 2) {
-            return response()->json(['trainees' => [], 'candidates' => [], 'examiners' => [], 'fellows' => []]);
+            return response()->json($empty);
         }
 
         $like = '%' . $q . '%';
 
         // Trainees
+        //
+        // Gate on the ACTIVE TRAINEE ROLE (user_roles.role_type = 2), not on
+        // users.user_type — that column only stores one "primary" role per
+        // user, so anyone whose primary role is Fellow/Trainer/Examiner but
+        // who also holds an active trainee role (e.g. a fellow re-training in
+        // a second specialty, or a trainer/examiner doing a trainee-tracked
+        // programme) would otherwise never appear here even though they have
+        // a real trainee record. Same pattern already used by
+        // TraineeController::listData()/bulkUpdateData() in cosecsa-api.
         $trainees = DB::table('trainees as t')
             ->join('users as u', 'u.id', '=', 't.user_id')
             ->join('user_roles as ur', function ($j) {
-                $j->on('ur.user_id', '=', 'u.id')->where('ur.is_active', 1);
+                $j->on('ur.user_id', '=', 'u.id')->where('ur.role_type', 2)->where('ur.is_active', 1);
             })
             ->leftJoin('programmes as p', 'p.id', '=', 't.programme_id')
-            ->where('u.user_type', 2)
             ->where('u.is_deleted', 0)
             // Exclude anyone already promoted to Fellow — their profile lives
             // under Fellows now, and the trainee record may be orphaned.
@@ -258,7 +271,66 @@ public function dashboard()
                 'url'  => url('admin/associates/fellows/view/' . $r->fellow_id),
             ]);
 
-        return response()->json(compact('trainees', 'candidates', 'examiners', 'fellows'));
+        // Trainers
+        $trainers = DB::table('trainers as tr')
+            ->join('users as u', 'u.id', '=', 'tr.user_id')
+            ->leftJoin('hospitals as h', 'h.id', '=', 'tr.hospital_id')
+            ->leftJoin('programmes as p', 'p.id', '=', 'tr.programme_id')
+            ->where('u.is_deleted', 0)
+            ->where(function ($w) use ($like) {
+                $w->where('u.name', 'like', $like)
+                  ->orWhere('u.email', 'like', $like)
+                  ->orWhere('tr.phone_number', 'like', $like)
+                  ->orWhere('tr.mobile_no', 'like', $like);
+            })
+            ->select('tr.id as trainer_id', 'u.name', 'h.name as hospital_name', 'p.name as programme')
+            ->orderBy('u.name')->limit(8)->get()
+            ->map(fn($r) => [
+                'name' => $r->name,
+                'sub'  => implode(' · ', array_filter([$r->hospital_name, $r->programme])),
+                'url'  => url('admin/associates/trainers/view/' . $r->trainer_id),
+            ]);
+
+        // Members
+        $members = DB::table('members as m')
+            ->join('users as u', 'u.id', '=', 'm.user_id')
+            ->leftJoin('countries as co', 'co.id', '=', 'm.country_id')
+            ->where('m.is_deleted', 0)
+            ->where('u.is_deleted', 0)
+            ->where(function ($w) use ($like) {
+                $w->where('u.name', 'like', $like)
+                  ->orWhere('m.member_id_number', 'like', $like)
+                  ->orWhere('m.personal_email', 'like', $like);
+            })
+            ->select('m.id as member_id', 'u.name', 'm.member_id_number', 'co.country_name')
+            ->orderBy('u.name')->limit(8)->get()
+            ->map(fn($r) => [
+                'name' => $r->name,
+                'sub'  => implode(' · ', array_filter([$r->member_id_number, $r->country_name])),
+                'url'  => url('admin/associates/members/view/' . $r->member_id),
+            ]);
+
+        // Country Reps
+        $country_reps = DB::table('country_reps as cr')
+            ->join('users as u', 'u.id', '=', 'cr.user_id')
+            ->leftJoin('countries as co', 'co.id', '=', 'cr.country_id')
+            ->where('u.is_deleted', 0)
+            ->where(function ($w) use ($like) {
+                $w->where('u.name', 'like', $like)
+                  ->orWhere('cr.cosecsa_email', 'like', $like)
+                  ->orWhere('cr.position', 'like', $like);
+            })
+            ->select('cr.id as rep_id', 'u.name', 'cr.position', 'co.country_name')
+            ->orderBy('u.name')->limit(8)->get()
+            ->map(fn($r) => [
+                'name' => $r->name,
+                'sub'  => implode(' · ', array_filter([$r->position, $r->country_name])),
+                'url'  => url('admin/associates/reps/view/' . $r->rep_id),
+            ]);
+
+        return response()->json(compact(
+            'trainees', 'candidates', 'examiners', 'fellows', 'trainers', 'members', 'country_reps'
+        ));
     }
 
     // Updated examiner form method
