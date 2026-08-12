@@ -193,12 +193,18 @@ public function dashboard()
             })
             ->leftJoin('programmes as p', 'p.id', '=', 't.programme_id')
             ->where('u.is_deleted', 0)
-            // Exclude anyone already promoted to Fellow — their profile lives
-            // under Fellows now, and the trainee record may be orphaned.
+            // Only exclude a trainee row when the matching fellow record is
+            // for the SAME programme — that's a leftover row from a
+            // completed programme. A different programme means genuine
+            // re-training in a second specialty (e.g. Emmanuel Koma, Dr
+            // Emmanuel Bua), which should still be searchable. Without the
+            // programme_id check this wrongly hid every such person — same
+            // fix already applied to TraineeController::listData().
             ->whereNotExists(function ($q) {
                 $q->select(DB::raw(1))
                     ->from('fellows')
                     ->whereColumn('fellows.candidate_number', 't.entry_number')
+                    ->whereColumn('fellows.programme_id', 't.programme_id')
                     ->whereNotNull('t.entry_number')
                     ->where('t.entry_number', '!=', '');
             })
