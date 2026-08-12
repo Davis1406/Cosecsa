@@ -295,7 +295,11 @@ public function dashboard()
         $members = DB::table('members as m')
             ->join('users as u', 'u.id', '=', 'm.user_id')
             ->leftJoin('countries as co', 'co.id', '=', 'm.country_id')
-            ->where('m.is_deleted', 0)
+            // members.is_deleted is ENUM('0','1'), not a boolean/int column —
+            // comparing against integer 0 matches on the enum's internal
+            // storage index (1) instead of the '0' label and silently drops
+            // every row. Must compare against the string '0'.
+            ->where('m.is_deleted', '0')
             ->where('u.is_deleted', 0)
             ->where(function ($w) use ($like) {
                 $w->where('u.name', 'like', $like)
