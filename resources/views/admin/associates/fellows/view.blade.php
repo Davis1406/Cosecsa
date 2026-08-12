@@ -685,37 +685,108 @@
                     {{-- ── TAB: Fees & Payments ── --}}
                     <div class="tab-pane fade" id="tab-fees">
                         <p class="sect-div">Programme Entry Fee</p>
-                        <div class="field-row"><span class="field-lbl">Entry Fee Year</span><span class="field-val">{{ $fellow->prog_entry_fee_year ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Mode of Payment</span><span class="field-val">{{ $fellow->prog_entry_mode_payment ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Sponsored by</span><span class="field-val">{{ $fellow->sponsored_by ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Registered by</span><span class="field-val">{{ $fellow->registered_by ?? '—' }}</span></div>
-                        @if($fellow->secretariat_registration_date)
+                        <div class="field-row"><span class="field-lbl">Entry Fee Year</span>
+                            <span class="field-val ie-field" data-ie="prog_entry_fee_year" data-ie-type="number"
+                                  data-ie-value="{{ $fellow->prog_entry_fee_year ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->prog_entry_fee_year ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit entry fee year"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">Mode of Payment</span>
+                            <span class="field-val ie-field" data-ie="prog_entry_mode_payment" data-ie-type="text"
+                                  data-ie-value="{{ $fellow->prog_entry_mode_payment ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->prog_entry_mode_payment ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit mode of payment"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">Sponsored by</span>
+                            <span class="field-val ie-field" data-ie="sponsored_by" data-ie-type="text"
+                                  data-ie-value="{{ $fellow->sponsored_by ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->sponsored_by ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit sponsor"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">Registered by</span>
+                            <span class="field-val ie-field" data-ie="registered_by" data-ie-type="text"
+                                  data-ie-value="{{ $fellow->registered_by ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->registered_by ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit registered by"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                         <div class="field-row"><span class="field-lbl">Secretariat Reg. Date</span>
-                            <span class="field-val">{{ \Carbon\Carbon::parse($fellow->secretariat_registration_date)->format('d M Y') }}</span></div>
-                        @endif
+                            <span class="field-val ie-field" data-ie="secretariat_registration_date" data-ie-type="date"
+                                  data-ie-value="{{ $fellow->secretariat_registration_date ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->secretariat_registration_date ? \Carbon\Carbon::parse($fellow->secretariat_registration_date)->format('d M Y') : '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit secretariat registration date"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
 
                         <p class="sect-div">Examination Fee</p>
-                        <div class="field-row"><span class="field-lbl">Exam Fee Year</span><span class="field-val">{{ $fellow->exam_fee_year ?? '—' }}</span></div>
-                        @if($fellow->exam_fee_date_paid)
+                        <div class="field-row"><span class="field-lbl">Exam Fee Year</span>
+                            <span class="field-val ie-field" data-ie="exam_fee_year" data-ie-type="number"
+                                  data-ie-value="{{ $fellow->exam_fee_year ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->exam_fee_year ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit exam fee year"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                         <div class="field-row"><span class="field-lbl">Date Paid</span>
-                            <span class="field-val">{{ \Carbon\Carbon::parse($fellow->exam_fee_date_paid)->format('d M Y') }}</span></div>
-                        @endif
-                        <div class="field-row"><span class="field-lbl">Mode of Payment</span><span class="field-val">{{ $fellow->exam_fee_mode_payment ?? '—' }}</span></div>
+                            <span class="field-val ie-field" data-ie="exam_fee_date_paid" data-ie-type="date"
+                                  data-ie-value="{{ $fellow->exam_fee_date_paid ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->exam_fee_date_paid ? \Carbon\Carbon::parse($fellow->exam_fee_date_paid)->format('d M Y') : '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit date paid"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">Mode of Payment</span>
+                            <span class="field-val ie-field" data-ie="exam_fee_mode_payment" data-ie-type="text"
+                                  data-ie-value="{{ $fellow->exam_fee_mode_payment ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->exam_fee_mode_payment ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit mode of payment"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                         <div class="field-row"><span class="field-lbl">Amount Paid</span>
-                            <span class="field-val">
-                                @if($fellow->exam_fee_amount_paid)
-                                    <strong>USD {{ number_format($fellow->exam_fee_amount_paid, 2) }}</strong>
-                                @else —
-                                @endif
+                            <span class="field-val ie-field" data-ie="exam_fee_amount_paid" data-ie-type="number"
+                                  data-ie-value="{{ $fellow->exam_fee_amount_paid ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">
+                                    @if($fellow->exam_fee_amount_paid)
+                                        <strong>USD {{ number_format($fellow->exam_fee_amount_paid, 2) }}</strong>
+                                    @else —
+                                    @endif
+                                </span>
+                                <button class="ie-pencil" type="button" title="Edit amount paid"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Payment Verified</span>
-                            <span class="field-val">
-                                @if($fellow->exam_fee_payment_verified)
-                                    <span class="badge" style="background:#d4edda; color:#155724;"><i class="fas fa-check mr-1"></i>Verified</span>
-                                @else
-                                    <span class="badge" style="background:#fff3cd; color:#856404;">Pending</span>
-                                @endif
+                            <span class="field-val ie-field" data-ie="exam_fee_payment_verified" data-ie-type="select"
+                                  data-ie-value="{{ $fellow->exam_fee_payment_verified ? '1' : '0' }}"
+                                  data-ie-options='{"1":"Verified","0":"Pending"}'
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">
+                                    @if($fellow->exam_fee_payment_verified)
+                                        <span class="badge" style="background:#d4edda; color:#155724;"><i class="fas fa-check mr-1"></i>Verified</span>
+                                    @else
+                                        <span class="badge" style="background:#fff3cd; color:#856404;">Pending</span>
+                                    @endif
+                                </span>
+                                <button class="ie-pencil" type="button" title="Edit payment verified"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
                     </div>

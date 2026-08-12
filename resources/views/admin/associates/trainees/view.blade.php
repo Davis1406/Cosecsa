@@ -608,9 +608,97 @@
                             </a>
                         </div>
 
-                        {{-- Programme Entry Fee(s) — one block per programme this person has applied for --}}
+                        {{-- Programme Entry Fee(s) — one block per programme this person has applied for.
+                             Only the block matching the trainee's own current programme maps 1:1 to
+                             editable columns on the trainees table; other rows are synced in from
+                             Salesforce and stay read-only here (edit them in the Fees Log instead). --}}
                         @forelse(($entryFees ?? collect()) as $fee)
-                            <p class="sect-div mt-3">{{ $fee->programme_name ?: 'Programme' }} — Programme Entry Fee</p>
+                            @php $isOwnFee = $fee->programme_name === ($trainee->programme_name ?? null); @endphp
+                            <p class="sect-div mt-3">
+                                {{ $fee->programme_name ?: 'Programme' }} — Programme Entry Fee
+                                @unless($isOwnFee)
+                                    <span class="text-muted font-weight-normal" style="text-transform:none;letter-spacing:0;font-size:.72rem;">(synced from Salesforce — read only)</span>
+                                @endunless
+                            </p>
+                            @if($isOwnFee)
+                            <div class="field-row"><span class="field-lbl">Invoice Number</span>
+                                <span class="field-val ie-field" data-ie="invoice_number" data-ie-type="text"
+                                      data-ie-value="{{ $fee->invoice_number ?? '' }}"
+                                      data-ie-url="{{ url('admin/associates/trainees/'.$trainee->trainee_id.'/quick-update') }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="ie-value">{{ $fee->invoice_number ?: '—' }}</span>
+                                    <button class="ie-pencil" type="button" title="Edit invoice number"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </div>
+                            <div class="field-row"><span class="field-lbl">Invoice Amount</span>
+                                <span class="field-val ie-field" data-ie="invoice_amount" data-ie-type="number"
+                                      data-ie-value="{{ $fee->invoice_amount ?? '' }}"
+                                      data-ie-url="{{ url('admin/associates/trainees/'.$trainee->trainee_id.'/quick-update') }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="ie-value">
+                                        @if(!empty($fee->invoice_amount))
+                                            <strong>${{ number_format($fee->invoice_amount) }}</strong>
+                                        @else —
+                                        @endif
+                                    </span>
+                                    <button class="ie-pencil" type="button" title="Edit invoice amount"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </div>
+                            <div class="field-row"><span class="field-lbl">Invoice Status</span>
+                                <span class="field-val ie-field" data-ie="invoice_status" data-ie-type="select"
+                                      data-ie-value="{{ $fee->invoice_status ?? 'Pending' }}"
+                                      data-ie-options='{"Pending":"Pending","Sent":"Sent","Complete":"Complete"}'
+                                      data-ie-url="{{ url('admin/associates/trainees/'.$trainee->trainee_id.'/quick-update') }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    @php $is = $fee->invoice_status ?? 'Pending'; @endphp
+                                    <span class="ie-value">
+                                        <span class="badge" style="background:{{ in_array($is,['Sent','Paid','Complete']) ? '#d4edda' : '#fff3cd' }}; color:{{ in_array($is,['Sent','Paid','Complete']) ? '#155724' : '#856404' }};">{{ $is }}</span>
+                                    </span>
+                                    <button class="ie-pencil" type="button" title="Edit invoice status"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </div>
+                            <div class="field-row"><span class="field-lbl">Amount Paid</span>
+                                <span class="field-val ie-field" data-ie="amount_paid" data-ie-type="number"
+                                      data-ie-value="{{ $fee->amount_paid ?? '' }}"
+                                      data-ie-url="{{ url('admin/associates/trainees/'.$trainee->trainee_id.'/quick-update') }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="ie-value">
+                                        @if(!empty($fee->amount_paid))
+                                            <strong style="color:#a02626;">${{ number_format($fee->amount_paid) }}</strong>
+                                        @else —
+                                        @endif
+                                    </span>
+                                    <button class="ie-pencil" type="button" title="Edit amount paid"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </div>
+                            <div class="field-row"><span class="field-lbl">Mode of Payment</span>
+                                <span class="field-val ie-field" data-ie="mode_of_payment" data-ie-type="text"
+                                      data-ie-value="{{ (!$fee->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $fee->mode_of_payment)) ? '' : $fee->mode_of_payment }}"
+                                      data-ie-url="{{ url('admin/associates/trainees/'.$trainee->trainee_id.'/quick-update') }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="ie-value">{{ (!$fee->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $fee->mode_of_payment)) ? '—' : $fee->mode_of_payment }}</span>
+                                    <button class="ie-pencil" type="button" title="Edit mode of payment"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </div>
+                            <div class="field-row"><span class="field-lbl">Payment Date</span>
+                                <span class="field-val ie-field" data-ie="payment_date" data-ie-type="date"
+                                      data-ie-value="{{ $fee->payment_date ?? '' }}"
+                                      data-ie-url="{{ url('admin/associates/trainees/'.$trainee->trainee_id.'/quick-update') }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="ie-value">{{ $fee->payment_date ?: '—' }}</span>
+                                    <button class="ie-pencil" type="button" title="Edit payment date"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </div>
+                            <div class="field-row"><span class="field-lbl">Sponsor</span>
+                                <span class="field-val ie-field" data-ie="sponsor" data-ie-type="text"
+                                      data-ie-value="{{ $sponsor ?? '' }}"
+                                      data-ie-url="{{ url('admin/associates/trainees/'.$trainee->trainee_id.'/quick-update') }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="ie-value">{{ $sponsor ?? '—' }}</span>
+                                    <button class="ie-pencil" type="button" title="Edit sponsor"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </div>
+                            @else
                             <div class="field-row"><span class="field-lbl">Invoice Number</span><span class="field-val">{{ $fee->invoice_number ?: '—' }}</span></div>
                             <div class="field-row"><span class="field-lbl">Invoice Amount</span>
                                 <span class="field-val">
@@ -636,8 +724,6 @@
                             </div>
                             <div class="field-row"><span class="field-lbl">Mode of Payment</span><span class="field-val">{{ (!$fee->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $fee->mode_of_payment)) ? '—' : $fee->mode_of_payment }}</span></div>
                             <div class="field-row"><span class="field-lbl">Payment Date</span><span class="field-val">{{ $fee->payment_date ?: '—' }}</span></div>
-                            @if($loop->first && $sponsor)
-                            <div class="field-row"><span class="field-lbl">Sponsor</span><span class="field-val">{{ $sponsor }}</span></div>
                             @endif
                         @empty
                             <p class="sect-div">Programme Entry Fee</p>

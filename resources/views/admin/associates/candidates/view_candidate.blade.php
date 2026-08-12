@@ -503,20 +503,40 @@
 
                         {{-- Exam Fee (from candidates table) --}}
                         <p class="sect-div">Examination Fee</p>
-                        <div class="field-row"><span class="field-lbl">Invoice Number</span><span class="field-val">{{ $candidate->invoice_number ?? '—' }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Invoice Number</span>
+                            <span class="field-val ie-field" data-ie="invoice_number" data-ie-type="text"
+                                  data-ie-value="{{ $candidate->invoice_number ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $candidate->invoice_number ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit invoice number"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                         <div class="field-row"><span class="field-lbl">Invoice Date</span>
-                            <span class="field-val">
-                                @if(!empty($candidate->invoice_date))
-                                    {{ \Carbon\Carbon::parse($candidate->invoice_date)->format('d M Y') }}
-                                @else —
-                                @endif
+                            <span class="field-val ie-field" data-ie="invoice_date" data-ie-type="date"
+                                  data-ie-value="{{ $candidate->invoice_date ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">
+                                    @if(!empty($candidate->invoice_date))
+                                        {{ \Carbon\Carbon::parse($candidate->invoice_date)->format('d M Y') }}
+                                    @else —
+                                    @endif
+                                </span>
+                                <button class="ie-pencil" type="button" title="Edit invoice date"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Invoice Amount</span>
-                            <span class="field-val">
-                                @if($invAmountFormatted) <strong>{{ $invAmountFormatted }}</strong>
-                                @else —
-                                @endif
+                            <span class="field-val ie-field" data-ie="invoice_amount" data-ie-type="number"
+                                  data-ie-value="{{ $candidate->invoice_amount ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">
+                                    @if($invAmountFormatted) <strong>{{ $invAmountFormatted }}</strong>
+                                    @else —
+                                    @endif
+                                </span>
+                                <button class="ie-pencil" type="button" title="Edit invoice amount"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Invoice Status</span>
@@ -533,57 +553,134 @@
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Fee Paid</span>
-                            <span class="field-val">
-                                @if($feePaid === 'Yes')
-                                    <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Yes</span>
-                                @else
-                                    <span class="badge badge-danger"><i class="fas fa-times mr-1"></i>No</span>
-                                @endif
+                            <span class="field-val ie-field" data-ie="fee_paid" data-ie-type="select"
+                                  data-ie-value="{{ $feePaid ?? 'No' }}"
+                                  data-ie-options='{"No":"No","Yes":"Yes"}'
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">
+                                    @if($feePaid === 'Yes')
+                                        <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Yes</span>
+                                    @else
+                                        <span class="badge badge-danger"><i class="fas fa-times mr-1"></i>No</span>
+                                    @endif
+                                </span>
+                                <button class="ie-pencil" type="button" title="Edit fee paid"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Amount Paid</span>
-                            <span class="field-val">
-                                @if($candAmountFormatted) <strong style="color:#2980b9;">{{ $candAmountFormatted }}</strong>
-                                @else —
-                                @endif
+                            <span class="field-val ie-field" data-ie="amount_paid" data-ie-type="number"
+                                  data-ie-value="{{ $candidate->amount_paid ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">
+                                    @if($candAmountFormatted) <strong style="color:#2980b9;">{{ $candAmountFormatted }}</strong>
+                                    @else —
+                                    @endif
+                                </span>
+                                <button class="ie-pencil" type="button" title="Edit amount paid"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Payment Date</span>
-                            <span class="field-val">
-                                @if(!empty($candidate->payment_date))
-                                    {{ \Carbon\Carbon::parse($candidate->payment_date)->format('d M Y') }}
-                                @else —
-                                @endif
+                            <span class="field-val ie-field" data-ie="payment_date" data-ie-type="date"
+                                  data-ie-value="{{ $candidate->payment_date ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">
+                                    @if(!empty($candidate->payment_date))
+                                        {{ \Carbon\Carbon::parse($candidate->payment_date)->format('d M Y') }}
+                                    @else —
+                                    @endif
+                                </span>
+                                <button class="ie-pencil" type="button" title="Edit payment date"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
-                        <div class="field-row"><span class="field-lbl">Mode of Payment</span><span class="field-val">{{ (!$candidate->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $candidate->mode_of_payment)) ? '—' : $candidate->mode_of_payment }}</span></div>
-                        @if($sponsor)
-                        <div class="field-row"><span class="field-lbl">Sponsor</span><span class="field-val">{{ $sponsor }}</span></div>
-                        @endif
+                        <div class="field-row"><span class="field-lbl">Mode of Payment</span>
+                            <span class="field-val ie-field" data-ie="mode_of_payment" data-ie-type="text"
+                                  data-ie-value="{{ (!$candidate->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $candidate->mode_of_payment)) ? '' : $candidate->mode_of_payment }}"
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ (!$candidate->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $candidate->mode_of_payment)) ? '—' : $candidate->mode_of_payment }}</span>
+                                <button class="ie-pencil" type="button" title="Edit mode of payment"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">Sponsor</span>
+                            <span class="field-val ie-field" data-ie="sponsor" data-ie-type="text"
+                                  data-ie-value="{{ $sponsor ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/candidates/'.$candidate->candidates_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $sponsor ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit sponsor"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
 
                         {{-- Programme Entry Fee (from trainees table, if linked) --}}
                         <p class="sect-div mt-3">Programme Entry Fee</p>
                         @if(isset($linkedTrainee) && $linkedTrainee)
-                            <div class="field-row"><span class="field-lbl">Invoice Number</span><span class="field-val">{{ $linkedTrainee->invoice_number ?? '—' }}</span></div>
+                            @php $traineeQuickUpdateUrl = url('admin/associates/trainees/'.($linkedTrainee->trainee_id ?? $linkedTrainee->id).'/quick-update'); @endphp
+                            <div class="field-row"><span class="field-lbl">Invoice Number</span>
+                                <span class="field-val ie-field" data-ie="invoice_number" data-ie-type="text"
+                                      data-ie-value="{{ $linkedTrainee->invoice_number ?? '' }}"
+                                      data-ie-url="{{ $traineeQuickUpdateUrl }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="ie-value">{{ $linkedTrainee->invoice_number ?? '—' }}</span>
+                                    <button class="ie-pencil" type="button" title="Edit invoice number"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </div>
                             <div class="field-row"><span class="field-lbl">Invoice Date</span><span class="field-val">{{ $linkedTrainee->invoice_date ?? '—' }}</span></div>
                             <div class="field-row"><span class="field-lbl">Invoice Status</span>
-                                <span class="field-val">
+                                <span class="field-val ie-field" data-ie="invoice_status" data-ie-type="select"
+                                      data-ie-value="{{ $linkedTrainee->invoice_status ?? 'Pending' }}"
+                                      data-ie-options='{"Pending":"Pending","Sent":"Sent","Complete":"Complete"}'
+                                      data-ie-url="{{ $traineeQuickUpdateUrl }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
                                     @php $ts = $linkedTrainee->invoice_status ?? 'Pending'; @endphp
-                                    <span class="badge" style="background:{{ in_array($ts,['Sent','Paid']) ? '#d4edda' : '#fff3cd' }}; color:{{ in_array($ts,['Sent','Paid']) ? '#155724' : '#856404' }};">{{ $ts }}</span>
+                                    <span class="ie-value">
+                                        <span class="badge" style="background:{{ in_array($ts,['Sent','Paid']) ? '#d4edda' : '#fff3cd' }}; color:{{ in_array($ts,['Sent','Paid']) ? '#155724' : '#856404' }};">{{ $ts }}</span>
+                                    </span>
+                                    <button class="ie-pencil" type="button" title="Edit invoice status"><i class="fas fa-pen"></i></button>
                                 </span>
                             </div>
                             <div class="field-row"><span class="field-lbl">Amount Paid</span>
-                                <span class="field-val">
-                                    @if($traineeAmountFormatted) <strong style="color:#a02626;">{{ $traineeAmountFormatted }}</strong>
-                                    @else —
-                                    @endif
+                                <span class="field-val ie-field" data-ie="amount_paid" data-ie-type="number"
+                                      data-ie-value="{{ $linkedTrainee->amount_paid ?? '' }}"
+                                      data-ie-url="{{ $traineeQuickUpdateUrl }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="ie-value">
+                                        @if($traineeAmountFormatted) <strong style="color:#a02626;">{{ $traineeAmountFormatted }}</strong>
+                                        @else —
+                                        @endif
+                                    </span>
+                                    <button class="ie-pencil" type="button" title="Edit amount paid"><i class="fas fa-pen"></i></button>
                                 </span>
                             </div>
-                            <div class="field-row"><span class="field-lbl">Mode of Payment</span><span class="field-val">{{ (!$linkedTrainee->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $linkedTrainee->mode_of_payment)) ? '—' : $linkedTrainee->mode_of_payment }}</span></div>
-                            <div class="field-row"><span class="field-lbl">Payment Date</span><span class="field-val">{{ $linkedTrainee->payment_date ?? '—' }}</span></div>
-                            @if(!empty($linkedTrainee->sponsor) && $linkedTrainee->sponsor !== 'null')
-                            <div class="field-row"><span class="field-lbl">Sponsor</span><span class="field-val">{{ $linkedTrainee->sponsor }}</span></div>
-                            @endif
+                            <div class="field-row"><span class="field-lbl">Mode of Payment</span>
+                                <span class="field-val ie-field" data-ie="mode_of_payment" data-ie-type="text"
+                                      data-ie-value="{{ (!$linkedTrainee->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $linkedTrainee->mode_of_payment)) ? '' : $linkedTrainee->mode_of_payment }}"
+                                      data-ie-url="{{ $traineeQuickUpdateUrl }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="ie-value">{{ (!$linkedTrainee->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $linkedTrainee->mode_of_payment)) ? '—' : $linkedTrainee->mode_of_payment }}</span>
+                                    <button class="ie-pencil" type="button" title="Edit mode of payment"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </div>
+                            <div class="field-row"><span class="field-lbl">Payment Date</span>
+                                <span class="field-val ie-field" data-ie="payment_date" data-ie-type="date"
+                                      data-ie-value="{{ $linkedTrainee->payment_date ?? '' }}"
+                                      data-ie-url="{{ $traineeQuickUpdateUrl }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="ie-value">{{ $linkedTrainee->payment_date ?? '—' }}</span>
+                                    <button class="ie-pencil" type="button" title="Edit payment date"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </div>
+                            <div class="field-row"><span class="field-lbl">Sponsor</span>
+                                <span class="field-val ie-field" data-ie="sponsor" data-ie-type="text"
+                                      data-ie-value="{{ (!empty($linkedTrainee->sponsor) && $linkedTrainee->sponsor !== 'null') ? $linkedTrainee->sponsor : '' }}"
+                                      data-ie-url="{{ $traineeQuickUpdateUrl }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="ie-value">{{ (!empty($linkedTrainee->sponsor) && $linkedTrainee->sponsor !== 'null') ? $linkedTrainee->sponsor : '—' }}</span>
+                                    <button class="ie-pencil" type="button" title="Edit sponsor"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </div>
                         @else
                             <div class="text-center py-3 text-muted" style="font-size:.83rem;">
                                 <i class="fas fa-info-circle mr-1"></i>No trainee programme entry fee record linked to this candidate.
@@ -599,15 +696,29 @@
                         <div class="field-row"><span class="field-lbl">Candidate Record ID</span><span class="field-val">{{ $candidate->candidates_id ?? '—' }}</span></div>
 
                         @if(isset($linkedTrainee) && $linkedTrainee)
+                        @php $traineeQuickUpdateUrl = url('admin/associates/trainees/'.($linkedTrainee->trainee_id ?? $linkedTrainee->id).'/quick-update'); @endphp
                         <p class="sect-div mt-3">Linked Trainee Record</p>
                         <div class="field-row"><span class="field-lbl">Trainee Record ID</span>
                             <span class="field-val">{{ $linkedTrainee->trainee_id ?? $linkedTrainee->id ?? '—' }}</span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Status</span>
-                            <span class="field-val">{{ $linkedTrainee->status ?? '—' }}</span>
+                            <span class="field-val ie-field" data-ie="status" data-ie-type="select"
+                                  data-ie-value="{{ $linkedTrainee->status ?? '' }}"
+                                  data-ie-options='{"Active":"Active","Inactive":"Inactive","Deferred":"Deferred"}'
+                                  data-ie-url="{{ $traineeQuickUpdateUrl }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $linkedTrainee->status ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit trainee status"><i class="fas fa-pen"></i></button>
+                            </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Admission Year</span>
-                            <span class="field-val">{{ $linkedTrainee->admission_year ?? '—' }}</span>
+                            <span class="field-val ie-field" data-ie="admission_year" data-ie-type="number"
+                                  data-ie-value="{{ $linkedTrainee->admission_year ?? '' }}"
+                                  data-ie-url="{{ $traineeQuickUpdateUrl }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $linkedTrainee->admission_year ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit admission year"><i class="fas fa-pen"></i></button>
+                            </span>
                         </div>
                         @endif
 
