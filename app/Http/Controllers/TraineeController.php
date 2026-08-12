@@ -47,6 +47,7 @@ class TraineeController extends Controller
             'capsuleExamResults' => collect($data->capsuleExamResults ?? []),
             'programmes'         => collect($data->programmes ?? []),
             'countries'          => collect($data->countries ?? []),
+            'hospitals'          => HospitalModel::getHospital(),
             'examYears'          => collect($data->examYears ?? []),
             'firstAdmissionYear' => $data->firstAdmissionYear ?? null,
         ]);

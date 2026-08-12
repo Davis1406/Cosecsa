@@ -289,6 +289,7 @@ Route::get('admin/associates/fellows/view/{id}',  [FellowsController::class,'vie
 Route::get('admin/associates/fellows/edit/{id}', [FellowsController::class,'edit']);
 Route::post('admin/associates/fellows/edit/{id}', [FellowsController::class,'update']);
 Route::put('admin/associates/fellows/labels/{id}', [FellowsController::class,'updateLabels'])->name('fellows.labels.update');
+Route::post('admin/associates/fellows/{id}/quick-update', [FellowsController::class,'quickUpdate'])->name('fellows.quick.update');
 Route::get('admin/associates/fellows/delete/{id}', [FellowsController::class,'delete']);
 Route::get('admin/associates/fellows/reports', [FellowsController::class,'reports'])->name('fellows.reports');
 Route::get('admin/associates/fellows/reports/data', [FellowsController::class,'reportsData'])->name('fellows.reports.data');

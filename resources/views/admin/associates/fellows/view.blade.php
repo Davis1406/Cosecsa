@@ -349,27 +349,60 @@
                         @if($fellow->personal_email)
                         <div class="info-row">
                             <span class="info-icon"><i class="fas fa-envelope-open"></i></span>
-                            <span><span class="info-label">Personal Email</span><span class="info-text">{{ $fellow->personal_email }}</span></span>
+                            <span><span class="info-label">Personal Email</span>
+                                <span class="ie-field" data-ie="personal_email" data-ie-type="email"
+                                      data-ie-value="{{ $fellow->personal_email }}"
+                                      data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="info-text ie-value">{{ $fellow->personal_email }}</span>
+                                    <button class="ie-pencil" type="button" title="Edit email"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </span>
                         </div>
                         @endif
                         @if($fellow->phone_number)
                         <div class="info-row">
                             <span class="info-icon"><i class="fas fa-phone"></i></span>
-                            <span><span class="info-label">Phone</span><span class="info-text">{{ $fellow->phone_number }}</span></span>
+                            <span><span class="info-label">Phone</span>
+                                <span class="ie-field" data-ie="phone_number" data-ie-type="text"
+                                      data-ie-value="{{ $fellow->phone_number }}"
+                                      data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="info-text ie-value">{{ $fellow->phone_number }}</span>
+                                    <button class="ie-pencil" type="button" title="Edit phone"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </span>
                         </div>
                         @endif
                         @if($fellow->address)
                         <div class="info-row">
                             <span class="info-icon"><i class="fas fa-map-marker-alt"></i></span>
-                            <span><span class="info-label">Address</span><span class="info-text">{{ $fellow->address }}</span></span>
+                            <span><span class="info-label">Address</span>
+                                <span class="ie-field" data-ie="address" data-ie-type="text"
+                                      data-ie-value="{{ $fellow->address }}"
+                                      data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="info-text ie-value">{{ $fellow->address }}</span>
+                                    <button class="ie-pencil" type="button" title="Edit address"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </span>
                         </div>
                         @endif
                         @if($fellow->country_name ?? null)
                         <div class="info-row">
                             <span class="info-icon"><i class="fas fa-flag"></i></span>
-                            <span><span class="info-label">Country</span><span class="info-text">
-                                @if($fellow->country_id ?? null)<a href="{{ url('admin/countries/view/'.$fellow->country_id) }}" style="color:#a02626;">{{ $fellow->country_name }}</a>@else{{ $fellow->country_name }}@endif
-                            </span></span>
+                            <span><span class="info-label">Country</span>
+                                <span class="ie-field" data-ie="country_id" data-ie-type="select"
+                                      data-ie-value="{{ $fellow->country_id ?? '' }}"
+                                      data-ie-options="{{ json_encode($fellowCountries->pluck('country_name','id')) }}"
+                                      data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="info-text ie-value">
+                                        @if($fellow->country_id ?? null)<a href="{{ url('admin/countries/view/'.$fellow->country_id) }}" style="color:#a02626;">{{ $fellow->country_name }}</a>@else{{ $fellow->country_name }}@endif
+                                    </span>
+                                    <button class="ie-pencil" type="button" title="Edit country"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </span>
                         </div>
                         @endif
                     </div>
@@ -439,7 +472,16 @@
                         <div class="field-row"><span class="field-lbl">Middle Name</span><span class="field-val">{{ $fellow->middlename }}</span></div>
                         @endif
                         <div class="field-row"><span class="field-lbl">Last Name</span><span class="field-val">{{ $fellow->lastname ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Gender</span><span class="field-val">{{ ucfirst($fellow->gender ?? '—') }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Gender</span>
+                            <span class="field-val ie-field" data-ie="gender" data-ie-type="select"
+                                  data-ie-value="{{ ucfirst($fellow->gender ?? '') }}"
+                                  data-ie-options='{"Male":"Male","Female":"Female"}'
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ ucfirst($fellow->gender ?? '—') }}</span>
+                                <button class="ie-pencil" type="button" title="Edit gender"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                         @if($fellow->candidate_number)
                         <div class="field-row"><span class="field-lbl">Candidate Number</span><span class="field-val"><strong>{{ $fellow->candidate_number }}</strong></span></div>
                         @endif
@@ -447,21 +489,70 @@
                         <p class="sect-div">Contact</p>
                         <div class="field-row"><span class="field-lbl">Login Email</span><span class="field-val">{{ $fellow->email ?? '—' }}</span></div>
                         @if($fellow->personal_email && $fellow->personal_email !== ($fellow->email ?? ''))
-                        <div class="field-row"><span class="field-lbl">Personal Email</span><span class="field-val">{{ $fellow->personal_email }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Personal Email</span>
+                            <span class="field-val ie-field" data-ie="personal_email" data-ie-type="email"
+                                  data-ie-value="{{ $fellow->personal_email }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->personal_email }}</span>
+                                <button class="ie-pencil" type="button" title="Edit email"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                         @endif
                         @if($fellow->second_email)
                         <div class="field-row"><span class="field-lbl">Secondary Email</span><span class="field-val">{{ $fellow->second_email }}</span></div>
                         @endif
-                        <div class="field-row"><span class="field-lbl">Phone</span><span class="field-val">{{ $fellow->phone_number ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Address</span><span class="field-val">{{ $fellow->address ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Country</span><span class="field-val">@if($fellow->country_id ?? null)<a href="{{ url('admin/countries/view/'.$fellow->country_id) }}" style="color:#a02626;">{{ $fellow->country_name }}</a>@else{{ $fellow->country_name ?? '—' }}@endif</span></div>
+                        <div class="field-row"><span class="field-lbl">Phone</span>
+                            <span class="field-val ie-field" data-ie="phone_number" data-ie-type="text"
+                                  data-ie-value="{{ $fellow->phone_number ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->phone_number ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit phone"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">Address</span>
+                            <span class="field-val ie-field" data-ie="address" data-ie-type="text"
+                                  data-ie-value="{{ $fellow->address ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->address ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit address"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">Country</span>
+                            <span class="field-val ie-field" data-ie="country_id" data-ie-type="select"
+                                  data-ie-value="{{ $fellow->country_id ?? '' }}"
+                                  data-ie-options="{{ json_encode($fellowCountries->pluck('country_name','id')) }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">@if($fellow->country_id ?? null)<a href="{{ url('admin/countries/view/'.$fellow->country_id) }}" style="color:#a02626;">{{ $fellow->country_name }}</a>@else{{ $fellow->country_name ?? '—' }}@endif</span>
+                                <button class="ie-pencil" type="button" title="Edit country"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                         @if($fellow->cosecsa_region)
                         <div class="field-row"><span class="field-lbl">COSECSA Region</span><span class="field-val">{{ $fellow->cosecsa_region }}</span></div>
                         @endif
 
                         <p class="sect-div">Professional</p>
-                        <div class="field-row"><span class="field-lbl">Specialty</span><span class="field-val">{{ $fellow->current_specialty ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Hospital / Organisation</span><span class="field-val">{{ $fellow->organization ?? '—' }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Specialty</span>
+                            <span class="field-val ie-field" data-ie="current_specialty" data-ie-type="text"
+                                  data-ie-value="{{ $fellow->current_specialty ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->current_specialty ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit specialty"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">Hospital / Organisation</span>
+                            <span class="field-val ie-field" data-ie="organization" data-ie-type="text"
+                                  data-ie-value="{{ $fellow->organization ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->organization ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit organization"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                         @if($fellow->supervised_by)
                         <div class="field-row"><span class="field-lbl">Supervised by</span><span class="field-val">{{ $fellow->supervised_by }}</span></div>
                         @endif
@@ -478,14 +569,38 @@
                     <div class="tab-pane fade" id="tab-fellowship">
                         <p class="sect-div">Fellowship Status</p>
                         <div class="field-row"><span class="field-lbl">Status</span>
-                            <span class="field-val">
-                                @php $st = $fellow->status ?? 'Unknown'; @endphp
-                                <span class="badge" style="background:{{ $st=='Active'?'#d4edda':($st=='Deceased'?'#f8d7da':'#e2e3e5') }};
-                                                                color:{{ $st=='Active'?'#155724':($st=='Deceased'?'#721c24':'#383d41') }};">{{ $st }}</span>
+                            <span class="field-val ie-field" data-ie="status" data-ie-type="select"
+                                  data-ie-value="{{ $fellow->status ?? 'Unknown' }}"
+                                  data-ie-options='{"Active":"Active","Inactive":"Inactive","Deceased":"Deceased"}'
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">
+                                    @php $st = $fellow->status ?? 'Unknown'; @endphp
+                                    <span class="badge" style="background:{{ $st=='Active'?'#d4edda':($st=='Deceased'?'#f8d7da':'#e2e3e5') }};
+                                                                    color:{{ $st=='Active'?'#155724':($st=='Deceased'?'#721c24':'#383d41') }};">{{ $st }}</span>
+                                </span>
+                                <button class="ie-pencil" type="button" title="Edit status"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
-                        <div class="field-row"><span class="field-lbl">Fellowship Type</span><span class="field-val">{{ $fellow->fellowship_type ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Fellowship Programme</span><span class="field-val">@if($fellow->programme_id ?? null)<a href="{{ url('admin/programmes/view/'.$fellow->programme_id) }}" style="color:#a02626;">{{ $fellow->programme_name }}</a>@else{{ $fellow->programme_name ?? '—' }}@endif</span></div>
+                        <div class="field-row"><span class="field-lbl">Fellowship Type</span>
+                            <span class="field-val ie-field" data-ie="fellowship_type" data-ie-type="text"
+                                  data-ie-value="{{ $fellow->fellowship_type ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->fellowship_type ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit fellowship type"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">Fellowship Programme</span>
+                            <span class="field-val ie-field" data-ie="programme_id" data-ie-type="select"
+                                  data-ie-value="{{ $fellow->programme_id ?? '' }}"
+                                  data-ie-options="{{ json_encode($fellowProgrammes->pluck('name','id')) }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">@if($fellow->programme_id ?? null)<a href="{{ url('admin/programmes/view/'.$fellow->programme_id) }}" style="color:#a02626;">{{ $fellow->programme_name }}</a>@else{{ $fellow->programme_name ?? '—' }}@endif</span>
+                                <button class="ie-pencil" type="button" title="Edit programme"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                         <div class="field-row"><span class="field-lbl">Fellow ID</span><span class="field-val"><strong>{{ $fellow->fellow_id_number ?? '—' }}</strong></span></div>
                         <div class="field-row"><span class="field-lbl">Promoted to Fellow</span>
                             <span class="field-val">
@@ -498,9 +613,33 @@
                         </div>
 
                         <p class="sect-div">Academic Timeline</p>
-                        <div class="field-row"><span class="field-lbl">Intake / Admission Year</span><span class="field-val">{{ $fellow->admission_year ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">MCS Qualification Year</span><span class="field-val">{{ $fellow->mcs_qualification_year ?? '—' }}</span></div>
-                        <div class="field-row"><span class="field-lbl">Fellowship Year</span><span class="field-val">{{ $fellow->fellowship_year ?? '—' }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Intake / Admission Year</span>
+                            <span class="field-val ie-field" data-ie="admission_year" data-ie-type="number"
+                                  data-ie-value="{{ $fellow->admission_year ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->admission_year ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit admission year"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">MCS Qualification Year</span>
+                            <span class="field-val ie-field" data-ie="mcs_qualification_year" data-ie-type="number"
+                                  data-ie-value="{{ $fellow->mcs_qualification_year ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->mcs_qualification_year ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit MCS qualification year"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">Fellowship Year</span>
+                            <span class="field-val ie-field" data-ie="fellowship_year" data-ie-type="number"
+                                  data-ie-value="{{ $fellow->fellowship_year ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->fellowship_year ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit fellowship year"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                         <div class="field-row"><span class="field-lbl">Candidate Number</span><span class="field-val">{{ $fellow->candidate_number ?? '—' }}</span></div>
 
                         @php

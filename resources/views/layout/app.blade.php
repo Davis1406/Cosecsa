@@ -52,6 +52,7 @@
 
     <link rel="stylesheet" href="{{ asset('dist/css/wizard.css') }}">
     <link rel="stylesheet" href="{{ asset('dist/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ asset('dist/css/inline-edit.css') }}">
     <!-- overlayScrollbars -->
     <link rel="stylesheet" href="{{ asset('plugins/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
     <!-- Daterange picker -->
@@ -138,6 +139,7 @@
     <script src="{{ asset('dist/js/pages/dashboard.js') }}"></script>
     <script src="{{ asset('dist/js/pages/wizard.js') }}"></script>
     <script src="{{ asset('dist/js/custom.js') }}?v={{ filemtime(public_path('dist/js/custom.js')) }}"></script>
+    <script src="{{ asset('dist/js/inline-edit.js') }}?v={{ filemtime(public_path('dist/js/inline-edit.js')) }}"></script>
 
     <!-- DataTables  & Plugins -->
     <script src="{{ asset('plugins/datatables/jquery.dataTables.min.js') }}"></script>

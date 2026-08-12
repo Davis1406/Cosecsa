@@ -1,0 +1,319 @@
+/* ═══════════════════════════════════════
+   INLINE PENCIL EDIT – COSECSA STYLES
+   Reusable component for quick field editing
+═══════════════════════════════════════ */
+
+/* ── Editable field wrapper ── */
+.ie-field {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ie-field-block {
+    position: relative;
+}
+
+/* ── Pencil icon button ── */
+.ie-pencil {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: #a02626;
+    font-size: 0.65rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, transform 0.1s;
+    flex-shrink: 0;
+    padding: 0;
+    line-height: 1;
+}
+
+.ie-field:hover > .ie-pencil,
+.ie-field-block:hover > .ie-pencil,
+.ie-pencil:focus {
+    opacity: 0.7;
+}
+
+.ie-pencil:hover {
+    opacity: 1 !important;
+    background: rgba(160, 38, 38, 0.08);
+    transform: scale(1.1);
+}
+
+.ie-pencil:active {
+    transform: scale(0.95);
+}
+
+/* ── Inline editor popover ── */
+.ie-popover {
+    display: none;
+    position: fixed;
+    z-index: 1060;
+    background: #fff;
+    border: 1px solid #e0e9f2;
+    border-radius: 8px;
+    padding: 14px 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    min-width: 220px;
+    max-width: 320px;
+}
+
+.ie-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.ie-popover-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ie-popover-close {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.ie-popover-close:hover {
+    color: #a02626;
+}
+
+/* ── Editor input/select ── */
+.ie-editor-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #333;
+    background: #fff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+}
+
+.ie-editor-input:focus {
+    border-color: #a02626;
+    box-shadow: 0 0 0 3px rgba(160, 38, 38, 0.12);
+}
+
+.ie-editor-input:disabled {
+    background: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.ie-editor-select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #333;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+    appearance: auto;
+}
+
+.ie-editor-select:focus {
+    border-color: #a02626;
+    box-shadow: 0 0 0 3px rgba(160, 38, 38, 0.12);
+}
+
+/* ── Editor footer buttons ── */
+.ie-editor-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.ie-btn-save {
+    padding: 5px 14px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    background: #a02626;
+    color: #fff;
+}
+
+.ie-btn-save:hover {
+    background: #870f0f;
+}
+
+.ie-btn-save:active {
+    transform: scale(0.97);
+}
+
+.ie-btn-save:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.ie-btn-cancel {
+    padding: 5px 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    background: #fff;
+    color: #666;
+    transition: background 0.15s;
+}
+
+.ie-btn-cancel:hover {
+    background: #f5f5f5;
+}
+
+/* ── Loading spinner ── */
+.ie-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: ie-spin 0.6s linear infinite;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+@keyframes ie-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Success flash animation ── */
+.ie-flash-success {
+    animation: ie-flash 0.8s ease-out;
+}
+
+@keyframes ie-flash {
+    0% { box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.5); }
+    100% { box-shadow: 0 0 0 2px transparent; }
+}
+
+/* ── Error flash animation ── */
+.ie-flash-error {
+    animation: ie-flash-error 0.8s ease-out;
+}
+
+@keyframes ie-flash-error {
+    0% { box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.5); }
+    100% { box-shadow: 0 0 0 2px transparent; }
+}
+
+/* ── Value display (hidden during edit) ── */
+.ie-value {
+    transition: opacity 0.15s;
+}
+
+/* ── Dark mode support ── */
+@media (prefers-color-scheme: dark) {
+    .ie-popover {
+        background: #1e2330;
+        border-color: #2d3748;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    .ie-popover-header {
+        border-bottom-color: #2d3748;
+    }
+    .ie-popover-title {
+        color: #cbd5e0;
+    }
+    .ie-popover-close {
+        color: #718096;
+    }
+    .ie-popover-close:hover {
+        color: #f48a8a;
+    }
+    .ie-editor-input,
+    .ie-editor-select {
+        background: #2b3040;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    .ie-editor-input:focus,
+    .ie-editor-select:focus {
+        border-color: #a02626;
+        box-shadow: 0 0 0 3px rgba(160, 38, 38, 0.25);
+    }
+    .ie-editor-footer {
+        border-top-color: #2d3748;
+    }
+    .ie-btn-cancel {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #cbd5e0;
+    }
+    .ie-btn-cancel:hover {
+        background: #374151;
+    }
+    .ie-pencil {
+        color: #f48a8a;
+    }
+    .ie-pencil:hover {
+        background: rgba(244, 138, 138, 0.12);
+    }
+}
+
+/* ── AdminLTE dark-mode class fallback ── */
+.dark-mode .ie-popover {
+    background: #1e2330;
+    border-color: #2d3748;
+}
+.dark-mode .ie-popover-header {
+    border-bottom-color: #2d3748;
+}
+.dark-mode .ie-popover-title {
+    color: #cbd5e0;
+}
+.dark-mode .ie-popover-close {
+    color: #718096;
+}
+.dark-mode .ie-popover-close:hover {
+    color: #f48a8a;
+}
+.dark-mode .ie-editor-input,
+.dark-mode .ie-editor-select {
+    background: #2b3040;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+.dark-mode .ie-editor-footer {
+    border-top-color: #2d3748;
+}
+.dark-mode .ie-btn-cancel {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #cbd5e0;
+}
+.dark-mode .ie-pencil {
+    color: #f48a8a;
+}

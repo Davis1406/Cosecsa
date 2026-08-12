@@ -75,6 +75,8 @@ class FellowsController extends Controller
             'assignedLabels'     => collect($data->assignedLabels ?? []),
             'currentLabelIds'    => $data->currentLabelIds ?? [],
             'relatedProfiles'    => $data->relatedProfiles ?? null,
+            'fellowCountries'    => \App\Models\Country::getCountry(),
+            'fellowProgrammes'   => \App\Models\Programme::getProgramme(),
         ]);
     }
 
@@ -283,6 +285,16 @@ class FellowsController extends Controller
     }
 
     // ── Delete ─────────────────────────────────────────────────────────────────
+
+    public function quickUpdate(Request $request, $id)
+    {
+        $response = $this->api->post("fellows/{$id}/quick-update", [
+            'field' => $request->input('field'),
+            'value' => $request->input('value'),
+        ]);
+
+        return response()->json($response->json(), $response->status());
+    }
 
     public function delete($id)
     {
