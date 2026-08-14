@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-08-14) — Programmes list back to the card-row layout, restyled
+- Brought back the card-list layout (icon, name/type, inline fee stats, edit/delete) instead of the plain bordered table it had been reverted to, per feedback that the card layout read better — but toned down the generic "AI dashboard" styling from that earlier pass: dropped the gradient hero banner and glassy translucent button for the same flat `h5` + count-badge header and solid brand-red button used on `hospital/list.blade.php`, and tightened the card sizing/radius to the app's usual density. Dark-mode colors aligned to the palette already used by the sibling hospital/draft-emails pages (`#1f2937`/`#374151`/`#f87171`) instead of a slightly-off variant.
+
 ### Added (2026-08-14) — Inline-edit Programme Directors from the hospital view page
 - The hospital view's "Programme Directors" tab table only linked out to each trainer's own profile to make any change. Added the same `ie-field`/`inline-edit.js` pencil-edit component already used on the trainer profile page for Phone Number and Assistant PD Name directly in this table, posting to the trainer's existing `POST admin/associates/trainers/{id}/quick-update` endpoint — no new backend/API work, same allow-listed fields (`Api\TrainerController::quickUpdate()`). Email isn't inline-editable here (or on the trainer profile) since it's the linked login `users` row, not a trainer field.
 
