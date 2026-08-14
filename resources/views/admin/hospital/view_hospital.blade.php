@@ -266,17 +266,21 @@
                                                     <button class="ie-pencil" type="button" title="Edit phone number"><i class="fas fa-pen"></i></button>
                                                 </span>
                                             </td>
+                                            <td>{{ $t->assistant_pd ?: '-' }}</td>
                                             <td>
-                                                <span class="ie-field" data-ie="assistant_pd" data-ie-type="text"
-                                                      data-ie-value="{{ $t->assistant_pd ?? '' }}"
-                                                      data-ie-url="{{ url('admin/associates/trainers/'.$t->trainer_id.'/quick-update') }}"
-                                                      data-ie-csrf="{{ csrf_token() }}">
-                                                    <span class="ie-value">{{ $t->assistant_pd ?: '—' }}</span>
-                                                    <button class="ie-pencil" type="button" title="Edit assistant PD name"><i class="fas fa-pen"></i></button>
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <a href="{{ url('admin/associates/trainers/view/'.$t->trainer_id) }}" class="btn btn-xs btn-light border">
+                                                <button type="button" class="btn btn-xs btn-light border edit-pd-btn" title="Edit"
+                                                        data-toggle="modal" data-target="#editPdModal"
+                                                        data-trainer-id="{{ $t->trainer_id }}"
+                                                        data-name="{{ $t->name }}"
+                                                        data-email="{{ $t->email }}"
+                                                        data-assistant-pd="{{ $t->assistant_pd }}"
+                                                        data-assistant-email="{{ $t->assistant_email }}"
+                                                        data-programme-id="{{ $t->programme_id }}"
+                                                        data-mobile-no="{{ $t->mobile_no }}"
+                                                        data-phone-number="{{ $t->phone_number }}">
+                                                    <i class="fas fa-pen text-secondary"></i>
+                                                </button>
+                                                <a href="{{ url('admin/associates/trainers/view/'.$t->trainer_id) }}" class="btn btn-xs btn-light border" title="View full profile">
                                                     <i class="fas fa-eye text-info"></i>
                                                 </a>
                                             </td>
@@ -512,6 +516,54 @@
     </div>
 </div>
 
+{{-- ══ Edit Programme Director modal ══ --}}
+<div class="modal fade modal-modern" id="editPdModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-edit"></i> Edit Programme Director</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert d-none" id="editPdAlert" role="alert"></div>
+                <input type="hidden" id="editpd_trainer_id">
+                <input type="hidden" id="editpd_hospital_id">
+                <input type="hidden" id="editpd_programme_id">
+                <input type="hidden" id="editpd_mobile_no">
+                <input type="hidden" id="editpd_phone_number">
+
+                <div class="form-row">
+                    <div class="form-group col-7">
+                        <label>Name</label>
+                        <input type="text" class="form-control" id="editpd_name" required>
+                    </div>
+                    <div class="form-group col-5">
+                        <label>Email</label>
+                        <input type="email" class="form-control" id="editpd_email" required>
+                    </div>
+                </div>
+
+                <div class="section-divider">Assistant PD (optional)</div>
+                <div class="form-row">
+                    <div class="form-group col-7">
+                        <label>Assistant PD Name</label>
+                        <input type="text" class="form-control" id="editpd_assistant_pd" placeholder="Full name">
+                    </div>
+                    <div class="form-group col-5">
+                        <label>Assistant PD Email</label>
+                        <input type="email" class="form-control" id="editpd_assistant_email" placeholder="email@example.com">
+                    </div>
+                </div>
+                <small class="text-muted">Phone number has its own quick-edit pencil in the table — no need to duplicate it here.</small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="editPdSubmitBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- ══ Map Fellow modal (search-or-create fellow) ══ --}}
 <div class="modal fade modal-modern" id="mapFellowModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -709,6 +761,48 @@ $('#pdSubmitBtn').on('click', function () {
             $('#pdAlert').removeClass('d-none alert-success').addClass('alert-danger').text(msg);
             $btn.prop('disabled', false);
         });
+    });
+});
+
+$('.edit-pd-btn').on('click', function () {
+    var $b = $(this);
+    $('#editPdAlert').addClass('d-none');
+    $('#editpd_trainer_id').val($b.data('trainer-id'));
+    $('#editpd_hospital_id').val(HOSPITAL_ID);
+    $('#editpd_programme_id').val($b.data('programme-id'));
+    $('#editpd_mobile_no').val($b.data('mobile-no'));
+    $('#editpd_phone_number').val($b.data('phone-number'));
+    $('#editpd_name').val($b.data('name'));
+    $('#editpd_email').val($b.data('email'));
+    $('#editpd_assistant_pd').val($b.data('assistant-pd'));
+    $('#editpd_assistant_email').val($b.data('assistant-email'));
+});
+
+$('#editPdSubmitBtn').on('click', function () {
+    var $btn = $(this).prop('disabled', true);
+    var trainerId = $('#editpd_trainer_id').val();
+    var name = $('#editpd_name').val().trim();
+    var email = $('#editpd_email').val().trim();
+    if (!name || !email) {
+        $('#editPdAlert').removeClass('d-none alert-success').addClass('alert-danger').text('Name and email are required.');
+        $btn.prop('disabled', false);
+        return;
+    }
+    $.post('{{ url("admin/associates/trainers") }}/' + trainerId + '/ajax-update', {
+        _token: CSRF_TOKEN,
+        name: name, email: email,
+        hospital_id: $('#editpd_hospital_id').val(),
+        programme_id: $('#editpd_programme_id').val(),
+        mobile_no: $('#editpd_mobile_no').val(),
+        phone_number: $('#editpd_phone_number').val(),
+        assistant_pd: $('#editpd_assistant_pd').val(),
+        assistant_email: $('#editpd_assistant_email').val(),
+    }).done(function () {
+        window.location.reload();
+    }).fail(function (xhr) {
+        var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to save changes.';
+        $('#editPdAlert').removeClass('d-none alert-success').addClass('alert-danger').text(msg);
+        $btn.prop('disabled', false);
     });
 });
 

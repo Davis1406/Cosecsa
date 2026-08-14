@@ -273,6 +273,7 @@ Route::get('admin/associates/trainers/import',  [TrainerController::class,'impor
 Route::post('admin/associates/trainers/import', [TrainerController::class, 'importData'])->name('trainers.import.data');
 Route::get('admin/associates/trainers/view/{id}',  [TrainerController::class,'view'])->name('trainers.view');
 Route::post('admin/associates/trainers/{id}/quick-update', [TrainerController::class,'quickUpdate'])->name('trainers.quick.update');
+Route::post('admin/associates/trainers/{id}/ajax-update', [TrainerController::class,'ajaxUpdate'])->name('trainers.ajax.update');
 Route::get('admin/associates/trainers/edit/{id} ', [TrainerController::class,'edit']);
 Route::post('admin/associates/trainers/edit/{id} ', [TrainerController::class,'update']);
 Route::get('admin/associates/trainers/delete/{id}', [TrainerController::class,'delete']);

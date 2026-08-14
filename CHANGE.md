@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added (2026-08-14) — Edit Programme Director modal on the hospital view page
+- The Programme Directors table's inline pencils only covered Phone Number and Assistant PD Name — there was no way to fix a PD's actual name or email (the linked `users` row) without navigating to their full trainer profile. Added an "Edit" button per row opening an `editPdModal` pre-filled with Name, Email, Assistant PD Name, and Assistant PD Email; Phone Number stays as its existing inline pencil rather than being duplicated in the modal.
+  - MIS: new `TrainerController::ajaxUpdate()` (`app/Http/Controllers/TrainerController.php`), route `POST admin/associates/trainers/{id}/ajax-update` (`routes/web.php`) — a JSON-returning counterpart to the existing form-based `update()`, reusing the same API call.
+  - API: `Api\HospitalController::show()`'s trainers query now also selects `programme_id`/`mobile_no` (`app/Http/Controllers/Api/HospitalController.php`) — `Api\TrainerController::update()` overwrites every one of hospital_id/programme_id/mobile_no from the request rather than only the fields sent, so the modal has to round-trip the trainer's current values for those or they'd get nulled out on save.
+
 ### Changed (2026-08-14) — Programmes list back to the card-row layout, restyled
 - Brought back the card-list layout (icon, name/type, inline fee stats, edit/delete) instead of the plain bordered table it had been reverted to, per feedback that the card layout read better — but toned down the generic "AI dashboard" styling from that earlier pass: dropped the gradient hero banner and glassy translucent button for the same flat `h5` + count-badge header and solid brand-red button used on `hospital/list.blade.php`, and tightened the card sizing/radius to the app's usual density. Dark-mode colors aligned to the palette already used by the sibling hospital/draft-emails pages (`#1f2937`/`#374151`/`#f87171`) instead of a slightly-off variant.
 

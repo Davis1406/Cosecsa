@@ -47,6 +47,25 @@ class TrainerController extends Controller
         return response()->json($response->json(), $response->status());
     }
 
+    // AJAX counterpart to update() — same fields, same API endpoint, but
+    // returns JSON instead of a redirect so it can be used from a modal
+    // (e.g. the hospital view's "Edit Programme Director" modal) without
+    // navigating away. Api\TrainerController::update() overwrites every one
+    // of these columns from the request, so callers must send the trainer's
+    // current hospital_id/programme_id/mobile_no even when only editing
+    // name/email/phone/assistant fields, or those get nulled out.
+    public function ajaxUpdate(Request $request, $id)
+    {
+        $fields = $request->only([
+            'name', 'email', 'phone_number', 'hospital_id', 'programme_id',
+            'assistant_pd', 'assistant_email', 'mobile_no',
+        ]);
+
+        $response = $this->api->post("trainers/{$id}", $fields);
+
+        return response()->json($response->json(), $response->status());
+    }
+
     public function add()
     {
         return view('admin.associates.trainers.add', [
