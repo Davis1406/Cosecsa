@@ -30,6 +30,13 @@
     .empty-state { text-align:center; padding:32px; color:#aaa; font-size:.9rem; }
     .empty-state i { font-size:2rem; display:block; margin-bottom:8px; }
 
+    /* The inline-edit component hides its pencil until hover by default,
+       which reads as "not editable" in a plain data table where nothing
+       else hints a cell can be clicked. Keep it faintly visible at rest
+       here so the Programme Directors table advertises itself. */
+    #pane-trainers .ie-pencil { opacity:.45; }
+    #pane-trainers .ie-pencil:hover { opacity:1 !important; }
+
     body.dark-mode .hosp-hero { background:#7a1f1f; }
     body.dark-mode .info-item label { color:#9ca3af; }
     body.dark-mode .info-item span  { color:#e0e0e0; }
