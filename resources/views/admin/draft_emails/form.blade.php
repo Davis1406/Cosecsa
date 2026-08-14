@@ -57,6 +57,87 @@
                                     <textarea name="body" id="bodyEditor" class="form-control" rows="14">{{ old('body', $draftEmail->body ?? '') }}</textarea>
                                 </div>
 
+                                <hr class="my-4">
+
+                                {{-- ── Who can see this draft ── --}}
+                                <div class="form-group">
+                                    <label class="de-label">Who Can View This Draft</label>
+                                    @php $visibility = old('visibility', $draftEmail->visibility ?? 'all'); @endphp
+                                    <div class="de-radio-row">
+                                        <label class="de-radio">
+                                            <input type="radio" name="visibility" value="all" {{ $visibility === 'all' ? 'checked' : '' }}>
+                                            <span>Everyone in the secretariat</span>
+                                        </label>
+                                        <label class="de-radio">
+                                            <input type="radio" name="visibility" value="selected" {{ $visibility === 'selected' ? 'checked' : '' }}>
+                                            <span>Specific people only</span>
+                                        </label>
+                                    </div>
+                                    @php $visibleIds = old('visible_user_ids', $draftEmail->visible_user_ids ?? []); @endphp
+                                    <div id="visibleUsersBox" class="de-chip-list {{ $visibility === 'selected' ? '' : 'd-none' }}">
+                                        @forelse($admins as $a)
+                                        <label class="de-chip">
+                                            <input type="checkbox" name="visible_user_ids[]" value="{{ $a->id }}"
+                                                   {{ in_array($a->id, $visibleIds) ? 'checked' : '' }}>
+                                            <span>{{ $a->name }}</span>
+                                        </label>
+                                        @empty
+                                        <div class="text-muted small">No other admin users found.</div>
+                                        @endforelse
+                                    </div>
+                                </div>
+
+                                {{-- ── Who it gets sent to ── --}}
+                                <div class="form-group">
+                                    <label class="de-label">Send To (recipient group)</label>
+                                    @php $recipientGroup = old('recipient_group', $draftEmail->recipient_group ?? ''); @endphp
+                                    <select name="recipient_group" id="recipientGroup" class="form-control de-input">
+                                        <option value="" {{ $recipientGroup === '' ? 'selected' : '' }}>— None (this is just a content draft) —</option>
+                                        <option value="country_reps" {{ $recipientGroup === 'country_reps' ? 'selected' : '' }}>Country Representatives (one email per country)</option>
+                                    </select>
+                                    <div class="custom-control custom-checkbox mt-2" id="ccBox">
+                                        @php $cc = old('cc_personal_email', $draftEmail->cc_personal_email ?? true); @endphp
+                                        <input type="checkbox" class="custom-control-input" id="ccPersonal" name="cc_personal_email" value="1" {{ $cc ? 'checked' : '' }}>
+                                        <label class="custom-control-label small" for="ccPersonal">CC each recipient's personal login email</label>
+                                    </div>
+                                </div>
+
+                                {{-- ── Manual vs automatic ── --}}
+                                <div class="form-group" id="sendModeGroup">
+                                    <label class="de-label">Sending</label>
+                                    @php $sendMode = old('send_mode', $draftEmail->send_mode ?? 'manual'); @endphp
+                                    <div class="de-radio-row">
+                                        <label class="de-radio">
+                                            <input type="radio" name="send_mode" value="manual" {{ $sendMode === 'manual' ? 'checked' : '' }}>
+                                            <span>Manual — I'll click "Send Now"</span>
+                                        </label>
+                                        <label class="de-radio">
+                                            <input type="radio" name="send_mode" value="automatic" {{ $sendMode === 'automatic' ? 'checked' : '' }}>
+                                            <span>Automatic — send when a condition is met</span>
+                                        </label>
+                                    </div>
+
+                                    @php
+                                        $trigger = old('automation_trigger', $draftEmail->automation_trigger ?? 'applications_threshold_per_country');
+                                        $threshold = old('automation_threshold', $draftEmail->automation_threshold ?? 10);
+                                    @endphp
+                                    <div id="automationBox" class="de-auto-box {{ $sendMode === 'automatic' ? '' : 'd-none' }}">
+                                        <div class="form-group mb-2">
+                                            <label class="small mb-1">Condition</label>
+                                            <select name="automation_trigger" class="form-control de-input">
+                                                <option value="applications_threshold_per_country" {{ $trigger === 'applications_threshold_per_country' ? 'selected' : '' }}>
+                                                    Applications for a country exceed a threshold (Salesforce)
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mb-0">
+                                            <label class="small mb-1">Threshold (applications per country)</label>
+                                            <input type="number" min="1" name="automation_threshold" class="form-control de-input" value="{{ $threshold }}">
+                                            <small class="text-muted">Checked hourly. Each country only ever triggers this draft once.</small>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="d-flex justify-content-between align-items-center mt-3">
                                     <a href="{{ url('admin/draft-emails') }}" class="btn btn-light border">Cancel</a>
                                     <button type="submit" class="btn de-save-btn">
@@ -64,6 +145,19 @@
                                     </button>
                                 </div>
                             </form>
+
+                            @if($draftEmail)
+                            <form method="POST" action="{{ url('admin/draft-emails/'.$draftEmail->id.'/send-now') }}"
+                                  onsubmit="return confirm('Send this draft to every recipient in the selected group right now?');" class="mt-3 pt-3 border-top">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-danger btn-sm" {{ $recipientGroup === '' ? 'disabled' : '' }}>
+                                    <i class="fas fa-paper-plane mr-1"></i> Send Now to {{ $recipientGroup === 'country_reps' ? 'all Country Representatives' : 'recipient group' }}
+                                </button>
+                                @if($recipientGroup === '')
+                                <small class="text-muted d-block mt-1">Select a recipient group above and save first.</small>
+                                @endif
+                            </form>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -144,6 +238,30 @@
     body.dark-mode .de-preview-frame-wrap { background:#0f172a; }
     body.dark-mode .note-editor.note-frame { border-color:#374151; }
     body.dark-mode .note-toolbar { background:#111827; }
+
+    /* ── Delivery settings ── */
+    .de-radio-row { display:flex; flex-wrap:wrap; gap:10px; margin-top:4px; }
+    .de-radio {
+        display:flex; align-items:center; gap:6px; font-size:.85rem; font-weight:500; color:#444;
+        background:#f9f6f6; border:1px solid #eee; border-radius:8px; padding:8px 14px; cursor:pointer; margin:0;
+        transition:border-color .15s, background .15s;
+    }
+    .de-radio input { accent-color:#a02626; margin:0; }
+    .de-radio:has(input:checked) { border-color:#a02626; background:#fdeeee; color:#a02626; }
+    .de-chip-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; max-height:160px; overflow-y:auto; padding:2px; }
+    .de-chip {
+        display:flex; align-items:center; gap:6px; font-size:.8rem; background:#f4f4f4; border:1px solid #e7e7e7;
+        border-radius:20px; padding:5px 12px; cursor:pointer; margin:0;
+    }
+    .de-chip input { accent-color:#a02626; margin:0; }
+    .de-chip:has(input:checked) { background:#fdeeee; border-color:#e8c5c5; color:#a02626; font-weight:600; }
+    .de-auto-box { background:#fbf7f7; border:1px solid #f0e0e0; border-radius:10px; padding:14px 16px; margin-top:10px; }
+
+    body.dark-mode .de-radio { background:#111827; border-color:#374151; color:#d1d5db; }
+    body.dark-mode .de-radio:has(input:checked) { border-color:#f87171; background:#3a1f1f; color:#f87171; }
+    body.dark-mode .de-chip { background:#111827; border-color:#374151; color:#d1d5db; }
+    body.dark-mode .de-chip:has(input:checked) { background:#3a1f1f; border-color:#7a1f1f; color:#f87171; }
+    body.dark-mode .de-auto-box { background:#111827; border-color:#374151; }
 </style>
 @endpush
 
@@ -167,6 +285,14 @@ $(function () {
         }
     });
     $('#subjectInput').on('input', updatePreview);
+
+    // ── Visibility / recipient / automation toggles ─────────────────────────
+    $('input[name=visibility]').on('change', function () {
+        $('#visibleUsersBox').toggleClass('d-none', $(this).val() !== 'selected');
+    });
+    $('input[name=send_mode]').on('change', function () {
+        $('#automationBox').toggleClass('d-none', $(this).val() !== 'automatic');
+    });
 
     $('#insertNameBtn').on('click', function () {
         $('#bodyEditor').summernote('editor.focus');

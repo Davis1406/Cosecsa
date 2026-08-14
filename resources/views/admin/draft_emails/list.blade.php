@@ -38,6 +38,14 @@
     body.dark-mode .de-name { color:#e5e7eb; }
     body.dark-mode .de-subject { color:#9ca3af; }
     body.dark-mode .de-meta { color:#6b7280; }
+
+    .de-tag {
+        display:inline-flex; align-items:center; gap:3px; font-size:.65rem; font-weight:600; text-transform:uppercase;
+        letter-spacing:.03em; background:#f0f0f0; color:#777; border-radius:10px; padding:1px 8px; margin-left:6px; vertical-align:middle;
+    }
+    .de-tag-auto { background:#fdeeee; color:#a02626; }
+    body.dark-mode .de-tag { background:#374151; color:#d1d5db; }
+    body.dark-mode .de-tag-auto { background:#3a1f1f; color:#f87171; }
 </style>
 @endpush
 
@@ -73,7 +81,18 @@
                 <div class="de-card" data-search="{{ strtolower($d->name.' '.$d->subject) }}">
                     <div class="de-icon"><i class="fas fa-envelope-open-text"></i></div>
                     <a href="{{ url('admin/draft-emails/edit/'.$d->id) }}" class="de-body text-decoration-none">
-                        <div class="de-name">{{ $d->name }}</div>
+                        <div class="de-name">
+                            {{ $d->name }}
+                            @if(($d->send_mode ?? 'manual') === 'automatic')
+                                <span class="de-tag de-tag-auto"><i class="fas fa-bolt"></i> Automatic</span>
+                            @endif
+                            @if(!empty($d->recipient_group))
+                                <span class="de-tag"><i class="fas fa-users"></i> {{ $d->recipient_group === 'country_reps' ? 'Country Reps' : $d->recipient_group }}</span>
+                            @endif
+                            @if(($d->visibility ?? 'all') === 'selected')
+                                <span class="de-tag"><i class="fas fa-lock"></i> Restricted</span>
+                            @endif
+                        </div>
                         <div class="de-subject">{{ $d->subject }}</div>
                     </a>
                     <div class="de-meta">

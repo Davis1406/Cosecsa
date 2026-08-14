@@ -464,6 +464,12 @@
                 @include('admin.hospital._fellow_picker', ['prefix' => 'pd'])
 
                 <div class="section-divider">Assistant PD (optional)</div>
+                <div class="form-group">
+                    <label>Search Fellow for Assistant PD</label>
+                    <input type="text" class="form-control" id="asstpd_search" placeholder="Type a name or email to fill the fields below...">
+                    <div class="list-group mt-1 d-none fp-results" id="asstpd_results" style="max-height:160px; overflow-y:auto;"></div>
+                    <small class="text-muted">Or just type the name/email directly — Assistant PD isn't a login account, so either works.</small>
+                </div>
                 <div class="form-row">
                     <div class="form-group col-7">
                         <label>Assistant PD Name</label>
@@ -591,6 +597,42 @@ function updateSubmitState(prefix) {
 
 wireFellowPicker('pd');
 wireFellowPicker('map');
+
+// ── Assistant PD: search fellows to auto-fill the name/email fields ──
+(function () {
+    var timer = null;
+    $('#asstpd_search').on('input', function () {
+        clearTimeout(timer);
+        var q = $(this).val().trim();
+        var $results = $('#asstpd_results');
+        if (q.length < 2) { $results.empty().addClass('d-none'); return; }
+        timer = setTimeout(function () {
+            $.get(SEARCH_URL, { q: q }).done(function (res) {
+                var fellows = res.fellows || [];
+                $results.empty();
+                if (!fellows.length) {
+                    $results.append('<div class="list-group-item text-muted small">No matching fellows.</div>');
+                } else {
+                    fellows.forEach(function (f) {
+                        var email = f.personal_email || f.email || '';
+                        $('<button type="button" class="list-group-item list-group-item-action py-1 px-2 small"></button>')
+                            .text(f.name + (email ? ' — ' + email : ''))
+                            .data('fellow', f)
+                            .appendTo($results);
+                    });
+                }
+                $results.removeClass('d-none');
+            });
+        }, 300);
+    });
+    $('#asstpd_results').on('click', '.list-group-item-action', function () {
+        var f = $(this).data('fellow');
+        $('#pd_assistant_pd').val(f.name);
+        $('#pd_assistant_email').val(f.personal_email || f.email || '');
+        $('#asstpd_search').val(f.name);
+        $('#asstpd_results').addClass('d-none').empty();
+    });
+})();
 
 // Re-enable submit while typing "add new fellow" fields
 $('#pd_fp_new, #map_fp_new').on('input', function () {
