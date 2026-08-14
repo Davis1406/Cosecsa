@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\Response;
 
@@ -21,28 +22,28 @@ class ApiClient
 
     public function get(string $path, array $query = []): Response
     {
-        return Http::withToken($this->token)
+        return $this->pending()
             ->timeout(30)
             ->get($this->url($path), $query);
     }
 
     public function post(string $path, array $data = []): Response
     {
-        return Http::withToken($this->token)
+        return $this->pending()
             ->timeout(30)
             ->post($this->url($path), $data);
     }
 
     public function put(string $path, array $data = []): Response
     {
-        return Http::withToken($this->token)
+        return $this->pending()
             ->timeout(30)
             ->put($this->url($path), $data);
     }
 
     public function delete(string $path): Response
     {
-        return Http::withToken($this->token)
+        return $this->pending()
             ->timeout(30)
             ->delete($this->url($path));
     }
@@ -52,7 +53,7 @@ class ApiClient
     // (e.g. ['cv' => [123 => $file1, 456 => $file2]]) for bulk forms.
     public function postWithFile(string $path, array $data = [], array $files = []): Response
     {
-        $request = Http::withToken($this->token)->timeout(60)->asMultipart();
+        $request = $this->pending()->timeout(60)->asMultipart();
 
         foreach ($data as $key => $value) {
             if ($value === null) continue;
@@ -115,6 +116,26 @@ class ApiClient
                 $request = $request->attach($fullKey, (string) $subValue);
             }
         }
+        return $request;
+    }
+
+    // Every internal-token request also carries who, in the MIS session, is
+    // actually making it — the API has no Sanctum-authenticated user of its
+    // own on these machine-token calls (see InternalTokenAuth), so without
+    // this every write the API performs would be attributed to nobody in
+    // the System Logs "Changes" tab (App\Services\SystemLogger on this side,
+    // its cosecsa-api counterpart on the other).
+    private function pending()
+    {
+        $request = Http::withToken($this->token);
+
+        if (Auth::check()) {
+            $request = $request->withHeaders([
+                'X-Actor-Id'   => Auth::id(),
+                'X-Actor-Name' => Auth::user()->name,
+            ]);
+        }
+
         return $request;
     }
 
