@@ -50,8 +50,12 @@ class ProgrammesController extends Controller
         $data = $response->object();
 
         // examResultsByYear comes back as a JSON object keyed by year — each
-        // value is an array of {exam_year, result, n} rows.
-        $examResultsByYear = collect((array) ($data->examResultsByYear ?? []));
+        // value is an array of {exam_year, result, n} rows. Casting the
+        // outer object to array leaves each per-year value as a plain PHP
+        // array (of stdClass rows), not a Collection, so the view's
+        // ->firstWhere() calls on each year's rows need those wrapped too.
+        $examResultsByYear = collect((array) ($data->examResultsByYear ?? []))
+            ->map(fn ($rows) => collect($rows));
 
         return view('admin.programmes.view', [
             'header_title'     => $data->programme->name ?? 'Programme',

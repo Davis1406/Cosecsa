@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed (2026-08-14) — Programme view page ("Results by Year" tab) threw a 500
+- `admin/programmes/view/{id}` errored with `Call to a member function firstWhere() on array` whenever a programme had exam results. `ProgrammesController::view()` cast the API's `examResultsByYear` object to an array with `collect((array) ...)`, which only wraps the *outer* keyed-by-year structure in a Collection — each year's own value stayed a plain PHP array, and the view calls `$rows->firstWhere(...)` on it. Fixed by mapping each year's rows through `collect()` too. Longstanding bug — first seen in production logs 2026-08-10, never previously traced.
+
 ### Fixed (2026-08-14) — Hospital view "Add Programme" modal threw a 500
 - The modal's Accredited/Expiry Date fields used `<input type="date">`, submitting a full `YYYY-MM-DD` value. `Api\HospitalProgrammesController::store()` (ported from the standalone Hospital Programmes module, where the equivalent form uses `<input type="month">`) parses those fields with `Carbon::createFromFormat('Y-m', $date)`, which throws `Trailing data` on a day-of-month component — a hard 500 on every submission. Changed both inputs to `type="month"` to match the API's expected format (`resources/views/admin/hospital/view_hospital.blade.php`), instead of loosening the API parser, which the standalone module still relies on being strict.
 
