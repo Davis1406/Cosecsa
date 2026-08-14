@@ -77,6 +77,7 @@ class FellowsController extends Controller
             'relatedProfiles'    => $data->relatedProfiles ?? null,
             'fellowCountries'    => \App\Models\Country::getCountry(),
             'fellowProgrammes'   => \App\Models\Programme::getProgramme(),
+            'fellowHospitals'    => \App\Models\HospitalModel::getHospital(),
         ]);
     }
 
@@ -292,6 +293,37 @@ class FellowsController extends Controller
             'field' => $request->input('field'),
             'value' => $request->input('value'),
         ]);
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    // Typeahead search used by "search for an existing fellow" widgets
+    // (hospital PD assignment, hospital fellow mapping).
+    public function search(Request $request)
+    {
+        $response = $this->api->get('fellows/search', ['q' => $request->input('q', '')]);
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    // Minimal inline "add someone not in the list" fallback used by the same
+    // widgets — creates a real fellow record (not a duplicate role table row).
+    public function quickCreate(Request $request)
+    {
+        $response = $this->api->post('fellows', $request->only([
+            'firstname', 'lastname', 'email', 'personal_email', 'gender', 'country_id',
+        ]));
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    public function addRole(Request $request, $id)
+    {
+        $response = $this->api->post("fellows/{$id}/add-role", $request->only([
+            'role_type', 'hospital_id', 'programme_id', 'phone_number', 'mobile_no',
+            'assistant_pd', 'assistant_email', 'country_id', 'cosecsa_email',
+            'specialty', 'subspecialty', 'gender',
+        ]));
 
         return response()->json($response->json(), $response->status());
     }

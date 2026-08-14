@@ -157,13 +157,46 @@ class HospitalController extends Controller
         $data = $response->object();
 
         return view('admin.hospital.view_hospital', [
-            'header_title' => $data->hospital->name ?? 'View Hospital',
-            'hospital'     => $data->hospital,
-            'programmes'   => collect($data->programmes ?? []),
-            'trainers'     => collect($data->trainers ?? []),
-            'trainees'     => collect($data->trainees ?? []),
-            'fellows'      => collect($data->fellows ?? []),
+            'header_title'  => $data->hospital->name ?? 'View Hospital',
+            'hospital'      => $data->hospital,
+            'programmes'    => collect($data->programmes ?? []),
+            'trainers'      => collect($data->trainers ?? []),
+            'trainees'      => collect($data->trainees ?? []),
+            'fellows'       => collect($data->fellows ?? []),
+            'allProgrammes' => \App\Models\Programme::getProgramme(),
+            'allCountries'  => \App\Models\Country::getCountry(),
         ]);
+    }
+
+    // ── Programmes / PD / Fellow-mapping widgets on the hospital view page ──
+
+    public function addProgramme(Request $request, $id)
+    {
+        $response = $this->api->post('admin/hospital-programmes', [
+            'hospital_id'     => $id,
+            'programme_id'    => $request->input('programme_id', []),
+            'accredited_date' => $request->input('accredited_date'),
+            'expiry_date'     => $request->input('expiry_date'),
+            'status'          => $request->input('status', 'Active'),
+        ]);
+
+        Cache::forget('lookup:programmes');
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    public function mapFellow(Request $request, $id)
+    {
+        $response = $this->api->post("admin/hospitals/{$id}/fellows", $request->only(['fellow_id']));
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    public function unmapFellow($id, $fellowId)
+    {
+        $response = $this->api->delete("admin/hospitals/{$id}/fellows/{$fellowId}");
+
+        return response()->json($response->json(), $response->status());
     }
 
     public function add()

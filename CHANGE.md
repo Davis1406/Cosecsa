@@ -4,6 +4,23 @@
 
 ## [Unreleased]
 
+### Added (2026-08-14) — Add another role to fellows
+- New "Add Role" button on the fellow profile page opens a modal to grant a fellow an additional role — Trainer/Programme Director, Country Representative, or Examiner — **without creating a duplicate user**. The new role record is linked to the fellow's existing `user_id`/login via a new `UserRole` row, reusing the same pattern already used by the `admin._role_switcher` "Also in:" chips.
+  - MIS: `FellowsController::addRole()` (`app/Http/Controllers/FellowsController.php`), route `POST admin/associates/fellows/{id}/add-role` (`routes/web.php`), modal + JS in `resources/views/admin/associates/fellows/view.blade.php` (role-specific fields: hospital/programme for Trainer, country for Country Rep, country/specialty/subspecialty for Examiner). `FellowsController::view()` now also passes `fellowHospitals` for the modal's hospital dropdown.
+  - API: `Api\FellowController::addRole()` (`app/Http/Controllers/Api/FellowController.php`) validates the fellow exists and doesn't already hold that role (via the existing `relatedProfiles()` helper), creates the role-specific record (`Trainer`/`CountryRepsModel`/`ExamsModel`) pointed at the fellow's existing `user_id`, and upserts the matching `UserRole` row — all inside a DB transaction. Route: `POST admin/internal/fellows/{id}/add-role` (`routes/api.php`).
+
+### Added (2026-08-14) — Hospital view: add programme, add PD, map fellows
+- Hospital view page (`admin/hospital/view_hospital/{id}`) gains three actions, all via in-page modals (no page navigation needed):
+  - **Add Programme** — multi-select of not-yet-accredited programmes, posts to the existing `admin/hospital-programmes` store endpoint (already used by the standalone Hospital Programmes module) via a new thin MIS wrapper `HospitalController::addProgramme()`.
+  - **Add Programme Director** — search-existing-fellow-or-create-new widget (shared partial `resources/views/admin/hospital/_fellow_picker.blade.php`), then calls the fellow's `add-role` endpoint (role_type=4/Trainer) with this hospital+programme, reusing the "Add another role to fellows" feature above instead of creating a separate trainer login.
+  - **Map Fellow** — same search-or-create widget, posts to a new `fellow_id`↔`hospital_id` mapping (new table `hospital_fellow_mappings`, migration `2026_08_14_090000_create_hospital_fellow_mappings_table`, model `HospitalFellowMapping`) so a fellow can be explicitly linked to a hospital independent of the existing implicit country+programme match. The Fellows tab now merges both sources (badge-labelled "mapped") and lets you remove an explicit mapping.
+  - New reusable pieces: `Api\FellowController::search()` (`GET internal/fellows/search?q=`) typeahead used by both widgets; `Api\HospitalController::mapFellow()`/`unmapFellow()`; MIS `FellowsController::search()`/`quickCreate()` proxies. `FellowController::store()` now defaults to a random password when the quick-create flow doesn't collect one.
+
+### Added (2026-08-14) — Draft Emails section
+- New "Draft Emails" sidebar item (`admin/draft-emails`) — a full CRUD list of reusable email drafts (name, subject, Summernote rich-text body), modelled on the existing single-record examiner email-template editor (`admin/exams/email-template`) but supporting any number of named drafts instead of just one.
+  - API: new table `draft_emails` (migration `2026_08_14_091500_create_draft_emails_table`), model `DraftEmail`, `Api\DraftEmailController` (index/show/store/update/destroy), routes under `admin/draft-emails` (`routes/api.php`). Kept as a separate table from the legacy `email_templates` table so this doesn't touch the working examiner bulk-email feature.
+  - MIS: `DraftEmailsController` (`app/Http/Controllers/DraftEmailsController.php`), routes in `routes/web.php`, views `resources/views/admin/draft_emails/{list,form}.blade.php` (shared form for add/edit, same Summernote setup as the examiner email-template page).
+
 ### Performance
 - Cache the `countries`, `hospitals`, and `programmes` lookup lists (`Country::getCountry()`, `HospitalModel::getHospital()`, `Programme::getProgramme()`) for 1h instead of re-querying MySQL directly on almost every add/edit/view page. `HospitalController` and `ProgrammesController` now call `Cache::forget()` on their write paths so edits appear immediately instead of waiting out the TTL.
 - Production deploy now rebuilds `config:cache`/`route:cache`/`view:cache` after every pull instead of only clearing them (see `~/cosecsa/HANDOFF.md` § Performance notes).

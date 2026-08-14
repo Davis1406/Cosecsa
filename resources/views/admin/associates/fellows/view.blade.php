@@ -204,6 +204,9 @@
                     <i class="fas fa-receipt mr-1"></i> Subscriptions
                 </a>
                 @include('admin._impersonate_button', ['userId' => $fellow->user_id ?? null])
+                <button type="button" class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#addRoleModal">
+                    <i class="fas fa-user-plus mr-1"></i> Add Role
+                </button>
                 <a href="{{ url('admin/associates/fellows/list') }}"
                    class="btn btn-sm btn-secondary">
                     <i class="fas fa-arrow-left mr-1"></i> Back to List
@@ -212,6 +215,105 @@
         </div>
 
         @include('admin._role_switcher', ['relatedProfiles' => $relatedProfiles ?? null, 'currentRole' => 'fellow'])
+
+        {{-- Add Role modal: attach Trainer(PD)/Country Rep/Examiner to this fellow's
+             existing login instead of creating a brand-new user record. --}}
+        <div class="modal fade" id="addRoleModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <form id="addRoleForm" class="modal-content">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fas fa-user-plus mr-1"></i> Add Role to {{ trim(($fellow->firstname ?? '') . ' ' . ($fellow->lastname ?? '')) }}</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="addRoleAlert" class="alert d-none" role="alert"></div>
+                        <div class="form-group">
+                            <label>Role</label>
+                            <select class="form-control" id="ar_role_type" name="role_type" required>
+                                <option value="">-- Select role --</option>
+                                <option value="4">Trainer / Programme Director</option>
+                                <option value="5">Country Representative</option>
+                                <option value="9">Examiner</option>
+                            </select>
+                        </div>
+
+                        <div class="ar-fields ar-fields-4 d-none">
+                            <div class="form-group">
+                                <label>Hospital <span class="text-danger">*</span></label>
+                                <select class="form-control" name="hospital_id">
+                                    <option value="">-- Select hospital --</option>
+                                    @foreach($fellowHospitals as $h)
+                                        <option value="{{ $h->id }}">{{ $h->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Programme</label>
+                                <select class="form-control" name="programme_id">
+                                    <option value="">-- Select programme --</option>
+                                    @foreach($fellowProgrammes as $p)
+                                        <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Mobile Number</label>
+                                <input type="text" class="form-control" name="mobile_no">
+                            </div>
+                        </div>
+
+                        <div class="ar-fields ar-fields-5 d-none">
+                            <div class="form-group">
+                                <label>Country <span class="text-danger">*</span></label>
+                                <select class="form-control" name="country_id">
+                                    <option value="">-- Select country --</option>
+                                    @foreach($fellowCountries as $c)
+                                        <option value="{{ $c->id }}">{{ $c->country_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>COSECSA Email</label>
+                                <input type="email" class="form-control" name="cosecsa_email">
+                            </div>
+                            <div class="form-group">
+                                <label>Mobile Number</label>
+                                <input type="text" class="form-control" name="mobile_no">
+                            </div>
+                        </div>
+
+                        <div class="ar-fields ar-fields-9 d-none">
+                            <div class="form-group">
+                                <label>Country</label>
+                                <select class="form-control" name="country_id">
+                                    <option value="">-- Use fellow's country --</option>
+                                    @foreach($fellowCountries as $c)
+                                        <option value="{{ $c->id }}">{{ $c->country_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Specialty</label>
+                                <input type="text" class="form-control" name="specialty" placeholder="Defaults to fellow's specialty">
+                            </div>
+                            <div class="form-group">
+                                <label>Sub-specialty</label>
+                                <input type="text" class="form-control" name="subspecialty">
+                            </div>
+                            <div class="form-group">
+                                <label>Mobile Number</label>
+                                <input type="text" class="form-control" name="mobile_no">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger" id="addRoleSubmit">Add Role</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         <div class="row">
             {{-- ══ LEFT PANEL ══ --}}
@@ -992,6 +1094,35 @@ function toggleLabelsEdit() {
     var panel = document.getElementById('labelsEditPanel');
     panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
 }
+
+$('#ar_role_type').on('change', function () {
+    $('.ar-fields').addClass('d-none').find('select,input').prop('required', false);
+    var v = $(this).val();
+    if (v) {
+        var $box = $('.ar-fields-' + v).removeClass('d-none');
+        if (v === '4') { $box.find('select[name=hospital_id]').prop('required', true); }
+        if (v === '5') { $box.find('select[name=country_id]').prop('required', true); }
+    }
+});
+
+$('#addRoleForm').on('submit', function (e) {
+    e.preventDefault();
+    var $btn = $('#addRoleSubmit').prop('disabled', true).text('Adding...');
+    var $alert = $('#addRoleAlert').addClass('d-none');
+
+    $.ajax({
+        url: '{{ url("admin/associates/fellows/" . ($fellow->fellow_id ?? "") . "/add-role") }}',
+        method: 'POST',
+        data: $(this).serialize(),
+    }).done(function (res) {
+        $alert.removeClass('d-none alert-danger').addClass('alert-success').text(res.message || 'Role added.');
+        setTimeout(function () { window.location.reload(); }, 900);
+    }).fail(function (xhr) {
+        var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to add role.';
+        $alert.removeClass('d-none alert-success').addClass('alert-danger').text(msg);
+        $btn.prop('disabled', false).text('Add Role');
+    });
+});
 </script>
 @endpush
 
