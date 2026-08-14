@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed (2026-08-14) — Hospital view "Add Programme" modal threw a 500
+- The modal's Accredited/Expiry Date fields used `<input type="date">`, submitting a full `YYYY-MM-DD` value. `Api\HospitalProgrammesController::store()` (ported from the standalone Hospital Programmes module, where the equivalent form uses `<input type="month">`) parses those fields with `Carbon::createFromFormat('Y-m', $date)`, which throws `Trailing data` on a day-of-month component — a hard 500 on every submission. Changed both inputs to `type="month"` to match the API's expected format (`resources/views/admin/hospital/view_hospital.blade.php`), instead of loosening the API parser, which the standalone module still relies on being strict.
+
 ### Added (2026-08-14) — Add another role to fellows
 - New "Add Role" button on the fellow profile page opens a modal to grant a fellow an additional role — Trainer/Programme Director, Country Representative, or Examiner — **without creating a duplicate user**. The new role record is linked to the fellow's existing `user_id`/login via a new `UserRole` row, reusing the same pattern already used by the `admin._role_switcher` "Also in:" chips.
   - MIS: `FellowsController::addRole()` (`app/Http/Controllers/FellowsController.php`), route `POST admin/associates/fellows/{id}/add-role` (`routes/web.php`), modal + JS in `resources/views/admin/associates/fellows/view.blade.php` (role-specific fields: hospital/programme for Trainer, country for Country Rep, country/specialty/subspecialty for Examiner). `FellowsController::view()` now also passes `fellowHospitals` for the modal's hospital dropdown.

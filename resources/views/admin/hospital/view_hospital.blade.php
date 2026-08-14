@@ -423,11 +423,11 @@
                 <div class="form-row">
                     <div class="form-group col-6">
                         <label>Accredited Date</label>
-                        <input type="date" class="form-control" name="accredited_date">
+                        <input type="month" class="form-control" name="accredited_date">
                     </div>
                     <div class="form-group col-6">
                         <label>Expiry Date</label>
-                        <input type="date" class="form-control" name="expiry_date">
+                        <input type="month" class="form-control" name="expiry_date">
                     </div>
                 </div>
             </div>
