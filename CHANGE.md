@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added (2026-08-14) — Inline-edit Programme Directors from the hospital view page
+- The hospital view's "Programme Directors" tab table only linked out to each trainer's own profile to make any change. Added the same `ie-field`/`inline-edit.js` pencil-edit component already used on the trainer profile page for Phone Number and Assistant PD Name directly in this table, posting to the trainer's existing `POST admin/associates/trainers/{id}/quick-update` endpoint — no new backend/API work, same allow-listed fields (`Api\TrainerController::quickUpdate()`). Email isn't inline-editable here (or on the trainer profile) since it's the linked login `users` row, not a trainer field.
+
 ### Fixed (2026-08-14) — Programme view page ("Results by Year" tab) threw a 500
 - `admin/programmes/view/{id}` errored with `Call to a member function firstWhere() on array` whenever a programme had exam results. `ProgrammesController::view()` cast the API's `examResultsByYear` object to an array with `collect((array) ...)`, which only wraps the *outer* keyed-by-year structure in a Collection — each year's own value stayed a plain PHP array, and the view calls `$rows->firstWhere(...)` on it. Fixed by mapping each year's rows through `collect()` too. Longstanding bug — first seen in production logs 2026-08-10, never previously traced.
 

@@ -250,8 +250,24 @@
                                                 </a>
                                             </td>
                                             <td>{{ $t->email ?: '-' }}</td>
-                                            <td>{{ $t->phone_number ?: '-' }}</td>
-                                            <td>{{ $t->assistant_pd ?: '-' }}</td>
+                                            <td>
+                                                <span class="ie-field" data-ie="phone_number" data-ie-type="text"
+                                                      data-ie-value="{{ $t->phone_number ?? '' }}"
+                                                      data-ie-url="{{ url('admin/associates/trainers/'.$t->trainer_id.'/quick-update') }}"
+                                                      data-ie-csrf="{{ csrf_token() }}">
+                                                    <span class="ie-value">{{ $t->phone_number ?: '—' }}</span>
+                                                    <button class="ie-pencil" type="button" title="Edit phone number"><i class="fas fa-pen"></i></button>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="ie-field" data-ie="assistant_pd" data-ie-type="text"
+                                                      data-ie-value="{{ $t->assistant_pd ?? '' }}"
+                                                      data-ie-url="{{ url('admin/associates/trainers/'.$t->trainer_id.'/quick-update') }}"
+                                                      data-ie-csrf="{{ csrf_token() }}">
+                                                    <span class="ie-value">{{ $t->assistant_pd ?: '—' }}</span>
+                                                    <button class="ie-pencil" type="button" title="Edit assistant PD name"><i class="fas fa-pen"></i></button>
+                                                </span>
+                                            </td>
                                             <td>
                                                 <a href="{{ url('admin/associates/trainers/view/'.$t->trainer_id) }}" class="btn btn-xs btn-light border">
                                                     <i class="fas fa-eye text-info"></i>
