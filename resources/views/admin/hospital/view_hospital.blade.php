@@ -39,6 +39,62 @@
     body.dark-mode .nav-tabs .nav-link.active { color:#f87171; border-bottom-color:#f87171; }
     body.dark-mode .tab-count { background:#4a5568; color:#e0e0e0; }
     body.dark-mode .nav-tabs .nav-link.active .tab-count { background:#f87171; color:#fff; }
+
+    /* ── Link colour override — no default Bootstrap blue anywhere on this page ── */
+    a, .btn-link { color:#a02626; }
+    a:hover, .btn-link:hover { color:#7a1f1f; }
+    .btn-link:focus { box-shadow:none; }
+    body.dark-mode a, body.dark-mode .btn-link { color:#f87171; }
+    body.dark-mode a:hover, body.dark-mode .btn-link:hover { color:#fca5a5; }
+
+    /* ── Modern minimal modals ── */
+    .modal-modern .modal-content { border:none; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.18); overflow:hidden; }
+    .modal-modern .modal-header {
+        border-bottom:1px solid #f1e5e5; padding:18px 22px; align-items:center;
+    }
+    .modal-modern .modal-title { font-size:1rem; font-weight:700; color:#2a2a2a; display:flex; align-items:center; }
+    .modal-modern .modal-title i { color:#a02626; margin-right:8px; font-size:.95em; }
+    .modal-modern .modal-header .close { color:#bbb; text-shadow:none; font-weight:400; font-size:1.4rem; opacity:1; transition:color .15s; }
+    .modal-modern .modal-header .close:hover { color:#a02626; }
+    .modal-modern .modal-body { padding:20px 22px; }
+    .modal-modern .modal-footer { border-top:1px solid #f1e5e5; padding:14px 22px; }
+    .modal-modern label { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#888; margin-bottom:5px; }
+    .modal-modern .form-control {
+        border:1px solid #e5e0e0; border-radius:8px; font-size:.88rem; padding:.5rem .7rem; height:auto;
+        transition:border-color .15s, box-shadow .15s;
+    }
+    .modal-modern .form-control:focus { border-color:#c98d8d; box-shadow:0 0 0 3px rgba(160,38,38,.1); }
+    .modal-modern .form-control[multiple] { padding:.4rem; }
+    .modal-modern .form-control[multiple] option { padding:6px 8px; border-radius:5px; }
+    .modal-modern small.text-muted { font-size:.72rem; }
+    .modal-modern .btn { border-radius:8px; font-size:.85rem; font-weight:600; padding:.45rem 1rem; }
+    .modal-modern .btn-danger { background:#a02626; border-color:#a02626; }
+    .modal-modern .btn-danger:hover { background:#7a1f1f; border-color:#7a1f1f; }
+    .modal-modern .btn-danger:disabled { background:#d5a3a3; border-color:#d5a3a3; }
+    .modal-modern .btn-secondary { background:#f5f5f5; border-color:#f5f5f5; color:#555; }
+    .modal-modern .btn-secondary:hover { background:#e9e9e9; border-color:#e9e9e9; color:#333; }
+    .modal-modern .section-divider { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#c98d8d; margin:18px 0 8px; padding-top:14px; border-top:1px dashed #eee; }
+    .modal-modern .fp-results { border:1px solid #e5e0e0; border-radius:8px; overflow:hidden; }
+    .modal-modern .fp-results .list-group-item { border:none; border-bottom:1px solid #f1e5e5; }
+    .modal-modern .fp-results .list-group-item:last-child { border-bottom:none; }
+    .modal-modern .fp-new-box { background:#fbf7f7; border:1px solid #f1e5e5 !important; border-radius:10px; }
+    .modal-modern .fp-selected { background:#f0faf0; border:1px solid #cdeecd; border-radius:8px; padding:6px 10px; color:#2f8a3e; font-weight:600; }
+    .modal-modern .alert { border-radius:8px; font-size:.85rem; border:none; }
+
+    body.dark-mode .modal-modern .modal-content { background:#1f2937; }
+    body.dark-mode .modal-modern .modal-header,
+    body.dark-mode .modal-modern .modal-footer { border-color:#374151; }
+    body.dark-mode .modal-modern .modal-title { color:#e5e7eb; }
+    body.dark-mode .modal-modern label { color:#9ca3af; }
+    body.dark-mode .modal-modern .form-control { background:#111827; border-color:#374151; color:#e5e7eb; }
+    body.dark-mode .modal-modern .form-control:focus { border-color:#f87171; box-shadow:0 0 0 3px rgba(248,113,113,.12); }
+    body.dark-mode .modal-modern .btn-secondary { background:#374151; border-color:#374151; color:#e5e7eb; }
+    body.dark-mode .modal-modern .btn-secondary:hover { background:#4b5563; border-color:#4b5563; }
+    body.dark-mode .modal-modern .section-divider { border-color:#374151; color:#f87171; }
+    body.dark-mode .modal-modern .fp-results { border-color:#374151; }
+    body.dark-mode .modal-modern .fp-results .list-group-item { background:#1f2937; border-color:#374151; color:#e5e7eb; }
+    body.dark-mode .modal-modern .fp-new-box { background:#111827; border-color:#374151 !important; }
+    body.dark-mode .modal-modern .fp-selected { background:#0f2e17; border-color:#1d4d28; color:#4ade80; }
 </style>
 @endpush
 
@@ -336,12 +392,12 @@
 </div>
 
 {{-- ══ Add Programme modal ══ --}}
-<div class="modal fade" id="addProgModal" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade modal-modern" id="addProgModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <form id="addProgForm" class="modal-content">
             @csrf
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-stethoscope mr-1"></i> Add Programme to {{ $hospital->name }}</h5>
+                <h5 class="modal-title"><i class="fas fa-stethoscope"></i> Add Programme to {{ $hospital->name }}</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
@@ -384,11 +440,11 @@
 </div>
 
 {{-- ══ Add Programme Director modal (search-or-create fellow) ══ --}}
-<div class="modal fade" id="addPdModal" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade modal-modern" id="addPdModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-user-tie mr-1"></i> Add Programme Director</h5>
+                <h5 class="modal-title"><i class="fas fa-user-tie"></i> Add Programme Director</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
@@ -397,14 +453,27 @@
                 <div class="form-group">
                     <label>Programme <span class="text-danger">*</span></label>
                     <select class="form-control" id="pd_programme_id" required>
-                        <option value="">-- Select accredited programme --</option>
-                        @foreach($programmes as $p)
-                            <option value="{{ $p->programme_id }}">{{ $p->programme_name }}</option>
+                        <option value="">-- Select programme --</option>
+                        @foreach($allProgrammes as $p)
+                            <option value="{{ $p->id }}">{{ $p->name }}</option>
                         @endforeach
                     </select>
+                    <small class="text-muted">All programmes are listed — not just ones already accredited here.</small>
                 </div>
 
                 @include('admin.hospital._fellow_picker', ['prefix' => 'pd'])
+
+                <div class="section-divider">Assistant PD (optional)</div>
+                <div class="form-row">
+                    <div class="form-group col-7">
+                        <label>Assistant PD Name</label>
+                        <input type="text" class="form-control" id="pd_assistant_pd" placeholder="Full name">
+                    </div>
+                    <div class="form-group col-5">
+                        <label>Assistant PD Email</label>
+                        <input type="email" class="form-control" id="pd_assistant_email" placeholder="email@example.com">
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -415,11 +484,11 @@
 </div>
 
 {{-- ══ Map Fellow modal (search-or-create fellow) ══ --}}
-<div class="modal fade" id="mapFellowModal" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade modal-modern" id="mapFellowModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-award mr-1"></i> Map Fellow to {{ $hospital->name }}</h5>
+                <h5 class="modal-title"><i class="fas fa-award"></i> Map Fellow to {{ $hospital->name }}</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
@@ -566,6 +635,7 @@ $('#pdSubmitBtn').on('click', function () {
         if (!fellowId) { $btn.prop('disabled', false); return; }
         $.post('{{ url("admin/associates/fellows") }}/' + fellowId + '/add-role', {
             _token: CSRF_TOKEN, role_type: 4, hospital_id: HOSPITAL_ID, programme_id: progId,
+            assistant_pd: $('#pd_assistant_pd').val(), assistant_email: $('#pd_assistant_email').val(),
         }).done(function (res) {
             $('#pdAlert').removeClass('d-none alert-danger').addClass('alert-success').text(res.message || 'Programme Director added.');
             setTimeout(function () { window.location.reload(); }, 900);

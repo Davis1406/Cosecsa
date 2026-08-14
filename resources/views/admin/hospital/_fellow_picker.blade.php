@@ -6,14 +6,14 @@
 <div class="form-group">
     <label>Search Fellow <span class="text-danger">*</span></label>
     <input type="text" class="form-control" id="{{ $prefix }}_fp_search" placeholder="Type a name or email...">
-    <div class="list-group mt-1 d-none" id="{{ $prefix }}_fp_results" style="max-height:180px; overflow-y:auto;"></div>
-    <div class="text-success small d-none mt-1" id="{{ $prefix }}_fp_selected"></div>
-    <button type="button" class="btn btn-link btn-sm p-0 mt-1" id="{{ $prefix }}_fp_not_listed">
+    <div class="list-group mt-1 d-none fp-results" id="{{ $prefix }}_fp_results" style="max-height:180px; overflow-y:auto;"></div>
+    <div class="d-none mt-2 fp-selected" id="{{ $prefix }}_fp_selected"></div>
+    <button type="button" class="btn btn-link btn-sm p-0 mt-2" id="{{ $prefix }}_fp_not_listed">
         Not in the list? Add a new fellow
     </button>
 </div>
 
-<div class="d-none border rounded p-2 mb-2" id="{{ $prefix }}_fp_new">
+<div class="d-none p-3 mb-2 fp-new-box" id="{{ $prefix }}_fp_new">
     <div class="form-row">
         <div class="form-group col-6">
             <label class="small mb-1">First Name</label>
