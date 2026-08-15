@@ -163,7 +163,10 @@ class CorrectFellowsFromXlsx extends Command
                 $normalized = strtolower(preg_replace('/\s+/', ' ', $specialtyRaw));
                 $programmeId = null;
                 if (isset(self::SPECIALTY_EXACT[$normalized])) {
-                    $programmeId = $programmesByKeyword[self::SPECIALTY_EXACT[$normalized]] ?? null;
+                    $needle = self::SPECIALTY_EXACT[$normalized];
+                    $programmeId = $programmesByKeyword->first(
+                        fn ($id, $key) => str_contains($key, $needle)
+                    );
                 }
 
                 if ($specialtyRaw !== $fellow->current_specialty) {
