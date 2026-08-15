@@ -12,6 +12,11 @@
                         <a href="{{ url('admin/associates/trainers/list') }}" class="btn btn-primary">
                             <span class="fas fa-arrow-left"></span> Trainers List
                         </a>
+                        @if($trainer)
+                        <a href="{{ url('admin/associates/trainers/edit/' . $trainer->id) }}" class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -36,7 +41,16 @@
                             </tr>
                             <tr>
                                 <th>Organisation</th>
-                                <td>{{ $trainer->organisation ?: '—' }}</td>
+                                <td>
+                                    @if(!empty($trainer->hospital))
+                                        <a href="{{ url('admin/hospital/view_hospital/' . $trainer->hospital->id) }}" style="color:#a02626;font-weight:500;">{{ $trainer->hospital->name }}</a>
+                                        @if($trainer->organisation && $trainer->organisation !== $trainer->hospital->name)
+                                            <span class="text-muted small">({{ $trainer->organisation }})</span>
+                                        @endif
+                                    @else
+                                        {{ $trainer->organisation ?: '—' }}
+                                    @endif
+                                </td>
                             </tr>
                             <tr>
                                 <th>Email</th>
@@ -47,7 +61,7 @@
                                 <td>
                                     @php $countries = collect($trainer->countries ?? []); @endphp
                                     @forelse($countries as $c)
-                                        <span class="badge badge-light border mr-1">{{ $c->name }}</span>
+                                        <a href="{{ url('admin/countries/view/' . $c->id) }}" class="badge badge-light border mr-1" style="color:#a02626;">{{ $c->name }}</a>
                                     @empty
                                         {{ $trainer->country_name_raw ?: '—' }}
                                     @endforelse
@@ -56,9 +70,13 @@
                             <tr>
                                 <th>Specialty</th>
                                 <td>
-                                    {{ $trainer->specialty ?: '—' }}
-                                    @if(!empty($trainer->is_subspecialty))
-                                        <span class="badge badge-light border">subspecialty</span>
+                                    @if($trainer->programme_id)
+                                        <a href="{{ url('admin/programmes/view/' . $trainer->programme_id) }}" style="color:#a02626;font-weight:500;">{{ $trainer->specialty }}</a>
+                                    @else
+                                        {{ $trainer->specialty ?: '—' }}
+                                        @if(!empty($trainer->is_subspecialty))
+                                            <span class="badge badge-light border">subspecialty</span>
+                                        @endif
                                     @endif
                                 </td>
                             </tr>

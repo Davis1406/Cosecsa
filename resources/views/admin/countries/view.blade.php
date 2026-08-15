@@ -74,6 +74,7 @@
                         ['icon'=>'fas fa-user-tie',     'bg'=>'#f3e5f5','ic'=>'#7b1fa2','lbl'=>'Prog. Directors', 'val'=>count($programmeDirectors)],
                         ['icon'=>'fas fa-id-badge',     'bg'=>'#e0f7fa','ic'=>'#00796b','lbl'=>'Country Reps','val'=>count($reps)],
                         ['icon'=>'fas fa-stethoscope',  'bg'=>'#fce8e8','ic'=>'#c62828','lbl'=>'Examiners',   'val'=>count($examiners)],
+                        ['icon'=>'fas fa-user-tie',     'bg'=>'#e0eafc','ic'=>'#1a56db','lbl'=>'Trainers',    'val'=>count($trainers)],
                     ]; @endphp
                     @foreach($cStats as $s)
                     <div class="c-stat">
@@ -95,6 +96,7 @@
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ct-pd"><i class="fas fa-user-tie mr-1"></i>Prog. Directors<span class="tab-count">{{ count($programmeDirectors) }}</span></a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ct-reps"><i class="fas fa-id-badge mr-1"></i>Country Reps<span class="tab-count">{{ count($reps) }}</span></a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ct-examiners"><i class="fas fa-stethoscope mr-1"></i>Examiners<span class="tab-count">{{ count($examiners) }}</span></a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ct-trainers"><i class="fas fa-user-tie mr-1"></i>Trainers<span class="tab-count">{{ count($trainers) }}</span></a></li>
                 </ul>
 
                 <div class="tab-content">
@@ -252,6 +254,30 @@
                                 </tbody>
                             </table>
                             @else<div class="empty-state"><i class="fas fa-stethoscope"></i>No examiners from this country.</div>@endif
+                        </div></div>
+                    </div>
+
+                    {{-- ── Trainers ── --}}
+                    <div class="tab-pane fade" id="ct-trainers">
+                        <div class="card"><div class="card-body p-0">
+                            @if(count($trainers))
+                            <table class="table table-bordered table-striped entity-table mb-0">
+                                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Specialty</th><th>ToT Years</th><th>Master Trainer</th><th>Action</th></tr></thead>
+                                <tbody>
+                                    @foreach($trainers as $i => $t)
+                                    <tr>
+                                        <td>{{ $i+1 }}</td>
+                                        <td><a href="{{ url('admin/associates/trainers/view/'.$t->trainer_id) }}" class="entity-link">{{ $t->name }}</a></td>
+                                        <td>{{ $t->email ?: '—' }}</td>
+                                        <td>{{ $t->specialty ?: '—' }}</td>
+                                        <td>{{ $t->tot_years ?: '—' }}</td>
+                                        <td>@if(!empty($t->is_master_trainer))<span class="badge badge-success">Yes</span>@else<span class="badge badge-light border">No</span>@endif</td>
+                                        <td><a href="{{ url('admin/associates/trainers/view/'.$t->trainer_id) }}" class="btn btn-xs btn-light border"><i class="fas fa-eye text-info"></i></a></td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                            @else<div class="empty-state"><i class="fas fa-user-tie"></i>No trainers attended a ToT from this country.</div>@endif
                         </div></div>
                     </div>
 

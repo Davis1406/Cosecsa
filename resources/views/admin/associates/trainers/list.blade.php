@@ -45,39 +45,27 @@
                 @endphp
                 <div class="row" id="statCards">
                     <div class="col-6 col-md-3">
-                        <div class="small-box" style="background:#fff;border:1px solid #eee;">
-                            <div class="inner">
-                                <h3 style="color:#a02626;">{{ $total }}</h3>
-                                <p class="mb-0 text-muted">Total Trainers</p>
-                            </div>
-                            <div class="icon"><i class="fas fa-user-tie"></i></div>
+                        <div class="mini-stat" id="statTotal" title="Show all trainers">
+                            <div class="mini-stat-icon" style="background:#f0d4d4;color:#a02626;"><i class="fas fa-user-tie"></i></div>
+                            <div><div class="mini-stat-val">{{ $total }}</div><div class="mini-stat-lbl">Total Trainers</div></div>
                         </div>
                     </div>
                     <div class="col-6 col-md-3">
-                        <div class="small-box" style="background:#fff;border:1px solid #eee;">
-                            <div class="inner">
-                                <h3 style="color:#28a745;">{{ $masterCount }}</h3>
-                                <p class="mb-0 text-muted">Master Trainers</p>
-                            </div>
-                            <div class="icon"><i class="fas fa-medal"></i></div>
+                        <div class="mini-stat" id="statMaster" title="Filter: Master Trainers only">
+                            <div class="mini-stat-icon" style="background:#e6f7ea;color:#28a745;"><i class="fas fa-medal"></i></div>
+                            <div><div class="mini-stat-val">{{ $masterCount }}</div><div class="mini-stat-lbl">Master Trainers</div></div>
                         </div>
                     </div>
                     <div class="col-6 col-md-3">
-                        <div class="small-box" style="background:#fff;border:1px solid #eee;">
-                            <div class="inner">
-                                <h3 style="color:#007bff;">{{ $ssCount }}</h3>
-                                <p class="mb-0 text-muted">Specialty Surgeons (SS)</p>
-                            </div>
-                            <div class="icon"><i class="fas fa-user-md"></i></div>
+                        <div class="mini-stat" id="statSS" title="Filter: Specialty Surgeons only">
+                            <div class="mini-stat-icon" style="background:#e6f0fc;color:#007bff;"><i class="fas fa-user-md"></i></div>
+                            <div><div class="mini-stat-val">{{ $ssCount }}</div><div class="mini-stat-lbl">Specialty Surgeons</div></div>
                         </div>
                     </div>
                     <div class="col-6 col-md-3">
-                        <div class="small-box" style="background:#fff;border:1px solid #eee;">
-                            <div class="inner">
-                                <h3 style="color:#6c757d;">{{ $subCount }}</h3>
-                                <p class="mb-0 text-muted">Subspecialty (unmatched)</p>
-                            </div>
-                            <div class="icon"><i class="fas fa-stethoscope"></i></div>
+                        <div class="mini-stat" id="statSub" title="Filter: unmatched subspecialty only">
+                            <div class="mini-stat-icon" style="background:#eee;color:#6c757d;"><i class="fas fa-stethoscope"></i></div>
+                            <div><div class="mini-stat-val">{{ $subCount }}</div><div class="mini-stat-lbl">Subspecialty (unmatched)</div></div>
                         </div>
                     </div>
                 </div>
@@ -144,6 +132,7 @@
                                         <tr>
                                             <th>#</th>
                                             <th>Name</th>
+                                            <th>Email</th>
                                             <th>Organisation</th>
                                             <th>Country</th>
                                             <th>Specialty</th>
@@ -156,8 +145,9 @@
                                     <tbody>
                                         @foreach ($getRecord as $value)
                                         @php
-                                            $countryNames = collect($value->countries ?? [])->pluck('name');
-                                            $countryIds = collect($value->countries ?? [])->pluck('id');
+                                            $countries = collect($value->countries ?? []);
+                                            $countryNames = $countries->pluck('name');
+                                            $countryIds = $countries->pluck('id');
                                             $yearIds = collect($value->tot_years ?? [])->pluck('id');
                                             $yearShorts = collect($value->tot_years ?? [])->pluck('label_short');
                                             $specialtyIds = $value->programme_id ? [$value->programme_id] : [];
@@ -166,19 +156,38 @@
                                             data-country="{{ $countryIds->implode(',') }}"
                                             data-year="{{ $yearIds->implode(',') }}"
                                             data-specialty="{{ implode(',', $specialtyIds) }}"
-                                            data-master="{{ !empty($value->is_master_trainer) ? '1' : '0' }}">
+                                            data-master="{{ !empty($value->is_master_trainer) ? '1' : '0' }}"
+                                            data-ss="{{ !empty($value->is_specialty_surgeon) ? '1' : '0' }}"
+                                            data-sub="{{ !empty($value->is_subspecialty) ? '1' : '0' }}">
                                             <td>{{ $value->id }}</td>
                                             <td>
                                                 <a href="{{ url('admin/associates/trainers/view/' . $value->id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">
                                                     {{ $value->name }}
                                                 </a>
                                             </td>
-                                            <td>{{ $value->organisation ?: '—' }}</td>
-                                            <td>{{ $countryNames->isNotEmpty() ? $countryNames->implode(', ') : ($value->country_name_raw ?: '—') }}</td>
+                                            <td>{{ $value->email ?: '—' }}</td>
                                             <td>
-                                                {{ $value->specialty ?: '—' }}
-                                                @if(!empty($value->is_subspecialty))
-                                                    <span class="badge badge-light border">subspecialty</span>
+                                                @if(!empty($value->hospital))
+                                                    <a href="{{ url('admin/hospital/view_hospital/' . $value->hospital->id) }}" class="entity-link">{{ $value->hospital->name }}</a>
+                                                @else
+                                                    {{ $value->organisation ?: '—' }}
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @forelse($countries as $c)
+                                                    <a href="{{ url('admin/countries/view/' . $c->id) }}" class="entity-link">{{ $c->name }}</a>@if(!$loop->last), @endif
+                                                @empty
+                                                    {{ $value->country_name_raw ?: '—' }}
+                                                @endforelse
+                                            </td>
+                                            <td>
+                                                @if($value->programme_id)
+                                                    <a href="{{ url('admin/programmes/view/' . $value->programme_id) }}" class="entity-link">{{ $value->specialty }}</a>
+                                                @else
+                                                    {{ $value->specialty ?: '—' }}
+                                                    @if(!empty($value->is_subspecialty))
+                                                        <span class="badge badge-light border">subspecialty</span>
+                                                    @endif
                                                 @endif
                                             </td>
                                             <td>
@@ -195,9 +204,24 @@
                                                 @if(!empty($value->is_specialty_surgeon))<i class="fas fa-check-circle text-success"></i>@else <span class="text-muted">—</span> @endif
                                             </td>
                                             <td class="text-center no-print" style="white-space:nowrap;">
-                                                <a class="btn btn-sm btn-light border" href="{{ url('admin/associates/trainers/view/' . $value->id) }}" title="View">
-                                                    <i class="fas fa-eye text-info"></i>
-                                                </a>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-light border dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                                        <a class="dropdown-item" href="{{ url('admin/associates/trainers/view/' . $value->id) }}">
+                                                            <i class="fas fa-eye text-info mr-2"></i> View
+                                                        </a>
+                                                        <a class="dropdown-item" href="{{ url('admin/associates/trainers/edit/' . $value->id) }}">
+                                                            <i class="fas fa-edit text-warning mr-2"></i> Edit
+                                                        </a>
+                                                        <div class="dropdown-divider"></div>
+                                                        <a class="dropdown-item text-danger" href="{{ url('admin/associates/trainers/delete/' . $value->id) }}"
+                                                           onclick="return confirm('Delete {{ addslashes($value->name) }} from the Trainers roster?')">
+                                                            <i class="fas fa-trash mr-2"></i> Delete
+                                                        </a>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                         @endforeach
@@ -249,9 +273,22 @@
     .chk-footer a:hover { color: #a02626; text-decoration: none; }
     .chk-filter-btn { white-space: nowrap; }
     #trtable td { vertical-align: middle; }
-    .small-box { border-radius: 8px; padding: 10px 15px; margin-bottom: 15px; position: relative; }
-    .small-box .icon { position: absolute; top: 8px; right: 12px; font-size: 32px; color: #eee; }
-    .small-box .inner h3 { font-size: 1.7rem; font-weight: 700; margin-bottom: 0; }
+    .entity-link { color:#a02626; font-weight:500; text-decoration:none; }
+    .entity-link:hover { text-decoration:underline; }
+    .mini-stat {
+        display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #eee;
+        border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; cursor: pointer; transition: box-shadow .15s;
+    }
+    .mini-stat:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); border-color: #ddd; }
+    .mini-stat.active { border-color: #a02626; box-shadow: 0 0 0 1px #a02626 inset; }
+    .mini-stat-icon {
+        width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center;
+        justify-content: center; font-size: .85rem; flex-shrink: 0;
+    }
+    .mini-stat-val { font-size: 1.15rem; font-weight: 700; line-height: 1.1; color: #222; }
+    .mini-stat-lbl { font-size: .68rem; color: #888; text-transform: uppercase; letter-spacing: .03em; }
+    body.dark-mode .mini-stat { background:#374151 !important; border-color:#4a5568 !important; }
+    body.dark-mode .mini-stat-val { color:#e0e0e0 !important; }
     .paginate_button.active>.page-link { background-color: #a02626 !important; border-color: #a02626 !important; color: white; }
     .paginate_button>.page-link { color: #a02626; }
     .paginate_button>.page-link:focus, .paginate_button.active>.page-link:focus { box-shadow: none !important; outline: none !important; }
@@ -344,13 +381,58 @@ $(document).ready(function () {
         updateBadge(filterId);
         redraw();
     });
-    $('#trFilterMaster').on('change', redraw);
+    $('#trFilterMaster').on('change', function () { refreshStatActive(); redraw(); });
     $('#trBtnClear').on('click', function () {
         $('.chk-option').prop('checked', false);
         $('#trFilterMaster').prop('checked', false);
         $('.chk-badge').hide();
+        trStatFilter = null;
+        refreshStatActive();
         redraw();
         $('#trFilteredCount').text('');
+    });
+
+    // Stat tiles double as quick filters — clicking one toggles that slice
+    // on/off (Master-only / SS-only / unmatched-subspecialty-only), reusing
+    // each row's data-* attributes; Total clears every filter back to the
+    // full roster.
+    var trStatFilter = null; // null | 'ss' | 'sub'
+    function refreshStatActive() {
+        $('.mini-stat').removeClass('active');
+        if ($('#trFilterMaster').is(':checked')) $('#statMaster').addClass('active');
+        if (trStatFilter === 'ss')  $('#statSS').addClass('active');
+        if (trStatFilter === 'sub') $('#statSub').addClass('active');
+    }
+    $('#statTotal').on('click', function () {
+        $('.chk-option').prop('checked', false);
+        $('.chk-badge').hide();
+        $('#trFilterMaster').prop('checked', false);
+        trStatFilter = null;
+        refreshStatActive();
+        redraw();
+    });
+    $('#statMaster').on('click', function () {
+        $('#trFilterMaster').prop('checked', !$('#trFilterMaster').is(':checked'));
+        refreshStatActive();
+        redraw();
+    });
+    $('#statSS').on('click', function () {
+        trStatFilter = (trStatFilter === 'ss') ? null : 'ss';
+        refreshStatActive();
+        redraw();
+    });
+    $('#statSub').on('click', function () {
+        trStatFilter = (trStatFilter === 'sub') ? null : 'sub';
+        refreshStatActive();
+        redraw();
+    });
+
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+        if (settings.nTable.id !== 'trtable') return true;
+        var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
+        if (trStatFilter === 'ss'  && String($row.data('ss'))  !== '1') return false;
+        if (trStatFilter === 'sub' && String($row.data('sub')) !== '1') return false;
+        return true;
     });
 
     $('#btnPrint').on('click', function () { window.print(); });

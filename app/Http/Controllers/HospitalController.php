@@ -163,6 +163,7 @@ class HospitalController extends Controller
             'programmeDirectors' => collect($data->programme_directors ?? []),
             'trainees'      => collect($data->trainees ?? []),
             'fellows'       => collect($data->fellows ?? []),
+            'trainers'      => collect($data->trainers ?? []),
             'allProgrammes' => \App\Models\Programme::getProgramme(),
             'allCountries'  => \App\Models\Country::getCountry(),
         ]);

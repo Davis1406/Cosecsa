@@ -284,6 +284,9 @@ Route::get('admin/associates/trainers/list', [TrainerController::class,'list']);
 Route::get('admin/associates/trainers/export', [TrainerController::class,'export'])->name('trainers.export');
 Route::get('admin/associates/trainers/view/{id}',  [TrainerController::class,'view'])->name('trainers.view');
 Route::post('admin/associates/trainers/{id}/quick-update', [TrainerController::class,'quickUpdate'])->name('trainers.quick.update');
+Route::get('admin/associates/trainers/edit/{id}', [TrainerController::class,'edit'])->name('trainers.edit');
+Route::post('admin/associates/trainers/edit/{id}', [TrainerController::class,'update'])->name('trainers.update');
+Route::get('admin/associates/trainers/delete/{id}', [TrainerController::class,'delete'])->name('trainers.delete');
 
 
 //CR's Route

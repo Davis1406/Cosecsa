@@ -405,41 +405,31 @@ document.addEventListener('DOMContentLoaded', function () {
                                     </a>
                                 </li>
                                 @endif
-                                @if (Auth::user()->hasPermission('programme_directors.view') || Auth::user()->hasPermission('trainers.view') || Auth::user()->hasPermission('country_reps.view'))
-                                <li class="nav-item @if (Request::segment(3) == 'programme-directors' || Request::segment(3) == 'trainers' || Request::segment(3) == 'reps') menu-open @endif">
-                                    <a href="#" class="nav-link">
-                                        <i class="fas fa-stethoscope nav-icon"></i>
-                                        <p>PDs, Trainers & Country Reps<i class="right fas fa-angle-left"></i></p>
+                                @if (Auth::user()->hasPermission('programme_directors.view'))
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/associates/programme-directors/list') }}"
+                                        class="nav-link @if (Request::segment(3) == 'programme-directors') active @endif">
+                                        <i class="fas fa-chalkboard-teacher nav-icon"></i>
+                                        <p>Programme Directors</p>
                                     </a>
-                                    <ul class="nav nav-treeview">
-                                        @if (Auth::user()->hasPermission('programme_directors.view'))
-                                        <li class="nav-item">
-                                            <a href="{{ url('admin/associates/programme-directors/list') }}"
-                                                class="nav-link @if (Request::segment(3) == 'programme-directors') active @endif">
-                                                <i class="fas fa-chalkboard-teacher nav-icon"></i>
-                                                <p>Programme Directors</p>
-                                            </a>
-                                        </li>
-                                        @endif
-                                        @if (Auth::user()->hasPermission('trainers.view'))
-                                        <li class="nav-item">
-                                            <a href="{{ url('admin/associates/trainers/list') }}"
-                                                class="nav-link @if (Request::segment(3) == 'trainers') active @endif">
-                                                <i class="fas fa-user-tie nav-icon"></i>
-                                                <p>Trainers</p>
-                                            </a>
-                                        </li>
-                                        @endif
-                                        @if (Auth::user()->hasPermission('country_reps.view'))
-                                        <li class="nav-item">
-                                            <a href="{{ url('admin/associates/reps/list') }}"
-                                                class="nav-link @if (Request::segment(3) == 'reps') active @endif">
-                                                <i class="fas fa-flag nav-icon"></i>
-                                                <p>Country Reps</p>
-                                            </a>
-                                        </li>
-                                        @endif
-                                    </ul>
+                                </li>
+                                @endif
+                                @if (Auth::user()->hasPermission('trainers.view'))
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/associates/trainers/list') }}"
+                                        class="nav-link @if (Request::segment(3) == 'trainers') active @endif">
+                                        <i class="fas fa-user-tie nav-icon"></i>
+                                        <p>Trainers</p>
+                                    </a>
+                                </li>
+                                @endif
+                                @if (Auth::user()->hasPermission('country_reps.view'))
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/associates/reps/list') }}"
+                                        class="nav-link @if (Request::segment(3) == 'reps') active @endif">
+                                        <i class="fas fa-flag nav-icon"></i>
+                                        <p>Country Reps</p>
+                                    </a>
                                 </li>
                                 @endif
                                 @if (Auth::user()->hasPermission('promotions.view'))

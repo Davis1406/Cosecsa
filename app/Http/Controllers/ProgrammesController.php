@@ -65,6 +65,7 @@ class ProgrammesController extends Controller
             'fellows'          => collect($data->fellows ?? []),
             'examResultsByYear' => $examResultsByYear,
             'examResultsAll'   => collect($data->examResultsAll ?? []),
+            'trainers'         => collect($data->trainers ?? []),
         ]);
     }
 

@@ -176,6 +176,12 @@
                             <span class="tab-count">{{ count($fellows) }}</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab-trainers"   data-toggle="tab" href="#pane-trainers"   role="tab">
+                            <i class="fas fa-chalkboard-teacher mr-1"></i>Trainers
+                            <span class="tab-count">{{ count($trainers) }}</span>
+                        </a>
+                    </li>
                 </ul>
 
                 <div class="tab-content">
@@ -406,6 +412,36 @@
                                 </table>
                                 @else
                                 <div class="empty-state"><i class="fas fa-award"></i>No fellows found for this country &amp; programme combination.</div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ── Trainers tab ── --}}
+                    <div class="tab-pane fade" id="pane-trainers" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body p-0">
+                                @if(count($trainers))
+                                <table class="table table-bordered table-striped mb-0">
+                                    <thead>
+                                        <tr><th>#</th><th>Name</th><th>Email</th><th>Specialty</th><th>ToT Years</th><th>Master Trainer</th><th>Action</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($trainers as $i => $t)
+                                        <tr>
+                                            <td>{{ $i+1 }}</td>
+                                            <td><a href="{{ url('admin/associates/trainers/view/'.$t->trainer_id) }}">{{ $t->name }}</a></td>
+                                            <td>{{ $t->email ?: '—' }}</td>
+                                            <td>{{ $t->specialty ?: '—' }}</td>
+                                            <td>{{ $t->tot_years ?: '—' }}</td>
+                                            <td>@if(!empty($t->is_master_trainer))<span class="badge badge-success">Yes</span>@else<span class="badge badge-light border">No</span>@endif</td>
+                                            <td><a href="{{ url('admin/associates/trainers/view/'.$t->trainer_id) }}" class="btn btn-xs btn-light border"><i class="fas fa-eye text-info"></i></a></td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                                @else
+                                <div class="text-center text-muted p-4">No trainers linked to this hospital yet.</div>
                                 @endif
                             </div>
                         </div>
