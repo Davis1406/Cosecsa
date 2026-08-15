@@ -87,7 +87,15 @@
                                 <span class="de-tag de-tag-auto"><i class="fas fa-bolt"></i> Automatic</span>
                             @endif
                             @if(!empty($d->recipient_group))
-                                <span class="de-tag"><i class="fas fa-users"></i> {{ $d->recipient_group === 'country_reps' ? 'Country Reps' : $d->recipient_group }}</span>
+                                @php
+                                    $recipientLabels = [
+                                        'fellows' => 'Fellows', 'members' => 'Members', 'trainees' => 'Trainees',
+                                        'candidates' => 'Candidates', 'programme_directors' => 'Programme Directors',
+                                        'trainers' => 'Trainers (ToT)', 'country_reps' => 'Country Reps',
+                                        'examiners' => 'Examiners', 'custom' => 'Custom list',
+                                    ];
+                                @endphp
+                                <span class="de-tag"><i class="fas fa-users"></i> {{ $recipientLabels[$d->recipient_group] ?? $d->recipient_group }}</span>
                             @endif
                             @if(($d->visibility ?? 'all') === 'selected')
                                 <span class="de-tag"><i class="fas fa-lock"></i> Restricted</span>

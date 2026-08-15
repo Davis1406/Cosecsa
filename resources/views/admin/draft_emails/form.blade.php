@@ -93,12 +93,44 @@
                                     @php $recipientGroup = old('recipient_group', $draftEmail->recipient_group ?? ''); @endphp
                                     <select name="recipient_group" id="recipientGroup" class="form-control de-input">
                                         <option value="" {{ $recipientGroup === '' ? 'selected' : '' }}>— None (this is just a content draft) —</option>
+                                        <option value="fellows" {{ $recipientGroup === 'fellows' ? 'selected' : '' }}>Fellows</option>
+                                        <option value="members" {{ $recipientGroup === 'members' ? 'selected' : '' }}>Members</option>
+                                        <option value="trainees" {{ $recipientGroup === 'trainees' ? 'selected' : '' }}>Trainees</option>
+                                        <option value="candidates" {{ $recipientGroup === 'candidates' ? 'selected' : '' }}>Candidates</option>
+                                        <option value="programme_directors" {{ $recipientGroup === 'programme_directors' ? 'selected' : '' }}>Programme Directors</option>
+                                        <option value="trainers" {{ $recipientGroup === 'trainers' ? 'selected' : '' }}>Trainers (ToT)</option>
                                         <option value="country_reps" {{ $recipientGroup === 'country_reps' ? 'selected' : '' }}>Country Representatives (one email per country)</option>
+                                        <option value="examiners" {{ $recipientGroup === 'examiners' ? 'selected' : '' }}>Examiners</option>
+                                        <option value="custom" {{ $recipientGroup === 'custom' ? 'selected' : '' }}>Custom list (type in or import emails)</option>
                                     </select>
                                     <div class="custom-control custom-checkbox mt-2" id="ccBox">
                                         @php $cc = old('cc_personal_email', $draftEmail->cc_personal_email ?? true); @endphp
                                         <input type="checkbox" class="custom-control-input" id="ccPersonal" name="cc_personal_email" value="1" {{ $cc ? 'checked' : '' }}>
-                                        <label class="custom-control-label small" for="ccPersonal">CC each recipient's personal login email</label>
+                                        <label class="custom-control-label small" for="ccPersonal">CC each recipient's personal login email (where on file)</label>
+                                    </div>
+
+                                    {{-- ── Custom list: type in or import ── --}}
+                                    @php
+                                        $customLines = old('custom_recipients_text');
+                                        if ($customLines === null) {
+                                            $customLines = collect($draftEmail->custom_recipients ?? [])
+                                                ->map(fn ($r) => trim(($r['name'] ?? '') . ' <' . ($r['email'] ?? '') . '>'))
+                                                ->implode("\n");
+                                        }
+                                    @endphp
+                                    <div id="customRecipientsBox" class="de-auto-box {{ $recipientGroup === 'custom' ? '' : 'd-none' }} mt-2">
+                                        <label class="small mb-1">
+                                            One recipient per line — <code>Name &lt;email@example.com&gt;</code> or just an email.
+                                        </label>
+                                        <textarea name="custom_recipients_text" id="customRecipientsText" class="form-control de-input" rows="6"
+                                                  placeholder="Jane Doe <jane@example.com>&#10;john@example.com">{{ $customLines }}</textarea>
+                                        <div class="d-flex align-items-center mt-2" style="gap:.6rem;">
+                                            <label class="btn btn-sm btn-outline-secondary mb-0" for="customRecipientsFile">
+                                                <i class="fas fa-file-import mr-1"></i> Import CSV (name, email)
+                                            </label>
+                                            <input type="file" id="customRecipientsFile" accept=".csv,text/csv" class="d-none">
+                                            <small class="text-muted" id="customImportStatus"></small>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -292,6 +324,40 @@ $(function () {
     });
     $('input[name=send_mode]').on('change', function () {
         $('#automationBox').toggleClass('d-none', $(this).val() !== 'automatic');
+    });
+    $('#recipientGroup').on('change', function () {
+        $('#customRecipientsBox').toggleClass('d-none', $(this).val() !== 'custom');
+    });
+
+    // ── Import CSV (name, email — either column order, with or without a
+    //    header row) — parsed client-side and appended as "Name <email>"
+    //    lines into the same textarea used for manually-typed recipients,
+    //    so both paths feed the one field the form actually submits.
+    document.getElementById('customRecipientsFile').addEventListener('change', function (e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var status = document.getElementById('customImportStatus');
+        var reader = new FileReader();
+        reader.onload = function () {
+            var lines = String(reader.result).split(/\r?\n/).filter(function (l) { return l.trim() !== ''; });
+            var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            var added = 0;
+            var out = [];
+            lines.forEach(function (line) {
+                var cols = line.split(',').map(function (c) { return c.trim().replace(/^"|"$/g, ''); });
+                var email = cols.find(function (c) { return emailRe.test(c); });
+                if (!email) return; // skip header row / junk lines
+                var name = cols.find(function (c) { return c && c !== email; }) || '';
+                out.push((name ? name + ' ' : '') + '<' + email + '>');
+                added++;
+            });
+            var $ta = $('#customRecipientsText');
+            var existing = $ta.val().trim();
+            $ta.val((existing ? existing + '\n' : '') + out.join('\n'));
+            status.textContent = added + ' recipient(s) imported.';
+            $('#recipientGroup').val('custom').trigger('change');
+        };
+        reader.readAsText(file);
     });
 
     $('#insertNameBtn').on('click', function () {

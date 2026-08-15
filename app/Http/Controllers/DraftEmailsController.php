@@ -110,7 +110,43 @@ class DraftEmailsController extends Controller
         $data = $request->only(self::FIELDS);
         $data['visible_user_ids'] = $request->input('visible_user_ids', []);
         $data['cc_personal_email'] = $request->boolean('cc_personal_email');
+        $data['custom_recipients'] = $data['recipient_group'] === 'custom'
+            ? $this->parseCustomRecipients($request->input('custom_recipients_text', ''))
+            : [];
         return $data;
+    }
+
+    // "Name <email@x.com>", "email@x.com, Name"/"Name, email@x.com", or a
+    // bare email per line — whatever a human pastes in or a CSV import
+    // produces (the form's client-side CSV parser also just writes into
+    // this same textarea, so both paths go through this one parser).
+    private function parseCustomRecipients(string $text): array
+    {
+        $out = [];
+        foreach (preg_split('/\r?\n/', $text) as $line) {
+            $line = trim($line);
+            if ($line === '') continue;
+
+            if (preg_match('/^(.*?)<\s*([^<>\s]+@[^<>\s]+)\s*>$/', $line, $m)) {
+                $out[] = ['name' => trim($m[1], " \t,"), 'email' => trim($m[2])];
+                continue;
+            }
+            if (preg_match('/^([^\s@]+@[^\s@]+\.[^\s@]+)$/', $line, $m)) {
+                $out[] = ['name' => '', 'email' => $m[1]];
+                continue;
+            }
+            $parts = array_map('trim', explode(',', $line));
+            $email = null;
+            foreach ($parts as $p) {
+                if (preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]+$/', $p)) { $email = $p; break; }
+            }
+            if ($email) {
+                $name = trim(implode(' ', array_diff($parts, [$email])));
+                $out[] = ['name' => $name, 'email' => $email];
+            }
+        }
+
+        return $out;
     }
 
     // "Anyone in the secretariat" = every logged-in admin/staff user — since

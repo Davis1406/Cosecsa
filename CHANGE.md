@@ -4,6 +4,22 @@
 
 ## [Unreleased]
 
+### Fixed (2026-08-17) — Programme Directors table: custom.js never updated after the Trainers/PD split
+- `public/dist/js/custom.js` still had its DataTable init block targeting `#trainerstable` — the table's id before Programme Directors and the ToT Trainers roster were split into separate tables/pages. The PD list table (`#pdtable`) was left with no matching block, so on page load it rendered as a bare, un-enhanced HTML table (no paging/search/sort/export buttons/stateSave, and none of the dropdown-menu-survives-redraw fix the other roster tables get) until a filter checkbox lazily auto-inited it with zero options. Renamed the block to `#pdtable`, kept the same columns/buttons/loader/dropdown-reinit config used by every other roster table.
+- **Files:** `public/dist/js/custom.js`.
+
+### Fixed (2026-08-17) — Fees page: payer name link color, hid the top stat row
+- `admin/fees` payer-name links were plain Bootstrap blue instead of the COSECSA red used everywhere else — added the `.entity-link` class/style (same pattern as every other associate list page).
+- Hidden the Total Collected / Outstanding / Paid Records / Total Records stat-chip row at Davis's request (kept in the markup behind `d-none`, easy to bring back).
+- **Files:** `resources/views/admin/fees/manage.blade.php`.
+
+### Added (2026-08-17) — Draft Emails: full associate-group targeting + custom recipient lists
+- "Send To (recipient group)" dropdown only had one real option (Country Reps). Expanded it to every associate group — Fellows, Members, Trainees, Candidates, Programme Directors, Trainers (ToT), Country Reps, Examiners — backed by the same `LetterRecipientResolver` the Letters/mail-merge feature already uses, so "who counts as a fellow/trainee/etc" stays in sync between the two features. Added a `members` source to that resolver (it only covered 7 of the 8 associate types before).
+- Added a **Custom list** mode: type recipients directly (`Name <email@x.com>` or a bare email, one per line) or **import a CSV** (name + email, either column order, with or without a header row — parsed client-side into the same textarea, no upload endpoint needed). Stored server-side as a new `draft_emails.custom_recipients` JSON column (see cosecsa-api CHANGES.md).
+- CC logic generalized: any group with a linked User account (all except Trainers, which have no login) can optionally CC the recipient's personal login email alongside their primary one, not just Country Reps' cosecsa_email/personal-email pair.
+- **Files:** `app/Http/Controllers/DraftEmailsController.php`, `resources/views/admin/draft_emails/{form,list}.blade.php`.
+- **⚠️ Coordinate:** requires the matching cosecsa-api deploy (new `custom_recipients` migration + `Api\DraftEmailController`/`LetterRecipientResolver` changes) to land first.
+
 ### Data correction (2026-08-16) — Fellows specialty/programme/category corrected from college spreadsheet
 - Ran a one-off correction from `Data Correction- Fellows.xlsx` (451 rows: Name, Email, Country, Specialty, Fellowship Type, Fellowship Year) via new command `fellows:correct-from-xlsx`.
 - Matched 450/451 rows to an existing fellow (email first, then an order-independent name match; only 1 name genuinely not found in the DB, 3 total left for manual review — 2 had a specialty outside the 8 core COSECSA programmes, e.g. "Radiology"/"Oral and Maxillofacial", so only their text label was considered, not a programme link).

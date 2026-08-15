@@ -14,6 +14,9 @@
     body.dark-mode .stat-chip { background:#374151; border-color:#4a5568; }
     body.dark-mode .stat-chip .val { color:#e0e0e0; }
 
+    .entity-link { color:#a02626; font-weight:500; text-decoration:none; }
+    .entity-link:hover { color:#a02626; text-decoration:underline; }
+
     .fee-card { border-top:3px solid #a02626; }
     .fee-type-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #f5f5f5; font-size:.86rem; }
     body.dark-mode .fee-type-row { border-color:#4a5568; }
@@ -55,7 +58,8 @@
                     </div>
                 </div>
 
-                <div class="d-flex flex-wrap mb-3" style="gap:.75rem;">
+                {{-- Stat chips row (Total Collected/Outstanding/Paid/Total Records) hidden at Davis's request — 2026-08-16 --}}
+                <div class="d-flex flex-wrap mb-3 d-none" style="gap:.75rem;">
                     <div class="stat-chip"><span class="lbl">Total Collected</span><span class="val">${{ number_format($totalCollected, 2) }}</span></div>
                     <div class="stat-chip"><span class="lbl">Outstanding</span><span class="val">${{ number_format($totalDue, 2) }}</span></div>
                     <div class="stat-chip"><span class="lbl">Paid Records</span><span class="val">{{ number_format($paidCount) }}</span></div>
@@ -251,7 +255,7 @@
                                     <td>{{ $i + 1 }}</td>
                                     <td>
                                         @if($profileUrl)
-                                            <a href="{{ $profileUrl }}">{{ $row->payer_name }}</a>
+                                            <a href="{{ $profileUrl }}" class="entity-link">{{ $row->payer_name }}</a>
                                         @else
                                             {{ $row->payer_name }}
                                         @endif

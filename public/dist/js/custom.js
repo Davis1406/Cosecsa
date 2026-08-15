@@ -316,11 +316,19 @@ $(function () {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
-    // Trainers / Programme Directors
+    // Programme Directors
+    // Cols: #(0) Name(1) Email(2) Hospital(3) Country(4) Phone(5) Assistant PD(6)
+    //       Asst PD Email(7) Mobile(8) | Action(9)
+    // Was "#trainerstable" back when PDs and the ToT Trainers roster shared
+    // one table/id — PDs kept id="pdtable" after the split (see Trainer
+    // model), this block just never got renamed with it, so the PD list was
+    // silently running as a bare, unstyled table (no buttons/paging chrome/
+    // stateSave, and the dropdown-menu-after-redraw fix below) until a
+    // filter checkbox lazily auto-inited it with zero options.
     // ═══════════════════════════════════════════════════════════════════════════════
-    if ($("#trainerstable").length) {
-        showLoader("trainerstable");
-        $("#trainerstable").DataTable({
+    if ($("#pdtable").length) {
+        showLoader("pdtable");
+        $("#pdtable").DataTable({
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "paging": true, "stateSave": true,
             "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
@@ -330,9 +338,9 @@ $(function () {
                 { "visible": true  }, { "visible": true  }, { "visible": true  },
                 { "visible": true,  "orderable": false, "searchable": false }
             ],
-            "initComplete": function () { hideLoader("trainerstable"); },
+            "initComplete": function () { hideLoader("pdtable"); },
             "drawCallback": function () { reinitDropdowns(this); }
-        }).buttons().container().appendTo('#trainerstable_wrapper .col-md-6:eq(0)');
+        }).buttons().container().appendTo('#pdtable_wrapper .col-md-6:eq(0)');
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
