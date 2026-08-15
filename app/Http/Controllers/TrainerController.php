@@ -3,20 +3,43 @@
 namespace App\Http\Controllers;
 
 use App\Services\ApiClient;
-use App\Models\HospitalModel;
 use Illuminate\Http\Request;
 
+// COSECSA ToT (Training of Trainers) roster — distinct from Programme
+// Directors (see ProgrammeDirectorController, formerly named TrainerController).
+// Read-only from this admin panel for now: the roster is seeded/maintained
+// via `php artisan trainers:import-tot-list` in cosecsa-api.
 class TrainerController extends Controller
 {
     public function __construct(private ApiClient $api) {}
 
-    public function list()
+    public function list(Request $request)
     {
         $response = $this->api->get('trainers/list-data');
         $data = $response->object();
+        $trainers = collect($data->trainers ?? []);
+
+        if ($request->filled('search')) {
+            $search = strtolower($request->string('search'));
+            $trainers = $trainers->filter(fn ($t) => str_contains(strtolower($t->name ?? ''), $search)
+                || str_contains(strtolower($t->organisation ?? ''), $search)
+                || str_contains(strtolower($t->email ?? ''), $search));
+        }
+        if ($request->filled('country')) {
+            $trainers = $trainers->filter(fn ($t) => $t->country === $request->string('country'));
+        }
+        if ($request->filled('specialty')) {
+            $trainers = $trainers->filter(fn ($t) => $t->specialty === $request->string('specialty'));
+        }
+        if ($request->boolean('master_only')) {
+            $trainers = $trainers->filter(fn ($t) => ! empty($t->is_master_trainer));
+        }
 
         return view('admin.associates.trainers.list', [
-            'getRecord'    => collect($data->trainers ?? []),
+            'getRecord'    => $trainers->values(),
+            'countries'    => collect($data->trainers ?? [])->pluck('country')->filter()->unique()->sort()->values(),
+            'specialties'  => collect($data->trainers ?? [])->pluck('specialty')->filter()->unique()->sort()->values(),
+            'filters'      => $request->only(['search', 'country', 'specialty', 'master_only']),
             'header_title' => 'Trainers List',
         ]);
     }
@@ -30,10 +53,8 @@ class TrainerController extends Controller
         $data = $response->object();
 
         return view('admin.associates.trainers.view', [
-            'trainer'         => $data->trainer,
-            'header_title'    => 'View Trainer',
-            'relatedProfiles' => $data->relatedProfiles ?? null,
-            'hospitals'       => HospitalModel::getHospital(),
+            'trainer'      => $data->trainer,
+            'header_title' => 'View Trainer',
         ]);
     }
 
@@ -45,106 +66,5 @@ class TrainerController extends Controller
         ]);
 
         return response()->json($response->json(), $response->status());
-    }
-
-    // AJAX counterpart to update() — same fields, same API endpoint, but
-    // returns JSON instead of a redirect so it can be used from a modal
-    // (e.g. the hospital view's "Edit Programme Director" modal) without
-    // navigating away. Api\TrainerController::update() overwrites every one
-    // of these columns from the request, so callers must send the trainer's
-    // current hospital_id/programme_id/mobile_no even when only editing
-    // name/email/phone/assistant fields, or those get nulled out.
-    public function ajaxUpdate(Request $request, $id)
-    {
-        $fields = $request->only([
-            'name', 'email', 'phone_number', 'hospital_id', 'programme_id',
-            'assistant_pd', 'assistant_email', 'mobile_no',
-        ]);
-
-        $response = $this->api->post("trainers/{$id}", $fields);
-
-        return response()->json($response->json(), $response->status());
-    }
-
-    public function add()
-    {
-        return view('admin.associates.trainers.add', [
-            'getHospital'  => HospitalModel::getHospital(),
-            'getCountry'   => collect([]),
-            'getProgramme' => collect([]),
-            'header_title' => 'Add New Trainer',
-        ]);
-    }
-
-    public function import()
-    {
-        return view('admin.associates.trainers.import', [
-            'header_title' => 'Import Trainers',
-        ]);
-    }
-
-    public function importData(Request $request)
-    {
-        $request->validate(['file' => 'required|mimes:csv,xlsx,xls|max:2048']);
-
-        $this->api->postWithFile('trainers/import', [], ['file' => $request->file('file')]);
-
-        return redirect('admin/associates/trainers/list')->with('success', 'Trainers imported successfully');
-    }
-
-    public function insert(Request $request)
-    {
-        $fields = $request->only([
-            'name', 'email', 'password', 'phone_number', 'hospital_id',
-            'assistant_pd', 'assistant_email', 'mobile_no',
-        ]);
-
-        if ($request->hasFile('profile_image')) {
-            $this->api->postWithFile('trainers/', $fields, ['profile_image' => $request->file('profile_image')]);
-        } else {
-            $this->api->post('trainers/', $fields);
-        }
-
-        return redirect('admin/associates/trainers/list')->with('success', 'Trainer added successfully');
-    }
-
-    public function edit($id)
-    {
-        $response = $this->api->get("trainers/{$id}/detail");
-        if ($response->status() === 404) {
-            return redirect('admin/associates/trainers/list')->with('error', 'Trainer not found');
-        }
-        $data = $response->object();
-
-        return view('admin.associates.trainers.edit', [
-            'trainer'      => $data->trainer,
-            'getHospital'  => HospitalModel::getHospital(),
-            'getCountry'   => collect([]),
-            'getProgramme' => collect([]),
-            'header_title' => 'Edit Trainer',
-        ]);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $fields = $request->only([
-            'name', 'email', 'password', 'phone_number', 'hospital_id',
-            'assistant_pd', 'assistant_email', 'mobile_no',
-        ]);
-
-        if ($request->hasFile('profile_image')) {
-            $this->api->postWithFile("trainers/{$id}", $fields, ['profile_image' => $request->file('profile_image')]);
-        } else {
-            $this->api->post("trainers/{$id}", $fields);
-        }
-
-        return redirect('admin/associates/trainers/list')->with('success', 'Trainer updated successfully');
-    }
-
-    public function delete($id)
-    {
-        $this->api->delete("trainers/{$id}");
-
-        return redirect('admin/associates/trainers/list')->with('success', 'Trainer information successfully deleted');
     }
 }

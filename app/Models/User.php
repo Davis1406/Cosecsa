@@ -685,28 +685,28 @@ class User extends Authenticatable
             });
     }
 
-    // Trainers Function
-    static public function getTrainers()
+    // Programme Directors Function (formerly getTrainers — see ProgrammeDirector model)
+    static public function getProgrammeDirectors()
     {
         $return = self::select(
             'users.id as user_id',
             'users.name as name',
             'users.email as user_email',
             'users.password as user_password',
-            'trainers.id as trainer_id',
-            'trainers.user_id as tr_id',
-            'trainers.*',
+            'programme_directors.id as programme_director_id',
+            'programme_directors.user_id as tr_id',
+            'programme_directors.*',
             'hospitals.name as hospital_name',
             'hospitals.country_id as country_id',
             'countries.country_name as country_name'
         )
-            ->join('trainers', 'users.id', '=', 'trainers.user_id')
+            ->join('programme_directors', 'users.id', '=', 'programme_directors.user_id')
             ->join('user_roles', 'users.id', '=', 'user_roles.user_id')
-            ->leftJoin('hospitals', 'trainers.hospital_id', '=', 'hospitals.id')
+            ->leftJoin('hospitals', 'programme_directors.hospital_id', '=', 'hospitals.id')
             ->leftJoin('countries', 'hospitals.country_id', '=', 'countries.id')
-            ->where('user_roles.role_type', 4) // Ensure it's a trainer role
+            ->where('user_roles.role_type', 4) // Ensure it's a programme director role
             ->where('user_roles.is_active', 1)
-            ->orderBy('trainer_id', 'asc')
+            ->orderBy('programme_director_id', 'asc')
             ->get();
 
         return $return;

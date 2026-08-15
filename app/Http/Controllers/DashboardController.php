@@ -160,13 +160,13 @@ public function dashboard()
 
     /**
      * GET admin/global-search?q=...
-     * Returns JSON: { trainees, candidates, examiners, fellows, trainers, members, country_reps }
+     * Returns JSON: { trainees, candidates, examiners, fellows, programme_directors, trainers, members, country_reps }
      */
     public function globalSearch(Request $request)
     {
         $empty = [
             'trainees' => [], 'candidates' => [], 'examiners' => [], 'fellows' => [],
-            'trainers' => [], 'members' => [], 'country_reps' => [],
+            'programme_directors' => [], 'trainers' => [], 'members' => [], 'country_reps' => [],
         ];
 
         $q = trim($request->input('q', ''));
@@ -277,8 +277,9 @@ public function dashboard()
                 'url'  => url('admin/associates/fellows/view/' . $r->fellow_id),
             ]);
 
-        // Trainers
-        $trainers = DB::table('trainers as tr')
+        // Programme Directors (formerly the "Trainers" search block —
+        // this queries the renamed `programme_directors` table)
+        $programme_directors = DB::table('programme_directors as tr')
             ->join('users as u', 'u.id', '=', 'tr.user_id')
             ->leftJoin('hospitals as h', 'h.id', '=', 'tr.hospital_id')
             ->leftJoin('programmes as p', 'p.id', '=', 'tr.programme_id')
@@ -289,11 +290,29 @@ public function dashboard()
                   ->orWhere('tr.phone_number', 'like', $like)
                   ->orWhere('tr.mobile_no', 'like', $like);
             })
-            ->select('tr.id as trainer_id', 'u.name', 'h.name as hospital_name', 'p.name as programme')
+            ->select('tr.id as pd_id', 'u.name', 'h.name as hospital_name', 'p.name as programme')
             ->orderBy('u.name')->limit(8)->get()
             ->map(fn($r) => [
                 'name' => $r->name,
                 'sub'  => implode(' · ', array_filter([$r->hospital_name, $r->programme])),
+                'url'  => url('admin/associates/programme-directors/view/' . $r->pd_id),
+            ]);
+
+        // Trainers — COSECSA ToT roster. No linked User account, so search
+        // is against the trainers table's own name/email/organisation.
+        $trainers = DB::table('trainers as t')
+            ->leftJoin('countries as co', 'co.id', '=', 't.country_id')
+            ->leftJoin('programmes as p', 'p.id', '=', 't.programme_id')
+            ->where(function ($w) use ($like) {
+                $w->where('t.name', 'like', $like)
+                  ->orWhere('t.email', 'like', $like)
+                  ->orWhere('t.organisation', 'like', $like);
+            })
+            ->select('t.id as trainer_id', 't.name', 't.organisation', 'co.country_name', 'p.name as programme', 't.specialty_raw')
+            ->orderBy('t.name')->limit(8)->get()
+            ->map(fn($r) => [
+                'name' => $r->name,
+                'sub'  => implode(' · ', array_filter([$r->programme ?? $r->specialty_raw, $r->country_name])),
                 'url'  => url('admin/associates/trainers/view/' . $r->trainer_id),
             ]);
 
@@ -339,7 +358,7 @@ public function dashboard()
             ]);
 
         return response()->json(compact(
-            'trainees', 'candidates', 'examiners', 'fellows', 'trainers', 'members', 'country_reps'
+            'trainees', 'candidates', 'examiners', 'fellows', 'programme_directors', 'trainers', 'members', 'country_reps'
         ));
     }
 

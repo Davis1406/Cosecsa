@@ -147,7 +147,7 @@
                     1 => 'Admin',
                     2 => 'Trainee',
                     3 => 'Candidate',
-                    4 => 'Trainer',
+                    4 => 'Programme Director',
                     5 => 'Country Representative',
                     7 => 'Fellow',
                     8 => 'Member',

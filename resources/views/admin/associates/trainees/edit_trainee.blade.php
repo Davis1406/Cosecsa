@@ -100,7 +100,7 @@
                             <select name="user_type" class="ms2-input">
                                 <option value="2" {{ $trainee->user_type == 2 ? 'selected' : '' }}>Trainee</option>
                                 <option value="3" {{ $trainee->user_type == 3 ? 'selected' : '' }}>Programme Director</option>
-                                <option value="4" {{ $trainee->user_type == 4 ? 'selected' : '' }}>Trainer</option>
+                                <option value="4" {{ $trainee->user_type == 4 ? 'selected' : '' }}>Programme Director</option>
                             </select>
                         </div>
                         <div class="ms2-col">

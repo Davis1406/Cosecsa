@@ -13,7 +13,7 @@ class ImpersonationController extends Controller
         1 => 'admin/dashboard',
         2 => 'trainee/dashboard',
         3 => 'candidate/dashboard',
-        4 => 'trainer/dashboard',
+        4 => 'programme-director/dashboard',
         5 => 'country-rep/dashboard',
         7 => 'fellow/dashboard',
         8 => 'member/dashboard',

@@ -43,10 +43,15 @@ return [
             'view'   => 'See the candidate list, profiles, and reports',
             'manage' => 'Add, edit, delete, import candidates',
         ],
-        'trainers' => [
-            'label'  => 'Trainers (Programme Directors)',
+        'programme_directors' => [
+            'label'  => 'Programme Directors',
             'view'   => 'See the programme directors list and profiles',
             'manage' => 'Add, edit, delete, import programme directors',
+        ],
+        'trainers' => [
+            'label'  => 'Trainers (ToT)',
+            'view'   => 'See the master trainer / ToT roster and profiles',
+            'manage' => 'Add, edit, delete, import trainers',
         ],
         'country_reps' => [
             'label'  => 'Country Reps',
@@ -131,6 +136,7 @@ return [
         'admin/hospitalprogrammes'      => 'lookups',
         'admin/associates/trainees'     => 'trainees',
         'admin/associates/candidates'   => 'candidates',
+        'admin/associates/programme-directors' => 'programme_directors',
         'admin/associates/trainers'     => 'trainers',
         'admin/associates/reps'         => 'country_reps',
         'admin/associates/fellows'      => 'fellows',

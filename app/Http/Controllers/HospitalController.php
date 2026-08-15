@@ -69,7 +69,7 @@ class HospitalController extends Controller
     public function savePd(Request $request, $hospitalProgrammeId)
     {
         $response = $this->api->post("admin/hospitals/pd/{$hospitalProgrammeId}/save", $request->only([
-            'trainer_id', 'name', 'email', 'phone', 'assistant_pd', 'assistant_email',
+            'programme_director_id', 'name', 'email', 'phone', 'assistant_pd', 'assistant_email',
         ]));
 
         if ($response->failed()) {
@@ -160,7 +160,7 @@ class HospitalController extends Controller
             'header_title'  => $data->hospital->name ?? 'View Hospital',
             'hospital'      => $data->hospital,
             'programmes'    => collect($data->programmes ?? []),
-            'trainers'      => collect($data->trainers ?? []),
+            'programmeDirectors' => collect($data->programme_directors ?? []),
             'trainees'      => collect($data->trainees ?? []),
             'fellows'       => collect($data->fellows ?? []),
             'allProgrammes' => \App\Models\Programme::getProgramme(),

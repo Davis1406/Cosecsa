@@ -11,7 +11,7 @@
                     <div class="container-fluid">
                         <div class="row mb-2">
                             <div class="col-sm-6">
-                                <h1>Import Trainers</h1>
+                                <h1>Import Programme Directors</h1>
                             </div>
                         </div>
                     </div><!-- /.container-fluid -->
@@ -33,7 +33,7 @@
                                     <!-- form start -->
                                     <div class="col-md-6 offset-md-3">
 
-                                        <form method="POST" action="{{ route('trainers.import.data') }}" enctype="multipart/form-data">
+                                        <form method="POST" action="{{ route('programme-directors.import.data') }}" enctype="multipart/form-data">
                                             {{ csrf_field() }}
                                             <div class="card-body">
                                                 <div class="form-group">

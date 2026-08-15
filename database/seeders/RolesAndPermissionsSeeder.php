@@ -16,7 +16,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view'   => ['dashboard', 'trainees'],
         ],
         'Education Officer' => [
-            'manage' => ['trainees', 'trainers', 'promotions', 'lookups'],
+            'manage' => ['trainees', 'programme_directors', 'promotions', 'lookups'],
             'view'   => ['dashboard', 'candidates'],
         ],
         'Finance Officer' => [
@@ -45,7 +45,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ],
         'Chief Executive Officer' => [
             'manage' => [],
-            'view'   => ['dashboard', 'trainees', 'candidates', 'trainers', 'country_reps', 'fellows', 'members', 'examiners', 'promotions', 'capsule', 'salesforce', 'fees', 'settings', 'lookups', 'system_logs'],
+            'view'   => ['dashboard', 'trainees', 'candidates', 'programme_directors', 'trainers', 'country_reps', 'fellows', 'members', 'examiners', 'promotions', 'capsule', 'salesforce', 'fees', 'settings', 'lookups', 'system_logs'],
         ],
         'IT and Examinations Assistant' => [
             'manage' => ['examiners', 'candidates', 'promotions', 'capsule', 'salesforce', 'settings', 'lookups'],

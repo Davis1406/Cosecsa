@@ -34,8 +34,8 @@
        which reads as "not editable" in a plain data table where nothing
        else hints a cell can be clicked. Keep it faintly visible at rest
        here so the Programme Directors table advertises itself. */
-    #pane-trainers .ie-pencil { opacity:.45; }
-    #pane-trainers .ie-pencil:hover { opacity:1 !important; }
+    #pane-pd .ie-pencil { opacity:.45; }
+    #pane-pd .ie-pencil:hover { opacity:1 !important; }
 
     body.dark-mode .hosp-hero { background:#7a1f1f; }
     body.dark-mode .info-item label { color:#9ca3af; }
@@ -159,9 +159,9 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="tab-trainers"  data-toggle="tab" href="#pane-trainers"  role="tab">
+                        <a class="nav-link" id="tab-pd"  data-toggle="tab" href="#pane-pd"  role="tab">
                             <i class="fas fa-user-tie mr-1"></i>Programme Directors
-                            <span class="tab-count">{{ count($trainers) }}</span>
+                            <span class="tab-count">{{ count($programmeDirectors) }}</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -227,7 +227,7 @@
                     </div>
 
                     {{-- ── Programme Directors tab ── --}}
-                    <div class="tab-pane fade" id="pane-trainers" role="tabpanel">
+                    <div class="tab-pane fade" id="pane-pd" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-end p-2">
                                 <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#addPdModal">
@@ -235,7 +235,7 @@
                                 </button>
                             </div>
                             <div class="card-body p-0">
-                                @if($trainers->count())
+                                @if($programmeDirectors->count())
                                 <table class="table table-bordered table-striped entity-table mb-0">
                                     <thead>
                                         <tr>
@@ -248,11 +248,11 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($trainers as $i => $t)
+                                        @foreach($programmeDirectors as $i => $t)
                                         <tr>
                                             <td>{{ $i+1 }}</td>
                                             <td>
-                                                <a href="{{ url('admin/associates/trainers/view/'.$t->trainer_id) }}" class="entity-link">
+                                                <a href="{{ url('admin/associates/programme-directors/view/'.$t->programme_director_id) }}" class="entity-link">
                                                     {{ $t->name }}
                                                 </a>
                                             </td>
@@ -260,7 +260,7 @@
                                             <td>
                                                 <span class="ie-field" data-ie="phone_number" data-ie-type="text"
                                                       data-ie-value="{{ $t->phone_number ?? '' }}"
-                                                      data-ie-url="{{ url('admin/associates/trainers/'.$t->trainer_id.'/quick-update') }}"
+                                                      data-ie-url="{{ url('admin/associates/programme-directors/'.$t->programme_director_id.'/quick-update') }}"
                                                       data-ie-csrf="{{ csrf_token() }}">
                                                     <span class="ie-value">{{ $t->phone_number ?: '—' }}</span>
                                                     <button class="ie-pencil" type="button" title="Edit phone number"><i class="fas fa-pen"></i></button>
@@ -270,7 +270,7 @@
                                             <td>
                                                 <button type="button" class="btn btn-xs btn-light border edit-pd-btn" title="Edit"
                                                         data-toggle="modal" data-target="#editPdModal"
-                                                        data-trainer-id="{{ $t->trainer_id }}"
+                                                        data-pd-id="{{ $t->programme_director_id }}"
                                                         data-name="{{ $t->name }}"
                                                         data-email="{{ $t->email }}"
                                                         data-assistant-pd="{{ $t->assistant_pd }}"
@@ -280,7 +280,7 @@
                                                         data-phone-number="{{ $t->phone_number }}">
                                                     <i class="fas fa-pen text-secondary"></i>
                                                 </button>
-                                                <a href="{{ url('admin/associates/trainers/view/'.$t->trainer_id) }}" class="btn btn-xs btn-light border" title="View full profile">
+                                                <a href="{{ url('admin/associates/programme-directors/view/'.$t->programme_director_id) }}" class="btn btn-xs btn-light border" title="View full profile">
                                                     <i class="fas fa-eye text-info"></i>
                                                 </a>
                                             </td>
@@ -526,7 +526,7 @@
             </div>
             <div class="modal-body">
                 <div class="alert d-none" id="editPdAlert" role="alert"></div>
-                <input type="hidden" id="editpd_trainer_id">
+                <input type="hidden" id="editpd_id">
                 <input type="hidden" id="editpd_hospital_id">
                 <input type="hidden" id="editpd_programme_id">
                 <input type="hidden" id="editpd_mobile_no">
@@ -767,7 +767,7 @@ $('#pdSubmitBtn').on('click', function () {
 $('.edit-pd-btn').on('click', function () {
     var $b = $(this);
     $('#editPdAlert').addClass('d-none');
-    $('#editpd_trainer_id').val($b.data('trainer-id'));
+    $('#editpd_id').val($b.data('pd-id'));
     $('#editpd_hospital_id').val(HOSPITAL_ID);
     $('#editpd_programme_id').val($b.data('programme-id'));
     $('#editpd_mobile_no').val($b.data('mobile-no'));
@@ -780,7 +780,7 @@ $('.edit-pd-btn').on('click', function () {
 
 $('#editPdSubmitBtn').on('click', function () {
     var $btn = $(this).prop('disabled', true);
-    var trainerId = $('#editpd_trainer_id').val();
+    var pdId = $('#editpd_id').val();
     var name = $('#editpd_name').val().trim();
     var email = $('#editpd_email').val().trim();
     if (!name || !email) {
@@ -788,7 +788,7 @@ $('#editPdSubmitBtn').on('click', function () {
         $btn.prop('disabled', false);
         return;
     }
-    $.post('{{ url("admin/associates/trainers") }}/' + trainerId + '/ajax-update', {
+    $.post('{{ url("admin/associates/programme-directors") }}/' + pdId + '/ajax-update', {
         _token: CSRF_TOKEN,
         name: name, email: email,
         hospital_id: $('#editpd_hospital_id').val(),

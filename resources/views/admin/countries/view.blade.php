@@ -71,7 +71,7 @@
                         ['icon'=>'fas fa-user-graduate','bg'=>'#e8f5e9','ic'=>'#388e3c','lbl'=>'Trainees',    'val'=>count($trainees)],
                         ['icon'=>'fas fa-award',        'bg'=>'#e8eaf6','ic'=>'#3949ab','lbl'=>'Fellows',     'val'=>count($fellows)],
                         ['icon'=>'fas fa-users',        'bg'=>'#fff8e1','ic'=>'#f9a825','lbl'=>'Members',     'val'=>count($members)],
-                        ['icon'=>'fas fa-user-tie',     'bg'=>'#f3e5f5','ic'=>'#7b1fa2','lbl'=>'Prog. Directors', 'val'=>count($trainers)],
+                        ['icon'=>'fas fa-user-tie',     'bg'=>'#f3e5f5','ic'=>'#7b1fa2','lbl'=>'Prog. Directors', 'val'=>count($programmeDirectors)],
                         ['icon'=>'fas fa-id-badge',     'bg'=>'#e0f7fa','ic'=>'#00796b','lbl'=>'Country Reps','val'=>count($reps)],
                         ['icon'=>'fas fa-stethoscope',  'bg'=>'#fce8e8','ic'=>'#c62828','lbl'=>'Examiners',   'val'=>count($examiners)],
                     ]; @endphp
@@ -92,7 +92,7 @@
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ct-trainees"><i class="fas fa-user-graduate mr-1"></i>Trainees<span class="tab-count">{{ count($trainees) }}</span></a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ct-fellows"><i class="fas fa-award mr-1"></i>Fellows<span class="tab-count">{{ count($fellows) }}</span></a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ct-members"><i class="fas fa-users mr-1"></i>Members<span class="tab-count">{{ count($members) }}</span></a></li>
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ct-trainers"><i class="fas fa-user-tie mr-1"></i>Prog. Directors<span class="tab-count">{{ count($trainers) }}</span></a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ct-pd"><i class="fas fa-user-tie mr-1"></i>Prog. Directors<span class="tab-count">{{ count($programmeDirectors) }}</span></a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ct-reps"><i class="fas fa-id-badge mr-1"></i>Country Reps<span class="tab-count">{{ count($reps) }}</span></a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ct-examiners"><i class="fas fa-stethoscope mr-1"></i>Examiners<span class="tab-count">{{ count($examiners) }}</span></a></li>
                 </ul>
@@ -191,19 +191,19 @@
                     </div>
 
                     {{-- ── Programme Directors ── --}}
-                    <div class="tab-pane fade" id="ct-trainers">
+                    <div class="tab-pane fade" id="ct-pd">
                         <div class="card"><div class="card-body p-0">
-                            @if(count($trainers))
+                            @if(count($programmeDirectors))
                             <table class="table table-bordered table-striped entity-table mb-0">
                                 <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Hospital</th><th>Action</th></tr></thead>
                                 <tbody>
-                                    @foreach($trainers as $i => $t)
+                                    @foreach($programmeDirectors as $i => $t)
                                     <tr>
                                         <td>{{ $i+1 }}</td>
-                                        <td><a href="{{ url('admin/associates/trainers/view/'.$t->trainer_id) }}" class="entity-link">{{ $t->name }}</a></td>
+                                        <td><a href="{{ url('admin/associates/programme-directors/view/'.$t->programme_director_id) }}" class="entity-link">{{ $t->name }}</a></td>
                                         <td>{{ $t->email ?: '—' }}</td>
                                         <td><a href="{{ url('admin/hospital/view_hospital/'.$t->hospital_id) }}" class="entity-link">{{ $t->hospital_name }}</a></td>
-                                        <td><a href="{{ url('admin/associates/trainers/view/'.$t->trainer_id) }}" class="btn btn-xs btn-light border"><i class="fas fa-eye text-info"></i></a></td>
+                                        <td><a href="{{ url('admin/associates/programme-directors/view/'.$t->programme_director_id) }}" class="btn btn-xs btn-light border"><i class="fas fa-eye text-info"></i></a></td>
                                     </tr>
                                     @endforeach
                                 </tbody>

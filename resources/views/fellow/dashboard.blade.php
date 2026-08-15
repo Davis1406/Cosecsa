@@ -169,7 +169,7 @@ body.dark-mode .stat-chip     { background:#2d3748 !important; }
 
         {{-- ═══════ ROLE SWITCHER (multi-role users only) ═══════ --}}
         @php
-            $roleNames = [1=>'Admin',2=>'Trainee',4=>'Trainer',5=>'Country Rep',7=>'Fellow',8=>'Member',9=>'Examiner'];
+            $roleNames = [1=>'Admin',2=>'Trainee',4=>'Programme Director',5=>'Country Rep',7=>'Fellow',8=>'Member',9=>'Examiner'];
             $roleIcons = [1=>'fa-shield-alt',2=>'fa-user-graduate',4=>'fa-chalkboard-teacher',5=>'fa-globe-africa',7=>'fa-award',8=>'fa-id-badge',9=>'fa-user-md'];
         @endphp
         @if(count($userRoles) > 1)

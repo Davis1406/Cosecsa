@@ -1,7 +1,7 @@
 @extends('layout.app')
 
 @php
-    $roleNames = [1=>'Admin',2=>'Trainee',3=>'Candidate',4=>'Trainer',5=>'Country Representative',7=>'Fellow',8=>'Member',9=>'Examiner'];
+    $roleNames = [1=>'Admin',2=>'Trainee',3=>'Candidate',4=>'Programme Director',5=>'Country Representative',7=>'Fellow',8=>'Member',9=>'Examiner'];
 @endphp
 
 @section('content')

@@ -158,7 +158,7 @@
                     </div>
                     @else
                     <div class="col-md-12">
-                        <p>No Trainer Data found.</p>
+                        <p>No Programme Director Data found.</p>
                     </div>
                     @endif
                 </div>

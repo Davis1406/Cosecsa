@@ -95,8 +95,8 @@ return [
             ],
             'group_by' => ['country_name', 'category_name', 'gender', 'status'],
         ],
-        'trainers' => [
-            'label' => 'Trainers (Programme Directors)',
+        'programme_directors' => [
+            'label' => 'Programme Directors',
             'fields' => [
                 'name'            => 'Name',
                 'hospital_name'   => 'Hospital',
@@ -106,6 +106,23 @@ return [
             ],
             'filters' => [],
             'group_by' => ['hospital_name'],
+        ],
+        'trainers' => [
+            'label' => 'Trainers (ToT)',
+            'fields' => [
+                'name'                 => 'Name',
+                'organisation'         => 'Organisation',
+                'email'                => 'Email',
+                'country_name'         => 'Country Attended In',
+                'specialty_name'       => 'Specialty',
+                'is_master_trainer'    => 'Master Trainer',
+                'is_specialty_surgeon' => 'SS',
+                'comment'              => 'Comment',
+            ],
+            'filters' => [
+                'country_id' => ['label' => 'Country', 'source' => 'countries'],
+            ],
+            'group_by' => ['country_name', 'specialty_name'],
         ],
         'country_reps' => [
             'label' => 'Country Reps',

@@ -229,9 +229,9 @@ class ReportBuilderController extends Controller
                         'status'          => 'm.status',
                     ],
                 ];
-            case 'trainers':
+            case 'programme_directors':
                 return [
-                    DB::table('trainers as t')
+                    DB::table('programme_directors as t')
                         ->leftJoin('users as u', 'u.id', '=', 't.user_id')
                         ->leftJoin('hospitals as h', 'h.id', '=', 't.hospital_id'),
                     [
@@ -240,6 +240,22 @@ class ReportBuilderController extends Controller
                         'phone_number'    => 't.phone_number',
                         'assistant_pd'    => 't.assistant_pd',
                         'assistant_email' => 't.assistant_email',
+                    ],
+                ];
+            case 'trainers':
+                return [
+                    DB::table('trainers as t')
+                        ->leftJoin('countries as co', 'co.id', '=', 't.country_id')
+                        ->leftJoin('programmes as p', 'p.id', '=', 't.programme_id'),
+                    [
+                        'name'                 => 't.name',
+                        'organisation'         => 't.organisation',
+                        'email'                => 't.email',
+                        'country_name'         => 'co.country_name',
+                        'specialty_name'       => 'IFNULL(p.name, t.specialty_raw)',
+                        'is_master_trainer'    => "IF(t.is_master_trainer=1,'Yes','No')",
+                        'is_specialty_surgeon' => "IF(t.is_specialty_surgeon=1,'Yes','No')",
+                        'comment'              => 't.comment',
                     ],
                 ];
             case 'country_reps':

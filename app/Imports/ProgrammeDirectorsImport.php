@@ -2,18 +2,18 @@
 
 namespace App\Imports;
 
-use App\Models\Trainer;
+use App\Models\ProgrammeDirector;
 use App\Models\User;
 use App\Models\UserRole;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Illuminate\Support\Facades\Hash;
 
-class TrainersImport implements ToModel, WithHeadingRow
+class ProgrammeDirectorsImport implements ToModel, WithHeadingRow
 {
     public function model(array $row)
     {
-        $userType = 4; // '4' represents trainers
+        $userType = 4; // '4' represents programme directors
 
         // Create the User first
         $user = User::create([
@@ -30,8 +30,8 @@ class TrainersImport implements ToModel, WithHeadingRow
             'is_active' => 1
         ]);
 
-        // Then create the Trainer
-        return new Trainer([
+        // Then create the Programme Director
+        return new ProgrammeDirector([
             'user_id' => $user->id,
             'phone_number' => $row['phone_number'],
             'hospital_id' => $row['hospital_id'],

@@ -1,8 +1,8 @@
 @php
     /*
      * Props:
-     *   $relatedProfiles  – stdClass|array with keys: fellow, examiner, trainer, country_rep (nullable ints)
-     *   $currentRole      – string: 'fellow' | 'examiner' | 'trainer' | 'country_rep'
+     *   $relatedProfiles  – stdClass|array with keys: fellow, examiner, programme_director, country_rep (nullable ints)
+     *   $currentRole      – string: 'fellow' | 'examiner' | 'programme_director' | 'country_rep'
      */
     $rp = $relatedProfiles ?? null;
     if (!$rp) { return; }
@@ -11,7 +11,7 @@
     $links = [
         'fellow'      => ['label' => 'Fellow',      'icon' => 'fa-user-graduate', 'url' => fn($id) => url("admin/associates/fellows/view/{$id}")],
         'examiner'    => ['label' => 'Examiner',     'icon' => 'fa-user-check',   'url' => fn($id) => url("admin/exams/view_examiner/{$id}")],
-        'trainer'     => ['label' => 'Trainer (PD)', 'icon' => 'fa-chalkboard-teacher', 'url' => fn($id) => url("admin/associates/trainers/view/{$id}")],
+        'programme_director' => ['label' => 'Programme Director', 'icon' => 'fa-chalkboard-teacher', 'url' => fn($id) => url("admin/associates/programme-directors/view/{$id}")],
         'country_rep' => ['label' => 'Country Rep',  'icon' => 'fa-globe-africa', 'url' => fn($id) => url("admin/associates/reps/view/{$id}")],
     ];
 

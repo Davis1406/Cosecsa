@@ -12,6 +12,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\TraineeController;
 use App\Http\Controllers\CandidatesController;
 use App\Http\Controllers\TrainerController;
+use App\Http\Controllers\ProgrammeDirectorController;
 use App\Http\Controllers\CountryRepsController;
 use App\Http\Controllers\FellowsController;
 use App\Http\Controllers\PromotionController;
@@ -265,18 +266,23 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
   Route::get('admin/associates/candidates/reports',      [CandidatesController::class,'reports'])->name('candidates.reports');
   Route::get('admin/associates/candidates/reports/data', [CandidatesController::class,'reportsData'])->name('candidates.reports.data');
 
-//Trainers Route
+//Programme Directors Route (formerly "Trainers" — see ProgrammeDirectorController)
+Route::get('admin/associates/programme-directors/list', [ProgrammeDirectorController::class,'list']);
+Route::get('admin/associates/programme-directors/add',  [ProgrammeDirectorController::class,'add']);
+Route::post('admin/associates/programme-directors/add', [ProgrammeDirectorController::class,'insert'])->name('admin.associates.programme-directors.add');
+Route::get('admin/associates/programme-directors/import',  [ProgrammeDirectorController::class,'import']);
+Route::post('admin/associates/programme-directors/import', [ProgrammeDirectorController::class, 'importData'])->name('programme-directors.import.data');
+Route::get('admin/associates/programme-directors/view/{id}',  [ProgrammeDirectorController::class,'view'])->name('programme-directors.view');
+Route::post('admin/associates/programme-directors/{id}/quick-update', [ProgrammeDirectorController::class,'quickUpdate'])->name('programme-directors.quick.update');
+Route::post('admin/associates/programme-directors/{id}/ajax-update', [ProgrammeDirectorController::class,'ajaxUpdate'])->name('programme-directors.ajax.update');
+Route::get('admin/associates/programme-directors/edit/{id} ', [ProgrammeDirectorController::class,'edit']);
+Route::post('admin/associates/programme-directors/edit/{id} ', [ProgrammeDirectorController::class,'update']);
+Route::get('admin/associates/programme-directors/delete/{id}', [ProgrammeDirectorController::class,'delete']);
+
+//Trainers Route (COSECSA ToT roster — distinct from Programme Directors above)
 Route::get('admin/associates/trainers/list', [TrainerController::class,'list']);
-Route::get('admin/associates/trainers/add',  [TrainerController::class,'add']);
-Route::post('admin/associates/trainers/add', [TrainerController::class,'insert'])->name('admin.associates.trainers.add');
-Route::get('admin/associates/trainers/import',  [TrainerController::class,'import']);
-Route::post('admin/associates/trainers/import', [TrainerController::class, 'importData'])->name('trainers.import.data');
 Route::get('admin/associates/trainers/view/{id}',  [TrainerController::class,'view'])->name('trainers.view');
 Route::post('admin/associates/trainers/{id}/quick-update', [TrainerController::class,'quickUpdate'])->name('trainers.quick.update');
-Route::post('admin/associates/trainers/{id}/ajax-update', [TrainerController::class,'ajaxUpdate'])->name('trainers.ajax.update');
-Route::get('admin/associates/trainers/edit/{id} ', [TrainerController::class,'edit']);
-Route::post('admin/associates/trainers/edit/{id} ', [TrainerController::class,'update']);
-Route::get('admin/associates/trainers/delete/{id}', [TrainerController::class,'delete']);
 
 
 //CR's Route

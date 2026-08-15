@@ -24,7 +24,7 @@ class SystemLogger
         \App\Models\Candidates::class,
         \App\Models\FellowsModel::class,
         \App\Models\MembersModel::class,
-        \App\Models\Trainer::class,
+        \App\Models\ProgrammeDirector::class,
         \App\Models\CountryRepsModel::class,
         \App\Models\ExamsModel::class,
         \App\Models\Role::class,

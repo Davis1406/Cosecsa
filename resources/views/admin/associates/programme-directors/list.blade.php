@@ -12,7 +12,10 @@
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1 class="m-0">Trainers <small class="text-muted">COSECSA Master Trainer ToT roster</small></h1>
+                    </div>
+                    <div class="col-sm-6" style="text-align: right">
+                        <a href="{{url('admin/associates/programme-directors/import')}}" class="btn btn-secondary" style="color:black; background-color: #FEC503; border-color: #FEC503;">Upload PD's <span class="fas fa-upload"></span></a>
+                        <a href="{{url('admin/associates/programme-directors/add')}}" class="btn btn-primary" style="background-color: #a02626; border-color: #a02626;">Add New PD</a>
                     </div>
                 </div>
             </div><!-- /.container-fluid -->
@@ -27,15 +30,17 @@
 
                 {{-- Filter Bar --}}
                 @php
-                $trFilterDefs = [
-                    ['id'=>'trFilterCountry',   'label'=>'Country',   'options'=>$countries],
-                    ['id'=>'trFilterSpecialty', 'label'=>'Specialty', 'options'=>$specialties],
+                $pdCountries = collect($getRecord)->pluck('country_name')->filter()->unique()->sort()->values();
+                $pdHospitals = collect($getRecord)->pluck('hospital_name')->filter()->unique()->sort()->values();
+                $pdFilterDefs = [
+                    ['id'=>'pdFilterCountry',  'label'=>'Country',  'options'=>$pdCountries],
+                    ['id'=>'pdFilterHospital', 'label'=>'Hospital', 'options'=>$pdHospitals],
                 ];
                 @endphp
                 <div class="card card-outline card-secondary mb-2 shadow-sm">
                     <div class="card-body py-2">
                         <div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
-                            @foreach($trFilterDefs as $fd)
+                            @foreach($pdFilterDefs as $fd)
                             <div class="chk-filter-wrap" data-filter="{{ $fd['id'] }}">
                                 <button type="button" class="btn btn-sm btn-outline-secondary chk-filter-btn" data-filter="{{ $fd['id'] }}">
                                     {{ $fd['label'] }}
@@ -61,14 +66,10 @@
                                 </div>
                             </div>
                             @endforeach
-                            <label class="chk-item" style="margin-left:.25rem;">
-                                <input type="checkbox" id="trFilterMaster">
-                                Master Trainers only
-                            </label>
-                            <button id="trBtnClear" class="btn btn-sm btn-outline-secondary">
+                            <button id="pdBtnClear" class="btn btn-sm btn-outline-secondary">
                                 <i class="fas fa-times mr-1"></i>Clear All
                             </button>
-                            <small class="text-muted ml-auto" id="trFilteredCount"></small>
+                            <small class="text-muted ml-auto" id="pdFilteredCount"></small>
                         </div>
                     </div>
                 </div>
@@ -77,61 +78,63 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Trainers ({{ count($getRecord) }})</h3>
+                                <h3 class="card-title">Programme Directors</h3>
                             </div>
                             <!-- /.card-header -->
                             <div class="card-body">
-                                <table id="trtable" class="table table-bordered table-striped">
+                                <table id="pdtable" class="table table-bordered table-striped">
                                     <thead>
                                         <tr>
                                             <th>#</th>
                                             <th>Name</th>
-                                            <th>Organisation</th>
+                                            <th>Email</th>
+                                            <th>Hospital</th>
                                             <th>Country</th>
-                                            <th>Specialty</th>
-                                            <th>ToT Years Attended</th>
-                                            <th>Master Trainer</th>
-                                            <th>SS</th>
+                                            <th>Phone Number</th>
+                                            <th>Assistant PD</th>
+                                            <th>Asst PD Email</th>
+                                            <th>Mobile Number</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($getRecord as $value)
                                         <tr class="user-row"
-                                            data-country="{{ $value->country ?? '' }}"
-                                            data-specialty="{{ $value->specialty ?? '' }}"
-                                            data-master="{{ !empty($value->is_master_trainer) ? '1' : '0' }}">
-                                            <td>{{ $value->id }}</td>
-                                            <td>
-                                                <a href="{{ url('admin/associates/trainers/view/' . $value->id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">
-                                                    {{ $value->name }}
-                                                </a>
-                                            </td>
-                                            <td>{{ $value->organisation ?: '—' }}</td>
-                                            <td>{{ $value->country ?: '—' }}</td>
-                                            <td>
-                                                {{ $value->specialty ?: '—' }}
-                                                @if(!empty($value->is_subspecialty))
-                                                    <span class="badge badge-light border">subspecialty</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @forelse($value->years_attended ?? [] as $year)
-                                                    <span class="badge badge-secondary">{{ $year }}</span>
-                                                @empty
-                                                    —
-                                                @endforelse
-                                            </td>
-                                            <td class="text-center">
-                                                @if(!empty($value->is_master_trainer))<i class="fas fa-check-circle text-success"></i>@else <span class="text-muted">—</span> @endif
-                                            </td>
-                                            <td class="text-center">
-                                                @if(!empty($value->is_specialty_surgeon))<i class="fas fa-check-circle text-success"></i>@else <span class="text-muted">—</span> @endif
-                                            </td>
+                                            data-country="{{ $value->country_name ?? '' }}"
+                                            data-hospital="{{ $value->hospital_name ?? '' }}">
+                                            <td>{{$value->id}}</td>
+                                            <td>{{$value->name}}</td>
+                                            <td>{{$value->user_email}}</td>
+                                            <td>@if(!empty($value->hospital_id))<a href="{{ url('admin/hospital/view_hospital/'.$value->hospital_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{$value->hospital_name}}</a>@else{{$value->hospital_name}}@endif</td>
+                                            <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{$value->country_name}}</a>@else{{$value->country_name}}@endif</td>
+                                            <td>{{$value->phone_number}}</td>
+                                            <td>{{$value->assistant_pd}}</td>
+                                            <td>{{$value->assistant_email}}</td>
+                                            <td>{{$value->mobile_no}}</td>
                                             <td class="text-center" style="white-space:nowrap;">
-                                                <a class="btn btn-sm btn-light border" href="{{ url('admin/associates/trainers/view/' . $value->id) }}" title="View">
-                                                    <i class="fas fa-eye text-info"></i>
-                                                </a>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
+                                                            type="button" data-toggle="dropdown"
+                                                            aria-haspopup="true" aria-expanded="false">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                                        <a class="dropdown-item" href="{{ url('admin/associates/programme-directors/view/' . $value->programme_director_id) }}">
+                                                            <i class="fas fa-eye text-info mr-2"></i> View
+                                                        </a>
+                                                        <a class="dropdown-item" href="{{ url('admin/associates/programme-directors/edit/' . $value->programme_director_id) }}">
+                                                            <i class="fas fa-edit text-warning mr-2"></i> Edit
+                                                        </a>
+                                                        @if(Auth::user()->isSuperAdmin())
+                                                        <div class="dropdown-divider"></div>
+                                                        <a class="dropdown-item text-danger"
+                                                           href="{{ url('admin/associates/programme-directors/delete/' . $value->tr_id) }}"
+                                                           onclick="return confirm('Delete this Programme Director?')">
+                                                            <i class="fas fa-trash mr-2"></i> Delete
+                                                        </a>
+                                                        @endif
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                         @endforeach
@@ -182,7 +185,12 @@
     .chk-footer a { color: #6c757d; }
     .chk-footer a:hover { color: #a02626; text-decoration: none; }
     .chk-filter-btn { white-space: nowrap; }
-    #trtable td { vertical-align: middle; }
+    #pdtable td { vertical-align: middle; }
+    .action-btn { padding: 2px 8px; line-height: 1.4; border-radius: 4px; }
+    .action-btn:hover { background-color: #f0f0f0; }
+    .dropdown-menu { min-width: 130px; font-size: .875rem; }
+    .dropdown-item { padding: 6px 14px; }
+    .dropdown-item:hover { background-color: #f8f0f0; }
     .paginate_button.active>.page-link { background-color: #a02626 !important; border-color: #a02626 !important; color: white; }
     .paginate_button>.page-link { color: #a02626; }
     .paginate_button>.page-link:focus, .paginate_button.active>.page-link:focus { box-shadow: none !important; outline: none !important; }
@@ -205,23 +213,22 @@ $(document).ready(function () {
     }
 
     function redraw() {
-        var dt   = $('#trtable').DataTable();
+        var dt   = $('#pdtable').DataTable();
         dt.draw();
         var info = dt.page.info();
-        $('#trFilteredCount').text(
+        $('#pdFilteredCount').text(
             info.recordsDisplay < info.recordsTotal
                 ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal : ''
         );
     }
 
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-        if (settings.nTable.id !== 'trtable') return true;
+        if (settings.nTable.id !== 'pdtable') return true;
         var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
-        var chkCountry   = getChecked('trFilterCountry');
-        var chkSpecialty = getChecked('trFilterSpecialty');
-        if (chkCountry.length   && chkCountry.indexOf(String($row.data('country')     || '')) === -1) return false;
-        if (chkSpecialty.length && chkSpecialty.indexOf(String($row.data('specialty') || '')) === -1) return false;
-        if ($('#trFilterMaster').is(':checked') && String($row.data('master')) !== '1') return false;
+        var chkCountry  = getChecked('pdFilterCountry');
+        var chkHospital = getChecked('pdFilterHospital');
+        if (chkCountry.length  && chkCountry.indexOf(String($row.data('country')  || '')) === -1) return false;
+        if (chkHospital.length && chkHospital.indexOf(String($row.data('hospital')|| '')) === -1) return false;
         return true;
     });
 
@@ -259,13 +266,11 @@ $(document).ready(function () {
         updateBadge(filterId);
         redraw();
     });
-    $('#trFilterMaster').on('change', redraw);
-    $('#trBtnClear').on('click', function () {
+    $('#pdBtnClear').on('click', function () {
         $('.chk-option').prop('checked', false);
-        $('#trFilterMaster').prop('checked', false);
         $('.chk-badge').hide();
         redraw();
-        $('#trFilteredCount').text('');
+        $('#pdFilteredCount').text('');
     });
 });
 </script>

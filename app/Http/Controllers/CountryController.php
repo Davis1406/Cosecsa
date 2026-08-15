@@ -37,7 +37,7 @@ class CountryController extends Controller
             'fellows'      => collect($data->fellows ?? []),
             'members'      => collect($data->members ?? []),
             'reps'         => collect($data->reps ?? []),
-            'trainers'     => collect($data->trainers ?? []),
+            'programmeDirectors' => collect($data->programme_directors ?? []),
             'examiners'    => collect($data->examiners ?? []),
         ]);
     }

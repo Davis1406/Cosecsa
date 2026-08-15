@@ -216,7 +216,7 @@
 
         @include('admin._role_switcher', ['relatedProfiles' => $relatedProfiles ?? null, 'currentRole' => 'fellow'])
 
-        {{-- Add Role modal: attach Trainer(PD)/Country Rep/Examiner to this fellow's
+        {{-- Add Role modal: attach Programme Director/Country Rep/Examiner to this fellow's
              existing login instead of creating a brand-new user record. --}}
         <div class="modal fade" id="addRoleModal" tabindex="-1" role="dialog" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -232,7 +232,7 @@
                             <label>Role</label>
                             <select class="form-control" id="ar_role_type" name="role_type" required>
                                 <option value="">-- Select role --</option>
-                                <option value="4">Trainer / Programme Director</option>
+                                <option value="4">Programme Director</option>
                                 <option value="5">Country Representative</option>
                                 <option value="9">Examiner</option>
                             </select>

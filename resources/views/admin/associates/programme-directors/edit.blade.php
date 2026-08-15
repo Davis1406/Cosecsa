@@ -23,7 +23,7 @@
 
         {{-- ── Form ────────────────────────────────────────────── --}}
         <form id="ms2form" method="POST"
-              action="{{ url('admin/associates/trainers/edit/' . $trainer->trainer_id) }}"
+              action="{{ url('admin/associates/programme-directors/edit/' . $pd->programme_director_id) }}"
               enctype="multipart/form-data">
             @csrf
 
@@ -37,7 +37,7 @@
                             <div class="ms2-input-group">
                                 <i class="fas fa-user"></i>
                                 <input type="text" name="name" class="ms2-input"
-                                       value="{{ $trainer->name }}" required placeholder="Full name">
+                                       value="{{ $pd->name }}" required placeholder="Full name">
                             </div>
                         </div>
                         <div class="ms2-col">
@@ -45,7 +45,7 @@
                             <div class="ms2-input-group">
                                 <i class="fas fa-envelope"></i>
                                 <input type="email" name="email" class="ms2-input"
-                                       value="{{ $trainer->user_email }}" required placeholder="Login email">
+                                       value="{{ $pd->user_email }}" required placeholder="Login email">
                             </div>
                         </div>
                     </div>
@@ -63,7 +63,7 @@
                             <div class="ms2-input-group">
                                 <i class="fas fa-phone"></i>
                                 <input type="text" name="phone_number" class="ms2-input"
-                                       value="{{ $trainer->phone_number }}" required placeholder="+000 000 000 000">
+                                       value="{{ $pd->phone_number }}" required placeholder="+000 000 000 000">
                             </div>
                         </div>
                     </div>
@@ -73,17 +73,17 @@
                             <label class="ms2-label">Associate Type <span class="req">*</span></label>
                             <select name="user_type" class="ms2-input" required>
                                 <option value="" disabled>Select Type…</option>
-                                <option value="2" {{ $trainer->user_type == 2 ? 'selected' : '' }}>Trainee</option>
-                                <option value="3" {{ $trainer->user_type == 3 ? 'selected' : '' }}>Candidate</option>
-                                <option value="4" {{ $trainer->user_type == 4 ? 'selected' : '' }}>Programme Director</option>
-                                <option value="5" {{ $trainer->user_type == 5 ? 'selected' : '' }}>Country Representative</option>
+                                <option value="2" {{ $pd->user_type == 2 ? 'selected' : '' }}>Trainee</option>
+                                <option value="3" {{ $pd->user_type == 3 ? 'selected' : '' }}>Candidate</option>
+                                <option value="4" {{ $pd->user_type == 4 ? 'selected' : '' }}>Programme Director</option>
+                                <option value="5" {{ $pd->user_type == 5 ? 'selected' : '' }}>Country Representative</option>
                             </select>
                         </div>
                         <div class="ms2-col">
                             <label class="ms2-label">Profile Image</label>
                             <label class="ms2-file-row" id="photoLabel">
                                 <i class="fas fa-camera"></i>
-                                <span id="photoName">{{ $trainer->profile_image ? 'Replace photo…' : 'Choose photo…' }}</span>
+                                <span id="photoName">{{ $pd->profile_image ? 'Replace photo…' : 'Choose photo…' }}</span>
                                 <input type="file" name="profile_image" accept="image/*" style="display:none"
                                        onchange="document.getElementById('photoName').textContent = this.files[0]?.name || 'Choose photo…'">
                             </label>
@@ -109,7 +109,7 @@
                             <select name="hospital_id" class="ms2-input" required>
                                 <option value="" disabled>Select Hospital…</option>
                                 @foreach($getHospital as $hospital)
-                                    <option value="{{ $hospital->id }}" {{ $hospital->id == $trainer->hospital_id ? 'selected' : '' }}>
+                                    <option value="{{ $hospital->id }}" {{ $hospital->id == $pd->hospital_id ? 'selected' : '' }}>
                                         {{ $hospital->name }}
                                     </option>
                                 @endforeach
@@ -118,7 +118,7 @@
                         <div class="ms2-col">
                             <label class="ms2-label">Assistant PD Name</label>
                             <input type="text" name="assistant_pd" class="ms2-input"
-                                   value="{{ $trainer->assistant_pd }}" placeholder="Assistant PD full name">
+                                   value="{{ $pd->assistant_pd }}" placeholder="Assistant PD full name">
                         </div>
                     </div>
 
@@ -128,7 +128,7 @@
                             <div class="ms2-input-group">
                                 <i class="fas fa-envelope"></i>
                                 <input type="email" name="assistant_email" class="ms2-input"
-                                       value="{{ $trainer->assistant_email }}" placeholder="assistant@hospital.org">
+                                       value="{{ $pd->assistant_email }}" placeholder="assistant@hospital.org">
                             </div>
                         </div>
                         <div class="ms2-col">
@@ -136,7 +136,7 @@
                             <div class="ms2-input-group">
                                 <i class="fas fa-mobile-alt"></i>
                                 <input type="text" name="mobile_no" class="ms2-input"
-                                       value="{{ $trainer->mobile_no }}" placeholder="+000 000 000 000">
+                                       value="{{ $pd->mobile_no }}" placeholder="+000 000 000 000">
                             </div>
                         </div>
                     </div>

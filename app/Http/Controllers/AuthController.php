@@ -106,7 +106,7 @@ class AuthController extends Controller
         $roleNames = [
             9 => 'Examiner',
             1 => 'Admin',
-            4 => 'Trainer',
+            4 => 'Programme Director',
             5 => 'Country Representative',
             7 => 'Fellow',
             8 => 'Member'
@@ -163,7 +163,7 @@ class AuthController extends Controller
             case 1: return redirect('admin/dashboard');
             case 2: return redirect('trainee/dashboard');
             case 3: return redirect('candidate/dashboard');
-            case 4: return redirect('trainer/dashboard');
+            case 4: return redirect('programme-director/dashboard');
             case 5: return redirect('country-rep/dashboard');
             case 7: return redirect('fellow/dashboard');
             case 8: return redirect('member/dashboard');

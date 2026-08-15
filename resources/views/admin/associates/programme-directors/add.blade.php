@@ -9,7 +9,7 @@
         <section class="content">
             <!-- Multi step form -->
             <section class="multi_step_form">
-                <form id="msform" method="POST" action="{{ url('admin/associates/trainers/add') }}" enctype="multipart/form-data">
+                <form id="msform" method="POST" action="{{ url('admin/associates/programme-directors/add') }}" enctype="multipart/form-data">
                     {{ csrf_field() }}
                     <!-- Tittle -->
                     <div class="tittle">

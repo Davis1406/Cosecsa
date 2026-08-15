@@ -5,11 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Trainer extends Model
+// Formerly Trainer — see ProgrammeDirectorController. Not queried directly
+// (this app reads via ApiClient, not MySQL — see CLAUDE.md); kept only for
+// parity/reference the way the old Trainer model was.
+class ProgrammeDirector extends Model
 {
     use HasFactory;
 
-    protected $table = 'trainers';
+    protected $table = 'programme_directors';
 
     protected $fillable = [
         'user_id',

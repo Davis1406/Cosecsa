@@ -273,13 +273,13 @@
                                  data-hp-id="{{ $r->id }}"
                                  data-hospital="{{ $r->hospital_name }}"
                                  data-programme="{{ $r->programme_name }}"
-                                 data-trainer-id="{{ $r->assigned_trainer_id }}"
-                                 data-name="{{ $r->assigned_trainer_name }}"
-                                 data-email="{{ $r->assigned_trainer_email }}"
-                                 data-phone="{{ $r->assigned_trainer_phone }}"
-                                 data-assistant-pd="{{ $r->assigned_trainer_assistant_pd }}"
-                                 data-assistant-email="{{ $r->assigned_trainer_assistant_email }}">
-                                <i class="fas fa-user-md text-primary mr-2"></i> {{ $r->assigned_trainer_id ? 'Edit' : 'Add' }} PD
+                                 data-pd-id="{{ $r->assigned_pd_id }}"
+                                 data-name="{{ $r->assigned_pd_name }}"
+                                 data-email="{{ $r->assigned_pd_email }}"
+                                 data-phone="{{ $r->assigned_pd_phone }}"
+                                 data-assistant-pd="{{ $r->assigned_pd_assistant_pd }}"
+                                 data-assistant-email="{{ $r->assigned_pd_assistant_email }}">
+                                <i class="fas fa-user-md text-primary mr-2"></i> {{ $r->assigned_pd_id ? 'Edit' : 'Add' }} PD
                               </a>
                               @if(count($r->reminder_emails))
                                 <div class="dropdown-divider"></div>
@@ -325,7 +325,7 @@
             <div class="modal-content">
               <form method="POST" id="pdModalForm" action="">
                 @csrf
-                <input type="hidden" name="trainer_id" id="pdTrainerId">
+                <input type="hidden" name="programme_director_id" id="pdId">
                 <div class="modal-header" style="background:#a02626;color:#fff;">
                   <h5 class="modal-title" id="pdModalTitle">Programme Director</h5>
                   <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
@@ -485,9 +485,9 @@ document.querySelectorAll('.pd-modal-trigger').forEach(function (link) {
     e.preventDefault();
     const d = this.dataset;
     document.getElementById('pdModalForm').action = "{{ url('admin/hospital/pd') }}/" + d.hpId + "/save";
-    document.getElementById('pdModalTitle').textContent = (d.trainerId ? 'Edit' : 'Add') + ' Programme Director';
+    document.getElementById('pdModalTitle').textContent = (d.pdId ? 'Edit' : 'Add') + ' Programme Director';
     document.getElementById('pdModalSubtitle').textContent = d.hospital + ' — ' + d.programme;
-    document.getElementById('pdTrainerId').value = d.trainerId || '';
+    document.getElementById('pdId').value = d.pdId || '';
     document.getElementById('pdName').value = d.name || '';
     document.getElementById('pdEmail').value = d.email || '';
     document.getElementById('pdPhone').value = d.phone || '';

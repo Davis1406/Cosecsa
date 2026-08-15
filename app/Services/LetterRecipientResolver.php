@@ -13,7 +13,8 @@ class LetterRecipientResolver
         'fellows'      => 'Fellows',
         'examiners'    => 'Examiners',
         'country_reps' => 'Country Reps',
-        'trainers'     => 'Trainers (Programme Directors)',
+        'programme_directors' => 'Programme Directors',
+        'trainers'     => 'Trainers (ToT)',
     ];
 
     public function countries()
@@ -48,6 +49,7 @@ class LetterRecipientResolver
             'fellows'      => $this->fellows($filters),
             'examiners'    => $this->examiners($filters),
             'country_reps' => $this->countryReps($filters),
+            'programme_directors' => $this->programmeDirectors($filters),
             'trainers'     => $this->trainers($filters),
             default        => collect(),
         };
@@ -196,9 +198,9 @@ class LetterRecipientResolver
         });
     }
 
-    protected function trainers(array $filters)
+    protected function programmeDirectors(array $filters)
     {
-        $q = DB::table('trainers as tr')
+        $q = DB::table('programme_directors as tr')
             ->join('users as u', 'u.id', '=', 'tr.user_id')
             ->leftJoin('hospitals as h', 'h.id', '=', 'tr.hospital_id')
             ->leftJoin('countries as co', 'co.id', '=', 'h.country_id')
@@ -212,9 +214,34 @@ class LetterRecipientResolver
 
         return $q->orderBy('u.name')->get()->map(function ($r) {
             return (object) [
-                'source' => 'trainers', 'id' => $r->id, 'user_id' => $r->user_id,
+                'source' => 'programme_directors', 'id' => $r->id, 'user_id' => $r->user_id,
                 'name' => $r->user_name, 'email' => $r->user_email,
                 'country' => $r->country_name, 'programme' => null, 'hospital' => $r->hospital_name,
+                'entry_number' => null, 'exam_year' => null, 'admission_year' => null,
+                'sfs_username' => null, 'sfs_password' => null,
+            ];
+        });
+    }
+
+    // ToT (Training of Trainers) roster — no linked User account, so
+    // user_id/sfs_* fields are always null for this source.
+    protected function trainers(array $filters)
+    {
+        $q = DB::table('trainers as tr')
+            ->leftJoin('countries as co', 'co.id', '=', 'tr.country_id')
+            ->select('tr.*', 'co.country_name');
+
+        $this->applyIn($q, 'co.id', $filters['country_id'] ?? null);
+        if (! empty($filters['search'])) {
+            $like = '%' . $filters['search'] . '%';
+            $q->where('tr.name', 'like', $like);
+        }
+
+        return $q->orderBy('tr.name')->get()->map(function ($r) {
+            return (object) [
+                'source' => 'trainers', 'id' => $r->id, 'user_id' => null,
+                'name' => $r->name, 'email' => $r->email,
+                'country' => $r->country_name, 'programme' => null, 'hospital' => $r->organisation,
                 'entry_number' => null, 'exam_year' => null, 'admission_year' => null,
                 'sfs_username' => null, 'sfs_password' => null,
             ];

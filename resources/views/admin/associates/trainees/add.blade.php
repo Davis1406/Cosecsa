@@ -73,7 +73,7 @@
                                 <option value="" disabled selected>Select Type...</option>
                                 <option value="2">Trainee</option>
                                 <option value="3">Programme Director</option>
-                                <option value="4">Trainer</option>
+                                <option value="4">Programme Director</option>
                             </select>
                         </div>
                       

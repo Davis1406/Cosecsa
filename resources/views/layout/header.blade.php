@@ -263,7 +263,8 @@ document.addEventListener('DOMContentLoaded', function () {
             { key: 'candidates',   label: 'Candidates',   icon: 'fas fa-user-check' },
             { key: 'examiners',    label: 'Examiners',    icon: 'fas fa-user-md' },
             { key: 'fellows',      label: 'Fellows',      icon: 'fas fa-award' },
-            { key: 'trainers',     label: 'Trainers',     icon: 'fas fa-chalkboard-teacher' },
+            { key: 'programme_directors', label: 'Programme Directors', icon: 'fas fa-chalkboard-teacher' },
+            { key: 'trainers',     label: 'Trainers',     icon: 'fas fa-user-tie' },
             { key: 'members',      label: 'Members',      icon: 'fas fa-id-badge' },
             { key: 'country_reps', label: 'Country Reps', icon: 'fas fa-flag' },
         ];
@@ -358,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         </li>
                         @endif
 
-                        @if (Auth::user()->hasPermission('trainees.view') || Auth::user()->hasPermission('candidates.view') || Auth::user()->hasPermission('members.view') || Auth::user()->hasPermission('fellows.view') || Auth::user()->hasPermission('trainers.view') || Auth::user()->hasPermission('country_reps.view') || Auth::user()->hasPermission('promotions.view'))
+                        @if (Auth::user()->hasPermission('trainees.view') || Auth::user()->hasPermission('candidates.view') || Auth::user()->hasPermission('members.view') || Auth::user()->hasPermission('fellows.view') || Auth::user()->hasPermission('programme_directors.view') || Auth::user()->hasPermission('trainers.view') || Auth::user()->hasPermission('country_reps.view') || Auth::user()->hasPermission('promotions.view'))
                         <li class="nav-item @if (Request::segment(2) == 'associates') menu-open @endif">
                             <a href="#" class="nav-link @if (Request::segment(2) == 'associates') active @endif">
                                 <i class="nav-icon fas fa-users"></i>
@@ -404,19 +405,28 @@ document.addEventListener('DOMContentLoaded', function () {
                                     </a>
                                 </li>
                                 @endif
-                                @if (Auth::user()->hasPermission('trainers.view') || Auth::user()->hasPermission('country_reps.view'))
-                                <li class="nav-item @if (Request::segment(3) == 'trainers' || Request::segment(3) == 'reps') menu-open @endif">
+                                @if (Auth::user()->hasPermission('programme_directors.view') || Auth::user()->hasPermission('trainers.view') || Auth::user()->hasPermission('country_reps.view'))
+                                <li class="nav-item @if (Request::segment(3) == 'programme-directors' || Request::segment(3) == 'trainers' || Request::segment(3) == 'reps') menu-open @endif">
                                     <a href="#" class="nav-link">
                                         <i class="fas fa-stethoscope nav-icon"></i>
-                                        <p>PD's & Country Reps<i class="right fas fa-angle-left"></i></p>
+                                        <p>PDs, Trainers & Country Reps<i class="right fas fa-angle-left"></i></p>
                                     </a>
                                     <ul class="nav nav-treeview">
+                                        @if (Auth::user()->hasPermission('programme_directors.view'))
+                                        <li class="nav-item">
+                                            <a href="{{ url('admin/associates/programme-directors/list') }}"
+                                                class="nav-link @if (Request::segment(3) == 'programme-directors') active @endif">
+                                                <i class="fas fa-chalkboard-teacher nav-icon"></i>
+                                                <p>Programme Directors</p>
+                                            </a>
+                                        </li>
+                                        @endif
                                         @if (Auth::user()->hasPermission('trainers.view'))
                                         <li class="nav-item">
                                             <a href="{{ url('admin/associates/trainers/list') }}"
                                                 class="nav-link @if (Request::segment(3) == 'trainers') active @endif">
-                                                <i class="fas fa-chalkboard-teacher nav-icon"></i>
-                                                <p>Programme Directors</p>
+                                                <i class="fas fa-user-tie nav-icon"></i>
+                                                <p>Trainers</p>
                                             </a>
                                         </li>
                                         @endif
