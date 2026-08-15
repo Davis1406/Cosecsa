@@ -42,18 +42,6 @@
     align-items: center;
     gap: 8px;
 }
-.trainer-view .action-name .role-tag {
-    font-size: .65rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    background: #f5e6e6;
-    color: #a02626;
-    border: 1px solid #e8c9c9;
-    border-radius: 10px;
-    padding: 2px 8px;
-    margin-left: 6px;
-}
 
 /* Action buttons — replace bootstrap blue with COSECSA red */
 .trainer-view .btn-cosecsa {
@@ -364,6 +352,83 @@
 .trainer-view .comment-box.empty { color: #aaa; font-style: italic; }
 .trainer-view .comment-box .ie-field { flex: 1; }
 
+/* ── Dark mode ──
+   The .card itself already goes dark via the site-wide body.dark-mode .card
+   rule (!important), but every custom component on this page (chips, pills,
+   cohort cards, avatar, action bar…) paints its own light background/text
+   and needs its own override, or it reads as near-black text on a near-
+   black card. Tokens match the rest of the admin (see custom.css): card bg
+   #1e2330, border #2d3748, body text #e2e8f0, muted label #9ca3af. */
+body.dark-mode .trainer-view .page-title { color: #e2e8f0; }
+
+body.dark-mode .trainer-view .admin-action-bar {
+    background: linear-gradient(180deg, #1e2330 0%, #252c3b 100%);
+    border-color: #3a2a2a;
+}
+body.dark-mode .trainer-view .action-name { color: #f87171; }
+body.dark-mode .trainer-view .action-name .text-muted { color: #8892a4 !important; }
+
+body.dark-mode .trainer-view .profile-card .card-body.head {
+    background: linear-gradient(180deg, #252c3b 0%, #1e2330 100%);
+    border-bottom-color: #2d3748;
+}
+body.dark-mode .trainer-view .trainer-name { color: #e2e8f0; }
+body.dark-mode .trainer-view .trainer-org,
+body.dark-mode .trainer-view .trainer-id-line { color: #8892a4; }
+
+body.dark-mode .trainer-view .role-pill.role-no { background: #2d3340; color: #9ca3af; border-color: #3a4152; }
+body.dark-mode .trainer-view .role-pill.role-yes { background: #16351f; color: #86e0a0; border-color: #235431; }
+body.dark-mode .trainer-view .role-pill.role-master { background: linear-gradient(180deg, #3a2f0d 0%, #4a3c10 100%); color: #f0d060; border-color: #6b551a; }
+body.dark-mode .trainer-view .role-pill.role-ss { background: linear-gradient(180deg, #16233d 0%, #1c2e4d 100%); color: #8fb4f0; border-color: #2e4a7a; }
+
+body.dark-mode .trainer-view .sect-div { color: #f87171; border-bottom-color: #3a2a2a; }
+
+body.dark-mode .trainer-view .tag-red   { background:#3a2222; color:#f0a8a8; border-color:#5a3232; }
+body.dark-mode .trainer-view .tag-gold  { background:#3a2f0d; color:#f0d060; border-color:#5a4a15; }
+body.dark-mode .trainer-view .tag-green { background:#16351f; color:#86e0a0; border-color:#235431; }
+body.dark-mode .trainer-view .tag-grey  { background:#2d3340; color:#9ca3af; border-color:#3a4152; }
+body.dark-mode .trainer-view .tag-empty { color:#6b7280; border-color:#3a4152; }
+
+body.dark-mode .trainer-view .info-row { border-bottom-color: #2d3748; }
+body.dark-mode .trainer-view .info-label { color: #6b7280; }
+body.dark-mode .trainer-view .info-text { color: #cbd5e0; }
+body.dark-mode .trainer-view .info-text a,
+body.dark-mode .trainer-view .field-val a { color: #f87171; }
+
+body.dark-mode .trainer-view .stat-chip { background: #1e2330; border-color: #2d3748; }
+body.dark-mode .trainer-view .chip-icon.bg-red   { background:#3a2222; color:#f0a8a8; }
+body.dark-mode .trainer-view .chip-icon.bg-gold  { background:#3a2f0d; color:#f0d060; }
+body.dark-mode .trainer-view .chip-icon.bg-green { background:#16351f; color:#86e0a0; }
+body.dark-mode .trainer-view .chip-icon.bg-blue  { background:#16233d; color:#8fb4f0; }
+body.dark-mode .trainer-view .chip-icon.bg-grey  { background:#2d3340; color:#9ca3af; }
+body.dark-mode .trainer-view .chip-label { color: #6b7280; }
+body.dark-mode .trainer-view .chip-val { color: #e2e8f0; }
+body.dark-mode .trainer-view .chip-sub { color: #8892a4; }
+body.dark-mode .trainer-view .chip-val.text-muted { color: #6b7280 !important; }
+
+body.dark-mode .trainer-view .field-row { border-bottom-color: #2d3748; }
+body.dark-mode .trainer-view .field-lbl { color: #9ca3af; }
+body.dark-mode .trainer-view .field-val { color: #e2e8f0; }
+body.dark-mode .trainer-view .field-val .text-muted { color: #6b7280 !important; }
+
+body.dark-mode .trainer-view .cohort-card { background: #1e2330; border-color: #2d3748; }
+body.dark-mode .trainer-view .cohort-card.tone-red   .cohort-icon { background:#3a2222; color:#f0a8a8; }
+body.dark-mode .trainer-view .cohort-card.tone-gold  .cohort-icon { background:#3a2f0d; color:#f0d060; }
+body.dark-mode .trainer-view .cohort-card.tone-green .cohort-icon { background:#16351f; color:#86e0a0; }
+body.dark-mode .trainer-view .cohort-card.tone-grey  .cohort-icon { background:#2d3340; color:#9ca3af; }
+body.dark-mode .trainer-view .cohort-card.tone-blue  .cohort-icon { background:#16233d; color:#8fb4f0; }
+body.dark-mode .trainer-view .cohort-name { color: #e2e8f0; }
+body.dark-mode .trainer-view .cohort-code { color: #6b7280; }
+
+body.dark-mode .trainer-view .empty-block {
+    background: #181c26; border-color: #2d3748; color: #6b7280;
+}
+
+body.dark-mode .trainer-view .comment-box {
+    background: #181c26; border-color: #2d3748; color: #cbd5e0;
+}
+body.dark-mode .trainer-view .comment-box.empty { color: #6b7280; }
+
 /* Print-friendly */
 @media print {
     .trainer-view .admin-action-bar .btn,
@@ -426,7 +491,7 @@
                 <div class="action-name">
                     <i class="fas fa-id-card"></i>
                     {{ $trainer->name }}
-                    <span class="role-tag">ToT Trainer · #{{ $trainer->id }}</span>
+                    <span class="text-muted font-weight-normal">(#{{ $trainer->id }})</span>
                 </div>
                 <div class="d-flex flex-wrap" style="gap:6px;">
                     <a href="{{ url('admin/associates/trainers/edit/' . $trainer->id) }}"
