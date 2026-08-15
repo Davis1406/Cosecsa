@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Data correction (2026-08-16) — Fellows specialty/programme/category corrected from college spreadsheet
+- Ran a one-off correction from `Data Correction- Fellows.xlsx` (451 rows: Name, Email, Country, Specialty, Fellowship Type, Fellowship Year) via new command `fellows:correct-from-xlsx`.
+- Matched 450/451 rows to an existing fellow (email first, then an order-independent name match; only 1 name genuinely not found in the DB, 3 total left for manual review — 2 had a specialty outside the 8 core COSECSA programmes, e.g. "Radiology"/"Oral and Maxillofacial", so only their text label was considered, not a programme link).
+- **316 fellows corrected**, mostly backfilling `programme_id` (291 — the correct specialty text was already on file, just never linked to the real `programmes` row), plus 60 Fellowship Type (category_id) fixes and a couple of specialty-text/fellowship-year corrections. `fellows.programme_id` NULLs dropped from 894 → 603.
+- Backup taken before running: `/var/backups/fellows_before_correction_xlsx_20260816_013043.sql`; full before/after audit trail: `/var/backups/fellows_correction_applied_20260816_013051.csv`.
+- **Files:** `app/Console/Commands/CorrectFellowsFromXlsx.php` (new, re-runnable with `--dry-run`/`--log=`).
+
 ### Added (2026-08-17) — Trainers page: edit/delete, hospital linking, click-through, smaller stat tiles
 - Stat tiles shrunk to a compact single-line "mini-stat" style and made clickable: Master Trainers/SS/Subspecialty tiles now toggle that slice as a live filter, Total resets everything — same underlying checkbox-filter/DataTable machinery as before, no page reload.
 - Added a proper **Edit** page (`admin/associates/trainers/edit/{id}`) and **Delete** action, following the same GET-edit/POST-update/GET-delete-with-confirm convention as the Programme Directors page. The list and detail pages' single "view" icon are now a View/Edit/Delete dropdown (matching the Programme Directors list).
