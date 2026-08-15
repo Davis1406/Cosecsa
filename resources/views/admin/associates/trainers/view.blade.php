@@ -44,7 +44,14 @@
                             </tr>
                             <tr>
                                 <th>Country Attended In</th>
-                                <td>{{ $trainer->country ?: '—' }}</td>
+                                <td>
+                                    @php $countries = collect($trainer->countries ?? []); @endphp
+                                    @forelse($countries as $c)
+                                        <span class="badge badge-light border mr-1">{{ $c->name }}</span>
+                                    @empty
+                                        {{ $trainer->country_name_raw ?: '—' }}
+                                    @endforelse
+                                </td>
                             </tr>
                             <tr>
                                 <th>Specialty</th>
@@ -58,8 +65,10 @@
                             <tr>
                                 <th>ToT Years Attended</th>
                                 <td>
-                                    @forelse($trainer->years_attended ?? [] as $year)
-                                        <span class="badge badge-secondary mr-1">{{ $year }}</span>
+                                    {{-- Full cohort names (e.g. "Pre-2019 (Master Trainer ToT)", "SS2020")
+                                         shown here only — the list page shows just the plain year. --}}
+                                    @forelse($trainer->tot_years ?? [] as $year)
+                                        <span class="badge badge-secondary mr-1">{{ $year->label_full }}</span>
                                     @empty
                                         —
                                     @endforelse

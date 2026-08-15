@@ -281,6 +281,7 @@ Route::get('admin/associates/programme-directors/delete/{id}', [ProgrammeDirecto
 
 //Trainers Route (COSECSA ToT roster — distinct from Programme Directors above)
 Route::get('admin/associates/trainers/list', [TrainerController::class,'list']);
+Route::get('admin/associates/trainers/export', [TrainerController::class,'export'])->name('trainers.export');
 Route::get('admin/associates/trainers/view/{id}',  [TrainerController::class,'view'])->name('trainers.view');
 Route::post('admin/associates/trainers/{id}/quick-update', [TrainerController::class,'quickUpdate'])->name('trainers.quick.update');
 

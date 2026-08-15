@@ -243,16 +243,20 @@ class ReportBuilderController extends Controller
                     ],
                 ];
             case 'trainers':
+                // country_name and years_attended are many-to-many
+                // (trainer_countries / trainer_tot_years) — correlated
+                // subqueries with GROUP_CONCAT rather than a join, so this
+                // stays one row per trainer like every other report type.
                 return [
                     DB::table('trainers as t')
-                        ->leftJoin('countries as co', 'co.id', '=', 't.country_id')
                         ->leftJoin('programmes as p', 'p.id', '=', 't.programme_id'),
                     [
                         'name'                 => 't.name',
                         'organisation'         => 't.organisation',
                         'email'                => 't.email',
-                        'country_name'         => 'co.country_name',
+                        'country_name'         => "IFNULL((SELECT GROUP_CONCAT(co.country_name SEPARATOR ', ') FROM trainer_countries tc JOIN countries co ON co.id = tc.country_id WHERE tc.trainer_id = t.id), t.country_name)",
                         'specialty_name'       => 'IFNULL(p.name, t.specialty_raw)',
+                        'years_attended'       => "(SELECT GROUP_CONCAT(ty.label_full ORDER BY ty.sort_order SEPARATOR ', ') FROM trainer_tot_years tty JOIN tot_years ty ON ty.id = tty.tot_year_id WHERE tty.trainer_id = t.id)",
                         'is_master_trainer'    => "IF(t.is_master_trainer=1,'Yes','No')",
                         'is_specialty_surgeon' => "IF(t.is_specialty_surgeon=1,'Yes','No')",
                         'comment'              => 't.comment',

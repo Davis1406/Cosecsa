@@ -597,6 +597,14 @@ $(document).ready(function () {
     }
   });
 
+  // ── Deep link: ?type=trainers pre-selects a category tab (e.g. linked
+  // from that roster's own list page "Export to Excel" button) instead of
+  // landing on the blank picker.
+  var preselectType = new URLSearchParams(window.location.search).get('type');
+  if (preselectType) {
+    $('.cat-tab[data-type="' + preselectType + '"]').trigger('click');
+  }
+
 });
 </script>
 @endpush

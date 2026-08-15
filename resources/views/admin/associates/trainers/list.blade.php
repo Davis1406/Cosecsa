@@ -10,9 +10,20 @@
         <!-- Content Header (Page header) -->
         <section class="content-header">
             <div class="container-fluid">
-                <div class="row mb-2">
+                <div class="row mb-2 align-items-center">
                     <div class="col-sm-6">
                         <h1 class="m-0">Trainers <small class="text-muted">COSECSA Master Trainer ToT roster</small></h1>
+                    </div>
+                    <div class="col-sm-6 text-right">
+                        <button type="button" id="btnPrint" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-print mr-1"></i>Print
+                        </button>
+                        <button type="button" id="btnExport" class="btn btn-sm" style="background-color:#FEC503;border-color:#FEC503;color:#000;">
+                            <i class="fas fa-file-excel mr-1"></i>Export CSV
+                        </button>
+                        <a href="{{ url('admin/reports?type=trainers') }}" class="btn btn-sm btn-outline-secondary" title="Build a custom field/grouping report and chart">
+                            <i class="fas fa-chart-bar mr-1"></i>College Reports
+                        </a>
                     </div>
                 </div>
             </div><!-- /.container-fluid -->
@@ -25,14 +36,61 @@
         <section class="content">
             <div class="container-wrapper">
 
-                {{-- Filter Bar --}}
+                {{-- ── Stat cards ── --}}
+                @php
+                    $total = count($getRecord);
+                    $masterCount = collect($getRecord)->where('is_master_trainer', true)->count();
+                    $ssCount = collect($getRecord)->where('is_specialty_surgeon', true)->count();
+                    $subCount = collect($getRecord)->where('is_subspecialty', true)->count();
+                @endphp
+                <div class="row" id="statCards">
+                    <div class="col-6 col-md-3">
+                        <div class="small-box" style="background:#fff;border:1px solid #eee;">
+                            <div class="inner">
+                                <h3 style="color:#a02626;">{{ $total }}</h3>
+                                <p class="mb-0 text-muted">Total Trainers</p>
+                            </div>
+                            <div class="icon"><i class="fas fa-user-tie"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="small-box" style="background:#fff;border:1px solid #eee;">
+                            <div class="inner">
+                                <h3 style="color:#28a745;">{{ $masterCount }}</h3>
+                                <p class="mb-0 text-muted">Master Trainers</p>
+                            </div>
+                            <div class="icon"><i class="fas fa-medal"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="small-box" style="background:#fff;border:1px solid #eee;">
+                            <div class="inner">
+                                <h3 style="color:#007bff;">{{ $ssCount }}</h3>
+                                <p class="mb-0 text-muted">Specialty Surgeons (SS)</p>
+                            </div>
+                            <div class="icon"><i class="fas fa-user-md"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="small-box" style="background:#fff;border:1px solid #eee;">
+                            <div class="inner">
+                                <h3 style="color:#6c757d;">{{ $subCount }}</h3>
+                                <p class="mb-0 text-muted">Subspecialty (unmatched)</p>
+                            </div>
+                            <div class="icon"><i class="fas fa-stethoscope"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ── Filter Bar ── --}}
                 @php
                 $trFilterDefs = [
-                    ['id'=>'trFilterCountry',   'label'=>'Country',   'options'=>$countries],
-                    ['id'=>'trFilterSpecialty', 'label'=>'Specialty', 'options'=>$specialties],
+                    ['id'=>'trFilterYear',      'label'=>'ToT Year',  'options'=>collect($meta->tot_years ?? [])->map(fn($y) => ['value'=>$y->id, 'label'=>$y->label_short, 'title'=>$y->label_full])],
+                    ['id'=>'trFilterCountry',   'label'=>'Country',   'options'=>collect($meta->countries ?? [])->map(fn($c) => ['value'=>$c->id, 'label'=>$c->country_name, 'title'=>$c->country_name])],
+                    ['id'=>'trFilterSpecialty', 'label'=>'Specialty', 'options'=>collect($meta->programmes ?? [])->map(fn($p) => ['value'=>$p->id, 'label'=>$p->name, 'title'=>$p->name])],
                 ];
                 @endphp
-                <div class="card card-outline card-secondary mb-2 shadow-sm">
+                <div class="card card-outline card-secondary mb-2 shadow-sm no-print">
                     <div class="card-body py-2">
                         <div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
                             @foreach($trFilterDefs as $fd)
@@ -48,9 +106,9 @@
                                     @endif
                                     <div class="chk-list">
                                         @foreach($fd['options'] as $opt)
-                                        <label class="chk-item">
-                                            <input type="checkbox" class="chk-option" data-filter="{{ $fd['id'] }}" value="{{ $opt }}">
-                                            {{ $opt }}
+                                        <label class="chk-item" title="{{ $opt['title'] }}">
+                                            <input type="checkbox" class="chk-option" data-filter="{{ $fd['id'] }}" value="{{ $opt['value'] }}">
+                                            {{ $opt['label'] }}
                                         </label>
                                         @endforeach
                                     </div>
@@ -77,7 +135,7 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Trainers ({{ count($getRecord) }})</h3>
+                                <h3 class="card-title">Trainers</h3>
                             </div>
                             <!-- /.card-header -->
                             <div class="card-body">
@@ -92,14 +150,22 @@
                                             <th>ToT Years Attended</th>
                                             <th>Master Trainer</th>
                                             <th>SS</th>
-                                            <th>Action</th>
+                                            <th class="no-print">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($getRecord as $value)
+                                        @php
+                                            $countryNames = collect($value->countries ?? [])->pluck('name');
+                                            $countryIds = collect($value->countries ?? [])->pluck('id');
+                                            $yearIds = collect($value->tot_years ?? [])->pluck('id');
+                                            $yearShorts = collect($value->tot_years ?? [])->pluck('label_short');
+                                            $specialtyIds = $value->programme_id ? [$value->programme_id] : [];
+                                        @endphp
                                         <tr class="user-row"
-                                            data-country="{{ $value->country ?? '' }}"
-                                            data-specialty="{{ $value->specialty ?? '' }}"
+                                            data-country="{{ $countryIds->implode(',') }}"
+                                            data-year="{{ $yearIds->implode(',') }}"
+                                            data-specialty="{{ implode(',', $specialtyIds) }}"
                                             data-master="{{ !empty($value->is_master_trainer) ? '1' : '0' }}">
                                             <td>{{ $value->id }}</td>
                                             <td>
@@ -108,7 +174,7 @@
                                                 </a>
                                             </td>
                                             <td>{{ $value->organisation ?: '—' }}</td>
-                                            <td>{{ $value->country ?: '—' }}</td>
+                                            <td>{{ $countryNames->isNotEmpty() ? $countryNames->implode(', ') : ($value->country_name_raw ?: '—') }}</td>
                                             <td>
                                                 {{ $value->specialty ?: '—' }}
                                                 @if(!empty($value->is_subspecialty))
@@ -116,7 +182,7 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                @forelse($value->years_attended ?? [] as $year)
+                                                @forelse($yearShorts as $year)
                                                     <span class="badge badge-secondary">{{ $year }}</span>
                                                 @empty
                                                     —
@@ -128,7 +194,7 @@
                                             <td class="text-center">
                                                 @if(!empty($value->is_specialty_surgeon))<i class="fas fa-check-circle text-success"></i>@else <span class="text-muted">—</span> @endif
                                             </td>
-                                            <td class="text-center" style="white-space:nowrap;">
+                                            <td class="text-center no-print" style="white-space:nowrap;">
                                                 <a class="btn btn-sm btn-light border" href="{{ url('admin/associates/trainers/view/' . $value->id) }}" title="View">
                                                     <i class="fas fa-eye text-info"></i>
                                                 </a>
@@ -183,18 +249,30 @@
     .chk-footer a:hover { color: #a02626; text-decoration: none; }
     .chk-filter-btn { white-space: nowrap; }
     #trtable td { vertical-align: middle; }
+    .small-box { border-radius: 8px; padding: 10px 15px; margin-bottom: 15px; position: relative; }
+    .small-box .icon { position: absolute; top: 8px; right: 12px; font-size: 32px; color: #eee; }
+    .small-box .inner h3 { font-size: 1.7rem; font-weight: 700; margin-bottom: 0; }
     .paginate_button.active>.page-link { background-color: #a02626 !important; border-color: #a02626 !important; color: white; }
     .paginate_button>.page-link { color: #a02626; }
     .paginate_button>.page-link:focus, .paginate_button.active>.page-link:focus { box-shadow: none !important; outline: none !important; }
+    @media print {
+        .main-sidebar, .main-header, .main-footer, .no-print, .content-header, .card-header,
+        #trFilteredCount, .dataTables_length, .dataTables_filter, .dataTables_paginate, .dataTables_info { display: none !important; }
+        .content-wrapper { margin-left: 0 !important; }
+        .card { border: none !important; box-shadow: none !important; }
+        table.dataTable { width: 100% !important; }
+    }
 </style>
 @endpush
 @push('scripts')
 <script>
 $(document).ready(function () {
 
+    var dt = $('#trtable').DataTable({ pageLength: 50 });
+
     function getChecked(filterId) {
         return $('.chk-option[data-filter="' + filterId + '"]:checked')
-               .map(function () { return this.value; }).get();
+               .map(function () { return String(this.value); }).get();
     }
 
     function updateBadge(filterId) {
@@ -205,7 +283,6 @@ $(document).ready(function () {
     }
 
     function redraw() {
-        var dt   = $('#trtable').DataTable();
         dt.draw();
         var info = dt.page.info();
         $('#trFilteredCount').text(
@@ -214,13 +291,21 @@ $(document).ready(function () {
         );
     }
 
+    // A row's data-country/-year/-specialty holds a comma-separated id list
+    // (a trainer can have more than one country or ToT year) — match if ANY
+    // checked filter value is present in that row's list.
+    function rowMatchesAny(rowValueCsv, checkedValues) {
+        if (!checkedValues.length) return true;
+        var rowValues = String(rowValueCsv || '').split(',');
+        return checkedValues.some(function (v) { return rowValues.indexOf(v) !== -1; });
+    }
+
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
         if (settings.nTable.id !== 'trtable') return true;
         var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
-        var chkCountry   = getChecked('trFilterCountry');
-        var chkSpecialty = getChecked('trFilterSpecialty');
-        if (chkCountry.length   && chkCountry.indexOf(String($row.data('country')     || '')) === -1) return false;
-        if (chkSpecialty.length && chkSpecialty.indexOf(String($row.data('specialty') || '')) === -1) return false;
+        if (!rowMatchesAny($row.data('year'),      getChecked('trFilterYear')))      return false;
+        if (!rowMatchesAny($row.data('country'),   getChecked('trFilterCountry')))   return false;
+        if (!rowMatchesAny($row.data('specialty'), getChecked('trFilterSpecialty'))) return false;
         if ($('#trFilterMaster').is(':checked') && String($row.data('master')) !== '1') return false;
         return true;
     });
@@ -266,6 +351,19 @@ $(document).ready(function () {
         $('.chk-badge').hide();
         redraw();
         $('#trFilteredCount').text('');
+    });
+
+    $('#btnPrint').on('click', function () { window.print(); });
+
+    // Export respects whatever's currently checked, as real query params —
+    // the server-side export endpoint applies the same filters.
+    $('#btnExport').on('click', function () {
+        var params = new URLSearchParams();
+        getChecked('trFilterYear').forEach(function (v) { params.append('tot_year_id[]', v); });
+        getChecked('trFilterCountry').forEach(function (v) { params.append('country_id[]', v); });
+        getChecked('trFilterSpecialty').forEach(function (v) { params.append('programme_id[]', v); });
+        if ($('#trFilterMaster').is(':checked')) params.append('master_only', '1');
+        window.location = "{{ url('admin/associates/trainers/export') }}?" + params.toString();
     });
 });
 </script>

@@ -225,13 +225,19 @@ class LetterRecipientResolver
 
     // ToT (Training of Trainers) roster — no linked User account, so
     // user_id/sfs_* fields are always null for this source.
+    // Country is a many-to-many (trainer_countries) — GROUP_CONCAT via
+    // subquery rather than a join, so this stays one row per trainer.
     protected function trainers(array $filters)
     {
         $q = DB::table('trainers as tr')
-            ->leftJoin('countries as co', 'co.id', '=', 'tr.country_id')
-            ->select('tr.*', 'co.country_name');
+            ->select('tr.*', DB::raw("IFNULL((SELECT GROUP_CONCAT(co.country_name SEPARATOR ', ') FROM trainer_countries tcty JOIN countries co ON co.id = tcty.country_id WHERE tcty.trainer_id = tr.id), tr.country_name) as country_name"));
 
-        $this->applyIn($q, 'co.id', $filters['country_id'] ?? null);
+        if (! empty($filters['country_id'])) {
+            $ids = array_filter((array) $filters['country_id']);
+            if (! empty($ids)) {
+                $q->whereIn('tr.id', fn ($sub) => $sub->select('trainer_id')->from('trainer_countries')->whereIn('country_id', $ids));
+            }
+        }
         if (! empty($filters['search'])) {
             $like = '%' . $filters['search'] . '%';
             $q->where('tr.name', 'like', $like);

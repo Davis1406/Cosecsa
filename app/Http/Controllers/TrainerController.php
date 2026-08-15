@@ -13,33 +13,19 @@ class TrainerController extends Controller
 {
     public function __construct(private ApiClient $api) {}
 
-    public function list(Request $request)
+    // Fetches the full roster unfiltered — the list page filters client-side
+    // (checkbox filters over the DataTable, like the Programme Directors and
+    // other roster pages) so switching filters is instant with no reload.
+    // export() below re-applies whatever's checked as real query params so
+    // the download matches what's on screen.
+    public function list()
     {
         $response = $this->api->get('trainers/list-data');
         $data = $response->object();
-        $trainers = collect($data->trainers ?? []);
-
-        if ($request->filled('search')) {
-            $search = strtolower($request->string('search'));
-            $trainers = $trainers->filter(fn ($t) => str_contains(strtolower($t->name ?? ''), $search)
-                || str_contains(strtolower($t->organisation ?? ''), $search)
-                || str_contains(strtolower($t->email ?? ''), $search));
-        }
-        if ($request->filled('country')) {
-            $trainers = $trainers->filter(fn ($t) => $t->country === $request->string('country'));
-        }
-        if ($request->filled('specialty')) {
-            $trainers = $trainers->filter(fn ($t) => $t->specialty === $request->string('specialty'));
-        }
-        if ($request->boolean('master_only')) {
-            $trainers = $trainers->filter(fn ($t) => ! empty($t->is_master_trainer));
-        }
 
         return view('admin.associates.trainers.list', [
-            'getRecord'    => $trainers->values(),
-            'countries'    => collect($data->trainers ?? [])->pluck('country')->filter()->unique()->sort()->values(),
-            'specialties'  => collect($data->trainers ?? [])->pluck('specialty')->filter()->unique()->sort()->values(),
-            'filters'      => $request->only(['search', 'country', 'specialty', 'master_only']),
+            'getRecord'    => collect($data->trainers ?? []),
+            'meta'         => $data->meta ?? (object) ['tot_years' => [], 'countries' => [], 'programmes' => []],
             'header_title' => 'Trainers List',
         ]);
     }
@@ -66,5 +52,17 @@ class TrainerController extends Controller
         ]);
 
         return response()->json($response->json(), $response->status());
+    }
+
+    // Streams the API's CSV straight through to the browser — respects
+    // whatever's currently filtered on the list page (same query params).
+    public function export(Request $request)
+    {
+        $response = $this->api->get('trainers/export', $request->only(['search', 'country_id', 'tot_year_id', 'programme_id', 'master_only']));
+
+        return response($response->body(), 200, [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="cosecsa-trainers-' . now()->format('Ymd_His') . '.csv"',
+        ]);
     }
 }

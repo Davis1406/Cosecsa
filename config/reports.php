@@ -115,13 +115,15 @@ return [
                 'email'                => 'Email',
                 'country_name'         => 'Country Attended In',
                 'specialty_name'       => 'Specialty',
+                'years_attended'       => 'ToT Years Attended',
                 'is_master_trainer'    => 'Master Trainer',
                 'is_specialty_surgeon' => 'SS',
                 'comment'              => 'Comment',
             ],
-            'filters' => [
-                'country_id' => ['label' => 'Country', 'source' => 'countries'],
-            ],
+            // Country/year/specialty filtering lives on the Trainers page
+            // itself (proper many-to-many filters) — this type is for
+            // field selection + export, not filtering.
+            'filters' => [],
             'group_by' => ['country_name', 'specialty_name'],
         ],
         'country_reps' => [
