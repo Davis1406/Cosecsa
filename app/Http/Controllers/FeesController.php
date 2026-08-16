@@ -47,9 +47,6 @@ class FeesController extends Controller
             'status'         => $filters['status'] ?? null,
             'year'           => $filters['year'] ?? date('Y'),
             'years'          => collect($data->years ?? []),
-            'totalCollected' => $data->total_collected ?? 0,
-            'totalDue'       => $data->total_due ?? 0,
-            'paidCount'      => $data->paid_count ?? 0,
         ]);
     }
 

@@ -6,13 +6,6 @@
 <style>
     .fee-hero { background:linear-gradient(135deg,#a02626 0%,#7a1f1f 100%); border-radius:10px;
                 padding:20px 24px; color:#fff; margin-bottom:1.2rem; }
-    .stat-chip { display:inline-flex; flex-direction:column; align-items:center;
-                 background:#fff; border:1px solid #e9ecef; border-radius:8px;
-                 padding:10px 18px; min-width:130px; text-align:center; }
-    .stat-chip .lbl { font-size:.66rem; color:#999; text-transform:uppercase; letter-spacing:.04em; }
-    .stat-chip .val { font-size:1.2rem; font-weight:700; color:#222; }
-    body.dark-mode .stat-chip { background:#374151; border-color:#4a5568; }
-    body.dark-mode .stat-chip .val { color:#e0e0e0; }
 
     .entity-link { color:#a02626; font-weight:500; text-decoration:none; }
     .entity-link:hover { color:#a02626; text-decoration:underline; }
@@ -57,15 +50,6 @@
                         </div>
                     </div>
                 </div>
-
-                {{-- Stat chips row (Total Collected/Outstanding/Paid/Total Records) hidden at Davis's request — 2026-08-16 --}}
-                <div class="d-flex flex-wrap mb-3 d-none" style="gap:.75rem;">
-                    <div class="stat-chip"><span class="lbl">Total Collected</span><span class="val">${{ number_format($totalCollected, 2) }}</span></div>
-                    <div class="stat-chip"><span class="lbl">Outstanding</span><span class="val">${{ number_format($totalDue, 2) }}</span></div>
-                    <div class="stat-chip"><span class="lbl">Paid Records</span><span class="val">{{ number_format($paidCount) }}</span></div>
-                    <div class="stat-chip"><span class="lbl">Total Records</span><span class="val">{{ number_format($log->count()) }}</span></div>
-                </div>
-
 
                 {{-- ── Record Payment (collapsed behind a + button) ── --}}
                 <div class="card fee-card mt-3">

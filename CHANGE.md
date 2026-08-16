@@ -8,9 +8,12 @@
 - `public/dist/js/custom.js` still had its DataTable init block targeting `#trainerstable` — the table's id before Programme Directors and the ToT Trainers roster were split into separate tables/pages. The PD list table (`#pdtable`) was left with no matching block, so on page load it rendered as a bare, un-enhanced HTML table (no paging/search/sort/export buttons/stateSave, and none of the dropdown-menu-survives-redraw fix the other roster tables get) until a filter checkbox lazily auto-inited it with zero options. Renamed the block to `#pdtable`, kept the same columns/buttons/loader/dropdown-reinit config used by every other roster table.
 - **Files:** `public/dist/js/custom.js`.
 
+### Removed (2026-08-16) — Fees page: removed the Total Collected / Outstanding / Paid Records / Total Records stat row
+- Fully removed the stat-chip row (previously hidden behind `d-none`) from `admin/fees` at Davis's request — deleted the markup, its now-unused `.stat-chip` CSS in that page, and the dead `totalCollected`/`totalDue`/`paidCount` view data in `FeesController::manage()`.
+- **Files:** `resources/views/admin/fees/manage.blade.php`, `app/Http/Controllers/FeesController.php`.
+
 ### Fixed (2026-08-17) — Fees page: payer name link color, hid the top stat row
 - `admin/fees` payer-name links were plain Bootstrap blue instead of the COSECSA red used everywhere else — added the `.entity-link` class/style (same pattern as every other associate list page).
-- Hidden the Total Collected / Outstanding / Paid Records / Total Records stat-chip row at Davis's request (kept in the markup behind `d-none`, easy to bring back).
 - **Files:** `resources/views/admin/fees/manage.blade.php`.
 
 ### Added (2026-08-17) — Draft Emails: full associate-group targeting + custom recipient lists
