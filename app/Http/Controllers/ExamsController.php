@@ -867,6 +867,28 @@ class ExamsController extends Controller
         ]);
     }
 
+    public function destroyTestResult(Request $request, $specialty, $id)
+    {
+        $response = $this->api->delete('exam-results/test/' . rawurlencode($specialty) . '/' . $id);
+
+        if ($response->failed()) {
+            return redirect()->back()->with('error', $response->json('message') ?? 'Failed to delete test result.');
+        }
+
+        return redirect()->back()->with('success', $response->json('message') ?? 'Test result deleted.');
+    }
+
+    public function destroyAllTestResults(Request $request)
+    {
+        $response = $this->api->delete('exam-results/test');
+
+        if ($response->failed()) {
+            return redirect()->back()->with('error', $response->json('message') ?? 'Failed to delete test results.');
+        }
+
+        return redirect()->back()->with('success', $response->json('message') ?? 'All test results deleted.');
+    }
+
     public function gsResults(Request $request)
     {
         $response = $this->api->get('exam-results/gs', $request->only(['year_id']));

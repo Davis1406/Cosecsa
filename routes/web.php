@@ -399,6 +399,8 @@ Route::get('admin/exams/overall_results', [ExamsController::class,'overallResult
 Route::get('admin/exams/exam_results', [ExamsController::class,'adminResults']);
 Route::get('admin/exams/gs_results', [ExamsController::class,'gsResults']);
 Route::get('admin/exams/test_results', [ExamsController::class,'testResults']); // Examiner App test clone — expires 2026-08-20
+Route::post('admin/exams/test_results/{specialty}/{id}/destroy', [ExamsController::class, 'destroyTestResult'])->name('test_results.destroy.record');
+Route::post('admin/exams/test_results/destroy', [ExamsController::class, 'destroyAllTestResults'])->name('test_results.destroy.all');
 Route::get('admin/exams/station_results/{candidate_id}/{station_id}', [ExamsController::class, 'viewCandidateStationResult']);
 Route::get('admin/exams/gs_station_results/{candidate_id}/{station_id}', [ExamsController::class, 'viewGsStationResult']);
 // FCS Programme Results

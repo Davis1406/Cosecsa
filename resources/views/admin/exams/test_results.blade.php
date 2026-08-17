@@ -28,8 +28,13 @@
                         </div>
 
                         <div class="card">
-                            <div class="card-header">
+                            <div class="card-header d-flex align-items-center justify-content-between">
                                 <h3 class="card-title mb-0">{{ $header_title }}</h3>
+                                @if(!$results->isEmpty())
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDeleteAll()">
+                                    <i class="fas fa-trash-alt mr-1"></i>Delete All
+                                </button>
+                                @endif
                             </div>
 
                             <div class="card-body">
@@ -55,6 +60,7 @@
                                                 <th>Overall</th>
                                                 <th style="max-width:220px;">Remarks</th>
                                                 <th>Submitted</th>
+                                                <th class="text-center" data-orderable="false">Delete</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -78,10 +84,20 @@
                                                 <td>{{ $r->overall ?? '—' }}</td>
                                                 <td style="max-width:220px;white-space:normal;word-break:break-word;">{{ $r->remarks ?? '' }}</td>
                                                 <td style="white-space:nowrap;">{{ $r->created_at }}</td>
+                                                <td class="text-center">
+                                                    <form method="POST"
+                                                          action="{{ route('test_results.destroy.record', [$r->specialty, $r->id]) }}"
+                                                          onsubmit="return confirm('Delete this test result ({{ addslashes($r->candidate_code) }}, {{ addslashes($r->specialty) }})?')">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-xs btn-outline-danger" title="Delete" style="padding:2px 7px;">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
                                             </tr>
                                             @empty
                                             <tr>
-                                                <td colspan="10" class="text-center text-muted">
+                                                <td colspan="11" class="text-center text-muted">
                                                     No test submissions yet. Have an examiner log into the
                                                     test build of the Examiner App and mark a candidate.
                                                 </td>
@@ -99,12 +115,23 @@
     </div>
 </div>
 
+{{-- Hidden delete-all form --}}
+<form id="deleteAllForm" method="POST" action="{{ route('test_results.destroy.all') }}" style="display:none;">
+    @csrf
+</form>
+
 @endsection
 
 @push('scripts')
 <script>
 $(document).ready(function () {
-    $('#testresultstable').DataTable({ order: [[9, 'desc']] });
+    $('#testresultstable').DataTable({ order: [[9, 'desc']], columnDefs: [{ orderable: false, targets: -1 }] });
 });
+
+function confirmDeleteAll() {
+    if (confirm('Delete ALL test results? This clears every specialty in the Examiner App test clone and cannot be undone.')) {
+        $('#deleteAllForm').submit();
+    }
+}
 </script>
 @endpush
