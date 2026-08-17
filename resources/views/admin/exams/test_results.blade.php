@@ -33,45 +33,59 @@
                             </div>
 
                             <div class="card-body">
-                                <table id="testresultstable" class="table table-bordered table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>Specialty</th>
-                                            <th>Candidate ID</th>
-                                            <th>Group</th>
-                                            <th>Examiner</th>
-                                            <th>Station</th>
-                                            <th>Format</th>
-                                            <th>Total</th>
-                                            <th>Overall</th>
-                                            <th>Remarks</th>
-                                            <th>Submitted</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse ($results as $r)
-                                        <tr>
-                                            <td>{{ $r->specialty }}</td>
-                                            <td>{{ $r->candidate_code }}</td>
-                                            <td>{{ $r->group_name }}</td>
-                                            <td>{{ $r->examiner_name }}</td>
-                                            <td>{{ $r->station_id }}</td>
-                                            <td>{{ $r->exam_format ?? '—' }}</td>
-                                            <td>{{ $r->total }}</td>
-                                            <td>{{ $r->overall ?? '—' }}</td>
-                                            <td>{{ $r->remarks ?? '' }}</td>
-                                            <td>{{ $r->created_at }}</td>
-                                        </tr>
-                                        @empty
-                                        <tr>
-                                            <td colspan="10" class="text-center text-muted">
-                                                No test submissions yet. Have an examiner log into the
-                                                test build of the Examiner App and mark a candidate.
-                                            </td>
-                                        </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
+                                <p class="text-muted small mb-2">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    General Surgery and MCS have a single format (no Clinical/Viva
+                                    split) by design — their Format column always reads
+                                    <strong>N/A</strong>, that's expected, not missing data.
+                                </p>
+                                <div class="table-responsive">
+                                    <table id="testresultstable" class="table table-bordered table-striped" style="min-width:900px;">
+                                        <thead>
+                                            <tr>
+                                                <th>Specialty</th>
+                                                <th>Candidate ID</th>
+                                                <th>Group</th>
+                                                <th>Examiner</th>
+                                                <th>Station</th>
+                                                <th>Format</th>
+                                                <th>Total</th>
+                                                <th>Overall</th>
+                                                <th style="max-width:220px;">Remarks</th>
+                                                <th>Submitted</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @forelse ($results as $r)
+                                            <tr>
+                                                <td>{{ $r->specialty }}</td>
+                                                <td>{{ $r->candidate_code }}</td>
+                                                <td>{{ $r->group_name }}</td>
+                                                <td>{{ $r->examiner_name }}</td>
+                                                <td>{{ $r->station_id }}</td>
+                                                <td>
+                                                    @if (is_null($r->exam_format))
+                                                        <span class="text-muted">N/A</span>
+                                                    @else
+                                                        {{ ucfirst($r->exam_format) }}
+                                                    @endif
+                                                </td>
+                                                <td>{{ $r->total }}</td>
+                                                <td>{{ $r->overall ?? '—' }}</td>
+                                                <td style="max-width:220px;white-space:normal;word-break:break-word;">{{ $r->remarks ?? '' }}</td>
+                                                <td style="white-space:nowrap;">{{ $r->created_at }}</td>
+                                            </tr>
+                                            @empty
+                                            <tr>
+                                                <td colspan="10" class="text-center text-muted">
+                                                    No test submissions yet. Have an examiner log into the
+                                                    test build of the Examiner App and mark a candidate.
+                                                </td>
+                                            </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
