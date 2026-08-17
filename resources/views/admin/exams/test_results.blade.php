@@ -36,8 +36,10 @@
                                 <p class="text-muted small mb-2">
                                     <i class="fas fa-info-circle mr-1"></i>
                                     General Surgery and MCS have a single format (no Clinical/Viva
-                                    split) by design — their Format column always reads
-                                    <strong>N/A</strong>, that's expected, not missing data.
+                                    split) by design. General Surgery is always run as Clinical, so
+                                    its Format column reads <strong>Clinical</strong>; MCS has no
+                                    equivalent real-world label so it reads <strong>N/A</strong> —
+                                    both are expected, not missing data.
                                 </p>
                                 <div class="table-responsive">
                                     <table id="testresultstable" class="table table-bordered table-striped" style="min-width:900px;">
@@ -64,7 +66,9 @@
                                                 <td>{{ $r->examiner_name }}</td>
                                                 <td>{{ $r->station_id }}</td>
                                                 <td>
-                                                    @if (is_null($r->exam_format))
+                                                    @if (is_null($r->exam_format) && $r->specialty === 'General Surgery')
+                                                        Clinical
+                                                    @elseif (is_null($r->exam_format))
                                                         <span class="text-muted">N/A</span>
                                                     @else
                                                         {{ ucfirst($r->exam_format) }}
