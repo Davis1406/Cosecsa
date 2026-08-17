@@ -854,6 +854,19 @@ class ExamsController extends Controller
         ]);
     }
 
+    // Examiner App test-clone results — temporary, expires 2026-08-20.
+    // See cosecsa-api's TESTING.md.
+    public function testResults(Request $request)
+    {
+        $response = $this->api->get('exam-results/test');
+        $d = $response->object();
+
+        return view('admin.exams.test_results', [
+            'header_title' => 'Examiner App — Test Results',
+            'results'      => collect($d->results ?? []),
+        ]);
+    }
+
     public function gsResults(Request $request)
     {
         $response = $this->api->get('exam-results/gs', $request->only(['year_id']));

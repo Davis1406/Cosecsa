@@ -642,6 +642,15 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 <p>FCS Neurosurgery</p>
                                             </a>
                                         </li>
+
+                                        <!-- Examiner App test-clone results (temporary, expires 2026-08-20) -->
+                                        <li class="nav-item">
+                                            <a href="{{ url('admin/exams/test_results') }}"
+                                               class="nav-link @if (Request::segment(3) == 'test_results') active @endif">
+                                                <i class="fas fa-flask nav-icon"></i>
+                                                <p>Test Results <span class="badge badge-warning ml-1">TEST</span></p>
+                                            </a>
+                                        </li>
                                     </ul>
                                 </li>
                             </ul>
