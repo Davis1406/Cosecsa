@@ -279,7 +279,8 @@ $(function () {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
-    // Fellows — #(0) Name(1) Email(2) Country(3) Specialty(4) Type(5) Year(6) Action(7)
+    // Fellows — #(0) Name(1) Email(2) Country(3) Specialty(4) Type(5) Year(6)
+    //           Hospital/Organisation(7) Action(8)
     // ═══════════════════════════════════════════════════════════════════════════════
     if ($("#fellowstable").length) {
         showLoader("fellowstable");
@@ -291,12 +292,12 @@ $(function () {
             "buttons": [
                 { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
                   className: "btn btn-success btn-sm", title: "Fellows List",
-                  exportOptions: { columns: [1,2,3,4,5,6] } },
+                  exportOptions: { columns: [1,2,3,4,5,6,7] } },
                 { extend: "pdfHtml5", text: '<i class="fas fa-file-pdf mr-1"></i> PDF',
                   className: "btn btn-danger btn-sm", title: "Fellows List",
-                  orientation: "landscape", pageSize: "A4", exportOptions: { columns: [1,2,3,4,5,6] } },
+                  orientation: "landscape", pageSize: "A4", exportOptions: { columns: [1,2,3,4,5,6,7] } },
                 { extend: "print", text: '<i class="fas fa-print mr-1"></i> Print',
-                  className: "btn btn-secondary btn-sm", exportOptions: { columns: [1,2,3,4,5,6] } },
+                  className: "btn btn-secondary btn-sm", exportOptions: { columns: [1,2,3,4,5,6,7] } },
                 { extend: "colvis", text: '<i class="fas fa-columns mr-1"></i> Columns',
                   className: "btn btn-outline-secondary btn-sm" }
             ],
@@ -304,6 +305,10 @@ $(function () {
                 { "visible": true,  "orderable": false, "searchable": false },
                 { "visible": true  }, { "visible": true  }, { "visible": true  },
                 { "visible": true  }, { "visible": true  }, { "visible": true  },
+                // Hospital/Organisation — off by default (extra subquery per
+                // row, and not everyone needs it); staff can turn it on via
+                // the Columns button.
+                { "visible": false },
                 { "visible": true,  "orderable": false, "searchable": false }
             ],
             "initComplete": function () { hideLoader("fellowstable"); },
