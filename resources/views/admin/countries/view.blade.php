@@ -289,3 +289,16 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+$(function () {
+    // Deep-link support: /admin/countries/view/{id}#ct-hospitals etc.
+    // opens straight to that tab (used by the "Quick Actions" panel on the Countries list).
+    var hash = window.location.hash;
+    if (hash && $('#cTabs a[href="' + hash + '"]').length) {
+        $('#cTabs a[href="' + hash + '"]').tab('show');
+    }
+});
+</script>
+@endpush

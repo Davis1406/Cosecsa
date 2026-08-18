@@ -23,6 +23,7 @@ $response->headers->set('Content-Security-Policy',
     "style-src 'self' {$cspOrigin} 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com https://code.ionicframework.com https://speedcf.cloudflareaccess.com; " .
     "font-src 'self' {$cspOrigin} https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.ionicframework.com; " .
     "img-src 'self' {$cspOrigin} data: https:; " .
+    "connect-src 'self' {$cspOrigin} https://cdn.jsdelivr.net; " .
     "object-src 'none'; " .
     "frame-ancestors 'self' {$cspOrigin};"
 );
