@@ -194,23 +194,30 @@
                     @endif
                 </span>
             </div>
-            <div class="d-flex flex-wrap" style="gap:6px;">
+            <div class="d-flex flex-wrap align-items-center" style="gap:6px;">
+                <a href="{{ url('admin/associates/fellows/list') }}"
+                   class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-arrow-left mr-1"></i> Back
+                </a>
                 <a href="{{ url('admin/associates/fellows/edit/' . $fellow->fellow_id) }}"
                    class="btn btn-sm btn-warning">
                     <i class="fas fa-edit mr-1"></i> Edit Fellow
                 </a>
-                <a href="{{ url('admin/associates/fellows/subscriptions/' . $fellow->fellow_id) }}"
-                   class="btn btn-sm btn-info">
-                    <i class="fas fa-receipt mr-1"></i> Subscriptions
-                </a>
                 @include('admin._impersonate_button', ['userId' => $fellow->user_id ?? null])
-                <button type="button" class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#addRoleModal">
-                    <i class="fas fa-user-plus mr-1"></i> Add Role
-                </button>
-                <a href="{{ url('admin/associates/fellows/list') }}"
-                   class="btn btn-sm btn-secondary">
-                    <i class="fas fa-arrow-left mr-1"></i> Back to List
-                </a>
+                <div class="dropdown">
+                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v mr-1"></i> More
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                        <a class="dropdown-item" href="{{ url('admin/associates/fellows/subscriptions/' . $fellow->fellow_id) }}">
+                            <i class="fas fa-receipt text-info mr-2"></i> Subscriptions
+                        </a>
+                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#addRoleModal">
+                            <i class="fas fa-user-plus text-danger mr-2"></i> Add Role
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -445,7 +452,15 @@
                         @if($fellow->email ?? null)
                         <div class="info-row">
                             <span class="info-icon"><i class="fas fa-envelope"></i></span>
-                            <span><span class="info-label">Login Email</span><span class="info-text">{{ $fellow->email }}</span></span>
+                            <span><span class="info-label">Login Email</span>
+                                <span class="ie-field" data-ie="email" data-ie-type="email"
+                                      data-ie-value="{{ $fellow->email }}"
+                                      data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="info-text ie-value">{{ $fellow->email }}</span>
+                                    <button class="ie-pencil" type="button" title="Edit login email"><i class="fas fa-pen"></i></button>
+                                </span>
+                            </span>
                         </div>
                         @endif
                         @if($fellow->personal_email)
@@ -589,7 +604,15 @@
                         @endif
 
                         <p class="sect-div">Contact</p>
-                        <div class="field-row"><span class="field-lbl">Login Email</span><span class="field-val">{{ $fellow->email ?? '—' }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Login Email</span>
+                            <span class="field-val ie-field" data-ie="email" data-ie-type="email"
+                                  data-ie-value="{{ $fellow->email ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->email ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit login email"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                         @if($fellow->personal_email && $fellow->personal_email !== ($fellow->email ?? ''))
                         <div class="field-row"><span class="field-lbl">Personal Email</span>
                             <span class="field-val ie-field" data-ie="personal_email" data-ie-type="email"
@@ -601,9 +624,15 @@
                             </span>
                         </div>
                         @endif
-                        @if($fellow->second_email)
-                        <div class="field-row"><span class="field-lbl">Secondary Email</span><span class="field-val">{{ $fellow->second_email }}</span></div>
-                        @endif
+                        <div class="field-row"><span class="field-lbl">Secondary Email</span>
+                            <span class="field-val ie-field" data-ie="second_email" data-ie-type="email"
+                                  data-ie-value="{{ $fellow->second_email ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->second_email ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit secondary email"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
                         <div class="field-row"><span class="field-lbl">Phone</span>
                             <span class="field-val ie-field" data-ie="phone_number" data-ie-type="text"
                                   data-ie-value="{{ $fellow->phone_number ?? '' }}"
@@ -637,18 +666,28 @@
                         @endif
 
                         <p class="sect-div">Professional</p>
+                        @php
+                            $specialtyOptsMap = $fellowProgrammes->pluck('name','name');
+                        @endphp
                         <div class="field-row"><span class="field-lbl">Specialty</span>
-                            <span class="field-val ie-field" data-ie="current_specialty" data-ie-type="text"
+                            <span class="field-val ie-field" data-ie="current_specialty" data-ie-type="select"
+                                  data-ie-searchable="1" data-ie-tags="1"
                                   data-ie-value="{{ $fellow->current_specialty ?? '' }}"
+                                  data-ie-options="{{ json_encode($specialtyOptsMap) }}"
                                   data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
                                   data-ie-csrf="{{ csrf_token() }}">
                                 <span class="ie-value">{{ $fellow->current_specialty ?? '—' }}</span>
                                 <button class="ie-pencil" type="button" title="Edit specialty"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
+                        @php
+                            $hospitalOptsMap = $fellowHospitals->pluck('name','name');
+                        @endphp
                         <div class="field-row"><span class="field-lbl">Hospital / Organisation</span>
-                            <span class="field-val ie-field" data-ie="organization" data-ie-type="text"
+                            <span class="field-val ie-field" data-ie="organization" data-ie-type="select"
+                                  data-ie-searchable="1" data-ie-tags="1"
                                   data-ie-value="{{ $fellow->organization ?? '' }}"
+                                  data-ie-options="{{ json_encode($hospitalOptsMap) }}"
                                   data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
                                   data-ie-csrf="{{ csrf_token() }}">
                                 <span class="ie-value">{{ $fellow->organization ?? '—' }}</span>
@@ -685,8 +724,10 @@
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Fellowship Type</span>
-                            <span class="field-val ie-field" data-ie="fellowship_type" data-ie-type="text"
-                                  data-ie-value="{{ $fellow->fellowship_type ?? '' }}"
+                            <span class="field-val ie-field" data-ie="category_id" data-ie-type="select"
+                                  data-ie-searchable="1"
+                                  data-ie-value="{{ $fellow->category_id ?? '' }}"
+                                  data-ie-options="{{ json_encode($fellowCategories->pluck('category_name','id')) }}"
                                   data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
                                   data-ie-csrf="{{ csrf_token() }}">
                                 <span class="ie-value">{{ $fellow->fellowship_type ?? '—' }}</span>

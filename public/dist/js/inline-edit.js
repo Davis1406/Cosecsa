@@ -18,8 +18,15 @@
  *   data-ie-options  – JSON map of {value: label} for select fields
  *   data-ie-url      – AJAX POST endpoint (must accept field + value)
  *   data-ie-csrf     – CSRF token
- *   data-ie-label    – human label for the popover title (optional)
- *   data-ie-readonly – if present, field is display-only (no edit)
+ *   data-ie-label      – human label for the popover title (optional)
+ *   data-ie-readonly   – if present, field is display-only (no edit)
+ *   data-ie-searchable – for type=select: render as a searchable select2
+ *                        dropdown instead of a plain native <select>
+ *   data-ie-tags       – for type=select + data-ie-searchable: also let
+ *                        staff type a value that isn't in data-ie-options
+ *                        (e.g. free-text fields being migrated to a
+ *                        canonical list — existing values that don't match
+ *                        anything in the list stay editable/selectable)
  */
 
 (function () {
@@ -52,7 +59,19 @@
             if (typeof opts === 'string') {
                 try { opts = JSON.parse(opts); } catch (e) { opts = {}; };
             }
-            html = '<select class="ie-editor-select" data-ie-editor>';
+            var searchable = $field.data('ie-searchable');
+            html = '<select class="ie-editor-select" data-ie-editor' + (searchable ? ' style="width:100%"' : '') + '>';
+            html += '<option value=""></option>';
+            // For tag-style fields the current value may be free text that
+            // doesn't appear in data-ie-options (e.g. pre-existing data that
+            // predates a canonical list) — keep it selectable rather than
+            // silently losing it the moment the popover opens.
+            if ($field.data('ie-tags') && current && !Object.prototype.hasOwnProperty.call(opts, current)) {
+                var hasMatchingValue = Object.keys(opts).some(function (k) { return String(opts[k]) === current; });
+                if (!hasMatchingValue) {
+                    html += '<option value="' + escapeHtml(current) + '" selected>' + escapeHtml(current) + '</option>';
+                }
+            }
             $.each(opts, function (val, label) {
                 var selected = String(val) === current ? ' selected' : '';
                 html += '<option value="' + escapeHtml(String(val)) + '"' + selected + '>' + escapeHtml(String(label)) + '</option>';
@@ -129,8 +148,32 @@
         positionPopover($pop, $field);
         $pop.show();
 
-        // Focus the input
-        $pop.find('[data-ie-editor]').focus();
+        // Searchable select (data-ie-searchable) — upgrade the plain
+        // <select> to select2. dropdownParent must be the popover itself:
+        // it's appended straight to <body> and can be repositioned/removed
+        // at any time, so select2's default (attaching to <body> globally)
+        // would leave a stray dropdown behind. tags:true (data-ie-tags)
+        // additionally lets staff type a value not in the option list.
+        if ($field.data('ie-type') === 'select' && $field.data('ie-searchable') && window.jQuery && $.fn.select2) {
+            $pop.find('.ie-editor-select').select2({
+                dropdownParent: $pop,
+                width: '100%',
+                tags: !!$field.data('ie-tags'),
+                placeholder: '— Select —',
+                allowClear: true
+            }).on('select2:open', function () {
+                // select2 steals focus into its own search box — the
+                // Enter-to-save handler below is bound to the original
+                // [data-ie-editor], so re-point it there too.
+                setTimeout(function () {
+                    var $search = document.querySelector('.select2-container--open .select2-search__field');
+                    if ($search) $search.focus();
+                }, 0);
+            });
+        } else {
+            // Focus the input (select2 fields focus their own search box instead)
+            $pop.find('[data-ie-editor]').focus();
+        }
 
         // Wire up events
         $pop.find('.ie-popover-close').on('click', hidePopover);

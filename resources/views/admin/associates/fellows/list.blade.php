@@ -125,19 +125,19 @@
                                                         + (!empty($value->third_fcs_specialty)  ? 1 : 0);
                                                     $multiSpec = $specCount > 1;
                                                 @endphp
-                                                <span style="position:relative; display:inline-block;">
-                                                    @if($multiSpec)
-                                                        <span style="
-                                                            position:absolute; top:-8px; right:-14px;
-                                                            background:#3a7a1a; color:#fff;
-                                                            border-radius:50%; width:16px; height:16px;
-                                                            font-size:.6rem; font-weight:700;
-                                                            display:flex; align-items:center; justify-content:center;
-                                                            line-height:1; z-index:1;
-                                                        " title="{{ $specCount }} FCS specialties">{{ $specCount }}</span>
-                                                    @endif
+                                                <span style="display:inline-flex; align-items:center; gap:4px;">
                                                     <a href="{{ url('admin/associates/fellows/view/' . ($value->fellow_id ?? 0)) }}"
-                                                       style="{{ $multiSpec ? 'color:#3a7a1a; font-weight:600;' : 'color:#222;' }} text-decoration:none;">{{ $value->fellow_name ?? '-' }}</a>
+                                                       style="{{ $multiSpec ? 'color:#a02626; font-weight:600;' : 'color:#222;' }} text-decoration:none;">{{ $value->fellow_name ?? '-' }}</a>
+                                                    @if($multiSpec)
+                                                        <sup style="
+                                                            background:#a02626; color:#fff;
+                                                            border-radius:50%; width:14px; height:14px;
+                                                            font-size:.6rem; font-weight:700;
+                                                            display:inline-flex; align-items:center; justify-content:center;
+                                                            line-height:1; flex-shrink:0;
+                                                        " title="{{ $specCount }} FCS specialties">{{ $specCount }}</sup>
+                                                    @endif
+                                                </span>
                                                 </span>
                                             </td>
                                             <td>{{ $value->personal_email ?? '-' }}</td>
