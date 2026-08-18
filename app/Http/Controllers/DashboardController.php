@@ -365,15 +365,18 @@ public function dashboard()
                 'url'  => url('admin/associates/reps/view/' . $r->rep_id),
             ]);
 
-        // Hospitals — excludes the per-country "Pending Assignment — Update
-        // Hospital" placeholders created by trainees:import-inactive /
-        // trainees:import-fellow-retraining to hold imported trainees whose
-        // real hospital wasn't supplied. Those aren't real accredited sites
-        // and shouldn't be searchable/countable as hospitals.
+        // Hospitals — excludes placeholder hospitals used to hold imported
+        // people whose real hospital wasn't supplied. Those aren't real
+        // accredited sites and shouldn't be searchable/countable as
+        // hospitals. Keep in sync with cosecsa-api's
+        // HospitalModel::PLACEHOLDER_NAMES.
         $hospitals = DB::table('hospitals as h')
             ->leftJoin('countries as co', 'co.id', '=', 'h.country_id')
             ->where('h.is_deleted', 0)
-            ->where('h.name', '!=', 'Pending Assignment — Update Hospital')
+            ->whereNotIn('h.name', [
+                'Pending Assignment — Update Hospital',
+                'TENTATIVE - Hospital Pending Confirmation',
+            ])
             ->where(function ($w) use ($like) {
                 $w->where('h.name', 'like', $like)
                   ->orWhere('h.contact_email', 'like', $like);

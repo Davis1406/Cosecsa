@@ -194,6 +194,19 @@ $hpFilterDefs = [
                     <td>{{ $data->expiry_date }}</td>
                     <td>
                         <span class="dot dot-{{ $statusLow }}"></span>{{ $data->status }}
+                        <button type="button" class="btn btn-xs toggle-status-btn ml-1
+                            @if($statusLow === 'expired') btn-outline-success @else btn-outline-danger @endif"
+                            data-hp-id="{{ $data->id }}"
+                            data-hospital-id="{{ $data->hospital_id }}"
+                            data-programme-id="{{ $data->programme_id }}"
+                            data-hospital="{{ $data->hospital_name }}"
+                            data-programme="{{ $data->programme_name }}"
+                            data-accredited="{{ $data->accredited_date }}"
+                            data-expiry="{{ $data->expiry_date }}"
+                            data-flag="{{ $statusLow === 'expired' ? 'expired' : 'active' }}"
+                            title="@if($statusLow === 'expired') Activate accreditation @else Mark as expired @endif">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
                     </td>
                     <td class="text-center" style="white-space:nowrap;">
                         <div class="dropdown">

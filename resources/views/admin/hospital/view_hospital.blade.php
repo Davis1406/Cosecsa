@@ -131,7 +131,19 @@
                                 <i class="fas fa-globe-africa mr-1"></i>{{ $hospital->country_name }}
                                 &nbsp;·&nbsp;
                                 @php $typeMap = [1=>'Government',2=>'NGO / Faith-Based',3=>'Private',4=>'University Teaching']; @endphp
-                                {{ $typeMap[$hospital->hospital_type] ?? 'Unknown' }}
+                                <span id="hospTypeDisplay">{{ $typeMap[$hospital->hospital_type] ?? 'Unknown' }}</span>
+                                <a href="#" id="hospTypeEditBtn" title="Edit hospital type" style="color:inherit;">
+                                    <i class="fas fa-pencil-alt ml-1" style="font-size:.75rem;"></i>
+                                </a>
+                                <span id="hospTypeEditWrap" style="display:none;">
+                                    <select id="hospTypeSelect" class="form-control form-control-sm d-inline-block" style="width:auto;display:inline-block;">
+                                        @foreach($typeMap as $val => $label)
+                                            <option value="{{ $val }}" {{ $hospital->hospital_type == $val ? 'selected' : '' }}>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    <button type="button" id="hospTypeSaveBtn" class="btn btn-sm btn-light">Save</button>
+                                    <button type="button" id="hospTypeCancelBtn" class="btn btn-sm btn-link text-white">Cancel</button>
+                                </span>
                             </div>
                         </div>
                         <div class="d-flex" style="gap:.5rem;">
@@ -641,6 +653,12 @@
                 </div>
 
                 <div class="section-divider">Assistant PD (optional)</div>
+                <div class="form-group">
+                    <label>Search Fellow for Assistant PD</label>
+                    <input type="text" class="form-control" id="editasstpd_search" placeholder="Type a name or email to fill the fields below...">
+                    <div class="list-group mt-1 d-none fp-results" id="editasstpd_results" style="max-height:160px; overflow-y:auto;"></div>
+                    <small class="text-muted">Or just type the name/email directly — Assistant PD isn't a login account, so either works.</small>
+                </div>
                 <div class="form-row">
                     <div class="form-group col-7">
                         <label>Assistant PD Name</label>
@@ -687,6 +705,29 @@ const HOSPITAL_ID = {{ $hospital->id }};
 const CSRF_TOKEN = '{{ csrf_token() }}';
 const SEARCH_URL = '{{ url("admin/associates/fellows/search") }}';
 const QUICK_CREATE_URL = '{{ url("admin/associates/fellows/quick-create") }}';
+
+// ── Inline hospital type edit ──
+$('#hospTypeEditBtn').on('click', function (e) {
+    e.preventDefault();
+    $('#hospTypeDisplay, #hospTypeEditBtn').hide();
+    $('#hospTypeEditWrap').show();
+});
+$('#hospTypeCancelBtn').on('click', function () {
+    $('#hospTypeEditWrap').hide();
+    $('#hospTypeDisplay, #hospTypeEditBtn').show();
+});
+$('#hospTypeSaveBtn').on('click', function () {
+    var $btn = $(this).prop('disabled', true).text('Saving…');
+    $.post('{{ url("admin/hospital/".$hospital->id."/quick-type") }}', {
+        _token: CSRF_TOKEN,
+        hospital_type: $('#hospTypeSelect').val(),
+    })
+        .done(function () { window.location.reload(); })
+        .fail(function (xhr) {
+            alert((xhr.responseJSON && xhr.responseJSON.message) || 'Could not update hospital type.');
+            $btn.prop('disabled', false).text('Save');
+        });
+});
 
 // ── Add Programme ──
 $('#addProgForm').on('submit', function (e) {
@@ -771,12 +812,16 @@ wireFellowPicker('pd');
 wireFellowPicker('map');
 
 // ── Assistant PD: search fellows to auto-fill the name/email fields ──
-(function () {
+// Shared by the Add PD modal (asstpd_*) and the Edit PD modal
+// (editasstpd_*) — same search-to-autofill pattern, just different target
+// name/email fields.
+function wireAssistantPdSearch(searchId, resultsId, nameFieldId, emailFieldId) {
     var timer = null;
-    $('#asstpd_search').on('input', function () {
+    var $search = $('#' + searchId);
+    var $results = $('#' + resultsId);
+    $search.on('input', function () {
         clearTimeout(timer);
         var q = $(this).val().trim();
-        var $results = $('#asstpd_results');
         if (q.length < 2) { $results.empty().addClass('d-none'); return; }
         timer = setTimeout(function () {
             $.get(SEARCH_URL, { q: q }).done(function (res) {
@@ -797,14 +842,16 @@ wireFellowPicker('map');
             });
         }, 300);
     });
-    $('#asstpd_results').on('click', '.list-group-item-action', function () {
+    $results.on('click', '.list-group-item-action', function () {
         var f = $(this).data('fellow');
-        $('#pd_assistant_pd').val(f.name);
-        $('#pd_assistant_email').val(f.personal_email || f.email || '');
-        $('#asstpd_search').val(f.name);
-        $('#asstpd_results').addClass('d-none').empty();
+        $('#' + nameFieldId).val(f.name);
+        $('#' + emailFieldId).val(f.personal_email || f.email || '');
+        $search.val(f.name);
+        $results.addClass('d-none').empty();
     });
-})();
+}
+wireAssistantPdSearch('asstpd_search', 'asstpd_results', 'pd_assistant_pd', 'pd_assistant_email');
+wireAssistantPdSearch('editasstpd_search', 'editasstpd_results', 'editpd_assistant_pd', 'editpd_assistant_email');
 
 // Re-enable submit while typing "add new fellow" fields
 $('#pd_fp_new, #map_fp_new').on('input', function () {
