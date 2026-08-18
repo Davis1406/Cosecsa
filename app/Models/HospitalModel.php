@@ -13,6 +13,15 @@ class HospitalModel extends Model
 
     protected $table ='hospitals';
 
+    // Placeholder hospitals used to hold imported people whose real hospital
+    // wasn't supplied yet — not real accredited sites, exclude from every
+    // hospital dropdown/list. Keep in sync with cosecsa-api's
+    // HospitalModel::PLACEHOLDER_NAMES.
+    const PLACEHOLDER_NAMES = [
+        'Pending Assignment — Update Hospital',
+        'TENTATIVE - Hospital Pending Confirmation',
+    ];
+
     static public function getRecord(){
         $return = HospitalModel::select('hospitals.*', 'countries.country_name as country_name')
                     ->join('countries', 'countries.id', 'hospitals.country_id')
@@ -47,6 +56,7 @@ class HospitalModel extends Model
             return HospitalModel::select('hospitals.*', 'countries.country_name as country_name')
                 ->join('countries', 'countries.id', 'hospitals.country_id')
                 ->where('hospitals.is_deleted', '=', 0)
+                ->whereNotIn('hospitals.name', self::PLACEHOLDER_NAMES)
                 ->orderBy('hospitals.name', 'asc')
                 ->get();
         });

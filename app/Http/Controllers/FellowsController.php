@@ -78,6 +78,7 @@ class FellowsController extends Controller
             'fellowCountries'    => \App\Models\Country::getCountry(),
             'fellowProgrammes'   => \App\Models\Programme::getProgramme(),
             'fellowHospitals'    => \App\Models\HospitalModel::getHospital(),
+            'fellowCategories'   => \Illuminate\Support\Facades\DB::table('categories')->orderBy('category_name')->get(),
         ]);
     }
 
@@ -177,6 +178,7 @@ class FellowsController extends Controller
         }
 
         $data['getCountry']   = \App\Models\Country::getCountry();
+        $data['getHospital']  = \App\Models\HospitalModel::getHospital();
         $data['header_title'] = 'Edit Fellow';
         $data['fellow']       = $response->object()->fellow;
 

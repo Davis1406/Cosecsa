@@ -314,13 +314,31 @@
                     <div class="ms2-row">
                         <div class="ms2-col">
                             <label class="ms2-label">Current Specialty</label>
-                            <input type="text" name="current_specialty" class="ms2-input"
-                                   value="{{ $fellow->current_specialty }}">
+                            <select name="current_specialty" class="ms2-input select2-tags" data-placeholder="Search or type a specialty…">
+                                <option value=""></option>
+                                @php $specialtyOpts = \App\Models\Programme::orderBy('name')->pluck('name'); @endphp
+                                @if($fellow->current_specialty && !$specialtyOpts->contains($fellow->current_specialty))
+                                    {{-- Existing free-text value that doesn't match a standard programme name — keep it selectable. --}}
+                                    <option value="{{ $fellow->current_specialty }}" selected>{{ $fellow->current_specialty }}</option>
+                                @endif
+                                @foreach($specialtyOpts as $s)
+                                    <option value="{{ $s }}" {{ $fellow->current_specialty==$s ? 'selected':'' }}>{{ $s }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="ms2-col">
                             <label class="ms2-label">Current Hospital / Organisation</label>
-                            <input type="text" name="organization" class="ms2-input"
-                                   value="{{ $fellow->organization }}">
+                            <select name="organization" class="ms2-input select2-tags" data-placeholder="Search or type a hospital / organisation…">
+                                <option value=""></option>
+                                @php $hospitalOpts = ($getHospital ?? collect())->pluck('name'); @endphp
+                                @if($fellow->organization && !$hospitalOpts->contains($fellow->organization))
+                                    {{-- Existing free-text value that doesn't match a real hospital record — keep it selectable. --}}
+                                    <option value="{{ $fellow->organization }}" selected>{{ $fellow->organization }}</option>
+                                @endif
+                                @foreach($hospitalOpts as $h)
+                                    <option value="{{ $h }}" {{ $fellow->organization==$h ? 'selected':'' }}>{{ $h }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
 
@@ -432,5 +450,20 @@ function goToStep(n) {
         if (line) line.style.background = j < n ? '#a02626' : '';
     }
 }
+
+// Searchable + free-text dropdowns for Current Specialty / Current Hospital.
+// tags:true lets staff either pick an existing option or type a value that
+// isn't in the list yet (both fields hold a lot of pre-existing free text
+// that doesn't cleanly match the standard programme/hospital name lists).
+// width:'100%' is needed because step 3 starts hidden (display:none via the
+// stepper) — select2 can't measure a hidden element's width on init.
+$(function () {
+    $('.select2-tags').select2({
+        tags: true,
+        width: '100%',
+        placeholder: function () { return $(this).data('placeholder') || ''; },
+        allowClear: true
+    });
+});
 </script>
 @endsection
