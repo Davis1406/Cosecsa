@@ -117,7 +117,7 @@
                 {{-- Breadcrumb --}}
                 <nav aria-label="breadcrumb" class="mb-2">
                     <ol class="breadcrumb" style="background:none;padding:0;font-size:.82rem;">
-                        <li class="breadcrumb-item"><a href="{{ url('admin/hospital/list') }}" style="color:#a02626;">Hospitals</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url('admin/hospital/dashboard') }}" style="color:#a02626;">Hospitals</a></li>
                         <li class="breadcrumb-item active">{{ $hospital->name }}</li>
                     </ol>
                 </nav>
