@@ -7,6 +7,9 @@
     .page-subtitle { color:#888; font-size:.85rem; max-width:480px; margin:.3rem 0 0; }
     body.dark-mode .page-subtitle { color:#9ca3af !important; }
 
+    #ctryBtnToggleReport { transition:.15s; }
+    #ctryBtnToggleReport:hover { background:#870f0f !important; color:#FEC503 !important; }
+
     /* ── Globe / network map panel ── */
     .ctry-globe-panel { background:#fff; border:1px solid #e9ecef; border-radius:14px; padding:24px;
                          display:flex; align-items:center; gap:24px; flex-wrap:wrap; margin-bottom:1.4rem;
@@ -17,6 +20,9 @@
     .ctry-globe-canvas-wrap { flex:0 0 auto; display:flex; align-items:center; justify-content:center; margin:0 auto; }
     #ctryGlobe { cursor:grab; }
     #ctryGlobe:active { cursor:grabbing; }
+    #ctryResetGlobe { transition:.15s; }
+    #ctryResetGlobe:hover { background:#FEC503 !important; border-color:#e0c060 !important; color:#3a2a00 !important; }
+    body.dark-mode #ctryResetGlobe:hover { background:#FEC503 !important; color:#3a2a00 !important; }
     body.dark-mode .ctry-globe-panel { background:#374151 !important; border-color:#4a5568 !important; }
     body.dark-mode .ctry-globe-panel h2 { color:#e0e0e0 !important; }
     body.dark-mode .ctry-globe-panel p { color:#9ca3af !important; }
@@ -26,9 +32,9 @@
     body.dark-mode .globe-graticule { stroke:#3d4260; }
     .globe-country { fill:#e6d3d3; stroke:#fff; stroke-width:.5px; cursor:pointer; transition:fill .15s; }
     body.dark-mode .globe-country { stroke:#374151; }
-    .globe-country.has-network { fill:#e3a9a9; }
-    .globe-country:hover { fill:#c76a6a; }
-    .globe-country.active { fill:#a02626; }
+    .globe-country.has-network { fill:#f0cf7a; }
+    .globe-country:hover { fill:#FEC503; }
+    .globe-country.active { fill:#a02626; stroke:#FEC503; stroke-width:1.25px; }
 
     /* ── Stat tiles ── */
     .ctry-stat { background:#fff; border:1px solid #e9ecef; border-radius:12px; padding:14px 16px; }
@@ -65,18 +71,19 @@
     body.dark-mode #country-list { background:#374151 !important; border-color:#4a5568 !important; }
 
     .country-row { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
-                   padding:16px 22px; border-bottom:1px solid #eee; text-decoration:none; color:inherit;
-                   transition:background .12s; }
+                   padding:16px 22px; border-bottom:1px solid #eee; border-left:3px solid transparent;
+                   text-decoration:none; color:inherit; transition:background .15s, border-color .15s; }
     .country-row:last-child { border-bottom:none; }
-    .country-row:hover { background:#faf5f5; text-decoration:none; color:inherit; }
-    body.dark-mode .country-row { border-color:#4a5568 !important; }
-    body.dark-mode .country-row:hover { background:#3d4455 !important; }
+    .country-row:hover { background:linear-gradient(90deg, rgba(254,197,3,.10), rgba(160,38,38,.03) 60%);
+                          border-left-color:#FEC503; text-decoration:none; color:inherit; }
+    body.dark-mode .country-row { border-bottom-color:#4a5568 !important; }
+    body.dark-mode .country-row:hover { background:linear-gradient(90deg, rgba(254,197,3,.12), rgba(160,38,38,.10) 60%) !important; }
 
     .country-row-left { display:flex; align-items:center; gap:14px; min-width:200px; }
     .country-row-icon { width:38px; height:38px; border-radius:50%; background:#f4f0f0; display:flex;
                          align-items:center; justify-content:center; color:#a02626; flex-shrink:0; font-size:.95rem;
-                         transition:background .15s; }
-    .country-row:hover .country-row-icon { background:#a02626; color:#fff; }
+                         transition:background .2s, color .2s; }
+    .country-row:hover .country-row-icon { background:linear-gradient(135deg, #a02626, #d68f00); color:#fff; }
     .country-row-name { font-weight:700; color:#222; font-size:1.02rem; margin:0; }
     body.dark-mode .country-row-name { color:#e0e0e0 !important; }
     .country-row-sub { font-size:.72rem; color:#aaa; }
@@ -94,14 +101,19 @@
     body.dark-mode .country-row-actions { border-color:#4a5568 !important; }
     .country-row-quickview { background:none; border:none; color:#bbb; padding:6px; border-radius:50%;
                               display:flex; align-items:center; justify-content:center; transition:.15s; }
-    .country-row-quickview:hover { color:#a02626; background:#f4e5e5; }
+    .country-row-quickview:hover { color:#a02626; background:#FEC503; }
     body.dark-mode .country-row-quickview { color:#8794a8; }
-    body.dark-mode .country-row-quickview:hover { color:#f0a8a8 !important; background:#4a5568 !important; }
-    .country-row-chevron { color:#ccc; }
+    body.dark-mode .country-row-quickview:hover { color:#3a2a00 !important; background:#FEC503 !important; }
+    .country-row-chevron { color:#ccc; transition:color .15s; }
+    .country-row:hover .country-row-chevron { color:#d68f00; }
     body.dark-mode .country-row-chevron { color:#6b7280 !important; }
+    body.dark-mode .country-row:hover .country-row-chevron { color:#FEC503 !important; }
 
-    #ctryLoadMoreWrap { text-align:center; margin-top:1.4rem; }
-    #ctryLoadMoreWrap .btn { border-radius:20px; }
+    #ctryLoadMoreWrap { text-align:center; margin:1.6rem 0 2.75rem; }
+    #ctryLoadMoreWrap .btn { border-radius:20px; padding:.5rem 1.4rem; border-color:#e0c060; color:#a02626; font-weight:600; transition:.15s; }
+    #ctryLoadMoreWrap .btn:hover { background:#FEC503; border-color:#FEC503; color:#3a2a00; }
+    body.dark-mode #ctryLoadMoreWrap .btn { background:#374151 !important; border-color:#4a5568 !important; color:#f0a8a8 !important; }
+    body.dark-mode #ctryLoadMoreWrap .btn:hover { background:#FEC503 !important; border-color:#FEC503 !important; color:#3a2a00 !important; }
 
     /* ── Quick-view slide panel ── */
     #ctryPanelBackdrop { position:fixed; inset:0; background:rgba(20,20,30,.4); z-index:1051; opacity:0;
@@ -132,14 +144,18 @@
     .ctry-panel-body h5 { font-size:.95rem; font-weight:700; color:#222; margin-bottom:12px; }
     body.dark-mode .ctry-panel-body h5 { color:#e0e0e0 !important; }
     .ctry-panel-action { width:100%; display:flex; align-items:center; justify-content:space-between;
-                          padding:13px 16px; background:#fff; border:1px solid #eee; border-radius:10px;
-                          margin-bottom:10px; text-decoration:none; color:#333; transition:.15s; }
-    .ctry-panel-action:hover { border-color:#a02626; background:#faf5f5; color:#a02626; text-decoration:none; }
+                          padding:13px 16px; background:#fff; border:1px solid #eee; border-left:3px solid transparent;
+                          border-radius:10px; margin-bottom:10px; text-decoration:none; color:#333; transition:.15s; }
+    .ctry-panel-action:hover { border-color:#e0c060; border-left-color:#FEC503;
+                                background:linear-gradient(90deg, rgba(254,197,3,.14), rgba(160,38,38,.03));
+                                color:#a02626; text-decoration:none; }
     body.dark-mode .ctry-panel-action { background:#2b3040 !important; border-color:#4a5568 !important; color:#e0e0e0 !important; }
-    body.dark-mode .ctry-panel-action:hover { background:#374151 !important; border-color:#f0a8a8 !important; color:#f0a8a8 !important; }
+    body.dark-mode .ctry-panel-action:hover { background:linear-gradient(90deg, rgba(254,197,3,.16), rgba(160,38,38,.12)) !important;
+                                               border-color:#4a5568 !important; border-left-color:#FEC503 !important; color:#FEC503 !important; }
     .ctry-panel-foot { padding:20px 26px; border-top:1px solid #eee; }
     body.dark-mode .ctry-panel-foot { border-color:#4a5568 !important; }
-    .ctry-panel-foot .btn { width:100%; }
+    .ctry-panel-foot .btn { width:100%; transition:.15s; }
+    .ctry-panel-foot .btn:hover { background:#870f0f !important; color:#FEC503 !important; }
 </style>
 @endpush
 
@@ -305,7 +321,9 @@
                 </div>
 
                 <div id="ctryLoadMoreWrap" class="d-print-none">
-                    <button class="btn btn-sm btn-light border" id="ctryLoadMore" type="button">Load More</button>
+                    <button class="btn btn-sm btn-light border" id="ctryLoadMore" type="button">
+                        <i class="fas fa-chevron-down mr-1"></i> Load More
+                    </button>
                 </div>
             </div>
         </section>
