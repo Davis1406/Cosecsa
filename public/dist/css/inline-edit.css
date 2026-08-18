@@ -57,29 +57,28 @@
     position: fixed;
     z-index: 1060;
     background: #fff;
-    border: 1px solid #e0e9f2;
-    border-radius: 8px;
+    border: 1px solid #f0d9d9;
+    border-top: 3px solid #a02626;
+    border-radius: 10px;
     padding: 14px 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
-    min-width: 220px;
-    max-width: 320px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0, 0, 0, 0.03);
+    min-width: 250px;
+    max-width: 340px;
 }
 
 .ie-popover-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 12px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid #f2f2f2;
 }
 
 .ie-popover-title {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #555;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #333;
 }
 
 .ie-popover-close {
@@ -234,56 +233,14 @@
     transition: opacity 0.15s;
 }
 
-/* ── Dark mode support ── */
-@media (prefers-color-scheme: dark) {
-    .ie-popover {
-        background: #1e2330;
-        border-color: #2d3748;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    }
-    .ie-popover-header {
-        border-bottom-color: #2d3748;
-    }
-    .ie-popover-title {
-        color: #cbd5e0;
-    }
-    .ie-popover-close {
-        color: #718096;
-    }
-    .ie-popover-close:hover {
-        color: #f48a8a;
-    }
-    .ie-editor-input,
-    .ie-editor-select {
-        background: #2b3040;
-        border-color: #4a5568;
-        color: #e2e8f0;
-    }
-    .ie-editor-input:focus,
-    .ie-editor-select:focus {
-        border-color: #a02626;
-        box-shadow: 0 0 0 3px rgba(160, 38, 38, 0.25);
-    }
-    .ie-editor-footer {
-        border-top-color: #2d3748;
-    }
-    .ie-btn-cancel {
-        background: #2d3748;
-        border-color: #4a5568;
-        color: #cbd5e0;
-    }
-    .ie-btn-cancel:hover {
-        background: #374151;
-    }
-    .ie-pencil {
-        color: #f48a8a;
-    }
-    .ie-pencil:hover {
-        background: rgba(244, 138, 138, 0.12);
-    }
-}
-
-/* ── AdminLTE dark-mode class fallback ── */
+/* ── Dark mode ──
+   This app's dark mode is a manual body.dark-mode toggle (saved to
+   localStorage), not the OS-level prefers-color-scheme — a bare
+   @media(prefers-color-scheme:dark) block here would render the
+   popover dark while the rest of the page stayed light whenever the
+   browser/OS happened to prefer dark, regardless of what the user
+   picked in-app. Match every other component's convention: key off
+   the class only. */
 .dark-mode .ie-popover {
     background: #1e2330;
     border-color: #2d3748;

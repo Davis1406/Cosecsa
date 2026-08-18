@@ -106,7 +106,7 @@
     /* ── Position popover below the field ────────────────────────── */
     function positionPopover($pop, $field) {
         var fieldRect = $field[0].getBoundingClientRect();
-        var popWidth = 260;
+        var popWidth = 340; // matches .ie-popover's max-width
 
         // Try to position below the field, aligned left
         var top = fieldRect.bottom + 6;

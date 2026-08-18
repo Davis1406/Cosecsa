@@ -9,7 +9,7 @@
     .c-stat { background:#fff; border:1px solid #e9ecef; border-radius:8px; padding:12px 18px;
               display:flex; align-items:center; gap:12px; flex:1; min-width:130px; }
     .c-stat-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center;
-                   justify-content:center; font-size:.95rem; flex-shrink:0; }
+                   justify-content:center; font-size:.95rem; flex-shrink:0; background:#f0d4d4; color:#a02626; }
     .c-stat-lbl { font-size:.67rem; color:#999; text-transform:uppercase; letter-spacing:.04em; }
     .c-stat-val { font-size:1rem; font-weight:700; color:#222; }
 
@@ -31,6 +31,7 @@
     .empty-state i { font-size:2rem; display:block; margin-bottom:8px; }
 
     body.dark-mode .c-stat { background:#374151 !important; border-color:#4a5568 !important; }
+    body.dark-mode .c-stat-icon { background:#4a3030 !important; color:#f0a8a8 !important; }
     body.dark-mode .c-stat-lbl { color:#9ca3af !important; }
     body.dark-mode .c-stat-val { color:#e0e0e0 !important; }
     body.dark-mode .entity-table thead th { background:#374151 !important; color:#f87171 !important; border-bottom-color:#4a5568 !important; }
@@ -64,21 +65,21 @@
                     <h4><i class="fas fa-flag mr-2"></i>{{ $country->country_name }}</h4>
                 </div>
 
-                {{-- Stat chips --}}
+                {{-- Stat chips — one restrained accent color, differentiated by icon only --}}
                 <div class="country-stats-row">
                     @php $cStats = [
-                        ['icon'=>'fas fa-hospital-alt','bg'=>'#f0d4d4','ic'=>'#a02626','lbl'=>'Hospitals',    'val'=>count($hospitals)],
-                        ['icon'=>'fas fa-user-graduate','bg'=>'#e8f5e9','ic'=>'#388e3c','lbl'=>'Trainees',    'val'=>count($trainees)],
-                        ['icon'=>'fas fa-award',        'bg'=>'#e8eaf6','ic'=>'#3949ab','lbl'=>'Fellows',     'val'=>count($fellows)],
-                        ['icon'=>'fas fa-users',        'bg'=>'#fff8e1','ic'=>'#f9a825','lbl'=>'Members',     'val'=>count($members)],
-                        ['icon'=>'fas fa-user-tie',     'bg'=>'#f3e5f5','ic'=>'#7b1fa2','lbl'=>'Prog. Directors', 'val'=>count($programmeDirectors)],
-                        ['icon'=>'fas fa-id-badge',     'bg'=>'#e0f7fa','ic'=>'#00796b','lbl'=>'Country Reps','val'=>count($reps)],
-                        ['icon'=>'fas fa-stethoscope',  'bg'=>'#fce8e8','ic'=>'#c62828','lbl'=>'Examiners',   'val'=>count($examiners)],
-                        ['icon'=>'fas fa-user-tie',     'bg'=>'#e0eafc','ic'=>'#1a56db','lbl'=>'Trainers',    'val'=>count($trainers)],
+                        ['icon'=>'fas fa-hospital-alt', 'lbl'=>'Hospitals',        'val'=>count($hospitals)],
+                        ['icon'=>'fas fa-user-graduate','lbl'=>'Trainees',         'val'=>count($trainees)],
+                        ['icon'=>'fas fa-award',        'lbl'=>'Fellows',          'val'=>count($fellows)],
+                        ['icon'=>'fas fa-users',        'lbl'=>'Members',          'val'=>count($members)],
+                        ['icon'=>'fas fa-user-tie',     'lbl'=>'Prog. Directors',  'val'=>count($programmeDirectors)],
+                        ['icon'=>'fas fa-id-badge',     'lbl'=>'Country Reps',     'val'=>count($reps)],
+                        ['icon'=>'fas fa-stethoscope',  'lbl'=>'Examiners',        'val'=>count($examiners)],
+                        ['icon'=>'fas fa-chalkboard-teacher', 'lbl'=>'Trainers',   'val'=>count($trainers)],
                     ]; @endphp
                     @foreach($cStats as $s)
                     <div class="c-stat">
-                        <div class="c-stat-icon" style="background:{{ $s['bg'] }};color:{{ $s['ic'] }};"><i class="{{ $s['icon'] }}"></i></div>
+                        <div class="c-stat-icon"><i class="{{ $s['icon'] }}"></i></div>
                         <div>
                             <div class="c-stat-lbl">{{ $s['lbl'] }}</div>
                             <div class="c-stat-val">{{ $s['val'] }}</div>
