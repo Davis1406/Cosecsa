@@ -104,6 +104,7 @@
                                             <th>Specialty</th>
                                             <th>Fellowship Type</th>
                                             <th>Fellowship Year</th>
+                                            <th>Hospital / Organisation</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -144,6 +145,7 @@
                                             <td>@if(!empty($value->programme_id))<a href="{{ url('admin/programmes/view/'.$value->programme_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->current_specialty ?: ($value->programme_name ? preg_replace('/^FCS\s+/i','', $value->programme_name) : '-') }}</a>@else{{ $value->current_specialty ?: ($value->programme_name ? preg_replace('/^FCS\s+/i','', $value->programme_name) : '-') }}@endif</td>
                                             <td>{{ $value->fellowship_type ?? '-' }}</td>
                                             <td>{{ $value->fellowship_year ?? '-' }}</td>
+                                            <td>{{ $value->trained_hospital ?: ($value->organization ?: '-') }}</td>
                                             <td class="text-center" style="white-space:nowrap;">
                                                 <div class="dropdown">
                                                     <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
@@ -160,7 +162,7 @@
                                                            href="{{ url('admin/associates/fellows/edit/' . ($value->fellow_id ?? 0)) }}">
                                                             <i class="fas fa-edit text-warning mr-2"></i> Edit
                                                         </a>
-                                                        @if(Auth::user()->hasPermission('transcripts.view'))
+                                                        @if(Auth::user()->hasPermission('transcripts.view') && $value->fellowship_type === 'Fellow by Examination')
                                                         <a class="dropdown-item"
                                                            href="{{ url('admin/transcripts/edit/' . $value->user_id) }}">
                                                             <i class="fas fa-file-signature text-secondary mr-2"></i> Issue Transcript
