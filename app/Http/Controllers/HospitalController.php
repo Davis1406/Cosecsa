@@ -103,20 +103,49 @@ class HospitalController extends Controller
         return back()->with('success', $response->json('message'));
     }
 
-    public function toggleStatus(Request $request)
+    // Activate/reaccredit one or more programmes at a hospital in one go.
+    // The chosen month/year is the new accreditation (reaccreditation) date
+    // — expiry is computed as 3 years from that date, the college's standard
+    // accreditation cycle. cosecsa-api handles the actual reaccreditation
+    // vs. first-time-accreditation distinction (and logs history) per
+    // programme depending on whether it already had an accreditation row.
+    public function reaccredit(Request $request)
+    {
+        $validated = $request->validate([
+            'hospital_id'    => 'required|integer',
+            'programme_id'   => 'required|array|min:1',
+            'programme_id.*' => 'integer',
+            'month'          => 'required|integer|min:1|max:12',
+            'year'           => 'required|integer|min:2020|max:2040',
+        ]);
+
+        $accreditedDate = Carbon::createFromDate($validated['year'], $validated['month'], 1)->startOfMonth();
+        $expiryDate = $accreditedDate->copy()->addYears(3)->endOfMonth();
+
+        $response = $this->api->post('admin/hospital-programmes/reaccredit', [
+            'hospital_id'     => $validated['hospital_id'],
+            'programme_id'    => $validated['programme_id'],
+            'accredited_date' => $accreditedDate->format('Y-m-d'),
+            'expiry_date'     => $expiryDate->format('Y-m-d'),
+        ]);
+
+        if ($response->failed()) {
+            return back()->with('error', $response->json('message', 'Update failed'));
+        }
+
+        return back()->with('success', $response->json('message'));
+    }
+
+    // Deactivate — marks one accreditation row Expired as of today.
+    public function markExpired(Request $request)
     {
         $validated = $request->validate([
             'hospital_programme_id' => 'required|integer',
-            'month'                 => 'required|integer|min:1|max:12',
-            'year'                  => 'required|integer|min:2020|max:2040',
         ]);
-
-        $lastDay = Carbon::createFromDate($validated['year'], $validated['month'], 1)->endOfMonth()->format('Y-m-d');
-        $expiryDate = $lastDay;
 
         $response = $this->api->put(
             "admin/hospital-programmes/{$validated['hospital_programme_id']}/toggle-status",
-            ['expiry_date' => $expiryDate, 'status' => 'Active']
+            ['expiry_date' => now()->format('Y-m-d'), 'status' => 'Expired']
         );
 
         if ($response->failed()) {
@@ -124,6 +153,18 @@ class HospitalController extends Controller
         }
 
         return back()->with('success', $response->json('message'));
+    }
+
+    // Lightweight JSON: the hospital's currently-accredited programmes, for
+    // the reaccreditation modal's programme checklist (dashboard.blade.php).
+    public function programmesJson($id)
+    {
+        $response = $this->api->get("admin/hospitals/{$id}");
+        $programmes = collect($response->object()->programmes ?? [])
+            ->map(fn ($p) => ['programme_id' => $p->programme_id, 'programme_name' => $p->programme_name])
+            ->values();
+
+        return response()->json(['programmes' => $programmes]);
     }
 
     public function hospital()
@@ -164,6 +205,7 @@ class HospitalController extends Controller
             'trainees'      => collect($data->trainees ?? []),
             'fellows'       => collect($data->fellows ?? []),
             'trainers'      => collect($data->trainers ?? []),
+            'accreditationHistory' => collect($data->accreditation_history ?? []),
             'allProgrammes' => \App\Models\Programme::getProgramme(),
             'allCountries'  => \App\Models\Country::getCountry(),
         ]);

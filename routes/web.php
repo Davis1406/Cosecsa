@@ -201,7 +201,9 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::post('admin/hospital/{id}/programmes', [HospitalController::class,'addProgramme']);
     Route::post('admin/hospital/{id}/fellows', [HospitalController::class,'mapFellow']);
     Route::delete('admin/hospital/{id}/fellows/{fellowId}', [HospitalController::class,'unmapFellow']);
-    Route::post('admin/hospital/toggle-status', [HospitalController::class,'toggleStatus']);
+    Route::post('admin/hospital/reaccredit', [HospitalController::class,'reaccredit']);
+    Route::post('admin/hospital/mark-expired', [HospitalController::class,'markExpired']);
+    Route::get('admin/hospital/{id}/programmes-json', [HospitalController::class,'programmesJson']);
     Route::get('admin/hospital/list ', [HospitalController::class,'hospital']);
     Route::get('admin/hospital/add ',  [HospitalController::class,'add']);
     Route::post('admin/hospital/add', [HospitalController::class,'insert']);
