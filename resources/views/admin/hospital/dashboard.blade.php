@@ -249,6 +249,8 @@
                           <button type="button" class="btn btn-xs toggle-status-btn ml-1
                             @if($r->flag === 'expired') btn-outline-success @else btn-outline-danger @endif"
                             data-hp-id="{{ $r->id }}"
+                            data-hospital-id="{{ $r->hospital_id }}"
+                            data-programme-id="{{ $r->programme_id }}"
                             data-hospital="{{ $r->hospital_name }}"
                             data-programme="{{ $r->programme_name }}"
                             data-accredited="{{ $r->accredited_date }}"
@@ -372,9 +374,10 @@
         <div class="modal fade" id="toggleStatusModal" tabindex="-1" role="dialog">
           <div class="modal-dialog" role="document">
             <div class="modal-content">
-              <form method="POST" action="{{ url('admin/hospital/toggle-status') }}" id="toggleStatusForm">
+              <form method="POST" action="{{ url('admin/hospital/reaccredit') }}" id="toggleStatusForm">
                 @csrf
                 <input type="hidden" name="hospital_programme_id" id="toggleHpId">
+                <input type="hidden" name="hospital_id" id="toggleHospitalId">
                 <div class="modal-header" id="toggleModalHeader" style="background:#a02626;color:#fff;">
                   <h5 class="modal-title" id="toggleModalTitle">Set Accreditation Duration</h5>
                   <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
@@ -384,7 +387,7 @@
 
                   <div class="row mb-3">
                     <div class="col-6">
-                      <small class="text-muted d-block">Accredited</small>
+                      <small class="text-muted d-block">Currently Accredited</small>
                       <strong id="toggleAccreditedDisplay">—</strong>
                     </div>
                     <div class="col-6">
@@ -399,9 +402,16 @@
                   </div>
 
                   <div id="toggleActivateFields">
+                    <div class="form-group">
+                      <label>Programmes being (re)accredited</label>
+                      <div id="toggleProgrammeList" class="border rounded p-2" style="max-height:160px;overflow-y:auto;">
+                        <small class="text-muted">Loading…</small>
+                      </div>
+                      <small class="form-text text-muted">Defaults to the programme you clicked — check any others being renewed in the same cycle.</small>
+                    </div>
                     <div class="form-row">
                       <div class="form-group col-md-6">
-                        <label>Month</label>
+                        <label>Reaccreditation Month</label>
                         <select name="month" id="toggleMonth" class="form-control">
                           @foreach(['January','February','March','April','May','June','July','August','September','October','November','December'] as $i => $m)
                             <option value="{{ $i + 1 }}">{{ $m }}</option>
@@ -409,10 +419,10 @@
                         </select>
                       </div>
                       <div class="form-group col-md-6">
-                        <label>Year</label>
+                        <label>Reaccreditation Year</label>
                         <select name="year" id="toggleYear" class="form-control">
-                          @foreach(range(date('Y'), date('Y') + 10) as $y)
-                            <option value="{{ $y }}" {{ $y == date('Y') + 3 ? 'selected' : '' }}>{{ $y }}</option>
+                          @foreach(range(date('Y') - 1, date('Y') + 10) as $y)
+                            <option value="{{ $y }}">{{ $y }}</option>
                           @endforeach
                         </select>
                       </div>
@@ -551,19 +561,23 @@ $(document).on('click', '.fchk-clear', function (e) {
 // Toggle Status modal
 var toggleMonthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+// The month/year picked is the REACCREDITATION date (accredited_date) —
+// expiry is always 3 years from that date, the college's standard
+// accreditation cycle length, computed here just for display.
 function calcToggleExpiry() {
   var m = parseInt($('#toggleMonth').val());
   var y = parseInt($('#toggleYear').val());
   if (!m || !y) {
     $('#toggleNewExpiry').val('');
-    $('#toggleExpiryNote').text('Select a month and year for the new expiry date.');
+    $('#toggleExpiryNote').text('Select the month and year this reaccreditation takes effect.');
     return;
   }
-  var lastDay = new Date(y, m, 0).getDate();
+  var expiryYear = y + 3;
+  var lastDay = new Date(expiryYear, m, 0).getDate();
   var mm = String(m).padStart(2, '0');
   var dd = String(lastDay).padStart(2, '0');
-  $('#toggleNewExpiry').val(y + '-' + mm + '-' + dd);
-  $('#toggleExpiryNote').text('Accreditation will expire on ' + lastDay + ' ' + toggleMonthNames[m - 1] + ' ' + y + '.');
+  $('#toggleNewExpiry').val(expiryYear + '-' + mm + '-' + dd);
+  $('#toggleExpiryNote').text('Accredited ' + toggleMonthNames[m - 1] + ' ' + y + ' — expires ' + lastDay + ' ' + toggleMonthNames[m - 1] + ' ' + expiryYear + ' (3-year cycle).');
 }
 
 function formatMmYy(dateStr) {
@@ -574,9 +588,28 @@ function formatMmYy(dateStr) {
 
 $('#toggleMonth, #toggleYear').on('change', calcToggleExpiry);
 
+function renderProgrammeChecklist(programmes, checkedProgrammeId) {
+  var $list = $('#toggleProgrammeList');
+  if (!programmes.length) {
+    $list.html('<small class="text-muted">No other accredited programmes at this hospital.</small>');
+    return;
+  }
+  var html = '';
+  programmes.forEach(function (p) {
+    var checked = (String(p.programme_id) === String(checkedProgrammeId)) ? 'checked' : '';
+    html += '<div class="form-check">'
+          + '<input class="form-check-input" type="checkbox" name="programme_id[]" value="' + p.programme_id + '" id="tp-' + p.programme_id + '" ' + checked + '>'
+          + '<label class="form-check-label" for="tp-' + p.programme_id + '">' + p.programme_name + '</label>'
+          + '</div>';
+  });
+  $list.html(html);
+}
+
 $(document).on('click', '.toggle-status-btn', function () {
   var btn = $(this);
   var hpId = btn.data('hpId');
+  var hospitalId = btn.data('hospitalId');
+  var programmeId = btn.data('programmeId');
   var hospital = btn.data('hospital');
   var programme = btn.data('programme');
   var accredited = btn.data('accredited');
@@ -585,29 +618,37 @@ $(document).on('click', '.toggle-status-btn', function () {
   var isExpired = (flag === 'expired');
 
   $('#toggleHpId').val(hpId);
+  $('#toggleHospitalId').val(hospitalId);
   $('#toggleModalSubtitle').text(hospital + ' — ' + programme);
   $('#toggleAccreditedDisplay').text(formatMmYy(accredited));
   $('#toggleExpiryDisplay').text(formatMmYy(expiry));
 
   if (isExpired) {
+    $('#toggleStatusForm').attr('action', "{{ url('admin/hospital/reaccredit') }}");
     $('#toggleActivateFields').show();
     $('#toggleDeactivateMsg').hide();
     $('#toggleModalHeader').css('background', '#28a745');
-    $('#toggleModalTitle').text('Activate Accreditation');
+    $('#toggleModalTitle').text('Activate / Reaccredit');
     $('#toggleSubmitBtn').text('Activate').removeClass('btn-danger').addClass('btn-cosecsa');
-    // Default: 3 years from now
+
+    // Default: today's month/year — this is when the reaccreditation
+    // is being recorded, not when it will expire.
     var def = new Date();
-    def.setFullYear(def.getFullYear() + 3);
     $('#toggleMonth').val(def.getMonth() + 1);
     $('#toggleYear').val(def.getFullYear());
     calcToggleExpiry();
+
+    $('#toggleProgrammeList').html('<small class="text-muted">Loading…</small>');
+    $.getJSON("{{ url('admin/hospital') }}/" + hospitalId + "/programmes-json")
+      .done(function (data) { renderProgrammeChecklist(data.programmes || [], programmeId); })
+      .fail(function () { $('#toggleProgrammeList').html('<small class="text-danger">Could not load programmes.</small>'); });
   } else {
+    $('#toggleStatusForm').attr('action', "{{ url('admin/hospital/mark-expired') }}");
     $('#toggleActivateFields').hide();
     $('#toggleDeactivateMsg').show();
     $('#toggleModalHeader').css('background', '#dc3545');
     $('#toggleModalTitle').text('Deactivate Accreditation');
     $('#toggleSubmitBtn').text('Mark as Expired').removeClass('btn-cosecsa').addClass('btn-danger');
-    $('#toggleNewExpiry').val(new Date().toISOString().slice(0, 10));
   }
 
   $('#toggleStatusModal').modal('show');

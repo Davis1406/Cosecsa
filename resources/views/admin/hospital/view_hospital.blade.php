@@ -182,6 +182,12 @@
                             <span class="tab-count">{{ count($trainers) }}</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab-history"   data-toggle="tab" href="#pane-history"   role="tab">
+                            <i class="fas fa-history mr-1"></i>Accreditation History
+                            <span class="tab-count">{{ count($accreditationHistory ?? []) }}</span>
+                        </a>
+                    </li>
                 </ul>
 
                 <div class="tab-content">
@@ -227,6 +233,61 @@
                                 </table>
                                 @else
                                 <div class="empty-state"><i class="fas fa-stethoscope"></i>No accredited programmes on record.</div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ── Accreditation History tab ── --}}
+                    <div class="tab-pane fade" id="pane-history" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body p-0">
+                                @if(count($accreditationHistory ?? []))
+                                <table class="table table-bordered table-striped entity-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Programme</th>
+                                            <th>Event</th>
+                                            <th>Accredited</th>
+                                            <th>Expires</th>
+                                            <th>Status</th>
+                                            <th>Recorded By</th>
+                                            <th>Date Recorded</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($accreditationHistory as $i => $h)
+                                        <tr>
+                                            <td>{{ $i+1 }}</td>
+                                            <td>
+                                                <a href="{{ url('admin/programmes/view/'.$h->programme_id) }}" class="entity-link">
+                                                    {{ $h->programme_name }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                @if($h->event_type === 'Initial Accreditation')
+                                                    <span class="badge badge-primary">Initial Accreditation</span>
+                                                @elseif($h->event_type === 'Reaccreditation')
+                                                    <span class="badge badge-success">Reaccreditation</span>
+                                                @else
+                                                    <span class="badge badge-danger">Marked Expired</span>
+                                                @endif
+                                            </td>
+                                            <td>{{ $h->accredited_date ? \Carbon\Carbon::parse($h->accredited_date)->format('M Y') : '-' }}</td>
+                                            <td>{{ $h->expiry_date    ? \Carbon\Carbon::parse($h->expiry_date)->format('M Y')    : '-' }}</td>
+                                            <td>
+                                                <span class="dot dot-{{ strtolower($h->status) === 'active' ? 'active_acc' : 'expired' }}"></span>
+                                                {{ $h->status }}
+                                            </td>
+                                            <td>{{ $h->recorded_by_name ?: '—' }}</td>
+                                            <td>{{ \Carbon\Carbon::parse($h->created_at)->format('d M Y') }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                                @else
+                                <div class="empty-state"><i class="fas fa-history"></i>No accreditation history recorded yet.</div>
                                 @endif
                             </div>
                         </div>
