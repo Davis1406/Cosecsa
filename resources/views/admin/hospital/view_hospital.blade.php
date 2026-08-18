@@ -641,6 +641,12 @@
                 <input type="hidden" id="editpd_mobile_no">
                 <input type="hidden" id="editpd_phone_number">
 
+                <div class="form-group">
+                    <label>Search Fellow</label>
+                    <input type="text" class="form-control" id="editpd_search" placeholder="Type a name or email to fill the fields below...">
+                    <div class="list-group mt-1 d-none fp-results" id="editpd_results" style="max-height:160px; overflow-y:auto;"></div>
+                    <small class="text-muted">Or just edit the name/email directly below.</small>
+                </div>
                 <div class="form-row">
                     <div class="form-group col-7">
                         <label>Name</label>
@@ -811,10 +817,10 @@ function updateSubmitState(prefix) {
 wireFellowPicker('pd');
 wireFellowPicker('map');
 
-// ── Assistant PD: search fellows to auto-fill the name/email fields ──
-// Shared by the Add PD modal (asstpd_*) and the Edit PD modal
-// (editasstpd_*) — same search-to-autofill pattern, just different target
-// name/email fields.
+// ── Search fellows to auto-fill a name/email pair ── Shared by every
+// "search a fellow, fill these fields" spot: the Edit PD modal's primary PD
+// fields (editpd_*), and both modals' Assistant PD fields (asstpd_* /
+// editasstpd_*) — same search-to-autofill pattern, just different targets.
 function wireAssistantPdSearch(searchId, resultsId, nameFieldId, emailFieldId) {
     var timer = null;
     var $search = $('#' + searchId);
@@ -852,6 +858,7 @@ function wireAssistantPdSearch(searchId, resultsId, nameFieldId, emailFieldId) {
 }
 wireAssistantPdSearch('asstpd_search', 'asstpd_results', 'pd_assistant_pd', 'pd_assistant_email');
 wireAssistantPdSearch('editasstpd_search', 'editasstpd_results', 'editpd_assistant_pd', 'editpd_assistant_email');
+wireAssistantPdSearch('editpd_search', 'editpd_results', 'editpd_name', 'editpd_email');
 
 // Re-enable submit while typing "add new fellow" fields
 $('#pd_fp_new, #map_fp_new').on('input', function () {
