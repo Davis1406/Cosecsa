@@ -300,15 +300,22 @@ public function dashboard()
 
         // Trainers — COSECSA ToT roster. No linked User account, so search
         // is against the trainers table's own name/email/organisation.
+        // Country is a many-to-many (trainer_countries pivot, since
+        // 2026-08-16 — trainers.country_id no longer exists) — GROUP_CONCAT
+        // via a correlated subquery rather than a join, same pattern as
+        // LetterRecipientResolver::trainers() in cosecsa-api. A plain join
+        // on t.country_id 500s this whole endpoint (column doesn't exist).
         $trainers = DB::table('trainers as t')
-            ->leftJoin('countries as co', 'co.id', '=', 't.country_id')
             ->leftJoin('programmes as p', 'p.id', '=', 't.programme_id')
             ->where(function ($w) use ($like) {
                 $w->where('t.name', 'like', $like)
                   ->orWhere('t.email', 'like', $like)
                   ->orWhere('t.organisation', 'like', $like);
             })
-            ->select('t.id as trainer_id', 't.name', 't.organisation', 'co.country_name', 'p.name as programme', 't.specialty_raw')
+            ->select(
+                't.id as trainer_id', 't.name', 't.organisation', 'p.name as programme', 't.specialty_raw',
+                DB::raw("(SELECT GROUP_CONCAT(co.country_name SEPARATOR ', ') FROM trainer_countries tcty JOIN countries co ON co.id = tcty.country_id WHERE tcty.trainer_id = t.id) as country_name")
+            )
             ->orderBy('t.name')->limit(8)->get()
             ->map(fn($r) => [
                 'name' => $r->name,
