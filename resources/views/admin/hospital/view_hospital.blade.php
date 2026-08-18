@@ -102,6 +102,21 @@
     body.dark-mode .modal-modern .fp-results .list-group-item { background:#1f2937; border-color:#374151; color:#e5e7eb; }
     body.dark-mode .modal-modern .fp-new-box { background:#111827; border-color:#374151 !important; }
     body.dark-mode .modal-modern .fp-selected { background:#0f2e17; border-color:#1d4d28; color:#4ade80; }
+
+    /* ── Accreditation History event badges ── */
+    .hist-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 3px 10px; border-radius: 20px;
+        font-size: .74rem; font-weight: 600;
+        border: 1px solid transparent; white-space: nowrap;
+    }
+    .hist-badge i { font-size: .68rem; }
+    .hist-badge-initial   { background:#eef2fb; color:#3454a8; border-color:#c9d4f0; }
+    .hist-badge-reaccred  { background:#eaf7ec; color:#2c7a3d; border-color:#bfe6c6; }
+    .hist-badge-expired   { background:#fbecec; color:#a8342e; border-color:#f0c9c7; }
+    body.dark-mode .hist-badge-initial  { background:#1c2740; color:#8fa8e8; border-color:#2d3f66; }
+    body.dark-mode .hist-badge-reaccred { background:#12291a; color:#7fd694; border-color:#1f4429; }
+    body.dark-mode .hist-badge-expired  { background:#2e1616; color:#f0918c; border-color:#4a2222; }
 </style>
 @endpush
 
@@ -279,11 +294,11 @@
                                             </td>
                                             <td>
                                                 @if($h->event_type === 'Initial Accreditation')
-                                                    <span class="badge badge-primary">Initial Accreditation</span>
+                                                    <span class="hist-badge hist-badge-initial"><i class="fas fa-flag-checkered"></i>Initial Accreditation</span>
                                                 @elseif($h->event_type === 'Reaccreditation')
-                                                    <span class="badge badge-success">Reaccreditation</span>
+                                                    <span class="hist-badge hist-badge-reaccred"><i class="fas fa-sync-alt"></i>Reaccreditation</span>
                                                 @else
-                                                    <span class="badge badge-danger">Marked Expired</span>
+                                                    <span class="hist-badge hist-badge-expired"><i class="fas fa-times-circle"></i>Marked Expired</span>
                                                 @endif
                                             </td>
                                             <td>{{ $h->accredited_date ? \Carbon\Carbon::parse($h->accredited_date)->format('M Y') : '-' }}</td>

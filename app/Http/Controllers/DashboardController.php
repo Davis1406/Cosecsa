@@ -167,7 +167,7 @@ public function dashboard()
         $empty = [
             'trainees' => [], 'candidates' => [], 'examiners' => [], 'fellows' => [],
             'programme_directors' => [], 'trainers' => [], 'members' => [], 'country_reps' => [],
-            'hospitals' => [],
+            'hospitals' => [], 'countries' => [],
         ];
 
         $q = trim($request->input('q', ''));
@@ -389,9 +389,21 @@ public function dashboard()
                 'url'  => url('admin/hospital/view_hospital/' . $r->hospital_id),
             ]);
 
+        // Countries — the college's own country roster, not a lookup of every
+        // possible nation, so a plain name search is enough.
+        $countries = DB::table('countries')
+            ->where('country_name', 'like', $like)
+            ->select('id', 'country_name')
+            ->orderBy('country_name')->limit(8)->get()
+            ->map(fn($r) => [
+                'name' => $r->country_name,
+                'sub'  => null,
+                'url'  => url('admin/countries/view/' . $r->id),
+            ]);
+
         return response()->json(compact(
             'trainees', 'candidates', 'examiners', 'fellows', 'programme_directors', 'trainers', 'members', 'country_reps',
-            'hospitals'
+            'hospitals', 'countries'
         ));
     }
 

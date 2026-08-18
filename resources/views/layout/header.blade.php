@@ -268,6 +268,7 @@ document.addEventListener('DOMContentLoaded', function () {
             { key: 'members',      label: 'Members',      icon: 'fas fa-id-badge' },
             { key: 'country_reps', label: 'Country Reps', icon: 'fas fa-flag' },
             { key: 'hospitals',    label: 'Hospitals',    icon: 'fas fa-hospital' },
+            { key: 'countries',    label: 'Countries',    icon: 'fas fa-globe-africa' },
         ];
         var total = 0;
         sections.forEach(function (s) {
@@ -355,6 +356,16 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <i class="nav-icon fas fa-book"></i>
                                 <p>
                                     Programmes
+                                </p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ url('admin/countries/list') }}"
+                                class="nav-link @if (Request::segment(2) == 'countries') active @endif">
+                                <i class="nav-icon fas fa-globe-africa"></i>
+                                <p>
+                                    Countries
                                 </p>
                             </a>
                         </li>
