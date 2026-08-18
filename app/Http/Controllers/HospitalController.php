@@ -103,24 +103,36 @@ class HospitalController extends Controller
         return back()->with('success', $response->json('message'));
     }
 
+    // Standard COSECSA accreditation cycle length. "Custom" duration must be
+    // strictly shorter than this — a conditional/shorter grant, not a way to
+    // extend past the standard term.
+    const STANDARD_CYCLE_MONTHS = 60;
+
     // Activate/reaccredit one or more programmes at a hospital in one go.
-    // The chosen month/year is the new accreditation (reaccreditation) date
-    // — expiry is computed as 3 years from that date, the college's standard
-    // accreditation cycle. cosecsa-api handles the actual reaccreditation
-    // vs. first-time-accreditation distinction (and logs history) per
-    // programme depending on whether it already had an accreditation row.
+    // The chosen month/year is the new accreditation (reaccreditation) date.
+    // Duration is either the standard 5-year cycle, or a shorter conditional
+    // grant (1 to 59 months) staff picks explicitly. cosecsa-api handles the
+    // actual reaccreditation vs. first-time-accreditation distinction (and
+    // logs history) per programme depending on whether it already had an
+    // accreditation row.
     public function reaccredit(Request $request)
     {
         $validated = $request->validate([
-            'hospital_id'    => 'required|integer',
-            'programme_id'   => 'required|array|min:1',
-            'programme_id.*' => 'integer',
-            'month'          => 'required|integer|min:1|max:12',
-            'year'           => 'required|integer|min:2020|max:2040',
+            'hospital_id'      => 'required|integer',
+            'programme_id'     => 'required|array|min:1',
+            'programme_id.*'   => 'integer',
+            'month'            => 'required|integer|min:1|max:12',
+            'year'             => 'required|integer|min:2020|max:2040',
+            'duration_mode'    => 'required|in:standard,custom',
+            'duration_months'  => 'required_if:duration_mode,custom|nullable|integer|min:1|max:' . (self::STANDARD_CYCLE_MONTHS - 1),
         ]);
 
+        $months = $validated['duration_mode'] === 'custom'
+            ? $validated['duration_months']
+            : self::STANDARD_CYCLE_MONTHS;
+
         $accreditedDate = Carbon::createFromDate($validated['year'], $validated['month'], 1)->startOfMonth();
-        $expiryDate = $accreditedDate->copy()->addYears(3)->endOfMonth();
+        $expiryDate = $accreditedDate->copy()->addMonths($months)->endOfMonth();
 
         $response = $this->api->post('admin/hospital-programmes/reaccredit', [
             'hospital_id'     => $validated['hospital_id'],
@@ -209,6 +221,33 @@ class HospitalController extends Controller
             'allProgrammes' => \App\Models\Programme::getProgramme(),
             'allCountries'  => \App\Models\Country::getCountry(),
         ]);
+    }
+
+    // Inline hospital-type edit from the view page. The API's update()
+    // endpoint requires name/country_id too (it's a full-record update), so
+    // fetch the hospital's current values first and resend them unchanged
+    // alongside the new type.
+    public function quickUpdateType(Request $request, $id)
+    {
+        $validated = $request->validate(['hospital_type' => 'required|integer|min:1|max:4']);
+
+        $current = $this->api->get("admin/hospitals/{$id}")->object();
+        if (! $current || ! isset($current->hospital)) {
+            return response()->json(['message' => 'Hospital not found.'], 404);
+        }
+
+        $response = $this->api->post("admin/hospitals/{$id}", [
+            'name'          => $current->hospital->name,
+            'country_id'    => $current->hospital->country_id,
+            'hospital_type' => $validated['hospital_type'],
+            'contact_email' => $current->hospital->contact_email,
+        ]);
+
+        if ($response->failed()) {
+            return response()->json(['message' => $response->json('message', 'Update failed.')], 422);
+        }
+
+        return response()->json(['message' => 'Hospital type updated.']);
     }
 
     // ── Programmes / PD / Fellow-mapping widgets on the hospital view page ──

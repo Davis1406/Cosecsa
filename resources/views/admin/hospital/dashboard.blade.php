@@ -428,6 +428,21 @@
                       </div>
                     </div>
                     <div class="form-group">
+                      <label>Duration</label>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="duration_mode" id="toggleDurationStandard" value="standard" checked>
+                        <label class="form-check-label" for="toggleDurationStandard">Standard — 5 years</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="duration_mode" id="toggleDurationCustom" value="custom">
+                        <label class="form-check-label" for="toggleDurationCustom">Custom — conditional accreditation, shorter than 5 years</label>
+                      </div>
+                      <div id="toggleCustomMonthsWrap" class="mt-2" style="display:none;">
+                        <label class="small mb-1">Number of months (1–59)</label>
+                        <input type="number" name="duration_months" id="toggleCustomMonths" class="form-control" min="1" max="59" value="6">
+                      </div>
+                    </div>
+                    <div class="form-group">
                       <label>New Expiry Date</label>
                       <input type="text" id="toggleNewExpiry" class="form-control" readonly style="background:#f8f9fa;">
                       <small class="form-text text-muted" id="toggleExpiryNote"></small>
@@ -560,24 +575,33 @@ $(document).on('click', '.fchk-clear', function (e) {
 
 // Toggle Status modal
 var toggleMonthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var STANDARD_CYCLE_MONTHS = 60; // 5 years — keep in sync with HospitalController::STANDARD_CYCLE_MONTHS
 
 // The month/year picked is the REACCREDITATION date (accredited_date) —
-// expiry is always 3 years from that date, the college's standard
-// accreditation cycle length, computed here just for display.
+// expiry is that date plus either the standard 5-year cycle or a shorter
+// custom duration (months), computed here just for display.
 function calcToggleExpiry() {
   var m = parseInt($('#toggleMonth').val());
   var y = parseInt($('#toggleYear').val());
-  if (!m || !y) {
+  var isCustom = $('#toggleDurationCustom').is(':checked');
+  var months = isCustom ? parseInt($('#toggleCustomMonths').val()) : STANDARD_CYCLE_MONTHS;
+
+  if (!m || !y || !months || months < 1) {
     $('#toggleNewExpiry').val('');
-    $('#toggleExpiryNote').text('Select the month and year this reaccreditation takes effect.');
+    $('#toggleExpiryNote').text('Select the month, year, and duration for this reaccreditation.');
     return;
   }
-  var expiryYear = y + 3;
-  var lastDay = new Date(expiryYear, m, 0).getDate();
-  var mm = String(m).padStart(2, '0');
+
+  var total = (m - 1) + months;
+  var expiryYear = y + Math.floor(total / 12);
+  var expiryMonth = (total % 12) + 1;
+  var lastDay = new Date(expiryYear, expiryMonth, 0).getDate();
+  var mm = String(expiryMonth).padStart(2, '0');
   var dd = String(lastDay).padStart(2, '0');
   $('#toggleNewExpiry').val(expiryYear + '-' + mm + '-' + dd);
-  $('#toggleExpiryNote').text('Accredited ' + toggleMonthNames[m - 1] + ' ' + y + ' — expires ' + lastDay + ' ' + toggleMonthNames[m - 1] + ' ' + expiryYear + ' (3-year cycle).');
+
+  var cycleLabel = isCustom ? (months + '-month conditional term') : '5-year standard cycle';
+  $('#toggleExpiryNote').text('Accredited ' + toggleMonthNames[m - 1] + ' ' + y + ' — expires ' + lastDay + ' ' + toggleMonthNames[expiryMonth - 1] + ' ' + expiryYear + ' (' + cycleLabel + ').');
 }
 
 function formatMmYy(dateStr) {
@@ -586,7 +610,11 @@ function formatMmYy(dateStr) {
   return toggleMonthNames[d.getMonth()] + ' ' + d.getFullYear();
 }
 
-$('#toggleMonth, #toggleYear').on('change', calcToggleExpiry);
+$('#toggleMonth, #toggleYear, #toggleCustomMonths').on('change input', calcToggleExpiry);
+$('input[name="duration_mode"]').on('change', function () {
+  $('#toggleCustomMonthsWrap').toggle($('#toggleDurationCustom').is(':checked'));
+  calcToggleExpiry();
+});
 
 function renderProgrammeChecklist(programmes, checkedProgrammeId) {
   var $list = $('#toggleProgrammeList');
@@ -632,10 +660,13 @@ $(document).on('click', '.toggle-status-btn', function () {
     $('#toggleSubmitBtn').text('Activate').removeClass('btn-danger').addClass('btn-cosecsa');
 
     // Default: today's month/year — this is when the reaccreditation
-    // is being recorded, not when it will expire.
+    // is being recorded, not when it will expire. Duration resets to
+    // Standard each time the modal opens.
     var def = new Date();
     $('#toggleMonth').val(def.getMonth() + 1);
     $('#toggleYear').val(def.getFullYear());
+    $('#toggleDurationStandard').prop('checked', true);
+    $('#toggleCustomMonthsWrap').hide();
     calcToggleExpiry();
 
     $('#toggleProgrammeList').html('<small class="text-muted">Loading…</small>');

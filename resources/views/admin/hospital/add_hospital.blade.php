@@ -65,11 +65,22 @@
                                             </div>
 
                                             <div class="form-group">
+                                                <label>Hospital Type</label>
+                                                <select name="hospital_type" class="form-control">
+                                                    <option value="1">Government</option>
+                                                    <option value="2">NGO / Faith-Based</option>
+                                                    <option value="3">Private</option>
+                                                    <option value="4">University Teaching</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="form-group">
                                                 <label>Status</label>
                                                 <select name="status" id="" class="form-control">
+                                                    <option value="1" selected>Inactive</option>
                                                     <option value="0">Active</option>
-                                                    <option value="1">Inactive</option>
                                                 </select>
+                                                <small class="form-text text-muted">Becomes Active automatically once a programme accreditation is marked Active.</small>
                                             </div>
 
                                             <div class="form-group">

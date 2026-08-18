@@ -35,10 +35,12 @@
 
                 <div class="ms2-row">
                     <div class="ms2-col">
-                        <label class="ms2-label">Status <span class="req">*</span></label>
-                        <select name="status" class="ms2-input" required>
-                            <option value="0" {{ $getRecord->status == 0 ? 'selected' : '' }}>Active</option>
-                            <option value="1" {{ $getRecord->status == 1 ? 'selected' : '' }}>Inactive</option>
+                        <label class="ms2-label">Hospital Type</label>
+                        <select name="hospital_type" class="ms2-input">
+                            @php $hospTypeOpts = [1=>'Government', 2=>'NGO / Faith-Based', 3=>'Private', 4=>'University Teaching']; @endphp
+                            @foreach($hospTypeOpts as $val => $label)
+                                <option value="{{ $val }}" {{ $getRecord->hospital_type == $val ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="ms2-col">
@@ -48,6 +50,20 @@
                             <input type="email" name="contact_email" class="ms2-input"
                                    value="{{ $getRecord->contact_email }}" placeholder="Used for accreditation reminders">
                         </div>
+                    </div>
+                </div>
+
+                <div class="ms2-row">
+                    <div class="ms2-col">
+                        <label class="ms2-label">Status</label>
+                        <div class="ms2-input" style="background:#f8f9fa;">
+                            @if($getRecord->status == 0)
+                                <span class="dot dot-active_acc"></span> Active
+                            @else
+                                <span class="dot dot-expired"></span> Inactive
+                            @endif
+                        </div>
+                        <small class="text-muted">Derived automatically — Active whenever at least one accredited programme is Active.</small>
                     </div>
                 </div>
 
