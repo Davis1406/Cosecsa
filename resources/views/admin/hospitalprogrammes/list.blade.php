@@ -235,7 +235,7 @@
                                                 <a class="dropdown-item" href="{{ url('admin/hospitalprogrammes/edit/' . $data->id) }}">
                                                     <i class="fas fa-edit text-warning mr-2"></i> Edit
                                                 </a>
-                                                @if(Auth::user()->isSuperAdmin())
+                                                @if(Auth::user()->isSuperAdmin() || Auth::user()->hasPermission('lookups.manage'))
                                                 <div class="dropdown-divider"></div>
                                                 <a class="dropdown-item text-danger"
                                                    href="{{ url('admin/hospitalprogrammes/delete/' . $data->id) }}"

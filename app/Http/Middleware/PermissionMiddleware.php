@@ -27,18 +27,21 @@ class PermissionMiddleware
             return $next($request);
         }
 
-        // Deleting is Super Admin only, full stop — regardless of what a
-        // scoped role's "manage" permission covers. Several delete actions
-        // in this app are wired as plain GET links (no POST confirmation
-        // step) rather than the DELETE verb, so check both.
+        // Deleting requires that module's "manage" permission — manage is
+        // documented (config/admin_permissions.php) as covering create/edit
+        // /delete/import, so a role granted manage on a module is trusted
+        // with delete there too. Super Admin always passes regardless of
+        // per-module grants. Several delete actions in this app are wired
+        // as plain GET links (no POST confirmation step) rather than the
+        // DELETE verb, so check both.
         $segments = explode('/', trim($path, '/'));
         $isDelete = $request->isMethod('delete') || (bool) array_intersect(['delete', 'destroy'], $segments);
 
         if ($isDelete) {
-            if ($user->isSuperAdmin()) {
+            if ($user->isSuperAdmin() || $user->hasPermission("{$module}.manage")) {
                 return $next($request);
             }
-            return redirect('admin/dashboard')->with('error', 'Only Super Admin can delete records.');
+            return redirect('admin/dashboard')->with('error', 'You do not have permission to delete records in that section.');
         }
 
         // Impersonating is also treated as a "manage" action even though the

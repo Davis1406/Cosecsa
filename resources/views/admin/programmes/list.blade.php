@@ -101,7 +101,7 @@
                             <a href="{{ url('admin/programmes/edit_programmes/'.$programme->id) }}" class="btn btn-edit" title="Edit">
                                 <i class="fas fa-pen"></i>
                             </a>
-                            @if(Auth::user()->isSuperAdmin())
+                            @if(Auth::user()->isSuperAdmin() || Auth::user()->hasPermission('lookups.manage'))
                             <a href="{{ url('admin/programmes/delete/'.$programme->id) }}" class="btn btn-del" title="Delete"
                                onclick="return confirm('Delete {{ $programme->name }}? This cannot be undone.');">
                                 <i class="fas fa-trash"></i>

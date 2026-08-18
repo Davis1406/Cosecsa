@@ -208,7 +208,7 @@ $filterDefs = [
                                         <a class="dropdown-item" href="{{ url('admin/hospital/edit_hospital/' . $value->id) }}">
                                             <i class="fas fa-edit text-warning mr-2"></i> Edit
                                         </a>
-                                        @if(Auth::user()->isSuperAdmin())
+                                        @if(Auth::user()->isSuperAdmin() || Auth::user()->hasPermission('lookups.manage'))
                                         <div class="dropdown-divider"></div>
                                         <a class="dropdown-item text-danger"
                                            href="{{ url('admin/hospital/delete/' . $value->id) }}"
