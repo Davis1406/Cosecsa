@@ -204,6 +204,51 @@
                     </div>
 
                     <div class="ms2-row">
+                        <div class="ms2-col" style="flex:1 1 100%;">
+                            <label class="ms2-label">Additional FCS Specialties <span style="font-weight:400;opacity:.6;">(if qualified in more than one — leave blank if not applicable)</span></label>
+                        </div>
+                    </div>
+                    @php $specialtyOpts = \App\Models\Programme::orderBy('name')->pluck('name'); @endphp
+                    <div class="ms2-row">
+                        <div class="ms2-col">
+                            <label class="ms2-label">2nd FCS Specialty</label>
+                            <select name="second_fcs_specialty" class="ms2-input select2-tags" data-placeholder="Search or type a specialty…">
+                                <option value=""></option>
+                                @if($fellow->second_fcs_specialty && !$specialtyOpts->contains($fellow->second_fcs_specialty))
+                                    <option value="{{ $fellow->second_fcs_specialty }}" selected>{{ $fellow->second_fcs_specialty }}</option>
+                                @endif
+                                @foreach($specialtyOpts as $s)
+                                    <option value="{{ $s }}" {{ $fellow->second_fcs_specialty==$s ? 'selected':'' }}>{{ $s }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="ms2-col">
+                            <label class="ms2-label">2nd FCS Year</label>
+                            <input type="text" name="second_fcs_year" class="ms2-input"
+                                   value="{{ $fellow->second_fcs_year }}" placeholder="e.g. 2018">
+                        </div>
+                    </div>
+                    <div class="ms2-row">
+                        <div class="ms2-col">
+                            <label class="ms2-label">3rd FCS Specialty</label>
+                            <select name="third_fcs_specialty" class="ms2-input select2-tags" data-placeholder="Search or type a specialty…">
+                                <option value=""></option>
+                                @if($fellow->third_fcs_specialty && !$specialtyOpts->contains($fellow->third_fcs_specialty))
+                                    <option value="{{ $fellow->third_fcs_specialty }}" selected>{{ $fellow->third_fcs_specialty }}</option>
+                                @endif
+                                @foreach($specialtyOpts as $s)
+                                    <option value="{{ $s }}" {{ $fellow->third_fcs_specialty==$s ? 'selected':'' }}>{{ $s }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="ms2-col">
+                            <label class="ms2-label">3rd FCS Year</label>
+                            <input type="text" name="third_fcs_year" class="ms2-input"
+                                   value="{{ $fellow->third_fcs_year }}" placeholder="e.g. 2021">
+                        </div>
+                    </div>
+
+                    <div class="ms2-row">
                         <div class="ms2-col">
                             <label class="ms2-label">Supervised By</label>
                             <input type="text" name="supervised_by" class="ms2-input"
