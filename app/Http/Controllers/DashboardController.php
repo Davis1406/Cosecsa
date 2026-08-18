@@ -160,13 +160,14 @@ public function dashboard()
 
     /**
      * GET admin/global-search?q=...
-     * Returns JSON: { trainees, candidates, examiners, fellows, programme_directors, trainers, members, country_reps }
+     * Returns JSON: { trainees, candidates, examiners, fellows, programme_directors, trainers, members, country_reps, hospitals }
      */
     public function globalSearch(Request $request)
     {
         $empty = [
             'trainees' => [], 'candidates' => [], 'examiners' => [], 'fellows' => [],
             'programme_directors' => [], 'trainers' => [], 'members' => [], 'country_reps' => [],
+            'hospitals' => [],
         ];
 
         $q = trim($request->input('q', ''));
@@ -364,8 +365,30 @@ public function dashboard()
                 'url'  => url('admin/associates/reps/view/' . $r->rep_id),
             ]);
 
+        // Hospitals — excludes the per-country "Pending Assignment — Update
+        // Hospital" placeholders created by trainees:import-inactive /
+        // trainees:import-fellow-retraining to hold imported trainees whose
+        // real hospital wasn't supplied. Those aren't real accredited sites
+        // and shouldn't be searchable/countable as hospitals.
+        $hospitals = DB::table('hospitals as h')
+            ->leftJoin('countries as co', 'co.id', '=', 'h.country_id')
+            ->where('h.is_deleted', 0)
+            ->where('h.name', '!=', 'Pending Assignment — Update Hospital')
+            ->where(function ($w) use ($like) {
+                $w->where('h.name', 'like', $like)
+                  ->orWhere('h.contact_email', 'like', $like);
+            })
+            ->select('h.id as hospital_id', 'h.name', 'co.country_name')
+            ->orderBy('h.name')->limit(8)->get()
+            ->map(fn($r) => [
+                'name' => $r->name,
+                'sub'  => $r->country_name,
+                'url'  => url('admin/hospital/view_hospital/' . $r->hospital_id),
+            ]);
+
         return response()->json(compact(
-            'trainees', 'candidates', 'examiners', 'fellows', 'programme_directors', 'trainers', 'members', 'country_reps'
+            'trainees', 'candidates', 'examiners', 'fellows', 'programme_directors', 'trainers', 'members', 'country_reps',
+            'hospitals'
         ));
     }
 

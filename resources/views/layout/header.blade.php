@@ -267,6 +267,7 @@ document.addEventListener('DOMContentLoaded', function () {
             { key: 'trainers',     label: 'Trainers',     icon: 'fas fa-user-tie' },
             { key: 'members',      label: 'Members',      icon: 'fas fa-id-badge' },
             { key: 'country_reps', label: 'Country Reps', icon: 'fas fa-flag' },
+            { key: 'hospitals',    label: 'Hospitals',    icon: 'fas fa-hospital' },
         ];
         var total = 0;
         sections.forEach(function (s) {
