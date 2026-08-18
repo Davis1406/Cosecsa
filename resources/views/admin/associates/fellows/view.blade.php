@@ -138,6 +138,13 @@
     gap: 8px;
 }
 
+/* ── Minimal icon-only action buttons (action bar, no text labels) ── */
+.action-icon-bar .btn-icon {
+    width: 30px; height: 30px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%; font-size: .8rem;
+}
+
 /* ── Labels edit panel ── */
 #labelsEditPanel {
     display: none;
@@ -194,30 +201,23 @@
                     @endif
                 </span>
             </div>
-            <div class="d-flex flex-wrap align-items-center" style="gap:6px;">
+            <div class="d-flex flex-wrap align-items-center action-icon-bar" style="gap:4px;">
                 <a href="{{ url('admin/associates/fellows/list') }}"
-                   class="btn btn-sm btn-outline-secondary">
-                    <i class="fas fa-arrow-left mr-1"></i> Back
+                   class="btn btn-sm btn-icon btn-outline-secondary" title="Back to list">
+                    <i class="fas fa-arrow-left"></i>
                 </a>
                 <a href="{{ url('admin/associates/fellows/edit/' . $fellow->fellow_id) }}"
-                   class="btn btn-sm btn-warning">
-                    <i class="fas fa-edit mr-1"></i> Edit Fellow
+                   class="btn btn-sm btn-icon btn-warning" title="Edit Fellow">
+                    <i class="fas fa-edit"></i>
                 </a>
-                @include('admin._impersonate_button', ['userId' => $fellow->user_id ?? null])
-                <div class="dropdown">
-                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-toggle="dropdown"
-                            aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-ellipsis-v mr-1"></i> More
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                        <a class="dropdown-item" href="{{ url('admin/associates/fellows/subscriptions/' . $fellow->fellow_id) }}">
-                            <i class="fas fa-receipt text-info mr-2"></i> Subscriptions
-                        </a>
-                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#addRoleModal">
-                            <i class="fas fa-user-plus text-danger mr-2"></i> Add Role
-                        </a>
-                    </div>
-                </div>
+                <a href="{{ url('admin/associates/fellows/subscriptions/' . $fellow->fellow_id) }}"
+                   class="btn btn-sm btn-icon btn-outline-info" title="Subscriptions">
+                    <i class="fas fa-receipt"></i>
+                </a>
+                <button type="button" class="btn btn-sm btn-icon btn-outline-danger" title="Add Role" data-toggle="modal" data-target="#addRoleModal">
+                    <i class="fas fa-user-plus"></i>
+                </button>
+                @include('admin._impersonate_button', ['userId' => $fellow->user_id ?? null, 'iconOnly' => true])
             </div>
         </div>
 
@@ -818,6 +818,49 @@
                         </div>
                         @endif
 
+                        <p class="sect-div">Additional FCS Specialties</p>
+                        <small class="text-muted d-block mb-2">A fellow qualified in more than one FCS specialty gets the "2"/"3" badge on the fellows list. Leave blank if not applicable.</small>
+                        <div class="field-row"><span class="field-lbl">2nd FCS Specialty</span>
+                            <span class="field-val ie-field" data-ie="second_fcs_specialty" data-ie-type="select"
+                                  data-ie-searchable="1" data-ie-tags="1"
+                                  data-ie-value="{{ $fellow->second_fcs_specialty ?? '' }}"
+                                  data-ie-options="{{ json_encode($specialtyOptsMap ?? []) }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->second_fcs_specialty ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit 2nd FCS specialty"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">2nd FCS Year</span>
+                            <span class="field-val ie-field" data-ie="second_fcs_year" data-ie-type="number"
+                                  data-ie-value="{{ $fellow->second_fcs_year ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->second_fcs_year ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit 2nd FCS year"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">3rd FCS Specialty</span>
+                            <span class="field-val ie-field" data-ie="third_fcs_specialty" data-ie-type="select"
+                                  data-ie-searchable="1" data-ie-tags="1"
+                                  data-ie-value="{{ $fellow->third_fcs_specialty ?? '' }}"
+                                  data-ie-options="{{ json_encode($specialtyOptsMap ?? []) }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->third_fcs_specialty ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit 3rd FCS specialty"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">3rd FCS Year</span>
+                            <span class="field-val ie-field" data-ie="third_fcs_year" data-ie-type="number"
+                                  data-ie-value="{{ $fellow->third_fcs_year ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->third_fcs_year ?? '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit 3rd FCS year"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+
                         <p class="sect-div">Training</p>
                         <div class="field-row"><span class="field-lbl">Supervised by</span><span class="field-val">{{ $fellow->supervised_by ?? '—' }}</span></div>
                         <div class="field-row"><span class="field-lbl">Country of MCS Training</span><span class="field-val">{{ $fellow->country_mcs_training ?? '—' }}</span></div>
@@ -1129,6 +1172,9 @@ $(document).ready(function () {
     $('#fellowTabs a').on('shown.bs.tab', function (e) {
         localStorage.setItem('adminFellowViewTab', $(e.target).attr('href'));
     });
+
+    // Icon-only action bar buttons rely on their title for a tooltip.
+    $('.action-icon-bar [title]').tooltip();
 });
 
 function toggleLabelsEdit() {
