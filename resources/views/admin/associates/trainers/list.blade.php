@@ -138,7 +138,7 @@
                                             <th>Specialty</th>
                                             <th>ToT Years Attended</th>
                                             <th>Master Trainer</th>
-                                            <th>SS</th>
+                                            <th>Specialty Surgeon</th>
                                             <th class="no-print">Action</th>
                                         </tr>
                                     </thead>
