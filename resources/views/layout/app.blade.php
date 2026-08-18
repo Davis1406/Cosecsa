@@ -51,8 +51,8 @@
     <link rel="stylesheet" href="{{ asset('plugins/datatables-buttons/css/buttons.bootstrap4.min.css') }}">
 
     <link rel="stylesheet" href="{{ asset('dist/css/wizard.css') }}">
-    <link rel="stylesheet" href="{{ asset('dist/css/custom.css') }}">
-    <link rel="stylesheet" href="{{ asset('dist/css/inline-edit.css') }}">
+    <link rel="stylesheet" href="{{ asset('dist/css/custom.css') }}?v={{ filemtime(public_path('dist/css/custom.css')) }}">
+    <link rel="stylesheet" href="{{ asset('dist/css/inline-edit.css') }}?v={{ filemtime(public_path('dist/css/inline-edit.css')) }}">
     <!-- overlayScrollbars -->
     <link rel="stylesheet" href="{{ asset('plugins/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
     <!-- Daterange picker -->
