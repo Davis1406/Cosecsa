@@ -12,7 +12,7 @@
             <div class="container-fluid">
                 <div class="row mb-2 align-items-center">
                     <div class="col-sm-6">
-                        <h1 class="m-0">Trainers <small class="text-muted">COSECSA Master Trainer ToT roster</small></h1>
+                        <h1 class="m-0">Trainers</h1>
                     </div>
                     <div class="col-sm-6 text-right">
                         <button type="button" id="btnPrint" class="btn btn-sm btn-secondary">
@@ -57,9 +57,9 @@
                         </div>
                     </div>
                     <div class="col-6 col-md-3">
-                        <div class="mini-stat" id="statSS" title="Filter: Specialty Surgeons only">
+                        <div class="mini-stat" id="statSS" title="Filter: Safe Surgery only">
                             <div class="mini-stat-icon" style="background:#e6f0fc;color:#007bff;"><i class="fas fa-user-md"></i></div>
-                            <div><div class="mini-stat-val">{{ $ssCount }}</div><div class="mini-stat-lbl">Specialty Surgeons</div></div>
+                            <div><div class="mini-stat-val">{{ $ssCount }}</div><div class="mini-stat-lbl">Safe Surgery</div></div>
                         </div>
                     </div>
                     <div class="col-6 col-md-3">
@@ -138,7 +138,7 @@
                                             <th>Specialty</th>
                                             <th>ToT Years Attended</th>
                                             <th>Master Trainer</th>
-                                            <th>Specialty Surgeon</th>
+                                            <th>Safe Surgery</th>
                                             <th class="no-print">Action</th>
                                         </tr>
                                     </thead>

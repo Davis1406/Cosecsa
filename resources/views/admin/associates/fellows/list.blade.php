@@ -118,13 +118,16 @@
                                             data-gender="{{ $value->gender ?? '' }}"
                                             data-alumni="{{ $value->is_alumni ?? 0 }}">
                                             <td class="row-num"></td>
-                                            <td>
-                                                @php
-                                                    $specCount = 1
-                                                        + (!empty($value->second_fcs_specialty) ? 1 : 0)
-                                                        + (!empty($value->third_fcs_specialty)  ? 1 : 0);
-                                                    $multiSpec = $specCount > 1;
-                                                @endphp
+                                            @php
+                                                $specCount = 1
+                                                    + (!empty($value->second_fcs_specialty) ? 1 : 0)
+                                                    + (!empty($value->third_fcs_specialty)  ? 1 : 0);
+                                                $multiSpec = $specCount > 1;
+                                                // Multi-specialty fellows sort first by default, then
+                                                // alphabetically within each group.
+                                                $nameSortKey = ($multiSpec ? '0_' : '1_') . ($value->fellow_name ?? '');
+                                            @endphp
+                                            <td data-order="{{ $nameSortKey }}">
                                                 <span style="display:inline-flex; align-items:center; gap:4px;">
                                                     <a href="{{ url('admin/associates/fellows/view/' . ($value->fellow_id ?? 0)) }}"
                                                        style="{{ $multiSpec ? 'color:#a02626; font-weight:600;' : 'color:#222;' }} text-decoration:none;">{{ $value->fellow_name ?? '-' }}</a>
@@ -137,7 +140,6 @@
                                                             line-height:1; flex-shrink:0;
                                                         " title="{{ $specCount }} FCS specialties">{{ $specCount }}</sup>
                                                     @endif
-                                                </span>
                                                 </span>
                                             </td>
                                             <td>{{ $value->personal_email ?? '-' }}</td>

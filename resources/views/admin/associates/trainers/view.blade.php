@@ -119,7 +119,7 @@
     margin: 4px 0 0;
 }
 
-/* ── Role pills (Master Trainer / Specialty Surgeon) ── */
+/* ── Role pills (Master Trainer / Safe Surgery) ── */
 .trainer-view .role-pill {
     display: inline-flex;
     align-items: center;
@@ -533,9 +533,9 @@ body.dark-mode .trainer-view .comment-box.empty { color: #6b7280; }
                                     <span class="role-pill role-no">Not a Master Trainer</span>
                                 @endif
                                 @if($isSpecialtySurgeon)
-                                    <span class="role-pill role-ss"><i class="fas fa-user-md mr-1"></i>Specialty Surgeon</span>
+                                    <span class="role-pill role-ss"><i class="fas fa-user-md mr-1"></i>Safe Surgery</span>
                                 @else
-                                    <span class="role-pill role-no">Not a Specialty Surgeon</span>
+                                    <span class="role-pill role-no">Not Safe Surgery</span>
                                 @endif
                             </div>
                         </div>
@@ -676,7 +676,7 @@ body.dark-mode .trainer-view .comment-box.empty { color: #6b7280; }
                                     <i class="fas fa-user-md"></i>
                                 </div>
                                 <div>
-                                    <div class="chip-label">Specialty Surgeon</div>
+                                    <div class="chip-label">Safe Surgery</div>
                                     @if($isSpecialtySurgeon)
                                         <strong class="chip-val" style="color:#007bff;">Yes</strong>
                                     @else
