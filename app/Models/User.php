@@ -775,8 +775,8 @@ class User extends Authenticatable
 
     // ── Fine-grained admin permissions (Role/Permission), separate from the
     //    coarse role_type/user_type buckets above. Only meaningful for
-    //    user_type=1 accounts. A null role_id is treated as Super Admin so
-    //    existing admin accounts aren't locked out by this being added later.
+    //    user_type=1 accounts. A null role_id means no role assigned — see
+    //    isSuperAdmin() below.
     public function adminRole()
     {
         return $this->belongsTo(\App\Models\Role::class, 'role_id');
@@ -785,15 +785,18 @@ class User extends Authenticatable
     // Super Admin bypasses every per-module permission check outright,
     // including delete (see PermissionMiddleware) — a scoped role can also
     // reach delete for a given module via that module's "manage" permission.
-    // Super Admin is either a null role_id (grandfathered) or an explicit
-    // assignment to the protected is_system Role row.
+    // Super Admin means an explicit assignment to the protected is_system
+    // Role row. A NULL role_id used to be treated as a grandfathered Super
+    // Admin (so existing admins weren't locked out the moment role_id was
+    // introduced) — that silently promoted every admin account nobody had
+    // gotten around to assigning a role to. 2026_08_19_080000_backfill_null_admin_role_id_to_super_admin
+    // explicitly assigns Super Admin to every account that relied on that
+    // grandfather clause, so NULL can safely mean "no role assigned" (fail
+    // closed) from here on.
     public function isSuperAdmin(): bool
     {
         if ($this->user_type != 1) {
             return false;
-        }
-        if (is_null($this->role_id)) {
-            return true;
         }
 
         return (bool) ($this->adminRole?->is_system ?? false);
@@ -835,8 +838,9 @@ class User extends Authenticatable
         if ($this->user_type != 1) {
             return false;
         }
+        // No role assigned (fail closed) — see isSuperAdmin() docblock above.
         if (is_null($this->role_id)) {
-            return true; // grandfathered Super Admin
+            return false;
         }
 
         $keys = \Illuminate\Support\Facades\Cache::remember(
