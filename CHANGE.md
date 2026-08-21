@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Data correction (2026-08-21) — Backfilled Secretariat Monthly Reports for Mar–Jul 2026 from the college's Word docs
+- Imported `config/progress_report_sections.php` under `admin/progressive-reports` had no way to bulk-load a month from a Word doc — every period previously had to be filled in section-by-section through the UI. Ran a one-off backfill (`cosecsa-api`'s new `progress-reports:import-secretariat` command, see that repo's CHANGES.md) against the college's `Monthly Reports` folder for March, April, May, June, and July 2026 (April was initially going to be skipped as its supplied file was stale, then included once a corrected copy was supplied).
+- Two existing periods (May id 5, June id 7) had already been auto-opened with template-seeded, unsubmitted content — backed up in-DB before being deleted and replaced with the real report content per Davis's instruction. No submitted staff data was lost (both were still 100% "pending").
+- **New staff section:** `MANAGING EDITOR (VINCENT KIPKORIR)` — every source doc included this role but it didn't exist in `progress_report_sections.php` yet. Added `user_id => 17994` (existing account, `managing_editor@cosecsa.org`, not yet logged in).
+- Confirmed `IT ASSISTANT (LAURENCE PAUL)` in the source docs and the existing config's `IT ASSISTANT (LAURENCE KISANGA)` (`user_id` 7827) are the same person — kept the existing `user_id`, no new account created.
+- **Files:** `config/progress_report_sections.php`.
+- **⚠️ Coordinate:** requires the matching `cosecsa-api` deploy (new `progress-reports:import-secretariat` command + identical config change) — see that repo's own CHANGES.md entry. Both apps' copies of `config/progress_report_sections.php` must stay in sync; nothing enforces that automatically.
+
 ### Changed (2026-08-18) — Delete now follows a module's "manage" permission, not Super-Admin-only
 - `config/admin_permissions.php` has always documented "manage" as covering "create/edit/delete/import — anything beyond read-only" for every module (e.g. `lookups.manage`: *"Add, edit, delete hospitals, programmes, and hospital-programme links"*), but `PermissionMiddleware` hard-coded delete routes (`.../delete/*`, `.../destroy/*`, or the `DELETE` verb) to Super-Admin-only regardless of what any role's manage permission granted — contradicting the config's own documented intent. Surfaced by Davis granting Edna's role (Academic Records Assistant) `lookups.manage` expecting it to include hospital delete, per that permission's own description, and it didn't.
 - `PermissionMiddleware::handle()`: delete now passes for `$user->isSuperAdmin() || $user->hasPermission("{$module}.manage")` instead of Super Admin only — matches the documented behavior for every module's manage permission app-wide, not just hospitals.

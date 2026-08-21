@@ -12,6 +12,7 @@ return [
     ['label' => 'EDUCATION OFFICER (NIRAJ BACHHETA)', 'user_id' => 8032],
     ['label' => 'ADMINISTRATIVE OFFICER (DIANA KAIZA)', 'user_id' => 17992],
     ['label' => 'ACADEMIC AND RECORDS ASSISTANT (EDNA HERMAN)', 'user_id' => 16679],
+    ['label' => 'MANAGING EDITOR (VINCENT KIPKORIR)', 'user_id' => 17994],
     ['label' => 'IT ASSISTANT (LAURENCE KISANGA)', 'user_id' => 7827],
     ['label' => 'ADMISSION ASSISTANT (DAVIS KONDAMWALI)', 'user_id' => 1],
 ];
