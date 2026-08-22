@@ -4,6 +4,26 @@
 
 ## [Unreleased]
 
+### Fixed (2026-08-23) — Progressive Report "No." column didn't renumber after deleting a row
+- Reported: add rows 5 and 6 to a section's task table, delete row 5, and the "No." column
+  showed 4, 6 — row 5 missing entirely, off by one for every row after it — until a full page
+  reload. Two stacked causes, one per repo:
+  1. **`cosecsa-api`** — `progress_report_tasks.row_no` (the stored, displayed row number)
+     wasn't compacted back to `1..N` after a delete, so it left a real gap in the database
+     and the next added row reused the wrong number (`max(row_no)+1` skipped straight past
+     the gap). Fixed there; see that repo's own CHANGES.md (2026-08-23 entry).
+  2. **This repo** — even with (1) fixed, `progressive_reports/show.blade.php`'s delete
+     handler only did `row.remove()` on success; it never updated the remaining rows'
+     already-rendered "No." cells to match the backend's new numbering, so the page kept
+     showing stale numbers until reloaded.
+- Delete handler now walks the remaining rows in that participant's `<tbody>` after a
+  successful delete and rewrites each row's "No." cell to its new `1..N` position — no
+  reload needed.
+- **Files:** `resources/views/progressive_reports/show.blade.php`.
+- **⚠️ Coordinate:** requires the `cosecsa-api` deploy from the same date (row_no compaction
+  fix) to actually be in place for the *database* numbers to be correct — this repo's fix
+  only keeps the on-page display in sync with whatever the API returns.
+
 ### Data correction (2026-08-21) — Backfilled Secretariat Monthly Reports for Mar–Jul 2026 from the college's Word docs
 - Imported `config/progress_report_sections.php` under `admin/progressive-reports` had no way to bulk-load a month from a Word doc — every period previously had to be filled in section-by-section through the UI. Ran a one-off backfill (`cosecsa-api`'s new `progress-reports:import-secretariat` command, see that repo's CHANGES.md) against the college's `Monthly Reports` folder for March, April, May, June, and July 2026 (April was initially going to be skipped as its supplied file was stale, then included once a corrected copy was supplied).
 - Two existing periods (May id 5, June id 7) had already been auto-opened with template-seeded, unsubmitted content — backed up in-DB before being deleted and replaced with the real report content per Davis's instruction. No submitted staff data was lost (both were still 100% "pending").
