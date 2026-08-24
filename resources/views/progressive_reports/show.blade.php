@@ -130,42 +130,47 @@
                   These are activities you report on every month. Add them here once, then pick them from the
                   "Activity Description" dropdown on any row below instead of retyping. Remove any you no longer need.
                 </p>
-                <table class="table table-sm table-bordered mb-3">
+                <table class="table table-sm table-bordered mb-3 pr-tpl-table" data-user-id="{{ Auth::id() }}">
                   <thead><tr><th style="width:35%;">Activity Description</th><th>Default Planned Activities</th><th style="width:8%;">Active</th><th style="width:10%;"></th></tr></thead>
-                  <tbody>
-                    @forelse($myTemplates as $tpl)
-                      <tr>
-                        <form method="POST" action="{{ url('progressive-reports/templates/'.$tpl->id.'/update') }}">
-                          @csrf
-                          <td><input type="text" name="activity_description" class="form-control form-control-sm" value="{{ $tpl->activity_description }}" required></td>
-                          <td><input type="text" name="default_planned_activities" class="form-control form-control-sm" value="{{ $tpl->default_planned_activities }}" placeholder="One per line"></td>
-                          <td class="text-center"><input type="checkbox" name="is_active" value="1" {{ $tpl->is_active ? 'checked' : '' }}></td>
-                          <td class="text-center" style="white-space:nowrap;">
-                            <button type="submit" class="btn btn-sm btn-cosecsa-outline" title="Save"><i class="fas fa-save"></i></button>
-                        </form>
-                        <form method="POST" action="{{ url('progressive-reports/templates/'.$tpl->id.'/delete') }}" style="display:inline;" onsubmit="return confirm('Remove this recurring task?')">
-                              @csrf
-                              <button type="submit" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
-                            </form>
-                          </td>
+                  <tbody class="pr-tpl-tbody">
+                    @foreach($myTemplates as $tpl)
+                      <tr data-template-id="{{ $tpl->id }}">
+                        <td><input type="text" class="form-control form-control-sm pr-tpl-field" data-field="activity_description" value="{{ $tpl->activity_description }}"></td>
+                        <td><input type="text" class="form-control form-control-sm pr-tpl-field" data-field="default_planned_activities" value="{{ $tpl->default_planned_activities }}" placeholder="One per line"></td>
+                        <td class="text-center"><input type="checkbox" class="pr-tpl-field" data-field="is_active" {{ $tpl->is_active ? 'checked' : '' }}></td>
+                        <td class="text-center" style="white-space:nowrap;">
+                          <button type="button" class="btn btn-sm btn-cosecsa-outline pr-tpl-save" title="Save"><i class="fas fa-save"></i></button>
+                          <button type="button" class="btn btn-sm btn-danger pr-tpl-delete" title="Delete"><i class="fas fa-trash"></i></button>
+                        </td>
                       </tr>
-                    @empty
-                      <tr><td colspan="4" class="text-center text-muted py-2">No recurring tasks yet — add one below.</td></tr>
-                    @endforelse
+                    @endforeach
+                    <tr class="pr-tpl-empty-row" @if($myTemplates->isNotEmpty()) style="display:none;" @endif>
+                      <td colspan="4" class="text-center text-muted py-2">No recurring tasks yet — add one below.</td>
+                    </tr>
                   </tbody>
                 </table>
-                <form method="POST" action="{{ url('progressive-reports/templates') }}" class="form-row align-items-center">
-                  @csrf
-                  <div class="col-md-4 mb-1">
-                    <input type="text" name="activity_description" class="form-control form-control-sm" placeholder="New activity description" required>
+                <div class="pr-tpl-new-wrap" data-user-id="{{ Auth::id() }}">
+                  <div class="pr-tpl-new-rows">
+                    <div class="form-row align-items-center pr-tpl-new-row mb-2">
+                      <div class="col-md-4 mb-1">
+                        <input type="text" class="form-control form-control-sm pr-tpl-new-activity" placeholder="New activity description">
+                      </div>
+                      <div class="col-md-5 mb-1">
+                        <input type="text" class="form-control form-control-sm pr-tpl-new-planned" placeholder="Default planned activities (one per line)">
+                      </div>
+                      <div class="col-md-3 mb-1">
+                        <button type="button" class="btn btn-sm btn-outline-danger pr-tpl-new-remove" title="Remove this row" style="display:none;"><i class="fas fa-times"></i></button>
+                      </div>
+                    </div>
                   </div>
-                  <div class="col-md-6 mb-1">
-                    <input type="text" name="default_planned_activities" class="form-control form-control-sm" placeholder="Default planned activities (one per line)">
-                  </div>
-                  <div class="col-md-2 mb-1">
-                    <button type="submit" class="btn btn-sm btn-cosecsa btn-block"><i class="fas fa-plus mr-1"></i> Add</button>
-                  </div>
-                </form>
+                  <button type="button" class="btn btn-sm btn-cosecsa-outline pr-tpl-new-add-row">
+                    <i class="fas fa-plus mr-1"></i> Add another row
+                  </button>
+                  <button type="button" class="btn btn-sm btn-cosecsa pr-tpl-new-save-all">
+                    Save all
+                  </button>
+                  <span class="pr-tpl-new-status ml-2 text-muted" style="font-size:.8rem;"></span>
+                </div>
               </div>
             </div>
           </div>
@@ -461,6 +466,159 @@ document.addEventListener('DOMContentLoaded', function () {
         attachBulletBehavior(tr.querySelectorAll('.pr-bullet-field'));
         tbody.appendChild(tr);
       });
+    });
+  });
+
+  // ── "My Recurring Tasks" widget ──────────────────────────────────
+  // Previously this was two plain <form method="POST"> blocks (per-row
+  // edit + the "Add" row), so every save/add fully reloaded this whole
+  // report page. Converted to the same AJAX pattern as the task rows
+  // above, plus multi-row batch add (mirrors progressive-reports/templates,
+  // the admin-only equivalent of this same feature).
+  document.querySelectorAll('.pr-tpl-table').forEach(function (table) {
+    table.addEventListener('click', function (e) {
+      const saveBtn = e.target.closest('.pr-tpl-save');
+      const delBtn = e.target.closest('.pr-tpl-delete');
+      if (!saveBtn && !delBtn) return;
+
+      const row = (saveBtn || delBtn).closest('tr');
+      const id = row.dataset.templateId;
+
+      if (saveBtn) {
+        const body = new URLSearchParams();
+        row.querySelectorAll('.pr-tpl-field').forEach(function (f) {
+          if (f.type === 'checkbox') { if (f.checked) body.append(f.dataset.field, '1'); }
+          else { body.append(f.dataset.field, f.value); }
+        });
+        fetch(`{{ url('progressive-reports/templates') }}/${id}/update`, {
+          method: 'POST',
+          headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body.toString(),
+        }).then(function (r) {
+          if (!r.ok) throw new Error();
+          saveBtn.innerHTML = '<i class="fas fa-check"></i>';
+          setTimeout(() => saveBtn.innerHTML = '<i class="fas fa-save"></i>', 1200);
+        }).catch(() => alert('Could not save that recurring task — please try again.'));
+      }
+
+      if (delBtn) {
+        if (!confirm('Remove this recurring task?')) return;
+        fetch(`{{ url('progressive-reports/templates') }}/${id}/delete`, {
+          method: 'POST',
+          headers: { 'X-CSRF-TOKEN': csrf },
+        }).then(() => row.remove());
+      }
+    });
+  });
+
+  function buildTplRow(t) {
+    const tr = document.createElement('tr');
+    tr.dataset.templateId = t.id;
+    tr.innerHTML = `
+      <td><input type="text" class="form-control form-control-sm pr-tpl-field" data-field="activity_description" value="${(t.activity_description || '').replace(/"/g, '&quot;')}"></td>
+      <td><input type="text" class="form-control form-control-sm pr-tpl-field" data-field="default_planned_activities" value="${(t.default_planned_activities || '').replace(/"/g, '&quot;')}" placeholder="One per line"></td>
+      <td class="text-center"><input type="checkbox" class="pr-tpl-field" data-field="is_active" ${t.is_active ? 'checked' : ''}></td>
+      <td class="text-center" style="white-space:nowrap;">
+        <button type="button" class="btn btn-sm btn-cosecsa-outline pr-tpl-save" title="Save"><i class="fas fa-save"></i></button>
+        <button type="button" class="btn btn-sm btn-danger pr-tpl-delete" title="Delete"><i class="fas fa-trash"></i></button>
+      </td>`;
+    return tr;
+  }
+
+  document.querySelectorAll('.pr-tpl-new-wrap').forEach(function (wrap) {
+    const userId = wrap.dataset.userId;
+    const rowsWrap = wrap.querySelector('.pr-tpl-new-rows');
+    const status = wrap.querySelector('.pr-tpl-new-status');
+    const table = wrap.closest('.card-body').querySelector('.pr-tpl-table');
+    const tbody = table.querySelector('.pr-tpl-tbody');
+    const emptyRow = tbody.querySelector('.pr-tpl-empty-row');
+
+    function newRowEl() {
+      const div = document.createElement('div');
+      div.className = 'form-row align-items-center pr-tpl-new-row mb-2';
+      div.innerHTML = `
+        <div class="col-md-4 mb-1"><input type="text" class="form-control form-control-sm pr-tpl-new-activity" placeholder="New activity description"></div>
+        <div class="col-md-5 mb-1"><input type="text" class="form-control form-control-sm pr-tpl-new-planned" placeholder="Default planned activities (one per line)"></div>
+        <div class="col-md-3 mb-1"><button type="button" class="btn btn-sm btn-outline-danger pr-tpl-new-remove" title="Remove this row"><i class="fas fa-times"></i></button></div>`;
+      return div;
+    }
+
+    function refreshRemoveButtons() {
+      const rows = rowsWrap.querySelectorAll('.pr-tpl-new-row');
+      rows.forEach(function (r) {
+        r.querySelector('.pr-tpl-new-remove').style.display = rows.length > 1 ? '' : 'none';
+      });
+    }
+
+    wrap.querySelector('.pr-tpl-new-add-row').addEventListener('click', function () {
+      const row = newRowEl();
+      rowsWrap.appendChild(row);
+      refreshRemoveButtons();
+      row.querySelector('.pr-tpl-new-activity').focus();
+    });
+
+    rowsWrap.addEventListener('click', function (e) {
+      const removeBtn = e.target.closest('.pr-tpl-new-remove');
+      if (!removeBtn) return;
+      const rows = rowsWrap.querySelectorAll('.pr-tpl-new-row');
+      if (rows.length > 1) removeBtn.closest('.pr-tpl-new-row').remove();
+      refreshRemoveButtons();
+    });
+
+    rowsWrap.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      if (!e.target.classList.contains('pr-tpl-new-activity') && !e.target.classList.contains('pr-tpl-new-planned')) return;
+      e.preventDefault();
+      wrap.querySelector('.pr-tpl-new-add-row').click();
+    });
+
+    wrap.querySelector('.pr-tpl-new-save-all').addEventListener('click', function () {
+      const saveBtn = this;
+      const tasks = [];
+      rowsWrap.querySelectorAll('.pr-tpl-new-row').forEach(function (r) {
+        const activity = r.querySelector('.pr-tpl-new-activity').value.trim();
+        const planned = r.querySelector('.pr-tpl-new-planned').value.trim();
+        if (activity) tasks.push({ activity_description: activity, default_planned_activities: planned || null });
+      });
+
+      if (tasks.length === 0) {
+        status.textContent = 'Type at least one task first.';
+        status.className = 'pr-tpl-new-status ml-2 text-danger';
+        return;
+      }
+
+      saveBtn.disabled = true;
+      status.textContent = 'Saving…';
+      status.className = 'pr-tpl-new-status ml-2 text-muted';
+
+      fetch(`{{ url('progressive-reports/templates/bulk') }}`, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ user_id: userId, tasks: tasks }),
+      })
+        .then(function (res) {
+          if (!res.ok) throw new Error('Request failed (' + res.status + ')');
+          return res.json();
+        })
+        .then(function (data) {
+          if (emptyRow) emptyRow.style.display = 'none';
+          data.templates.forEach(function (t) { tbody.appendChild(buildTplRow(t)); });
+
+          rowsWrap.innerHTML = '';
+          rowsWrap.appendChild(newRowEl());
+          refreshRemoveButtons();
+
+          status.textContent = tasks.length + (tasks.length === 1 ? ' task added.' : ' tasks added.');
+          status.className = 'pr-tpl-new-status ml-2 text-success';
+          rowsWrap.querySelector('.pr-tpl-new-activity').focus();
+        })
+        .catch(function (err) {
+          status.textContent = 'Could not save — ' + err.message;
+          status.className = 'pr-tpl-new-status ml-2 text-danger';
+        })
+        .finally(function () {
+          saveBtn.disabled = false;
+        });
     });
   });
 });
