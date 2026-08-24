@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+### Added (2026-08-24) — Draft Emails: preview shows sender's account + {{number}}; emails now send as the sender
+- The Draft Email live preview now reflects how the email actually sends: the **From** and
+  **Reply-To** lines show the logged-in staff member's name/email (not the generic COSECSA
+  mailbox), and the `{{number}}` placeholder renders as a sample count ("25") instead of the raw
+  token. The form hint now documents both `[Name]` and `{{number}}`.
+- Backed by the `cosecsa-api` change (see that repo's CHANGES.md): manual "Send Now" sends from
+  the acting staff member's account (From + Reply-To), and the `{{number}}` placeholder is
+  replaced with the real per-country pending-application count (automatic trigger and manual
+  sends). Every admin/staff member who can open the Draft Emails section can use Send Now.
+- **Files:** `resources/views/admin/draft_emails/form.blade.php`.
+- **⚠️ Coordinate:** requires the matching `cosecsa-api` deploy (mailable + sendNow changes).
+
 ### Added (2026-08-24) — Country Rep Active/Retired status + dark-mode fix for position badges
 - Country Reps can now be marked **Active** or **Retired**. Retired reps stay visible in the
   list/profile (with a badge) but are excluded from automated emails (the Draft Email

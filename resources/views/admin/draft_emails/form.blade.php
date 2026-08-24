@@ -15,7 +15,7 @@
                             <i class="fas {{ $draftEmail ? 'fa-edit' : 'fa-paper-plane' }} mr-2"></i>
                             {{ $draftEmail ? 'Edit Draft Email' : 'New Draft Email' }}
                         </h4>
-                        <div class="meta">Use <code>[Name]</code> anywhere to personalise — the preview shows it as "Dr. Example".</div>
+                        <div class="meta">Use <code>[Name]</code> to personalise (preview shows "Dr. Example") and <code>@{{number}}</code> for the pending-application count (preview shows "25"). Emails are sent from your account, so replies come back to you.</div>
                     </div>
                     <a href="{{ url('admin/draft-emails') }}" class="btn btn-new">
                         <i class="fas fa-arrow-left mr-1"></i> Back to Draft Emails
@@ -415,13 +415,17 @@ $(function () {
     function updatePreview() {
         var subject = ($('#subjectInput').val() || '(no subject)').replace(/\[Name\]/g, 'Dr. Example');
         var body = $('#bodyEditor').summernote('code')
-                        .replace(/\[Name\]/g, '<strong>Dr. Example</strong>');
+                        .replace(/\[Name\]/g, '<strong>Dr. Example</strong>')
+                        .replace(/\{\{number\}\}/g, '<strong>25</strong>');
 
         var mailHead = `
           <div style="max-width:580px; margin:0 auto; background:#fff; border:1px solid #e6e6e6;
                       border-bottom:none; border-radius:8px 8px 0 0; font-family:Arial,sans-serif; overflow:hidden;">
             <div style="padding:10px 16px; border-bottom:1px solid #f0f0f0; font-size:12px; color:#888;">
-              <strong style="color:#444;">From:</strong> COSECSA &lt;{{ config('mail.from.address') }}&gt;
+              <strong style="color:#444;">From:</strong> {{ Auth::user()?->name ?? 'Secretariat' }} &lt;{{ Auth::user()?->email ?? config('mail.from.address') }}&gt;
+            </div>
+            <div style="padding:10px 16px; border-bottom:1px solid #f0f0f0; font-size:12px; color:#888;">
+              <strong style="color:#444;">Reply-To:</strong> {{ Auth::user()?->email ?? config('mail.from.address') }}
             </div>
             <div style="padding:10px 16px; border-bottom:1px solid #f0f0f0; font-size:12px; color:#888;">
               <strong style="color:#444;">To:</strong> Dr. Example &lt;dr.example@email.com&gt;
