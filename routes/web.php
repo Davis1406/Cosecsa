@@ -90,8 +90,7 @@ Route::middleware('auth')->prefix('progressive-reports')->group(function () {
     Route::post('/open', [$prc, 'openPeriod'])->name('progressive-reports.open');
 
     Route::get('/templates', [$prc, 'templatesIndex'])->name('progressive-reports.templates.index');
-    Route::post('/templates', [$prc, 'templateStore'])->name('progressive-reports.templates.store');
-    Route::post('/templates/bulk', [$prc, 'templateStoreBulk'])->name('progressive-reports.templates.bulk');
+    Route::post('/templates/add-blank', [$prc, 'templateAddBlank'])->name('progressive-reports.templates.add-blank');
     Route::post('/templates/{id}/update', [$prc, 'templateUpdate'])->name('progressive-reports.templates.update');
     Route::post('/templates/{id}/delete', [$prc, 'templateDelete'])->name('progressive-reports.templates.delete');
 

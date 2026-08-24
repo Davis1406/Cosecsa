@@ -634,22 +634,23 @@ class ProgressiveReportController extends Controller
         ]);
     }
 
-    public function templateStore(Request $request)
+    // Creates one blank recurring-task row instantly, same idea as
+    // addTaskRow() for the report tasks themselves — the row appears empty
+    // in the table and every field autosaves on change from there via
+    // templateUpdate(), so there's no separate "fill in a form, then submit"
+    // step (and nothing to lose on an accidental page reload).
+    public function templateAddBlank(Request $request)
     {
-        $request->validate([
-            'user_id'                    => 'nullable|integer',
-            'activity_description'       => 'required|string|max:1000',
-            'default_planned_activities' => 'nullable|string|max:5000',
-        ]);
+        $request->validate(['user_id' => 'nullable|integer']);
 
         $userId = ($this->canManage() && $request->filled('user_id')) ? (int) $request->user_id : Auth::id();
 
         $template = ProgressReportTaskTemplate::create([
             'user_id'                    => $userId,
-            'activity_description'       => $request->activity_description,
-            'default_planned_activities' => $request->default_planned_activities,
+            'activity_description'       => '',
+            'default_planned_activities' => null,
             'is_active'                  => true,
-            'sort_order'                 => ProgressReportTaskTemplate::where('user_id', $userId)->max('sort_order') + 1,
+            'sort_order'                 => (int) (ProgressReportTaskTemplate::where('user_id', $userId)->max('sort_order') ?? 0) + 1,
             'created_by'                 => Auth::id(),
         ]);
 
@@ -657,61 +658,33 @@ class ProgressiveReportController extends Controller
             return response()->json(['success' => true, 'template' => $template]);
         }
 
-        return back()->with('success', 'Recurring task added.');
+        return back();
     }
 
-    // Add several recurring tasks in one request — lets someone type out a
-    // whole list of activities for a section and save them together instead
-    // of round-tripping (and full-page-reloading, before this endpoint
-    // existed) once per task via templateStore().
-    public function templateStoreBulk(Request $request)
-    {
-        $request->validate([
-            'user_id'                                 => 'nullable|integer',
-            'tasks'                                    => 'required|array|min:1',
-            'tasks.*.activity_description'              => 'required|string|max:1000',
-            'tasks.*.default_planned_activities'        => 'nullable|string|max:5000',
-            'tasks.*.is_active'                          => 'nullable|boolean',
-        ]);
-
-        $userId = ($this->canManage() && $request->filled('user_id')) ? (int) $request->user_id : Auth::id();
-
-        $nextSort = (int) (ProgressReportTaskTemplate::where('user_id', $userId)->max('sort_order') ?? 0) + 1;
-
-        $created = collect($request->input('tasks'))->map(function ($task) use (&$nextSort, $userId) {
-            return ProgressReportTaskTemplate::create([
-                'user_id'                    => $userId,
-                'activity_description'       => $task['activity_description'],
-                'default_planned_activities' => $task['default_planned_activities'] ?? null,
-                'is_active'                  => $task['is_active'] ?? true,
-                'sort_order'                 => $nextSort++,
-                'created_by'                 => Auth::id(),
-            ]);
-        });
-
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json(['success' => true, 'templates' => $created]);
-        }
-
-        return back()->with('success', count($created) . ' recurring tasks added.');
-    }
-
+    // Partial/field-at-a-time update, mirroring updateTask() for report
+    // tasks — the UI fires one request per field on change (autosave), not
+    // one request with the whole row, so every field here is optional.
     public function templateUpdate(Request $request, $id)
     {
         $template = ProgressReportTaskTemplate::findOrFail($id);
         abort_unless($this->canManage() || $template->user_id == Auth::id(), 403, 'You can only edit your own recurring tasks.');
 
         $request->validate([
-            'activity_description'       => 'required|string|max:1000',
-            'default_planned_activities' => 'nullable|string|max:5000',
-            'is_active'                  => 'nullable|boolean',
+            'activity_description'       => 'sometimes|nullable|string|max:1000',
+            'default_planned_activities' => 'sometimes|nullable|string|max:5000',
+            'is_active'                  => 'sometimes|boolean',
         ]);
 
-        $template->update([
-            'activity_description'       => $request->activity_description,
-            'default_planned_activities' => $request->default_planned_activities,
-            'is_active'                  => $request->boolean('is_active'),
-        ]);
+        $data = $request->only(['activity_description', 'default_planned_activities', 'is_active']);
+        if (array_key_exists('activity_description', $data) && $data['activity_description'] === null) {
+            $data['activity_description'] = '';
+        }
+
+        $template->update($data);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'template' => $template->fresh()]);
+        }
 
         return back()->with('success', 'Recurring task updated.');
     }

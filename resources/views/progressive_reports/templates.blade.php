@@ -28,41 +28,24 @@
             <div class="card-header"><h3 class="card-title" style="font-size:1rem;">{{ $section['label'] }}</h3></div>
             <div class="card-body p-0">
               <div class="table-responsive">
-                <table class="table table-sm table-striped mb-0 pr-template-table" data-user-id="{{ $userId }}">
-                  <thead><tr><th style="width:30%;">Activity</th><th>Default Planned Activities</th><th style="width:8%;">Active</th><th style="width:12%;"></th></tr></thead>
+                <table class="table table-sm table-striped mb-0 pr-tpl-table" data-user-id="{{ $userId }}">
+                  <thead><tr><th style="width:30%;">Activity</th><th>Default Planned Activities</th><th style="width:8%;">Active</th><th style="width:8%;"></th></tr></thead>
                   <tbody class="pr-tpl-tbody">
                     @foreach($rows as $t)
-                      <tr data-template-id="{{ $t->id }}">
-                        <td><input type="text" class="form-control form-control-sm pr-tpl-field" data-field="activity_description" value="{{ $t->activity_description }}"></td>
-                        <td><input type="text" class="form-control form-control-sm pr-tpl-field" data-field="default_planned_activities" value="{{ $t->default_planned_activities }}"></td>
-                        <td class="text-center"><input type="checkbox" class="pr-tpl-field" data-field="is_active" {{ $t->is_active ? 'checked' : '' }}></td>
-                        <td>
-                          <button type="button" class="btn btn-sm btn-cosecsa-outline pr-tpl-save">Save</button>
-                          <button type="button" class="btn btn-sm btn-danger pr-tpl-delete">Delete</button>
-                        </td>
-                      </tr>
+                      @include('progressive_reports._template_row', ['tpl' => $t])
                     @endforeach
                     <tr class="pr-tpl-empty-row" @if(!$rows->isEmpty()) style="display:none;" @endif>
                       <td colspan="4" class="text-center text-muted py-2">No recurring tasks yet.</td>
-                    </tr>
-                    <tr class="pr-tpl-new-row">
-                      <td><input type="text" class="form-control form-control-sm pr-tpl-new-activity" placeholder="New recurring task…"></td>
-                      <td><input type="text" class="form-control form-control-sm pr-tpl-new-planned" placeholder="Default planned activities (optional)"></td>
-                      <td class="text-center"><input type="checkbox" class="pr-tpl-new-active" checked></td>
-                      <td><button type="button" class="btn btn-sm btn-outline-danger pr-tpl-new-remove" title="Remove this row" style="display:none;"><i class="fas fa-times"></i></button></td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
-            <div class="card-footer pr-tpl-new-wrap" data-user-id="{{ $userId }}">
-              <button type="button" class="btn btn-sm btn-cosecsa-outline pr-tpl-new-add-row">
-                <i class="fas fa-plus mr-1"></i> Add another row
+            <div class="card-footer">
+              <button type="button" class="btn btn-sm btn-cosecsa-outline pr-tpl-add-row" data-user-id="{{ $userId }}">
+                <i class="fas fa-plus mr-1"></i> Add Row
               </button>
-              <button type="button" class="btn btn-sm btn-cosecsa pr-tpl-new-save-all">
-                Save all
-              </button>
-              <span class="pr-tpl-new-status ml-2 text-muted" style="font-size:.8rem;"></span>
+              <span class="pr-tpl-save-flash text-success ml-2" style="font-size:.8rem; display:none;"><i class="fas fa-check"></i> Saved</span>
             </div>
           </div>
         @endforeach
@@ -76,158 +59,85 @@
 document.addEventListener('DOMContentLoaded', function () {
   const csrf = '{{ csrf_token() }}';
 
-  document.querySelectorAll('.pr-template-table').forEach(function (table) {
-    table.addEventListener('click', function (e) {
-      const saveBtn = e.target.closest('.pr-tpl-save');
-      const delBtn = e.target.closest('.pr-tpl-delete');
-      if (!saveBtn && !delBtn) return;
-
-      const row = (saveBtn || delBtn).closest('tr');
-      const id = row.dataset.templateId;
-
-      if (saveBtn) {
-        const body = new URLSearchParams();
-        row.querySelectorAll('.pr-tpl-field').forEach(function (f) {
-          if (f.type === 'checkbox') { if (f.checked) body.append(f.dataset.field, '1'); }
-          else { body.append(f.dataset.field, f.value); }
-        });
-        fetch(`{{ url('progressive-reports/templates') }}/${id}/update`, {
-          method: 'POST',
-          headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: body.toString(),
-        }).then(() => {
-          saveBtn.innerHTML = '<i class="fas fa-check"></i>';
-          setTimeout(() => saveBtn.textContent = 'Save', 1200);
-        });
-      }
-
-      if (delBtn) {
-        if (!confirm('Remove this recurring task?')) return;
-        fetch(`{{ url('progressive-reports/templates') }}/${id}/delete`, {
-          method: 'POST',
-          headers: { 'X-CSRF-TOKEN': csrf },
-        }).then(() => row.remove());
-      }
-    });
-  });
-
-  // ── Add new recurring tasks (one row or several) without reloading ──
-  // Type several activities across multiple rows, then "Save all" sends
-  // them together to templates/bulk in one request.
-  function buildSavedRow(t) {
+  function buildTplRow(t) {
     const tr = document.createElement('tr');
     tr.dataset.templateId = t.id;
     tr.innerHTML = `
-      <td><input type="text" class="form-control form-control-sm pr-tpl-field" data-field="activity_description" value="${t.activity_description ? t.activity_description.replace(/"/g, '&quot;') : ''}"></td>
-      <td><input type="text" class="form-control form-control-sm pr-tpl-field" data-field="default_planned_activities" value="${t.default_planned_activities ? t.default_planned_activities.replace(/"/g, '&quot;') : ''}"></td>
+      <td><input type="text" class="form-control form-control-sm pr-tpl-field" data-field="activity_description" value="${(t.activity_description || '').replace(/"/g, '&quot;')}" placeholder="Activity description"></td>
+      <td><input type="text" class="form-control form-control-sm pr-tpl-field" data-field="default_planned_activities" value="${(t.default_planned_activities || '').replace(/"/g, '&quot;')}" placeholder="One per line"></td>
       <td class="text-center"><input type="checkbox" class="pr-tpl-field" data-field="is_active" ${t.is_active ? 'checked' : ''}></td>
-      <td>
-        <button type="button" class="btn btn-sm btn-cosecsa-outline pr-tpl-save">Save</button>
-        <button type="button" class="btn btn-sm btn-danger pr-tpl-delete">Delete</button>
-      </td>`;
+      <td class="text-center"><button type="button" class="btn btn-sm btn-danger pr-tpl-delete" title="Delete"><i class="fas fa-trash"></i></button></td>`;
     return tr;
   }
 
-  // New-task rows live inside the same <tbody> as saved rows (real <tr>s,
-  // same column widths) so they look identical to the rows above them
-  // instead of a separate, differently-proportioned form underneath.
-  function newTplRowEl() {
-    const tr = document.createElement('tr');
-    tr.className = 'pr-tpl-new-row';
-    tr.innerHTML = `
-      <td><input type="text" class="form-control form-control-sm pr-tpl-new-activity" placeholder="New recurring task…"></td>
-      <td><input type="text" class="form-control form-control-sm pr-tpl-new-planned" placeholder="Default planned activities (optional)"></td>
-      <td class="text-center"><input type="checkbox" class="pr-tpl-new-active" checked></td>
-      <td><button type="button" class="btn btn-sm btn-outline-danger pr-tpl-new-remove" title="Remove this row"><i class="fas fa-times"></i></button></td>`;
-    return tr;
-  }
+  // Autosave, same pattern as the report-task fields below: one request per
+  // field on change (blur), no manual Save button. Delete stays explicit.
+  document.querySelectorAll('.pr-tpl-table').forEach(function (table) {
+    const card = table.closest('.card');
+    const flash = card.querySelector('.pr-tpl-save-flash');
 
-  document.querySelectorAll('.pr-tpl-new-wrap').forEach(function (wrap) {
-    const userId = wrap.dataset.userId;
-    const status = wrap.querySelector('.pr-tpl-new-status');
-    const table = wrap.closest('.card').querySelector('.pr-template-table');
-    const tbody = table.querySelector('.pr-tpl-tbody');
-    const emptyRow = tbody.querySelector('.pr-tpl-empty-row');
+    table.addEventListener('change', function (e) {
+      const field = e.target.closest('.pr-tpl-field');
+      if (!field) return;
+      const row = field.closest('tr');
+      const id = row.dataset.templateId;
+      const value = field.type === 'checkbox' ? field.checked : field.value;
 
-    function refreshRemoveButtons() {
-      const rows = tbody.querySelectorAll('.pr-tpl-new-row');
-      rows.forEach(function (r) {
-        r.querySelector('.pr-tpl-new-remove').style.display = rows.length > 1 ? '' : 'none';
-      });
-    }
-
-    wrap.querySelector('.pr-tpl-new-add-row').addEventListener('click', function () {
-      const row = newTplRowEl();
-      tbody.appendChild(row);
-      refreshRemoveButtons();
-      row.querySelector('.pr-tpl-new-activity').focus();
-    });
-
-    tbody.addEventListener('click', function (e) {
-      const removeBtn = e.target.closest('.pr-tpl-new-remove');
-      if (!removeBtn) return;
-      const rows = tbody.querySelectorAll('.pr-tpl-new-row');
-      if (rows.length > 1) removeBtn.closest('.pr-tpl-new-row').remove();
-      refreshRemoveButtons();
-    });
-
-    // Enter in a "new task" field adds another row and moves focus there,
-    // so someone can keep typing tasks one after another without touching
-    // the mouse — the actual save only happens on "Save all".
-    tbody.addEventListener('keydown', function (e) {
-      if (e.key !== 'Enter') return;
-      if (!e.target.classList.contains('pr-tpl-new-activity') && !e.target.classList.contains('pr-tpl-new-planned')) return;
-      e.preventDefault();
-      wrap.querySelector('.pr-tpl-new-add-row').click();
-    });
-
-    wrap.querySelector('.pr-tpl-new-save-all').addEventListener('click', function () {
-      const saveBtn = this;
-      const tasks = [];
-      tbody.querySelectorAll('.pr-tpl-new-row').forEach(function (r) {
-        const activity = r.querySelector('.pr-tpl-new-activity').value.trim();
-        const planned = r.querySelector('.pr-tpl-new-planned').value.trim();
-        const active = r.querySelector('.pr-tpl-new-active').checked;
-        if (activity) tasks.push({ activity_description: activity, default_planned_activities: planned || null, is_active: active });
-      });
-
-      if (tasks.length === 0) {
-        status.textContent = 'Type at least one task first.';
-        status.className = 'pr-tpl-new-status ml-2 text-danger';
-        return;
-      }
-
-      saveBtn.disabled = true;
-      status.textContent = 'Saving…';
-      status.className = 'pr-tpl-new-status ml-2 text-muted';
-
-      fetch(`{{ url('progressive-reports/templates/bulk') }}`, {
+      fetch(`{{ url('progressive-reports/templates') }}/${id}/update`, {
         method: 'POST',
         headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ user_id: userId, tasks: tasks }),
+        body: JSON.stringify({ [field.dataset.field]: value }),
+      }).then(function (r) {
+        if (!r.ok) throw new Error();
+        if (flash) {
+          flash.style.display = 'inline';
+          setTimeout(() => flash.style.display = 'none', 1500);
+        }
+      }).catch(() => alert('Could not save that recurring task — please try again.'));
+    });
+
+    table.addEventListener('click', function (e) {
+      const delBtn = e.target.closest('.pr-tpl-delete');
+      if (!delBtn) return;
+      const row = delBtn.closest('tr');
+      if (!confirm('Remove this recurring task?')) return;
+      fetch(`{{ url('progressive-reports/templates') }}/${row.dataset.templateId}/delete`, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrf },
+      }).then(() => {
+        row.remove();
+        const tbody = table.querySelector('.pr-tpl-tbody');
+        if (!tbody.querySelector('tr[data-template-id]')) {
+          const emptyRow = tbody.querySelector('.pr-tpl-empty-row');
+          if (emptyRow) emptyRow.style.display = '';
+        }
+      });
+    });
+  });
+
+  // "Add Row" creates a blank recurring task instantly (like "Add Row" on
+  // the report tasks table) — it appears empty and autosaves as you type,
+  // no separate submit step.
+  document.querySelectorAll('.pr-tpl-add-row').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const userId = btn.dataset.userId;
+      const table = btn.closest('.card').querySelector('.pr-tpl-table');
+      const tbody = table.querySelector('.pr-tpl-tbody');
+      const emptyRow = tbody.querySelector('.pr-tpl-empty-row');
+
+      fetch(`{{ url('progressive-reports/templates/add-blank') }}`, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ user_id: userId }),
       })
-        .then(function (res) {
-          if (!res.ok) throw new Error('Request failed (' + res.status + ')');
-          return res.json();
-        })
+        .then(function (r) { return r.json(); })
         .then(function (data) {
           if (emptyRow) emptyRow.style.display = 'none';
-          tbody.querySelectorAll('.pr-tpl-new-row').forEach(function (r) { r.remove(); });
-          data.templates.forEach(function (t) { tbody.appendChild(buildSavedRow(t)); });
-          tbody.appendChild(newTplRowEl());
-          refreshRemoveButtons();
-
-          status.textContent = tasks.length + (tasks.length === 1 ? ' task added.' : ' tasks added.');
-          status.className = 'pr-tpl-new-status ml-2 text-success';
-          tbody.querySelector('.pr-tpl-new-activity').focus();
+          const row = buildTplRow(data.template);
+          tbody.appendChild(row);
+          row.querySelector('.pr-tpl-field[data-field="activity_description"]').focus();
         })
-        .catch(function (err) {
-          status.textContent = 'Could not save — ' + err.message;
-          status.className = 'pr-tpl-new-status ml-2 text-danger';
-        })
-        .finally(function () {
-          saveBtn.disabled = false;
-        });
+        .catch(() => alert('Could not add a new row — please try again.'));
     });
   });
 });
