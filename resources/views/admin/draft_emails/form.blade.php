@@ -422,7 +422,7 @@ $(function () {
           <div style="max-width:580px; margin:0 auto; background:#fff; border:1px solid #e6e6e6;
                       border-bottom:none; border-radius:8px 8px 0 0; font-family:Arial,sans-serif; overflow:hidden;">
             <div style="padding:10px 16px; border-bottom:1px solid #f0f0f0; font-size:12px; color:#888;">
-              <strong style="color:#444;">From:</strong> {{ Auth::user()?->name ?? 'Secretariat' }} &lt;{{ Auth::user()?->email ?? config('mail.from.address') }}&gt;
+              <strong style="color:#444;">From:</strong> {{ Auth::user()?->name ?? 'Secretariat' }} via COSECSA &lt;{{ config('mail.from.address') }}&gt;
             </div>
             <div style="padding:10px 16px; border-bottom:1px solid #f0f0f0; font-size:12px; color:#888;">
               <strong style="color:#444;">Reply-To:</strong> {{ Auth::user()?->email ?? config('mail.from.address') }}

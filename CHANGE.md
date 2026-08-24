@@ -4,15 +4,19 @@
 
 ## [Unreleased]
 
-### Added (2026-08-24) — Draft Emails: preview shows sender's account + {{number}}; emails now send as the sender
-- The Draft Email live preview now reflects how the email actually sends: the **From** and
-  **Reply-To** lines show the logged-in staff member's name/email (not the generic COSECSA
-  mailbox), and the `{{number}}` placeholder renders as a sample count ("25") instead of the raw
-  token. The form hint now documents both `[Name]` and `{{number}}`.
-- Backed by the `cosecsa-api` change (see that repo's CHANGES.md): manual "Send Now" sends from
-  the acting staff member's account (From + Reply-To), and the `{{number}}` placeholder is
-  replaced with the real per-country pending-application count (automatic trigger and manual
-  sends). Every admin/staff member who can open the Draft Emails section can use Send Now.
+### Added (2026-08-24) — Draft Emails: preview shows masked sender + {{number}}; emails send like the Progress Report reminders
+- The Draft Email live preview now reflects how the email actually sends: **From** shows
+  "Your Name via COSECSA `<communications@cosecsa.org>`" (the shared mailbox with the logged-in
+  staff member's name as the display name) and **Reply-To** shows their own email — the same
+  masked-sender practice as the Progress Report reminder emails — plus the `{{number}}`
+  placeholder renders as a sample count ("25"). The form hint now documents both `[Name]` and
+  `{{number}}`.
+- Backed by the `cosecsa-api` change (see that repo's CHANGES.md): manual "Send Now" goes out
+  through the shared COSECSA mailbox dressed up as personally from the acting staff member
+  (From display name = their name, Reply-To = their email, their signature in the body), and
+  the `{{number}}` placeholder is replaced with the real per-country pending-application count
+  (automatic trigger and manual sends). Every admin/staff member who can open the Draft Emails
+  section can use Send Now.
 - **Files:** `resources/views/admin/draft_emails/form.blade.php`.
 - **⚠️ Coordinate:** requires the matching `cosecsa-api` deploy (mailable + sendNow changes).
 
