@@ -15,6 +15,7 @@
     }
     .pr-header-actions form { margin: 0; }
     .pr-table td[style*="pre-line"] { line-height: 1.5; }
+    .pr-tpl-table textarea.pr-tpl-autogrow { resize: none; overflow: hidden; min-height: 32px; width: 100%; font-size: .82rem; }
   </style>
   <div class="content-wrapper">
     <section class="content-header">
@@ -448,16 +449,32 @@ document.addEventListener('DOMContentLoaded', function () {
   // per field on change (blur), no manual Save button — "Add Row" creates
   // a blank row instantly (like "Add Row" for the report tasks table),
   // and typing into it autosaves from there. Delete stays explicit.
+  // Grows a textarea's height to fit its content (no scrollbar, no manual
+  // drag-resize needed) — same idea as the report task fields, but those
+  // only resize by hand; these actually track what you type.
+  function autoGrow(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+
   function buildTplRow(t) {
     const tr = document.createElement('tr');
     tr.dataset.templateId = t.id;
     tr.innerHTML = `
-      <td><input type="text" class="form-control form-control-sm pr-tpl-field" data-field="activity_description" value="${(t.activity_description || '').replace(/"/g, '&quot;')}" placeholder="Activity description"></td>
-      <td><input type="text" class="form-control form-control-sm pr-tpl-field" data-field="default_planned_activities" value="${(t.default_planned_activities || '').replace(/"/g, '&quot;')}" placeholder="One per line"></td>
+      <td><textarea class="form-control form-control-sm pr-tpl-field pr-tpl-autogrow" data-field="activity_description" rows="1" placeholder="Activity description">${(t.activity_description || '')}</textarea></td>
+      <td><textarea class="form-control form-control-sm pr-tpl-field pr-tpl-autogrow" data-field="default_planned_activities" rows="1" placeholder="One per line">${(t.default_planned_activities || '')}</textarea></td>
       <td class="text-center"><input type="checkbox" class="pr-tpl-field" data-field="is_active" ${t.is_active ? 'checked' : ''}></td>
       <td class="text-center"><button type="button" class="btn btn-sm btn-danger pr-tpl-delete" title="Delete"><i class="fas fa-trash"></i></button></td>`;
+    tr.querySelectorAll('.pr-tpl-autogrow').forEach(autoGrow);
     return tr;
   }
+
+  // Size every existing textarea to its (possibly multi-line) saved content
+  // on page load, then keep growing as the user types.
+  document.querySelectorAll('.pr-tpl-autogrow').forEach(autoGrow);
+  document.addEventListener('input', function (e) {
+    if (e.target.classList.contains('pr-tpl-autogrow')) autoGrow(e.target);
+  });
 
   document.querySelectorAll('.pr-tpl-table').forEach(function (table) {
     const flash = table.closest('.card-body').querySelector('.pr-tpl-save-flash');
