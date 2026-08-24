@@ -671,6 +671,7 @@ class ProgressiveReportController extends Controller
             'tasks'                                    => 'required|array|min:1',
             'tasks.*.activity_description'              => 'required|string|max:1000',
             'tasks.*.default_planned_activities'        => 'nullable|string|max:5000',
+            'tasks.*.is_active'                          => 'nullable|boolean',
         ]);
 
         $userId = ($this->canManage() && $request->filled('user_id')) ? (int) $request->user_id : Auth::id();
@@ -682,7 +683,7 @@ class ProgressiveReportController extends Controller
                 'user_id'                    => $userId,
                 'activity_description'       => $task['activity_description'],
                 'default_planned_activities' => $task['default_planned_activities'] ?? null,
-                'is_active'                  => true,
+                'is_active'                  => $task['is_active'] ?? true,
                 'sort_order'                 => $nextSort++,
                 'created_by'                 => Auth::id(),
             ]);

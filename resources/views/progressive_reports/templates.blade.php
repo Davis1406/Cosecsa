@@ -45,18 +45,17 @@
                     <tr class="pr-tpl-empty-row" @if(!$rows->isEmpty()) style="display:none;" @endif>
                       <td colspan="4" class="text-center text-muted py-2">No recurring tasks yet.</td>
                     </tr>
+                    <tr class="pr-tpl-new-row">
+                      <td><input type="text" class="form-control form-control-sm pr-tpl-new-activity" placeholder="New recurring task…"></td>
+                      <td><input type="text" class="form-control form-control-sm pr-tpl-new-planned" placeholder="Default planned activities (optional)"></td>
+                      <td class="text-center"><input type="checkbox" class="pr-tpl-new-active" checked></td>
+                      <td><button type="button" class="btn btn-sm btn-outline-danger pr-tpl-new-remove" title="Remove this row" style="display:none;"><i class="fas fa-times"></i></button></td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
             </div>
             <div class="card-footer pr-tpl-new-wrap" data-user-id="{{ $userId }}">
-              <div class="pr-tpl-new-rows">
-                <div class="form-inline pr-tpl-new-row mb-2">
-                  <input type="text" class="form-control form-control-sm mr-2 pr-tpl-new-activity" placeholder="New recurring task…" style="min-width:260px;">
-                  <input type="text" class="form-control form-control-sm mr-2 pr-tpl-new-planned" placeholder="Default planned activities (optional)" style="min-width:300px;">
-                  <button type="button" class="btn btn-sm btn-outline-danger pr-tpl-new-remove" title="Remove this row" style="display:none;"><i class="fas fa-times"></i></button>
-                </div>
-              </div>
               <button type="button" class="btn btn-sm btn-cosecsa-outline pr-tpl-new-add-row">
                 <i class="fas fa-plus mr-1"></i> Add another row
               </button>
@@ -129,42 +128,45 @@ document.addEventListener('DOMContentLoaded', function () {
     return tr;
   }
 
+  // New-task rows live inside the same <tbody> as saved rows (real <tr>s,
+  // same column widths) so they look identical to the rows above them
+  // instead of a separate, differently-proportioned form underneath.
+  function newTplRowEl() {
+    const tr = document.createElement('tr');
+    tr.className = 'pr-tpl-new-row';
+    tr.innerHTML = `
+      <td><input type="text" class="form-control form-control-sm pr-tpl-new-activity" placeholder="New recurring task…"></td>
+      <td><input type="text" class="form-control form-control-sm pr-tpl-new-planned" placeholder="Default planned activities (optional)"></td>
+      <td class="text-center"><input type="checkbox" class="pr-tpl-new-active" checked></td>
+      <td><button type="button" class="btn btn-sm btn-outline-danger pr-tpl-new-remove" title="Remove this row"><i class="fas fa-times"></i></button></td>`;
+    return tr;
+  }
+
   document.querySelectorAll('.pr-tpl-new-wrap').forEach(function (wrap) {
     const userId = wrap.dataset.userId;
-    const rowsWrap = wrap.querySelector('.pr-tpl-new-rows');
     const status = wrap.querySelector('.pr-tpl-new-status');
     const table = wrap.closest('.card').querySelector('.pr-template-table');
     const tbody = table.querySelector('.pr-tpl-tbody');
     const emptyRow = tbody.querySelector('.pr-tpl-empty-row');
 
-    function newRowEl() {
-      const div = document.createElement('div');
-      div.className = 'form-inline pr-tpl-new-row mb-2';
-      div.innerHTML = `
-        <input type="text" class="form-control form-control-sm mr-2 pr-tpl-new-activity" placeholder="New recurring task…" style="min-width:260px;">
-        <input type="text" class="form-control form-control-sm mr-2 pr-tpl-new-planned" placeholder="Default planned activities (optional)" style="min-width:300px;">
-        <button type="button" class="btn btn-sm btn-outline-danger pr-tpl-new-remove" title="Remove this row"><i class="fas fa-times"></i></button>`;
-      return div;
-    }
-
     function refreshRemoveButtons() {
-      const rows = rowsWrap.querySelectorAll('.pr-tpl-new-row');
+      const rows = tbody.querySelectorAll('.pr-tpl-new-row');
       rows.forEach(function (r) {
         r.querySelector('.pr-tpl-new-remove').style.display = rows.length > 1 ? '' : 'none';
       });
     }
 
     wrap.querySelector('.pr-tpl-new-add-row').addEventListener('click', function () {
-      const row = newRowEl();
-      rowsWrap.appendChild(row);
+      const row = newTplRowEl();
+      tbody.appendChild(row);
       refreshRemoveButtons();
       row.querySelector('.pr-tpl-new-activity').focus();
     });
 
-    rowsWrap.addEventListener('click', function (e) {
+    tbody.addEventListener('click', function (e) {
       const removeBtn = e.target.closest('.pr-tpl-new-remove');
       if (!removeBtn) return;
-      const rows = rowsWrap.querySelectorAll('.pr-tpl-new-row');
+      const rows = tbody.querySelectorAll('.pr-tpl-new-row');
       if (rows.length > 1) removeBtn.closest('.pr-tpl-new-row').remove();
       refreshRemoveButtons();
     });
@@ -172,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Enter in a "new task" field adds another row and moves focus there,
     // so someone can keep typing tasks one after another without touching
     // the mouse — the actual save only happens on "Save all".
-    rowsWrap.addEventListener('keydown', function (e) {
+    tbody.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter') return;
       if (!e.target.classList.contains('pr-tpl-new-activity') && !e.target.classList.contains('pr-tpl-new-planned')) return;
       e.preventDefault();
@@ -182,10 +184,11 @@ document.addEventListener('DOMContentLoaded', function () {
     wrap.querySelector('.pr-tpl-new-save-all').addEventListener('click', function () {
       const saveBtn = this;
       const tasks = [];
-      rowsWrap.querySelectorAll('.pr-tpl-new-row').forEach(function (r) {
+      tbody.querySelectorAll('.pr-tpl-new-row').forEach(function (r) {
         const activity = r.querySelector('.pr-tpl-new-activity').value.trim();
         const planned = r.querySelector('.pr-tpl-new-planned').value.trim();
-        if (activity) tasks.push({ activity_description: activity, default_planned_activities: planned || null });
+        const active = r.querySelector('.pr-tpl-new-active').checked;
+        if (activity) tasks.push({ activity_description: activity, default_planned_activities: planned || null, is_active: active });
       });
 
       if (tasks.length === 0) {
@@ -209,16 +212,14 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(function (data) {
           if (emptyRow) emptyRow.style.display = 'none';
+          tbody.querySelectorAll('.pr-tpl-new-row').forEach(function (r) { r.remove(); });
           data.templates.forEach(function (t) { tbody.appendChild(buildSavedRow(t)); });
-
-          // Reset the footer back to a single blank row.
-          rowsWrap.innerHTML = '';
-          rowsWrap.appendChild(newRowEl());
+          tbody.appendChild(newTplRowEl());
           refreshRemoveButtons();
 
           status.textContent = tasks.length + (tasks.length === 1 ? ' task added.' : ' tasks added.');
           status.className = 'pr-tpl-new-status ml-2 text-success';
-          rowsWrap.querySelector('.pr-tpl-new-activity').focus();
+          tbody.querySelector('.pr-tpl-new-activity').focus();
         })
         .catch(function (err) {
           status.textContent = 'Could not save — ' + err.message;
