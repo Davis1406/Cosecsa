@@ -4,6 +4,26 @@
 
 ## [Unreleased]
 
+### Added (2026-08-24) — Country Rep Active/Retired status + dark-mode fix for position badges
+- Country Reps can now be marked **Active** or **Retired**. Retired reps stay visible in the
+  list/profile (with a badge) but are excluded from automated emails (the Draft Email
+  `applications_threshold_per_country` trigger) and the Letters recipient resolver — a rep who
+  stepped down no longer gets pinged for pending applications. Backing DB column is
+  `country_reps.status` in `cosecsa-api` (see that repo's CHANGES.md; both apps deploy in
+  lockstep, migration included).
+- **List page** (`admin/associates/reps/list`): new **Status** column with Active/Retired badge
+  and a matching filter in the filter bar. **View page** (`view.blade.php`): Status badge next to
+  the Position badge in the header, plus an inline-pencil Status field (Active/Retired) in
+  Representative Details. **Add/Edit forms** (`add`/`edit.blade.php`): Status dropdown, saved via
+  `CountryRepsController::insert()/update()`.
+- **Fixed:** the Position badge colours (`Country Representative` / `WiSA chair` /
+  `Overseas Representative`) were hard-coded light-mode pastels that looked wrong on dark-mode
+  card surfaces. Moved them into a `.cr-position-badge` class with proper dark-mode variants
+  (`body.dark-mode`) on both the list and view pages.
+- **Files:** `app/Http/Controllers/CountryRepsController.php`, `resources/views/admin/associates/reps/{list,view,add,edit}.blade.php`.
+- **⚠️ Coordinate:** requires the matching `cosecsa-api` deploy (migration + `status` in
+  list/detail/quick-update responses) to land first — the list/view read `status` from the API.
+
 ### Fixed (2026-08-23) — Progressive Report "No." column didn't renumber after deleting a row
 - Reported: add rows 5 and 6 to a section's task table, delete row 5, and the "No." column
   showed 4, 6 — row 5 missing entirely, off by one for every row after it — until a full page

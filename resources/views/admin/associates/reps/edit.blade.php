@@ -74,6 +74,13 @@
 
                 <div class="ms2-row">
                     <div class="ms2-col">
+                        <label class="ms2-label">Status</label>
+                        <select name="status" class="ms2-input">
+                            <option value="active" {{ ($countryRep->status ?? 'active') === 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="retired" {{ ($countryRep->status ?? 'active') === 'retired' ? 'selected' : '' }}>Retired</option>
+                        </select>
+                    </div>
+                    <div class="ms2-col">
                         <label class="ms2-label">Associate Type <span class="req">*</span></label>
                         <select name="user_type" class="ms2-input" required>
                             <option value="" disabled>Select Type…</option>

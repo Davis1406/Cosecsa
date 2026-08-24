@@ -78,6 +78,16 @@
                             </div>
                         </div>
                         <div class="form-row">
+
+                            <div class="form-group col-md-12">
+                                <label>Status</label>
+                                <select name="status" class="form-control">
+                                    <option value="active" selected>Active</option>
+                                    <option value="retired">Retired</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
                             <div class="input-group col-md-12">
                                 <div class="custom-file">
                                     <input type="file" class="custom-file-input" id="upload" name="profile_image">

@@ -81,6 +81,29 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="chk-filter-wrap" data-filter="crFilterStatus">
+                                <button type="button" class="btn btn-sm btn-outline-secondary chk-filter-btn" data-filter="crFilterStatus">
+                                    Status
+                                    <span class="badge badge-danger chk-badge ml-1" style="display:none;font-size:.65rem;"></span>
+                                    <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
+                                </button>
+                                <div class="chk-filter-panel shadow" id="crFilterStatus-panel" style="display:none;">
+                                    <div class="chk-list">
+                                        <label class="chk-item">
+                                            <input type="checkbox" class="chk-option" data-filter="crFilterStatus" value="active">
+                                            Active
+                                        </label>
+                                        <label class="chk-item">
+                                            <input type="checkbox" class="chk-option" data-filter="crFilterStatus" value="retired">
+                                            Retired
+                                        </label>
+                                    </div>
+                                    <div class="chk-footer">
+                                        <a href="#" class="chk-select-all small">All</a>
+                                        <a href="#" class="chk-clear small text-danger">Clear</a>
+                                    </div>
+                                </div>
+                            </div>
                             <button id="crBtnClear" class="btn btn-sm btn-outline-secondary">
                                 <i class="fas fa-times mr-1"></i>Clear All
                             </button>
@@ -103,6 +126,7 @@
                                             <th>#</th>
                                             <th>Name</th>
                                             <th>Position</th>
+                                            <th>Status</th>
                                             <th>Email</th>
                                             <th>Country</th>
                                             <th>Mobile Number</th>
@@ -112,12 +136,19 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($getRecord as $value)
-                                        <tr class="user-row" data-country="{{ $value->country_name ?? '' }}" data-position="{{ $value->position ?? 'Country Representative' }}">
+                                        @php $pos = $value->position ?? 'Country Representative'; $repStatus = $value->status ?? 'active'; @endphp
+                                        <tr class="user-row" data-country="{{ $value->country_name ?? '' }}" data-position="{{ $value->position ?? 'Country Representative' }}" data-status="{{ $repStatus }}">
                                             <td>{{$value->id}}</td>
                                             <td>{{$value->name}}</td>
                                             <td>
-                                                @php $pos = $value->position ?? 'Country Representative'; @endphp
-                                                <span class="badge" style="background:{{ $pos === 'WiSA chair' ? '#f0d4e8' : ($pos === 'Overseas Representative' ? '#d4e0f0' : '#f0f0f0') }}; color:{{ $pos === 'WiSA chair' ? '#7a2a5c' : ($pos === 'Overseas Representative' ? '#2a4d7a' : '#555') }};">{{ $pos }}</span>
+                                                <span class="badge cr-position-badge" data-pos="{{ $pos }}">{{ $pos }}</span>
+                                            </td>
+                                            <td>
+                                                @if($repStatus === 'retired')
+                                                    <span class="badge badge-secondary">Retired</span>
+                                                @else
+                                                    <span class="badge badge-success">Active</span>
+                                                @endif
                                             </td>
                                             <td>{{$value->user_email}}</td>
                                             <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{$value->country_name}}</a>@else{{$value->country_name}}@endif</td>
@@ -205,6 +236,19 @@
     .paginate_button.active>.page-link { background-color: #a02626 !important; border-color: #a02626 !important; color: white; }
     .paginate_button>.page-link { color: #a02626; }
     .paginate_button>.page-link:focus, .paginate_button.active>.page-link:focus { box-shadow: none !important; outline: none !important; }
+
+    /* Position badges — light mode */
+    .cr-position-badge {
+        font-weight: 600; padding: 3px 10px; border-radius: 11px;
+        background: #f0f0f0; color: #555;
+    }
+    .cr-position-badge[data-pos="WiSA chair"] { background: #f0d4e8; color: #7a2a5c; }
+    .cr-position-badge[data-pos="Overseas Representative"] { background: #d4e0f0; color: #2a4d7a; }
+
+    /* Position badges — dark mode */
+    body.dark-mode .cr-position-badge { background: #374151; color: #d1d5db; }
+    body.dark-mode .cr-position-badge[data-pos="WiSA chair"] { background: #4a2d45; color: #f0b6df; }
+    body.dark-mode .cr-position-badge[data-pos="Overseas Representative"] { background: #24364d; color: #9cc3f0; }
 </style>
 @endpush
 
@@ -239,8 +283,10 @@ $(document).ready(function () {
         var $row     = $($(settings.nTable).DataTable().row(dataIndex).node());
         var chkCountry  = getChecked('crFilterCountry');
         var chkPosition = getChecked('crFilterPosition');
+        var chkStatus   = getChecked('crFilterStatus');
         if (chkCountry.length && chkCountry.indexOf(String($row.data('country') || '')) === -1) return false;
         if (chkPosition.length && chkPosition.indexOf(String($row.data('position') || '')) === -1) return false;
+        if (chkStatus.length && chkStatus.indexOf(String($row.data('status') || 'active')) === -1) return false;
         return true;
     });
 

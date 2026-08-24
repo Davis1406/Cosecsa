@@ -75,7 +75,7 @@ class CountryRepsController extends Controller
     public function insert(Request $request)
     {
         $fields = $request->only([
-            'name', 'email', 'password', 'country_id', 'cosecsa_email', 'mobile_no',
+            'name', 'email', 'password', 'country_id', 'cosecsa_email', 'mobile_no', 'status',
         ]);
 
         if ($request->hasFile('profile_image')) {
@@ -105,7 +105,7 @@ class CountryRepsController extends Controller
     public function update(Request $request, $id)
     {
         $fields = $request->only([
-            'name', 'email', 'password', 'country_id', 'cosecsa_email', 'mobile_no',
+            'name', 'email', 'password', 'country_id', 'cosecsa_email', 'mobile_no', 'status',
         ]);
 
         if ($request->hasFile('profile_image')) {

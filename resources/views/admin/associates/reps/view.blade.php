@@ -49,6 +49,15 @@
 body.dark-mode .admin-action-bar { background:#374151; border-color:#4a5568; }
 body.dark-mode .info-row, body.dark-mode .field-row { border-color:#4a5568; }
 body.dark-mode .info-text, body.dark-mode .field-val { color:#e0e0e0; }
+
+/* Position badges — light mode */
+.cr-position-badge { font-weight: 600; background:#d4edda; color:#155724; }
+.cr-position-badge[data-pos="WiSA chair"] { background:#f0d4e8; color:#7a2a5c; }
+.cr-position-badge[data-pos="Overseas Representative"] { background:#d4e0f0; color:#2a4d7a; }
+/* Position badges — dark mode */
+body.dark-mode .cr-position-badge { background:#374151; color:#d1d5db; }
+body.dark-mode .cr-position-badge[data-pos="WiSA chair"] { background:#4a2d45; color:#f0b6df; }
+body.dark-mode .cr-position-badge[data-pos="Overseas Representative"] { background:#24364d; color:#9cc3f0; }
 </style>
 @endpush
 
@@ -114,13 +123,17 @@ body.dark-mode .info-text, body.dark-mode .field-val { color:#e0e0e0; }
                                 <p class="rep-org">{{ $linkedFellow->programme_name ?? $linkedFellow->current_specialty ?? '' }}</p>
 
                                 <div class="mt-2 mb-2">
-                                    @php $pos = $countryRep->position ?? 'Country Representative'; @endphp
-                                    <span class="badge badge-pill px-3 py-1"
-                                          style="background:{{ $pos === 'WiSA chair' ? '#f0d4e8' : ($pos === 'Overseas Representative' ? '#d4e0f0' : '#d4edda') }};
-                                                 color:{{ $pos === 'WiSA chair' ? '#7a2a5c' : ($pos === 'Overseas Representative' ? '#2a4d7a' : '#155724') }};
-                                                 font-size:.75rem;">
+                                    @php $pos = $countryRep->position ?? 'Country Representative'; $repStatus = $countryRep->status ?? 'active'; @endphp
+                                    <span class="badge badge-pill px-3 py-1 cr-position-badge"
+                                          data-pos="{{ $pos }}"
+                                          style="font-size:.75rem;">
                                         {{ $pos }}
                                     </span>
+                                    @if($repStatus === 'retired')
+                                        <span class="badge badge-pill px-3 py-1 badge-secondary" style="font-size:.75rem;">Retired</span>
+                                    @else
+                                        <span class="badge badge-pill px-3 py-1 badge-success" style="font-size:.75rem;">Active</span>
+                                    @endif
                                 </div>
                             </div>
 
@@ -196,6 +209,17 @@ body.dark-mode .info-text, body.dark-mode .field-val { color:#e0e0e0; }
                                           data-ie-csrf="{{ csrf_token() }}">
                                         <span class="ie-value">{{ $countryRep->position ?? 'Country Representative' }}</span>
                                         <button class="ie-pencil" type="button" title="Edit position"><i class="fas fa-pen"></i></button>
+                                    </span>
+                                </div>
+                                <div class="field-row">
+                                    <span class="field-lbl">Status</span>
+                                    <span class="field-val ie-field" data-ie="status" data-ie-type="select"
+                                          data-ie-value="{{ $countryRep->status ?? 'active' }}"
+                                          data-ie-options='{"active":"Active","retired":"Retired"}'
+                                          data-ie-url="{{ url('admin/associates/reps/'.$countryRep->reps_id.'/quick-update') }}"
+                                          data-ie-csrf="{{ csrf_token() }}">
+                                        <span class="ie-value">{{ ucfirst($countryRep->status ?? 'active') }}</span>
+                                        <button class="ie-pencil" type="button" title="Edit status"><i class="fas fa-pen"></i></button>
                                     </span>
                                 </div>
                                 <div class="field-row">
