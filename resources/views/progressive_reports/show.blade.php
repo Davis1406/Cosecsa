@@ -2,7 +2,7 @@
 
 @section('content')
   <style>
-    .pr-table textarea { min-height: 60px; resize: vertical; font-size: .82rem; width: 100%; }
+    .pr-table textarea { min-height: 60px; resize: none; overflow: hidden; font-size: .82rem; width: 100%; }
     .pr-table textarea.pr-activity { min-height: 44px; font-size: .85rem; font-weight: 600; }
     .pr-section-card.mine { border-left: 4px solid #a02626; }
     .pr-section-card { scroll-margin-top: 75px; }
@@ -314,6 +314,19 @@ document.addEventListener('DOMContentLoaded', function () {
   const periodId = {{ $period->id ?? 'null' }};
   const csrf = '{{ csrf_token() }}';
 
+  // Grows a textarea's height to fit its content (no scrollbar, no manual
+  // drag-resize needed). Used for every textarea in the report tables below
+  // (Activity Description, Planned Activities, Current Status, Next Steps)
+  // as well as the Recurring Tasks widget further down.
+  function autoGrow(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+  document.addEventListener('input', function (e) {
+    if (e.target.matches('.pr-bullet-field, .pr-activity, .pr-tpl-autogrow')) autoGrow(e.target);
+  });
+  document.querySelectorAll('.pr-bullet-field, .pr-activity, .pr-tpl-autogrow').forEach(autoGrow);
+
   // Planned Activities / Current Status / Next Steps are bulleted lists —
   // Enter starts a new "❖ " point instead of a bare newline, and an empty
   // field gets its first bullet as soon as the user starts typing.
@@ -328,11 +341,13 @@ document.addEventListener('DOMContentLoaded', function () {
         field.value = field.value.slice(0, start) + insert + field.value.slice(end);
         const pos = start + insert.length;
         field.selectionStart = field.selectionEnd = pos;
+        autoGrow(field);
       });
       field.addEventListener('focus', function () {
         if (! field.value) {
           field.value = '❖ ';
           field.selectionStart = field.selectionEnd = field.value.length;
+          autoGrow(field);
         }
       });
     });
@@ -351,6 +366,7 @@ document.addEventListener('DOMContentLoaded', function () {
       // instead of only appearing after a reload.
       if (fieldEl && data.task && data.task[fieldName] !== undefined && data.task[fieldName] !== value) {
         fieldEl.value = data.task[fieldName] || '';
+        autoGrow(fieldEl);
       }
       if (cardFooterFlash) {
         cardFooterFlash.style.display = 'inline';
@@ -439,6 +455,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <td class="text-center"><a href="#" class="text-danger pr-delete-row" title="Delete row"><i class="fas fa-trash"></i></a></td>
         `;
         attachBulletBehavior(tr.querySelectorAll('.pr-bullet-field'));
+        tr.querySelectorAll('.pr-bullet-field, .pr-activity').forEach(autoGrow);
         tbody.appendChild(tr);
       });
     });
@@ -449,14 +466,6 @@ document.addEventListener('DOMContentLoaded', function () {
   // per field on change (blur), no manual Save button — "Add Row" creates
   // a blank row instantly (like "Add Row" for the report tasks table),
   // and typing into it autosaves from there. Delete stays explicit.
-  // Grows a textarea's height to fit its content (no scrollbar, no manual
-  // drag-resize needed) — same idea as the report task fields, but those
-  // only resize by hand; these actually track what you type.
-  function autoGrow(el) {
-    el.style.height = 'auto';
-    el.style.height = el.scrollHeight + 'px';
-  }
-
   function buildTplRow(t) {
     const tr = document.createElement('tr');
     tr.dataset.templateId = t.id;
@@ -468,13 +477,6 @@ document.addEventListener('DOMContentLoaded', function () {
     tr.querySelectorAll('.pr-tpl-autogrow').forEach(autoGrow);
     return tr;
   }
-
-  // Size every existing textarea to its (possibly multi-line) saved content
-  // on page load, then keep growing as the user types.
-  document.querySelectorAll('.pr-tpl-autogrow').forEach(autoGrow);
-  document.addEventListener('input', function (e) {
-    if (e.target.classList.contains('pr-tpl-autogrow')) autoGrow(e.target);
-  });
 
   document.querySelectorAll('.pr-tpl-table').forEach(function (table) {
     const flash = table.closest('.card-body').querySelector('.pr-tpl-save-flash');
