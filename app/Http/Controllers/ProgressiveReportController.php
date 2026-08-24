@@ -644,7 +644,7 @@ class ProgressiveReportController extends Controller
 
         $userId = ($this->canManage() && $request->filled('user_id')) ? (int) $request->user_id : Auth::id();
 
-        ProgressReportTaskTemplate::create([
+        $template = ProgressReportTaskTemplate::create([
             'user_id'                    => $userId,
             'activity_description'       => $request->activity_description,
             'default_planned_activities' => $request->default_planned_activities,
@@ -653,7 +653,46 @@ class ProgressiveReportController extends Controller
             'created_by'                 => Auth::id(),
         ]);
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'template' => $template]);
+        }
+
         return back()->with('success', 'Recurring task added.');
+    }
+
+    // Add several recurring tasks in one request — lets someone type out a
+    // whole list of activities for a section and save them together instead
+    // of round-tripping (and full-page-reloading, before this endpoint
+    // existed) once per task via templateStore().
+    public function templateStoreBulk(Request $request)
+    {
+        $request->validate([
+            'user_id'                                 => 'nullable|integer',
+            'tasks'                                    => 'required|array|min:1',
+            'tasks.*.activity_description'              => 'required|string|max:1000',
+            'tasks.*.default_planned_activities'        => 'nullable|string|max:5000',
+        ]);
+
+        $userId = ($this->canManage() && $request->filled('user_id')) ? (int) $request->user_id : Auth::id();
+
+        $nextSort = (int) (ProgressReportTaskTemplate::where('user_id', $userId)->max('sort_order') ?? 0) + 1;
+
+        $created = collect($request->input('tasks'))->map(function ($task) use (&$nextSort, $userId) {
+            return ProgressReportTaskTemplate::create([
+                'user_id'                    => $userId,
+                'activity_description'       => $task['activity_description'],
+                'default_planned_activities' => $task['default_planned_activities'] ?? null,
+                'is_active'                  => true,
+                'sort_order'                 => $nextSort++,
+                'created_by'                 => Auth::id(),
+            ]);
+        });
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'templates' => $created]);
+        }
+
+        return back()->with('success', count($created) . ' recurring tasks added.');
     }
 
     public function templateUpdate(Request $request, $id)
