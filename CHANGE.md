@@ -24,6 +24,19 @@
 - **⚠️ Coordinate:** requires the matching `cosecsa-api` deploy (migration + `status` in
   list/detail/quick-update responses) to land first — the list/view read `status` from the API.
 
+### Fixed (2026-08-24) — Country Reps table blank after adding the Status column
+- The list page went blank (table never appeared) after the Status column was added. The
+  `crstable` DataTable in `public/dist/js/custom.js` still declared **8** column definitions
+  while the table now had **9** `<th>`s. The `#crstable` table is `opacity: 0` until DataTables
+  initialises (see `custom.css`), and with `stateSave: true` a stale saved column state can make
+  init throw before `initComplete` runs — so `hideLoader()` never fires and the table stays
+  invisible, showing nothing.
+- Fixed the column-definition count to 9 in `custom.js` so it matches the current table; the
+  `#crstable_wrapper` column-visibility/order state re-saves itself on the next successful load.
+  If a stale saved state still lingers in a browser, a hard refresh (or clearing that site's
+  DataTables localStorage state) resolves it.
+- **Files:** `public/dist/js/custom.js`.
+
 ### Fixed (2026-08-23) — Progressive Report "No." column didn't renumber after deleting a row
 - Reported: add rows 5 and 6 to a section's task table, delete row 5, and the "No." column
   showed 4, 6 — row 5 missing entirely, off by one for every row after it — until a full page
