@@ -25,6 +25,17 @@ class SystemLogsController extends Controller
         ]);
     }
 
+    // Fetches one email_logs row's full subject/addresses/body for the
+    // "View" action on the Emails Dispatched tab — kept off the main list
+    // response since bodies can be large. Returned as JSON for the modal's
+    // AJAX fetch in admin/logs/index.blade.php.
+    public function showEmail($id)
+    {
+        $response = $this->api->get("admin/logs/emails/{$id}");
+
+        return response()->json($response->object(), $response->status());
+    }
+
     // Reconstruct a LengthAwarePaginator from the JSON paginator shape the
     // API returns, so Blade can call $records->links() as usual.
     private function rebuildPaginator(?object $raw, Request $request): LengthAwarePaginator

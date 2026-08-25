@@ -94,16 +94,31 @@ class SystemLogger
             ->map(fn ($addr) => $addr->getAddress())
             ->implode(', ') ?: 'unknown';
 
+        // email_logs is a table shared with cosecsa-api (same DB) — this
+        // listener only fires for mail sent by this app's own process
+        // (cosecsa-api has its own equivalent listener, LogSentEmail, for
+        // mail it sends, e.g. Draft Emails). Brought to parity with that
+        // listener's fields (from/reply-to/mailable/body) so every email
+        // logged here, regardless of which app sent it, shows the same
+        // detail on the System Logs > Emails Dispatched tab.
+        $from = collect($event->message->getFrom())->first();
+        $replyTo = collect($event->message->getReplyTo())->first();
+        $htmlBody = $event->message->getHtmlBody();
+        $body = $htmlBody ?: $event->message->getTextBody();
+
         DB::table('email_logs')->insert([
-            'to_address' => substr($toAddress, 0, 255),
-            'subject'    => substr((string) $event->message->getSubject(), 0, 255),
-            // Laravel's MessageSent event carries the Mailable's public
-            // properties (via buildViewData()) but not its class name, so
-            // this is left blank rather than guessed.
-            'mailable'   => null,
-            'sent_at'    => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
+            'to_address'       => substr($toAddress, 0, 255),
+            'from_address'     => $from?->getAddress(),
+            'from_name'        => $from?->getName() ?: null,
+            'reply_to_address' => $replyTo?->getAddress(),
+            'reply_to_name'    => $replyTo?->getName() ?: null,
+            'subject'          => substr((string) $event->message->getSubject(), 0, 255),
+            'mailable'         => $event->data['__laravel_mailable'] ?? null,
+            'body'             => $body,
+            'is_html'          => $body !== null ? (bool) $htmlBody : null,
+            'sent_at'          => now(),
+            'created_at'       => now(),
+            'updated_at'       => now(),
         ]);
     }
 

@@ -130,7 +130,7 @@
               <div class="table-responsive">
                 <table class="table table-striped table-sm">
                   <thead>
-                    <tr><th>#</th><th>Sent At</th><th>To</th><th>Subject</th><th>Type</th></tr>
+                    <tr><th>#</th><th>Sent At</th><th>To</th><th>From</th><th>Reply-To</th><th>Subject</th><th>Type</th><th></th></tr>
                   </thead>
                   <tbody>
                     @foreach($records as $r)
@@ -138,12 +138,33 @@
                         <td>{{ $loop->iteration + ($records->currentPage()-1)*$records->perPage() }}</td>
                         <td>{{ date('d-m-Y H:i A', strtotime($r->sent_at)) }}</td>
                         <td>{{ $r->to_address }}</td>
+                        <td>
+                          @if($r->from_name ?? null)
+                            {{ $r->from_name }} @if($r->from_address ?? null)<span class="text-muted">&lt;{{ $r->from_address }}&gt;</span>@endif
+                          @else
+                            {{ $r->from_address ?? '—' }}
+                          @endif
+                        </td>
+                        <td>
+                          @if($r->reply_to_name ?? null)
+                            {{ $r->reply_to_name }} @if($r->reply_to_address ?? null)<span class="text-muted">&lt;{{ $r->reply_to_address }}&gt;</span>@endif
+                          @else
+                            {{ $r->reply_to_address ?? '—' }}
+                          @endif
+                        </td>
                         <td>{{ $r->subject }}</td>
                         <td>{{ $r->mailable ? class_basename($r->mailable) : '—' }}</td>
+                        <td>
+                          <button type="button" class="btn btn-sm btn-cosecsa-outline pr-view-email-btn"
+                                  data-id="{{ $r->id }}" data-subject="{{ $r->subject }}" data-to="{{ $r->to_address }}"
+                                  data-sent-at="{{ date('d-m-Y H:i A', strtotime($r->sent_at)) }}">
+                            <i class="fas fa-eye mr-1"></i> View
+                          </button>
+                        </td>
                       </tr>
                     @endforeach
                     @if($records->isEmpty())
-                      <tr><td colspan="5" class="text-center text-muted py-3">No emails recorded yet.</td></tr>
+                      <tr><td colspan="8" class="text-center text-muted py-3">No emails recorded yet.</td></tr>
                     @endif
                   </tbody>
                 </table>
@@ -157,5 +178,88 @@
         </div>
       </div>
     </section>
+
+    <!-- Email content view modal (Emails Dispatched tab) -->
+    <div class="modal fade" id="prViewEmailModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="fas fa-envelope-open-text mr-1"></i> <span id="prViewEmailSubject">Email</span>
+            </h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-2" style="font-size:.85rem;color:#6b7280;">
+              <div><strong>To:</strong> <span id="prViewEmailTo"></span></div>
+              <div><strong>Sent:</strong> <span id="prViewEmailSentAt"></span></div>
+            </div>
+            <div id="prViewEmailLoading" class="text-center text-muted py-4">
+              <i class="fas fa-spinner fa-spin mr-1"></i> Loading…
+            </div>
+            <div id="prViewEmailError" class="alert alert-danger d-none"></div>
+            <iframe id="prViewEmailFrame" class="d-none" style="width:100%;min-height:400px;border:1px solid #dee2e6;border-radius:4px;background:#fff;" sandbox=""></iframe>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  @push('scripts')
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var modalEl = document.getElementById('prViewEmailModal');
+        if (!modalEl) return;
+        var $modal = window.jQuery ? jQuery(modalEl) : null;
+
+        document.querySelectorAll('.pr-view-email-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-id');
+            document.getElementById('prViewEmailSubject').textContent = btn.getAttribute('data-subject') || 'Email';
+            document.getElementById('prViewEmailTo').textContent = btn.getAttribute('data-to') || '—';
+            document.getElementById('prViewEmailSentAt').textContent = btn.getAttribute('data-sent-at') || '—';
+
+            var loading = document.getElementById('prViewEmailLoading');
+            var errorBox = document.getElementById('prViewEmailError');
+            var frame = document.getElementById('prViewEmailFrame');
+            loading.classList.remove('d-none');
+            errorBox.classList.add('d-none');
+            frame.classList.add('d-none');
+            frame.srcdoc = '';
+
+            if ($modal) { $modal.modal('show'); } else { modalEl.style.display = 'block'; }
+
+            fetch('{{ url('admin/logs/emails') }}/' + id, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+              .then(function (res) {
+                if (!res.ok) { throw new Error('Could not load this email (HTTP ' + res.status + ').'); }
+                return res.json();
+              })
+              .then(function (data) {
+                loading.classList.add('d-none');
+                if (!data.body) {
+                  errorBox.textContent = 'No content was saved for this email (sent before content logging was added, or a plain notification with no body).';
+                  errorBox.classList.remove('d-none');
+                  return;
+                }
+                // Rendered inside a sandboxed iframe (no allow-scripts) so
+                // saved email HTML can never execute against the admin
+                // page — it can only display.
+                frame.srcdoc = data.is_html
+                  ? data.body
+                  : '<pre style="white-space:pre-wrap;font-family:inherit;">' + data.body.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>';
+                frame.classList.remove('d-none');
+              })
+              .catch(function (err) {
+                loading.classList.add('d-none');
+                errorBox.textContent = err.message || 'Failed to load this email.';
+                errorBox.classList.remove('d-none');
+              });
+          });
+        });
+      });
+    </script>
+  @endpush
 @endsection

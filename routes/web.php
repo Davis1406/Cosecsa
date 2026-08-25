@@ -135,6 +135,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::get('admin/roles/delete/{id}', [\App\Http\Controllers\RoleController::class, 'delete']);
 
     Route::get('admin/logs', [\App\Http\Controllers\SystemLogsController::class, 'index'])->name('admin.logs.index');
+    Route::get('admin/logs/emails/{id}', [\App\Http\Controllers\SystemLogsController::class, 'showEmail'])->name('admin.logs.show-email');
 
     Route::get('admin/reports', [\App\Http\Controllers\ReportBuilderController::class, 'index'])->name('admin.reports.index');
     Route::get('admin/reports/fields/{type}', [\App\Http\Controllers\ReportBuilderController::class, 'fields'])->name('admin.reports.fields');
