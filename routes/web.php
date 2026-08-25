@@ -107,6 +107,8 @@ Route::middleware('auth')->prefix('progressive-reports')->group(function () {
     Route::post('/{periodId}/unconsolidate', [$prc, 'unconsolidate'])->name('progressive-reports.unconsolidate');
     Route::post('/{periodId}/delete', [$prc, 'deletePeriod'])->name('progressive-reports.delete');
     Route::post('/{periodId}/share-ceo', [$prc, 'shareWithCeo'])->name('progressive-reports.share-ceo');
+    Route::get('/{periodId}/preview-email', [$prc, 'previewEmail'])->name('progressive-reports.preview-email');
+    Route::get('/{periodId}/preview-docx', [$prc, 'previewDocx'])->name('progressive-reports.preview-docx');
 
     Route::post('/{periodId}/tasks/{taskId}/update', [$prc, 'updateTask'])->name('progressive-reports.tasks.update');
     Route::post('/{periodId}/tasks/{taskId}/delete', [$prc, 'deleteTaskRow'])->name('progressive-reports.tasks.delete');

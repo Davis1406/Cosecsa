@@ -69,6 +69,12 @@
               <a href="{{ url('progressive-reports/'.$period->id.'/download-docx') }}" class="btn btn-cosecsa-outline" target="_blank">
                 <i class="fas fa-file-word mr-1"></i> Download DOCX
               </a>
+              <a href="{{ url('progressive-reports/'.$period->id.'/preview-docx') }}" class="btn btn-cosecsa-outline" target="_blank">
+                <i class="fas fa-file-alt mr-1"></i> Preview Document
+              </a>
+              <a href="{{ url('progressive-reports/'.$period->id.'/preview-email') }}" class="btn btn-cosecsa-outline" target="_blank">
+                <i class="fas fa-envelope mr-1"></i> Preview Email
+              </a>
               <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/share-ceo') }}">
                 @csrf
                 <button type="submit" class="btn btn-cosecsa-outline" onclick="return confirm('Send the current report to the CEO via Messages (PDF) and email (Word document)?')">

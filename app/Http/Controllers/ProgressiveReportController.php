@@ -603,8 +603,22 @@ class ProgressiveReportController extends Controller
             $table->addCell($colNext, $headerStyle)->addText('Next Steps');
 
             if ($participant->tasks->isEmpty()) {
-                $table->addRow();
-                $table->addCell($colFullWidth, $noTasksCellStyle)->addText('No tasks recorded.', $rowStyle);
+                // For the CEO section, render 4 blank rows so she can fill
+                // tasks by hand in the Word document (she does not use the
+                // system UI). Every other section shows the usual notice.
+                if ($participant->section_label === 'CEO') {
+                    for ($i = 1; $i <= 4; $i++) {
+                        $table->addRow();
+                        $table->addCell($colNo, $rowStyle)->addText((string) $i);
+                        $table->addCell($colActivity, $rowStyle)->addText('');
+                        $table->addCell($colPlanned, $rowStyle)->addText('');
+                        $table->addCell($colStatus, $rowStyle)->addText('');
+                        $table->addCell($colNext, $rowStyle)->addText('');
+                    }
+                } else {
+                    $table->addRow();
+                    $table->addCell($colFullWidth, $noTasksCellStyle)->addText('No tasks recorded.', $rowStyle);
+                }
             } else {
                 foreach ($participant->tasks as $task) {
                     $table->addRow();
@@ -727,6 +741,51 @@ class ProgressiveReportController extends Controller
             : 'Report shared with the CEO via Messages — no email was sent because the CEO account has no email address on file.';
 
         return redirect("progressive-reports/{$periodId}")->with($emailed ? 'success' : 'error', $message);
+    }
+
+    /**
+     * Preview the email that will be sent to the CEO — renders the same
+     * blade template as the real Mailable but in the browser so the manager
+     * can verify formatting before clicking Share with CEO.
+     */
+    public function previewEmail(Request $request, $periodId)
+    {
+        $this->authorizeManage();
+        $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks'])->findOrFail($periodId);
+
+        [$docxBinary, $docxFilename] = $this->buildProgressReportDocx($period);
+
+        $mailable = new \App\Mail\ProgressReportCeoShareMail(
+            $period->period_month->format('F Y'),
+            $docxFilename,
+            $docxBinary,
+            Auth::user(),
+        );
+
+        // Render the email HTML the same way Laravel Mail does internally
+        $html = $mailable->render();
+
+        // Replace the embedded image CID reference with a public URL so
+        // the preview renders correctly in the browser (the real email
+        // uses $message->embed() which only works inside a Mailable).
+        $logoUrl = url('dist/img/Cosecsa_Logo_email.png');
+        $html = preg_replace('/src=["\']cid:[^"\'"]+["\']/i', 'src="' . $logoUrl . '"', $html);
+
+        return response($html)->header('Content-Type', 'text/html');
+    }
+
+    /**
+     * Preview the consolidated DOCX content in the browser as an HTML table
+     * so the manager can verify every section and task before sharing.
+     */
+    public function previewDocx(Request $request, $periodId)
+    {
+        $this->authorizeManage();
+        $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks'])->findOrFail($periodId);
+
+        return view('progressive_reports.preview_docx', [
+            'period' => $period,
+        ]);
     }
 
     // ── Recurring task templates ─────────────────────────────────────
