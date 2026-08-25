@@ -4,6 +4,23 @@
 
 ## [Unreleased]
 
+### Added (2026-08-25) — "Share with CEO" now also emails her the compiled DOCX report
+- Previously "Share with CEO" (`progressive-reports/{id}/share-ceo`) only sent the consolidated
+  PDF as an in-app Messages attachment — no email was ever sent, and the DOCX export existed
+  only as a manual download nobody delivered to her. It now does both: the existing PDF-via-
+  Messages share, plus an email to the CEO's account email with the compiled report attached
+  as a formatted `.docx` (same masked-sender practice as the Progress Report reminder/Draft
+  Email sends — From: the acting staff member's name via COSECSA, Reply-To: their own email).
+- Extracted the PhpWord docx-rendering logic out of `downloadDocx()` into a shared
+  `buildProgressReportDocx($period)` helper so the manual "Download DOCX" button and the CEO
+  email attachment render from the same code path; `downloadDocx()`'s own behavior (scoped to
+  the current user's section) is unchanged, `shareWithCeo()` passes the already-loaded
+  all-participants `$period` for the compiled report.
+- **Files:** `app/Http/Controllers/ProgressiveReportController.php`,
+  `app/Mail/ProgressReportCeoShareMail.php` (new),
+  `resources/views/emails/progress_report_ceo_share.blade.php` (new),
+  `resources/views/progressive_reports/show.blade.php`.
+
 ### Added (2026-08-24) — Draft Emails: preview shows masked sender + {{number}}; emails send like the Progress Report reminders
 - The Draft Email live preview now reflects how the email actually sends: **From** shows
   "Your Name via COSECSA `<communications@cosecsa.org>`" (the shared mailbox with the logged-in
