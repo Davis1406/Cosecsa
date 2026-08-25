@@ -4,6 +4,28 @@
 
 ## [Unreleased]
 
+### Fixed (2026-08-25) — CEO DOCX report: section-name visibility, bullet formatting, repeated column headers
+- The maroon section-header row (staff name/role) in the emailed/downloaded `.docx` report had
+  the white `color` set on the **cell** style array (`bgColor` + `bold` + `color` together), but
+  PhpWord's `Cell` style only honours `bgColor`/border/valign — font-level keys like `bold`/
+  `color` are silently ignored there, so the name rendered in PhpWord's default (effectively
+  invisible on the maroon fill). Split into a cell-level style (`bgColor` only) and a font-level
+  style (`bold`, `color: FFFFFF`) passed to `addText()`'s own style argument, matching how the
+  rest of the app renders it (already-visible white-on-maroon in the PDF/web views, which use
+  CSS, not PhpWord).
+- Planned Activities / Current Status / Next Steps store multiple bullet points joined by
+  `\n❖ ` and render fine in the PDF/web views (`white-space:pre-line`), but PhpWord's `addText()`
+  doesn't treat `\n` as a line break — every bullet in a multi-line field was mashed onto one
+  run with no visible separation. New `buildProgressReportDocx()` helper
+  `addBulletedCellText()` splits each field on newlines and adds every non-empty line as its own
+  line via `addTextBreak()`, prefixing a `❖ ` bullet on any line that's missing one (covers
+  older data entered before the bullet-textarea existed).
+- The `No / Activity / Planned Activities / Current Status / Next Steps` column header row
+  previously appeared once at the very top of the table; it's now repeated directly under every
+  section's maroon name row so the columns stay identifiable while reading/scrolling through
+  each staff member's section, not just the first one.
+- **Files:** `app/Http/Controllers/ProgressiveReportController.php`.
+
 ### Added (2026-08-25) — "Share with CEO" now also emails her the compiled DOCX report
 - Previously "Share with CEO" (`progressive-reports/{id}/share-ceo`) only sent the consolidated
   PDF as an in-app Messages attachment — no email was ever sent, and the DOCX export existed

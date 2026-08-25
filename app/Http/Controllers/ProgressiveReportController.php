@@ -551,11 +551,25 @@ class ProgressiveReportController extends Controller
         $table->addCell(3780, $headerStyle)->addText('Next Steps');
 
         $rowStyle = ['size' => 9];
+        $sectionCellStyle = ['bgColor' => 'A02626'];
+        $sectionFontStyle = ['size' => 9, 'bold' => true, 'color' => 'FFFFFF'];
         foreach ($period->participants as $participant) {
-            // Section header row
-            $sectionStyle = ['size' => 9, 'bold' => true, 'bgColor' => 'A02626', 'color' => 'FFFFFF'];
+            // Section header row — bgColor is a cell-level style, bold/color
+            // are font-level styles and must go on addText()'s own style arg
+            // or the text renders in the default (black, invisible-on-red) font.
             $table->addRow();
-            $table->addCell(14700, $sectionStyle)->addText($participant->section_label);
+            $table->addCell(14700, $sectionCellStyle)->addText($participant->section_label, $sectionFontStyle);
+
+            // Repeat the column header row under every section label so a
+            // reader scrolling/paging through the report always has the
+            // No/Activity/Planned Activities/Current Status/Next Steps
+            // headings in view, not just once at the very top of the table.
+            $table->addRow();
+            $table->addCell(420, $headerStyle)->addText('No');
+            $table->addCell(2520, $headerStyle)->addText('Activity');
+            $table->addCell(3780, $headerStyle)->addText('Planned Activities');
+            $table->addCell(3780, $headerStyle)->addText('Current Status');
+            $table->addCell(3780, $headerStyle)->addText('Next Steps');
 
             if ($participant->tasks->isEmpty()) {
                 $table->addRow();
@@ -565,9 +579,9 @@ class ProgressiveReportController extends Controller
                     $table->addRow();
                     $table->addCell(420, $rowStyle)->addText($task->row_no ? (string) $task->row_no : '');
                     $table->addCell(2520, $rowStyle)->addText($task->activity_description ?: '');
-                    $table->addCell(3780, $rowStyle)->addText($task->planned_activities ?: '');
-                    $table->addCell(3780, $rowStyle)->addText($task->current_status ?: '');
-                    $table->addCell(3780, $rowStyle)->addText($task->next_steps ?: '');
+                    $this->addBulletedCellText($table->addCell(3780, $rowStyle), $task->planned_activities, $rowStyle);
+                    $this->addBulletedCellText($table->addCell(3780, $rowStyle), $task->current_status, $rowStyle);
+                    $this->addBulletedCellText($table->addCell(3780, $rowStyle), $task->next_steps, $rowStyle);
                 }
             }
         }
@@ -585,6 +599,37 @@ class ProgressiveReportController extends Controller
         @unlink($tempPath);
 
         return [$binary, $filename];
+    }
+
+    /**
+     * Render a task field (planned_activities / current_status / next_steps)
+     * into a table cell as one bullet point per line instead of PhpWord's
+     * default of dumping the raw "\n❖ "-joined string as one unbroken run —
+     * addText() doesn't treat "\n" as a line break, so multi-bullet fields
+     * used to render as all their bullets mashed onto a single line. Every
+     * line is guaranteed to start with the "❖" bullet even if the stored
+     * text is missing it (older data entered before the bullet-textarea
+     * existed), and each bullet gets its own line via addTextBreak().
+     */
+    private function addBulletedCellText($cell, ?string $text, array $fontStyle): void
+    {
+        $lines = collect(preg_split('/\r\n|\r|\n/', (string) $text))
+            ->map(fn ($line) => trim($line))
+            ->filter(fn ($line) => $line !== '')
+            ->values();
+
+        if ($lines->isEmpty()) {
+            $cell->addText('', $fontStyle);
+            return;
+        }
+
+        foreach ($lines as $index => $line) {
+            if ($index > 0) {
+                $cell->addTextBreak(1, $fontStyle);
+            }
+            $bulleted = str_starts_with($line, '❖') ? $line : '❖ ' . $line;
+            $cell->addText($bulleted, $fontStyle);
+        }
     }
 
     public function shareWithCeo(Request $request, $periodId)
