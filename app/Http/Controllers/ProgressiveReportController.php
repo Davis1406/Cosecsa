@@ -541,47 +541,67 @@ class ProgressiveReportController extends Controller
             'cellMargin'  => 40,
         ]);
 
+        // Column widths (twips). Page is 14400 wide with 720 left/right
+        // margins, so usable width is 14400 - 1440 = 12960 — these must sum
+        // to at most that or the table overflows past the right margin (the
+        // Next Steps column got clipped at the page edge when this summed
+        // to 14280). Also the total here is what any gridSpan-merged
+        // full-width cell (section header row, "No tasks recorded" row)
+        // must be given so it renders as one full-width band and not just
+        // the width of the grid's first column.
+        $colNo       = 420;
+        $colActivity = 2200;
+        $colPlanned  = 3300;
+        $colStatus   = 3300;
+        $colNext     = 3300;
+        $colFullWidth = $colNo + $colActivity + $colPlanned + $colStatus + $colNext; // 12520
+
         // Header row
         $headerStyle = ['size' => 9, 'bold' => true, 'bgColor' => 'F1F1F1'];
         $table->addRow();
-        $table->addCell(420, $headerStyle)->addText('No');
-        $table->addCell(2520, $headerStyle)->addText('Activity');
-        $table->addCell(3780, $headerStyle)->addText('Planned Activities');
-        $table->addCell(3780, $headerStyle)->addText('Current Status');
-        $table->addCell(3780, $headerStyle)->addText('Next Steps');
+        $table->addCell($colNo, $headerStyle)->addText('No');
+        $table->addCell($colActivity, $headerStyle)->addText('Activity');
+        $table->addCell($colPlanned, $headerStyle)->addText('Planned Activities');
+        $table->addCell($colStatus, $headerStyle)->addText('Current Status');
+        $table->addCell($colNext, $headerStyle)->addText('Next Steps');
 
         $rowStyle = ['size' => 9];
-        $sectionCellStyle = ['bgColor' => 'A02626'];
+        $sectionCellStyle = ['bgColor' => 'A02626', 'gridSpan' => 5];
         $sectionFontStyle = ['size' => 9, 'bold' => true, 'color' => 'FFFFFF'];
+        $noTasksCellStyle = ['gridSpan' => 5];
         foreach ($period->participants as $participant) {
             // Section header row — bgColor is a cell-level style, bold/color
             // are font-level styles and must go on addText()'s own style arg
-            // or the text renders in the default (black, invisible-on-red) font.
+            // or the text renders in the default (black, invisible-on-red)
+            // font. gridSpan is required for the cell to actually span all
+            // 5 grid columns — without it, a single cell in a row by itself
+            // collapses to the width of the grid's first (narrowest) column
+            // and the section name wraps letter-by-letter down the page.
             $table->addRow();
-            $table->addCell(14700, $sectionCellStyle)->addText($participant->section_label, $sectionFontStyle);
+            $table->addCell($colFullWidth, $sectionCellStyle)->addText($participant->section_label, $sectionFontStyle);
 
             // Repeat the column header row under every section label so a
             // reader scrolling/paging through the report always has the
             // No/Activity/Planned Activities/Current Status/Next Steps
             // headings in view, not just once at the very top of the table.
             $table->addRow();
-            $table->addCell(420, $headerStyle)->addText('No');
-            $table->addCell(2520, $headerStyle)->addText('Activity');
-            $table->addCell(3780, $headerStyle)->addText('Planned Activities');
-            $table->addCell(3780, $headerStyle)->addText('Current Status');
-            $table->addCell(3780, $headerStyle)->addText('Next Steps');
+            $table->addCell($colNo, $headerStyle)->addText('No');
+            $table->addCell($colActivity, $headerStyle)->addText('Activity');
+            $table->addCell($colPlanned, $headerStyle)->addText('Planned Activities');
+            $table->addCell($colStatus, $headerStyle)->addText('Current Status');
+            $table->addCell($colNext, $headerStyle)->addText('Next Steps');
 
             if ($participant->tasks->isEmpty()) {
                 $table->addRow();
-                $table->addCell(14700, $rowStyle)->addText('No tasks recorded.');
+                $table->addCell($colFullWidth, $noTasksCellStyle)->addText('No tasks recorded.', $rowStyle);
             } else {
                 foreach ($participant->tasks as $task) {
                     $table->addRow();
-                    $table->addCell(420, $rowStyle)->addText($task->row_no ? (string) $task->row_no : '');
-                    $table->addCell(2520, $rowStyle)->addText($task->activity_description ?: '');
-                    $this->addBulletedCellText($table->addCell(3780, $rowStyle), $task->planned_activities, $rowStyle);
-                    $this->addBulletedCellText($table->addCell(3780, $rowStyle), $task->current_status, $rowStyle);
-                    $this->addBulletedCellText($table->addCell(3780, $rowStyle), $task->next_steps, $rowStyle);
+                    $table->addCell($colNo, $rowStyle)->addText($task->row_no ? (string) $task->row_no : '');
+                    $table->addCell($colActivity, $rowStyle)->addText($task->activity_description ?: '');
+                    $this->addBulletedCellText($table->addCell($colPlanned, $rowStyle), $task->planned_activities, $rowStyle);
+                    $this->addBulletedCellText($table->addCell($colStatus, $rowStyle), $task->current_status, $rowStyle);
+                    $this->addBulletedCellText($table->addCell($colNext, $rowStyle), $task->next_steps, $rowStyle);
                 }
             }
         }
