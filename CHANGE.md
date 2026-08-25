@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+### Fixed (2026-08-25) — Manager "Download PDF"/"Download DOCX" only returned the manager's own section
+- Diana (Administrative Officer, a report manager) reported that downloading the report from
+  her side gave her only her own section, not the compiled report. `downloadPdf()` and
+  `downloadDocx()` both unconditionally scoped `participants` to `Auth::id()` regardless of who
+  was asking — but the "Download PDF"/"Download DOCX" buttons a manager sees sit in the manager
+  toolbar (`show.blade.php`) right alongside "Share with CEO" (which already compiles every
+  section) and "Consolidate"/"Delete Report", so a manager downloading should get everyone's
+  data, not just their own. The same-labelled buttons in the regular-participant toolbar should
+  still stay scoped to just that person's own section — unaffected.
+- Both methods now only apply the `where('user_id', Auth::id())` filter when `! $this->canManage()`
+  (the same manager check `shareWithCeo()`/`authorizeManage()` already use) — managers get every
+  participant, everyone else keeps seeing only their own.
+- **Files:** `app/Http/Controllers/ProgressiveReportController.php`.
+
 ### Fixed (2026-08-25) — CEO DOCX report: section-name visibility, bullet formatting, repeated column headers
 - The maroon section-header row (staff name/role) in the emailed/downloaded `.docx` report had
   the white `color` set on the **cell** style array (`bgColor` + `bold` + `color` together), but

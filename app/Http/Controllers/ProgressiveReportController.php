@@ -457,7 +457,14 @@ class ProgressiveReportController extends Controller
     public function downloadPdf($periodId)
     {
         $period = ProgressReportPeriod::with(['participants' => function ($q) {
-            $q->where('user_id', Auth::id());
+            // Report managers (Administrative Officer / Super Admin) get
+            // every section's compiled report — their "Download PDF" button
+            // sits in the manager toolbar next to "Share with CEO", which
+            // already compiles everyone, so this download should match.
+            // Regular participants only ever see their own section's data.
+            if (! $this->canManage()) {
+                $q->where('user_id', Auth::id());
+            }
         }, 'participants.user', 'participants.tasks'])->findOrFail($periodId);
 
         $pdf = Pdf::loadView('progressive_reports.pdf', ['period' => $period])->setPaper('a4', 'landscape');
@@ -471,12 +478,16 @@ class ProgressiveReportController extends Controller
     }
 
     /**
-     * Download the progressive report as a DOCX file.
+     * Download the progressive report as a DOCX file. Managers (see
+     * downloadPdf()'s comment) get every section compiled; everyone else
+     * only gets their own.
      */
     public function downloadDocx($periodId)
     {
         $period = ProgressReportPeriod::with(['participants' => function ($q) {
-            $q->where('user_id', Auth::id());
+            if (! $this->canManage()) {
+                $q->where('user_id', Auth::id());
+            }
         }, 'participants.user', 'participants.tasks'])->findOrFail($periodId);
 
         [$binary, $filename] = $this->buildProgressReportDocx($period);
