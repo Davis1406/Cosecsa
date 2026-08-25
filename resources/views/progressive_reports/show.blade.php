@@ -71,7 +71,7 @@
               </a>
               <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/share-ceo') }}">
                 @csrf
-                <button type="submit" class="btn btn-cosecsa-outline" onclick="return confirm('Generate the current PDF and send it to the CEO via Messages?')">
+                <button type="submit" class="btn btn-cosecsa-outline" onclick="return confirm('Send the current report to the CEO via Messages (PDF) and email (Word document)?')">
                   <i class="fas fa-paper-plane mr-1"></i> Share with CEO
                 </button>
               </form>

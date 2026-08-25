@@ -16,6 +16,7 @@ use App\Models\ProgressReportTaskTemplate;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
@@ -478,6 +479,28 @@ class ProgressiveReportController extends Controller
             $q->where('user_id', Auth::id());
         }, 'participants.user', 'participants.tasks'])->findOrFail($periodId);
 
+        [$binary, $filename] = $this->buildProgressReportDocx($period);
+
+        return response()->streamDownload(function () use ($binary) {
+            echo $binary;
+        }, $filename, [
+            'Content-Type'              => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'Content-Disposition'       => 'attachment; filename="' . $filename . '"',
+            'Content-Length'             => strlen($binary),
+        ]);
+    }
+
+    /**
+     * Render a ProgressReportPeriod (with participants.user/participants.tasks
+     * already eager-loaded) to a .docx binary. Shared by the manual "Download
+     * DOCX" button and the "Share with CEO" email attachment — the only
+     * difference between the two is which participants the caller loaded
+     * onto $period (the current user's own section vs. every section).
+     *
+     * @return array{0: string, 1: string} [$binary, $filename]
+     */
+    private function buildProgressReportDocx(ProgressReportPeriod $period): array
+    {
         // Without this, PHPWord writes raw text into document.xml instead of
         // escaping it, so any "&", "<", or ">" in the data (e.g. "MCS & FCS")
         // produces invalid XML that Word refuses to open.
@@ -558,17 +581,10 @@ class ProgressiveReportController extends Controller
             ob_end_clean();
         }
 
-        $path   = $tempPath;
         $binary = file_get_contents($tempPath);
         @unlink($tempPath);
 
-        return response()->streamDownload(function () use ($binary) {
-            echo $binary;
-        }, $filename, [
-            'Content-Type'              => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'Content-Disposition'       => 'attachment; filename="' . $filename . '"',
-            'Content-Length'             => strlen($binary),
-        ]);
+        return [$binary, $filename];
     }
 
     public function shareWithCeo(Request $request, $periodId)
@@ -577,10 +593,11 @@ class ProgressiveReportController extends Controller
         $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks'])->findOrFail($periodId);
 
         $ceoSection = collect(config('progress_report_sections'))->firstWhere('label', 'CEO');
-        if (! $ceoSection || ! \App\Models\User::where('id', $ceoSection['user_id'])->exists()) {
+        $ceoUser = $ceoSection ? \App\Models\User::find($ceoSection['user_id']) : null;
+        if (! $ceoUser) {
             return back()->with('error', 'No CEO account is configured to share with.');
         }
-        $ceoId = $ceoSection['user_id'];
+        $ceoId = $ceoUser->id;
         $myId = Auth::id();
 
         $pdf = Pdf::loadView('progressive_reports.pdf', ['period' => $period])->setPaper('a4', 'landscape');
@@ -616,7 +633,24 @@ class ProgressiveReportController extends Controller
         ]);
         $conversation->update(['last_message_at' => now()]);
 
-        return redirect("progressive-reports/{$periodId}")->with('success', 'Report shared with the CEO via Messages.');
+        $emailed = false;
+        if ($ceoUser->email) {
+            [$docxBinary, $docxFilename] = $this->buildProgressReportDocx($period);
+
+            Mail::to($ceoUser->email)->send(new \App\Mail\ProgressReportCeoShareMail(
+                $period->period_month->format('F Y'),
+                $docxFilename,
+                $docxBinary,
+                Auth::user(),
+            ));
+            $emailed = true;
+        }
+
+        $message = $emailed
+            ? 'Report shared with the CEO via Messages and emailed to her as a Word document.'
+            : 'Report shared with the CEO via Messages — no email was sent because the CEO account has no email address on file.';
+
+        return redirect("progressive-reports/{$periodId}")->with($emailed ? 'success' : 'error', $message);
     }
 
     // ── Recurring task templates ─────────────────────────────────────
