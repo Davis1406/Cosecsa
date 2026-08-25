@@ -24,6 +24,7 @@ $response->headers->set('Content-Security-Policy',
     "font-src 'self' {$cspOrigin} https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.ionicframework.com; " .
     "img-src 'self' {$cspOrigin} data: https:; " .
     "connect-src 'self' {$cspOrigin} https://cdn.jsdelivr.net; " .
+    "frame-src 'self' {$cspOrigin} blob:; " .
     "object-src 'none'; " .
     "frame-ancestors 'self' {$cspOrigin};"
 );

@@ -228,31 +228,44 @@
             loading.classList.remove('d-none');
             errorBox.classList.add('d-none');
             frame.classList.add('d-none');
-            frame.srcdoc = '';
+            if (frame._blobUrl) { URL.revokeObjectURL(frame._blobUrl); frame._blobUrl = null; }
+            frame.src = 'about:blank';
 
             if ($modal) { $modal.modal('show'); } else { modalEl.style.display = 'block'; }
 
+            console.log('[EmailView] opening id:', id);
             fetch('{{ url('admin/logs/emails') }}/' + id, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
               .then(function (res) {
+                console.log('[EmailView] fetch status:', res.status);
                 if (!res.ok) { throw new Error('Could not load this email (HTTP ' + res.status + ').'); }
                 return res.json();
               })
               .then(function (data) {
+                console.log('[EmailView] data received — body length:', (data.body || '').length, 'is_html:', data.is_html);
                 loading.classList.add('d-none');
                 if (!data.body) {
                   errorBox.textContent = 'No content was saved for this email (sent before content logging was added, or a plain notification with no body).';
                   errorBox.classList.remove('d-none');
                   return;
                 }
-                // Rendered inside a sandboxed iframe (no allow-scripts) so
-                // saved email HTML can never execute against the admin
-                // page — it can only display.
-                frame.srcdoc = data.is_html
+                // Use a blob URL instead of srcdoc — far more reliable across
+                // browsers (srcdoc is silently ignored by some Chrome builds
+                // when combined with Bootstrap 4 modal CSS).
+                frame.classList.remove('d-none');
+                var html = data.is_html
                   ? data.body
                   : '<pre style="white-space:pre-wrap;font-family:inherit;">' + data.body.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>';
-                frame.classList.remove('d-none');
+                // Replace email CID attachment references with the public logo
+                // so images render instead of showing broken-image boxes.
+                html = html.replace(/src=["']cid:cosecsa-logo\.png["']/gi, 'src="/dist/img/Cosecsa_Logo_email.png"');
+                html = html.replace(/src=["']cid:[^"']+["']/gi, 'src="/dist/img/Cosecsa_Logo_email.png"');
+                if (frame._blobUrl) { URL.revokeObjectURL(frame._blobUrl); }
+                frame._blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+                frame.src = frame._blobUrl;
+                console.log('[EmailView] blob URL set, iframe classes:', frame.className);
               })
               .catch(function (err) {
+                console.error('[EmailView] fetch error:', err);
                 loading.classList.add('d-none');
                 errorBox.textContent = err.message || 'Failed to load this email.';
                 errorBox.classList.remove('d-none');
