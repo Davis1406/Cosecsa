@@ -1,8 +1,8 @@
 @php
     /*
      * Props:
-     *   $relatedProfiles  – stdClass|array with keys: fellow, examiner, programme_director, country_rep (nullable ints)
-     *   $currentRole      – string: 'fellow' | 'examiner' | 'programme_director' | 'country_rep'
+     *   $relatedProfiles  – stdClass|array with keys: fellow, examiner, programme_director, country_rep, member (nullable ints)
+     *   $currentRole      – string: 'fellow' | 'examiner' | 'programme_director' | 'country_rep' | 'member'
      */
     $rp = $relatedProfiles ?? null;
     if (!$rp) { return; }
@@ -13,6 +13,7 @@
         'examiner'    => ['label' => 'Examiner',     'icon' => 'fa-user-check',   'url' => fn($id) => url("admin/exams/view_examiner/{$id}")],
         'programme_director' => ['label' => 'Programme Director', 'icon' => 'fa-chalkboard-teacher', 'url' => fn($id) => url("admin/associates/programme-directors/view/{$id}")],
         'country_rep' => ['label' => 'Country Rep',  'icon' => 'fa-globe-africa', 'url' => fn($id) => url("admin/associates/reps/view/{$id}")],
+        'member'      => ['label' => 'Member',       'icon' => 'fa-id-badge',     'url' => fn($id) => url("admin/associates/members/view/{$id}")],
     ];
 
     $hasOther = false;

@@ -330,6 +330,28 @@ class FellowsController extends Controller
         return response()->json($response->json(), $response->status());
     }
 
+    // ── Add Fellow from an existing associate (Examiner/Country Rep/Member) ──
+
+    // Typeahead used by the "Add Fellow from existing associate" modal.
+    public function searchAssociates(Request $request)
+    {
+        $response = $this->api->get('fellows/search-associates', $request->only(['type', 'q']));
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    // Creates a fellows record for someone who already has a login as an
+    // Examiner/Country Rep/Member, instead of creating a duplicate account.
+    public function addFromAssociate(Request $request)
+    {
+        $response = $this->api->post('fellows/from-associate', $request->only([
+            'source_type', 'source_id', 'category_id', 'programme_id',
+            'fellowship_year', 'admission_year',
+        ]));
+
+        return response()->json($response->json(), $response->status());
+    }
+
     public function delete($id)
     {
         $response = $this->api->delete("fellows/{$id}");

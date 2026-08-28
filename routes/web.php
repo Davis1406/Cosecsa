@@ -324,6 +324,9 @@ Route::post('admin/associates/fellows/{id}/quick-update', [FellowsController::cl
 Route::post('admin/associates/fellows/{id}/add-role', [FellowsController::class,'addRole'])->name('fellows.add-role');
 Route::get('admin/associates/fellows/search', [FellowsController::class,'search'])->name('fellows.search');
 Route::post('admin/associates/fellows/quick-create', [FellowsController::class,'quickCreate'])->name('fellows.quick-create');
+// Add a fellow from an existing Examiner/Country Rep/Member (reuses their login).
+Route::get('admin/associates/fellows/search-associates', [FellowsController::class,'searchAssociates'])->name('fellows.search-associates');
+Route::post('admin/associates/fellows/from-associate', [FellowsController::class,'addFromAssociate'])->name('fellows.from-associate');
 Route::get('admin/associates/fellows/delete/{id}', [FellowsController::class,'delete']);
 Route::get('admin/associates/fellows/reports', [FellowsController::class,'reports'])->name('fellows.reports');
 Route::get('admin/associates/fellows/reports/data', [FellowsController::class,'reportsData'])->name('fellows.reports.data');

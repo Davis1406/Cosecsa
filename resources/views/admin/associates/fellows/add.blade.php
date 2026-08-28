@@ -108,6 +108,10 @@
                         </h3>
                     </div>
                     <div class="card-body">
+                        <p class="small text-muted mb-2">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            The Fellow ID is assigned automatically (next number after the last fellow).
+                        </p>
                         <div class="form-row">
                             <div class="form-group col-md-4">
                                 <label class="form-label">Fellowship Type <span class="req">*</span></label>
@@ -136,13 +140,6 @@
                                     <option value="0">No</option>
                                     <option value="1">Yes</option>
                                 </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-4">
-                                <label class="form-label">Fellow ID</label>
-                                <input type="text" name="fellow_id_number" class="form-control form-control-sm"
-                                       placeholder="Unique College Fellow ID">
                             </div>
                         </div>
                         <div class="form-row">

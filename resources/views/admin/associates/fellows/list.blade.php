@@ -17,6 +17,10 @@
                            style="color:#333; background-color:#FEC503; border-color:#FEC503;">
                             <span class="fas fa-upload mr-1"></span> Upload Fellows
                         </a>
+                        <button type="button" class="btn btn-outline-danger mr-2"
+                                data-toggle="modal" data-target="#addFromAssociateModal">
+                            <span class="fas fa-user-friends mr-1"></span> Add Fellow from Associate
+                        </button>
                         <a href="{{ url('admin/associates/fellows/add') }}"
                            class="btn btn-primary"
                            style="background-color:#a02626; border-color:#a02626;">
@@ -193,6 +197,79 @@
         </section>
     </div>
 </div>
+
+{{-- Add Fellow from Associate: someone already an Examiner/Country Rep/Member
+     gets a fellows record created off their existing login, instead of a
+     brand-new duplicate account. Reverse of the "Add Role" flow on the
+     fellow view page. --}}
+<div class="modal fade" id="addFromAssociateModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form id="addFromAssociateForm" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-friends mr-1"></i> Add Fellow from Associate</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div id="afaAlert" class="alert d-none" role="alert"></div>
+
+                <div class="form-group">
+                    <label>Search In</label>
+                    <select class="form-control" id="afa_type" name="source_type">
+                        <option value="examiner">Examiners</option>
+                        <option value="country_rep">Country Representatives</option>
+                        <option value="member">Members</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Search Name / Email <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="afa_search" placeholder="Type a name or email...">
+                    <div class="list-group mt-1 d-none afa-results" id="afa_results" style="max-height:180px; overflow-y:auto;"></div>
+                    <div class="d-none mt-2" id="afa_selected"></div>
+                    <input type="hidden" id="afa_source_id" name="source_id">
+                </div>
+
+                <div class="d-none" id="afa_fields">
+                    <hr>
+                    <p class="small text-muted mb-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        A Fellow ID is assigned automatically (next number after the last fellow).
+                    </p>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Fellowship Type</label>
+                            <select class="form-control" name="category_id">
+                                <option value="">Select…</option>
+                                <option value="5">Fellow by Examination</option>
+                                <option value="6">Foundation Fellow</option>
+                                <option value="7">Fellow By Election</option>
+                                <option value="8">Honorary Fellow (ASEA)</option>
+                                <option value="9">Overseas Fellow</option>
+                                <option value="10">Honorary Fellow (COSECSA)</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Admission Year</label>
+                            <input type="text" class="form-control" name="admission_year" placeholder="e.g. 2015">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Fellowship Year</label>
+                            <input type="text" class="form-control" name="fellowship_year" placeholder="e.g. 2018">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger" id="afaSubmit" disabled>Add as Fellow</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script type="application/json" id="extraAlumniRowsData">{!! json_encode($extraAlumniRows ?? []) !!}</script>
 @endsection
 
@@ -389,6 +466,100 @@ $(document).ready(function () {
         syncExtraAlumniRows();
         redraw();
         $('#filteredCount').text('');
+    });
+});
+</script>
+@endpush
+
+@push('scripts')
+<script>
+$(function () {
+    // ── Add Fellow from Associate ───────────────────────────────────────────
+    var afaTimer = null;
+
+    function afaResetSelection() {
+        $('#afa_source_id').val('');
+        $('#afa_selected').addClass('d-none').empty();
+        $('#afa_fields').addClass('d-none');
+        $('#afaSubmit').prop('disabled', true);
+    }
+
+    $('#addFromAssociateModal').on('hidden.bs.modal', function () {
+        $('#afa_search').val('');
+        $('#afa_results').addClass('d-none').empty();
+        $('#afaAlert').addClass('d-none');
+        afaResetSelection();
+    });
+
+    $('#afa_type').on('change', afaResetSelection);
+
+    $('#afa_search').on('input', function () {
+        var q = $(this).val().trim();
+        afaResetSelection();
+        clearTimeout(afaTimer);
+
+        if (q.length < 2) {
+            $('#afa_results').addClass('d-none').empty();
+            return;
+        }
+
+        afaTimer = setTimeout(function () {
+            $.get('{{ route("fellows.search-associates") }}', { type: $('#afa_type').val(), q: q })
+                .done(function (res) {
+                    var results = res.results || [];
+                    var $list = $('#afa_results').empty();
+
+                    if (!results.length) {
+                        $list.append('<div class="list-group-item small text-muted">No matches (or already a fellow).</div>');
+                    } else {
+                        results.forEach(function (r) {
+                            var name = r.name || '';
+                            var $item = $('<button type="button" class="list-group-item list-group-item-action"></button>')
+                                .text(name + (r.email ? ' — ' + r.email : '') + (r.country ? ' (' + r.country + ')' : ''))
+                                .data('id', r.id)
+                                .data('label', name);
+                            $list.append($item);
+                        });
+                    }
+                    $list.removeClass('d-none');
+                });
+        }, 300);
+    });
+
+    $(document).on('click', '#afa_results .list-group-item-action', function () {
+        var id = $(this).data('id');
+        var label = $(this).data('label');
+
+        $('#afa_source_id').val(id);
+        $('#afa_selected').removeClass('d-none')
+            .html('<span class="badge badge-secondary p-2"><i class="fas fa-check mr-1"></i>' +
+                  $('<div>').text(label).html() + '</span>');
+        $('#afa_results').addClass('d-none').empty();
+        $('#afa_fields').removeClass('d-none');
+        $('#afaSubmit').prop('disabled', false);
+    });
+
+    $('#addFromAssociateForm').on('submit', function (e) {
+        e.preventDefault();
+        if (!$('#afa_source_id').val()) return;
+
+        var $btn = $('#afaSubmit').prop('disabled', true).text('Adding...');
+        var $alert = $('#afaAlert').addClass('d-none');
+
+        $.ajax({
+            url: '{{ route("fellows.from-associate") }}',
+            method: 'POST',
+            data: $(this).serialize(),
+        }).done(function (res) {
+            $alert.removeClass('d-none alert-danger').addClass('alert-success').text(res.message || 'Fellow added.');
+            setTimeout(function () {
+                window.location.href = '{{ url("admin/associates/fellows/view") }}/' + res.fellow_id;
+            }, 900);
+        }).fail(function (xhr) {
+            var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to add fellow.';
+            $alert.removeClass('d-none alert-success').addClass('alert-danger').text(msg);
+            $btn.prop('disabled', false).text('Add as Fellow');
+        });
     });
 });
 </script>
