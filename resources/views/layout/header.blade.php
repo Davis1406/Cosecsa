@@ -84,11 +84,16 @@
                 $sidebarMsgBadgeTotal = $unreadConvoIds->count() + $sidebarPendingTasksCount;
 
                 // Progressive Reports badge: my own section still pending on
-                // the current open period, plus (for the Administrative
+                // the current period, plus (for the Administrative
                 // Officer / Super Admin) everyone else's still-pending
                 // sections they may need to chase up.
+                // Uses is_current (set by openPeriod()) rather than
+                // status='open' — an older period can be left un-consolidated
+                // indefinitely, which would otherwise outrank the real
+                // current period in a status='open' + latest-month lookup
+                // and surface its stale pending rows here instead.
                 $prOpenPeriodId = \Illuminate\Support\Facades\DB::table('progress_report_periods')
-                    ->where('status', 'open')->orderByDesc('period_month')->value('id');
+                    ->where('is_current', true)->value('id');
                 $progressReportBadgeCount = 0;
                 if ($prOpenPeriodId) {
                     $progressReportBadgeCount += \Illuminate\Support\Facades\DB::table('progress_report_participants')
@@ -977,7 +982,22 @@ document.addEventListener('DOMContentLoaded', function () {
     .btn-cosecsa:hover, .btn-cosecsa:focus { background:#841f1f; border-color:#841f1f; color:#fff; }
     .btn-cosecsa-outline { background:#fff; border:1px solid #a02626; color:#a02626; }
     .btn-cosecsa-outline:hover, .btn-cosecsa-outline:focus { background:#f5e6e6; color:#a02626; }
-    body.dark-mode .btn-cosecsa-outline, html.dark-mode .btn-cosecsa-outline { background:transparent; }
+    /* Dark mode: the light-theme maroon (#a02626) reads as near-invisible
+       against a dark card background with only a 1px border to carry it —
+       swap to the brighter red already used for dark-mode accents elsewhere
+       in the app (hospital/draft-emails pages) and add a faint tinted fill
+       so the button still reads as a button, not just a thin outline. */
+    body.dark-mode .btn-cosecsa-outline, html.dark-mode .btn-cosecsa-outline {
+        background: rgba(248, 113, 113, .1);
+        border-color: #f87171;
+        color: #f87171;
+    }
+    body.dark-mode .btn-cosecsa-outline:hover, html.dark-mode .btn-cosecsa-outline:hover,
+    body.dark-mode .btn-cosecsa-outline:focus, html.dark-mode .btn-cosecsa-outline:focus {
+        background: rgba(248, 113, 113, .2);
+        border-color: #f87171;
+        color: #f87171;
+    }
     .btn-cosecsa-yellow { background:#FEC503; border-color:#FEC503; color:#3a2a00; }
     .btn-cosecsa-yellow:hover, .btn-cosecsa-yellow:focus { background:#e6b200; border-color:#e6b200; color:#3a2a00; }
 

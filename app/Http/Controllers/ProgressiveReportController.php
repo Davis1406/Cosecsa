@@ -77,7 +77,12 @@ class ProgressiveReportController extends Controller
 
         $requestedId = $request->query('period_id');
         $selected = $requestedId ? $myPeriods->firstWhere('id', (int) $requestedId) : null;
-        $selected = $selected ?? $myPeriods->firstWhere('status', 'open') ?? $myPeriods->first();
+        // Default to the actual current period (is_current), not "most
+        // recent still-open period" — an older period left un-consolidated
+        // indefinitely would otherwise outrank a newer, already-consolidated
+        // current period here. See header.blade.php's Progressive Reports
+        // badge for the same fix.
+        $selected = $selected ?? $myPeriods->firstWhere('is_current', true) ?? $myPeriods->first();
 
         $period = ProgressReportPeriod::with(['participants' => function ($q) {
             $q->where('user_id', Auth::id());

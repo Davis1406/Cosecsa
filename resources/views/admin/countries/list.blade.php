@@ -288,6 +288,7 @@
                        data-trainees="{{ (int) $c->trainee_count }}"
                        data-fellows="{{ (int) $c->fellow_count }}"
                        data-members="{{ (int) $c->member_count }}"
+                       data-examiners="{{ (int) ($c->available_examiners_count ?? 0) }}"
                        data-has-records="{{ $hasRecords ? 1 : 0 }}">
                         <div class="country-row-left">
                             <div class="country-row-icon"><i class="fas fa-flag"></i></div>
@@ -308,6 +309,10 @@
                             <div class="country-row-metric {{ $c->fellow_count ? '' : 'is-zero' }}">
                                 <span class="country-row-metric-lbl">Fellows</span>
                                 <span class="country-row-metric-val"><i class="fas fa-award" style="font-size:.8rem;color:#a02626;"></i>{{ (int) $c->fellow_count }}</span>
+                            </div>
+                            <div class="country-row-metric {{ ($c->available_examiners_count ?? 0) ? '' : 'is-zero' }}" title="Examiners available this year">
+                                <span class="country-row-metric-lbl">Examiners</span>
+                                <span class="country-row-metric-val"><i class="fas fa-user-md" style="font-size:.8rem;color:#999;"></i>{{ (int) ($c->available_examiners_count ?? 0) }}</span>
                             </div>
                             <div class="country-row-actions">
                                 <button type="button" class="country-row-quickview" title="Quick view" data-id="{{ $c->id }}">
@@ -357,6 +362,10 @@
             <div class="ctry-panel-stat">
                 <div class="ctry-panel-stat-lbl">Members</div>
                 <div class="ctry-panel-stat-val" id="ctryPanelMembers">0</div>
+            </div>
+            <div class="ctry-panel-stat">
+                <div class="ctry-panel-stat-lbl">Examiners Available</div>
+                <div class="ctry-panel-stat-val" id="ctryPanelExaminers">0</div>
             </div>
         </div>
         <h5>Quick Actions</h5>
@@ -469,7 +478,7 @@ $(function () {
 
     // ── Export CSV (only the currently-filtered/visible countries) ──
     $('#ctryBtnExportCsv').on('click', function () {
-        var rows = [['Country', 'Hospitals', 'Trainees', 'Fellows', 'Members']];
+        var rows = [['Country', 'Hospitals', 'Trainees', 'Fellows', 'Members', 'Examiners Available']];
         $rows.filter(':visible').each(function () {
             var $row = $(this);
             rows.push([
@@ -478,6 +487,7 @@ $(function () {
                 $row.data('trainees'),
                 $row.data('fellows'),
                 $row.data('members'),
+                $row.data('examiners'),
             ]);
         });
         var csv = rows.map(function (r) {
@@ -507,6 +517,7 @@ $(function () {
         $('#ctryPanelTrainees').text($row.data('trainees'));
         $('#ctryPanelFellows').text($row.data('fellows'));
         $('#ctryPanelMembers').text($row.data('members'));
+        $('#ctryPanelExaminers').text($row.data('examiners'));
 
         var base = countryBaseUrl + '/' + id;
         $('#ctryPanelViewFull').attr('href', base);

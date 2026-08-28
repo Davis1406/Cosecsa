@@ -63,24 +63,6 @@
           </div>
           <div class="col-12 col-lg-6 mt-2 mt-lg-0 pr-header-actions">
             @if($period && $canManage)
-              <a href="{{ url('progressive-reports/'.$period->id.'/download') }}" class="btn btn-cosecsa-outline" target="_blank">
-                <i class="fas fa-file-pdf mr-1"></i> Download PDF
-              </a>
-              <a href="{{ url('progressive-reports/'.$period->id.'/download-docx') }}" class="btn btn-cosecsa-outline" target="_blank">
-                <i class="fas fa-file-word mr-1"></i> Download DOCX
-              </a>
-              <a href="{{ url('progressive-reports/'.$period->id.'/preview-docx') }}" class="btn btn-cosecsa-outline" target="_blank">
-                <i class="fas fa-file-alt mr-1"></i> Preview Document
-              </a>
-              <a href="{{ url('progressive-reports/'.$period->id.'/preview-email') }}" class="btn btn-cosecsa-outline" target="_blank">
-                <i class="fas fa-envelope mr-1"></i> Preview Email
-              </a>
-              <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/share-ceo') }}">
-                @csrf
-                <button type="submit" class="btn btn-cosecsa-outline" onclick="return confirm('Send the current report to the CEO via Messages (PDF) and email (Word document)?')">
-                  <i class="fas fa-paper-plane mr-1"></i> Share with CEO
-                </button>
-              </form>
               @if($period->status !== 'consolidated')
                 <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/consolidate') }}">
                   @csrf
@@ -96,14 +78,42 @@
                   </button>
                 </form>
               @endif
-              @if(Auth::user()->isSuperAdmin())
-                <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/delete') }}" onsubmit="return confirm('Permanently delete this report? This removes every section\'s data and cannot be undone.')">
-                  @csrf
-                  <button type="submit" class="btn btn-danger">
-                    <i class="fas fa-trash mr-1"></i> Delete Report
-                  </button>
-                </form>
-              @endif
+
+              <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/share-ceo') }}">
+                @csrf
+                <button type="submit" class="btn btn-cosecsa-outline" onclick="return confirm('Send the current report to the CEO via Messages (PDF) and email (Word document)?')">
+                  <i class="fas fa-paper-plane mr-1"></i> Share with CEO
+                </button>
+              </form>
+
+              <div class="dropdown">
+                <button class="btn btn-cosecsa-outline dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="More actions">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                  <a class="dropdown-item" href="{{ url('progressive-reports/'.$period->id.'/download') }}" target="_blank">
+                    <i class="fas fa-file-pdf mr-2 text-danger"></i> Download PDF
+                  </a>
+                  <a class="dropdown-item" href="{{ url('progressive-reports/'.$period->id.'/download-docx') }}" target="_blank">
+                    <i class="fas fa-file-word mr-2 text-primary"></i> Download DOCX
+                  </a>
+                  <a class="dropdown-item" href="{{ url('progressive-reports/'.$period->id.'/preview-docx') }}" target="_blank">
+                    <i class="fas fa-file-alt mr-2 text-muted"></i> Preview Document
+                  </a>
+                  <a class="dropdown-item" href="{{ url('progressive-reports/'.$period->id.'/preview-email') }}" target="_blank">
+                    <i class="fas fa-envelope mr-2 text-muted"></i> Preview Email
+                  </a>
+                  @if(Auth::user()->isSuperAdmin())
+                    <div class="dropdown-divider"></div>
+                    <form method="POST" action="{{ url('progressive-reports/'.$period->id.'/delete') }}" onsubmit="return confirm('Permanently delete this report? This removes every section\'s data and cannot be undone.')">
+                      @csrf
+                      <button type="submit" class="dropdown-item text-danger">
+                        <i class="fas fa-trash mr-2"></i> Delete Report
+                      </button>
+                    </form>
+                  @endif
+                </div>
+              </div>
             @endif
             @if($period && ! $canManage)
               <a href="{{ url('progressive-reports/'.$period->id.'/download') }}" class="btn btn-cosecsa-outline" target="_blank">

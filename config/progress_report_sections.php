@@ -5,7 +5,8 @@
 // owns that section. This drives both new-period seeding (which
 // participants get created) and the PDF export's row order.
 return [
-    ['label' => 'CEO', 'user_id' => 17991],
+    // CEO (Stella Itungu, user_id 17991) is deliberately excluded — she's
+    // the manager this report goes to, not a section that submits into it.
     ['label' => 'FINANCE OFFICER (JONATHAN OMONGOLE)', 'user_id' => 17993],
     ['label' => 'RESEARCH AND PATIENT OUTCOMES COORDINATION – Dr. Godfrey Sama Philipo', 'user_id' => 17995],
     ['label' => 'EXAMINATION OFFICER (AMANI PASCAL)', 'user_id' => 3],
