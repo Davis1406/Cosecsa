@@ -4,6 +4,59 @@
 
 ## [Unreleased]
 
+### Added (2026-08-30) — "Secretariat Report" menu for the CEO + exempt her from the submission deadline
+- New **Secretariat Report** sidebar entry under Progressive Reports, visible only to the CEO
+  (Stella Itungu), alongside her existing "My Progress Report". Opens the full, consolidated
+  current-period report (every officer's section, read-only outside her own row) with Download
+  PDF / Download DOCX buttons — previously she only ever saw her own single row and had no menu
+  path to the compiled report at all.
+- `downloadPdf()` / `downloadDocx()` now give the CEO every section compiled, same as a manager
+  (new `canViewFullReport()` = `isProgressReportManager() || isProgressReportCeo()`) — she was
+  silently getting just her own row back before, same bug as the 2026-08-25 manager fix below.
+- `ProgressReportParticipant::isLocked()`: the CEO's own section is exempt from the
+  deadline-passed lock — she isn't submitting on a schedule, so there's no deadline to lock her
+  out for. A past (no-longer-current) month still locks for her too, same as everyone's history.
+- **Fixed a live bug found while doing this:** `shareWithCeo()` ("Share with CEO" button) has
+  been silently broken since `bf86516` (2026-08-28) — it looked the CEO up via
+  `config('progress_report_sections')`, but that same commit deliberately removed her from that
+  list (she's the report's recipient, not an auto-seeded section), so every click just returned
+  "No CEO account is configured to share with." Fixed by adding a dedicated
+  `services.progress_reports.ceo_user_id` config value (`config/services.php`), decoupled from
+  the sections list on purpose, and pointing `ProgressReportParticipant::ceoUserId()` /
+  `shareWithCeo()` / the new CEO checks at that instead.
+- Also hardened `shareWithCeo()`'s PDF write: the `public` disk has `throw => false`
+  (`config/filesystems.php`), so a failed `Storage::put()` silently returns false instead of
+  throwing — the code went on to message/email the CEO a link to a file that was never actually
+  written. This happened for real on 2026-08-25 (via cosecsa-api's copy of the same method — see
+  its `DEPLOYMENT.md` 2026-08-30 entry for how it was caught and repaired on that side). Now
+  verified with `put()`'s return value + `exists()` before sending anything.
+- Reminders (`SendProgressReportReminders`) and the sidebar's pending-count badge now exclude the
+  CEO's `user_id`, so if she ever has a pending section in a given month (seeded by cosecsa-api's
+  copy of the sections list, which does include her — e.g. Aug 2026) she's never emailed a
+  deadline reminder and never inflates the manager's badge count.
+- **Note for future reference:** this app and `cosecsa-api` each keep their own independent copy
+  of `config/progress_report_sections.php` and their own Eloquent models over the same shared
+  `progress_report_*` tables (per `CLAUDE.md`, this app is supposed to go through
+  `cosecsa-api`/`ApiClient` for everything, but Progressive Reports predates that and still
+  queries MySQL directly). The two configs have drifted — this app excludes the CEO from the
+  section list, cosecsa-api includes her — so whichever app's "Add a new month" button gets
+  clicked determines whether she gets an auto-seeded row that month. Not resolved here; flagging
+  it since it's the reason a dedicated `ceo_user_id` setting was needed instead of just restoring
+  her to this app's section list.
+
+Files changed:
+```
+config/services.php                                   (modified)
+app/Models/User.php                                    (modified)
+app/Models/ProgressReportParticipant.php                (modified)
+app/Http/Controllers/ProgressiveReportController.php   (modified)
+app/Console/Commands/SendProgressReportReminders.php   (modified)
+resources/views/layout/header.blade.php                (modified)
+```
+Deployed via `cosecsa-deploy web` over SSH. No migrations. Verified post-deploy via tinker:
+`isProgressReportCeo()` / `isProgressReportManager()` / `isLocked()` / `ceoUserId()` all correct;
+`shareWithCeo()`'s CEO lookup now resolves to Stella Itungu instead of failing.
+
 ### Fixed (2026-08-25) — Manager "Download PDF"/"Download DOCX" only returned the manager's own section
 - Diana (Administrative Officer, a report manager) reported that downloading the report from
   her side gave her only her own section, not the compiled report. `downloadPdf()` and
