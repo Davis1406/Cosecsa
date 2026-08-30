@@ -36,6 +36,18 @@ return [
         'token' => env('COSECSA_API_TOKEN'),
     ],
 
+    // The CEO's user_id — kept separate from config/progress_report_sections.php
+    // (which deliberately excludes her: she's the report's recipient, not a
+    // section that gets auto-seeded into every month). Used wherever code
+    // needs to identify "is this the CEO" regardless of whether she happens
+    // to have a participant row on a given period — see
+    // ProgressReportParticipant::ceoUserId().
+    'progress_reports' => [
+        // Stella Itungu — hardcoded like every other id in
+        // config/progress_report_sections.php, not env-driven.
+        'ceo_user_id' => 17991,
+    ],
+
     'capsule' => [
         'token' => env('CAPSULE_API_TOKEN'),
     ],

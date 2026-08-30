@@ -94,6 +94,11 @@
                 // and surface its stale pending rows here instead.
                 $prOpenPeriodId = \Illuminate\Support\Facades\DB::table('progress_report_periods')
                     ->where('is_current', true)->value('id');
+                // The CEO has a section row but never owes a submission —
+                // excluded from both halves of the badge count below, same
+                // as everywhere else in the workflow (never reminded,
+                // never locked by the deadline).
+                $prCeoUserId = \App\Models\ProgressReportParticipant::ceoUserId();
                 $progressReportBadgeCount = 0;
                 if ($prOpenPeriodId) {
                     $progressReportBadgeCount += \Illuminate\Support\Facades\DB::table('progress_report_participants')
@@ -103,6 +108,7 @@
                     if (Auth::user()->isProgressReportManager()) {
                         $progressReportBadgeCount += \Illuminate\Support\Facades\DB::table('progress_report_participants')
                             ->where('period_id', $prOpenPeriodId)->where('user_id', '!=', Auth::id())
+                            ->when($prCeoUserId, fn ($q) => $q->where('user_id', '!=', $prCeoUserId))
                             ->where('status', 'pending')->count();
                     }
                 }
@@ -770,6 +776,14 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <a href="{{ url('progressive-reports') }}" class="nav-link {{ (Request::is('progressive-reports') || (Request::is('progressive-reports/*') && ! Request::is('progressive-reports/my'))) ? 'active' : '' }}">
                                         <i class="far fa-circle nav-icon"></i>
                                         <p>Manage Reports</p>
+                                    </a>
+                                </li>
+                                @endif
+                                @if (Auth::user()->isProgressReportCeo() && $prOpenPeriodId)
+                                <li class="nav-item">
+                                    <a href="{{ url('progressive-reports/'.$prOpenPeriodId) }}" class="nav-link {{ Request::is('progressive-reports/'.$prOpenPeriodId) ? 'active' : '' }}">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Secretariat Report</p>
                                     </a>
                                 </li>
                                 @endif

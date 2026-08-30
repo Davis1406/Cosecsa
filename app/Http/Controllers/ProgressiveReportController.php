@@ -466,8 +466,10 @@ class ProgressiveReportController extends Controller
             // every section's compiled report — their "Download PDF" button
             // sits in the manager toolbar next to "Share with CEO", which
             // already compiles everyone, so this download should match.
+            // The CEO gets every section too — that's the whole point of
+            // her "Secretariat Report" view (see canViewFullReport()).
             // Regular participants only ever see their own section's data.
-            if (! $this->canManage()) {
+            if (! $this->canViewFullReport()) {
                 $q->where('user_id', Auth::id());
             }
         }, 'participants.user', 'participants.tasks'])->findOrFail($periodId);
@@ -483,14 +485,14 @@ class ProgressiveReportController extends Controller
     }
 
     /**
-     * Download the progressive report as a DOCX file. Managers (see
-     * downloadPdf()'s comment) get every section compiled; everyone else
-     * only gets their own.
+     * Download the progressive report as a DOCX file. Managers and the CEO
+     * (see downloadPdf()'s comment / canViewFullReport()) get every
+     * section compiled; everyone else only gets their own.
      */
     public function downloadDocx($periodId)
     {
         $period = ProgressReportPeriod::with(['participants' => function ($q) {
-            if (! $this->canManage()) {
+            if (! $this->canViewFullReport()) {
                 $q->where('user_id', Auth::id());
             }
         }, 'participants.user', 'participants.tasks'])->findOrFail($periodId);
@@ -687,8 +689,13 @@ class ProgressiveReportController extends Controller
         $this->authorizeManage();
         $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks'])->findOrFail($periodId);
 
-        $ceoSection = collect(config('progress_report_sections'))->firstWhere('label', 'CEO');
-        $ceoUser = $ceoSection ? \App\Models\User::find($ceoSection['user_id']) : null;
+        // Looked up via the dedicated ceo_user_id setting, NOT
+        // config('progress_report_sections') — she's deliberately excluded
+        // from that list (see its header comment), so a lookup keyed off
+        // it here would always come back empty. See
+        // ProgressReportParticipant::ceoUserId()'s comment.
+        $ceoId = ProgressReportParticipant::ceoUserId();
+        $ceoUser = $ceoId ? \App\Models\User::find($ceoId) : null;
         if (! $ceoUser) {
             return back()->with('error', 'No CEO account is configured to share with.');
         }
@@ -698,7 +705,16 @@ class ProgressiveReportController extends Controller
         $pdf = Pdf::loadView('progressive_reports.pdf', ['period' => $period])->setPaper('a4', 'landscape');
         $filename = 'COSECSA Secretariat Report - ' . $period->period_month->format('F Y') . '.pdf';
         $path = 'messages/attachments/' . uniqid('progress_report_') . '.pdf';
-        Storage::disk('public')->put($path, $pdf->output());
+        $bytes = Storage::disk('public')->put($path, $pdf->output());
+
+        // The 'public' disk has `throw => false` (config/filesystems.php), so
+        // a failed write returns false/0 instead of throwing — without this
+        // check we'd go on to message/email the CEO a link to a file that
+        // doesn't exist (this happened for real on 2026-08-25, see
+        // cosecsa-api's DEPLOYMENT.md 2026-08-30 entry).
+        if (! $bytes || ! Storage::disk('public')->exists($path)) {
+            return back()->with('error', 'Could not save the report PDF to storage — nothing was sent.');
+        }
 
         $conversation = Conversation::where('type', 'direct')
             ->whereHas('participants', fn ($q) => $q->where('user_id', $myId))
@@ -910,6 +926,16 @@ class ProgressiveReportController extends Controller
     {
         $user = Auth::user();
         return $user && $user->isProgressReportManager();
+    }
+
+    // Managers get every section because they run the workflow; the CEO
+    // gets every section because the whole report is compiled for her —
+    // see the "Secretariat Report" menu item (header.blade.php) and
+    // downloadPdf()/downloadDocx()'s comments below.
+    protected function canViewFullReport(): bool
+    {
+        $user = Auth::user();
+        return $user && ($user->isProgressReportManager() || $user->isProgressReportCeo());
     }
 
     protected function authorizeManage(): void

@@ -833,6 +833,16 @@ class User extends Authenticatable
         return $this->isMasterAdmin() || ($this->adminRole && $this->adminRole->name === 'Administrative Officer');
     }
 
+    // The CEO — the recipient the whole Progressive Reports workflow
+    // ultimately reports to (see config/services.php's `progress_reports.ceo_user_id`).
+    // Not a manager (isProgressReportManager() is false for her), but she
+    // gets her own read-only "Secretariat Report" view of the full,
+    // consolidated report instead of just "My Progress Report".
+    public function isProgressReportCeo(): bool
+    {
+        return $this->id === \App\Models\ProgressReportParticipant::ceoUserId();
+    }
+
     public function hasPermission(string $key): bool
     {
         if ($this->user_type != 1) {

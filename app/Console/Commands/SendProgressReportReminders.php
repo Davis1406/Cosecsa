@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Mail\ProgressReportReminderMail;
+use App\Models\ProgressReportParticipant;
 use App\Models\ProgressReportPeriod;
 use App\Models\ProgressReportSetting;
 use App\Models\User;
@@ -43,7 +44,12 @@ class SendProgressReportReminders extends Command
         $adminOfficerSection = collect(config('progress_report_sections'))->firstWhere('label', 'ADMINISTRATIVE OFFICER (DIANA KAIZA)');
         $sender = $adminOfficerSection ? User::find($adminOfficerSection['user_id']) : null;
 
-        $pending = $period->participants()->where('status', 'pending')->with('user')->get();
+        // The CEO has a section row but never owes a submission — never
+        // reminded, same as cosecsa-api's ProgressReportReminderService.
+        $ceoUserId = ProgressReportParticipant::ceoUserId();
+        $pending = $period->participants()->where('status', 'pending')
+            ->when($ceoUserId, fn ($q) => $q->where('user_id', '!=', $ceoUserId))
+            ->with('user')->get();
 
         $sent = 0;
         foreach ($pending as $participant) {
