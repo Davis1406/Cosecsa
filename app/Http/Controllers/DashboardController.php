@@ -223,10 +223,18 @@ public function dashboard()
             ]);
 
         // Candidates
+        //
+        // Only the present exam year's candidates are searchable — past
+        // candidates (who sat earlier exams) are hidden so the search bar
+        // doesn't surface stale profiles. Same scope as
+        // cosecsa-api's GlobalSearchController::searchCandidates() and the
+        // same current-year convention (date('Y')) PromotionController and
+        // CandidateController::reportsData() use.
         $candidates = DB::table('candidates as c')
             ->join('users as u', 'u.id', '=', 'c.user_id')
             ->leftJoin('programmes as p', 'p.id', '=', 'c.programme_id')
             ->where('u.is_deleted', 0)
+            ->where('c.exam_year', date('Y'))
             ->where(function ($w) use ($like) {
                 $w->where('u.name', 'like', $like)
                   ->orWhere('c.entry_number', 'like', $like)

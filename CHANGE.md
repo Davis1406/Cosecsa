@@ -4,6 +4,17 @@
 
 ## [Unreleased]
 
+### Fixed (2026-08-31) — Global search shows only the present exam year's candidates
+- The admin global search bar's Candidates group (`DashboardController::globalSearch()`)
+  returned every candidate row ever synced, so queries surfaced past candidates (e.g. Judith
+  NASSAAZI, exam_year 2024; Mulualem WOLDEMICHAEL, exam_year 2025) alongside the current
+  intake. Now scoped to `c.exam_year = date('Y')`, matching
+  `cosecsa-api/GlobalSearchController::searchCandidates()` (same fix applied there) and the
+  `date('Y')` convention `PromotionController`/`CandidateController::reportsData()` use. Rolls
+  forward each January automatically.
+- Past candidates remain fully visible on the Candidates page itself (its year filter is
+  untouched) — only the search bar hides them.
+
 ### Added (2026-08-30) — "Secretariat Report" menu for the CEO + exempt her from the submission deadline
 - New **Secretariat Report** sidebar entry under Progressive Reports, visible only to the CEO
   (Stella Itungu), alongside her existing "My Progress Report". Opens the full, consolidated
