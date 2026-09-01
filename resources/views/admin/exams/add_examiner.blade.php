@@ -114,7 +114,8 @@
                                         <div class="form-group">
                                             <label for="examiner_id">Examiner ID</label>
                                             <input type="text" name="examiner_id" id="examiner_id"
-                                                class="form-control" value="{{ old('examiner_id') }}">
+                                                class="form-control" value="{{ old('examiner_id', $nextExaminerId ?? '') }}">
+                                            <small class="form-text text-muted">Suggested next ID — edit if needed.</small>
                                             <div class="error-message">Please enter examiner ID</div>
                                         </div>
                                     </div>

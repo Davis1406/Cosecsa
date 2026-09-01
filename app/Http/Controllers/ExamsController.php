@@ -124,6 +124,7 @@ class ExamsController extends Controller
             'programmeOptions'   => $d->programme_options ?? [],
             'specialtyOptions'   => collect($d->specialty_options ?? []),
             'designationOptions' => collect($d->designation_options ?? []),
+            'nextExaminerId'     => $d->next_examiner_id ?? null,
         ]);
     }
 
