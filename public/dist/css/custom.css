@@ -865,7 +865,18 @@ body.dark-mode .select2-container--default .select2-results__message {
     border-radius: 9999px;
     margin-left: .5rem;
 }
+.assoc-notes-add-btn {
+    background: #FEC503;
+    border-color: #FEC503;
+    color: #59413f;
+    font-weight: 700;
+    font-size: .74rem;
+    padding: .25em .7em;
+}
+.assoc-notes-add-btn:hover { background: #f5b800; border-color: #f5b800; color: #3d2a29; }
 .assoc-notes-body { padding: 16px; }
+.assoc-modal-header { background: #a02626; color: #fff; }
+.assoc-modal-header .fa-sticky-note { color: #FEC503; }
 
 .assoc-notes-list {
     max-height: 340px;
@@ -942,14 +953,14 @@ body.dark-mode .select2-container--default .select2-results__message {
     border-color: #a02626;
     box-shadow: 0 0 0 .15rem rgba(160,38,38,.15);
 }
-.assoc-notes-form .btn-assoc-add {
+.btn-assoc-add {
     background: #a02626;
     border-color: #a02626;
     color: #fff;
     font-weight: 600;
     font-size: .82rem;
 }
-.assoc-notes-form .btn-assoc-add:hover {
+.btn-assoc-add:hover {
     background: #841f1f;
     border-color: #841f1f;
     color: #fff;

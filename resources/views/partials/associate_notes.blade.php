@@ -1,11 +1,13 @@
 {{--
-    Reusable "Notes" card — a running, dated log of free-text notes with an
-    optional single attached PDF/image per note (e.g. a deferral note with
-    the scanned deferral letter attached), usable on any associate profile
-    page. Attachments open in a new tab, where the browser previews the
-    PDF/image natively — same pattern as the examiner "Additional Documents"
-    list. Styled with the COSECSA brand palette (maroon #a02626 / gold
-    #FEC503) — see the "Associate Notes card" block in public/dist/css/custom.css.
+    Reusable "Notes" section — a running, dated log of free-text notes with
+    an optional single attached PDF/image per note (e.g. a deferral note
+    with the scanned deferral letter attached), usable on any associate
+    profile page. Adding a note happens in a modal (matching the page's
+    other action modals — Delete, Candidate Results, etc.) rather than a
+    permanent inline form. Attachments open in a new tab, where the browser
+    previews the PDF/image natively. Styled with the COSECSA brand palette
+    (maroon #a02626 / gold #FEC503) — see the "Associate Notes card" block
+    in public/dist/css/custom.css.
 
     Include with:
     @include('partials.associate_notes', [
@@ -14,11 +16,16 @@
         'notes'         => $notes,
     ])
 --}}
+@php $assocModalId = 'assocNoteModal_' . $associateType . '_' . $associateId; @endphp
+
 <div class="assoc-notes mb-3">
     <div class="assoc-notes-header">
         <i class="fas fa-sticky-note mr-2"></i>
         Notes
         <span class="assoc-notes-count">{{ count($notes) }}</span>
+        <button type="button" class="btn btn-sm assoc-notes-add-btn ml-auto" data-toggle="modal" data-target="#{{ $assocModalId }}">
+            <i class="fas fa-plus mr-1"></i> Add Note
+        </button>
     </div>
     <div class="assoc-notes-body">
         @if(count($notes))
@@ -65,24 +72,42 @@
                 No notes yet.
             </div>
         @endif
+    </div>
+</div>
 
+{{-- ── Add Note modal ──────────────────────────────────────────────────── --}}
+<div class="modal fade" id="{{ $assocModalId }}" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
         <form method="POST"
               action="{{ route($associateType . '.notes.store', $associateId) }}"
-              enctype="multipart/form-data" class="assoc-notes-form">
-            @csrf
-            <input type="hidden" name="back" value="{{ url()->full() }}">
-            <div class="form-group mb-2">
-                <textarea name="note" class="form-control form-control-sm" rows="2"
-                          placeholder="Add a note (e.g. deferral reason)…" required></textarea>
+              enctype="multipart/form-data">
+            <div class="modal-content">
+                <div class="modal-header assoc-modal-header">
+                    <h5 class="modal-title"><i class="fas fa-sticky-note mr-2"></i>Add Note</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body assoc-notes-form">
+                    @csrf
+                    <input type="hidden" name="back" value="{{ url()->full() }}">
+                    <div class="form-group mb-2">
+                        <label class="font-weight-bold mb-1" style="font-size:.82rem;">Note</label>
+                        <textarea name="note" class="form-control" rows="3"
+                                  placeholder="e.g. Deferred exam sitting — see attached letter…" required></textarea>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold mb-1" style="font-size:.82rem;">Attachment</label>
+                        <input type="file" name="attachment" class="form-control-file"
+                               accept=".pdf,.jpg,.jpeg,.png,.gif,.webp">
+                        <small class="form-text">Optional — PDF or image (e.g. a deferral letter), max 10MB.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-assoc-add">
+                        <i class="fas fa-check mr-1"></i> Save Note
+                    </button>
+                </div>
             </div>
-            <div class="form-group mb-2">
-                <input type="file" name="attachment" class="form-control-file form-control-sm"
-                       accept=".pdf,.jpg,.jpeg,.png,.gif,.webp">
-                <small class="form-text">Optional — attach a PDF or image (e.g. a deferral letter), max 10MB.</small>
-            </div>
-            <button type="submit" class="btn btn-sm btn-assoc-add">
-                <i class="fas fa-plus mr-1"></i> Add Note
-            </button>
         </form>
     </div>
 </div>
