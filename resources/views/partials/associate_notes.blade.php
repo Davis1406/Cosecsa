@@ -77,7 +77,7 @@
 
 {{-- ── Add Note modal ──────────────────────────────────────────────────── --}}
 <div class="modal fade" id="{{ $assocModalId }}" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-lg" role="document">
         <form method="POST"
               action="{{ route($associateType . '.notes.store', $associateId) }}"
               enctype="multipart/form-data">
