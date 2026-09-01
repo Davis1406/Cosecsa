@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\FetchesAssociateNotes;
 use App\Services\ApiClient;
 use Illuminate\Http\Request;
 
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
 // update()/destroy() below — the "add"/"import" side is still console-only).
 class TrainerController extends Controller
 {
+    use FetchesAssociateNotes;
+
     public function __construct(private ApiClient $api) {}
 
     // Fetches the full roster unfiltered — the list page filters client-side
@@ -47,6 +50,7 @@ class TrainerController extends Controller
         return view('admin.associates.trainers.view', [
             'trainer'      => $data->trainer,
             'header_title' => 'View Trainer',
+            'notes'        => $this->associateNotes('trainer', $id),
         ]);
     }
 

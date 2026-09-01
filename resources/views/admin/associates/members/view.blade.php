@@ -165,6 +165,8 @@
             </div>
             <!-- /.card-body -->
         </div>
+
+        @include('partials.associate_notes', ['associateType' => 'member', 'associateId' => $member->members_id, 'notes' => $notes])
     </section>
     <!-- /.content -->
 </div>

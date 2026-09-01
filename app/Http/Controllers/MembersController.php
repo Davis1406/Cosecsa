@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\FetchesAssociateNotes;
 use App\Services\ApiClient;
 use App\Models\Country;
 use Illuminate\Http\Request;
 
 class MembersController extends Controller
 {
+    use FetchesAssociateNotes;
+
     public function __construct(private ApiClient $api) {}
 
     public function list()
@@ -40,6 +43,7 @@ class MembersController extends Controller
             'member'       => $data->member,
             'header_title' => 'View Member',
             'countries'    => Country::getCountry(),
+            'notes'        => $this->associateNotes('member', $id),
         ]);
     }
 

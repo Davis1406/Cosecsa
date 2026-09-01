@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\FetchesAssociateNotes;
 use App\Services\ApiClient;
 use App\Models\User;
 use App\Models\Trainee;
@@ -17,6 +18,8 @@ use Illuminate\Support\Facades\DB;
 
 class CandidatesController extends Controller
 {
+    use FetchesAssociateNotes;
+
     public function __construct(private ApiClient $api) {}
 
     // ── Admin CRUD (proxied via API) ──────────────────────────────────────────
@@ -69,6 +72,7 @@ class CandidatesController extends Controller
             'hospitals'     => HospitalModel::getHospital(),
             'countries'     => Country::getCountry(),
             'programmes'    => Programme::getProgramme(),
+            'notes'         => $this->associateNotes('candidate', $id),
         ]);
     }
 

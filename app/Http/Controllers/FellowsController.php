@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\FetchesAssociateNotes;
 use App\Services\ApiClient;
 use Illuminate\Http\Request;
 
 class FellowsController extends Controller
 {
+    use FetchesAssociateNotes;
+
     public function __construct(private ApiClient $api) {}
 
     public function list()
@@ -79,6 +82,7 @@ class FellowsController extends Controller
             'fellowProgrammes'   => \App\Models\Programme::getProgramme(),
             'fellowHospitals'    => \App\Models\HospitalModel::getHospital(),
             'fellowCategories'   => \Illuminate\Support\Facades\DB::table('categories')->orderBy('category_name')->get(),
+            'notes'              => $this->associateNotes('fellow', $id),
         ]);
     }
 

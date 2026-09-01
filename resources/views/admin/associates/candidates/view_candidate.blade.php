@@ -745,6 +745,12 @@
             </div>{{-- /.col right --}}
         </div>{{-- /.row --}}
 
+        <div class="row">
+            <div class="col-12">
+                @include('partials.associate_notes', ['associateType' => 'candidate', 'associateId' => $candidate->candidates_id, 'notes' => $notes])
+            </div>
+        </div>
+
         @else
         <div class="card">
             <div class="card-body text-center py-5">

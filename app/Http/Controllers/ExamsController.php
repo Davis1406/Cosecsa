@@ -18,9 +18,12 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use App\Services\ApiClient;
+use App\Http\Controllers\Concerns\FetchesAssociateNotes;
 
 class ExamsController extends Controller
 {
+    use FetchesAssociateNotes;
+
     private ApiClient $api;
 
     public function __construct(ApiClient $api)
@@ -242,6 +245,7 @@ class ExamsController extends Controller
             'designationOptions' => collect($d->designation_options ?? []),
             'examinerDocuments'  => collect($d->examiner_documents ?? []),
             'relatedProfiles'    => $d->relatedProfiles ?? null,
+            'notes'              => $this->associateNotes('examiner', $examiner->examin_id),
         ]);
     }
 

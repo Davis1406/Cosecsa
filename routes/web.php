@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AssociateNoteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\HospitalController;
@@ -253,6 +254,8 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
   Route::get('admin/associates/trainees/bulk-update',   [TraineeController::class,'bulkUpdate'])->name('trainees.bulk.update');
   Route::post('admin/associates/trainees/bulk-update',  [TraineeController::class,'bulkUpdateProcess'])->name('trainees.bulk.update.process');
   Route::get('admin/associates/trainees/view/{id}',     [TraineeController::class,'view'])->name('trainees.view');
+  Route::post('admin/associates/trainees/{id}/notes', [AssociateNoteController::class,'store'])->name('trainee.notes.store')->defaults('type', 'trainee');
+  Route::post('admin/associates/trainees/notes/{noteId}/delete', [AssociateNoteController::class,'destroy'])->name('trainee.notes.destroy')->defaults('type', 'trainee');
   Route::get('admin/associates/trainees/edit/{id}',     [TraineeController::class,'edit']);
   Route::post('admin/associates/trainees/edit/{id}',    [TraineeController::class,'update']);
   Route::get('admin/associates/trainees/delete/{id}',   [TraineeController::class,'delete']);
@@ -265,6 +268,8 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
   Route::get('admin/associates/candidates/import',  [CandidatesController::class,'import']);
   Route::post('admin/associates/candidates/import', [CandidatesController::class, 'importData'])->name('candidates.import.data');
   Route::get('admin/associates/candidates/view/{id}',  [CandidatesController::class,'view'])->name('candidates.view');
+  Route::post('admin/associates/candidates/{id}/notes', [AssociateNoteController::class,'store'])->name('candidate.notes.store')->defaults('type', 'candidate');
+  Route::post('admin/associates/candidates/notes/{noteId}/delete', [AssociateNoteController::class,'destroy'])->name('candidate.notes.destroy')->defaults('type', 'candidate');
   Route::post('admin/associates/candidates/{id}/quick-update', [CandidatesController::class,'quickUpdate'])->name('candidates.quick.update');
   Route::get('admin/associates/candidates/edit/{id} ', [CandidatesController::class,'edit']);
   Route::post('admin/associates/candidates/edit/{id} ', [CandidatesController::class,'update']);
@@ -279,6 +284,8 @@ Route::post('admin/associates/programme-directors/add', [ProgrammeDirectorContro
 Route::get('admin/associates/programme-directors/import',  [ProgrammeDirectorController::class,'import']);
 Route::post('admin/associates/programme-directors/import', [ProgrammeDirectorController::class, 'importData'])->name('programme-directors.import.data');
 Route::get('admin/associates/programme-directors/view/{id}',  [ProgrammeDirectorController::class,'view'])->name('programme-directors.view');
+Route::post('admin/associates/programme-directors/{id}/notes', [AssociateNoteController::class,'store'])->name('programme_director.notes.store')->defaults('type', 'programme_director');
+Route::post('admin/associates/programme-directors/notes/{noteId}/delete', [AssociateNoteController::class,'destroy'])->name('programme_director.notes.destroy')->defaults('type', 'programme_director');
 Route::post('admin/associates/programme-directors/{id}/quick-update', [ProgrammeDirectorController::class,'quickUpdate'])->name('programme-directors.quick.update');
 Route::post('admin/associates/programme-directors/{id}/ajax-update', [ProgrammeDirectorController::class,'ajaxUpdate'])->name('programme-directors.ajax.update');
 Route::get('admin/associates/programme-directors/edit/{id} ', [ProgrammeDirectorController::class,'edit']);
@@ -289,6 +296,8 @@ Route::get('admin/associates/programme-directors/delete/{id}', [ProgrammeDirecto
 Route::get('admin/associates/trainers/list', [TrainerController::class,'list']);
 Route::get('admin/associates/trainers/export', [TrainerController::class,'export'])->name('trainers.export');
 Route::get('admin/associates/trainers/view/{id}',  [TrainerController::class,'view'])->name('trainers.view');
+Route::post('admin/associates/trainers/{id}/notes', [AssociateNoteController::class,'store'])->name('trainer.notes.store')->defaults('type', 'trainer');
+Route::post('admin/associates/trainers/notes/{noteId}/delete', [AssociateNoteController::class,'destroy'])->name('trainer.notes.destroy')->defaults('type', 'trainer');
 Route::post('admin/associates/trainers/{id}/quick-update', [TrainerController::class,'quickUpdate'])->name('trainers.quick.update');
 Route::get('admin/associates/trainers/edit/{id}', [TrainerController::class,'edit'])->name('trainers.edit');
 Route::post('admin/associates/trainers/edit/{id}', [TrainerController::class,'update'])->name('trainers.update');
@@ -302,6 +311,8 @@ Route::post('admin/associates/reps/add', [CountryRepsController::class,'insert']
 Route::get('admin/associates/reps/import',  [CountryRepsController::class,'import']);
 Route::post('admin/associates/reps/import', [CountryRepsController::class, 'importData'])->name('reps.import.data');
 Route::get('admin/associates/reps/view/{id}',  [CountryRepsController::class,'view'])->name('reps.view');
+Route::post('admin/associates/reps/{id}/notes', [AssociateNoteController::class,'store'])->name('country_rep.notes.store')->defaults('type', 'country_rep');
+Route::post('admin/associates/reps/notes/{noteId}/delete', [AssociateNoteController::class,'destroy'])->name('country_rep.notes.destroy')->defaults('type', 'country_rep');
 Route::post('admin/associates/reps/{id}/quick-update', [CountryRepsController::class,'quickUpdate'])->name('reps.quick.update');
 Route::get('admin/associates/reps/edit/{id} ', [CountryRepsController::class,'edit']);
 Route::post('admin/associates/reps/edit/{id} ', [CountryRepsController::class,'update']);
@@ -317,6 +328,8 @@ Route::get('admin/associates/fellows/import_fellows', [FellowsController::class,
 Route::get('admin/associates/fellows/import/template', [FellowsController::class,'downloadTemplate'])->name('fellows.import.template');
 Route::post('admin/associates/fellows/import', [FellowsController::class, 'importFellows'])->name('fellows.import.data');
 Route::get('admin/associates/fellows/view/{id}',  [FellowsController::class,'view'])->name('fellows.view');
+Route::post('admin/associates/fellows/{id}/notes', [AssociateNoteController::class,'store'])->name('fellow.notes.store')->defaults('type', 'fellow');
+Route::post('admin/associates/fellows/notes/{noteId}/delete', [AssociateNoteController::class,'destroy'])->name('fellow.notes.destroy')->defaults('type', 'fellow');
 Route::get('admin/associates/fellows/edit/{id}', [FellowsController::class,'edit']);
 Route::post('admin/associates/fellows/edit/{id}', [FellowsController::class,'update']);
 Route::put('admin/associates/fellows/labels/{id}', [FellowsController::class,'updateLabels'])->name('fellows.labels.update');
@@ -379,6 +392,8 @@ Route::post('admin/associates/members/add', [MembersController::class,'insert'])
 Route::get('admin/associates/members/import_members', [MembersController::class,'import']);
 Route::post('admin/associates/members/import', [MembersController::class, 'importMembers'])->name('members.import.data');
 Route::get('admin/associates/members/view/{id}',  [MembersController::class,'view'])->name('members.view');
+Route::post('admin/associates/members/{id}/notes', [AssociateNoteController::class,'store'])->name('member.notes.store')->defaults('type', 'member');
+Route::post('admin/associates/members/notes/{noteId}/delete', [AssociateNoteController::class,'destroy'])->name('member.notes.destroy')->defaults('type', 'member');
 Route::post('admin/associates/members/{id}/quick-update', [MembersController::class,'quickUpdate'])->name('members.quick.update');
 Route::get('admin/associates/members/edit/{id}', [MembersController::class,'edit']);
 Route::post('admin/associates/members/edit/{id}', [MembersController::class,'update']);
@@ -431,6 +446,8 @@ Route::get('admin/exams/examiner/{examiner_id}/candidate/{candidate_id}/results'
 // Delete / reset routes
 Route::post('admin/exams/examiner/{id}/reset-confirmation', [ExamsController::class, 'resetExaminerConfirmation'])->name('examiner.reset.confirmation');
 Route::post('admin/exams/examiner/{id}/destroy',            [ExamsController::class, 'destroyExaminer'])->name('examiner.destroy');
+Route::post('admin/exams/examiner/{id}/notes', [AssociateNoteController::class,'store'])->name('examiner.notes.store')->defaults('type', 'examiner');
+Route::post('admin/exams/examiner/notes/{noteId}/delete', [AssociateNoteController::class,'destroy'])->name('examiner.notes.destroy')->defaults('type', 'examiner');
 Route::post('admin/exams/attendance/date/destroy',          [ExamsController::class, 'destroyAttendanceByDate'])->name('attendance.destroy.date');
 Route::post('admin/exams/attendance/{id}/destroy',          [ExamsController::class, 'destroyAttendanceRecord'])->name('attendance.destroy.record');
 

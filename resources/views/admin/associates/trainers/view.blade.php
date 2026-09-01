@@ -818,6 +818,10 @@ body.dark-mode .trainer-view .comment-box.empty { color: #6b7280; }
 
             </div>
         </div>
+
+        <div class="container-fluid">
+            @include('partials.associate_notes', ['associateType' => 'trainer', 'associateId' => $trainer->id, 'notes' => $notes])
+        </div>
     </section>
 
     @else

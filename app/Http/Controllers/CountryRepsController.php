@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\FetchesAssociateNotes;
 use App\Services\ApiClient;
 use App\Models\Country;
 use Illuminate\Http\Request;
 
 class CountryRepsController extends Controller
 {
+    use FetchesAssociateNotes;
+
     public function __construct(private ApiClient $api) {}
 
     public function list()
@@ -35,6 +38,7 @@ class CountryRepsController extends Controller
             'header_title'    => 'View CR',
             'relatedProfiles' => $data->relatedProfiles ?? null,
             'countries'       => Country::getCountry(),
+            'notes'           => $this->associateNotes('country_rep', $id),
         ]);
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\FetchesAssociateNotes;
 use App\Services\ApiClient;
 use App\Models\HospitalModel;
 use Illuminate\Http\Request;
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
 // TrainerController (new).
 class ProgrammeDirectorController extends Controller
 {
+    use FetchesAssociateNotes;
+
     public function __construct(private ApiClient $api) {}
 
     public function list()
@@ -38,6 +41,7 @@ class ProgrammeDirectorController extends Controller
             'header_title'    => 'View Programme Director',
             'relatedProfiles' => $data->relatedProfiles ?? null,
             'hospitals'       => HospitalModel::getHospital(),
+            'notes'           => $this->associateNotes('programme_director', $id),
         ]);
     }
 

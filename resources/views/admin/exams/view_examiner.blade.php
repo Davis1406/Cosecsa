@@ -782,6 +782,12 @@
         </div>
         @endif
 
+        <div class="row">
+            <div class="col-12">
+                @include('partials.associate_notes', ['associateType' => 'examiner', 'associateId' => $examiner->examin_id, 'notes' => $notes])
+            </div>
+        </div>
+
     </section>
 </div>
 </div>

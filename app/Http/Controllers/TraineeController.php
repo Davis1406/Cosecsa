@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\FetchesAssociateNotes;
 use App\Services\ApiClient;
 use App\Models\HospitalModel;
 use App\Models\Programme;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class TraineeController extends Controller
 {
+    use FetchesAssociateNotes;
+
     public function __construct(private ApiClient $api) {}
 
     public function list()
@@ -50,6 +53,7 @@ class TraineeController extends Controller
             'hospitals'          => HospitalModel::getHospital(),
             'examYears'          => collect($data->examYears ?? []),
             'firstAdmissionYear' => $data->firstAdmissionYear ?? null,
+            'notes'              => $this->associateNotes('trainee', $id),
         ]);
     }
 
