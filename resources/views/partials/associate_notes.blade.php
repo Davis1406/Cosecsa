@@ -4,7 +4,8 @@
     the scanned deferral letter attached), usable on any associate profile
     page. Attachments open in a new tab, where the browser previews the
     PDF/image natively — same pattern as the examiner "Additional Documents"
-    list.
+    list. Styled with the COSECSA brand palette (maroon #a02626 / gold
+    #FEC503) — see the "Associate Notes card" block in public/dist/css/custom.css.
 
     Include with:
     @include('partials.associate_notes', [
@@ -13,47 +14,45 @@
         'notes'         => $notes,
     ])
 --}}
-<div class="card mb-3">
-    <div class="card-header py-2" style="background:#f8f8f8;">
-        <i class="fas fa-sticky-note mr-1"></i>
-        <strong>Notes</strong>
-        <span class="badge badge-secondary ml-1" style="font-size:.65rem;">{{ count($notes) }}</span>
+<div class="assoc-notes mb-3">
+    <div class="assoc-notes-header">
+        <i class="fas fa-sticky-note mr-2"></i>
+        Notes
+        <span class="assoc-notes-count">{{ count($notes) }}</span>
     </div>
-    <div class="card-body">
+    <div class="assoc-notes-body">
         @if(count($notes))
-            <div class="mb-3" style="max-height:320px;overflow-y:auto;">
+            <div class="assoc-notes-list">
                 @foreach($notes as $note)
                     @php
                         $noteIcon = match(strtolower($note->file_type ?? '')) {
-                            'pdf' => 'fas fa-file-pdf text-danger',
-                            'jpg', 'jpeg', 'png', 'gif', 'webp' => 'fas fa-file-image text-info',
+                            'pdf' => 'fas fa-file-pdf',
+                            'jpg', 'jpeg', 'png', 'gif', 'webp' => 'fas fa-file-image',
                             default => null,
                         };
                     @endphp
-                    <div class="border rounded p-2 mb-2" style="font-size:.85rem;">
+                    <div class="assoc-note">
                         <div class="d-flex justify-content-between align-items-start">
-                            <div style="white-space:pre-wrap;">{{ $note->note }}</div>
+                            <div class="assoc-note-body">{{ $note->note }}</div>
                             <form method="POST"
                                   action="{{ route($associateType . '.notes.destroy', $note->id) }}"
                                   onsubmit="return confirm('Delete this note?')"
                                   class="ml-2" style="flex-shrink:0;">
                                 @csrf
                                 <input type="hidden" name="back" value="{{ url()->full() }}">
-                                <button type="submit" class="btn btn-xs btn-outline-danger"
-                                        style="padding:1px 6px;font-size:.7rem;" title="Delete note">
+                                <button type="submit" class="btn btn-xs btn-outline-secondary assoc-note-delete" title="Delete note">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
                         </div>
                         @if($note->file_path)
-                            <div class="mt-1">
-                                <a href="{{ \App\Support\ApiAsset::url($note->file_path) }}" target="_blank" rel="noopener">
-                                    @if($noteIcon)<i class="{{ $noteIcon }} mr-1"></i>@endif
-                                    {{ $note->original_name ?? 'Attachment' }}
-                                </a>
-                            </div>
+                            <a href="{{ \App\Support\ApiAsset::url($note->file_path) }}"
+                               target="_blank" rel="noopener" class="assoc-note-attachment">
+                                @if($noteIcon)<i class="{{ $noteIcon }}"></i>@endif
+                                <span>{{ $note->original_name ?? 'Attachment' }}</span>
+                            </a>
                         @endif
-                        <div class="text-muted mt-1" style="font-size:.72rem;">
+                        <div class="assoc-note-meta">
                             {{ $note->created_by_name ?? 'Staff' }} ·
                             {{ \Carbon\Carbon::parse($note->created_at)->format('d M Y, H:i') }}
                         </div>
@@ -61,12 +60,15 @@
                 @endforeach
             </div>
         @else
-            <p class="text-muted mb-3" style="font-size:.85rem;">No notes yet.</p>
+            <div class="assoc-notes-empty">
+                <i class="far fa-clipboard mb-1" style="font-size:1.3rem;display:block;"></i>
+                No notes yet.
+            </div>
         @endif
 
         <form method="POST"
               action="{{ route($associateType . '.notes.store', $associateId) }}"
-              enctype="multipart/form-data">
+              enctype="multipart/form-data" class="assoc-notes-form">
             @csrf
             <input type="hidden" name="back" value="{{ url()->full() }}">
             <div class="form-group mb-2">
@@ -76,9 +78,9 @@
             <div class="form-group mb-2">
                 <input type="file" name="attachment" class="form-control-file form-control-sm"
                        accept=".pdf,.jpg,.jpeg,.png,.gif,.webp">
-                <small class="text-muted">Optional — attach a PDF or image (e.g. a deferral letter), max 10MB.</small>
+                <small class="form-text">Optional — attach a PDF or image (e.g. a deferral letter), max 10MB.</small>
             </div>
-            <button type="submit" class="btn btn-sm btn-primary">
+            <button type="submit" class="btn btn-sm btn-assoc-add">
                 <i class="fas fa-plus mr-1"></i> Add Note
             </button>
         </form>

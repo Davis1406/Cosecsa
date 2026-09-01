@@ -832,3 +832,151 @@ body.dark-mode .select2-container--default .select2-results__group,
 body.dark-mode .select2-container--default .select2-results__message {
     color: #8794a8 !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Associate Notes card (partials.associate_notes) — COSECSA maroon/gold,
+   Stitch-tile card shape. Used on every associate profile page.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.assoc-notes {
+    background: #ffffff;
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    overflow: hidden;
+}
+.assoc-notes-header {
+    background: #a02626;
+    color: #fff;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 700;
+    font-size: .88rem;
+    letter-spacing: .01em;
+}
+.assoc-notes-header .fa-sticky-note { color: #FEC503; }
+.assoc-notes-count {
+    background: #FEC503;
+    color: #59413f;
+    font-weight: 700;
+    font-size: .68rem;
+    padding: .15em .55em;
+    border-radius: 9999px;
+    margin-left: .5rem;
+}
+.assoc-notes-body { padding: 16px; }
+
+.assoc-notes-list {
+    max-height: 340px;
+    overflow-y: auto;
+    margin-bottom: 14px;
+    padding-right: 2px;
+}
+.assoc-note {
+    background: #fbf9f7;
+    border-left: 3px solid #a02626;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    font-size: .85rem;
+    transition: box-shadow .15s;
+}
+.assoc-note:hover { box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.assoc-note:last-child { margin-bottom: 0; }
+.assoc-note-body {
+    white-space: pre-wrap;
+    color: #212529;
+    line-height: 1.4;
+}
+.assoc-note-delete {
+    color: #a02626 !important;
+    border-color: rgba(160,38,38,.35) !important;
+    background: transparent !important;
+    padding: 1px 6px !important;
+    font-size: .7rem !important;
+}
+.assoc-note-delete:hover { background: #a02626 !important; color: #fff !important; }
+.assoc-note-attachment {
+    display: inline-flex;
+    align-items: center;
+    gap: .35em;
+    margin-top: 6px;
+    padding: .2em .6em;
+    background: #FEC503;
+    color: #59413f;
+    border-radius: 9999px;
+    font-size: .74rem;
+    font-weight: 600;
+    text-decoration: none;
+    max-width: 100%;
+}
+.assoc-note-attachment:hover { color: #3d2a29; text-decoration: none; background: #f5b800; }
+.assoc-note-attachment span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.assoc-note-meta {
+    margin-top: 6px;
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: #9a8a89;
+}
+.assoc-notes-empty {
+    text-align: center;
+    color: #9ca3af;
+    font-size: .82rem;
+    padding: 18px 0;
+}
+
+.assoc-notes-form textarea.form-control,
+.assoc-notes-form input[type=file] {
+    border: 1px solid #e0e9f2;
+    border-radius: 6px;
+    font-size: .85rem;
+}
+.assoc-notes-form textarea.form-control:focus {
+    border-color: #a02626;
+    box-shadow: 0 0 0 .15rem rgba(160,38,38,.15);
+}
+.assoc-notes-form .btn-assoc-add {
+    background: #a02626;
+    border-color: #a02626;
+    color: #fff;
+    font-weight: 600;
+    font-size: .82rem;
+}
+.assoc-notes-form .btn-assoc-add:hover {
+    background: #841f1f;
+    border-color: #841f1f;
+    color: #fff;
+}
+.assoc-notes-form small.form-text { color: #9ca3af; font-size: .72rem; }
+
+/* ── Dark mode ──────────────────────────────────────────────────────────── */
+body.dark-mode .assoc-notes {
+    background: #1e2330 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25) !important;
+}
+body.dark-mode .assoc-note {
+    background: #252c3b !important;
+    border-left-color: #c85c5c !important;
+}
+body.dark-mode .assoc-note-body { color: #e2e8f0 !important; }
+body.dark-mode .assoc-note-meta { color: #7d8798 !important; }
+body.dark-mode .assoc-notes-empty { color: #7d8798 !important; }
+body.dark-mode .assoc-note-delete {
+    color: #e8a3a3 !important;
+    border-color: rgba(232,163,163,.35) !important;
+}
+body.dark-mode .assoc-note-delete:hover { background: #c85c5c !important; color: #1e2330 !important; }
+body.dark-mode .assoc-note-attachment { color: #3d2a29 !important; }
+body.dark-mode .assoc-notes-form textarea.form-control,
+body.dark-mode .assoc-notes-form input[type=file] {
+    background-color: #252c3b !important;
+    border-color: #4a5568 !important;
+    color: #e2e8f0 !important;
+}
