@@ -289,10 +289,10 @@ body.dark-mode .cr-position-badge[data-pos="Overseas Representative"] { backgrou
                                 @endif
                             </div>
                         </div>
+
+                        @include('partials.associate_notes', ['associateType' => 'country_rep', 'associateId' => $countryRep->reps_id, 'notes' => $notes])
                     </div>
                 </div>
-
-                @include('partials.associate_notes', ['associateType' => 'country_rep', 'associateId' => $countryRep->reps_id, 'notes' => $notes])
 
                 @else
                 <div class="text-center py-5 text-muted">

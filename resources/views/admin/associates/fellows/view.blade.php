@@ -1142,14 +1142,10 @@
                     </div>
 
                 </div>{{-- /.tab-content --}}
+
+                @include('partials.associate_notes', ['associateType' => 'fellow', 'associateId' => $fellow->fellow_id, 'notes' => $notes])
             </div>{{-- /.col right --}}
         </div>{{-- /.row main --}}
-
-        <div class="row">
-            <div class="col-12">
-                @include('partials.associate_notes', ['associateType' => 'fellow', 'associateId' => $fellow->fellow_id, 'notes' => $notes])
-            </div>
-        </div>
 
         @else
         <div class="card">

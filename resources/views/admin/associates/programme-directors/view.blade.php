@@ -132,6 +132,8 @@
                                 </td>
                             </tr>
                         </table>
+
+                        @include('partials.associate_notes', ['associateType' => 'programme_director', 'associateId' => $pd->programme_director_id, 'notes' => $notes])
                     </div>
                     @else
                     <div class="col-md-12">
@@ -142,8 +144,6 @@
             </div>
             <!-- /.card-body -->
         </div>
-
-        @include('partials.associate_notes', ['associateType' => 'programme_director', 'associateId' => $pd->programme_director_id, 'notes' => $notes])
     </section>
     <!-- /.content -->
 </div>
