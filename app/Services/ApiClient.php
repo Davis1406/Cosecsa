@@ -56,16 +56,18 @@ class ApiClient
         $request = $this->pending()->timeout(60)->asMultipart();
 
         foreach ($data as $key => $value) {
-            // Skip null AND empty-string scalars: attach() with '' would drop the
-            // 'contents' key (array_filter) and Guzzle throws "A 'contents' key is
-            // required" — a 500 on any form that submits blank optional fields.
             if ($value === null) continue;
 
             if (is_array($value)) {
                 // Recursively attach nested arrays using bracket notation
                 // e.g. examination_years[] or year_programme[2024][] or year_role[2024][Specialty]
                 $request = $this->attachArray($request, $key, $value);
-            } elseif ($value !== '') {
+            } elseif ($value !== '' && $value !== '0' && $value !== 0 && $value !== false) {
+                // Skip falsy scalars. Laravel's attach() stores each part through
+                // array_filter(), which drops the 'contents' key for any falsy value
+                // ('', '0', 0, false) — Guzzle then throws "A 'contents' key is
+                // required" (a 500). The API treats an absent field as unchanged/null,
+                // so it's safe — and necessary — to omit them.
                 $request = $request->attach($key, (string) $value);
             }
         }
@@ -121,7 +123,7 @@ class ApiClient
             $fullKey = "{$key}[{$subKey}]";
             if (is_array($subValue)) {
                 $request = $this->attachArray($request, $fullKey, $subValue);
-            } elseif ($subValue !== null && $subValue !== '') {
+            } elseif ($subValue !== null && $subValue !== '' && $subValue !== '0' && $subValue !== 0 && $subValue !== false) {
                 $request = $request->attach($fullKey, (string) $subValue);
             }
         }
