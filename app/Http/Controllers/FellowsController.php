@@ -99,9 +99,8 @@ class FellowsController extends Controller
         if ($request->hasFile('profile_image')) {
             $response = $this->api->postWithFile(
                 'fellows',
-                $request->file('profile_image'),
-                'profile_image',
-                $request->except('profile_image')
+                $request->except('profile_image'),
+                ['profile_image' => $request->file('profile_image')]
             );
         } else {
             $response = $this->api->post('fellows', $request->all());
@@ -164,7 +163,7 @@ class FellowsController extends Controller
     {
         $request->validate(['file' => 'required|mimes:csv,xlsx,xls|max:2048']);
 
-        $response = $this->api->postWithFile('fellows/import', $request->file('file'), 'file');
+        $response = $this->api->postWithFile('fellows/import', [], ['file' => $request->file('file')]);
 
         if ($response->failed()) {
             return redirect()->back()->with('error', $response->json('message') ?? 'Import failed.');
@@ -194,9 +193,8 @@ class FellowsController extends Controller
         if ($request->hasFile('profile_image')) {
             $response = $this->api->postWithFile(
                 "fellows/{$id}",
-                $request->file('profile_image'),
-                'profile_image',
-                $request->except('profile_image')
+                $request->except('profile_image'),
+                ['profile_image' => $request->file('profile_image')]
             );
         } else {
             $response = $this->api->post("fellows/{$id}", $request->all());
