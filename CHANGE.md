@@ -4,6 +4,35 @@
 
 ## [Unreleased]
 
+### Fixed (2026-09-02) — Fellow profile photo upload crashed with a 500
+- Editing (or adding) a fellow with a profile photo threw an internal server error. Two bugs in
+  sequence:
+  1. **`FellowsController` called `ApiClient::postWithFile()` with the wrong arguments.** The
+     signature is `postWithFile($path, array $data, array $files)`, but the add/edit/import
+     methods passed the `UploadedFile` object as `$data` and a string as `$files`, so any fellow
+     save with a photo died with `Argument #2 ($data) must be of type array,
+     Illuminate\Http\UploadedFile given`. All three call sites now use the same pattern as
+     `MembersController` / `TraineeController`:
+     `postWithFile($path, $request->except('profile_image'), ['profile_image' => $file])` (and
+     `postWithFile('fellows/import', [], ['file' => $file])`).
+  2. **`ApiClient::postWithFile()` crashed on empty multipart fields.** After fixing #1, saving
+     still 500'd with `A 'contents' key is required` (Guzzle `MultipartStream`). Laravel's
+     `attach()` stores each part via `array_filter()`, which drops the `contents` key when the
+     value is an empty string `''`. The fellow form sends `$request->except('profile_image')` —
+     every field including blanks — so any optional field left empty (e.g. `second_email`,
+     `address`, `candidate_number`) became `attach('field', '')` and crashed. `postWithFile()` /
+     `attachArray()` now skip empty-string scalar values, and the file attach is guarded against
+     an empty/0-byte/unreadable upload (`file_get_contents()` returning `false`/`''`). This fixes
+     the same latent crash for every other controller that uses `postWithFile`.
+
+Files changed:
+```
+app/Http/Controllers/FellowsController.php   (modified — correct postWithFile args)
+app/Services/ApiClient.php                    (modified — skip empty multipart fields)
+```
+Deployed via `cosecsa-deploy web` over SSH. No migrations. Verified: fellow save with a profile
+photo no longer 500s (web log no longer shows `A 'contents' key is required`).
+
 ### Fixed (2026-08-31) — Global search shows only the present exam year's candidates
 - The admin global search bar's Candidates group (`DashboardController::globalSearch()`)
   returned every candidate row ever synced, so queries surfaced past candidates (e.g. Judith
