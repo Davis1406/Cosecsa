@@ -15,23 +15,26 @@
      `MembersController` / `TraineeController`:
      `postWithFile($path, $request->except('profile_image'), ['profile_image' => $file])` (and
      `postWithFile('fellows/import', [], ['file' => $file])`).
-  2. **`ApiClient::postWithFile()` crashed on empty multipart fields.** After fixing #1, saving
+  2. **`ApiClient::postWithFile()` crashed on falsy multipart fields.** After fixing #1, saving
      still 500'd with `A 'contents' key is required` (Guzzle `MultipartStream`). Laravel's
-     `attach()` stores each part via `array_filter()`, which drops the `contents` key when the
-     value is an empty string `''`. The fellow form sends `$request->except('profile_image')` —
-     every field including blanks — so any optional field left empty (e.g. `second_email`,
-     `address`, `candidate_number`) became `attach('field', '')` and crashed. `postWithFile()` /
-     `attachArray()` now skip empty-string scalar values, and the file attach is guarded against
-     an empty/0-byte/unreadable upload (`file_get_contents()` returning `false`/`''`). This fixes
-     the same latent crash for every other controller that uses `postWithFile`.
+     `attach()` stores each part via `array_filter()`, which drops the `contents` key for **any
+     falsy value** (`''`, `'0'`, `0`, `false`, `null`) — the first empty or zero-valued field in
+     the submitted form crashes the request. The fellow form sends `$request->except('profile_image')`
+     (every field including blanks), so a blank optional field or a `0` value (e.g. `is_promoted`)
+     was enough to 500. `postWithFile()` / `attachArray()` now skip all falsy scalar values (the
+     API treats an absent field as unchanged/null, so omitting them is safe), and the file attach
+     is guarded against an empty/0-byte/unreadable upload (`file_get_contents()` returning
+     `false`/`''`). This fixes the same latent crash for every other controller that uses
+     `postWithFile`.
 
 Files changed:
 ```
 app/Http/Controllers/FellowsController.php   (modified — correct postWithFile args)
-app/Services/ApiClient.php                    (modified — skip empty multipart fields)
+app/Services/ApiClient.php                    (modified — skip falsy multipart fields)
 ```
-Deployed via `cosecsa-deploy web` over SSH. No migrations. Verified: fellow save with a profile
-photo no longer 500s (web log no longer shows `A 'contents' key is required`).
+Deployed via `cosecsa-deploy web` over SSH. No migrations. Verified by reproducing the exact
+multipart build (falsy fields + a real image file) — the request builds without throwing
+`A 'contents' key is required`, and a real file upload still attaches correctly.
 
 ### Fixed (2026-08-31) — Global search shows only the present exam year's candidates
 - The admin global search bar's Candidates group (`DashboardController::globalSearch()`)
