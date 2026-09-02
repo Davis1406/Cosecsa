@@ -56,32 +56,41 @@ class ApiClient
         $request = $this->pending()->timeout(60)->asMultipart();
 
         foreach ($data as $key => $value) {
+            // Skip null AND empty-string scalars: attach() with '' would drop the
+            // 'contents' key (array_filter) and Guzzle throws "A 'contents' key is
+            // required" — a 500 on any form that submits blank optional fields.
             if ($value === null) continue;
 
             if (is_array($value)) {
                 // Recursively attach nested arrays using bracket notation
                 // e.g. examination_years[] or year_programme[2024][] or year_role[2024][Specialty]
                 $request = $this->attachArray($request, $key, $value);
-            } else {
+            } elseif ($value !== '') {
                 $request = $request->attach($key, (string) $value);
             }
         }
 
         foreach ($files as $fieldName => $file) {
             if ($file instanceof UploadedFile) {
-                $request = $request->attach(
-                    $fieldName,
-                    file_get_contents($file->getRealPath()),
-                    $file->getClientOriginalName()
-                );
+                $contents = file_get_contents($file->getRealPath());
+                if ($contents !== false && $contents !== '') {
+                    $request = $request->attach(
+                        $fieldName,
+                        $contents,
+                        $file->getClientOriginalName()
+                    );
+                }
             } elseif (is_array($file)) {
                 foreach ($file as $key => $nestedFile) {
                     if ($nestedFile instanceof UploadedFile && $nestedFile->isValid()) {
-                        $request = $request->attach(
-                            "{$fieldName}[{$key}]",
-                            file_get_contents($nestedFile->getRealPath()),
-                            $nestedFile->getClientOriginalName()
-                        );
+                        $contents = file_get_contents($nestedFile->getRealPath());
+                        if ($contents !== false && $contents !== '') {
+                            $request = $request->attach(
+                                "{$fieldName}[{$key}]",
+                                $contents,
+                                $nestedFile->getClientOriginalName()
+                            );
+                        }
                     }
                 }
             }
@@ -112,7 +121,7 @@ class ApiClient
             $fullKey = "{$key}[{$subKey}]";
             if (is_array($subValue)) {
                 $request = $this->attachArray($request, $fullKey, $subValue);
-            } elseif ($subValue !== null) {
+            } elseif ($subValue !== null && $subValue !== '') {
                 $request = $request->attach($fullKey, (string) $subValue);
             }
         }
