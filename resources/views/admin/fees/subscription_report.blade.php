@@ -204,16 +204,16 @@
                     </div>
                     <div class="form-group">
                         <label class="font-weight-bold small">Body <span class="text-danger">*</span></label>
-                        <textarea name="body" class="form-control" rows="4" required>Dear {{ '{{first_name}}' }},
+                        <textarea name="body" class="form-control" rows="4" required>Dear @{{first_name}},
 
-This is a reminder that your COSECSA annual subscription for {{ '{{year}}' }} is still outstanding. Please arrange payment at your earliest convenience.
+This is a reminder that your COSECSA annual subscription for @{{year}} is still outstanding. Please arrange payment at your earliest convenience.
 
 Kind Regards,
 COSECSA Secretariat</textarea>
                         <div class="mt-2">
                             <small class="text-muted">Insert a token:</small>
                             @foreach(['name','first_name','year','country','fellowship_type','amount_due','amount_paid','outstanding'] as $tok)
-                                <span class="token-chip" onclick="insertToken(this)">{{ '{{' . $tok . '}}' }}</span>
+                                <span class="token-chip" onclick="insertToken(this)">{{ '{' . '{' . $tok . '}' . '}' }}</span>
                             @endforeach
                         </div>
                     </div>
