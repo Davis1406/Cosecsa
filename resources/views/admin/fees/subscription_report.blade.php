@@ -2,40 +2,185 @@
 
 @section('title', 'Annual Subscription Report')
 
+@php
+    $total    = max(1, (int) ($summary['total_fellows'] ?? 0));
+    $due      = (float) ($summary['amount_due'] ?? 0);
+    $collected= (float) ($summary['amount_collected'] ?? 0);
+    $collectPct = $due > 0 ? min(100, round($collected / $due * 100)) : 0;
+    $statusTiles = [
+        'Paid'    => ['label' => 'Paid',      'key' => 'paid'],
+        'Partial' => ['label' => 'Partial',   'key' => 'partial'],
+        'Unpaid'  => ['label' => 'Unpaid',    'key' => 'unpaid'],
+        'None'    => ['label' => 'No Record', 'key' => 'none'],
+        'Waived'  => ['label' => 'Waived',    'key' => 'waived'],
+    ];
+    $activeStatus = $filters['status'] ?? '';
+    $canManage = Auth::user()->hasPermission('fees.manage');
+@endphp
+
 @push('styles')
 <style>
-    .fee-hero { background:linear-gradient(135deg,#a02626 0%,#7a1f1f 100%); border-radius:10px;
-                padding:20px 24px; color:#fff; margin-bottom:1.2rem; }
+    /* ── Tokens ── */
+    .sr-page { --sr-ink:#141d23; --sr-muted:#6b7280; --sr-faint:#9ca3af; --sr-line:#e5e9f0; --sr-card:#fff; --sr-soft:#f7f8fa;
+               --sr-brand:#a02626;
+               --st-Paid-bg:#e9f7ee;    --st-Paid-fg:#2e7d32;    --st-Paid-bd:#c3e9cf;
+               --st-Partial-bg:#fff6dc; --st-Partial-fg:#8a6100; --st-Partial-bd:#f5e0a3;
+               --st-Unpaid-bg:#fdeeee;  --st-Unpaid-fg:#c62828;  --st-Unpaid-bd:#f6caca;
+               --st-None-bg:#f1f3f5;    --st-None-fg:#6b7280;    --st-None-bd:#e2e5e9;
+               --st-Waived-bg:#e7f3f7;  --st-Waived-fg:#0c5f73;  --st-Waived-bd:#c3e2ea; }
+    body.dark-mode .sr-page { --sr-ink:#f1f5f9; --sr-muted:#94a3b8; --sr-faint:#718096; --sr-line:#2d3748; --sr-card:#1e2330; --sr-soft:#252c3b;
+               --sr-brand:#f48a8a;
+               --st-Paid-bg:#17311f;    --st-Paid-fg:#7ddc97;    --st-Paid-bd:#25502f;
+               --st-Partial-bg:#342a10; --st-Partial-fg:#f3cf6b; --st-Partial-bd:#54441a;
+               --st-Unpaid-bg:#3a1c1f;  --st-Unpaid-fg:#f59a9a;  --st-Unpaid-bd:#5c2a2e;
+               --st-None-bg:#2b3040;    --st-None-fg:#a0aec0;    --st-None-bd:#3b4254;
+               --st-Waived-bg:#15303a;  --st-Waived-fg:#7cc9dd;  --st-Waived-bd:#20495a; }
 
-    .entity-link { color:#a02626; font-weight:500; text-decoration:none; }
-    .entity-link:hover { color:#a02626; text-decoration:underline; }
+    .sr-page { color:var(--sr-ink); }
+    .sr-eyebrow { font-size:.68rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--sr-faint); }
 
-    .fee-card { border-top:3px solid #a02626; }
-    .fee-group-title { font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:#888; margin:12px 0 4px; font-weight:700; }
+    /* ── Header ── */
+    .sr-head { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; justify-content:space-between; margin:4px 0 18px; }
+    .sr-head h4 { font-weight:700; margin:2px 0 2px; }
+    .sr-head .sr-sub { color:var(--sr-muted); font-size:.86rem; }
+    .sr-head .sr-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .sr-year { font-weight:700; border-radius:8px; min-width:96px; }
+    .btn-sr { background:var(--sr-brand); border-color:var(--sr-brand); color:#fff; font-weight:600; border-radius:8px; }
+    .btn-sr:hover { background:#870f0f; border-color:#870f0f; color:#FEC503; }
+    body.dark-mode .btn-sr { background:#a02626; border-color:#a02626; }
+    .btn-sr-ghost { border:1px solid var(--sr-line); background:var(--sr-card); color:var(--sr-ink); border-radius:8px; font-weight:600; }
+    .btn-sr-ghost:hover { color:var(--sr-brand); }
 
-    .report-table thead th { background:#f8f0f0; color:#a02626; font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; }
-    body.dark-mode .report-table thead th { background:#252c3b; color:#f48a8a; }
+    /* ── Cards ── */
+    .sr-card { background:var(--sr-card); border:1px solid var(--sr-line); border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
 
-    .status-pill { display:inline-block; padding:3px 12px; border-radius:20px; font-weight:600; font-size:.78rem; }
-    .status-Paid    { background:#d4edda; color:#155724; }
-    .status-Partial { background:#fff3cd; color:#856404; }
-    .status-Unpaid  { background:#f8d7da; color:#721c24; }
-    .status-Waived  { background:#d1ecf1; color:#0c5460; }
-    .status-None    { background:#e2e3e5; color:#383d41; }
+    /* Collection card */
+    .sr-collect { padding:18px 20px; height:100%; }
+    .sr-collect .big { font-size:1.9rem; font-weight:700; letter-spacing:-.02em; line-height:1.1; }
+    .sr-collect .of { color:var(--sr-muted); font-size:.9rem; }
+    .sr-bar { height:8px; background:var(--sr-soft); border-radius:99px; overflow:hidden; margin:14px 0 12px; }
+    .sr-bar > span { display:block; height:100%; background:#2e7d32; border-radius:99px; }
+    .sr-collect .split { display:flex; gap:18px; font-size:.85rem; color:var(--sr-muted); }
+    .sr-collect .split strong { display:block; color:var(--sr-ink); font-size:1rem; }
 
-    .sum-chip { flex:1 1 130px; min-width:130px; background:#fff; border:1px solid #e0e9f2; border-left:4px solid #a02626;
-                border-radius:8px; padding:10px 14px; box-shadow:0 1px 4px rgba(0,0,0,.07); }
-    body.dark-mode .sum-chip { background:#1e2330; border-color:#2d3748; }
-    .sum-chip .sc-label { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#6b7280; }
-    body.dark-mode .sum-chip .sc-label { color:#94a3b8; }
-    .sum-chip .sc-value { font-size:1.25rem; font-weight:700; color:#141d23; }
-    body.dark-mode .sum-chip .sc-value { color:#f1f5f9; }
-    .sum-chip.owing { border-left-color:#FEC503; background:#fff8dc; }
-    body.dark-mode .sum-chip.owing { background:#2d3030; }
+    /* Status tiles */
+    .sr-tiles { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:10px; }
+    .sr-tile { display:flex; flex-direction:column; justify-content:center; text-align:center; padding:14px 8px; border-radius:12px;
+               border:1px solid var(--sr-line); background:var(--sr-card); color:inherit; text-decoration:none !important; transition:transform .12s, box-shadow .12s; }
+    .sr-tile:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.07); }
+    .sr-tile .n { font-size:1.55rem; font-weight:700; line-height:1.2; margin-top:4px; }
+    .sr-tile .p { font-size:.74rem; color:var(--sr-faint); }
+    @foreach(array_keys($statusTiles) as $st)
+    .sr-tile.t-{{ $st }} .n { color:var(--st-{{ $st }}-fg); }
+    .sr-tile.t-{{ $st }}.active { background:var(--st-{{ $st }}-bg); border-color:var(--st-{{ $st }}-bd); }
+    @endforeach
+    .sr-owing { display:flex; align-items:center; gap:10px; margin-top:10px; padding:10px 14px; border-radius:10px;
+                background:var(--st-Unpaid-bg); border:1px solid var(--st-Unpaid-bd); color:var(--st-Unpaid-fg); font-size:.86rem; }
+    .sr-owing strong { font-size:1rem; }
+    .sr-dist { display:flex; height:6px; border-radius:99px; overflow:hidden; margin-top:10px; background:var(--sr-soft); }
+    .sr-dist span { display:block; height:100%; }
+
+    /* ── Filters + table ── */
+    .sr-toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding:14px 16px; border-bottom:1px solid var(--sr-line); }
+    .sr-toolbar .title { font-weight:700; margin-right:auto; }
+    .sr-toolbar .count { background:var(--sr-soft); color:var(--sr-muted); border-radius:99px; padding:1px 9px; font-size:.78rem; margin-left:6px; font-weight:600; }
+    .sr-toolbar .form-control { border-radius:8px; }
+    .sr-search { position:relative; }
+    .sr-search i { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--sr-faint); font-size:.8rem; }
+    .sr-search input { padding-left:28px; width:220px; }
+
+    #subscriptionReportTable { border-collapse:separate; border-spacing:0; }
+    #subscriptionReportTable thead th { background:transparent; border-top:0; border-bottom:1px solid var(--sr-line); font-size:.68rem; font-weight:700;
+                                        text-transform:uppercase; letter-spacing:.07em; color:var(--sr-faint); padding:10px 12px; white-space:nowrap; }
+    #subscriptionReportTable tbody td { border-top:1px solid var(--sr-line); padding:10px 12px; vertical-align:middle; font-size:.88rem; }
+    #subscriptionReportTable tbody tr { cursor:pointer; transition:background .1s; }
+    #subscriptionReportTable tbody tr:hover { background:var(--sr-soft); }
+    #subscriptionReportTable td.num, #subscriptionReportTable th.num { text-align:right; font-variant-numeric:tabular-nums; }
+    #subscriptionReportTable th.num { padding-right:26px; }
+    #subscriptionReportTable td.muted { color:var(--sr-faint); }
+    .sr-wrap .dataTables_wrapper { padding:0 16px 14px; }
+    .sr-wrap .dt-buttons { padding-top:12px; }
+    .sr-wrap .dataTables_filter { display:none; }  /* server-side search box in toolbar */
+
+    .sr-who { display:flex; align-items:center; gap:10px; min-width:200px; }
+    .sr-avatar { flex:none; width:34px; height:34px; border-radius:50%; background:#f3e3e3; color:#a02626; font-weight:700; font-size:.78rem;
+                 display:flex; align-items:center; justify-content:center; overflow:hidden; }
+    .sr-avatar::before { content:attr(data-initials); }
+    .sr-avatar.has-img::before { content:none; }
+    .sr-avatar img { width:100%; height:100%; object-fit:cover; }
+    body.dark-mode .sr-avatar { background:#3a2328; color:#f48a8a; }
+    .sr-who .nm { font-weight:600; color:var(--sr-ink); line-height:1.2; }
+    .sr-who .em { font-size:.78rem; color:var(--sr-faint); }
+    .sr-go { color:var(--sr-faint); }
+    tr:hover .sr-go { color:var(--sr-brand); }
+
+    /* Status pill — shared by table + drawer */
+    .sr-pill { display:inline-block; padding:2px 9px; border-radius:6px; font-size:.74rem; font-weight:700; white-space:nowrap;
+               background:var(--st-None-bg); color:var(--st-None-fg); }
+    @foreach(array_keys($statusTiles) as $st)
+    .sr-pill.s-{{ $st }} { background:var(--st-{{ $st }}-bg); color:var(--st-{{ $st }}-fg); }
+    @endforeach
+
+    /* ── Drawer ── */
+    .sr-backdrop { position:fixed; inset:0; background:rgba(15,20,30,.4); opacity:0; pointer-events:none; transition:opacity .2s; z-index:1060; }
+    .sr-drawer { position:fixed; top:0; right:0; height:100vh; width:min(440px,100vw); background:var(--sr-card); z-index:1061;
+                 box-shadow:-8px 0 30px rgba(0,0,0,.14); transform:translateX(100%); transition:transform .25s ease;
+                 display:flex; flex-direction:column; color:var(--sr-ink); }
+    body.dark-mode .sr-backdrop { background:rgba(0,0,0,.55); }
+    .sr-open .sr-backdrop { opacity:1; pointer-events:auto; }
+    .sr-open .sr-drawer { transform:none; }
+    .sr-dh { display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--sr-line); }
+    .sr-dh h5 { margin:0; font-weight:700; font-size:1.1rem; }
+    .sr-x { background:none; border:0; color:var(--sr-faint); font-size:1.3rem; line-height:1; padding:4px 6px; border-radius:6px; }
+    .sr-x:hover { color:var(--sr-ink); background:var(--sr-soft); }
+    .sr-db { flex:1; overflow-y:auto; padding:20px 22px 28px; }
+    .sr-df { padding:14px 22px; border-top:1px solid var(--sr-line); display:flex; gap:8px; }
+    .sr-df .btn { flex:1; }
+
+    .sr-id { display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+    .sr-id .sr-avatar { width:54px; height:54px; font-size:1.05rem; }
+    .sr-id .nm { font-weight:700; font-size:1.08rem; line-height:1.25; }
+    .sr-id .meta { color:var(--sr-muted); font-size:.83rem; }
+
+    .sr-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:22px; }
+    .sr-stat { border:1px solid var(--sr-line); background:var(--sr-soft); border-radius:12px; padding:12px 6px; text-align:center; }
+    .sr-stat .v { font-size:1.12rem; font-weight:700; margin-top:3px; }
+    @foreach(array_keys($statusTiles) as $st)
+    .sr-stat.s-{{ $st }} { background:var(--st-{{ $st }}-bg); border-color:var(--st-{{ $st }}-bd); }
+    .sr-stat.s-{{ $st }} .v { color:var(--st-{{ $st }}-fg); }
+    @endforeach
+
+    .sr-sec { margin:0 0 10px; }
+    .sr-contact { margin-bottom:22px; }
+    .sr-contact div { display:flex; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid var(--sr-line); font-size:.95rem; word-break:break-word; }
+    .sr-contact i { width:16px; text-align:center; color:var(--sr-faint); }
+    .sr-contact a, body.dark-mode .sr-contact a { color:var(--sr-ink) !important; }
+    .sr-contact a:hover { color:var(--sr-brand) !important; }
+    .sr-contact .none { color:var(--sr-faint); }
+
+    .sr-hist { border:1px solid var(--sr-line); border-radius:12px; overflow:hidden; }
+    .sr-hrow { display:flex; align-items:center; gap:10px; padding:13px 16px; border-bottom:1px solid var(--sr-line); }
+    .sr-hrow .left { flex:1; min-width:0; }
+    .sr-hrow .yr { font-weight:700; font-size:1.02rem; margin-right:8px; }
+    .sr-hrow .left small { display:block; color:var(--sr-faint); font-size:.75rem; margin-top:2px; }
+    .sr-hrow .amt { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .sr-hrow .amt small { display:block; color:var(--sr-faint); font-size:.74rem; }
+    .sr-hrow.current { background:var(--sr-soft); box-shadow:inset 3px 0 0 #a02626; }
+    .sr-hfoot { display:flex; justify-content:space-between; align-items:center; padding:13px 16px; background:var(--sr-soft); }
+    .sr-hfoot + .sr-hfoot { border-top:1px solid var(--sr-line); }
+    .sr-hfoot strong { font-size:1.05rem; font-variant-numeric:tabular-nums; }
+    .sr-empty { padding:22px 16px; text-align:center; color:var(--sr-faint); font-size:.88rem; }
+
+    .sr-skel { background:linear-gradient(90deg,var(--sr-soft) 25%,var(--sr-line) 50%,var(--sr-soft) 75%); background-size:200% 100%;
+               animation:srsk 1.2s infinite; border-radius:8px; }
+    @keyframes srsk { to { background-position:-200% 0; } }
 
     .token-chip { cursor:pointer; border:1px solid #a02626; color:#a02626; background:#fff; border-radius:4px;
                   font-size:.72rem; padding:2px 8px; margin:0 3px 3px 0; }
     .token-chip:hover { background:#a02626; color:#fff; }
+
+    @media (max-width: 991px) { .sr-tiles { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+    @media (max-width: 575px) { .sr-tiles { grid-template-columns:repeat(2,minmax(0,1fr)); } .sr-search input { width:100%; } }
 </style>
 @endpush
 
@@ -45,92 +190,107 @@
         <section class="content-header"></section>
         <div class="col-md-12">@include('_message')</div>
 
-        <section class="content">
+        <section class="content sr-page">
             <div class="container-wrapper">
 
-                <div class="fee-hero d-flex flex-wrap justify-content-between align-items-center">
+                {{-- ── Header ── --}}
+                <div class="sr-head">
                     <div>
-                        <h4 class="mb-0"><i class="fas fa-file-invoice-dollar mr-2"></i>Annual Subscription Report</h4>
-                        <div style="font-size:.85rem;opacity:.85;">
-                            Per-year subscription payment status across all fellows. Fellows with no record
-                            for the year count as <strong>No Record</strong> (treated as owing).
-                            <a href="{{ url('admin/fees') }}" style="color:#fff;text-decoration:underline;">Back to Manage Fees</a>
-                        </div>
+                        <div class="sr-eyebrow"><a href="{{ url('admin/fees') }}" style="color:inherit;">Fees</a> / Subscriptions</div>
+                        <h4>Annual Subscription Report</h4>
+                        <div class="sr-sub">Every fellow's {{ $year }} subscription. Fellows with no record for the year count as owing.</div>
                     </div>
-                    @if (Auth::user()->hasPermission('fees.manage') && ($summary['owing'] ?? 0) > 0)
-                    <button type="button" class="btn btn-sm" style="background:#FEC503;border-color:#FEC503;color:#3a2a00;font-weight:600;"
-                            onclick="$('#reminderModal').modal('show')">
-                        <i class="fas fa-envelope-open-text mr-1"></i>Send Reminders ({{ $summary['owing'] ?? 0 }} owing)
-                    </button>
-                    @endif
+                    <div class="sr-actions">
+                        <form method="GET" action="{{ url('admin/fees/subscriptions/report') }}" class="m-0">
+                            @foreach(['status','country_id','q'] as $keep)
+                                @if(!empty($filters[$keep]))<input type="hidden" name="{{ $keep }}" value="{{ $filters[$keep] }}">@endif
+                            @endforeach
+                            <select name="year" class="form-control form-control-sm sr-year" onchange="this.form.submit()" aria-label="Year">
+                                @foreach($years as $y)
+                                    <option value="{{ $y }}" {{ (string)$year === (string)$y ? 'selected' : '' }}>{{ $y }}</option>
+                                @endforeach
+                            </select>
+                        </form>
+                        @if ($canManage && ($summary['owing'] ?? 0) > 0)
+                        <button type="button" class="btn btn-sm btn-sr" onclick="$('#reminderModal').modal('show')">
+                            <i class="fas fa-paper-plane mr-1"></i>Remind {{ number_format($summary['owing'] ?? 0) }} owing
+                        </button>
+                        @endif
+                    </div>
                 </div>
 
                 {{-- ── Summary ── --}}
-                <div class="d-flex flex-wrap" style="gap:.75rem;margin-bottom:1.1rem;">
-                    <div class="sum-chip"><div class="sc-label">Total Fellows</div><div class="sc-value">{{ $summary['total_fellows'] ?? 0 }}</div></div>
-                    <div class="sum-chip"><div class="sc-label">Paid</div><div class="sc-value" style="color:#28a745;">{{ $summary['paid'] ?? 0 }}</div></div>
-                    <div class="sum-chip"><div class="sc-label">Partial</div><div class="sc-value" style="color:#856404;">{{ $summary['partial'] ?? 0 }}</div></div>
-                    <div class="sum-chip"><div class="sc-label">Unpaid</div><div class="sc-value" style="color:#d64545;">{{ $summary['unpaid'] ?? 0 }}</div></div>
-                    <div class="sum-chip"><div class="sc-label">Waived</div><div class="sc-value" style="color:#0c5460;">{{ $summary['waived'] ?? 0 }}</div></div>
-                    <div class="sum-chip"><div class="sc-label">No Record</div><div class="sc-value">{{ $summary['none'] ?? 0 }}</div></div>
-                    <div class="sum-chip owing"><div class="sc-label">Owing</div><div class="sc-value" style="color:#a02626;">{{ $summary['owing'] ?? 0 }}</div></div>
-                    <div class="sum-chip"><div class="sc-label">Due (USD)</div><div class="sc-value">{{ number_format($summary['amount_due'] ?? 0, 2) }}</div></div>
-                    <div class="sum-chip"><div class="sc-label">Collected (USD)</div><div class="sc-value" style="color:#28a745;">{{ number_format($summary['amount_collected'] ?? 0, 2) }}</div></div>
-                    <div class="sum-chip"><div class="sc-label">Outstanding (USD)</div><div class="sc-value" style="color:#d64545;">{{ number_format($summary['outstanding'] ?? 0, 2) }}</div></div>
-                </div>
-
-                {{-- ── Filters ── --}}
-                <div class="card mt-3">
-                    <div class="card-body">
-                        <form method="GET" action="{{ url('admin/fees/subscriptions/report') }}" class="d-flex flex-wrap align-items-end" style="gap:.75rem;">
-                            <div>
-                                <label class="d-block mb-1 small font-weight-bold text-muted">Year</label>
-                                <select name="year" class="form-control form-control-sm" style="width:110px;" onchange="this.form.submit()">
-                                    @foreach($years as $y)
-                                        <option value="{{ $y }}" {{ (string)$year === (string)$y ? 'selected' : '' }}>{{ $y }}</option>
-                                    @endforeach
-                                </select>
+                <div class="row mb-3">
+                    <div class="col-lg-4 mb-3 mb-lg-0">
+                        <div class="sr-card sr-collect">
+                            <div class="sr-eyebrow">Collected in {{ $year }}</div>
+                            <div class="mt-2">
+                                <span class="big">${{ number_format($collected, 2) }}</span>
+                                <span class="of">of ${{ number_format($due, 2) }} billed</span>
                             </div>
-                            <div>
-                                <label class="d-block mb-1 small font-weight-bold text-muted">Status</label>
-                                <select name="status" class="form-control form-control-sm" style="width:130px;" onchange="this.form.submit()">
-                                    <option value="">All statuses</option>
-                                    @foreach(['Paid','Partial','Unpaid','Waived','None'] as $opt)
-                                        <option value="{{ $opt }}" {{ ($filters['status'] ?? '') === $opt ? 'selected' : '' }}>{{ $opt === 'None' ? 'No Record' : $opt }}</option>
-                                    @endforeach
-                                </select>
+                            <div class="sr-bar"><span style="width:{{ $collectPct }}%"></span></div>
+                            <div class="split">
+                                <div><strong>{{ $collectPct }}%</strong>collected</div>
+                                <div><strong style="color:var(--st-Unpaid-fg);">${{ number_format($summary['outstanding'] ?? 0, 2) }}</strong>outstanding on billed records</div>
                             </div>
-                            <div>
-                                <label class="d-block mb-1 small font-weight-bold text-muted">Country</label>
-                                <select name="country_id" class="form-control form-control-sm" style="width:180px;" onchange="this.form.submit()">
-                                    <option value="">All countries</option>
-                                    @foreach($countries as $c)
-                                        <option value="{{ $c->id }}" {{ (string)($filters['country_id'] ?? '') === (string)$c->id ? 'selected' : '' }}>{{ $c->country_name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label class="d-block mb-1 small font-weight-bold text-muted">Search</label>
-                                <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Name, email, reg no..."
-                                       class="form-control form-control-sm" onchange="this.form.submit()">
-                            </div>
-                            <div>
-                                <a href="{{ url('admin/fees/subscriptions/report') }}" class="btn btn-outline-secondary btn-sm">Clear</a>
-                            </div>
-                        </form>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="sr-tiles">
+                            @foreach($statusTiles as $st => $t)
+                                @php $n = (int) ($summary[$t['key']] ?? 0); $isActive = $activeStatus === $st; @endphp
+                                <a class="sr-tile t-{{ $st }} {{ $isActive ? 'active' : '' }}"
+                                   href="{{ request()->fullUrlWithQuery(['status' => $isActive ? null : $st]) }}"
+                                   title="{{ $isActive ? 'Show all statuses' : 'Show only ' . $t['label'] }}">
+                                    <span class="sr-eyebrow">{{ $t['label'] }}</span>
+                                    <span class="n">{{ number_format($n) }}</span>
+                                    <span class="p">{{ round($n / $total * 100) }}% of fellows</span>
+                                </a>
+                            @endforeach
+                        </div>
+                        <div class="sr-dist" title="Status distribution across {{ number_format($summary['total_fellows'] ?? 0) }} fellows">
+                            @foreach($statusTiles as $st => $t)
+                                <span style="width:{{ ($summary[$t['key']] ?? 0) / $total * 100 }}%;background:var(--st-{{ $st }}-fg);"></span>
+                            @endforeach
+                        </div>
+                        @if(($summary['owing'] ?? 0) > 0)
+                        <div class="sr-owing">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span><strong>{{ number_format($summary['owing']) }}</strong> of {{ number_format($summary['total_fellows'] ?? 0) }} fellows still owe for {{ $year }} (Unpaid, Partial or No Record).</span>
+                        </div>
+                        @endif
                     </div>
                 </div>
 
-                {{-- ── Report table ── --}}
-                <div class="card mt-3">
-                    <div class="card-header">
-                        <h3 class="card-title" style="font-size:1rem;">
-                            <i class="fas fa-users mr-2" style="color:#a02626;"></i>{{ $year }} Subscription Status
-                            <span class="badge badge-pill text-white ml-1" style="background:#a02626;">{{ $rows->count() }}</span>
-                        </h3>
-                    </div>
-                    <div class="card-body p-0">
-                        <table id="subscriptionReportTable" class="table table-sm table-bordered table-striped report-table mb-0" style="width:100%;">
+                {{-- ── Table ── --}}
+                <div class="sr-card sr-wrap mb-4">
+                    <form method="GET" action="{{ url('admin/fees/subscriptions/report') }}" class="sr-toolbar m-0">
+                        <input type="hidden" name="year" value="{{ $year }}">
+                        <div class="title">Fellows <span class="count">{{ number_format($rows->count()) }}</span></div>
+                        <div class="sr-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Name, email, reg no…"
+                                   class="form-control form-control-sm" onchange="this.form.submit()">
+                        </div>
+                        <select name="status" class="form-control form-control-sm" style="width:140px;" onchange="this.form.submit()" aria-label="Status">
+                            <option value="">All statuses</option>
+                            @foreach($statusTiles as $st => $t)
+                                <option value="{{ $st }}" {{ $activeStatus === $st ? 'selected' : '' }}>{{ $t['label'] }}</option>
+                            @endforeach
+                        </select>
+                        <select name="country_id" class="form-control form-control-sm" style="width:170px;" onchange="this.form.submit()" aria-label="Country">
+                            <option value="">All countries</option>
+                            @foreach($countries as $c)
+                                <option value="{{ $c->id }}" {{ (string)($filters['country_id'] ?? '') === (string)$c->id ? 'selected' : '' }}>{{ $c->country_name }}</option>
+                            @endforeach
+                        </select>
+                        @if(!empty($filters['q']) || !empty($filters['status']) || !empty($filters['country_id']))
+                            <a href="{{ url('admin/fees/subscriptions/report') }}?year={{ $year }}" class="btn btn-sm btn-sr-ghost">Clear</a>
+                        @endif
+                    </form>
+
+                    <div class="table-responsive">
+                        <table id="subscriptionReportTable" class="table mb-0" style="width:100%;">
                             <thead>
                                 <tr>
                                     <th>#</th>
@@ -138,35 +298,43 @@
                                     <th>Country</th>
                                     <th>Fellowship Type</th>
                                     <th>Status</th>
-                                    <th>Due (USD)</th>
-                                    <th>Paid (USD)</th>
-                                    <th>Outstanding (USD)</th>
+                                    <th class="num">Due</th>
+                                    <th class="num">Paid</th>
+                                    <th class="num">Outstanding</th>
                                     <th>Date Paid</th>
                                     <th>Mode</th>
+                                    <th class="no-export"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($rows as $i => $row)
-                                <tr>
-                                    <td>{{ $i + 1 }}</td>
+                                @php
+                                    $parts = preg_split('/\s+/', trim($row->name));
+                                    $initials = strtoupper(mb_substr($parts[0] ?? '', 0, 1) . mb_substr(count($parts) > 1 ? end($parts) : '', 0, 1));
+                                    $mode = (!$row->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $row->mode_of_payment)) ? null : $row->mode_of_payment;
+                                @endphp
+                                <tr data-fellow="{{ $row->fellow_id }}">
+                                    <td class="muted">{{ $i + 1 }}</td>
                                     <td>
-                                        <a href="{{ url('admin/associates/fellows/view/' . $row->fellow_id) }}#tab-subs" class="entity-link">{{ $row->name }}</a>
-                                        @if($row->email)
-                                            <div class="small text-muted">{{ $row->email }}</div>
-                                        @endif
+                                        <div class="sr-who">
+                                            <span class="sr-avatar" data-initials="{{ $initials }}"></span>
+                                            <div>
+                                                <div class="nm">{{ $row->name }}</div>
+                                                @if($row->email)<div class="em">{{ $row->email }}</div>@endif
+                                            </div>
+                                        </div>
                                     </td>
                                     <td>{{ $row->country_name ?? '—' }}</td>
                                     <td>{{ $row->fellowship_type ?? '—' }}</td>
-                                    <td>
-                                        <span class="status-pill status-{{ $row->effective_status }}">
-                                            {{ $row->effective_status === 'None' ? 'No Record' : $row->effective_status }}
-                                        </span>
+                                    <td data-order="{{ $row->effective_status }}">
+                                        <span class="sr-pill s-{{ $row->effective_status }}">{{ $row->effective_status === 'None' ? 'No Record' : $row->effective_status }}</span>
                                     </td>
-                                    <td>{{ $row->amount_due !== null ? number_format($row->amount_due, 2) : '—' }}</td>
-                                    <td>{{ $row->amount_paid !== null ? number_format($row->amount_paid, 2) : '—' }}</td>
-                                    <td>{{ $row->outstanding !== null ? number_format($row->outstanding, 2) : '—' }}</td>
-                                    <td>{{ $row->date_paid ? \Carbon\Carbon::parse($row->date_paid)->format('d M Y') : '—' }}</td>
-                                    <td>{{ (!$row->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $row->mode_of_payment)) ? '—' : $row->mode_of_payment }}</td>
+                                    <td class="num" data-order="{{ $row->amount_due ?? -1 }}">{{ $row->amount_due !== null ? number_format($row->amount_due, 2) : '—' }}</td>
+                                    <td class="num" data-order="{{ $row->amount_paid ?? -1 }}">{{ $row->amount_paid !== null ? number_format($row->amount_paid, 2) : '—' }}</td>
+                                    <td class="num" data-order="{{ $row->outstanding ?? -1 }}">{{ $row->outstanding !== null ? number_format($row->outstanding, 2) : '—' }}</td>
+                                    <td data-order="{{ $row->date_paid ?? '' }}">{{ $row->date_paid ? \Carbon\Carbon::parse($row->date_paid)->format('d M Y') : '—' }}</td>
+                                    <td>{{ $mode ?? '—' }}</td>
+                                    <td class="no-export text-right"><i class="fas fa-chevron-right sr-go"></i></td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -177,6 +345,24 @@
             </div>
         </section>
     </div>
+</div>
+
+{{-- ── Fellow subscription drawer ── --}}
+<div class="sr-page" id="srDrawerRoot">
+    <div class="sr-backdrop" data-close></div>
+    <aside class="sr-drawer" role="dialog" aria-modal="true" aria-labelledby="srDrawerTitle" aria-hidden="true">
+        <div class="sr-dh">
+            <h5 id="srDrawerTitle">Fellow Subscription</h5>
+            <button type="button" class="sr-x" data-close aria-label="Close">&times;</button>
+        </div>
+        <div class="sr-db" id="srDrawerBody"></div>
+        <div class="sr-df">
+            <a href="#" class="btn btn-sm btn-sr-ghost" id="srProfileLink"><i class="far fa-user mr-1"></i>Full profile</a>
+            @if($canManage)
+            <a href="#" class="btn btn-sm btn-sr" id="srManageLink"><i class="fas fa-receipt mr-1"></i>Manage subscriptions</a>
+            @endif
+        </div>
+    </aside>
 </div>
 
 {{-- ── Send Reminder Modal ── --}}
@@ -236,22 +422,158 @@ COSECSA Secretariat</textarea>
 @push('scripts')
 <script>
 $(document).ready(function () {
+    var exportCols = { columns: ':not(.no-export)' };
     $('#subscriptionReportTable').DataTable({
-        dom: 'Bfrtip',
+        dom: 'Brtip',
         buttons: [
-            { extend: 'copyHtml5',  className: 'btn-sm', exportOptions: { columns: ':not(.no-export)' } },
-            { extend: 'csvHtml5',   className: 'btn-sm', title: 'annual_subscriptions_{{ $year }}', exportOptions: { columns: ':not(.no-export)' } },
-            { extend: 'excelHtml5', className: 'btn-sm', title: 'annual_subscriptions_{{ $year }}', exportOptions: { columns: ':not(.no-export)' } },
-            { extend: 'pdfHtml5',   className: 'btn-sm', title: 'Annual Subscription Report {{ $year }}', orientation: 'landscape', pageSize: 'A4', exportOptions: { columns: ':not(.no-export)' } },
-            { extend: 'print',      className: 'btn-sm', exportOptions: { columns: ':not(.no-export)' } }
+            { extend: 'copyHtml5',  className: 'btn-sm', exportOptions: exportCols },
+            { extend: 'csvHtml5',   className: 'btn-sm', title: 'annual_subscriptions_{{ $year }}', exportOptions: exportCols },
+            { extend: 'excelHtml5', className: 'btn-sm', title: 'annual_subscriptions_{{ $year }}', exportOptions: exportCols },
+            { extend: 'pdfHtml5',   className: 'btn-sm', title: 'Annual Subscription Report {{ $year }}', orientation: 'landscape', pageSize: 'A4', exportOptions: exportCols },
+            { extend: 'print',      className: 'btn-sm', exportOptions: exportCols }
         ],
         columnDefs: [
-            { orderable: false, targets: 0, render: function (data, type, row, meta) { return meta.row + 1; } }
+            { orderable: false, targets: [0, -1] },
+            { targets: 0, render: function (data, type, row, meta) { return meta.row + 1; } }
         ],
         pageLength: 25,
         order: []
     });
+
+    // Row click opens the drawer (delegated so it survives paging/sorting).
+    $('#subscriptionReportTable tbody').on('click', 'tr[data-fellow]', function () {
+        SubDrawer.open($(this).data('fellow'));
+    });
 });
+
+// ── Fellow subscription drawer ──────────────────────────────────────────
+var SubDrawer = (function () {
+    var root   = document.getElementById('srDrawerRoot');
+    var panel  = root.querySelector('.sr-drawer');
+    var body   = document.getElementById('srDrawerBody');
+    var year   = @json((string) $year);
+    var base   = @json(url('admin/fees/subscriptions/fellow'));
+    var subsBase = @json(url('admin/associates/fellows/subscriptions'));
+    var labels = { None: 'No Record' };
+    var current = 0;
+
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+    function money(n) {
+        return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function initials(name) {
+        var p = String(name || '').trim().split(/\s+/);
+        return ((p[0] || '').charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : '')).toUpperCase();
+    }
+    function pill(status) {
+        return '<span class="sr-pill s-' + esc(status) + '">' + esc(labels[status] || status) + '</span>';
+    }
+
+    function skeleton() {
+        var row = '<div class="sr-skel" style="height:14px;margin:14px 0;"></div>';
+        return '<div class="sr-id"><div class="sr-skel" style="width:54px;height:54px;border-radius:50%;"></div>'
+             + '<div style="flex:1"><div class="sr-skel" style="height:16px;width:70%;"></div><div class="sr-skel" style="height:12px;width:45%;margin-top:8px;"></div></div></div>'
+             + '<div class="sr-stats">' + '<div class="sr-skel" style="height:64px;border-radius:12px;"></div>'.repeat(3) + '</div>'
+             + row.repeat(3) + '<div class="sr-skel" style="height:220px;border-radius:12px;margin-top:22px;"></div>';
+    }
+
+    function render(d) {
+        var f = d.fellow, h = d.history || [];
+        var thisYear = h.find(function (r) { return r.year === year; });
+        var yrStatus = thisYear ? thisYear.status : 'None';
+
+        var avatar = f.photo
+            ? '<span class="sr-avatar has-img"><img src="' + esc(f.photo) + '" alt="" onerror="this.parentNode.classList.remove(\'has-img\');this.remove();"></span>'
+            : '<span class="sr-avatar"></span>';
+        var meta = [f.fellowship_type, f.programme].filter(Boolean).map(esc).join(' · ');
+
+        var html = '<div class="sr-id">' + avatar.replace('class="sr-avatar', 'data-initials="' + esc(initials(f.name)) + '" class="sr-avatar')
+                 + '<div><div class="nm">' + esc(f.name) + '</div>' + (meta ? '<div class="meta">' + meta + '</div>' : '') + '</div></div>';
+
+        html += '<div class="sr-stats">'
+              + '<div class="sr-stat s-' + esc(yrStatus) + '"><div class="sr-eyebrow">' + esc(year) + '</div><div class="v">' + esc(labels[yrStatus] || yrStatus) + '</div></div>'
+              + '<div class="sr-stat"><div class="sr-eyebrow">Total Paid</div><div class="v">' + money(d.total_paid) + '</div></div>'
+              + '<div class="sr-stat' + (d.total_owing > 0 ? ' s-Unpaid' : '') + '"><div class="sr-eyebrow">Owing</div><div class="v">' + money(d.total_owing) + '</div></div>'
+              + '</div>';
+
+        function line(icon, value, href) {
+            if (!value) return '<div><i class="' + icon + '"></i><span class="none">Not on file</span></div>';
+            var v = esc(value);
+            return '<div><i class="' + icon + '"></i>' + (href ? '<a href="' + esc(href) + '">' + v + '</a>' : '<span>' + v + '</span>') + '</div>';
+        }
+        html += '<div class="sr-eyebrow sr-sec">Contact</div><div class="sr-contact">'
+              + line('far fa-envelope', f.email, f.email ? 'mailto:' + f.email : null)
+              + line('fas fa-phone-alt', f.phone, f.phone ? 'tel:' + String(f.phone).replace(/\s+/g, '') : null)
+              + line('fas fa-map-marker-alt', f.country)
+              + '</div>';
+
+        html += '<div class="sr-eyebrow sr-sec">Subscription History</div><div class="sr-hist">';
+        if (!h.length) {
+            html += '<div class="sr-empty"><i class="far fa-folder-open d-block mb-2" style="font-size:1.4rem;"></i>No subscription records yet.</div>';
+        } else {
+            h.forEach(function (r) {
+                var partial = r.amount_due != null && r.amount_paid != null && r.amount_paid < r.amount_due && r.status !== 'Waived';
+                var sub = [];
+                if (r.date_paid) sub.push(new Date(r.date_paid).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }));
+                if (r.mode) sub.push(esc(r.mode));
+                html += '<div class="sr-hrow' + (r.year === year ? ' current' : '') + '">'
+                      + '<div class="left"><span class="yr">' + esc(r.year) + '</span>' + pill(r.status)
+                      + (sub.length ? '<small>' + sub.join(' · ') + '</small>' : '') + '</div>'
+                      + '<span class="amt">' + (r.amount_paid != null ? money(r.amount_paid) : '—')
+                      + (partial ? '<small>of ' + money(r.amount_due) + '</small>' : '') + '</span></div>';
+            });
+        }
+        html += '<div class="sr-hfoot"><span class="sr-eyebrow">Total Paid</span><strong>' + money(d.total_paid) + '</strong></div>';
+        if (d.total_owing > 0) {
+            html += '<div class="sr-hfoot"><span class="sr-eyebrow">Outstanding</span><strong style="color:var(--st-Unpaid-fg);">' + money(d.total_owing) + '</strong></div>';
+        }
+        html += '</div>';
+
+        if (!thisYear) {
+            html += '<div class="sr-owing mt-3"><i class="fas fa-info-circle"></i><span>No ' + esc(year) + ' subscription on record, so this fellow is counted as owing.</span></div>';
+        }
+
+        body.innerHTML = html;
+        document.getElementById('srProfileLink').href = f.profile_url;
+        var manage = document.getElementById('srManageLink');
+        if (manage) manage.href = subsBase + '/' + f.id;
+    }
+
+    function open(id) {
+        current = id;
+        body.innerHTML = skeleton();
+        document.getElementById('srProfileLink').href = '#';
+        root.classList.add('sr-open');
+        panel.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        panel.querySelector('.sr-x').focus();
+
+        fetch(base + '/' + encodeURIComponent(id), { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(function (d) { if (current === id) render(d); })
+            .catch(function () {
+                if (current !== id) return;
+                body.innerHTML = '<div class="sr-empty"><i class="fas fa-exclamation-triangle d-block mb-2" style="font-size:1.4rem;color:var(--st-Unpaid-fg);"></i>'
+                               + 'Couldn\'t load this fellow\'s subscriptions. <a href="#" onclick="SubDrawer.open(' + Number(id) + ');return false;">Try again</a></div>';
+            });
+    }
+
+    function close() {
+        current = 0;
+        root.classList.remove('sr-open');
+        panel.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    root.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && root.classList.contains('sr-open')) close(); });
+
+    return { open: open, close: close };
+})();
 
 // Insert a token marker into the reminder body at the cursor.
 function insertToken(el) {

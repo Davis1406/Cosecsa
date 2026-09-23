@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+### Changed (2026-09-23) — Subscription Report redesign + per-fellow subscription drawer
+- Rebuilt `admin/fees/subscriptions/report`. The gradient hero is gone. The page now has a flat header with a year picker and a "Remind N owing" button, a **Collected** card (collected vs billed, with a progress bar), and five **status tiles** (Paid / Partial / Unpaid / No Record / Waived). Each tile shows its share of fellows and filters the table when clicked (click again to clear). Under the tiles are a status-distribution bar and an owing banner.
+- The table now sits in one card, with the search / status / country filters in its toolbar (still server-side). Rows show an initials avatar, soft status pills and right-aligned money columns. Copy/CSV/Excel/PDF/Print export is unchanged; the avatar uses a CSS `data-initials` pseudo-element so exports stay clean.
+- **Clicking any row opens a slide-in drawer** (modelled on the voting app's Member Profile panel) with:
+  - three tiles: this year's status, Total Paid, Owing
+  - contact details: email, phone, country
+  - the fellow's full **Subscription History**: a row per year with status pill, amount, date/mode, and "of $X" for partial payments
+  - Total Paid / Outstanding footers
+  - links to the full profile and (for `fees.manage`) the fellow's subscriptions page
+
+  Supports dark mode; closes with Esc or a backdrop click.
+- New JSON route `GET admin/fees/subscriptions/fellow/{id}` (`FeesController::subscriptionFellow()`) feeds the drawer. It reuses the existing `fellows/{id}/detail` API endpoint, so **no cosecsa-api change or coordinated deploy is needed**. It lives under `admin/fees`, so `fees.view` is enough to use it.
+- **Files:** `app/Http/Controllers/FeesController.php`, `routes/web.php`, `resources/views/admin/fees/subscription_report.blade.php`.
+
 ### Added (2026-09-23) — Annual Subscription Report per year + reminder emails
 - New Fees subpage at `admin/fees/subscriptions/report` (named route `admin.fees.subscriptions.report`): every fellow's payment status for a chosen year, including fellows with **no subscription record at all** (shown as "No Record", treated as owing — many fellows simply never had a record created).
 - Summary tiles (total fellows, Paid/Partial/Unpaid/Waived/No Record counts, Owing, due/collected/outstanding USD), filters (year, status, country, search), DataTable with copy/CSV/Excel/PDF/print export, and click-through to each fellow's subscription tab.

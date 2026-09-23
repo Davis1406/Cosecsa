@@ -379,6 +379,7 @@ Route::put('admin/fees/types/{id}',           [FeesController::class, 'updateFee
 Route::delete('admin/fees/types/{id}',        [FeesController::class, 'destroyFeeType'])->name('admin.fees.types.destroy');
 Route::get('admin/fees/subscriptions/report', [FeesController::class, 'subscriptionReport'])->name('admin.fees.subscriptions.report');
 Route::post('admin/fees/subscriptions/remind', [FeesController::class, 'sendSubscriptionReminders'])->name('admin.fees.subscriptions.remind');
+Route::get('admin/fees/subscriptions/fellow/{id}', [FeesController::class, 'subscriptionFellow'])->name('admin.fees.subscriptions.fellow');
 
 // Fellow Labels Settings (Admin)
 Route::get('admin/settings/fellow-labels',          [FellowLabelController::class,'index'])->name('admin.settings.fellow-labels');
