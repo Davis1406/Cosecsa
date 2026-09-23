@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixed (2026-09-23) — Tasks assigned in a chat weren't visible in that chat
+- Reported: the "Deliverables" group (`messages/24`) seemed to have activity under Messages, but opening the group showed "No messages yet". Cause: the sidebar **Messages** badge is *unread messages + pending tasks* (`layout/header.blade.php`), and the group's activity was 2 tasks created with **Assign Task**. Tasks live in the separate `tasks` table and were only listed under My Tasks; the thread view never loaded them, and assigning one posted nothing to the chat. There were no hidden or lost messages (verified: `poll-summary` showed 0 unread, 2 pending tasks).
+- The thread now shows a collapsible **Tasks** panel above the chat, listing that conversation's tasks: title, description, who it's for, who assigned it, and due date (flagged when overdue). Open tasks come first. The assignee or creator can change status inline (same `messages/tasks/{id}/status` endpoint as My Tasks); other members see a status badge. This also covers tasks created before this change.
+- **Assign Task** now also posts a chat note ("Assigned a task to <name>: "<title>" (due <date>)") from the assigner, and bumps the conversation's `last_message_at`. The task therefore appears in the conversation, its list preview, and the assignee's unread count.
+- **Files:** `app/Http/Controllers/MessagingController.php` (`show()` loads tasks), `app/Http/Controllers/TaskController.php` (`store()` posts the note), `resources/views/messaging/show.blade.php`.
+
 ### Changed (2026-09-23) — Subscription Report: view several years at once
 - The header year dropdown is now a **multi-select year picker** (tick years → Apply; Select all / Clear all). URLs use `?years[]=2026&years[]=2025…`; old `?year=2026` links still work.
 - **One year selected:** the page looks exactly as before.

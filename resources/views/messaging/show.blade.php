@@ -59,6 +59,23 @@
     .chat-input-group .btn:hover { background:rgba(160,38,38,.08) !important; }
     .chat-input-group .btn-send { color:#fff; background:#a02626 !important; border-radius:50% !important; width:38px; height:38px; padding:0; margin:4px; display:flex; align-items:center; justify-content:center; }
     .chat-input-group .btn-send:hover { background:#8a1f1f !important; }
+
+    /* ── Conversation tasks panel ── */
+    .thread-tasks { border:none; border-radius:14px; box-shadow:0 2px 14px rgba(0,0,0,.07); margin-bottom:14px; }
+    .thread-tasks .card-header { background:transparent; border-bottom:1px solid #ececec; padding:10px 16px; cursor:pointer; }
+    .thread-tasks .tt-count { background:#a02626; color:#fff; border-radius:99px; font-size:.72rem; padding:1px 8px; margin-left:6px; }
+    .thread-task { display:flex; align-items:center; gap:12px; padding:10px 16px; border-bottom:1px solid #f0f0f0; }
+    .thread-task:last-child { border-bottom:none; }
+    .thread-task .tt-main { flex:1; min-width:0; }
+    .thread-task .tt-title { font-weight:600; }
+    .thread-task.done .tt-title { text-decoration:line-through; color:#999; }
+    .thread-task .tt-meta, .thread-task .tt-desc { font-size:.8rem; color:#6b7280; }
+    .thread-task .tt-desc { white-space:pre-line; }
+    .thread-task .tt-overdue { color:#c62828; font-weight:600; }
+    .thread-task select { width:130px; }
+    body.dark-mode .thread-tasks .card-header { border-bottom-color:#374151; }
+    body.dark-mode .thread-task { border-bottom-color:#374151; }
+    body.dark-mode .thread-task .tt-meta, body.dark-mode .thread-task .tt-desc { color:#9ca3af; }
   </style>
   <div class="content-wrapper">
     <section class="content-header">
@@ -109,6 +126,48 @@
     <section class="content">
       <div class="container-fluid">
         @include('_message')
+
+        @if($tasks->isNotEmpty())
+          @php $openTasks = $tasks->where('status', '!=', 'done')->count(); @endphp
+          <div class="card thread-tasks">
+            <div class="card-header d-flex align-items-center" data-toggle="collapse" data-target="#threadTasksBody" aria-expanded="true">
+              <strong><i class="fas fa-tasks mr-1" style="color:#a02626;"></i> Tasks</strong>
+              <span class="tt-count">{{ $openTasks }} open</span>
+              <span class="ml-2 text-muted" style="font-size:.8rem;">{{ $tasks->count() }} total</span>
+              <a href="{{ url('messages/tasks') }}" class="ml-auto small" onclick="event.stopPropagation()">My Tasks</a>
+            </div>
+            <div id="threadTasksBody" class="collapse show">
+              @foreach($tasks as $t)
+                @php
+                  $canEdit = in_array(Auth::id(), [$t->assigned_to, $t->created_by]);
+                  $due = $t->due_date ? \Carbon\Carbon::parse($t->due_date) : null;
+                  $overdue = $due && $t->status !== 'done' && $due->isPast() && !$due->isToday();
+                @endphp
+                <div class="thread-task {{ $t->status === 'done' ? 'done' : '' }}" data-task-row="{{ $t->id }}">
+                  <div class="tt-main">
+                    <div class="tt-title">{{ $t->title }}</div>
+                    @if($t->description)<div class="tt-desc">{{ $t->description }}</div>@endif
+                    <div class="tt-meta">
+                      For <strong>{{ $t->assignee->name ?? '—' }}</strong> · from {{ $t->creator->name ?? '—' }}
+                      @if($due) · <span class="{{ $overdue ? 'tt-overdue' : '' }}">due {{ $due->format('d M Y') }}{{ $overdue ? ' (overdue)' : '' }}</span>@endif
+                    </div>
+                  </div>
+                  @if($canEdit)
+                    <select class="form-control form-control-sm thread-task-status" data-task-id="{{ $t->id }}" aria-label="Task status">
+                      <option value="pending" {{ $t->status==='pending'?'selected':'' }}>Pending</option>
+                      <option value="in_progress" {{ $t->status==='in_progress'?'selected':'' }}>In Progress</option>
+                      <option value="done" {{ $t->status==='done'?'selected':'' }}>Done</option>
+                    </select>
+                  @else
+                    <span class="badge {{ $t->status==='done'?'badge-success':($t->status==='in_progress'?'badge-warning':'badge-secondary') }}">
+                      {{ ucfirst(str_replace('_', ' ', $t->status)) }}
+                    </span>
+                  @endif
+                </div>
+              @endforeach
+            </div>
+          </div>
+        @endif
 
         <div class="card chat-card">
           <div class="card-body" style="max-height:520px; overflow-y:auto;" id="threadBody"
@@ -250,6 +309,24 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  // ── Task status changes from the thread's Tasks panel ────────────────
+  document.querySelectorAll('.thread-task-status').forEach(function (sel) {
+    let previous = sel.value;
+    sel.addEventListener('change', function () {
+      fetch(`{{ url('messages/tasks') }}/${sel.dataset.taskId}/status`, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: sel.value }),
+      })
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(() => {
+          previous = sel.value;
+          sel.closest('.thread-task').classList.toggle('done', sel.value === 'done');
+        })
+        .catch(() => { sel.value = previous; alert('Could not update task status.'); });
+    });
+  });
+
   const box = document.getElementById('threadBody');
   const conversationId = box.dataset.conversationId;
   if (box) box.scrollTop = box.scrollHeight;

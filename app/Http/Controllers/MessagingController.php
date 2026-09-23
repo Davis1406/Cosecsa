@@ -95,9 +95,17 @@ class MessagingController extends Controller
             ->where('user_id', Auth::id())
             ->update(['last_read_at' => now()]);
 
+        // Tasks live in their own table; surface them in the thread so a task
+        // assigned here is visible to the group, not only under My Tasks.
+        $tasks = \App\Models\Task::with(['assignee', 'creator'])
+            ->where('conversation_id', $id)
+            ->orderByRaw("status = 'done'")->orderByRaw('due_date IS NULL')->orderBy('due_date')->orderByDesc('id')
+            ->get();
+
         return view('messaging.show', [
             'header_title'  => 'Messages',
             'conversation'  => $conversation,
+            'tasks'         => $tasks,
             'title'         => $this->conversationTitle($conversation, Auth::id()),
         ]);
     }

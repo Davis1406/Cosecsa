@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Conversation;
 use App\Models\ConversationParticipant;
+use App\Models\Message;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -48,6 +51,17 @@ class TaskController extends Controller
             'description'     => $request->description,
             'due_date'        => $request->due_date,
         ]);
+
+        // Post a note in the chat so the task shows up in the conversation,
+        // its list preview, and the assignee's unread count.
+        $assignee = User::find($request->assigned_to);
+        $note = 'Assigned a task to ' . ($assignee->name ?? 'a member') . ': "' . $request->title . '"'
+              . ($request->due_date ? ' (due ' . \Carbon\Carbon::parse($request->due_date)->format('d M Y') . ')' : '');
+        Message::create(['conversation_id' => $conversationId, 'sender_id' => Auth::id(), 'body' => $note]);
+        Conversation::where('id', $conversationId)->update(['last_message_at' => now()]);
+        ConversationParticipant::where('conversation_id', $conversationId)
+            ->where('user_id', Auth::id())
+            ->update(['last_read_at' => now()]);
 
         return redirect("messages/{$conversationId}")->with('success', 'Task assigned');
     }
