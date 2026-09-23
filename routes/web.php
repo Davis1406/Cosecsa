@@ -380,6 +380,7 @@ Route::delete('admin/fees/types/{id}',        [FeesController::class, 'destroyFe
 Route::get('admin/fees/subscriptions/report', [FeesController::class, 'subscriptionReport'])->name('admin.fees.subscriptions.report');
 Route::post('admin/fees/subscriptions/remind', [FeesController::class, 'sendSubscriptionReminders'])->name('admin.fees.subscriptions.remind');
 Route::get('admin/fees/subscriptions/fellow/{id}', [FeesController::class, 'subscriptionFellow'])->name('admin.fees.subscriptions.fellow');
+Route::get('admin/fees/subscriptions/export', [FeesController::class, 'exportSubscriptions'])->name('admin.fees.subscriptions.export');
 
 // Fellow Labels Settings (Admin)
 Route::get('admin/settings/fellow-labels',          [FellowLabelController::class,'index'])->name('admin.settings.fellow-labels');

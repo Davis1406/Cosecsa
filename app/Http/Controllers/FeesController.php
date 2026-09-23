@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\SubscriptionReportExport;
 use App\Services\ApiClient;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class FeesController extends Controller
 {
@@ -156,6 +158,59 @@ class FeesController extends Controller
             'summary'      => (array) ($data->summary ?? []),
             'rows'         => collect($data->rows ?? []),
         ]);
+    }
+
+    // Multi-year Excel download: one report API call per selected year,
+    // bundled into a Summary sheet + one sheet per year.
+    public function exportSubscriptions(Request $request)
+    {
+        $request->validate([
+            'years'   => 'required|array|min:1|max:20',
+            'years.*' => 'integer|min:1990|max:2099|distinct',
+        ], ['years.required' => 'Select at least one year to download.']);
+
+        $years   = collect($request->input('years'))->map(fn ($y) => (int) $y)->sortDesc()->values();
+        $filters = $request->boolean('apply_filters') ? $request->only(['status', 'country_id', 'q']) : [];
+
+        $summaryRows = [];
+        $yearRows    = [];
+
+        foreach ($years as $year) {
+            $response = $this->api->get('fees/subscriptions/report', array_filter(['year' => $year] + $filters));
+
+            if ($response->failed()) {
+                return back()->with('error', "Failed to load the {$year} subscription report — nothing was downloaded.");
+            }
+
+            $data = $response->object();
+            $s    = (array) ($data->summary ?? []);
+
+            $summaryRows[] = [
+                $year, $s['total_fellows'] ?? 0, $s['paid'] ?? 0, $s['partial'] ?? 0, $s['unpaid'] ?? 0,
+                $s['none'] ?? 0, $s['waived'] ?? 0, $s['owing'] ?? 0,
+                $s['amount_due'] ?? 0, $s['amount_collected'] ?? 0, $s['outstanding'] ?? 0,
+            ];
+
+            $yearRows[$year] = collect($data->rows ?? [])->map(fn ($r) => [
+                trim((string) $r->name),
+                $r->email,
+                $r->country_name,
+                $r->fellowship_type,
+                $r->effective_status === 'None' ? 'No Record' : $r->effective_status,
+                $r->amount_due,
+                $r->amount_paid,
+                $r->outstanding,
+                $r->date_paid ? \Carbon\Carbon::parse($r->date_paid)->format('Y-m-d') : null,
+                (! $r->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $r->mode_of_payment)) ? null : $r->mode_of_payment,
+            ])->all();
+        }
+
+        $span = $years->count() === 1 ? $years->first() : $years->last() . '-' . $years->first();
+
+        return Excel::download(
+            new SubscriptionReportExport($summaryRows, $yearRows),
+            "annual_subscriptions_{$span}.xlsx"
+        );
     }
 
     // JSON for the report page's fellow drawer: contact details + every

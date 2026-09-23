@@ -163,6 +163,12 @@
                animation:srsk 1.2s infinite; border-radius:8px; }
     @keyframes srsk { to { background-position:-200% 0; } }
 
+    .export-year input { display:none; }
+    .export-year span { display:inline-block; min-width:64px; text-align:center; padding:6px 12px; border-radius:8px; cursor:pointer;
+                        border:1px solid #d6dde6; font-weight:600; user-select:none; transition:all .1s; }
+    .export-year input:checked + span { background:#a02626; border-color:#a02626; color:#fff; }
+    body.dark-mode .export-year span { border-color:#4a5568; }
+
     .token-chip { cursor:pointer; border:1px solid #a02626; color:#a02626; background:#fff; border-radius:4px;
                   font-size:.72rem; padding:2px 8px; margin:0 3px 3px 0; }
     .token-chip:hover { background:#a02626; color:#fff; }
@@ -339,6 +345,61 @@
     </aside>
 </div>
 
+{{-- ── Multi-year Excel download ── --}}
+@php $hasFilters = !empty($filters['q']) || !empty($filters['status']) || !empty($filters['country_id']); @endphp
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="GET" action="{{ route('admin.fees.subscriptions.export') }}" id="exportForm">
+                <div class="modal-header" style="border-bottom:2px solid #a02626;">
+                    <h5 class="modal-title" style="color:#a02626;"><i class="fas fa-file-excel mr-1"></i>Download Excel</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="font-weight-bold small mb-0">Years to include</label>
+                        <a href="#" class="small" id="exportToggleAll">Select all</a>
+                    </div>
+                    <div class="d-flex flex-wrap" style="gap:8px;">
+                        @foreach($years as $y)
+                            <label class="export-year mb-0">
+                                <input type="checkbox" name="years[]" value="{{ $y }}" {{ (string)$year === (string)$y ? 'checked' : '' }}>
+                                <span>{{ $y }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                    <div class="small text-muted mt-3">
+                        One workbook: a <strong>Summary</strong> sheet (one row per year) plus a sheet per year listing every fellow.
+                    </div>
+                    @if($hasFilters)
+                        <div class="custom-control custom-checkbox mt-3">
+                            <input type="checkbox" class="custom-control-input" id="exportApplyFilters" name="apply_filters" value="1" checked>
+                            <label class="custom-control-label small" for="exportApplyFilters">
+                                Apply current filters
+                                <span class="text-muted">({{ collect([
+                                    !empty($filters['status']) ? ($filters['status'] === 'None' ? 'No Record' : $filters['status']) : null,
+                                    !empty($filters['country_id']) ? optional($countries->firstWhere('id', $filters['country_id']))->country_name : null,
+                                    !empty($filters['q']) ? '“' . $filters['q'] . '”' : null,
+                                ])->filter()->implode(', ') }})</span>
+                            </label>
+                        </div>
+                        @foreach(['status','country_id','q'] as $keep)
+                            @if(!empty($filters[$keep]))<input type="hidden" name="{{ $keep }}" value="{{ $filters[$keep] }}">@endif
+                        @endforeach
+                    @endif
+                    <div class="text-danger small mt-2 d-none" id="exportNoYear">Select at least one year.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn font-weight-bold" style="background:#a02626;border-color:#a02626;color:#fff;">
+                        <i class="fas fa-download mr-1"></i>Download <span id="exportCount"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {{-- ── Send Reminder Modal ── --}}
 @if (Auth::user()->hasPermission('fees.manage') && ($summary['owing'] ?? 0) > 0)
 <div class="modal fade" id="reminderModal" tabindex="-1">
@@ -402,7 +463,7 @@ $(document).ready(function () {
         buttons: [
             { extend: 'copyHtml5',  className: 'btn-sm', exportOptions: exportCols },
             { extend: 'csvHtml5',   className: 'btn-sm', title: 'annual_subscriptions_{{ $year }}', exportOptions: exportCols },
-            { extend: 'excelHtml5', className: 'btn-sm', title: 'annual_subscriptions_{{ $year }}', exportOptions: exportCols },
+            { text: 'Excel', className: 'btn-sm', action: function () { $('#exportModal').modal('show'); } },
             { extend: 'pdfHtml5',   className: 'btn-sm', title: 'Annual Subscription Report {{ $year }}', orientation: 'landscape', pageSize: 'A4', exportOptions: exportCols },
             { extend: 'print',      className: 'btn-sm', exportOptions: exportCols }
         ],
@@ -419,6 +480,33 @@ $(document).ready(function () {
         SubDrawer.open($(this).data('fellow'));
     });
 });
+
+// ── Multi-year Excel download modal ─────────────────────────────────────
+(function () {
+    var form = document.getElementById('exportForm');
+    var boxes = form.querySelectorAll('input[name="years[]"]');
+    var toggle = document.getElementById('exportToggleAll');
+    function refresh() {
+        var n = Array.prototype.filter.call(boxes, function (b) { return b.checked; }).length;
+        document.getElementById('exportCount').textContent = n ? '(' + n + ' year' + (n === 1 ? '' : 's') + ')' : '';
+        toggle.textContent = n === boxes.length ? 'Clear all' : 'Select all';
+        if (n) document.getElementById('exportNoYear').classList.add('d-none');
+        return n;
+    }
+    boxes.forEach(function (b) { b.addEventListener('change', refresh); });
+    toggle.addEventListener('click', function (e) {
+        e.preventDefault();
+        var all = refresh() !== boxes.length;
+        boxes.forEach(function (b) { b.checked = all; });
+        refresh();
+    });
+    form.addEventListener('submit', function (e) {
+        if (!refresh()) { e.preventDefault(); document.getElementById('exportNoYear').classList.remove('d-none'); return; }
+        // File downloads don't navigate, so close the modal once the request is sent.
+        setTimeout(function () { $('#exportModal').modal('hide'); }, 300);
+    });
+    refresh();
+})();
 
 // ── Fellow subscription drawer ──────────────────────────────────────────
 var SubDrawer = (function () {

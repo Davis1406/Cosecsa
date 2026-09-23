@@ -4,6 +4,22 @@
 
 ## [Unreleased]
 
+### Added (2026-09-23) — Multi-year Excel download on the Subscription Report
+- The report's **Excel** button now opens a year picker (current year pre-ticked, Select all / Clear all) instead of exporting only the loaded table. It downloads one workbook, `annual_subscriptions_{from}-{to}.xlsx`, containing:
+  - a **Summary** sheet with one row per year: total fellows, Paid/Partial/Unpaid/No Record/Waived/Owing counts, and due/collected/outstanding USD
+  - **one sheet per year** listing every fellow (money columns are real numbers; bold, frozen header row)
+- When the page has status/country/search filters active, an "Apply current filters" option (on by default) carries them into the export.
+- New route `GET admin/fees/subscriptions/export` (`FeesController::exportSubscriptions()`, `fees.view`). It calls the existing `fees/subscriptions/report` API once per year (max 20 years), so **no cosecsa-api change is needed**. New export classes `App\Exports\SubscriptionReportExport` (multi-sheet) and `SubscriptionSheet` (uses `WithStrictNullComparison` so `0` values aren't written as blank cells).
+- Copy/CSV/PDF/Print still export the table currently on screen.
+- **Files:** `app/Http/Controllers/FeesController.php`, `app/Exports/{SubscriptionReportExport,SubscriptionSheet}.php`, `routes/web.php`, `resources/views/admin/fees/subscription_report.blade.php`.
+
+### Added (2026-09-23) — Global search: recent searches (last 10)
+- Focusing the navbar search box while it's empty now shows a **Recent searches** dropdown (up to 10, newest first). Clicking one re-runs it, × removes a single entry, and "Clear" empties the list.
+- A search is saved when it's committed (Enter, the search icon, or opening one of its results), not on every debounced keystroke, so partial typing doesn't fill the list. Repeating a search moves it to the top instead of duplicating it (case-insensitive).
+- Stored in the browser's `localStorage` under `gs_recent_{user id}`: per-browser, per-admin (a shared machine won't mix two admins' histories), nothing stored server-side. All reads and writes are wrapped in try/catch, so private windows just show no history.
+- Also: a late-arriving search response no longer overwrites the dropdown if the box has been cleared or edited since.
+- **Files:** `resources/views/layout/header.blade.php`.
+
 ### Removed (2026-09-23) — Subscription Report: "Collected in {year}" card
 - Removed the collected-vs-billed summary card from `admin/fees/subscriptions/report` at Davis's request (its markup, CSS, and view variables). The status tiles now take the full width.
 - **Files:** `resources/views/admin/fees/subscription_report.blade.php`.

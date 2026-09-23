@@ -230,6 +230,20 @@ document.addEventListener('DOMContentLoaded', function () {
 #globalSearchResults .gs-empty { padding:12px;color:#888;font-size:.85rem;text-align:center; }
 #globalSearchResults .gs-loading { padding:12px;color:#888;font-size:.85rem;text-align:center; }
 .navbar-search-wrapper input:focus { box-shadow:none;border-color:#a02626; }
+#globalSearchResults .gs-recent-head { display:flex;justify-content:space-between;align-items:center;padding:8px 12px 4px; }
+#globalSearchResults .gs-recent-head span { font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#888; }
+#globalSearchResults .gs-recent-head a { font-size:.75rem;color:#a02626;cursor:pointer; }
+#globalSearchResults .gs-recent { display:flex;align-items:center;padding:7px 12px;font-size:.85rem;color:#333;cursor:pointer; }
+#globalSearchResults .gs-recent:hover, #globalSearchResults .gs-recent.active { background:#fdf0f0;color:#a02626; }
+#globalSearchResults .gs-recent .fa-history { color:#aaa;margin-right:10px;font-size:.8rem; }
+#globalSearchResults .gs-recent .gs-q { flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+#globalSearchResults .gs-recent .gs-del { color:#aaa;padding:0 4px;border:0;background:none;line-height:1;visibility:hidden; }
+#globalSearchResults .gs-recent:hover .gs-del { visibility:visible; }
+#globalSearchResults .gs-recent .gs-del:hover { color:#a02626; }
+body.dark-mode #globalSearchResults .gs-recent { color:#e2e8f0; }
+body.dark-mode #globalSearchResults .gs-recent:hover, body.dark-mode #globalSearchResults .gs-recent.active { background:#3a2a3a;color:#f48a8a; }
+body.dark-mode #globalSearchResults .gs-recent-head span { color:#94a3b8; }
+body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
 </style>
 @push('scripts')
 {{-- Global search — deferred until after jQuery loads --}}
@@ -239,20 +253,80 @@ document.addEventListener('DOMContentLoaded', function () {
     var $input  = $('#globalSearchInput');
     var $box    = $('#globalSearchResults');
 
+    // ── Recent searches (max 10, newest first) ─────────────────────────────
+    // Per-browser convenience only, keyed by user so a shared machine doesn't
+    // mix two admins' histories. Saved when a search is committed (Enter,
+    // search button, or clicking a result) — not on every debounced keystroke.
+    var RECENT_KEY = 'gs_recent_{{ Auth::id() }}';
+    var RECENT_MAX = 10;
+
+    function loadRecent() {
+        try { var v = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); return Array.isArray(v) ? v : []; }
+        catch (e) { return []; }
+    }
+    function storeRecent(list) {
+        try { localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_MAX))); } catch (e) {}
+    }
+    function saveRecent(q) {
+        q = $.trim(q);
+        if (q.length < 2) return;
+        var list = loadRecent().filter(function (x) { return x.toLowerCase() !== q.toLowerCase(); });
+        list.unshift(q);
+        storeRecent(list);
+    }
+    function showRecent() {
+        var list = loadRecent();
+        if (!list.length) { $box.hide().empty(); return; }
+        var html = '<div class="gs-recent-head"><span>Recent searches</span><a data-gs-clear>Clear</a></div>';
+        list.forEach(function (q, i) {
+            html += '<div class="gs-recent" data-gs-q="' + escHtml(q) + '">'
+                  + '<i class="fas fa-history"></i><span class="gs-q">' + escHtml(q) + '</span>'
+                  + '<button type="button" class="gs-del" data-gs-del="' + i + '" title="Remove">&times;</button></div>';
+        });
+        $box.html(html).show();
+    }
+
+    $input.on('focus click', function () {
+        if ($.trim($input.val()).length < 2) showRecent();
+    });
+
+    $box.on('click', '[data-gs-q]', function (e) {
+        if ($(e.target).closest('[data-gs-del]').length) return;
+        var q = $(this).attr('data-gs-q');
+        $input.val(q);
+        saveRecent(q);
+        doSearch(q);
+    });
+    $box.on('click', '[data-gs-del]', function (e) {
+        e.stopPropagation();
+        var list = loadRecent();
+        list.splice(+$(this).attr('data-gs-del'), 1);
+        storeRecent(list);
+        showRecent();
+        $input.focus();
+    });
+    $box.on('click', '[data-gs-clear]', function (e) {
+        e.stopPropagation();
+        storeRecent([]);
+        $box.hide().empty();
+    });
+    // Opening a result counts as using that search.
+    $box.on('click', 'a.gs-item', function () { saveRecent($input.val()); });
+
     $input.on('input', function () {
         clearTimeout(timer);
         var q = $.trim($(this).val());
-        if (q.length < 2) { $box.hide().empty(); return; }
+        if (q.length < 2) { showRecent(); return; }
         timer = setTimeout(function () { doSearch(q); }, 300);
     });
 
     $('#globalSearchBtn').on('click', function () {
         var q = $.trim($input.val());
-        if (q.length >= 2) doSearch(q);
+        if (q.length >= 2) { saveRecent(q); doSearch(q); }
     });
 
     $input.on('keydown', function (e) {
-        if (e.key === 'Enter') { var q = $.trim($(this).val()); if (q.length >= 2) doSearch(q); }
+        if (e.key === 'Enter') { var q = $.trim($(this).val()); if (q.length >= 2) { saveRecent(q); doSearch(q); } }
         if (e.key === 'Escape') { $box.hide().empty(); }
     });
 
@@ -263,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function doSearch(q) {
         $box.html('<div class="gs-loading"><i class="fas fa-spinner fa-spin mr-1"></i> Searching…</div>').show();
         $.getJSON('{{ url("admin/global-search") }}', { q: q })
-            .done(function (data) { renderResults(data, q); })
+            .done(function (data) { if ($.trim($input.val()) === q) renderResults(data, q); })
             .fail(function () { $box.html('<div class="gs-empty">Search failed. Please try again.</div>'); });
     }
 
@@ -300,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function escHtml(s) {
-        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
 })();
 </script>
