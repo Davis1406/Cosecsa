@@ -50,6 +50,15 @@
     body.dark-mode .msg-deleted-bubble { background: #202c33 !important; color: #8696a0 !important; }
     #noMessagesPlaceholder { color: #54656f; }
 
+    /* ── Timestamps + day dividers ── */
+    .msg-meta { font-size: .74rem; margin-top: 2px; }
+    .chat-row .msg-meta, .chat-row .msg-meta .msg-time { color: #667781 !important; }
+    body.dark-mode .chat-row .msg-meta, body.dark-mode .chat-row .msg-meta .msg-time { color: #8696a0 !important; }
+    .day-sep { text-align: center; margin: 6px 0 14px; }
+    .day-sep span { display: inline-block; background: #fff; color: #54656f; font-size: .75rem; font-weight: 600;
+                    padding: 4px 12px; border-radius: 8px; box-shadow: 0 1px .5px rgba(11,20,26,.13); }
+    body.dark-mode .day-sep span { background: #182229; color: #8696a0; }
+
     /* ── Input footer ── */
     .chat-footer { background:#fff; border-top:1px solid #ececec; }
     body.dark-mode .chat-footer { border-top-color:#374151 !important; }
@@ -236,8 +245,8 @@
                     @endif
                   @endif
 
-                  <div class="text-muted text-right" style="font-size:.7rem;">
-                    <span class="msg-time">{{ $m->created_at->format('d M, H:i') }}</span>
+                  <div class="text-muted text-right msg-meta">
+                    <span class="msg-time" data-ts="{{ $m->created_at->toIso8601String() }}">{{ $m->created_at->copy()->setTimezone('Africa/Nairobi')->format('d M Y, H:i') }}</span>
                     <span class="msg-edited-tag font-italic" style="{{ ($m->edited_at && !$m->deleted_at) ? '' : 'display:none;' }}"> (edited)</span>
                   </div>
                 </div>
@@ -337,6 +346,49 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const box = document.getElementById('threadBody');
   const conversationId = box.dataset.conversationId;
+
+  // ── Dates: show every timestamp in the reader's local time, with
+  //    WhatsApp-style day dividers ("Today", "Yesterday", …) ───────────────
+  // Built by hand so months always read "Sep" (Intl gives "Sept" in some browsers).
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const pad = n => String(n).padStart(2, '0');
+  const timeFmt = { format: d => `${pad(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}` };
+  const fullFmt = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+  const dayFmt  = { format: d => `${new Intl.DateTimeFormat('en-GB', { weekday: 'short' }).format(d)}, ${pad(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()}` };
+  const wkFmt   = new Intl.DateTimeFormat('en-GB', { weekday: 'long' });
+  function fmtTime(iso) { return timeFmt.format(new Date(iso)); }
+  function dayKey(d) { return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); }
+  function dayLabel(d) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const that = new Date(d); that.setHours(0, 0, 0, 0);
+    const diff = Math.round((today - that) / 86400000);
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Yesterday';
+    if (diff > 1 && diff < 7) return wkFmt.format(d);
+    return dayFmt.format(d);
+  }
+  function refreshDates() {
+    box.querySelectorAll('.day-sep').forEach(el => el.remove());
+    let lastKey = null;
+    box.querySelectorAll('.chat-row').forEach(row => {
+      const t = row.querySelector('.msg-time[data-ts]');
+      if (!t) return;                          // e.g. a message still sending
+      const d = new Date(t.dataset.ts);
+      t.textContent = timeFmt.format(d);
+      t.title = fullFmt.format(d);
+      const key = dayKey(d);
+      if (key !== lastKey) {
+        const sep = document.createElement('div');
+        sep.className = 'day-sep';
+        sep.innerHTML = '<span></span>';
+        sep.firstChild.textContent = dayLabel(d);
+        row.before(sep);
+        lastKey = key;
+      }
+    });
+  }
+  refreshDates();
+
   if (box) box.scrollTop = box.scrollHeight;
 
   function escapeHtml(s) {
@@ -389,8 +441,8 @@ document.addEventListener('DOMContentLoaded', function () {
         </form>`;
       }
     }
-    html += `<div class="text-muted text-right" style="font-size:.7rem;">
-      <span class="msg-time">${m.created_at}</span>
+    html += `<div class="text-muted text-right msg-meta">
+      <span class="msg-time" ${m.created_iso ? `data-ts="${m.created_iso}"` : ''}>${m.created_iso ? fmtTime(m.created_iso) : escapeHtml(m.created_at)}</span>
       <span class="msg-edited-tag font-italic" style="${(m.edited && !m.deleted) ? '' : 'display:none;'}"> (edited)</span>
     </div></div>`;
     wrap.innerHTML = html;
@@ -408,6 +460,7 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
       box.appendChild(row);
     }
+    refreshDates();
     if (scroll) box.scrollTop = box.scrollHeight;
   }
 

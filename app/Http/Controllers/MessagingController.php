@@ -291,7 +291,8 @@ class MessagingController extends Controller
             'body'       => $m->deleted_at ? '' : $m->body,
             'deleted'    => (bool) $m->deleted_at,
             'edited'     => (bool) $m->edited_at,
-            'created_at' => $m->created_at->format('d M, H:i'),
+            'created_at' => $m->created_at->copy()->setTimezone('Africa/Nairobi')->format('d M Y, H:i'),
+            'created_iso'=> $m->created_at->toIso8601String(),
             'attachments'=> $m->attachments->map(fn ($a) => [
                 'kind' => $a->kind,
                 'url'  => asset('storage/' . $a->path),

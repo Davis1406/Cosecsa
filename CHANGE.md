@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Changed (2026-09-23) — Chat messages show full date + time (local time) with day dividers
+- Each message now shows its full date and time, e.g. `20 Sep 2026, 17:10`. Before, it showed a small `20 Sep, 14:10` with no year, and **in UTC**: the app timezone is UTC, so every chat time was 3 hours behind for East African staff. Hovering a time shows the full weekday/date.
+- Times are converted in the browser to **each reader's own timezone** (the page carries the ISO timestamp in `data-ts`). This is correct for staff in any country without touching the app-wide `APP_TIMEZONE`, which the rest of the system's stored dates depend on. Server-rendered and poll fallbacks use Africa/Nairobi (EAT).
+- WhatsApp-style **day dividers** between days: "Today", "Yesterday", the weekday for the past week, otherwise e.g. "Wed, 19 Aug 2026". They are recalculated as new messages arrive through the live poll.
+- `formatMessage()` (poll/send JSON) gains `created_iso`, and `created_at` now includes the year.
+- **Files:** `app/Http/Controllers/MessagingController.php`, `resources/views/messaging/show.blade.php`.
+
 ### Changed (2026-09-23) — Chat bubbles use WhatsApp-style contrasting colours
 - Received messages were white bubbles on a near-white background, so a conversation of mostly incoming messages read as one undifferentiated block. The thread now uses WhatsApp's palette:
   - light mode: beige wallpaper (`#efeae2`), **white** received bubbles, **soft green** (`#d9fdd3`) sent bubbles, dark text in both
