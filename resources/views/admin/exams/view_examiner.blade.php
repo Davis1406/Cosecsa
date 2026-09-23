@@ -140,7 +140,19 @@
                             <i class="fas fa-user mr-2"></i> Personal Details
                         </div>
                         <div class="card-body p-0">
+                            @php $ieUrl = url('admin/exams/examiner/'.$examiner->examin_id.'/quick-update'); @endphp
                             <table class="table table-sm mb-0 info-table">
+                                <tr>
+                                    <th><i class="fas fa-user text-muted mr-1"></i> Full Name</th>
+                                    <td>
+                                        <span class="ie-field" data-ie="name" data-ie-type="text" data-ie-label="Full Name"
+                                              data-ie-value="{{ $examiner->examiner_name ?? '' }}"
+                                              data-ie-url="{{ $ieUrl }}" data-ie-csrf="{{ csrf_token() }}">
+                                            <span class="ie-value">{{ $examiner->examiner_name }}</span>
+                                            <button class="ie-pencil" type="button" title="Edit name"><i class="fas fa-pen"></i></button>
+                                        </span>
+                                    </td>
+                                </tr>
                                 <tr>
                                     <th><i class="fas fa-envelope text-muted mr-1"></i> Email</th>
                                     <td>
@@ -201,7 +213,14 @@
                                 </tr>
                                 <tr>
                                     <th><i class="fas fa-id-card text-muted mr-1"></i> Examiner ID</th>
-                                    <td>{{ $examiner->examiner_id ?: '—' }}</td>
+                                    <td>
+                                        <span class="ie-field" data-ie="examiner_id" data-ie-type="text" data-ie-label="Examiner ID"
+                                              data-ie-value="{{ $examiner->examiner_id ?? '' }}"
+                                              data-ie-url="{{ $ieUrl }}" data-ie-csrf="{{ csrf_token() }}">
+                                            <span class="ie-value">{{ $examiner->examiner_id ?: '—' }}</span>
+                                            <button class="ie-pencil" type="button" title="Edit examiner ID"><i class="fas fa-pen"></i></button>
+                                        </span>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th><i class="fas fa-circle text-muted mr-1"></i> Status</th>
@@ -271,19 +290,35 @@
                                 </tr>
                                 <tr>
                                     <th><i class="fas fa-user-tie text-muted mr-1"></i> Role</th>
-                                    <td>{{ $examiner->role_id == 1 ? 'Examiner' : 'Observer' }}</td>
+                                    <td>
+                                        <span class="ie-field" data-ie="role_id" data-ie-type="select" data-ie-label="Role"
+                                              data-ie-value="{{ $examiner->role_id ?? '' }}"
+                                              data-ie-options="{{ json_encode($roleOptions) }}"
+                                              data-ie-url="{{ $ieUrl }}" data-ie-csrf="{{ csrf_token() }}">
+                                            <span class="ie-value">{{ $roleOptions[$examiner->role_id] ?? ($examiner->role_id == 1 ? 'Examiner' : 'Observer') }}</span>
+                                            <button class="ie-pencil" type="button" title="Edit role"><i class="fas fa-pen"></i></button>
+                                        </span>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th><i class="fas fa-gavel text-muted mr-1"></i> Designation</th>
                                     <td>
-                                        @if(!empty($examiner->examiner_designation))
-                                            <span class="badge badge-pill"
-                                                  style="background:#a02626;color:#fff;font-size:.78rem;padding:.3em .7em;">
-                                                {{ $examiner->examiner_designation }}
+                                        <span class="ie-field" data-ie="examiner_designation" data-ie-type="select" data-ie-label="Designation"
+                                              data-ie-value="{{ $examiner->examiner_designation ?? '' }}"
+                                              data-ie-options="{{ json_encode(['' => '— None —'] + $designationOptions->mapWithKeys(fn ($d) => [$d => $d])->all()) }}"
+                                              data-ie-url="{{ $ieUrl }}" data-ie-csrf="{{ csrf_token() }}">
+                                            <span class="ie-value">
+                                                @if(!empty($examiner->examiner_designation))
+                                                    <span class="badge badge-pill"
+                                                          style="background:#a02626;color:#fff;font-size:.78rem;padding:.3em .7em;">
+                                                        {{ $examiner->examiner_designation }}
+                                                    </span>
+                                                @else
+                                                    <span class="text-muted">—</span>
+                                                @endif
                                             </span>
-                                        @else
-                                            <span class="text-muted">—</span>
-                                        @endif
+                                            <button class="ie-pencil" type="button" title="Edit designation"><i class="fas fa-pen"></i></button>
+                                        </span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -618,8 +653,14 @@
                                 <i class="fas fa-hospital"></i>
                             </div>
                             <small class="d-block mt-2 text-muted">Hospital</small>
-                            <strong class="d-block text-truncate" style="font-size:.8rem;max-width:140px;margin:0 auto;">
-                                {{ ($examiner->hospital_name ?? '') ?: '—' }}
+                            <strong class="d-block" style="font-size:.8rem;max-width:180px;margin:0 auto;">
+                                <span class="ie-field" data-ie="hospital_name" data-ie-type="text" data-ie-label="Hospital"
+                                      data-ie-value="{{ $examiner->hospital_name ?? '' }}"
+                                      data-ie-url="{{ url('admin/exams/examiner/'.$examiner->examin_id.'/quick-update') }}"
+                                      data-ie-csrf="{{ csrf_token() }}">
+                                    <span class="ie-value">{{ ($examiner->hospital_name ?? '') ?: '—' }}</span>
+                                    <button class="ie-pencil" type="button" title="Edit hospital"><i class="fas fa-pen"></i></button>
+                                </span>
                             </strong>
                         </div>
                         <div class="col-6 col-md-3 mb-3">

@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Added (2026-09-23) — More inline-edit fields on the examiner profile
+- `admin/exams/view_examiner/{id}` gains pencil edits for **Full Name** (new row at the top of Personal Details), **Examiner ID**, **Role** (dropdown from `examiners_roles`), **Designation** (dropdown of the options managed under Settings, or none) and **Hospital** (Participation Summary). That makes 13 inline-editable fields, up from 8.
+- Validation lives in the API: Examiner ID must be unique (the error names who has it), and Hospital needs a participation record first. Errors appear in the pencil popover.
+- Left as they were: Groups, Shifts and Participation (per-year assignments with their own modals), Notes (existing memo editor), and documents/CV.
+- **Files:** `app/Http/Controllers/ExamsController.php` (passes `roleOptions`), `resources/views/admin/exams/view_examiner.blade.php`.
+- **⚠️ Coordinate:** requires the matching cosecsa-api deploy (quick-update allow-list + `role_options`) to land first.
+
 ### Changed (2026-09-23) — Chat messages show full date + time (local time) with day dividers
 - Each message now shows its full date and time, e.g. `20 Sep 2026, 17:10`. Before, it showed a small `20 Sep, 14:10` with no year, and **in UTC**: the app timezone is UTC, so every chat time was 3 hours behind for East African staff. Hovering a time shows the full weekday/date.
 - Times are converted in the browser to **each reader's own timezone** (the page carries the ISO timestamp in `data-ts`). This is correct for staff in any country without touching the app-wide `APP_TIMEZONE`, which the rest of the system's stored dates depend on. Server-rendered and poll fallbacks use Africa/Nairobi (EAT).
