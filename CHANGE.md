@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Changed (2026-09-23) — My Tasks: card layout rebuilt on the app's Stitch design system
+- Feedback on the two earlier passes: the first looked "AI-designed" and the plain-table version was too basic. The page now sits between the two, built only from existing app components:
+  - **Summary:** `.stitch-tile` summary tiles (All / Unread or Not Seen / Pending / In Progress / Done / Overdue), clickable as filters with the same `tile-clickable` / `tile-active` pattern as the Hospital dashboard.
+  - **Task cards:** the stitch-tile look (white, 8px radius, the standard `0 1px 4px` shadow) with a 4px left border for state: maroon = unread, gold = in progress, red = overdue, green = done (faded and struck through). Grey means read and pending.
+  - **Details on each card:** Bootstrap badges (status, a maroon **New** badge, Seen / Not seen yet), FontAwesome meta icons, and a `btn-cosecsa-outline` **Open** button. Maroon `nav-tabs` switch between To Me and By Me, and dark mode is covered.
+- Behaviour (read tracking, inline status, live poll) is unchanged.
+- **Files:** `resources/views/messaging/tasks.blade.php`.
+
 ### Fixed (2026-09-23) — `messages/tasks` 500: compiled views owned by root
 - `messages/tasks` returned a 500: `file_put_contents(storage/framework/views/5269397e….php): Permission denied`, where that file is the compiled My Tasks view. Deploys ran `php artisan view:cache` as root over SSH, leaving root-owned (644) compiled views. Laravel's `CompilerEngine` recompiles when the template mtime is **>=** the compiled mtime, and `git pull` + `view:cache` in the same second produced exactly that tie. Apache (`www-data`) then couldn't overwrite the file.
 - Fixed on the server with `chown -R www-data:www-data storage bootstrap/cache` for both the MIS (187 root-owned compiled views) and cosecsa-api (4 root-owned `bootstrap/cache` files). The page loads again.

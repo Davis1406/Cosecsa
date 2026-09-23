@@ -25,14 +25,36 @@
     .nav-tabs .nav-link.active { background-color:#a02626 !important; color:#fff !important; border-color:#a02626 !important; }
     .nav-tabs .nav-link { color:#a02626 !important; }
     .nav-tabs .nav-link:hover { background-color:#FEC503 !important; color:#000 !important; border-color:#FEC503 !important; }
-    .tasks-table td { vertical-align: middle; }
-    .tasks-table tr.task-unread { box-shadow: inset 3px 0 0 #a02626; background: rgba(160,38,38,.04); }
-    .tasks-table tr.task-unread .task-title { font-weight: 700; }
-    .tasks-table tr.task-done .task-title { text-decoration: line-through; }
-    .tasks-table tr.task-done td { color: #6c757d; }
-    body.dark-mode .tasks-table tr.task-unread { background: rgba(244,138,138,.06); }
+
+    /* Summary tiles — the app's .stitch-tile, clickable like the hospital dashboard */
+    .tile-clickable { cursor:pointer; }
+    .tile-clickable.tile-active { outline:2px solid #a02626; outline-offset:2px; }
+    .tile-clickable.tile-disabled { opacity:.5; cursor:default; }
+    .stitch-tile-red { border-left-color:#dc3545; color:#dc3545; }
+    .stitch-tile .stitch-tile-value { font-size:1.6rem; }
+
+    /* Task cards share the stitch-tile look: white, 8px radius, 4px state border */
+    .task-item { background:#fff; border-radius:8px; border-left:4px solid #dee2e6; box-shadow:0 1px 4px rgba(0,0,0,.07);
+                 padding:14px 18px; margin-bottom:10px; display:flex; align-items:center; gap:16px; }
+    .task-item:hover { box-shadow:0 4px 12px rgba(0,0,0,.09); }
+    .task-item.is-unread  { border-left-color:#a02626; }
+    .task-item.is-progress { border-left-color:#FEC503; }
+    .task-item.is-overdue { border-left-color:#dc3545; }
+    .task-item.is-done    { border-left-color:#28a745; opacity:.75; }
+    .task-item.is-unread.is-progress, .task-item.is-unread.is-overdue { border-left-color:#a02626; }
+    .task-item .task-title { font-size:1rem; font-weight:600; color:#141d23; margin:0; }
+    .task-item.is-unread .task-title { font-weight:700; }
+    .task-item.is-done .task-title { text-decoration:line-through; color:#6c757d; }
+    .task-item .task-desc { color:#6c757d; font-size:.875rem; margin:2px 0 0; }
+    .task-item .task-meta { font-size:.8rem; color:#6c757d; margin-top:6px; }
+    .task-item .task-meta span { margin-right:14px; white-space:nowrap; }
+    .task-item .task-meta i { margin-right:4px; }
+    .task-item .task-side { flex:none; display:flex; align-items:center; gap:10px; }
     .badge-new { background:#a02626; color:#fff; }
-    .task-filters .btn { margin: 0 4px 4px 0; }
+    body.dark-mode .task-item { background:#1e2330; }
+    body.dark-mode .task-item .task-title { color:#f1f5f9; }
+    body.dark-mode .task-item.is-done .task-title, body.dark-mode .task-item .task-desc, body.dark-mode .task-item .task-meta { color:#94a3b8; }
+    @media (max-width: 767px) { .task-item { flex-wrap:wrap; } .task-item .task-side { width:100%; justify-content:space-between; } }
   </style>
 
   <div class="content-wrapper">
@@ -59,11 +81,8 @@
           @foreach($panes as $key => [$label, $list, $c])
             <li class="nav-item">
               <a class="nav-link {{ $loop->first ? 'active' : '' }}" data-toggle="tab" href="#pane-{{ $key }}" role="tab">
-                {{ $label }}
-                <span class="badge badge-light ml-1">{{ $c['all'] }}</span>
-                @if($key === 'toMe' && $c['unread'])
-                  <span class="badge badge-new ml-1">{{ $c['unread'] }} new</span>
-                @endif
+                {{ $label }} <span class="badge badge-light ml-1">{{ $c['all'] }}</span>
+                @if($key === 'toMe' && $c['unread'])<span class="badge badge-new ml-1">{{ $c['unread'] }} new</span>@endif
               </a>
             </li>
           @endforeach
@@ -71,96 +90,85 @@
 
         <div class="tab-content">
           @foreach($panes as $key => [$label, $list, $c, $emptyText])
-            <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="pane-{{ $key }}" role="tabpanel">
-              <div class="card">
-                <div class="card-header">
-                  <div class="task-filters" data-pane="{{ $key }}">
-                    @foreach([
-                      'all'         => 'All',
-                      'unread'      => $key === 'toMe' ? 'Unread' : 'Not Seen',
-                      'pending'     => 'Pending',
-                      'in_progress' => 'In Progress',
-                      'done'        => 'Done',
-                      'overdue'     => 'Overdue',
-                    ] as $f => $fLabel)
-                      <button type="button" class="btn btn-sm {{ $f === 'all' ? 'btn-cosecsa' : 'btn-cosecsa-outline' }}" data-filter="{{ $f }}"
-                              {{ $f !== 'all' && !$c[$f] ? 'disabled' : '' }}>
-                        {{ $fLabel }} <span class="badge badge-light ml-1">{{ $c[$f] }}</span>
-                      </button>
-                    @endforeach
+            <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="pane-{{ $key }}" role="tabpanel" data-pane="{{ $key }}">
+
+              <div class="row">
+                @foreach([
+                  'all'         => ['All Tasks', 'teal'],
+                  'unread'      => [$key === 'toMe' ? 'Unread' : 'Not Seen', 'maroon'],
+                  'pending'     => ['Pending', 'blue'],
+                  'in_progress' => ['In Progress', 'gold'],
+                  'done'        => ['Done', 'green'],
+                  'overdue'     => ['Overdue', 'red'],
+                ] as $f => [$fLabel, $colour])
+                  <div class="col-lg-2 col-md-4 col-6 mb-3">
+                    <div class="stitch-tile stitch-tile-{{ $colour }} tile-clickable {{ $f === 'all' ? 'tile-active' : '' }} {{ $f !== 'all' && !$c[$f] ? 'tile-disabled' : '' }}"
+                         data-filter="{{ $f }}" title="Show {{ strtolower($fLabel) }}">
+                      <div class="stitch-tile-label">{{ $fLabel }}</div>
+                      <div class="stitch-tile-value">{{ $c[$f] }}</div>
+                      <div class="stitch-tile-bar"><div class="stitch-tile-fill" style="width:{{ $c['all'] ? round($c[$f] / $c['all'] * 100) : 0 }}%"></div></div>
+                    </div>
                   </div>
-                </div>
-                <div class="card-body p-0">
-                  <div class="table-responsive">
-                    <table class="table table-hover table-sm mb-0 tasks-table" id="table-{{ $key }}">
-                      <thead>
-                        <tr>
-                          <th>Task</th>
-                          <th>{{ $key === 'toMe' ? 'From' : 'Assigned To' }}</th>
-                          <th>Due</th>
-                          <th>Status</th>
-                          @if($key === 'byMe')<th>Seen</th>@endif
-                          <th></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @forelse($list as $t)
-                          @php $overdue = $isOverdue($t); @endphp
-                          <tr data-task-id="{{ $t->id }}" data-status="{{ $t->status }}" data-read="{{ $t->read_at ? 1 : 0 }}" data-overdue="{{ $overdue ? 1 : 0 }}"
-                              class="{{ ($key === 'toMe' && !$t->read_at) ? 'task-unread' : '' }} {{ $t->status === 'done' ? 'task-done' : '' }}">
-                            <td>
-                              <span class="task-title">{{ $t->title }}</span>
-                              @if($key === 'toMe' && !$t->read_at)<span class="badge badge-new ml-1 task-new">New</span>@endif
-                              @if($t->description)<br><small class="text-muted">{{ \Illuminate\Support\Str::limit($t->description, 140) }}</small>@endif
-                            </td>
-                            <td class="text-nowrap">{{ $key === 'toMe' ? ($t->creator->name ?? '—') : ($t->assignee->name ?? '—') }}</td>
-                            <td class="text-nowrap">
-                              @if($t->due_date)
-                                @if($overdue)
-                                  <span class="text-danger font-weight-bold"><i class="fas fa-exclamation-circle mr-1"></i>{{ \Carbon\Carbon::parse($t->due_date)->format('d M Y') }}</span>
-                                @elseif($isSoon($t))
-                                  <span class="text-warning font-weight-bold">{{ \Carbon\Carbon::parse($t->due_date)->format('d M Y') }}</span>
-                                @else
-                                  {{ \Carbon\Carbon::parse($t->due_date)->format('d M Y') }}
-                                @endif
-                              @else
-                                <span class="text-muted">—</span>
-                              @endif
-                            </td>
-                            <td>
-                              @if($key === 'toMe')
-                                <select class="form-control form-control-sm task-status-select" data-task-id="{{ $t->id }}" style="width:130px;">
-                                  @foreach($statusLabel as $v => $l)
-                                    <option value="{{ $v }}" {{ $t->status === $v ? 'selected' : '' }}>{{ $l }}</option>
-                                  @endforeach
-                                </select>
-                              @else
-                                <span class="badge task-status-badge {{ $statusBadge[$t->status] ?? 'badge-light' }}">{{ $statusLabel[$t->status] ?? $t->status }}</span>
-                              @endif
-                            </td>
-                            @if($key === 'byMe')
-                              <td class="text-nowrap task-seen">
-                                @if($t->read_at)
-                                  <span class="text-success" title="Seen {{ $t->read_at->format('d M Y, H:i') }}"><i class="fas fa-check-double mr-1"></i>Seen</span>
-                                @else
-                                  <span class="text-muted"><i class="fas fa-check mr-1"></i>Not seen</span>
-                                @endif
-                              </td>
+                @endforeach
+              </div>
+
+              <div class="task-list">
+                @forelse($list as $t)
+                  @php
+                    $overdue = $isOverdue($t);
+                    $unread  = $key === 'toMe' && !$t->read_at;
+                    $person  = $key === 'toMe' ? ($t->creator->name ?? '—') : ($t->assignee->name ?? '—');
+                  @endphp
+                  <div class="task-item {{ $unread ? 'is-unread' : '' }} {{ $t->status === 'in_progress' ? 'is-progress' : '' }} {{ $t->status === 'done' ? 'is-done' : '' }} {{ $overdue ? 'is-overdue' : '' }}"
+                       data-task-id="{{ $t->id }}" data-status="{{ $t->status }}" data-read="{{ $t->read_at ? 1 : 0 }}" data-overdue="{{ $overdue ? 1 : 0 }}">
+                    <div class="flex-grow-1" style="min-width:0;">
+                      <p class="task-title">
+                        {{ $t->title }}
+                        @if($unread)<span class="badge badge-new ml-1 task-new">New</span>@endif
+                      </p>
+                      @if($t->description)<p class="task-desc">{{ \Illuminate\Support\Str::limit($t->description, 180) }}</p>@endif
+                      <div class="task-meta">
+                        <span><i class="fas fa-user"></i>{{ $key === 'toMe' ? 'From' : 'To' }} <strong>{{ $person }}</strong></span>
+                        @if($t->due_date)
+                          @if($overdue)
+                            <span class="text-danger font-weight-bold"><i class="fas fa-exclamation-circle"></i>Overdue — {{ \Carbon\Carbon::parse($t->due_date)->format('d M Y') }}</span>
+                          @elseif($isSoon($t))
+                            <span class="text-warning font-weight-bold"><i class="fas fa-calendar-day"></i>Due {{ \Carbon\Carbon::parse($t->due_date)->format('d M Y') }}</span>
+                          @else
+                            <span><i class="fas fa-calendar-alt"></i>Due {{ \Carbon\Carbon::parse($t->due_date)->format('d M Y') }}</span>
+                          @endif
+                        @endif
+                        <span><i class="fas fa-clock"></i>{{ $t->created_at?->diffForHumans() }}</span>
+                        @if($key === 'byMe')
+                          <span class="task-seen">
+                            @if($t->read_at)
+                              <span class="text-success" title="Seen {{ $t->read_at->format('d M Y, H:i') }}"><i class="fas fa-check-double"></i>Seen</span>
+                            @else
+                              <i class="fas fa-check"></i>Not seen yet
                             @endif
-                            <td class="text-right text-nowrap">
-                              @if($t->conversation_id)
-                                <a href="{{ route('messages.tasks.open', $t->id) }}" class="cosecsa-link">Open <i class="fas fa-external-link-alt ml-1" style="font-size:.75em;"></i></a>
-                              @endif
-                            </td>
-                          </tr>
-                        @empty
-                          <tr><td colspan="{{ $key === 'byMe' ? 6 : 5 }}" class="text-center text-muted py-3">{{ $emptyText }}</td></tr>
-                        @endforelse
-                        <tr class="task-nomatch" style="display:none;"><td colspan="{{ $key === 'byMe' ? 6 : 5 }}" class="text-center text-muted py-3">No tasks match this filter.</td></tr>
-                      </tbody>
-                    </table>
+                          </span>
+                        @endif
+                      </div>
+                    </div>
+                    <div class="task-side">
+                      @if($key === 'toMe')
+                        <select class="form-control form-control-sm task-status-select" data-task-id="{{ $t->id }}" style="width:130px;">
+                          @foreach($statusLabel as $v => $l)
+                            <option value="{{ $v }}" {{ $t->status === $v ? 'selected' : '' }}>{{ $l }}</option>
+                          @endforeach
+                        </select>
+                      @else
+                        <span class="badge task-status-badge {{ $statusBadge[$t->status] ?? 'badge-light' }}">{{ $statusLabel[$t->status] ?? $t->status }}</span>
+                      @endif
+                      @if($t->conversation_id)
+                        <a href="{{ route('messages.tasks.open', $t->id) }}" class="btn btn-sm btn-cosecsa-outline"><i class="fas fa-comments mr-1"></i> Open</a>
+                      @endif
+                    </div>
                   </div>
-                </div>
+                @empty
+                  <div class="card"><div class="card-body text-center text-muted">{{ $emptyText }}</div></div>
+                @endforelse
+                <div class="card task-nomatch" style="display:none;"><div class="card-body text-center text-muted">No tasks match this filter.</div></div>
               </div>
             </div>
           @endforeach
@@ -175,85 +183,81 @@
 document.addEventListener('DOMContentLoaded', function () {
   const badgeClass = { done: 'badge-success', in_progress: 'badge-warning', pending: 'badge-secondary' };
   const statusLabel = { pending: 'Pending', in_progress: 'In Progress', done: 'Done' };
+  const pane = name => document.querySelector(`.tab-pane[data-pane="${name}"]`);
 
-  // ── Filters ─────────────────────────────────────────────────────────
-  function applyFilter(pane) {
-    const group = document.querySelector(`.task-filters[data-pane="${pane}"]`);
-    const f = group.querySelector('.btn-cosecsa').dataset.filter;
+  // ── Tile filters ────────────────────────────────────────────────────
+  function applyFilter(name) {
+    const p = pane(name);
+    const f = p.querySelector('.tile-active').dataset.filter;
     let shown = 0;
-    document.querySelectorAll(`#table-${pane} tbody tr[data-task-id]`).forEach(tr => {
+    p.querySelectorAll('.task-item').forEach(item => {
       const ok = f === 'all'
-        || (f === 'unread' && tr.dataset.read === '0')
-        || (f === 'overdue' && tr.dataset.overdue === '1')
-        || tr.dataset.status === f;
-      tr.style.display = ok ? '' : 'none';
+        || (f === 'unread' && item.dataset.read === '0')
+        || (f === 'overdue' && item.dataset.overdue === '1')
+        || item.dataset.status === f;
+      item.style.display = ok ? '' : 'none';
       if (ok) shown++;
     });
-    const nomatch = document.querySelector(`#table-${pane} .task-nomatch`);
-    const hasRows = document.querySelector(`#table-${pane} tr[data-task-id]`);
-    nomatch.style.display = (hasRows && !shown) ? '' : 'none';
+    p.querySelector('.task-nomatch').style.display = (p.querySelector('.task-item') && !shown) ? '' : 'none';
   }
-  document.querySelectorAll('.task-filters').forEach(group => {
-    group.addEventListener('click', function (e) {
-      const btn = e.target.closest('[data-filter]');
-      if (!btn || btn.disabled) return;
-      group.querySelectorAll('[data-filter]').forEach(b => {
-        b.classList.toggle('btn-cosecsa', b === btn);
-        b.classList.toggle('btn-cosecsa-outline', b !== btn);
-      });
-      applyFilter(group.dataset.pane);
-    });
+  document.querySelectorAll('.tab-pane[data-pane]').forEach(p => {
+    p.querySelectorAll('.tile-clickable').forEach(tile => tile.addEventListener('click', function () {
+      if (tile.classList.contains('tile-disabled')) return;
+      p.querySelectorAll('.tile-clickable').forEach(t => t.classList.toggle('tile-active', t === tile));
+      applyFilter(p.dataset.pane);
+    }));
   });
 
-  // ── Row state ───────────────────────────────────────────────────────
-  function paintRow(tr, status, read) {
-    tr.dataset.status = status;
-    tr.classList.toggle('task-done', status === 'done');
-    if (status === 'done') tr.dataset.overdue = '0';
-    if (read !== undefined && tr.closest('#table-toMe')) {
-      tr.dataset.read = read ? '1' : '0';
-      tr.classList.toggle('task-unread', !read);
-      if (read) { const n = tr.querySelector('.task-new'); if (n) n.remove(); }
+  // ── Card state ──────────────────────────────────────────────────────
+  function paint(item, status, read) {
+    item.dataset.status = status;
+    item.classList.toggle('is-progress', status === 'in_progress');
+    item.classList.toggle('is-done', status === 'done');
+    if (status === 'done') { item.dataset.overdue = '0'; item.classList.remove('is-overdue'); }
+    if (read !== undefined && item.closest('[data-pane="toMe"]')) {
+      item.dataset.read = read ? '1' : '0';
+      item.classList.toggle('is-unread', !read);
+      if (read) { const n = item.querySelector('.task-new'); if (n) n.remove(); }
     }
   }
 
-  // Assignee changes status (also marks the task read server-side)
-  document.getElementById('table-toMe').addEventListener('change', function (e) {
+  // Assignee changes status (also marks it read server-side)
+  pane('toMe').addEventListener('change', function (e) {
     const sel = e.target.closest('.task-status-select');
     if (!sel) return;
-    const tr = sel.closest('tr');
-    const previous = tr.dataset.status;
+    const item = sel.closest('.task-item');
+    const previous = item.dataset.status;
     fetch(`{{ url('messages/tasks') }}/${sel.dataset.taskId}/status`, {
       method: 'POST',
       headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: sel.value }),
     })
       .then(r => { if (!r.ok) throw new Error(r.status); })
-      .then(() => { paintRow(tr, sel.value, true); applyFilter('toMe'); })
+      .then(() => { paint(item, sel.value, true); applyFilter('toMe'); })
       .catch(() => { sel.value = previous; alert('Could not update task status.'); });
   });
 
   // ── Live updates: status + "Seen" ───────────────────────────────────
-  function sync(pane, rows) {
+  function sync(name, rows) {
     rows.forEach(t => {
-      const tr = document.querySelector(`#table-${pane} tr[data-task-id="${t.id}"]`);
-      if (!tr) return;
-      if (pane === 'toMe') {
-        const sel = tr.querySelector('.task-status-select');
+      const item = pane(name).querySelector(`.task-item[data-task-id="${t.id}"]`);
+      if (!item) return;
+      if (name === 'toMe') {
+        const sel = item.querySelector('.task-status-select');
         if (sel && document.activeElement !== sel) sel.value = t.status;
-        paintRow(tr, t.status, t.read);
+        paint(item, t.status, t.read);
       } else {
-        const badge = tr.querySelector('.task-status-badge');
+        const badge = item.querySelector('.task-status-badge');
         badge.className = 'badge task-status-badge ' + badgeClass[t.status];
         badge.textContent = statusLabel[t.status];
-        paintRow(tr, t.status);
+        paint(item, t.status);
         if (t.read) {
-          tr.dataset.read = '1';
-          tr.querySelector('.task-seen').innerHTML = `<span class="text-success" title="Seen ${t.read_at}"><i class="fas fa-check-double mr-1"></i>Seen</span>`;
+          item.dataset.read = '1';
+          item.querySelector('.task-seen').innerHTML = `<span class="text-success" title="Seen ${t.read_at}"><i class="fas fa-check-double"></i>Seen</span>`;
         }
       }
     });
-    applyFilter(pane);
+    applyFilter(name);
   }
   setInterval(function () {
     fetch("{{ url('messages/tasks/poll') }}", { headers: { Accept: 'application/json' } })
