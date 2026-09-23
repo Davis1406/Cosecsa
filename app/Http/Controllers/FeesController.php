@@ -141,27 +141,76 @@ class FeesController extends Controller
 
     public function subscriptionReport(Request $request)
     {
-        $response = $this->api->get('fees/subscriptions/report', $request->only(['year', 'status', 'country_id', 'q']));
+        // Accept ?years[]=… (multi-select) and the older ?year=… links.
+        $selected = $this->requestedYears($request->input('years', $request->input('year')));
+        if (! $selected) {
+            $selected = [(int) date('Y')];
+        }
 
-        if ($response->failed()) {
+        $perYear = $this->loadSubscriptionYears($selected, $request->only(['country_id', 'q']));
+        if ($perYear === null) {
             abort(500, 'Failed to load the subscription report.');
         }
 
-        $data = $response->object();
+        $latest = $perYear[$selected[0]];
+        $status = $request->input('status');
+
+        // One row per fellow, with that fellow's row for each selected year.
+        $fellows = [];
+        foreach ($perYear as $year => $data) {
+            foreach ($data->rows ?? [] as $r) {
+                $f = $fellows[$r->fellow_id] ??= (object) [
+                    'fellow_id'       => $r->fellow_id,
+                    'name'            => trim((string) $r->name),
+                    'email'           => $r->email,
+                    'country_name'    => $r->country_name,
+                    'fellowship_type' => $r->fellowship_type,
+                    'years'           => [],
+                ];
+                $f->years[$year] = $r;
+            }
+        }
+        $fellows = collect($fellows)->each(function ($f) {
+            $f->total_paid  = collect($f->years)->sum(fn ($r) => $r->amount_paid ?? 0);
+            $f->outstanding = collect($f->years)->sum(fn ($r) => $r->outstanding ?? 0);
+            $f->owing       = collect($f->years)->contains(fn ($r) => in_array($r->effective_status, ['Unpaid', 'Partial', 'None']));
+        });
+
+        $sum = fn ($key) => collect($perYear)->sum(fn ($d) => $d->summary->{$key} ?? 0);
+        $summary = [
+            'total_fellows'    => $fellows->count(),
+            'records'          => $fellows->count() * count($selected),
+            'paid'             => $sum('paid'),
+            'partial'          => $sum('partial'),
+            'unpaid'           => $sum('unpaid'),
+            'waived'           => $sum('waived'),
+            'none'             => $sum('none'),
+            'owing'            => $fellows->where('owing', true)->count(),
+            'amount_due'       => round($sum('amount_due'), 2),
+            'amount_collected' => round($sum('amount_collected'), 2),
+            'outstanding'      => round($sum('outstanding'), 2),
+        ];
+
+        // Status filter is applied here (not by the API) so a fellow shows if
+        // that status occurs in ANY selected year.
+        $rows = $status
+            ? $fellows->filter(fn ($f) => collect($f->years)->contains(fn ($r) => $r->effective_status === $status))
+            : $fellows;
 
         return view('admin.fees.subscription_report', [
-            'header_title' => 'Annual Subscription Report',
-            'year'         => $data->year,
-            'years'        => collect($data->years ?? []),
-            'countries'    => collect($data->countries ?? []),
-            'filters'      => (array) ($data->filters ?? []),
-            'summary'      => (array) ($data->summary ?? []),
-            'rows'         => collect($data->rows ?? []),
+            'header_title'  => 'Annual Subscription Report',
+            'year'          => (string) $selected[0],
+            'selectedYears' => array_map('strval', $selected),
+            'years'         => collect($latest->years ?? []),
+            'countries'     => collect($latest->countries ?? []),
+            'filters'       => ['status' => $status] + $request->only(['country_id', 'q']),
+            'summary'       => $summary,
+            'yearOwing'     => collect($perYear)->map(fn ($d) => (int) ($d->summary->owing ?? 0))->all(),
+            'rows'          => $rows->values(),
         ]);
     }
 
-    // Multi-year Excel download: one report API call per selected year,
-    // bundled into a Summary sheet + one sheet per year.
+    // Multi-year Excel download: a Summary sheet + one sheet per year.
     public function exportSubscriptions(Request $request)
     {
         $request->validate([
@@ -169,21 +218,19 @@ class FeesController extends Controller
             'years.*' => 'integer|min:1990|max:2099|distinct',
         ], ['years.required' => 'Select at least one year to download.']);
 
-        $years   = collect($request->input('years'))->map(fn ($y) => (int) $y)->sortDesc()->values();
+        $years   = $this->requestedYears($request->input('years'), 20);
         $filters = $request->boolean('apply_filters') ? $request->only(['status', 'country_id', 'q']) : [];
+
+        $perYear = $this->loadSubscriptionYears($years, $filters);
+        if ($perYear === null) {
+            return back()->with('error', 'Failed to load the subscription report — nothing was downloaded.');
+        }
 
         $summaryRows = [];
         $yearRows    = [];
 
-        foreach ($years as $year) {
-            $response = $this->api->get('fees/subscriptions/report', array_filter(['year' => $year] + $filters));
-
-            if ($response->failed()) {
-                return back()->with('error', "Failed to load the {$year} subscription report — nothing was downloaded.");
-            }
-
-            $data = $response->object();
-            $s    = (array) ($data->summary ?? []);
+        foreach ($perYear as $year => $data) {
+            $s = (array) ($data->summary ?? []);
 
             $summaryRows[] = [
                 $year, $s['total_fellows'] ?? 0, $s['paid'] ?? 0, $s['partial'] ?? 0, $s['unpaid'] ?? 0,
@@ -205,12 +252,41 @@ class FeesController extends Controller
             ])->all();
         }
 
-        $span = $years->count() === 1 ? $years->first() : $years->last() . '-' . $years->first();
+        $span = count($years) === 1 ? $years[0] : end($years) . '-' . $years[0];
 
         return Excel::download(
             new SubscriptionReportExport($summaryRows, $yearRows),
             "annual_subscriptions_{$span}.xlsx"
         );
+    }
+
+    // Sanitised, de-duplicated, newest-first list of years from a request value.
+    private function requestedYears($input, int $max = 10): array
+    {
+        return collect((array) $input)
+            ->map(fn ($y) => (int) $y)
+            ->filter(fn ($y) => $y >= 1990 && $y <= 2099)
+            ->unique()->sortDesc()->take($max)->values()->all();
+    }
+
+    // Fetches the report for each year concurrently. Returns [year => data]
+    // (newest first), or null if any year failed to load.
+    private function loadSubscriptionYears(array $years, array $filters): ?array
+    {
+        $queries = [];
+        foreach ($years as $year) {
+            $queries[$year] = array_filter(['year' => $year] + $filters);
+        }
+
+        $out = [];
+        foreach ($this->api->getMany('fees/subscriptions/report', $queries) as $year => $response) {
+            if (! $response || $response->failed()) {
+                return null;
+            }
+            $out[$year] = $response->object();
+        }
+
+        return $out;
     }
 
     // JSON for the report page's fellow drawer: contact details + every

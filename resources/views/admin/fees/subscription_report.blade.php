@@ -3,7 +3,15 @@
 @section('title', 'Annual Subscription Report')
 
 @php
-    $total    = max(1, (int) ($summary['total_fellows'] ?? 0));
+    $multi    = count($selectedYears) > 1;
+    // Tiles count fellow-year records, so with several years the % base is fellows × years.
+    $total    = max(1, (int) ($summary['records'] ?? 0));
+    $asc      = array_reverse($selectedYears);
+    $isRange  = $multi && (int) end($asc) - (int) $asc[0] === count($asc) - 1;
+    $yearLabel = !$multi ? $year : ($isRange ? $asc[0] . '–' . end($asc) : implode(', ', $asc));
+    $keepYears = function () use ($selectedYears) {
+        return collect($selectedYears)->map(fn ($y) => '<input type="hidden" name="years[]" value="' . e($y) . '">')->implode('');
+    };
     $statusTiles = [
         'Paid'    => ['label' => 'Paid',      'key' => 'paid'],
         'Partial' => ['label' => 'Partial',   'key' => 'partial'],
@@ -163,6 +171,13 @@
                animation:srsk 1.2s infinite; border-radius:8px; }
     @keyframes srsk { to { background-position:-200% 0; } }
 
+    .sr-yearpick .dropdown-toggle { font-weight:700; border-radius:8px; min-width:120px; text-align:left; }
+    .sr-yearpick .dropdown-menu { padding:10px; min-width:230px; }
+    .sr-yearpick .yp-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+    .sr-yearpick .yp-foot { display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:8px; border-top:1px solid var(--sr-line); }
+    .sr-yearpick .export-year span { min-width:0; width:100%; padding:5px 0; }
+    #subscriptionReportTable td.yc { white-space:nowrap; }
+    #subscriptionReportTable td.yc small { display:block; color:var(--sr-faint); font-size:.74rem; margin-top:2px; font-variant-numeric:tabular-nums; }
     .export-year input { display:none; }
     .export-year span { display:inline-block; min-width:64px; text-align:center; padding:6px 12px; border-radius:8px; cursor:pointer;
                         border:1px solid #d6dde6; font-weight:600; user-select:none; transition:all .1s; }
@@ -192,22 +207,43 @@
                     <div>
                         <div class="sr-eyebrow"><a href="{{ url('admin/fees') }}" style="color:inherit;">Fees</a> / Subscriptions</div>
                         <h4>Annual Subscription Report</h4>
-                        <div class="sr-sub">Every fellow's {{ $year }} subscription. Fellows with no record for the year count as owing.</div>
+                        <div class="sr-sub">
+                            @if($multi)
+                                Every fellow's subscriptions for {{ $yearLabel }}. A fellow with no record for a year counts as owing for that year.
+                            @else
+                                Every fellow's {{ $year }} subscription. Fellows with no record for the year count as owing.
+                            @endif
+                        </div>
                     </div>
                     <div class="sr-actions">
                         <form method="GET" action="{{ url('admin/fees/subscriptions/report') }}" class="m-0">
                             @foreach(['status','country_id','q'] as $keep)
                                 @if(!empty($filters[$keep]))<input type="hidden" name="{{ $keep }}" value="{{ $filters[$keep] }}">@endif
                             @endforeach
-                            <select name="year" class="form-control form-control-sm sr-year" onchange="this.form.submit()" aria-label="Year">
-                                @foreach($years as $y)
-                                    <option value="{{ $y }}" {{ (string)$year === (string)$y ? 'selected' : '' }}>{{ $y }}</option>
-                                @endforeach
-                            </select>
+                            <div class="dropdown sr-yearpick">
+                                <button type="button" class="btn btn-sm btn-sr-ghost dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="far fa-calendar-alt mr-1"></i>{{ $yearLabel }}
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right" onclick="event.stopPropagation()">
+                                    <div class="sr-eyebrow mb-2">Show years</div>
+                                    <div class="yp-grid">
+                                        @foreach($years as $y)
+                                            <label class="export-year mb-0">
+                                                <input type="checkbox" name="years[]" value="{{ $y }}" {{ in_array((string) $y, $selectedYears, true) ? 'checked' : '' }}>
+                                                <span>{{ $y }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    <div class="yp-foot">
+                                        <a href="#" class="small" data-yp-all>Select all</a>
+                                        <button type="submit" class="btn btn-sm btn-sr">Apply</button>
+                                    </div>
+                                </div>
+                            </div>
                         </form>
                         @if ($canManage && ($summary['owing'] ?? 0) > 0)
                         <button type="button" class="btn btn-sm btn-sr" onclick="$('#reminderModal').modal('show')">
-                            <i class="fas fa-paper-plane mr-1"></i>Remind {{ number_format($summary['owing'] ?? 0) }} owing
+                            <i class="fas fa-paper-plane mr-1"></i>{{ $multi ? 'Remind owing' : 'Remind ' . number_format($summary['owing'] ?? 0) . ' owing' }}
                         </button>
                         @endif
                     </div>
@@ -221,14 +257,14 @@
                                 @php $n = (int) ($summary[$t['key']] ?? 0); $isActive = $activeStatus === $st; @endphp
                                 <a class="sr-tile t-{{ $st }} {{ $isActive ? 'active' : '' }}"
                                    href="{{ request()->fullUrlWithQuery(['status' => $isActive ? null : $st]) }}"
-                                   title="{{ $isActive ? 'Show all statuses' : 'Show only ' . $t['label'] }}">
+                                   title="{{ $isActive ? 'Show all statuses' : 'Show only ' . $t['label'] . ($multi ? ' (in any selected year)' : '') }}">
                                     <span class="sr-eyebrow">{{ $t['label'] }}</span>
                                     <span class="n">{{ number_format($n) }}</span>
-                                    <span class="p">{{ round($n / $total * 100) }}% of fellows</span>
+                                    <span class="p">{{ round($n / $total * 100) }}% of {{ $multi ? 'records' : 'fellows' }}</span>
                                 </a>
                             @endforeach
                         </div>
-                        <div class="sr-dist" title="Status distribution across {{ number_format($summary['total_fellows'] ?? 0) }} fellows">
+                        <div class="sr-dist" title="Status distribution across {{ number_format($summary['records'] ?? 0) }} {{ $multi ? 'fellow-year records' : 'fellows' }}">
                             @foreach($statusTiles as $st => $t)
                                 <span style="width:{{ ($summary[$t['key']] ?? 0) / $total * 100 }}%;background:var(--st-{{ $st }}-fg);"></span>
                             @endforeach
@@ -236,7 +272,12 @@
                         @if(($summary['owing'] ?? 0) > 0)
                         <div class="sr-owing">
                             <i class="fas fa-exclamation-circle"></i>
-                            <span><strong>{{ number_format($summary['owing']) }}</strong> of {{ number_format($summary['total_fellows'] ?? 0) }} fellows still owe for {{ $year }} (Unpaid, Partial or No Record).</span>
+                            <span><strong>{{ number_format($summary['owing']) }}</strong> of {{ number_format($summary['total_fellows'] ?? 0) }} fellows still owe for {{ $multi ? 'at least one of ' . $yearLabel : $year }} (Unpaid, Partial or No Record).</span>
+                        </div>
+                        @endif
+                        @if($multi)
+                        <div class="small mt-2" style="color:var(--sr-faint);">
+                            Tile counts are summed across the {{ count($selectedYears) }} selected years (one record per fellow per year).
                         </div>
                         @endif
                     </div>
@@ -245,7 +286,7 @@
                 {{-- ── Table ── --}}
                 <div class="sr-card sr-wrap mb-4">
                     <form method="GET" action="{{ url('admin/fees/subscriptions/report') }}" class="sr-toolbar m-0">
-                        <input type="hidden" name="year" value="{{ $year }}">
+                        {!! $keepYears() !!}
                         <div class="title">Fellows <span class="count">{{ number_format($rows->count()) }}</span></div>
                         <div class="sr-search">
                             <i class="fas fa-search"></i>
@@ -265,7 +306,7 @@
                             @endforeach
                         </select>
                         @if(!empty($filters['q']) || !empty($filters['status']) || !empty($filters['country_id']))
-                            <a href="{{ url('admin/fees/subscriptions/report') }}?year={{ $year }}" class="btn btn-sm btn-sr-ghost">Clear</a>
+                            <a href="{{ url('admin/fees/subscriptions/report') . '?' . http_build_query(['years' => $selectedYears]) }}" class="btn btn-sm btn-sr-ghost">Clear</a>
                         @endif
                     </form>
 
@@ -277,12 +318,18 @@
                                     <th>Fellow</th>
                                     <th>Country</th>
                                     <th>Fellowship Type</th>
-                                    <th>Status</th>
-                                    <th class="num">Due</th>
-                                    <th class="num">Paid</th>
-                                    <th class="num">Outstanding</th>
-                                    <th>Date Paid</th>
-                                    <th>Mode</th>
+                                    @if($multi)
+                                        @foreach($selectedYears as $y)<th>{{ $y }}</th>@endforeach
+                                        <th class="num">Total Paid</th>
+                                        <th class="num">Outstanding</th>
+                                    @else
+                                        <th>Status</th>
+                                        <th class="num">Due</th>
+                                        <th class="num">Paid</th>
+                                        <th class="num">Outstanding</th>
+                                        <th>Date Paid</th>
+                                        <th>Mode</th>
+                                    @endif
                                     <th class="no-export"></th>
                                 </tr>
                             </thead>
@@ -291,7 +338,8 @@
                                 @php
                                     $parts = preg_split('/\s+/', trim($row->name));
                                     $initials = strtoupper(mb_substr($parts[0] ?? '', 0, 1) . mb_substr(count($parts) > 1 ? end($parts) : '', 0, 1));
-                                    $mode = (!$row->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $row->mode_of_payment)) ? null : $row->mode_of_payment;
+                                    $r = $row->years[$year] ?? null;
+                                    $mode = (!$r || !$r->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $r->mode_of_payment)) ? null : $r->mode_of_payment;
                                 @endphp
                                 <tr data-fellow="{{ $row->fellow_id }}">
                                     <td class="muted">{{ $i + 1 }}</td>
@@ -306,14 +354,27 @@
                                     </td>
                                     <td>{{ $row->country_name ?? '—' }}</td>
                                     <td>{{ $row->fellowship_type ?? '—' }}</td>
-                                    <td data-order="{{ $row->effective_status }}">
-                                        <span class="sr-pill s-{{ $row->effective_status }}">{{ $row->effective_status === 'None' ? 'No Record' : $row->effective_status }}</span>
-                                    </td>
-                                    <td class="num" data-order="{{ $row->amount_due ?? -1 }}">{{ $row->amount_due !== null ? number_format($row->amount_due, 2) : '—' }}</td>
-                                    <td class="num" data-order="{{ $row->amount_paid ?? -1 }}">{{ $row->amount_paid !== null ? number_format($row->amount_paid, 2) : '—' }}</td>
-                                    <td class="num" data-order="{{ $row->outstanding ?? -1 }}">{{ $row->outstanding !== null ? number_format($row->outstanding, 2) : '—' }}</td>
-                                    <td data-order="{{ $row->date_paid ?? '' }}">{{ $row->date_paid ? \Carbon\Carbon::parse($row->date_paid)->format('d M Y') : '—' }}</td>
-                                    <td>{{ $mode ?? '—' }}</td>
+                                    @if($multi)
+                                        @foreach($selectedYears as $y)
+                                            @php $yr = $row->years[$y] ?? null; $st = $yr->effective_status ?? 'None'; @endphp
+                                            <td class="yc" data-order="{{ $st }}">
+                                                <span class="sr-pill s-{{ $st }}">{{ $st === 'None' ? 'No Record' : $st }}</span>
+                                                @if($yr && $yr->amount_paid !== null)<small>{{ number_format($yr->amount_paid, 2) }}</small>@endif
+                                            </td>
+                                        @endforeach
+                                        <td class="num" data-order="{{ $row->total_paid }}">{{ number_format($row->total_paid, 2) }}</td>
+                                        <td class="num" data-order="{{ $row->outstanding }}">{{ number_format($row->outstanding, 2) }}</td>
+                                    @else
+                                        @php $st = $r->effective_status ?? 'None'; @endphp
+                                        <td data-order="{{ $st }}">
+                                            <span class="sr-pill s-{{ $st }}">{{ $st === 'None' ? 'No Record' : $st }}</span>
+                                        </td>
+                                        <td class="num" data-order="{{ $r->amount_due ?? -1 }}">{{ isset($r->amount_due) ? number_format($r->amount_due, 2) : '—' }}</td>
+                                        <td class="num" data-order="{{ $r->amount_paid ?? -1 }}">{{ isset($r->amount_paid) ? number_format($r->amount_paid, 2) : '—' }}</td>
+                                        <td class="num" data-order="{{ $r->outstanding ?? -1 }}">{{ isset($r->outstanding) ? number_format($r->outstanding, 2) : '—' }}</td>
+                                        <td data-order="{{ $r->date_paid ?? '' }}">{{ !empty($r->date_paid) ? \Carbon\Carbon::parse($r->date_paid)->format('d M Y') : '—' }}</td>
+                                        <td>{{ $mode ?? '—' }}</td>
+                                    @endif
                                     <td class="no-export text-right"><i class="fas fa-chevron-right sr-go"></i></td>
                                 </tr>
                                 @endforeach
@@ -363,7 +424,7 @@
                     <div class="d-flex flex-wrap" style="gap:8px;">
                         @foreach($years as $y)
                             <label class="export-year mb-0">
-                                <input type="checkbox" name="years[]" value="{{ $y }}" {{ (string)$year === (string)$y ? 'checked' : '' }}>
+                                <input type="checkbox" name="years[]" value="{{ $y }}" {{ in_array((string) $y, $selectedYears, true) ? 'checked' : '' }}>
                                 <span>{{ $y }}</span>
                             </label>
                         @endforeach
@@ -401,7 +462,8 @@
 </div>
 
 {{-- ── Send Reminder Modal ── --}}
-@if (Auth::user()->hasPermission('fees.manage') && ($summary['owing'] ?? 0) > 0)
+@php $remindYears = array_filter($yearOwing, fn ($n) => $n > 0); $remindDefault = array_key_first($remindYears); @endphp
+@if ($canManage && $remindYears)
 <div class="modal fade" id="reminderModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -413,15 +475,27 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-warning py-2" style="font-size:.85rem;">
-                        This will email <strong>{{ $summary['owing'] ?? 0 }} fellow(s)</strong> with an outstanding {{ $year }}
+                        This will email <strong><span id="remindCount">{{ number_format($remindYears[$remindDefault]) }}</span> fellow(s)</strong>
+                        with an outstanding <span id="remindYearText">{{ $remindDefault }}</span>
                         annual subscription (status Unpaid, Partial, or No Record). Waived fellows are never emailed.
                     </div>
-                    <input type="hidden" name="year" value="{{ $year }}">
+                    @if(count($remindYears) > 1)
+                        <div class="form-group">
+                            <label class="font-weight-bold small">Year to remind for <span class="text-danger">*</span></label>
+                            <select name="year" id="remindYear" class="form-control" style="max-width:220px;">
+                                @foreach($remindYears as $y => $n)
+                                    <option value="{{ $y }}" data-owing="{{ $n }}">{{ $y }} — {{ number_format($n) }} owing</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @else
+                        <input type="hidden" name="year" value="{{ $remindDefault }}">
+                    @endif
                     <div class="form-group">
                         <label class="font-weight-bold small">Subject <span class="text-danger">*</span></label>
                         <input type="text" name="subject" class="form-control" required
-                               placeholder="Annual Subscription Reminder for {{ $year }}"
-                               value="Annual Subscription Reminder for {{ $year }}">
+                               placeholder="Annual Subscription Reminder for {{ $remindDefault }}"
+                               value="Annual Subscription Reminder for {{ $remindDefault }}">
                     </div>
                     <div class="form-group">
                         <label class="font-weight-bold small">Body <span class="text-danger">*</span></label>
@@ -442,7 +516,7 @@ COSECSA Secretariat</textarea>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn font-weight-bold" style="background:#a02626;border-color:#a02626;color:#fff;"
-                            onclick="return confirm('Send reminder emails to all {{ $summary['owing'] ?? 0 }} outstanding fellows for {{ $year }}?');">
+                            onclick="return confirm('Send reminder emails to all ' + document.getElementById('remindCount').textContent + ' outstanding fellows for ' + document.getElementById('remindYearText').textContent + '?');">
                         <i class="fas fa-paper-plane mr-1"></i>Send Reminder Emails
                     </button>
                 </div>
@@ -462,9 +536,9 @@ $(document).ready(function () {
         dom: 'Brtip',
         buttons: [
             { extend: 'copyHtml5',  className: 'btn-sm', exportOptions: exportCols },
-            { extend: 'csvHtml5',   className: 'btn-sm', title: 'annual_subscriptions_{{ $year }}', exportOptions: exportCols },
+            { extend: 'csvHtml5',   className: 'btn-sm', title: @json('annual_subscriptions_' . str_replace('–', '-', $yearLabel)), exportOptions: exportCols },
             { text: 'Excel', className: 'btn-sm', action: function () { $('#exportModal').modal('show'); } },
-            { extend: 'pdfHtml5',   className: 'btn-sm', title: 'Annual Subscription Report {{ $year }}', orientation: 'landscape', pageSize: 'A4', exportOptions: exportCols },
+            { extend: 'pdfHtml5',   className: 'btn-sm', title: @json('Annual Subscription Report ' . $yearLabel), orientation: 'landscape', pageSize: 'A4', exportOptions: exportCols },
             { extend: 'print',      className: 'btn-sm', exportOptions: exportCols }
         ],
         columnDefs: [
@@ -480,6 +554,42 @@ $(document).ready(function () {
         SubDrawer.open($(this).data('fellow'));
     });
 });
+
+// ── Year picker (header) ─────────────────────────────────────────────────
+(function () {
+    var menu = document.querySelector('.sr-yearpick .dropdown-menu');
+    if (!menu) return;
+    var boxes = menu.querySelectorAll('input[name="years[]"]');
+    var all = menu.querySelector('[data-yp-all]');
+    function sync() {
+        var n = Array.prototype.filter.call(boxes, function (b) { return b.checked; }).length;
+        all.textContent = n === boxes.length ? 'Clear all' : 'Select all';
+        menu.querySelector('button[type="submit"]').disabled = n === 0;
+    }
+    boxes.forEach(function (b) { b.addEventListener('change', sync); });
+    all.addEventListener('click', function (e) {
+        e.preventDefault();
+        var on = Array.prototype.some.call(boxes, function (b) { return !b.checked; });
+        boxes.forEach(function (b) { b.checked = on; });
+        sync();
+    });
+    sync();
+})();
+
+// ── Reminder modal: switching the year updates the count + subject ──────
+(function () {
+    var sel = document.getElementById('remindYear');
+    if (!sel) return;
+    var subject = document.querySelector('#reminderModal input[name="subject"]');
+    var shown = sel.value;
+    sel.addEventListener('change', function () {
+        var opt = sel.options[sel.selectedIndex];
+        document.getElementById('remindCount').textContent = Number(opt.dataset.owing).toLocaleString('en-US');
+        document.getElementById('remindYearText').textContent = sel.value;
+        subject.value = subject.value.split(shown).join(sel.value);
+        shown = sel.value;
+    });
+})();
 
 // ── Multi-year Excel download modal ─────────────────────────────────────
 (function () {
@@ -513,7 +623,8 @@ var SubDrawer = (function () {
     var root   = document.getElementById('srDrawerRoot');
     var panel  = root.querySelector('.sr-drawer');
     var body   = document.getElementById('srDrawerBody');
-    var year   = @json((string) $year);
+    var year   = @json((string) $year);          // newest selected year
+    var selectedYears = @json($selectedYears);
     var base   = @json(url('admin/fees/subscriptions/fellow'));
     var subsBase = @json(url('admin/associates/fellows/subscriptions'));
     var labels = { None: 'No Record' };
@@ -582,7 +693,7 @@ var SubDrawer = (function () {
                 var sub = [];
                 if (r.date_paid) sub.push(new Date(r.date_paid).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }));
                 if (r.mode) sub.push(esc(r.mode));
-                html += '<div class="sr-hrow' + (r.year === year ? ' current' : '') + '">'
+                html += '<div class="sr-hrow' + (selectedYears.indexOf(r.year) !== -1 ? ' current' : '') + '">'
                       + '<div class="left"><span class="yr">' + esc(r.year) + '</span>' + pill(r.status)
                       + (sub.length ? '<small>' + sub.join(' · ') + '</small>' : '') + '</div>'
                       + '<span class="amt">' + (r.amount_paid != null ? money(r.amount_paid) : '—')

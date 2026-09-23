@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\Response;
 
 // Thin wrapper around Laravel's HTTP client for server-to-server calls
@@ -25,6 +26,26 @@ class ApiClient
         return $this->pending()
             ->timeout(30)
             ->get($this->url($path), $query);
+    }
+
+    /**
+     * Several GETs to the same path, sent concurrently. Returns responses
+     * keyed like $queries; a request that couldn't connect comes back as
+     * null rather than a Response.
+     */
+    public function getMany(string $path, array $queries): array
+    {
+        $headers = Auth::check() ? ['X-Actor-Id' => Auth::id(), 'X-Actor-Name' => Auth::user()->name] : [];
+
+        $responses = Http::pool(fn (Pool $pool) => collect($queries)->map(
+            fn ($query, $key) => $pool->as((string) $key)
+                ->withToken($this->token)->withHeaders($headers)->timeout(30)
+                ->get($this->url($path), $query)
+        )->all());
+
+        return collect($queries)->mapWithKeys(fn ($q, $key) => [
+            $key => ($responses[(string) $key] ?? null) instanceof Response ? $responses[(string) $key] : null,
+        ])->all();
     }
 
     public function post(string $path, array $data = []): Response

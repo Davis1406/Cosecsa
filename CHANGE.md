@@ -4,6 +4,19 @@
 
 ## [Unreleased]
 
+### Changed (2026-09-23) — Subscription Report: view several years at once
+- The header year dropdown is now a **multi-select year picker** (tick years → Apply; Select all / Clear all). URLs use `?years[]=2026&years[]=2025…`; old `?year=2026` links still work.
+- **One year selected:** the page looks exactly as before.
+- **Several years selected:**
+  - The table shows one row per fellow with a **column per year** (status pill + amount paid), then **Total Paid** and **Outstanding** across the selected years.
+  - Tiles sum each status across the years (shown as "% of records", i.e. fellow × year), and the owing banner counts fellows who owe for at least one selected year.
+  - A status filter (tile or dropdown) shows fellows with that status in **any** selected year. It's applied MIS-side; country and search still go to the API.
+- The **Excel** download modal now pre-ticks the years currently in view, so the extract matches what's on screen.
+- **Reminders** are still sent one year at a time. With several years in view, the Remind modal gets a year dropdown showing each year's owing count, and switching years updates the count and subject line.
+- The fellow drawer highlights every selected year in the fellow's history.
+- New `ApiClient::getMany()` sends the per-year report requests concurrently (`Http::pool`), so a 3-year view loads in about the time of one year. `FeesController` has new private helpers `requestedYears()` (sanitise, de-dupe, newest first, max 10 for the view / 20 for export) and `loadSubscriptionYears()`, shared by the view and the Excel export. No cosecsa-api change.
+- **Files:** `app/Services/ApiClient.php`, `app/Http/Controllers/FeesController.php`, `resources/views/admin/fees/subscription_report.blade.php`.
+
 ### Added (2026-09-23) — Multi-year Excel download on the Subscription Report
 - The report's **Excel** button now opens a year picker (current year pre-ticked, Select all / Clear all) instead of exporting only the loaded table. It downloads one workbook, `annual_subscriptions_{from}-{to}.xlsx`, containing:
   - a **Summary** sheet with one row per year: total fellows, Paid/Partial/Unpaid/No Record/Waived/Owing counts, and due/collected/outstanding USD
