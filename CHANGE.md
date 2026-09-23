@@ -4,6 +4,23 @@
 
 ## [Unreleased]
 
+### Changed (2026-09-23) — My Tasks restyled to match the app's own theme
+- Replaced the custom card/chip/pill design from the earlier redesign with the app's standard building blocks, per feedback that it looked out of place:
+  - the standard `content-header` title with a `btn-cosecsa-outline` Back button
+  - maroon Bootstrap `nav-tabs`, styled the same as System Logs
+  - an AdminLTE card holding a `table-hover` table
+  - Bootstrap status badges (`badge-secondary` / `badge-warning` / `badge-success`)
+  - `btn-cosecsa` / `btn-cosecsa-outline` filter buttons with count badges
+  - the shared `.cosecsa-link` class for the maroon **Open** links
+- Behaviour unchanged:
+  - unread rows get a thin maroon left edge, a light tint, a bold title and a **New** badge
+  - done rows are muted and struck through
+  - overdue dates are red with an icon, and due-soon dates are amber
+  - "Seen / Not seen" column on Assigned By Me
+  - All / Unread / Pending / In Progress / Done / Overdue filters
+  - inline status change and the 5 s live poll
+- **Files:** `resources/views/messaging/tasks.blade.php`.
+
 ### Changed (2026-09-23) — My Tasks redesign with read/unread and status states
 - Rebuilt `messages/tasks` in COSECSA colours:
   - "Assigned to me" and "Assigned by me" tabs; the first shows an unread dot
