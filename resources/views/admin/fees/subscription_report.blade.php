@@ -253,7 +253,7 @@ $(document).ready(function () {
     });
 });
 
-// Insert a {{token}} into the reminder body at the cursor.
+// Insert a token marker into the reminder body at the cursor.
 function insertToken(el) {
     var ta = document.querySelector('#reminderModal textarea[name="body"]');
     if (!ta) return;
