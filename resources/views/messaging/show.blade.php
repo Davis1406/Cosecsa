@@ -13,11 +13,12 @@
 
     /* ── Card / thread surface ── */
     .chat-card { border: none; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 14px rgba(0,0,0,.07); }
+    /* WhatsApp-style palette: beige wallpaper, white received, green sent. */
     #threadBody {
-      background: linear-gradient(180deg,#fafafa,#f2f3f5);
+      background: #efeae2;
       padding: 20px;
     }
-    body.dark-mode #threadBody { background: linear-gradient(180deg,#1f2937,#161d29) !important; }
+    body.dark-mode #threadBody { background: #0b141a !important; }
 
     /* ── Message rows / avatars / bubbles ── */
     .chat-row { display:flex; align-items:flex-end; margin-bottom:16px; }
@@ -30,17 +31,24 @@
     }
     .chat-bubble-col { max-width:68%; }
     .message-bubble:hover .msg-actions { display: block !important; }
-    .msg-bubble-mine, .msg-bubble-theirs { position: relative; box-shadow: 0 1px 3px rgba(0,0,0,.09); }
-    .msg-bubble-mine   { background: #a02626; color: #fff; border-radius: 16px 16px 4px 16px; }
-    .msg-bubble-theirs { background: #ffffff; color: #222; border-radius: 16px 16px 16px 4px; }
-    .msg-bubble-mine   .msg-attach-link { color: #fff; }
-    .msg-bubble-theirs .msg-attach-link { color: #a02626; }
-    body.dark-mode .msg-bubble-mine   { background: #a02626 !important; color: #fff !important; }
-    body.dark-mode .msg-bubble-theirs { background: #374151 !important; color: #e0e0e0 !important; }
-    body.dark-mode .msg-bubble-mine   .msg-attach-link { color: #fff !important; }
-    body.dark-mode .msg-bubble-theirs .msg-attach-link { color: #fca5a5 !important; }
-    .msg-deleted-bubble { border-radius: 16px; }
-    body.dark-mode .msg-deleted-bubble { background: #374151 !important; color: #9ca3af !important; }
+    .msg-bubble-mine, .msg-bubble-theirs { position: relative; box-shadow: 0 1px .5px rgba(11,20,26,.13); }
+    .msg-bubble-mine   { background: #d9fdd3; color: #111b21; border-radius: 12px 12px 3px 12px; }
+    .msg-bubble-theirs { background: #ffffff; color: #111b21; border-radius: 12px 12px 12px 3px; }
+    .msg-bubble-mine   .msg-attach-link,
+    .msg-bubble-theirs .msg-attach-link { color: #027eb5; }
+    .msg-bubble-mine .msg-actions a { color: #54656f !important; }
+    .msg-bubble-mine .msg-actions { background: #d9fdd3; padding-left: 6px; border-radius: 6px; }
+    .chat-row .chat-bubble-col > .text-muted { color: #667781 !important; }
+    body.dark-mode .msg-bubble-mine   { background: #005c4b !important; color: #e9edef !important; }
+    body.dark-mode .msg-bubble-theirs { background: #202c33 !important; color: #e9edef !important; }
+    body.dark-mode .msg-bubble-mine   .msg-attach-link,
+    body.dark-mode .msg-bubble-theirs .msg-attach-link { color: #53bdeb !important; }
+    body.dark-mode .msg-bubble-mine .msg-actions { background: #005c4b; }
+    body.dark-mode .msg-bubble-mine .msg-actions a { color: #e9edef !important; }
+    body.dark-mode .chat-row .chat-bubble-col > .text-muted { color: #8696a0 !important; }
+    .msg-deleted-bubble { border-radius: 12px; background: rgba(255,255,255,.7) !important; }
+    body.dark-mode .msg-deleted-bubble { background: #202c33 !important; color: #8696a0 !important; }
+    #noMessagesPlaceholder { color: #54656f; }
 
     /* ── Input footer ── */
     .chat-footer { background:#fff; border-top:1px solid #ececec; }

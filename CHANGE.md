@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Changed (2026-09-23) — Chat bubbles use WhatsApp-style contrasting colours
+- Received messages were white bubbles on a near-white background, so a conversation of mostly incoming messages read as one undifferentiated block. The thread now uses WhatsApp's palette:
+  - light mode: beige wallpaper (`#efeae2`), **white** received bubbles, **soft green** (`#d9fdd3`) sent bubbles, dark text in both
+  - dark mode: `#0b141a` wallpaper, `#202c33` received, `#005c4b` sent
+- Sent bubbles were previously maroon. Attachment links are blue in both bubbles, and the edit/delete icons on your own messages are recoloured to stay visible on green.
+- **Files:** `resources/views/messaging/show.blade.php` (CSS only).
+
 ### Fixed (2026-09-23) — Tasks assigned in a chat weren't visible in that chat
 - Reported: the "Deliverables" group (`messages/24`) seemed to have activity under Messages, but opening the group showed "No messages yet". Cause: the sidebar **Messages** badge is *unread messages + pending tasks* (`layout/header.blade.php`), and the group's activity was 2 tasks created with **Assign Task**. Tasks live in the separate `tasks` table and were only listed under My Tasks; the thread view never loaded them, and assigning one posted nothing to the chat. There were no hidden or lost messages (verified: `poll-summary` showed 0 unread, 2 pending tasks).
 - The thread now shows a collapsible **Tasks** panel above the chat, listing that conversation's tasks: title, description, who it's for, who assigned it, and due date (flagged when overdue). Open tasks come first. The assignee or creator can change status inline (same `messages/tasks/{id}/status` endpoint as My Tasks); other members see a status badge. This also covers tasks created before this change.
