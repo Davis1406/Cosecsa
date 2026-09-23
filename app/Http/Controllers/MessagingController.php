@@ -95,6 +95,10 @@ class MessagingController extends Controller
             ->where('user_id', Auth::id())
             ->update(['last_read_at' => now()]);
 
+        // Viewing the conversation shows its Tasks panel, so the viewer's own
+        // tasks here count as read.
+        \App\Models\Task::markReadFor(Auth::id(), null, (int) $id);
+
         // Tasks live in their own table; surface them in the thread so a task
         // assigned here is visible to the group, not only under My Tasks.
         $tasks = \App\Models\Task::with(['assignee', 'creator'])

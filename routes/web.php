@@ -68,6 +68,7 @@ Route::middleware('auth')->group(function () {
     Route::get('messages/tasks', [\App\Http\Controllers\TaskController::class, 'index'])->name('messages.tasks.index');
     Route::get('messages/tasks/poll', [\App\Http\Controllers\TaskController::class, 'poll'])->name('messages.tasks.poll');
     Route::post('messages/tasks/{id}/status', [\App\Http\Controllers\TaskController::class, 'updateStatus'])->name('messages.tasks.status');
+    Route::get('messages/tasks/{id}/open', [\App\Http\Controllers\TaskController::class, 'open'])->name('messages.tasks.open');
 
     Route::get('messages/poll-summary', [\App\Http\Controllers\MessagingController::class, 'pollSummary'])->name('messages.poll-summary');
 

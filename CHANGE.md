@@ -4,6 +4,17 @@
 
 ## [Unreleased]
 
+### Changed (2026-09-23) — My Tasks redesign with read/unread and status states
+- Rebuilt `messages/tasks` in COSECSA colours:
+  - "Assigned to me" and "Assigned by me" tabs; the first shows an unread dot
+  - filter chips with counts: All, Unread (or "Not seen" on the by-me tab), Pending, In Progress, Done, Overdue
+  - tasks shown as cards, each with an initials avatar, title, description, from/for, due date (amber when due within 2 days, red when overdue), when it was assigned, and a maroon **Open conversation** link
+- **Read vs unread:** unread tasks get a maroon left edge, a light maroon tint, a bold title and a **NEW** badge, and are listed first. A task becomes read when the assignee opens it (new `GET messages/tasks/{id}/open`, which then goes to the chat), views its conversation (`MessagingController::show()`), or changes its status. `Task::markReadFor()` holds the rule.
+- **Seen receipts:** on "Assigned by me", each task shows "✓ Not seen yet" or "✓✓ Seen" (seen time on hover), updated live by the 5 s poll. The poll now returns `read` / `read_at`.
+- **Pending vs done:** status is a coloured pill or dropdown (Pending grey, In Progress gold, Done green). Done cards fade and are struck through with a green edge; overdue open tasks get a red edge. The assignee changes status inline, and the card restyles immediately.
+- **Files:** `app/Models/Task.php`, `app/Http/Controllers/{TaskController,MessagingController}.php`, `routes/web.php`, `resources/views/messaging/tasks.blade.php`.
+- **⚠️ Coordinate:** requires the cosecsa-api migration `2026_09_23_140000_add_read_at_to_tasks_table` to run first, because the page sorts by `tasks.read_at`.
+
 ### Added (2026-09-23) — More inline-edit fields on the examiner profile
 - `admin/exams/view_examiner/{id}` gains pencil edits for **Full Name** (new row at the top of Personal Details), **Examiner ID**, **Role** (dropdown from `examiners_roles`), **Designation** (dropdown of the options managed under Settings, or none) and **Hospital** (Participation Summary). That makes 13 inline-editable fields, up from 8.
 - Validation lives in the API: Examiner ID must be unique (the error names who has it), and Hospital needs a participation record first. Errors appear in the pencil popover.

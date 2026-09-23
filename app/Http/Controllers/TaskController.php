@@ -19,9 +19,28 @@ class TaskController extends Controller
 
         return view('messaging.tasks', [
             'header_title' => 'My Tasks',
-            'assignedToMe' => Task::with(['creator', 'conversation'])->where('assigned_to', $userId)->orderByRaw("status = 'done'")->orderBy('due_date')->get(),
-            'assignedByMe' => Task::with(['assignee', 'conversation'])->where('created_by', $userId)->where('assigned_to', '!=', $userId)->orderByDesc('created_at')->get(),
+            // Unread first, then open tasks by due date (no date last), then done.
+            'assignedToMe' => Task::with(['creator', 'conversation'])->where('assigned_to', $userId)
+                ->orderByRaw('read_at IS NOT NULL')->orderByRaw("status = 'done'")
+                ->orderByRaw('due_date IS NULL')->orderBy('due_date')->orderByDesc('id')->get(),
+            'assignedByMe' => Task::with(['assignee', 'conversation'])->where('created_by', $userId)->where('assigned_to', '!=', $userId)
+                ->orderByRaw("status = 'done'")->orderByDesc('created_at')->get(),
         ]);
+    }
+
+    // Opening a task marks it read (for the assignee) and jumps to its chat.
+    public function open($id)
+    {
+        $task = Task::findOrFail($id);
+        abort_unless(in_array(Auth::id(), [$task->assigned_to, $task->created_by]), 403);
+
+        if ($task->assigned_to == Auth::id()) {
+            Task::markReadFor(Auth::id(), [$task->id]);
+        }
+
+        return $task->conversation_id
+            ? redirect("messages/{$task->conversation_id}")
+            : redirect('messages/tasks');
     }
 
     public function store(Request $request, $conversationId)
@@ -74,6 +93,9 @@ class TaskController extends Controller
         abort_unless(in_array(Auth::id(), [$task->assigned_to, $task->created_by]), 403);
 
         $task->update(['status' => $request->status]);
+        if ($task->assigned_to == Auth::id()) {
+            Task::markReadFor(Auth::id(), [$task->id]);
+        }
 
         if ($request->wantsJson()) {
             return response()->json(['ok' => true, 'status' => $task->status]);
@@ -99,6 +121,8 @@ class TaskController extends Controller
             'conversation_url' => $t->conversation_id ? url('messages/' . $t->conversation_id) : null,
             'due_date'    => $t->due_date ? \Carbon\Carbon::parse($t->due_date)->format('d M Y') : null,
             'status'      => $t->status,
+            'read'        => (bool) $t->read_at,
+            'read_at'     => $t->read_at?->format('d M Y, H:i'),
         ];
 
         $assignedToMe = Task::with(['creator', 'conversation'])->where('assigned_to', $userId)
