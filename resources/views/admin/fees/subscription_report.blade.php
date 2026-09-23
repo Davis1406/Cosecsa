@@ -4,9 +4,6 @@
 
 @php
     $total    = max(1, (int) ($summary['total_fellows'] ?? 0));
-    $due      = (float) ($summary['amount_due'] ?? 0);
-    $collected= (float) ($summary['amount_collected'] ?? 0);
-    $collectPct = $due > 0 ? min(100, round($collected / $due * 100)) : 0;
     $statusTiles = [
         'Paid'    => ['label' => 'Paid',      'key' => 'paid'],
         'Partial' => ['label' => 'Partial',   'key' => 'partial'],
@@ -53,15 +50,6 @@
 
     /* ── Cards ── */
     .sr-card { background:var(--sr-card); border:1px solid var(--sr-line); border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
-
-    /* Collection card */
-    .sr-collect { padding:18px 20px; height:100%; }
-    .sr-collect .big { font-size:1.9rem; font-weight:700; letter-spacing:-.02em; line-height:1.1; }
-    .sr-collect .of { color:var(--sr-muted); font-size:.9rem; }
-    .sr-bar { height:8px; background:var(--sr-soft); border-radius:99px; overflow:hidden; margin:14px 0 12px; }
-    .sr-bar > span { display:block; height:100%; background:#2e7d32; border-radius:99px; }
-    .sr-collect .split { display:flex; gap:18px; font-size:.85rem; color:var(--sr-muted); }
-    .sr-collect .split strong { display:block; color:var(--sr-ink); font-size:1rem; }
 
     /* Status tiles */
     .sr-tiles { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:10px; }
@@ -221,21 +209,7 @@
 
                 {{-- ── Summary ── --}}
                 <div class="row mb-3">
-                    <div class="col-lg-4 mb-3 mb-lg-0">
-                        <div class="sr-card sr-collect">
-                            <div class="sr-eyebrow">Collected in {{ $year }}</div>
-                            <div class="mt-2">
-                                <span class="big">${{ number_format($collected, 2) }}</span>
-                                <span class="of">of ${{ number_format($due, 2) }} billed</span>
-                            </div>
-                            <div class="sr-bar"><span style="width:{{ $collectPct }}%"></span></div>
-                            <div class="split">
-                                <div><strong>{{ $collectPct }}%</strong>collected</div>
-                                <div><strong style="color:var(--st-Unpaid-fg);">${{ number_format($summary['outstanding'] ?? 0, 2) }}</strong>outstanding on billed records</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-8">
+                    <div class="col-12">
                         <div class="sr-tiles">
                             @foreach($statusTiles as $st => $t)
                                 @php $n = (int) ($summary[$t['key']] ?? 0); $isActive = $activeStatus === $st; @endphp

@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Removed (2026-09-23) — Subscription Report: "Collected in {year}" card
+- Removed the collected-vs-billed summary card from `admin/fees/subscriptions/report` at Davis's request (its markup, CSS, and view variables). The status tiles now take the full width.
+- **Files:** `resources/views/admin/fees/subscription_report.blade.php`.
+
 ### Changed (2026-09-23) — Subscription Report redesign + per-fellow subscription drawer
 - Rebuilt `admin/fees/subscriptions/report`. The gradient hero is gone. The page now has a flat header with a year picker and a "Remind N owing" button, a **Collected** card (collected vs billed, with a progress bar), and five **status tiles** (Paid / Partial / Unpaid / No Record / Waived). Each tile shows its share of fellows and filters the table when clicked (click again to clear). Under the tiles are a status-distribution bar and an owing banner.
 - The table now sits in one card, with the search / status / country filters in its toolbar (still server-side). Rows show an initials avatar, soft status pills and right-aligned money columns. Copy/CSV/Excel/PDF/Print export is unchanged; the avatar uses a CSS `data-initials` pseudo-element so exports stay clean.
