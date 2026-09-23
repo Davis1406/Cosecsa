@@ -46,7 +46,9 @@
                         <h4 class="mb-0"><i class="fas fa-hand-holding-usd mr-2"></i>Manage Fees</h4>
                         <div style="font-size:.85rem;opacity:.85;">
                             Record payments and review the unified payments log. To view or edit fee rates, go to
-                            <a href="{{ route('admin.fees.catalogue') }}" style="color:#fff;text-decoration:underline;">Fee Catalogues</a>.
+                            <a href="{{ route('admin.fees.catalogue') }}" style="color:#fff;text-decoration:underline;">Fee Catalogues</a>
+                            or view payment status per year in the
+                            <a href="{{ route('admin.fees.subscriptions.report') }}" style="color:#fff;text-decoration:underline;">Annual Subscription Report</a>.
                         </div>
                     </div>
                 </div>
@@ -129,6 +131,7 @@
                                         <option>Cash</option>
                                         <option>Cheque</option>
                                         <option>Mobile Money</option>
+                                        <option>Country Office</option>
                                     </select>
                                 </div>
                                 <div class="form-group col-md-6">
@@ -316,7 +319,15 @@
                         </div>
                         <div class="form-group col-6">
                             <label>Mode of Payment</label>
-                            <input type="text" name="mode_of_payment" id="epMode" class="form-control">
+                            <input type="text" name="mode_of_payment" id="epMode" class="form-control" list="modeOfPaymentOptions">
+                            <datalist id="modeOfPaymentOptions">
+                                <option value="Bank Transfer"></option>
+                                <option value="Online Payment"></option>
+                                <option value="Cash"></option>
+                                <option value="Cheque"></option>
+                                <option value="Mobile Money"></option>
+                                <option value="Country Office"></option>
+                            </datalist>
                         </div>
                     </div>
                     <div class="form-group" id="epReferenceGroup">

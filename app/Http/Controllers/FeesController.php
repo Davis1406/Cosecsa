@@ -134,4 +134,40 @@ class FeesController extends Controller
 
         return redirect('admin/fees')->with('success', $response->json('message'));
     }
+
+    // ── Annual Subscription report + reminders ────────────────────────────
+
+    public function subscriptionReport(Request $request)
+    {
+        $response = $this->api->get('fees/subscriptions/report', $request->only(['year', 'status', 'country_id', 'q']));
+
+        if ($response->failed()) {
+            abort(500, 'Failed to load the subscription report.');
+        }
+
+        $data = $response->object();
+
+        return view('admin.fees.subscription_report', [
+            'header_title' => 'Annual Subscription Report',
+            'year'         => $data->year,
+            'years'        => collect($data->years ?? []),
+            'countries'    => collect($data->countries ?? []),
+            'filters'      => (array) ($data->filters ?? []),
+            'summary'      => (array) ($data->summary ?? []),
+            'rows'         => collect($data->rows ?? []),
+        ]);
+    }
+
+    public function sendSubscriptionReminders(Request $request)
+    {
+        $response = $this->api->post('fees/subscriptions/remind', $request->only([
+            'year', 'subject', 'body', 'recipient_ids',
+        ]));
+
+        if ($response->failed()) {
+            return back()->withInput()->with('error', $response->json('message', 'Failed to send reminders.'));
+        }
+
+        return back()->with('success', $response->json('message'));
+    }
 }

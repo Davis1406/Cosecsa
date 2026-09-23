@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Added (2026-09-23) — Annual Subscription Report per year + reminder emails
+- New Fees subpage at `admin/fees/subscriptions/report` (named route `admin.fees.subscriptions.report`): every fellow's payment status for a chosen year, including fellows with **no subscription record at all** (shown as "No Record", treated as owing — many fellows simply never had a record created).
+- Summary tiles (total fellows, Paid/Partial/Unpaid/Waived/No Record counts, Owing, due/collected/outstanding USD), filters (year, status, country, search), DataTable with copy/CSV/Excel/PDF/print export, and click-through to each fellow's subscription tab.
+- **Send Reminders** (only visible with `fees.manage`, using the same permission gate as recording payments): a modal composes subject + body (with `{{name}}`, `{{first_name}}`, `{{year}}`, `{{country}}`, `{{fellowship_type}}`, `{{amount_due}}`, `{{amount_paid}}`, `{{outstanding}}` tokens inserted via clickable chips) and emails every outstanding fellow for the year — Unpaid, Partial, or No Record; Waived/Paid are never touched.
+- Record Payment form's Mode of Payment dropdown gained **Country Office** (alongside Bank Transfer/Online/Cash/Cheque/Mobile Money), plus a matching datalist on the Edit Payment modal's free-text Mode field.
+- Sidebar: "Subscriptions Report" link under the Fees treeview.
+- **Files:** `app/Http/Controllers/FeesController.php`, `routes/web.php`, `resources/views/admin/fees/{manage,subscription_report}.blade.php`, `resources/views/layout/header.blade.php`.
+- **⚠️ Coordinate:** requires the matching cosecsa-api deploy (new `fees/subscriptions/report` + `fees/subscriptions/remind` endpoints, `fee_reminders` migration, `AnnualSubscriptionReminderMail`) to land first — run `php artisan migrate` there before/alongside this.
+
 ### Fixed (2026-09-02) — Fellow profile photo upload crashed with a 500
 - Editing (or adding) a fellow with a profile photo threw an internal server error. Two bugs in
   sequence:

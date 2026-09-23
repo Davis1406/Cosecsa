@@ -717,6 +717,13 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <p>Manage Fees</p>
                                     </a>
                                 </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.fees.subscriptions.report') }}"
+                                        class="nav-link @if (Request::segment(2) == 'fees' && Request::segment(3) == 'subscriptions') active @endif">
+                                        <i class="fas fa-file-invoice-dollar nav-icon"></i>
+                                        <p>Subscriptions Report</p>
+                                    </a>
+                                </li>
                             </ul>
                         </li>
                         @endif
