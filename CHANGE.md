@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed (2026-09-23) — `messages/tasks` 500: compiled views owned by root
+- `messages/tasks` returned a 500: `file_put_contents(storage/framework/views/5269397e….php): Permission denied`, where that file is the compiled My Tasks view. Deploys ran `php artisan view:cache` as root over SSH, leaving root-owned (644) compiled views. Laravel's `CompilerEngine` recompiles when the template mtime is **>=** the compiled mtime, and `git pull` + `view:cache` in the same second produced exactly that tie. Apache (`www-data`) then couldn't overwrite the file.
+- Fixed on the server with `chown -R www-data:www-data storage bootstrap/cache` for both the MIS (187 root-owned compiled views) and cosecsa-api (4 root-owned `bootstrap/cache` files). The page loads again.
+- The deploy commands in `CLAUDE.md` and `DEPLOY.md` now end with that `chown`, with an explanation, so it can't recur. No code change.
+
 ### Changed (2026-09-23) — My Tasks restyled to match the app's own theme
 - Replaced the custom card/chip/pill design from the earlier redesign with the app's standard building blocks, per feedback that it looked out of place:
   - the standard `content-header` title with a `btn-cosecsa-outline` Back button
