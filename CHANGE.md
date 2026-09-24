@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-09-24) — "Approved" count on the Salesforce applications page
+- New **Approved** tile (teal, between Active and Complete) on `admin/salesforce`, counting applications whose Salesforce **Stage = "Approved"** under the current filters. The five tiles now share the row equally (`col-md`).
+- **Files:** `app/Http/Controllers/SalesforceSyncController.php`, `resources/views/admin/salesforce/index.blade.php`. Needs the cosecsa-api `approvedStageCount` change (falls back to 0 without it).
+
 ### Fixed (2026-09-24) — Salesforce application stages out of sync with Salesforce
 - Applications approved in Salesforce weren't showing as approved (e.g. `admin/salesforce/view/1980`). The root cause was in cosecsa-api's sync: nothing was scheduled, there was a watermark gap, and failures were silent. See that repo's CHANGES.md (2026-09-24). Applications now auto-sync every 15 min, plus a full sync nightly.
 - A one-off full sync on 2026-09-24 refreshed all 2,050 applications. App 1980 is now **Stage = Approved**, matching Salesforce.

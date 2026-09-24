@@ -52,6 +52,7 @@ class SalesforceSyncController extends Controller
             'trendCounts'     => collect($data->trendCounts ?? []),
             'receivedCount'   => $data->receivedCount ?? 0,
             'approvedCount'   => $data->approvedCount ?? 0,
+            'approvedStageCount' => $data->approvedStageCount ?? 0,
             'rejectedCount'   => $data->rejectedCount ?? 0,
         ]);
     }
