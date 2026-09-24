@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added (2026-09-24) — Salesforce page: Invoiced tile + clickable tiles filter the list
+- New **Invoiced** tile (dark gold). Pending no longer includes Invoiced.
+- All six tiles (Total, Pending, Approved, Invoiced, Complete, Rejected/Withdrawn) are links. Clicking one filters the table to that category (`?group=`) and outlines the tile in gold; clicking it again, or clicking Total, clears the filter. Tile counts stay fixed while a tile is selected. The filter bar keeps the selected tile when year, country etc. change, while choosing a specific Stage in the dropdown replaces it.
+- Tiles are six across on wide screens (`col-xl-2`), three on tablets and two on phones.
+- **Files:** `app/Http/Controllers/SalesforceSyncController.php`, `resources/views/admin/salesforce/index.blade.php`. Needs the matching cosecsa-api deploy (`group` + `invoicedCount`).
+
 ### Added (2026-09-24) — "Approved" count on the Salesforce applications page
 - New **Approved** tile (teal, between Active and Complete) on `admin/salesforce`, counting applications whose Salesforce **Stage = "Approved"** under the current filters. The five tiles now share the row equally (`col-md`).
 - The **Active (not rejected/withdrawn)** tile became **Pending** (blue): applications still being processed, i.e. every stage except Approved, Complete, Rejected, Withdrawn and Closed. The tiles now add up without overlap (Total = Pending + Approved + Complete + Rejected/Withdrawn + Closed); Closed has no tile.

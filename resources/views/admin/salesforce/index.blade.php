@@ -19,6 +19,10 @@
     .stat-card.st-warn    { background: linear-gradient(135deg, #a3690c, #d68f16); box-shadow:0 2px 10px rgba(163,105,12,.25); }
     .stat-card.st-pending  { background: linear-gradient(135deg, #1f6391, #2980b9); box-shadow:0 2px 10px rgba(31,99,145,.25); }
     .stat-card.st-approved { background: linear-gradient(135deg, #004356, #0b6a83); box-shadow:0 2px 10px rgba(0,67,86,.25); }
+    .stat-card.st-invoiced { background: linear-gradient(135deg, #6b4f00, #9a7400); box-shadow:0 2px 10px rgba(107,79,0,.25); }
+    .stat-link { display:block; color:#fff !important; text-decoration:none !important; transition:transform .12s, box-shadow .12s; }
+    .stat-link:hover { transform:translateY(-2px); }
+    .stat-link.stat-active { outline:3px solid #FEC503; outline-offset:2px; }
     .stat-card.st-neutral { background: linear-gradient(135deg, #495057, #6c757d); box-shadow:0 2px 10px rgba(73,80,87,.25); }
     .stat-number { font-size: 26px; font-weight: 700; margin-bottom: 2px; }
     .stat-label  { font-size: 12px; opacity: .9; text-transform:uppercase; letter-spacing:.03em; }
@@ -81,6 +85,7 @@
                 <div class="filter-bar no-print">
                     <form method="GET" action="{{ url('admin/salesforce') }}"
                           class="d-flex flex-wrap align-items-end" style="gap:.75rem;">
+                        @if(!empty($group))<input type="hidden" name="group" value="{{ $group }}">@endif
                         <div style="flex:1;min-width:200px;">
                             <label class="d-block mb-1 small font-weight-bold text-muted">Search</label>
                             <input type="text" name="q" value="{{ $search }}" placeholder="Name, email, PEN..."
@@ -126,7 +131,7 @@
                         </div>
                         <div>
                             <label class="d-block mb-1 small font-weight-bold text-muted">Stage</label>
-                            <select name="stage" class="form-control form-control-sm" style="width:190px;" onchange="this.form.submit()">
+                            <select name="stage" class="form-control form-control-sm" style="width:190px;" onchange="if (this.form.group) this.form.group.remove(); this.form.submit()">
                                 <option value="">All stages</option>
                                 @foreach($stages as $s)
                                     <option value="{{ $s }}" {{ $stage == $s ? 'selected' : '' }}>{{ $s }}</option>
@@ -155,38 +160,28 @@
                     </form>
                 </div>
 
-                {{-- ── Stat cards ──────────────────────────────────────────────── --}}
+                {{-- ── Stat cards (click to filter the table; click again to clear) ── --}}
+                @php
+                    $tiles = [
+                        null       => ['Total Applications', '',            $total,                                'Show all applications'],
+                        'pending'  => ['Pending',            'st-pending',  $pendingCount ?? $receivedCount,      'Received, in the approval process, awaiting payment verification or with a question'],
+                        'approved' => ['Approved',           'st-approved', $approvedStageCount ?? 0,             'Stage: Approved'],
+                        'invoiced' => ['Invoiced',           'st-invoiced', $invoicedCount ?? 0,                  'Stage: Invoiced'],
+                        'complete' => ['Complete',           'st-good',     $approvedCount,                       'Stage: Complete'],
+                        'rejected' => ['Rejected / Withdrawn','st-warn',    $rejectedCount,                       'Stage: Rejected or Withdrawn by applicant'],
+                    ];
+                @endphp
                 <div class="row">
-                    <div class="col-6 col-md">
-                        <div class="stat-card">
-                            <div class="stat-number">{{ number_format($total) }}</div>
-                            <div class="stat-label">Total Applications</div>
+                    @foreach($tiles as $key => [$label, $cls, $n, $hint])
+                        @php $isActive = ($group ?? null) === ($key ?: null); @endphp
+                        <div class="col-6 col-md-4 col-xl-2">
+                            <a href="{{ request()->fullUrlWithQuery(['group' => ($key && !$isActive) ? $key : null, 'stage' => null]) }}"
+                               class="stat-card stat-link {{ $cls }} {{ $isActive ? 'stat-active' : '' }}" title="{{ $hint }}">
+                                <div class="stat-number">{{ number_format($n) }}</div>
+                                <div class="stat-label">{{ $label }}</div>
+                            </a>
                         </div>
-                    </div>
-                    <div class="col-6 col-md">
-                        <div class="stat-card st-pending">
-                            <div class="stat-number">{{ number_format($pendingCount ?? $receivedCount) }}</div>
-                            <div class="stat-label" title="Received, in the approval process, invoiced, awaiting payment verification or with a question — not yet Approved, Complete, Rejected/Withdrawn or Closed">Pending</div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md">
-                        <div class="stat-card st-approved">
-                            <div class="stat-number">{{ number_format($approvedStageCount ?? 0) }}</div>
-                            <div class="stat-label">Approved</div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md">
-                        <div class="stat-card st-good">
-                            <div class="stat-number">{{ number_format($approvedCount) }}</div>
-                            <div class="stat-label">Complete</div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md">
-                        <div class="stat-card st-warn">
-                            <div class="stat-number">{{ number_format($rejectedCount) }}</div>
-                            <div class="stat-label">Rejected / Withdrawn</div>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
 
                 @if($total === 0)
