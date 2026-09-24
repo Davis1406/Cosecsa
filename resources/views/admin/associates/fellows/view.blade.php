@@ -300,9 +300,19 @@
                                     @endforeach
                                 </select>
                             </div>
+                            @php $arSpecialty = $fellow->current_specialty ?? ''; @endphp
                             <div class="form-group">
                                 <label>Specialty</label>
-                                <input type="text" class="form-control" name="specialty" placeholder="Defaults to fellow's specialty">
+                                <select class="form-control" name="specialty">
+                                    <option value="">-- Select specialty --</option>
+                                    @foreach($fellowProgrammes as $p)
+                                        <option value="{{ $p->name }}" {{ $arSpecialty === $p->name ? 'selected' : '' }}>{{ $p->name }}</option>
+                                    @endforeach
+                                    @if($arSpecialty !== '' && ! collect($fellowProgrammes)->contains('name', $arSpecialty))
+                                        <option value="{{ $arSpecialty }}" selected>{{ $arSpecialty }} (current)</option>
+                                    @endif
+                                </select>
+                                <small class="text-muted">Taken from the fellow's current specialty; change it if needed.</small>
                             </div>
                             <div class="form-group">
                                 <label>Sub-specialty</label>
@@ -312,6 +322,17 @@
                                 <label>Mobile Number</label>
                                 <input type="text" class="form-control" name="mobile_no">
                             </div>
+                            <div class="form-row">
+                                <div class="form-group col-sm-6">
+                                    <label>Set Password</label>
+                                    <input type="password" class="form-control" name="password" minlength="8" autocomplete="new-password">
+                                </div>
+                                <div class="form-group col-sm-6">
+                                    <label>Confirm Password</label>
+                                    <input type="password" class="form-control" name="password_confirmation" minlength="8" autocomplete="new-password">
+                                </div>
+                            </div>
+                            <small class="text-muted d-block" style="margin-top:-.5rem;">Optional. The fellow has one login for all their roles, so this also changes their fellow password. Leave blank to keep the current one.</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -1185,10 +1206,13 @@ function toggleLabelsEdit() {
 }
 
 $('#ar_role_type').on('change', function () {
-    $('.ar-fields').addClass('d-none').find('select,input').prop('required', false);
+    // Hidden sections are disabled so their same-named fields (country_id,
+    // mobile_no) aren't submitted over the visible ones.
+    $('.ar-fields').addClass('d-none').find('select,input').prop({ required: false, disabled: true });
     var v = $(this).val();
     if (v) {
         var $box = $('.ar-fields-' + v).removeClass('d-none');
+        $box.find('select,input').prop('disabled', false);
         if (v === '4') { $box.find('select[name=hospital_id]').prop('required', true); }
         if (v === '5') { $box.find('select[name=country_id]').prop('required', true); }
     }
@@ -1196,8 +1220,13 @@ $('#ar_role_type').on('change', function () {
 
 $('#addRoleForm').on('submit', function (e) {
     e.preventDefault();
-    var $btn = $('#addRoleSubmit').prop('disabled', true).text('Adding...');
     var $alert = $('#addRoleAlert').addClass('d-none');
+    var pw = this.elements['password'];
+    if (pw && !pw.disabled && pw.value !== this.elements['password_confirmation'].value) {
+        $alert.removeClass('d-none alert-success').addClass('alert-danger').text('Passwords do not match.');
+        return;
+    }
+    var $btn = $('#addRoleSubmit').prop('disabled', true).text('Adding...');
 
     $.ajax({
         url: '{{ url("admin/associates/fellows/" . ($fellow->fellow_id ?? "") . "/add-role") }}',

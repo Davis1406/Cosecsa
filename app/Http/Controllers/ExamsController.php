@@ -245,6 +245,7 @@ class ExamsController extends Controller
             'designationOptions' => collect($d->designation_options ?? []),
             'examinerDocuments'  => collect($d->examiner_documents ?? []),
             'roleOptions'        => (array) ($d->role_options ?? [1 => 'Examiner', 2 => 'Observer']),
+            'specialtyOptions'   => collect($d->specialty_options ?? []),
             'relatedProfiles'    => $d->relatedProfiles ?? null,
             'notes'              => $this->associateNotes('examiner', $examiner->examin_id),
         ]);

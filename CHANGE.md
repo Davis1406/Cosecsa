@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Fixed (2026-09-24) — Fellows given the Examiner role; Add Role password + specialty
+- Fellows who get the Examiner role via **Add Role** now appear in the public availability form dropdown, the Examiners list and bulk email. Those lists used to require the user's primary type to be Examiner. The fix is in cosecsa-api.
+- **Add Role → Examiner** modal:
+  - **Specialty** is now a dropdown of programmes, preselected with the fellow's current specialty.
+  - New optional **Set Password / Confirm Password** fields. The login is shared, so this also changes the fellow password.
+  - Hidden role sections are now disabled so their same-named fields (country, mobile) no longer overwrite the visible ones.
+- `admin/exams/view_examiner/{id}`: inline **Specialty** edit is a programme dropdown showing the current value by name.
+- **Files:** `app/Http/Controllers/FellowsController.php`, `app/Http/Controllers/ExamsController.php`, `resources/views/admin/associates/fellows/view.blade.php`, `resources/views/admin/exams/view_examiner.blade.php`. Needs the matching cosecsa-api deploy.
+
 ### Added (2026-09-24) — Salesforce page: Invoiced tile + clickable tiles filter the list
 - New **Invoiced** tile (dark gold). Pending no longer includes Invoiced.
 - All six tiles (Total, Pending, Approved, Invoiced, Complete, Rejected/Withdrawn) are links. Clicking one filters the table to that category (`?group=`) and outlines the tile in gold; clicking it again, or clicking Total, clears the filter. Tile counts stay fixed while a tile is selected. The filter bar keeps the selected tile when year, country etc. change, while choosing a specific Stage in the dropdown replaces it.

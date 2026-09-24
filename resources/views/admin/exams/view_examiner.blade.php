@@ -324,8 +324,9 @@
                                 <tr>
                                     <th><i class="fas fa-stethoscope text-muted mr-1"></i> Specialty</th>
                                     <td>
-                                        <span class="ie-field" data-ie="specialty" data-ie-type="text"
+                                        <span class="ie-field" data-ie="specialty" data-ie-type="select"
                                               data-ie-value="{{ $examiner->specialty ?? '' }}"
+                                              data-ie-options="{{ json_encode(['' => '— None —'] + $specialtyOptions->mapWithKeys(fn ($p) => [$p => $p])->all()) }}"
                                               data-ie-url="{{ url('admin/exams/examiner/'.$examiner->examin_id.'/quick-update') }}"
                                               data-ie-csrf="{{ csrf_token() }}">
                                             <span class="ie-value">{{ $examiner->specialty ?: '—' }}</span>

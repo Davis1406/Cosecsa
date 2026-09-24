@@ -326,7 +326,7 @@ class FellowsController extends Controller
         $response = $this->api->post("fellows/{$id}/add-role", $request->only([
             'role_type', 'hospital_id', 'programme_id', 'phone_number', 'mobile_no',
             'assistant_pd', 'assistant_email', 'country_id', 'cosecsa_email',
-            'specialty', 'subspecialty', 'gender',
+            'specialty', 'subspecialty', 'gender', 'password', 'password_confirmation',
         ]));
 
         return response()->json($response->json(), $response->status());
