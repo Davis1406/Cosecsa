@@ -268,7 +268,12 @@
                                 @php
                                     $stageLower = strtolower($app->application_stage ?? '');
                                     $pillClass = 'stage-default';
-                                    if (str_contains($stageLower, 'complete') || str_contains($stageLower, 'approv')) $pillClass = 'stage-complete';
+                                    $stageMap = ['complete' => 'stage-complete', 'approved' => 'stage-complete',
+                                            'application received' => 'stage-received', 'question' => 'stage-received',
+                                            'in the approval process' => 'stage-review', 'invoiced' => 'stage-review', 'payment verification pending' => 'stage-review',
+                                            'rejected' => 'stage-rejected', 'withdrawn by applicant' => 'stage-rejected', 'closed' => 'stage-default'];
+                                    if (isset($stageMap[$stageLower])) $pillClass = $stageMap[$stageLower];
+                                    elseif (str_contains($stageLower, 'complete')) $pillClass = 'stage-complete';
                                     elseif (str_contains($stageLower, 'received')) $pillClass = 'stage-received';
                                     elseif (str_contains($stageLower, 'review') || str_contains($stageLower, 'pending')) $pillClass = 'stage-review';
                                     elseif (str_contains($stageLower, 'reject') || str_contains($stageLower, 'withdrawn')) $pillClass = 'stage-rejected';
@@ -280,7 +285,7 @@
                                     <td>{{ $app->programme_name ?: '—' }}</td>
                                     <td>{{ $app->application_level ?: '—' }}</td>
                                     <td>{{ $app->country ?: '—' }}</td>
-                                    <td>{{ $pillClass === 'stage-complete' ? ($app->pen ?: $app->entry_number ?: '—') : '—' }}</td>
+                                    <td>{{ $stageLower === 'complete' ? ($app->pen ?: $app->entry_number ?: '—') : '—' }}</td>
                                     <td data-order="{{ $app->date_of_application }}">
                                         {{ $app->date_of_application ? \Carbon\Carbon::parse($app->date_of_application)->format('d M Y') : '—' }}
                                     </td>

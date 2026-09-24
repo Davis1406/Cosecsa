@@ -6,7 +6,17 @@
 
 ### Fixed (2026-09-24) — Salesforce application stages out of sync with Salesforce
 - Applications approved in Salesforce weren't showing as approved (e.g. `admin/salesforce/view/1980`). The root cause was in cosecsa-api's sync: nothing was scheduled, there was a watermark gap, and failures were silent. See that repo's CHANGES.md (2026-09-24). Applications now auto-sync every 15 min, plus a full sync nightly.
-- This repo: the view page now shows Salesforce's **Approved** checkbox, which was synced but never displayed, and notes that records auto-sync. The Stage pill on the view and list pages shows any "Approved…" stage in green, like Complete, instead of grey.
+- A one-off full sync on 2026-09-24 refreshed all 2,050 applications. App 1980 is now **Stage = Approved**, matching Salesforce.
+- Salesforce's `Application_Approved__c` checkbox **does not track the stage**: 860 Complete and 14 Approved applications have it unticked, while some Rejected/Withdrawn ones have it ticked. The **Stage** is the source of truth, so the view page shows the Stage only. (A checkbox row added briefly earlier the same day was removed, because it would have said "No" for approved applications.)
+- This repo: the Stage pill (view + list) now maps every stage Salesforce actually uses to a colour:
+  - Complete / Approved: green
+  - Application Received / Question: yellow
+  - In the Approval Process / Invoiced / Payment Verification Pending: blue
+  - Rejected / Withdrawn: red
+  - Closed: grey
+  - anything new falls back to the old keyword rules
+- PEN is shown only for Complete, as before. The "Last synced" row notes the 15-minute auto-sync.
+- **Not changed (needs a decision):** the list page's **Approved** filter still uses the unreliable checkbox, and its **Approved** count counts *Complete* only.
 - **Files:** `resources/views/admin/salesforce/{show,index}.blade.php`.
 
 ### Changed (2026-09-23) — My Tasks: card layout rebuilt on the app's Stitch design system

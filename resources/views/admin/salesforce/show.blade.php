@@ -44,7 +44,12 @@
                 @php
                     $stageLower = strtolower($application->application_stage ?? '');
                     $pillClass = 'stage-default';
-                    if (str_contains($stageLower, 'complete') || str_contains($stageLower, 'approv')) $pillClass = 'stage-complete';
+                    $stageMap = ['complete' => 'stage-complete', 'approved' => 'stage-complete',
+                            'application received' => 'stage-received', 'question' => 'stage-received',
+                            'in the approval process' => 'stage-review', 'invoiced' => 'stage-review', 'payment verification pending' => 'stage-review',
+                            'rejected' => 'stage-rejected', 'withdrawn by applicant' => 'stage-rejected', 'closed' => 'stage-default'];
+                    if (isset($stageMap[$stageLower])) $pillClass = $stageMap[$stageLower];
+                    elseif (str_contains($stageLower, 'complete')) $pillClass = 'stage-complete';
                     elseif (str_contains($stageLower, 'received')) $pillClass = 'stage-received';
                     elseif (str_contains($stageLower, 'review') || str_contains($stageLower, 'pending')) $pillClass = 'stage-review';
                     elseif (str_contains($stageLower, 'reject') || str_contains($stageLower, 'withdrawn')) $pillClass = 'stage-rejected';
@@ -69,12 +74,11 @@
                             <div class="dl-row"><div class="dl-label">Stage</div><div class="dl-value"><span class="stage-pill {{ $pillClass }}">{{ $application->application_stage ?: '—' }}</span></div></div>
                             <div class="dl-row"><div class="dl-label">Level</div><div class="dl-value">{{ $application->application_level ?: '—' }}</div></div>
                             <div class="dl-row"><div class="dl-label">Programme</div><div class="dl-value">{{ $application->programme_name ?: '—' }}</div></div>
-                            <div class="dl-row"><div class="dl-label">PEN</div><div class="dl-value">{{ $pillClass === 'stage-complete' ? ($application->pen ?: '—') : '— (assigned once Complete)' }}</div></div>
+                            <div class="dl-row"><div class="dl-label">PEN</div><div class="dl-value">{{ $stageLower === 'complete' ? ($application->pen ?: '—') : '— (assigned once Complete)' }}</div></div>
                             <div class="dl-row"><div class="dl-label">Date of Application</div><div class="dl-value">{{ $application->date_of_application ? \Carbon\Carbon::parse($application->date_of_application)->format('d M Y') : '—' }}</div></div>
                             <div class="dl-row"><div class="dl-label">Intake Year</div><div class="dl-value">{{ $intakeYear ?: '—' }} @if($intakeYear)<small class="text-muted">(Jul {{ $intakeYear - 1 }} – Jun {{ $intakeYear }})</small>@endif</div></div>
                             <div class="dl-row"><div class="dl-label">Exam Year (Salesforce)</div><div class="dl-value">{{ $application->exam_year ?: '—' }}</div></div>
                             <div class="dl-row"><div class="dl-label">Received</div><div class="dl-value">{{ $application->application_received ? 'Yes' : 'No' }}</div></div>
-                            <div class="dl-row"><div class="dl-label">Approved</div><div class="dl-value">@if($application->application_approved)<span class="badge badge-success">Yes</span>@else No @endif</div></div>
                         </div>
                     </div>
                 </div>
