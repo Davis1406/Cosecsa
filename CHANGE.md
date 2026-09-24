@@ -9,6 +9,7 @@
 - **Add Role → Examiner** modal:
   - **Specialty** is now a dropdown of programmes, preselected with the fellow's current specialty.
   - New optional **Set Password / Confirm Password** fields. The login is shared, so this also changes the fellow password.
+  - **Country** and **Mobile Number** are now filled in from the fellow's record in every role section (Programme Director, Country Rep, Examiner). If Mobile is cleared, the API falls back to the fellow's phone.
   - Hidden role sections are now disabled so their same-named fields (country, mobile) no longer overwrite the visible ones.
 - `admin/exams/view_examiner/{id}`: inline **Specialty** edit is a programme dropdown showing the current value by name.
 - **Files:** `app/Http/Controllers/FellowsController.php`, `app/Http/Controllers/ExamsController.php`, `resources/views/admin/associates/fellows/view.blade.php`, `resources/views/admin/exams/view_examiner.blade.php`. Needs the matching cosecsa-api deploy.

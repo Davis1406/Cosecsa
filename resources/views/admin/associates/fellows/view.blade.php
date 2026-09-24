@@ -266,7 +266,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Mobile Number</label>
-                                <input type="text" class="form-control" name="mobile_no">
+                                <input type="text" class="form-control" name="mobile_no" value="{{ $fellow->phone_number ?? '' }}">
                             </div>
                         </div>
 
@@ -276,7 +276,7 @@
                                 <select class="form-control" name="country_id">
                                     <option value="">-- Select country --</option>
                                     @foreach($fellowCountries as $c)
-                                        <option value="{{ $c->id }}">{{ $c->country_name }}</option>
+                                        <option value="{{ $c->id }}" {{ ($fellow->country_id ?? null) == $c->id ? 'selected' : '' }}>{{ $c->country_name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -286,7 +286,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Mobile Number</label>
-                                <input type="text" class="form-control" name="mobile_no">
+                                <input type="text" class="form-control" name="mobile_no" value="{{ $fellow->phone_number ?? '' }}">
                             </div>
                         </div>
 
@@ -296,7 +296,7 @@
                                 <select class="form-control" name="country_id">
                                     <option value="">-- Use fellow's country --</option>
                                     @foreach($fellowCountries as $c)
-                                        <option value="{{ $c->id }}">{{ $c->country_name }}</option>
+                                        <option value="{{ $c->id }}" {{ ($fellow->country_id ?? null) == $c->id ? 'selected' : '' }}>{{ $c->country_name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -320,7 +320,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Mobile Number</label>
-                                <input type="text" class="form-control" name="mobile_no">
+                                <input type="text" class="form-control" name="mobile_no" value="{{ $fellow->phone_number ?? '' }}">
                             </div>
                             <div class="form-row">
                                 <div class="form-group col-sm-6">
