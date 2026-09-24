@@ -53,6 +53,7 @@ class SalesforceSyncController extends Controller
             'receivedCount'   => $data->receivedCount ?? 0,
             'approvedCount'   => $data->approvedCount ?? 0,
             'approvedStageCount' => $data->approvedStageCount ?? 0,
+            'pendingCount'    => $data->pendingCount ?? null,
             'rejectedCount'   => $data->rejectedCount ?? 0,
         ]);
     }

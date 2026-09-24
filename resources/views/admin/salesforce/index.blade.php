@@ -17,6 +17,7 @@
                  box-shadow: 0 2px 10px rgba(160,38,38,.25); margin-bottom: 16px; }
     .stat-card.st-good    { background: linear-gradient(135deg, #1a6e3c, #28a05a); box-shadow:0 2px 10px rgba(26,110,60,.25); }
     .stat-card.st-warn    { background: linear-gradient(135deg, #a3690c, #d68f16); box-shadow:0 2px 10px rgba(163,105,12,.25); }
+    .stat-card.st-pending  { background: linear-gradient(135deg, #1f6391, #2980b9); box-shadow:0 2px 10px rgba(31,99,145,.25); }
     .stat-card.st-approved { background: linear-gradient(135deg, #004356, #0b6a83); box-shadow:0 2px 10px rgba(0,67,86,.25); }
     .stat-card.st-neutral { background: linear-gradient(135deg, #495057, #6c757d); box-shadow:0 2px 10px rgba(73,80,87,.25); }
     .stat-number { font-size: 26px; font-weight: 700; margin-bottom: 2px; }
@@ -163,9 +164,9 @@
                         </div>
                     </div>
                     <div class="col-6 col-md">
-                        <div class="stat-card st-good">
-                            <div class="stat-number">{{ number_format($receivedCount) }}</div>
-                            <div class="stat-label">Active (not rejected/withdrawn)</div>
+                        <div class="stat-card st-pending">
+                            <div class="stat-number">{{ number_format($pendingCount ?? $receivedCount) }}</div>
+                            <div class="stat-label" title="Received, in the approval process, invoiced, awaiting payment verification or with a question — not yet Approved, Complete, Rejected/Withdrawn or Closed">Pending</div>
                         </div>
                     </div>
                     <div class="col-6 col-md">
