@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed (2026-09-24) — Salesforce application stages out of sync with Salesforce
+- Applications approved in Salesforce weren't showing as approved (e.g. `admin/salesforce/view/1980`). The root cause was in cosecsa-api's sync: nothing was scheduled, there was a watermark gap, and failures were silent. See that repo's CHANGES.md (2026-09-24). Applications now auto-sync every 15 min, plus a full sync nightly.
+- This repo: the view page now shows Salesforce's **Approved** checkbox, which was synced but never displayed, and notes that records auto-sync. The Stage pill on the view and list pages shows any "Approved…" stage in green, like Complete, instead of grey.
+- **Files:** `resources/views/admin/salesforce/{show,index}.blade.php`.
+
 ### Changed (2026-09-23) — My Tasks: card layout rebuilt on the app's Stitch design system
 - Feedback on the two earlier passes: the first looked "AI-designed" and the plain-table version was too basic. The page now sits between the two, built only from existing app components:
   - **Summary:** `.stitch-tile` summary tiles (All / Unread or Not Seen / Pending / In Progress / Done / Overdue), clickable as filters with the same `tile-clickable` / `tile-active` pattern as the Hospital dashboard.

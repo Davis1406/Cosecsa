@@ -44,7 +44,7 @@
                 @php
                     $stageLower = strtolower($application->application_stage ?? '');
                     $pillClass = 'stage-default';
-                    if (str_contains($stageLower, 'complete')) $pillClass = 'stage-complete';
+                    if (str_contains($stageLower, 'complete') || str_contains($stageLower, 'approv')) $pillClass = 'stage-complete';
                     elseif (str_contains($stageLower, 'received')) $pillClass = 'stage-received';
                     elseif (str_contains($stageLower, 'review') || str_contains($stageLower, 'pending')) $pillClass = 'stage-review';
                     elseif (str_contains($stageLower, 'reject') || str_contains($stageLower, 'withdrawn')) $pillClass = 'stage-rejected';
@@ -74,6 +74,7 @@
                             <div class="dl-row"><div class="dl-label">Intake Year</div><div class="dl-value">{{ $intakeYear ?: '—' }} @if($intakeYear)<small class="text-muted">(Jul {{ $intakeYear - 1 }} – Jun {{ $intakeYear }})</small>@endif</div></div>
                             <div class="dl-row"><div class="dl-label">Exam Year (Salesforce)</div><div class="dl-value">{{ $application->exam_year ?: '—' }}</div></div>
                             <div class="dl-row"><div class="dl-label">Received</div><div class="dl-value">{{ $application->application_received ? 'Yes' : 'No' }}</div></div>
+                            <div class="dl-row"><div class="dl-label">Approved</div><div class="dl-value">@if($application->application_approved)<span class="badge badge-success">Yes</span>@else No @endif</div></div>
                         </div>
                     </div>
                 </div>
@@ -85,7 +86,7 @@
                             <div class="dl-row"><div class="dl-label">Salesforce ID</div><div class="dl-value"><code>{{ $application->sf_id }}</code></div></div>
                             <div class="dl-row"><div class="dl-label">SF Created</div><div class="dl-value">{{ $application->sf_created_at ? \Carbon\Carbon::parse($application->sf_created_at)->format('d M Y H:i') : '—' }}</div></div>
                             <div class="dl-row"><div class="dl-label">SF Last Modified</div><div class="dl-value">{{ $application->sf_modified_at ? \Carbon\Carbon::parse($application->sf_modified_at)->format('d M Y H:i') : '—' }}</div></div>
-                            <div class="dl-row"><div class="dl-label">Last Synced</div><div class="dl-value">{{ $application->synced_at ? \Carbon\Carbon::parse($application->synced_at)->diffForHumans() : '—' }}</div></div>
+                            <div class="dl-row"><div class="dl-label">Last Synced</div><div class="dl-value">{{ $application->synced_at ? \Carbon\Carbon::parse($application->synced_at)->diffForHumans() : '—' }} <small class="text-muted">(auto-syncs every 15 min)</small></div></div>
                             <div class="dl-row">
                                 <div class="dl-label">Open in Salesforce</div>
                                 <div class="dl-value">

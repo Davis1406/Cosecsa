@@ -268,7 +268,7 @@
                                 @php
                                     $stageLower = strtolower($app->application_stage ?? '');
                                     $pillClass = 'stage-default';
-                                    if (str_contains($stageLower, 'complete')) $pillClass = 'stage-complete';
+                                    if (str_contains($stageLower, 'complete') || str_contains($stageLower, 'approv')) $pillClass = 'stage-complete';
                                     elseif (str_contains($stageLower, 'received')) $pillClass = 'stage-received';
                                     elseif (str_contains($stageLower, 'review') || str_contains($stageLower, 'pending')) $pillClass = 'stage-review';
                                     elseif (str_contains($stageLower, 'reject') || str_contains($stageLower, 'withdrawn')) $pillClass = 'stage-rejected';
