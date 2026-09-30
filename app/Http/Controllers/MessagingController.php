@@ -16,13 +16,15 @@ class MessagingController extends Controller
     public function index()
     {
         $userId = Auth::id();
+        $unreadCounts = $this->unreadCountsByConversation($userId);
 
         $conversations = Conversation::whereHas('participants', fn ($q) => $q->where('user_id', $userId))
             ->with(['latestMessage', 'participants.user'])
             ->orderByDesc('last_message_at')
             ->get()
-            ->map(function ($c) use ($userId) {
+            ->map(function ($c) use ($userId, $unreadCounts) {
                 $c->display_name = $this->conversationTitle($c, $userId);
+                $c->unread_count = (int) ($unreadCounts[$c->id] ?? 0);
                 return $c;
             });
 
@@ -221,6 +223,22 @@ class MessagingController extends Controller
      * Lightweight summary for the navbar bell, dashboard cards, and
      * conversation list — polled globally every ~10-15s.
      */
+    // Messages from others newer than the user's last_read_at, per
+    // conversation — same rule as pollSummary()'s unread conversation list.
+    protected function unreadCountsByConversation(int $userId)
+    {
+        return DB::table('conversation_participants as cp')
+            ->join('messages as m', function ($j) use ($userId) {
+                $j->on('m.conversation_id', '=', 'cp.conversation_id')
+                    ->where('m.sender_id', '!=', $userId)
+                    ->where(fn ($w) => $w->whereNull('cp.last_read_at')->orWhereColumn('m.created_at', '>', 'cp.last_read_at'));
+            })
+            ->where('cp.user_id', $userId)
+            ->groupBy('cp.conversation_id')
+            ->selectRaw('cp.conversation_id, COUNT(m.id) as unread')
+            ->pluck('unread', 'conversation_id');
+    }
+
     public function pollSummary(Request $request)
     {
         $userId = Auth::id();
@@ -262,14 +280,17 @@ class MessagingController extends Controller
             ->where('status', '!=', 'done')
             ->count();
 
+        $unreadCounts = $this->unreadCountsByConversation($userId);
+
         $conversationPreviews = Conversation::whereHas('participants', fn ($q) => $q->where('user_id', $userId))
             ->with('latestMessage')
             ->orderByDesc('last_message_at')
             ->get()
-            ->map(function ($c) use ($userId) {
+            ->map(function ($c) use ($userId, $unreadCounts) {
                 $last = $c->latestMessage;
                 return [
                     'id'         => $c->id,
+                    'unread'     => (int) ($unreadCounts[$c->id] ?? 0),
                     'last_at'    => $last?->created_at?->toDateTimeString(),
                     'last_human' => $last?->created_at?->diffForHumans(),
                     'preview'    => $last ? \Illuminate\Support\Str::limit(strip_tags($last->deleted_at ? 'This message was deleted.' : $last->body), 90) : 'No messages yet.',

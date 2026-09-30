@@ -1,6 +1,25 @@
 @extends('layout.app')
 
 @section('content')
+  <style>
+    /* Unread vs read, same treatment as My Tasks: maroon left edge, light tint, bold. */
+    #conversationList .conv-item { border-left:4px solid transparent; }
+    #conversationList .conv-name { font-weight:500; color:#2d3748; }
+    #conversationList .conv-item.is-unread { border-left-color:#a02626; background:rgba(160,38,38,.05); }
+    #conversationList .conv-item.is-unread:hover { background:rgba(160,38,38,.09); }
+    #conversationList .conv-item.is-unread .conv-name { font-weight:700; color:#141d23; }
+    #conversationList .conv-item.is-unread .conv-preview { color:#141d23 !important; font-weight:600; }
+    #conversationList .conv-item.is-unread .conv-time { color:#a02626 !important; font-weight:700; }
+    #conversationList .conv-badge { display:none; }
+    #conversationList .conv-item.is-unread .conv-badge { display:inline-block; }
+    .badge-new { background:#a02626; color:#fff; }
+    body.dark-mode #conversationList .conv-name { color:#cbd5e0; }
+    body.dark-mode #conversationList .conv-item.is-unread { border-left-color:#f48a8a; background:rgba(244,138,138,.08); }
+    body.dark-mode #conversationList .conv-item.is-unread .conv-name,
+    body.dark-mode #conversationList .conv-item.is-unread .conv-preview { color:#f1f5f9 !important; }
+    body.dark-mode #conversationList .conv-item.is-unread .conv-time { color:#f48a8a !important; }
+  </style>
+
   <div class="content-wrapper">
     <section class="content-header">
       <div class="container-fluid">
@@ -42,16 +61,19 @@
             <div class="list-group list-group-flush" id="conversationList">
               @foreach($conversations as $c)
                 @php $last = $c->latestMessage; @endphp
-                <a href="{{ url('messages/'.$c->id) }}" class="list-group-item list-group-item-action" data-conv-id="{{ $c->id }}">
+                <a href="{{ url('messages/'.$c->id) }}" class="list-group-item list-group-item-action conv-item {{ $c->unread_count ? 'is-unread' : '' }}" data-conv-id="{{ $c->id }}">
                   <div class="d-flex justify-content-between">
-                    <strong>
+                    <span class="conv-name">
                       @if($c->type === 'group')<i class="fas fa-users text-muted mr-1"></i>@endif
                       {{ $c->display_name }}
-                    </strong>
+                    </span>
                     <small class="text-muted conv-time">{{ $last ? $last->created_at->diffForHumans() : '' }}</small>
                   </div>
-                  <div class="text-muted conv-preview" style="font-size:.85rem;">
-                    {{ $last ? \Illuminate\Support\Str::limit(strip_tags($last->body), 90) : 'No messages yet.' }}
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted conv-preview" style="font-size:.85rem;">
+                      {{ $last ? \Illuminate\Support\Str::limit(strip_tags($last->body), 90) : 'No messages yet.' }}
+                    </div>
+                    <span class="badge badge-pill badge-new conv-badge ml-2" title="Unread messages">{{ $c->unread_count }}</span>
                   </div>
                 </a>
               @endforeach
@@ -115,6 +137,8 @@ document.addEventListener('DOMContentLoaded', function () {
           if (!row) return;
           row.querySelector('.conv-time').textContent = c.last_human || '';
           row.querySelector('.conv-preview').textContent = c.preview;
+          row.classList.toggle('is-unread', c.unread > 0);
+          row.querySelector('.conv-badge').textContent = c.unread;
           list.appendChild(row); // re-append in server order (newest last_message_at first)
         });
       })

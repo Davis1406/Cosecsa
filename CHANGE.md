@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Changed (2026-09-30) — Messages list: unread conversations stand out
+- On `messages` every conversation looked the same (all names bold), so read and unread couldn't be told apart. Now, same treatment as My Tasks:
+  - **Unread:** maroon left edge, light maroon tint, bold name, dark bold preview, maroon time, and a maroon pill with the number of unread messages.
+  - **Read:** normal-weight name, grey preview and time, no pill.
+  - Dark mode covered.
+- Unread = messages from others newer than your `last_read_at`, the same rule as the navbar bell. The 10 s poll now returns an `unread` count per conversation, so rows switch state live.
+- **Files:** `app/Http/Controllers/MessagingController.php`, `resources/views/messaging/index.blade.php`.
+
 ### Fixed (2026-09-30) — CEO had no section to fill in on the September report
 - The September 2026 report was consolidated without a **CEO** section, so the CEO had nothing to fill in. This app's `config/progress_report_sections.php` leaves her out when a month is opened. August had a CEO section only because it was opened from cosecsa-api, whose copy of the list includes her.
 - New `ProgressReportParticipant::ensureCeoSection($period)` adds her section (label `CEO`, first in the report, other sections shifted down one). It uses her task templates if she has any. It is idempotent: it does nothing if she already has a section.
