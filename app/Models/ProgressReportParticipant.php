@@ -49,6 +49,54 @@ class ProgressReportParticipant extends Model
         return $id ? (int) $id : null;
     }
 
+    // Gives the CEO her own section in a period once it's consolidated /
+    // shared with her, so she can fill in her part of the report. Needed
+    // because this app's config/progress_report_sections.php leaves her
+    // out at openPeriod() time (Sep 2026 had no CEO row as a result) —
+    // only months opened via cosecsa-api's copy of the list seeded one.
+    // Idempotent: returns the existing row if she already has one. Placed
+    // first (sort_order 0, others shifted down) to match Aug 2026's layout;
+    // the column is unsigned, so it can't just go negative.
+    public static function ensureCeoSection(ProgressReportPeriod $period): ?self
+    {
+        $ceoId = static::ceoUserId();
+        if (! $ceoId || ! User::where('id', $ceoId)->exists()) {
+            return null;
+        }
+
+        $existing = static::where('period_id', $period->id)->where('user_id', $ceoId)->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($period, $ceoId) {
+            static::where('period_id', $period->id)->increment('sort_order');
+
+            $participant = static::create([
+                'period_id'     => $period->id,
+                'user_id'       => $ceoId,
+                'section_label' => 'CEO',
+                'sort_order'    => 0,
+            ]);
+
+            $templates = ProgressReportTaskTemplate::where('user_id', $ceoId)
+                ->where('is_active', true)->orderBy('sort_order')->get();
+
+            foreach ($templates as $ti => $template) {
+                ProgressReportTask::create([
+                    'period_id'            => $period->id,
+                    'participant_id'       => $participant->id,
+                    'template_id'          => $template->id,
+                    'row_no'               => $ti + 1,
+                    'activity_description' => $template->activity_description,
+                    'planned_activities'   => $template->default_planned_activities,
+                ]);
+            }
+
+            return $participant;
+        });
+    }
+
     public function isCeoSection(): bool
     {
         return $this->user_id === static::ceoUserId();

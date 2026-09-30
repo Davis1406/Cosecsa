@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+### Fixed (2026-09-30) — CEO had no section to fill in on the September report
+- The September 2026 report was consolidated without a **CEO** section, so the CEO had nothing to fill in. This app's `config/progress_report_sections.php` leaves her out when a month is opened. August had a CEO section only because it was opened from cosecsa-api, whose copy of the list includes her.
+- New `ProgressReportParticipant::ensureCeoSection($period)` adds her section (label `CEO`, first in the report, other sections shifted down one). It uses her task templates if she has any. It is idempotent: it does nothing if she already has a section.
+- When it runs:
+  - **Consolidate**: she gets her section as soon as the report is consolidated.
+  - **Share with CEO**: runs before the PDF/DOCX are built, so what she receives includes her (blank) CEO rows.
+  - **When the CEO opens My Progress Report or Secretariat Report**, if the current period is consolidated. This covers September without a data script: her section appears the first time she opens it. Past months are not touched.
+- Her section is still exempt from the deadline lock, reminders and the pending badge, as before, so she can fill it in after the due date and after consolidation.
+- **Files:** `app/Models/ProgressReportParticipant.php`, `app/Http/Controllers/ProgressiveReportController.php`. No migration and no cosecsa-api change needed.
+
 ### Fixed (2026-09-24) — Fellows given the Examiner role; Add Role password + specialty
 - Fellows who get the Examiner role via **Add Role** now appear in the public availability form dropdown, the Examiners list and bulk email. Those lists used to require the user's primary type to be Examiner. The fix is in cosecsa-api.
 - **Add Role → Examiner** modal:

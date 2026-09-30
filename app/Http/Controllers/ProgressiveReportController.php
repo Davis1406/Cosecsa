@@ -49,6 +49,8 @@ class ProgressiveReportController extends Controller
     // instead of always defaulting to the latest open period.
     public function myReport(Request $request)
     {
+        $this->ensureCeoSectionForViewer();
+
         $myPeriods = ProgressReportPeriod::whereHas('participants', fn ($q) => $q->where('user_id', Auth::id()))
             ->orderByDesc('period_month')->get();
 
@@ -174,6 +176,8 @@ class ProgressiveReportController extends Controller
 
     public function show($periodId)
     {
+        $this->ensureCeoSectionForViewer(ProgressReportPeriod::find($periodId));
+
         $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks', 'participants.pendingAccessRequest', 'participants.period'])->findOrFail($periodId);
 
         $templatesByUser = ProgressReportTaskTemplate::whereIn('user_id', $period->participants->pluck('user_id'))
@@ -431,6 +435,7 @@ class ProgressiveReportController extends Controller
         $this->authorizeManage();
         $period = ProgressReportPeriod::findOrFail($periodId);
         $period->update(['status' => 'consolidated', 'consolidated_at' => now(), 'consolidated_by' => Auth::id()]);
+        ProgressReportParticipant::ensureCeoSection($period);
 
         return back()->with('success', 'Report consolidated.');
     }
@@ -687,6 +692,9 @@ class ProgressiveReportController extends Controller
     public function shareWithCeo(Request $request, $periodId)
     {
         $this->authorizeManage();
+        // Give her a section to fill in before the report is compiled, so
+        // the PDF/DOCX she receives already carries her (blank) CEO rows.
+        ProgressReportParticipant::ensureCeoSection(ProgressReportPeriod::findOrFail($periodId));
         $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks'])->findOrFail($periodId);
 
         // Looked up via the dedicated ceo_user_id setting, NOT
@@ -936,6 +944,23 @@ class ProgressiveReportController extends Controller
     {
         $user = Auth::user();
         return $user && ($user->isProgressReportManager() || $user->isProgressReportCeo());
+    }
+
+    // The CEO fills in her section once the report has been consolidated
+    // for her. Covers periods consolidated before ensureCeoSection() was
+    // wired into consolidate()/shareWithCeo() (e.g. Sep 2026): opening her
+    // report creates the missing row. Only the current period — past
+    // months stay as they were.
+    protected function ensureCeoSectionForViewer(?ProgressReportPeriod $period = null): void
+    {
+        if (! Auth::user()->isProgressReportCeo()) {
+            return;
+        }
+
+        $period = $period ?? ProgressReportPeriod::where('is_current', true)->first();
+        if ($period && $period->is_current && $period->status === 'consolidated') {
+            ProgressReportParticipant::ensureCeoSection($period);
+        }
     }
 
     protected function authorizeManage(): void
