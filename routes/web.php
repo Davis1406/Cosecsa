@@ -406,6 +406,21 @@ Route::get('admin/associates/members/delete/{id}', [MembersController::class,'de
 
 //Examiners's Route
 Route::get('admin/exams/examiners', [ExamsController::class,'list']);
+// Examiner Training (learning) — content and progress live in cosecsa-api (internal/learning/*)
+Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(\App\Http\Controllers\Learning\AdminLearningController::class)->group(function () {
+    Route::get('/', 'index');
+    Route::get('users/{id}', 'userProgress')->whereNumber('id')->name('.user');
+    Route::get('course', 'course')->name('.course');
+    Route::get('modules/{id}', 'module')->whereNumber('id')->name('.module');
+    Route::get('blocks/{id}/edit', 'editBlock')->whereNumber('id')->name('.block');
+    Route::post('blocks/{id}/preview', 'previewBlock')->whereNumber('id')->name('.block.preview');
+    Route::post('blocks/{id}/image', 'uploadBlockImage')->whereNumber('id')->name('.block.image');
+    Route::post('blocks/{id}', 'updateBlock')->whereNumber('id')->name('.block.update');
+    Route::get('videos', 'videos')->name('.videos');
+    Route::post('videos', 'uploadVideo')->name('.videos.upload');
+    Route::post('logo', 'uploadLogo')->name('.logo');
+    Route::post('logo/remove', 'removeLogo')->name('.logo.remove');
+});
 Route::get('admin/exams/add_examiner',  [ExamsController::class,'add']);
 Route::post('admin/exams/add_examiner', [ExamsController::class,'insert'])->name('examiners.add');
 Route::post('admin/exams/import', [ExamsController::class, 'importExaminers'])->name('exams.import.data');;
@@ -527,6 +542,15 @@ Route::group(['middleware' => 'examiner'], function(){
     Route::get('examiner/edit_info/{id}', [ExamsController::class, 'examinerEdit'])->name('examiner.edit');
     Route::post('examiner/edit_info/{id}', [ExamsController::class, 'examinerUpdate'])->name('examiner.selfUpdate');
     Route::get('examiner/badge', [ExamsController::class, 'examinerBadge'])->name('examiner.badge');
+    // Examiner Training course (content/progress via cosecsa-api internal/learning/*)
+    Route::prefix('examiner/learning')->name('examiner.learning')->controller(\App\Http\Controllers\Learning\ExaminerLearningController::class)->group(function () {
+        Route::get('/', 'cover');
+        Route::get('{slug}', 'module')->name('.module');
+        Route::post('{slug}/next', 'advance')->name('.advance');
+        Route::get('{slug}/quiz', 'quiz')->name('.quiz');
+        Route::post('{slug}/quiz', 'submit')->name('.submit');
+        Route::get('{slug}/quiz/result', 'result')->name('.result');
+    });
 
     // Exam type selection pages
     Route::get('examiner/cardiothoracic', [CandidatesController::class, 'cardiothoracicSelection'])->name('examiner.cardiothoracic');

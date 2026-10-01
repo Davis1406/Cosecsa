@@ -69,6 +69,22 @@ class ApiClient
             ->delete($this->url($path));
     }
 
+    // Multipart upload of one large file (e.g. a course video), streamed from
+    // disk instead of read into memory like postWithFile() does.
+    public function postStream(string $path, array $data, string $field, UploadedFile $file, int $timeout = 600): Response
+    {
+        $request = $this->pending()->timeout($timeout)->asMultipart()
+            ->attach($field, fopen($file->getRealPath(), 'r'), $file->getClientOriginalName());
+
+        foreach ($data as $key => $value) {
+            if ($value !== null && $value !== '') {
+                $request = $request->attach($key, (string) $value);
+            }
+        }
+
+        return $request->post($this->url($path));
+    }
+
     // Multipart upload: sends scalar $data fields + one or more $files.
     // $files values may be a single UploadedFile OR an array keyed by ID
     // (e.g. ['cv' => [123 => $file1, 456 => $file2]]) for bulk forms.

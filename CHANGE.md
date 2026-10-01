@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Added (2026-10-02) — Examiner Training course inside the MIS
+- ⚠️ **Coordinate:** deploy together with cosecsa-api `feat/learning` (migration + `internal/learning/*` endpoints + `lms:import`). These pages read everything from the API.
+- **Examiners:** sidebar → **Examiner Training** (`examiner/learning`): course page, module player (module sidebar, rich content blocks, image preview, checklists, flashcards, process steps, labelled graphics, videos), the 20-question quiz with retakes, and results. **Next module** marks the module complete. Uses the normal MIS login and `examiner` middleware.
+- **Staff:** Examinations → **Examiner Training** (`admin/exams/learning`), behind `admin` + `permission` (the existing `admin/exams` → `examiners` mapping: view to see, manage to edit): learner progress for all examiners (with per-person detail), course content with a block editor (formatting toolbar, live preview, image replace/size/alignment/corners/border/shadow/opacity), course logo, and video uploads.
+- Correct quiz answers are only shown after a pass. Course styles are scoped under `.lms` so they don't affect Bootstrap/AdminLTE.
+- `ApiClient::postStream()` streams large uploads (videos) instead of reading them into memory.
+- **Files:** `app/Http/Controllers/Learning/{ExaminerLearningController,AdminLearningController}.php`, `app/Support/LearningView.php`, `app/Services/ApiClient.php`, `resources/views/learning/**`, `routes/web.php`, `resources/views/layout/header.blade.php`.
+- **Note:** video uploads through the page are limited by PHP's `upload_max_filesize`/`post_max_size` (150M on the server); larger files go through `php artisan lms:import-videos` on the API.
+
 ### Changed (2026-10-01) — Role switch shows a placeholder and animates in
 - Clicking an **Also in** chip now immediately covers the current profile with a skeleton of a profile page (header bar, photo card, stat tiles, tabs, content card) with a shimmer and a caption such as "Opening Examiner profile…". After 300 ms (0 with reduced motion) it navigates, so the placeholder registers even when the next profile is already prerendered; if it isn't, the skeleton stays up while it loads.
 - The arriving profile fades in and slides up 10 px (`::view-transition-new(root)`); the old one fades out.

@@ -585,6 +585,15 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                                     </a>
                                 </li>
 
+                                @if (Auth::user()->hasPermission('examiners.view'))
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/exams/learning') }}" class="nav-link">
+                                        <i class="fas fa-graduation-cap nav-icon"></i>
+                                        <p>Examiner Training</p>
+                                    </a>
+                                </li>
+                                @endif
+
                                 <li class="nav-item">
                                     <a href="{{ url('admin/exams/examiner-confirmation') }}"
                                         class="nav-link
@@ -1008,6 +1017,13 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                             <a href="{{ url('examiner/results') }}" class="nav-link @if (Request::segment(2) == 'results' || Request::segment(2) == 'view_results' || Request::segment(2) == 'resubmit'||Request::segment(2) == 'view_fcs_results'||Request::segment(2) == 'fcs-resubmit') active @endif">
                                 <i class="fas fa-chart-line nav-icon"></i>
                                 <p>Results</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ url('examiner/learning') }}" class="nav-link">
+                                <i class="nav-icon fas fa-graduation-cap"></i>
+                                <p>Examiner Training</p>
                             </a>
                         </li>
 

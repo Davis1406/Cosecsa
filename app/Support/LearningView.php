@@ -1,0 +1,68 @@
+<?php
+
+namespace App\Support;
+
+use Illuminate\Support\Str;
+
+/**
+ * View helpers for the Examiner Training (learning) pages. Block payloads come
+ * from cosecsa-api with image URLs already resolved (`resolved_url`) and videos
+ * as `video_url`.
+ */
+class LearningView
+{
+    public static function imageUrl(?array $image): ?string
+    {
+        return $image['resolved_url'] ?? null;
+    }
+
+    public static function html(?string $html): ?string
+    {
+        return $html ? (string) Str::of($html)->trim() : null;
+    }
+
+    /**
+     * Normalised display settings — mirrors cosecsa-api App\Services\Lms\ImageDisplay.
+     */
+    public static function display(?array $image, array $defaults = []): array
+    {
+        $d = array_merge([
+            'width' => 100, 'align' => 'center', 'radius' => 12,
+            'border' => 0, 'border_color' => '#e2e8f0', 'shadow' => 'none',
+        ], $defaults, array_filter((array) ($image['display'] ?? []), fn ($v) => $v !== null && $v !== ''));
+
+        return [
+            'width' => max(10, min(100, (int) $d['width'])),
+            'align' => in_array($d['align'], ['left', 'center', 'right'], true) ? $d['align'] : 'center',
+            'radius' => max(0, min(48, (int) $d['radius'])),
+            'border' => max(0, min(12, (int) $d['border'])),
+            'border_color' => preg_match('/^#[0-9a-f]{6}$/i', (string) $d['border_color']) ? strtolower($d['border_color']) : '#e2e8f0',
+            'shadow' => in_array($d['shadow'], ['none', 'soft', 'strong', 'lifted'], true) ? $d['shadow'] : 'none',
+        ];
+    }
+
+    /** Inline style + class for the frame around a block image. */
+    public static function frame(?array $image, array $defaults = []): array
+    {
+        $d = static::display($image, $defaults);
+
+        $margin = match ($d['align']) {
+            'left' => 'margin-right: auto;',
+            'right' => 'margin-left: auto;',
+            default => 'margin-left: auto; margin-right: auto;',
+        };
+
+        $style = 'width: '.$d['width'].'%; '.$margin.' border-radius: '.$d['radius'].'px;';
+        if ($d['border'] > 0) {
+            $style .= ' border: '.$d['border'].'px solid '.$d['border_color'].';';
+        }
+
+        return ['style' => $style, 'class' => 'img-shadow-'.$d['shadow']];
+    }
+
+    /** API block arrays → objects, so block templates can use $block->type etc. */
+    public static function blocks(array $blocks): array
+    {
+        return array_map(fn ($b) => (object) $b, $blocks);
+    }
+}
