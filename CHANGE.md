@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Data correction (2026-10-01) — Tyler Pender's entry number; lost 2025/2024 GS marks restored
+- **Fixed:** fellow 5425 (Tyler Pender, user 13955) had candidate number `MW/2022/26`, which is Emmanuel Malekwa's (trainee 351, candidate 1621). It is now **`MW/2025/26`**. Backup taken first: `/var/backups/cosecsa_2026-10-01_103324_pre_tyler_pen_fix.sql`; the change is in `activity_logs`.
+- **Why Tyler was missing from `admin/exams/gs_results?year_id=6`:** his 2025 candidate row (GS-047) had been deleted, and `gs_results` used `ON DELETE CASCADE`, so his marks went with it. The same happened to 9 other 2025 GS candidates and 2 from 2024. Deleted after 2025-11-29 and before 2026-07-17; nothing logged who.
+- **Restored** from the 2026-03-31 production export (`Downloads/ECSA/COSECSA/Db/cosecsa.sql`): 12 candidate rows and 168 GS marks with their original ids. Examiner 219 had been merged into 44, so his rows point at 44. 2025 GS now has 865 rows / 54 candidates, matching the export. Backup first: `/var/backups/cosecsa_2026-10-01_105635_pre_gs_restore.sql`.
+- Tyler's restored candidate carries `MW/2025/26`. His Capsule results 2955/3598 now link to his candidate 785 instead of Malekwa's trainee 351 / candidate 1621; Malekwa has no results of his own. Tyler's stray Trainee role (`user_roles` 11702) is deactivated.
+- **Prevention:** cosecsa-api migration `2026_10_01_120000_restrict_deletes_on_exam_results` (deployed): deleting a candidate or examiner with marks is now refused instead of deleting the marks.
+
 ### Fixed (2026-10-01) — Gold and cyan outline buttons didn't react to hover in dark mode
 - The global dark-mode button styles (`layout/header.blade.php`) force `btn-outline-warning` and `btn-outline-info` to a transparent background with `!important`, but unlike the primary, danger and secondary outlines they had no `:hover` rule. In dark mode they didn't change on hover at all. Reported on the Fellow Profile's Subscriptions tab **Manage** button; the cyan Subscriptions icon in the profile's action bar was affected too, as was every other button using these two classes.
 - Added dark-mode hovers in the same pattern as the others: warning fills gold (`#f59e0b`) with dark text, info fills cyan (`#0e7490`) with white text. Light mode is unchanged.
