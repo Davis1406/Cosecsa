@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-01) — Gold and cyan outline buttons didn't react to hover in dark mode
+- The global dark-mode button styles (`layout/header.blade.php`) force `btn-outline-warning` and `btn-outline-info` to a transparent background with `!important`, but unlike the primary, danger and secondary outlines they had no `:hover` rule. In dark mode they didn't change on hover at all. Reported on the Fellow Profile's Subscriptions tab **Manage** button; the cyan Subscriptions icon in the profile's action bar was affected too, as was every other button using these two classes.
+- Added dark-mode hovers in the same pattern as the others: warning fills gold (`#f59e0b`) with dark text, info fills cyan (`#0e7490`) with white text. Light mode is unchanged.
+- **Files:** `resources/views/layout/header.blade.php` (CSS only).
+
 ### Fixed (2026-10-01) — Fellow Profile tables unreadable in dark mode
 - On the Fellow Profile (`admin/associates/fellows/view/{id}`), the **Subscriptions** tab's table header (Year, Status, Amount Due, …) kept its pale pink background in dark mode, with light text on it, so the labels were almost invisible. The two **Results** tab tables (Exam History, FCS Exam Results) had the same inline pale header.
 - Dark mode now gives all three headers the DESIGN.md dark card-header colour (`#252c3b`) with dark-mode maroon (`#f48a8a`) labels. The fellow's name in the top action bar (inline maroon on the slate bar) uses `#f48a8a` too.

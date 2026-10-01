@@ -1723,10 +1723,18 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
         border-color: #06b6d4 !important;
         background-color: transparent !important;
     }
+    body.dark-mode .btn-outline-info:hover {
+        background-color: #0e7490 !important;
+        color: #ffffff !important;
+    }
     body.dark-mode .btn-outline-warning {
         color: #fbbf24 !important;
         border-color: #f59e0b !important;
         background-color: transparent !important;
+    }
+    body.dark-mode .btn-outline-warning:hover {
+        background-color: #f59e0b !important;
+        color: #1f2d3d !important;
     }
     body.dark-mode .btn-light {
         background-color: #374151 !important;
