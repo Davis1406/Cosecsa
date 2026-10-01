@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-01) — Role switch shows a placeholder and animates in
+- Clicking an **Also in** chip now immediately covers the current profile with a skeleton of a profile page (header bar, photo card, stat tiles, tabs, content card) with a shimmer and a caption such as "Opening Examiner profile…". After 300 ms (0 with reduced motion) it navigates, so the placeholder registers even when the next profile is already prerendered; if it isn't, the skeleton stays up while it loads.
+- The arriving profile fades in and slides up 10 px (`::view-transition-new(root)`); the old one fades out.
+- Ctrl/Cmd/Shift/middle-click still open the profile in a new tab with no placeholder, and returning via Back clears it. `prefers-reduced-motion` turns off the shimmer and slide. Dark mode uses the DESIGN.md dark palette.
+- Checked with headless-Chrome screenshots of the placeholder in light and dark mode.
+- **Files:** `resources/views/admin/_role_switcher.blade.php`.
+
 ### Fixed (2026-10-01) — Role switch still loaded: prerender now starts on page load
 - After the instant role switch above was deployed, switching from Fellow to Examiner on `fellows/view/5205` still showed a normal load. Cause: the rules used `eagerness: "eager"`, which on desktop Chrome (tested on 154) no longer starts on page load; it waits for the pointer to approach the link. A quick click found no prerendered page and loaded it fresh.
 - Reproduced in headless Chrome with the two rendered profile pages: with `eager`, opening the fellow page fetched nothing else; with `immediate`, the examiner page was fetched straight away. Changed to `eagerness: "immediate"`.
