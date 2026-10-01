@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Data correction (2026-10-01) — Emmanuel Malekwa's MCS 2023 result added by hand
+- Added `capsule_exam_results` 4180 (capsule_id 900001632): Emmanuel Malekwa, MCS 2023, score 70.85, **Pass**, linked to trainee 351 (`MW/2022/26`); there is no 2023 MCS candidate row. Stored like the existing MCS rows (specialty and exam type `MCS`, programme 10). Supplied by the admin; it was never imported. Backup first: `/var/backups/cosecsa_2026-10-01_110651_pre_malekwa_mcs2023.sql`; logged in `activity_logs`.
+- The trainee detail API now returns only this result for him.
+- **Wider gap, not filled:** Capsule MCS results stop at 2019 and exam-system `mcs_results` only cover 2024–2025, so no one's 2020–2023 MCS results are recorded. They need the examination officer's spreadsheet.
+
 ### Data correction (2026-10-01) — Tyler Pender's entry number; lost 2025/2024 GS marks restored
 - **Fixed:** fellow 5425 (Tyler Pender, user 13955) had candidate number `MW/2022/26`, which is Emmanuel Malekwa's (trainee 351, candidate 1621). It is now **`MW/2025/26`**. Backup taken first: `/var/backups/cosecsa_2026-10-01_103324_pre_tyler_pen_fix.sql`; the change is in `activity_logs`.
 - **Why Tyler was missing from `admin/exams/gs_results?year_id=6`:** his 2025 candidate row (GS-047) had been deleted, and `gs_results` used `ON DELETE CASCADE`, so his marks went with it. The same happened to 9 other 2025 GS candidates and 2 from 2024. Deleted after 2025-11-29 and before 2026-07-17; nothing logged who.
