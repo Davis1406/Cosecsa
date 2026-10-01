@@ -10,7 +10,7 @@
 
             <div class="card card-pad mb-3">
                 <h5 style="font-size:16px; font-weight:700; margin-bottom:4px;">Course logo</h5>
-                <p class="muted" style="font-size:13px; margin-bottom:16px;">Shown on the course pages.</p>
+                <p class="muted" style="font-size:13px; margin-bottom:16px;">Shown beside the course title in the module sidebar.</p>
                 <div class="d-flex flex-wrap" style="gap:20px; align-items:flex-start;">
                     <div class="logo-preview">
                         @if($course['logo_url'])

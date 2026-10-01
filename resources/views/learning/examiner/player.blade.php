@@ -21,7 +21,10 @@
                             </a>
                             <button type="button" class="ps-close" data-drawer-close aria-label="Close modules">×</button>
                         </div>
-                        <div class="ps-course">{{ $course['title'] }}</div>
+                        <div class="ps-course">
+                            @if($course['logo_url'])<img src="{{ $course['logo_url'] }}" alt="" class="ps-logo">@endif
+                            {{ $course['title'] }}
+                        </div>
                         <div class="ps-progress">
                             <div class="ps-progress-top">
                                 <span class="ps-progress-label">Course progress</span>
@@ -157,7 +160,8 @@
         font-size: 12.5px; font-weight: 600; color: var(--brand); letter-spacing: .2px;
     }
     .ps-close { display: none; border: 0; background: #f1f5f9; width: 30px; height: 30px; border-radius: 8px; font-size: 20px; line-height: 1; color: #475569; cursor: pointer; }
-    .ps-course { font-size: 15px; font-weight: 800; color: #0f172a; line-height: 1.35; }
+    .ps-course { font-size: 15px; font-weight: 800; color: #0f172a; line-height: 1.35; display: flex; align-items: center; gap: 10px; }
+    .ps-logo { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
     .ps-progress { margin-top: 16px; }
     .ps-progress-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
     .ps-progress-label { font-size: 12px; color: #64748b; font-weight: 600; }
