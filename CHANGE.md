@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Data correction (2026-10-01) — Dr Ayman Elhosny: duplicate examiner login merged into his fellow account
+- Fellow ID 2026 (user 13735) and examiner EXA720 (user 17720, created 2026-07-09) were separate accounts with the same email, so the fellow and examiner logins had separate passwords. Neither matched the `1234567` he was given, so examiner login failed both ways.
+- Merged into user 13735: examiner 985 now belongs to it, it has the Examiner role, and 17720 is retired (role removed, `is_deleted = 1`, email renamed to `…merged-13735`). Fellow ID `2026` or the email with `1234567` now works for both Fellow and Examiner (password set at admin request; below the 8-character Add Role minimum).
+- Unified details: name **Ayman A A ELHOSNY** (from the fellow record); fellow specialty "Paediatric Surgery" (double space fixed); examiner keeps "FCS Paediatric Surgery"; passport photo copied to the fellow profile photo; fellowship no. 2026 on his examiner participation. Mobile, country, gender and email already matched.
+- Backup first: `/var/backups/cosecsa_2026-10-01_113902_pre_elhosny_merge.sql`; logged in `activity_logs`.
+- **Note:** a fellow who already has a separate examiner account should be merged like this, not given **Add Role → Examiner**, which would create a second examiner profile.
+
 ### Fixed (2026-10-01) — Overall Exam Results page returned a 500
 - `admin/exams/overall_results` failed with `Cannot use object of type stdClass as array`. The API's `summary` (year → programme → Pass/Fail/Absent counts) was decoded with `->object()` and only the top level cast to an array, so the view's `$counts['Pass']` hit a `stdClass`. The log shows the same error since at least 2026-07-09, so it is long-standing, not caused by today's data changes.
 - `ExamsController::overallResults()` now passes `$response->json('summary')` (nested arrays). Rendered against the live API data (22 years) without error.
