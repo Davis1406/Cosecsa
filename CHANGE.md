@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-01) — Role switch still loaded: prerender now starts on page load
+- After the instant role switch above was deployed, switching from Fellow to Examiner on `fellows/view/5205` still showed a normal load. Cause: the rules used `eagerness: "eager"`, which on desktop Chrome (tested on 154) no longer starts on page load; it waits for the pointer to approach the link. A quick click found no prerendered page and loaded it fresh.
+- Reproduced in headless Chrome with the two rendered profile pages: with `eager`, opening the fellow page fetched nothing else; with `immediate`, the examiner page was fetched straight away. Changed to `eagerness: "immediate"`.
+- Still Chrome/Edge only. Chrome skips prerendering when **Settings → Performance → Preload pages** is off, under Energy or Memory Saver, and in a tab with a debugger attached.
+- **Files:** `resources/views/admin/_role_switcher.blade.php`.
+
 ### Changed (2026-10-01) — Switching between a person's role profiles is instant
 - The **Also in** chips (Fellow / Examiner / Programme Director / Country Rep / Member) on profile pages now prerender the person's other role profiles in the background (Chrome Speculation Rules, `eagerness: eager`). Clicking a chip shows that profile immediately, already fully loaded with its own scripts, instead of a fresh page load and preloader. A cross-document view transition (`@view-transition { navigation: auto; }`) fades between them.
 - Chosen over swapping the page content in place: each profile page has a lot of page-specific script and CSS that only runs on load (the examiner page has 1,500+ lines of script), and an in-place swap would leave inline edits, modals and tabs unwired.

@@ -49,7 +49,7 @@
     }
 @endphp
 <script type="speculationrules">
-{!! json_encode(['prerender' => [['urls' => $otherRoleUrls, 'eagerness' => 'eager']]], JSON_UNESCAPED_SLASHES) !!}
+{!! json_encode(['prerender' => [['urls' => $otherRoleUrls, 'eagerness' => 'immediate']]], JSON_UNESCAPED_SLASHES) !!}
 </script>
 <style>
 /* Cross-fade between a person's role profiles (both pages include this
