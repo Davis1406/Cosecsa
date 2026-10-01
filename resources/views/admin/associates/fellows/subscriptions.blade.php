@@ -279,7 +279,7 @@ body.dark-mode .fee-hint a { color:#f48a8a; }
 <div class="modal fade" id="addSubModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <form method="POST" action="{{ url('admin/associates/fellows/subscriptions/' . $fellow->fellow_id) }}">
+            <form method="POST" action="{{ url('admin/associates/fellows/subscriptions/' . $fellow->fellow_id) }}" class="sub-form">
                 @csrf
                 <div class="modal-header py-2" style="background:#a02626;">
                     <h5 class="modal-title text-white" style="font-size:.95rem;">
@@ -299,7 +299,7 @@ body.dark-mode .fee-hint a { color:#f48a8a; }
                         </div>
                         <div class="form-group col-md-3">
                             <label class="form-label">Status <span class="req">*</span></label>
-                            <select name="status" class="form-control form-control-sm" required>
+                            <select name="status" class="form-control form-control-sm js-status" required>
                                 <option value="Unpaid">Unpaid</option>
                                 <option value="Paid">Paid</option>
                                 <option value="Partial">Partial</option>
@@ -307,19 +307,14 @@ body.dark-mode .fee-hint a { color:#f48a8a; }
                             </select>
                         </div>
                         <div class="form-group col-md-3">
-                            <label class="form-label">Amount Due (USD) <span class="req">*</span></label>
-                            <input type="number" step="0.01" min="0" name="amount_due"
-                                   class="form-control form-control-sm"
-                                   placeholder="0.00" value="{{ $suggestedFee ? number_format($suggestedFee->amount, 2, '.', '') : '' }}" required>
-                            @if($suggestedFee)
-                                <div class="fee-hint">From fee catalogue: {{ $suggestedFee->name }} ({{ $suggestedFee->type }})</div>
-                            @endif
+                            @include('admin.associates.fellows._sub_due_field', ['preselect' => true])
                         </div>
-                        <div class="form-group col-md-3">
-                            <label class="form-label">Amount Paid (USD)</label>
+                        <div class="form-group col-md-3 js-paid-group">
+                            <label class="form-label">Amount Paid (USD) <span class="req js-paid-req">*</span></label>
                             <input type="number" step="0.01" min="0" name="amount_paid"
-                                   class="form-control form-control-sm"
+                                   class="form-control form-control-sm js-paid"
                                    placeholder="0.00" value="0.00">
+                            <div class="fee-hint js-pending"></div>
                         </div>
                     </div>
                     <div class="form-row">
@@ -357,7 +352,7 @@ body.dark-mode .fee-hint a { color:#f48a8a; }
 <div class="modal fade" id="editSubModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <form method="POST" id="editSubForm" action="">
+            <form method="POST" id="editSubForm" action="" class="sub-form">
                 @csrf
                 @method('PUT')
                 <div class="modal-header py-2" style="background:#856404;">
@@ -377,7 +372,7 @@ body.dark-mode .fee-hint a { color:#f48a8a; }
                         </div>
                         <div class="form-group col-md-3">
                             <label class="form-label">Status <span class="req">*</span></label>
-                            <select name="status" id="edit_status" class="form-control form-control-sm" required>
+                            <select name="status" id="edit_status" class="form-control form-control-sm js-status" required>
                                 <option value="Unpaid">Unpaid</option>
                                 <option value="Paid">Paid</option>
                                 <option value="Partial">Partial</option>
@@ -385,20 +380,15 @@ body.dark-mode .fee-hint a { color:#f48a8a; }
                             </select>
                         </div>
                         <div class="form-group col-md-3">
-                            <label class="form-label">Amount Due (USD)</label>
-                            <input type="number" step="0.01" min="0" name="amount_due"
-                                   id="edit_amount_due" class="form-control form-control-sm">
-                            @if($suggestedFee)
-                                <div class="fee-hint">
-                                    Catalogue: {{ $suggestedFee->name }} USD {{ number_format($suggestedFee->amount, 2) }}
-                                    &middot; <a href="#" id="editUseCatalogueFee">Use</a>
-                                </div>
-                            @endif
+                            @include('admin.associates.fellows._sub_due_field', [
+                                'preselect' => false, 'selectId' => 'edit_due_select', 'inputId' => 'edit_amount_due',
+                            ])
                         </div>
-                        <div class="form-group col-md-3">
-                            <label class="form-label">Amount Paid (USD)</label>
+                        <div class="form-group col-md-3 js-paid-group">
+                            <label class="form-label">Amount Paid (USD) <span class="req js-paid-req">*</span></label>
                             <input type="number" step="0.01" min="0" name="amount_paid"
-                                   id="edit_amount_paid" class="form-control form-control-sm">
+                                   id="edit_amount_paid" class="form-control form-control-sm js-paid">
+                            <div class="fee-hint js-pending"></div>
                         </div>
                     </div>
                     <div class="form-row">
@@ -434,12 +424,85 @@ body.dark-mode .fee-hint a { color:#f48a8a; }
 <script>
 var SUGGESTED_FEE = @json($suggestedFee ? $suggestedFee->amount : null);
 
+// Amount Paid follows the status: hidden (0) for Unpaid/Waived, filled with
+// the amount due for Paid (editable, fellows sometimes overpay), and for
+// Partial required, below the amount due, with the pending balance shown.
+function syncPaidField(form, statusChanged) {
+    var status = form.querySelector('.js-status').value;
+    var due    = parseFloat(form.querySelector('.js-due').value) || 0;
+    var paid   = form.querySelector('.js-paid');
+    var group  = form.querySelector('.js-paid-group');
+    var req    = form.querySelector('.js-paid-req');
+    var note   = form.querySelector('.js-pending');
+
+    var showPaid = status === 'Paid' || status === 'Partial';
+    group.style.display = showPaid ? '' : 'none';
+    req.style.display   = status === 'Partial' ? '' : 'none';
+    paid.required       = status === 'Partial';
+    paid.max            = status === 'Partial' && due > 0 ? (due - 0.01).toFixed(2) : '';
+    paid.min            = status === 'Partial' ? '0.01' : '0';
+
+    if (!showPaid) {
+        paid.value = '0.00';
+    } else if (statusChanged && status === 'Paid') {
+        paid.value = due.toFixed(2);
+    } else if (statusChanged && status === 'Partial' && !(parseFloat(paid.value) > 0 && parseFloat(paid.value) < due)) {
+        paid.value = '';
+    }
+
+    note.innerHTML = '';
+    note.textContent = '';
+    note.style.color = '';
+    if (status === 'Partial') {
+        var p = parseFloat(paid.value) || 0;
+        var pending = due - p;
+        if (paid.value === '') {
+            note.textContent = 'Enter how much was paid.';
+        } else if (pending <= 0) {
+            note.textContent = 'Covers the full amount due. Use status Paid instead.';
+            note.style.color = '#a02626';
+        } else {
+            note.innerHTML = 'Pending balance: <strong>USD ' + pending.toFixed(2) + '</strong>';
+        }
+    }
+}
+
+// Amount Due: a catalogue fee copies its amount into the (hidden) number box;
+// "Other amount…" shows the box for typing.
+function syncDueField(form, focusOther) {
+    var select = form.querySelector('.js-due-select');
+    var input  = form.querySelector('.js-due');
+    var other  = select.value === 'other';
+    if (!other) input.value = select.value;
+    input.style.display = other ? '' : 'none';
+    input.required      = other;
+    if (other && focusOther) input.focus();
+    syncPaidField(form, false);
+}
+
+// Edit: select the fee whose amount matches the saved Amount Due, else
+// "Other" with the saved amount; nothing saved → the fellowship-type fee.
+function setDueField(form, amount) {
+    var select = form.querySelector('.js-due-select');
+    var input  = form.querySelector('.js-due');
+    var value  = parseFloat(amount) > 0 ? parseFloat(amount).toFixed(2)
+               : (SUGGESTED_FEE !== null ? SUGGESTED_FEE.toFixed(2) : '');
+    var match  = Array.prototype.some.call(select.options, function (o) { return o.value === value; });
+    select.value = match ? value : 'other';
+    input.value  = value;
+    syncDueField(form, false);
+}
+
 document.addEventListener('DOMContentLoaded', function () {
-    var useFee = document.getElementById('editUseCatalogueFee');
-    if (useFee) useFee.addEventListener('click', function (e) {
-        e.preventDefault();
-        document.getElementById('edit_amount_due').value = SUGGESTED_FEE.toFixed(2);
+    document.querySelectorAll('.sub-form').forEach(function (form) {
+        form.querySelector('.js-due-select').addEventListener('change', function () { syncDueField(form, true); });
+        syncDueField(form, false);
+        form.querySelector('.js-status').addEventListener('change', function () { syncPaidField(form, true); });
+        form.querySelector('.js-due').addEventListener('input', function () { syncPaidField(form, false); });
+        form.querySelector('.js-paid').addEventListener('input', function () { syncPaidField(form, false); });
+        syncPaidField(form, false);
     });
+
 });
 
 function openEditModal(sub) {
@@ -451,9 +514,7 @@ function openEditModal(sub) {
     document.getElementById('editSubYearTitle').textContent = sub.year;
     document.getElementById('edit_year').value        = sub.year;
     // Keep the saved amount; only fall back to the catalogue fee when none was recorded.
-    document.getElementById('edit_amount_due').value  = parseFloat(sub.amount_due) > 0
-        ? sub.amount_due
-        : (SUGGESTED_FEE !== null ? SUGGESTED_FEE.toFixed(2) : sub.amount_due);
+    setDueField(document.getElementById('editSubForm'), sub.amount_due);
     document.getElementById('edit_amount_paid').value = sub.amount_paid;
     document.getElementById('edit_date_paid').value   = sub.date_paid  || '';
 
@@ -469,6 +530,7 @@ function openEditModal(sub) {
         modeSel.options[i].selected = (modeSel.options[i].value === (sub.mode_of_payment || ''));
     }
 
+    syncPaidField(document.getElementById('editSubForm'), false);
     $('#editSubModal').modal('show');
 }
 </script>

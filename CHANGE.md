@@ -4,6 +4,21 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-01) — Fellow subscriptions: Amount Due is a fee-catalogue dropdown with "Other"
+- On the **Add Subscription Year** and **Edit Subscription** modals, Amount Due is now a dropdown of the fee catalogue's active **Annual Subscription** fees (e.g. "Overseas Fellow — USD 120.00"), highest first, followed by **Other amount…**, which shows a box for typing any amount.
+- **Add:** the fee matching the fellow's fellowship type is preselected and labelled with the type, e.g. "Fellows — USD 100.00 (Fellow by Examination)". Honorary fellows and fellows with no type start on Other.
+- **Edit:** selects the fee whose amount matches the saved Amount Due. A saved amount not in the catalogue opens on Other with that amount, and a record with no amount falls back to the fellowship-type fee. This replaces the earlier "Catalogue: … · Use" link.
+- The submitted `amount_due` is unchanged (a number), so the API is unchanged. If the catalogue can't be loaded, only Other is offered.
+- **Files:** `app/Http/Controllers/FellowsController.php` (`subscriptionFees()`), `resources/views/admin/associates/fellows/_sub_due_field.blade.php` (new), `resources/views/admin/associates/fellows/subscriptions.blade.php`.
+
+### Changed (2026-10-01) — Fellow subscriptions: Amount Paid follows the status, Partial shows the pending balance
+- On the **Add Subscription Year** and **Edit Subscription** modals, the Amount Paid field now depends on Status:
+  - **Unpaid / Waived:** hidden, saved as 0.
+  - **Paid:** shown and filled with the Amount Due when Paid is chosen; editable, since some fellows overpay (e.g. 120 against 100).
+  - **Partial:** shown and required, must be more than 0 and less than the Amount Due. A live **Pending balance: USD x** is calculated from Amount Due − Amount Paid. If the amount covers the full due, it says to use Paid instead.
+- Editing an existing record keeps its saved Amount Paid; the field only resets when the status is changed. Changing Amount Due (or using the catalogue fee) recalculates the pending balance.
+- Browser-side only; the API is unchanged. **Files:** `resources/views/admin/associates/fellows/subscriptions.blade.php`.
+
 ### Added (2026-10-01) — "Country Office" payment mode on fellow subscriptions
 - **Mode of Payment** on the Add Subscription Year and Edit Subscription modals now includes **Country Office**, between Online and Waived. `fellow_subscriptions.mode_of_payment` is `varchar(50)` and the API doesn't restrict its values, so no API change is needed.
 - The programme-entry and exam-fee payment modes on the fellow add/edit forms are unchanged.

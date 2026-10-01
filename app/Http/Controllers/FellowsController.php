@@ -238,7 +238,8 @@ class FellowsController extends Controller
             'fellow'        => $fellow,
             'subscriptions' => collect($data->subscriptions ?? []),
             'header_title'  => $header_title,
-            'suggestedFee'  => $this->suggestSubscriptionFee($fellow->fellowship_type ?? null),
+            'subscriptionFees' => $fees = $this->subscriptionFees(),
+            'suggestedFee'     => $this->suggestSubscriptionFee($fellow->fellowship_type ?? null, $fees),
         ]);
     }
 
@@ -250,14 +251,9 @@ class FellowsController extends Controller
     // Fellow" → "Associate Fellows", "Overseas Fellow" → "Overseas Fellow".
     // Honorary fellows get no suggestion: they're normally exempt, so
     // finance enters (or waives) those by hand.
-    protected function suggestSubscriptionFee(?string $fellowshipType): ?object
+    protected function suggestSubscriptionFee(?string $fellowshipType, $fees): ?object
     {
         if (! $fellowshipType || stripos($fellowshipType, 'honorary') !== false) {
-            return null;
-        }
-
-        $response = $this->api->get('fees/catalogue');
-        if ($response->failed()) {
             return null;
         }
 
@@ -269,18 +265,13 @@ class FellowsController extends Controller
         $typeWords = $words($fellowshipType);
         $best = null;
         $bestScore = 0;
-        foreach ((array) ($response->object()->fee_types ?? []) as $fees) {
-            foreach ($fees as $fee) {
-                if (empty($fee->applies_to_subscription) || empty($fee->is_active)) {
-                    continue;
-                }
-                $feeWords = $words($fee->name);
-                $shared = count(array_intersect($feeWords, $typeWords));
-                $score = $shared - 0.5 * (count($feeWords) - $shared);
-                if ($shared > 0 && $score > $bestScore) {
-                    $best = $fee;
-                    $bestScore = $score;
-                }
+        foreach ($fees as $fee) {
+            $feeWords = $words($fee->name);
+            $shared = count(array_intersect($feeWords, $typeWords));
+            $score = $shared - 0.5 * (count($feeWords) - $shared);
+            if ($shared > 0 && $score > $bestScore) {
+                $best = $fee;
+                $bestScore = $score;
             }
         }
 
@@ -289,6 +280,23 @@ class FellowsController extends Controller
             'amount' => (float) $best->amount,
             'type'   => $fellowshipType,
         ] : null;
+    }
+
+    // Active Annual Subscription fees from the fee catalogue — the options of
+    // the subscription modals' Amount Due dropdown. Empty if the API is down
+    // (the modals then fall back to typing the amount under "Other").
+    protected function subscriptionFees()
+    {
+        $response = $this->api->get('fees/catalogue');
+        if ($response->failed()) {
+            return collect();
+        }
+
+        return collect((array) ($response->object()->fee_types ?? []))
+            ->flatten(1)
+            ->filter(fn ($fee) => ! empty($fee->applies_to_subscription) && ! empty($fee->is_active))
+            ->sortByDesc('amount')
+            ->values();
     }
 
     public function storeSubscription(Request $request, $id)
