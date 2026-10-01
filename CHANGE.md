@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-01) — Fellow Profile tables unreadable in dark mode
+- On the Fellow Profile (`admin/associates/fellows/view/{id}`), the **Subscriptions** tab's table header (Year, Status, Amount Due, …) kept its pale pink background in dark mode, with light text on it, so the labels were almost invisible. The two **Results** tab tables (Exam History, FCS Exam Results) had the same inline pale header.
+- Dark mode now gives all three headers the DESIGN.md dark card-header colour (`#252c3b`) with dark-mode maroon (`#f48a8a`) labels. The fellow's name in the top action bar (inline maroon on the slate bar) uses `#f48a8a` too.
+- The subscriptions page's header colour is now `!important` as well, so it shows the intended `#f48a8a` instead of being overridden to white.
+- Light mode unchanged. Checked with local headless-Chrome screenshots (Subscriptions tab and action bar; the local data had no exam results, so the Results tables weren't rendered).
+- **Files:** `resources/views/admin/associates/fellows/view.blade.php`, `resources/views/admin/associates/fellows/subscriptions.blade.php` (CSS only).
+
 ### Fixed (2026-10-01) — Fellow subscriptions page unreadable in dark mode
 - On `admin/associates/fellows/subscriptions/{id}` the table header (Year, Status, Amount Due, Amount Paid, Date Paid, Mode) kept its light pink background (`#fff5f5`) in dark mode and was hard to read. The card header (`#fafafa`), the totals row (`#f9f9f9`) and the four summary chips (`#fff`) had the same problem.
 - Added dark-mode rules using the DESIGN.md dark palette: header and totals rows `#252c3b`, chips `#1e2330`, light text, and the dark-mode maroon `#f48a8a` / green for the outstanding and fully-paid figures. Light mode is unchanged.

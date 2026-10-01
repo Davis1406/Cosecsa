@@ -169,6 +169,14 @@
 .badge-unpaid   { background:#f8d7da; color:#721c24; }
 .badge-partial  { background:#fff3cd; color:#856404; }
 .badge-waived   { background:#e2e3e5; color:#383d41; }
+
+/* Dark mode: the light pink table headers (Subscriptions tab, and the inline
+   ones on the Results tab) get the DESIGN.md dark card-header colour. */
+body.dark-mode .subs-table th,
+body.dark-mode thead[style*="fff5f5"],
+body.dark-mode thead[style*="fff5f5"] th { background:#252c3b !important; color:#f48a8a !important; border-color:#3d3f57; }
+/* Name in the admin action bar is inline maroon — too dark on the slate bar */
+body.dark-mode .admin-action-bar span[style*="a02626"] { color:#f48a8a !important; }
 </style>
 @endpush
 

@@ -42,7 +42,7 @@
 .fee-hint { font-size:.72rem; color:#6c757d; margin-top:3px; }
 .fee-hint a { color:#a02626; font-weight:600; }
 /* Dark mode: the light surfaces above (some set inline) use the DESIGN.md dark palette */
-body.dark-mode .subs-table th { background:#252c3b; color:#f48a8a; border-color:#3d3f57; }
+body.dark-mode .subs-table th { background:#252c3b !important; color:#f48a8a !important; border-color:#3d3f57; }
 body.dark-mode .subs-table td { border-color:#2d3748; }
 body.dark-mode .subs-table tfoot { background:#252c3b !important; }
 body.dark-mode .subs-table tfoot td { color:#e2e8f0 !important; }
