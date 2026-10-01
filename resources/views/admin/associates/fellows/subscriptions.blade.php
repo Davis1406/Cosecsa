@@ -39,6 +39,10 @@
 }
 .sc-label { font-size:.65rem; color:#999; margin-bottom:1px; }
 .sc-val   { font-size:.95rem; font-weight:700; color:#222; }
+.fee-hint { font-size:.72rem; color:#6c757d; margin-top:3px; }
+.fee-hint a { color:#a02626; font-weight:600; }
+body.dark-mode .fee-hint { color:#94a3b8; }
+body.dark-mode .fee-hint a { color:#f48a8a; }
 </style>
 @endpush
 
@@ -306,7 +310,10 @@
                             <label class="form-label">Amount Due (USD) <span class="req">*</span></label>
                             <input type="number" step="0.01" min="0" name="amount_due"
                                    class="form-control form-control-sm"
-                                   placeholder="150.00" value="150.00" required>
+                                   placeholder="0.00" value="{{ $suggestedFee ? number_format($suggestedFee->amount, 2, '.', '') : '' }}" required>
+                            @if($suggestedFee)
+                                <div class="fee-hint">From fee catalogue: {{ $suggestedFee->name }} ({{ $suggestedFee->type }})</div>
+                            @endif
                         </div>
                         <div class="form-group col-md-3">
                             <label class="form-label">Amount Paid (USD)</label>
@@ -381,6 +388,12 @@
                             <label class="form-label">Amount Due (USD)</label>
                             <input type="number" step="0.01" min="0" name="amount_due"
                                    id="edit_amount_due" class="form-control form-control-sm">
+                            @if($suggestedFee)
+                                <div class="fee-hint">
+                                    Catalogue: {{ $suggestedFee->name }} USD {{ number_format($suggestedFee->amount, 2) }}
+                                    &middot; <a href="#" id="editUseCatalogueFee">Use</a>
+                                </div>
+                            @endif
                         </div>
                         <div class="form-group col-md-3">
                             <label class="form-label">Amount Paid (USD)</label>
@@ -419,6 +432,16 @@
 
 @push('scripts')
 <script>
+var SUGGESTED_FEE = @json($suggestedFee ? $suggestedFee->amount : null);
+
+document.addEventListener('DOMContentLoaded', function () {
+    var useFee = document.getElementById('editUseCatalogueFee');
+    if (useFee) useFee.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.getElementById('edit_amount_due').value = SUGGESTED_FEE.toFixed(2);
+    });
+});
+
 function openEditModal(sub) {
     // Set form action URL
     document.getElementById('editSubForm').action =
@@ -427,7 +450,10 @@ function openEditModal(sub) {
     // Populate fields
     document.getElementById('editSubYearTitle').textContent = sub.year;
     document.getElementById('edit_year').value        = sub.year;
-    document.getElementById('edit_amount_due').value  = sub.amount_due;
+    // Keep the saved amount; only fall back to the catalogue fee when none was recorded.
+    document.getElementById('edit_amount_due').value  = parseFloat(sub.amount_due) > 0
+        ? sub.amount_due
+        : (SUGGESTED_FEE !== null ? SUGGESTED_FEE.toFixed(2) : sub.amount_due);
     document.getElementById('edit_amount_paid').value = sub.amount_paid;
     document.getElementById('edit_date_paid').value   = sub.date_paid  || '';
 

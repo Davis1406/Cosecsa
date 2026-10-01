@@ -238,7 +238,57 @@ class FellowsController extends Controller
             'fellow'        => $fellow,
             'subscriptions' => collect($data->subscriptions ?? []),
             'header_title'  => $header_title,
+            'suggestedFee'  => $this->suggestSubscriptionFee($fellow->fellowship_type ?? null),
         ]);
+    }
+
+    // Best-matching Annual Subscription fee from the fee catalogue
+    // (fee_types with applies_to_subscription) for a fellowship type, used to
+    // prefill Amount Due. Words are compared singularised ("Fellows" =
+    // "Fellow"); a fee scores +1 per shared word and -0.5 per word the type
+    // doesn't have, so "Fellow by Examination" → "Fellows", "Associate
+    // Fellow" → "Associate Fellows", "Overseas Fellow" → "Overseas Fellow".
+    // Honorary fellows get no suggestion: they're normally exempt, so
+    // finance enters (or waives) those by hand.
+    protected function suggestSubscriptionFee(?string $fellowshipType): ?object
+    {
+        if (! $fellowshipType || stripos($fellowshipType, 'honorary') !== false) {
+            return null;
+        }
+
+        $response = $this->api->get('fees/catalogue');
+        if ($response->failed()) {
+            return null;
+        }
+
+        $words = fn (string $s) => array_values(array_unique(array_filter(array_map(
+            fn ($w) => rtrim($w, 's'),
+            preg_split('/[^a-z]+/', strtolower($s))
+        ), fn ($w) => strlen($w) > 2)));
+
+        $typeWords = $words($fellowshipType);
+        $best = null;
+        $bestScore = 0;
+        foreach ((array) ($response->object()->fee_types ?? []) as $fees) {
+            foreach ($fees as $fee) {
+                if (empty($fee->applies_to_subscription) || empty($fee->is_active)) {
+                    continue;
+                }
+                $feeWords = $words($fee->name);
+                $shared = count(array_intersect($feeWords, $typeWords));
+                $score = $shared - 0.5 * (count($feeWords) - $shared);
+                if ($shared > 0 && $score > $bestScore) {
+                    $best = $fee;
+                    $bestScore = $score;
+                }
+            }
+        }
+
+        return $best ? (object) [
+            'name'   => $best->name,
+            'amount' => (float) $best->amount,
+            'type'   => $fellowshipType,
+        ] : null;
     }
 
     public function storeSubscription(Request $request, $id)

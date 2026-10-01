@@ -140,6 +140,10 @@ return [
         'admin/associates/trainers'     => 'trainers',
         'admin/associates/reps'         => 'country_reps',
         'admin/associates/fellows'      => 'fellows',
+        // Annual subscriptions are fees data kept on the fellow's record, so
+        // either module grants access: the Finance Officer (fees) and the
+        // Administrative Officer (fellows) both maintain them.
+        'admin/associates/fellows/subscriptions' => ['fellows', 'fees'],
         'admin/associates/members'      => 'members',
         'admin/associates/promotion'    => 'promotions',
         'admin/exams'                   => 'examiners',

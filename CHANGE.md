@@ -4,6 +4,19 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-01) — Finance couldn't save fellow subscriptions; Amount Due prefilled from the fee catalogue
+- **Edit Subscription didn't save and went to the dashboard** (seen on `admin/associates/fellows/subscriptions/6146`, record 3804). `PermissionMiddleware` maps every `admin/associates/fellows/...` URL to the **Fellows** module. The Finance Officer role has Fees manage but not Fellows manage, so every save was redirected to the dashboard before reaching the API. The dashboard doesn't show flash messages, so there was no visible error.
+  - `config/admin_permissions.php`: `admin/associates/fellows/subscriptions` now maps to `['fellows', 'fees']`. Either module's permission is enough, so the Finance Officer (fees) and the Administrative Officer (fellows) can both add, edit and delete subscription years. Editing the fellow profile itself still needs Fellows.
+  - `PermissionMiddleware`: a `route_map` entry can now list several modules; holding the permission on any one of them passes.
+- **Amount Due from the fee catalogue:** the fellow's fellowship type is matched to the best **Annual Subscription** fee in `fee_types`:
+  - Fellow by Examination / Election / Foundation Fellow → Fellows (100)
+  - Associate Fellow → Associate Fellows (70)
+  - Associate Member → Associate Members (30)
+  - Overseas Fellow → Overseas Fellow (120)
+  - Honorary fellows and fellows with no type get no suggestion.
+  - **Add Subscription Year** prefills it (it was a hard-coded 150.00, which isn't a catalogue fee). **Edit** keeps the saved amount, falls back to the catalogue fee only when none was recorded, and shows a "Catalogue: … · Use" link. Both stay editable.
+- **Files:** `config/admin_permissions.php`, `app/Http/Middleware/PermissionMiddleware.php`, `app/Http/Controllers/FellowsController.php`, `resources/views/admin/associates/fellows/subscriptions.blade.php`. No cosecsa-api change.
+
 ### Changed (2026-09-30) — Messages list: unread conversations stand out
 - On `messages` every conversation looked the same (all names bold), so read and unread couldn't be told apart. Now, same treatment as My Tasks:
   - **Unread:** maroon left edge, light maroon tint, bold name, dark bold preview, maroon time, and a maroon pill with the number of unread messages.

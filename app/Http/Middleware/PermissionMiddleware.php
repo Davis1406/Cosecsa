@@ -20,8 +20,10 @@ class PermissionMiddleware
         $user = Auth::user();
         $path = $request->path();
 
-        $module = $this->resolveModule($path);
-        if (! $module) {
+        // A route_map entry may name several modules; holding the needed
+        // permission on any one of them is enough.
+        $modules = (array) $this->resolveModule($path);
+        if (! $modules) {
             // Unmapped route — fail-open rather than risk locking everyone
             // out of something nobody thought to add to the module map.
             return $next($request);
@@ -38,7 +40,7 @@ class PermissionMiddleware
         $isDelete = $request->isMethod('delete') || (bool) array_intersect(['delete', 'destroy'], $segments);
 
         if ($isDelete) {
-            if ($user->isSuperAdmin() || $user->hasPermission("{$module}.manage")) {
+            if ($user->isSuperAdmin() || $this->hasAny($user, $modules, 'manage')) {
                 return $next($request);
             }
             return redirect('admin/dashboard')->with('error', 'You do not have permission to delete records in that section.');
@@ -49,16 +51,26 @@ class PermissionMiddleware
         $isImpersonate = in_array('impersonate', $segments);
 
         $suffix = (in_array($request->method(), ['GET', 'HEAD']) && ! $isImpersonate) ? 'view' : 'manage';
-        $key = "{$module}.{$suffix}";
 
-        if ($user->hasPermission($key)) {
+        if ($this->hasAny($user, $modules, $suffix)) {
             return $next($request);
         }
 
         return redirect('admin/dashboard')->with('error', 'You do not have permission to access that page.');
     }
 
-    protected function resolveModule(string $path): ?string
+    protected function hasAny($user, array $modules, string $action): bool
+    {
+        foreach ($modules as $module) {
+            if ($user->hasPermission("{$module}.{$action}")) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function resolveModule(string $path): string|array|null
     {
         $map = config('admin_permissions.route_map', []);
 
