@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-01) — Switching between a person's role profiles is instant
+- The **Also in** chips (Fellow / Examiner / Programme Director / Country Rep / Member) on profile pages now prerender the person's other role profiles in the background (Chrome Speculation Rules, `eagerness: eager`). Clicking a chip shows that profile immediately, already fully loaded with its own scripts, instead of a fresh page load and preloader. A cross-document view transition (`@view-transition { navigation: auto; }`) fades between them.
+- Chosen over swapping the page content in place: each profile page has a lot of page-specific script and CSS that only runs on load (the examiner page has 1,500+ lines of script), and an in-place swap would leave inline edits, modals and tabs unwired.
+- All profile `view()` methods are read-only GETs, so prerendering has no side effects. The site CSP already allows the inline rules. Chrome and Edge only; Safari and Firefox navigate normally as before.
+- **Files:** `resources/views/admin/_role_switcher.blade.php`.
+
 ### Data correction (2026-10-01) — Dr Ayman Elhosny: duplicate examiner login merged into his fellow account
 - Fellow ID 2026 (user 13735) and examiner EXA720 (user 17720, created 2026-07-09) were separate accounts with the same email, so the fellow and examiner logins had separate passwords. Neither matched the `1234567` he was given, so examiner login failed both ways.
 - Merged into user 13735: examiner 985 now belongs to it, it has the Examiner role, and 17720 is retired (role removed, `is_deleted = 1`, email renamed to `…merged-13735`). Fellow ID `2026` or the email with `1234567` now works for both Fellow and Examiner (password set at admin request; below the 8-character Add Role minimum).

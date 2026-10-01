@@ -37,6 +37,25 @@
         @endif
     @endforeach
 </div>
+@php
+    // The person's other role profiles, prerendered in the background
+    // (Chrome Speculation Rules) so switching roles shows the page at once,
+    // fully loaded with its own scripts, instead of a fresh page load.
+    $otherRoleUrls = [];
+    foreach ($links as $role => $cfg) {
+        if ($role !== ($currentRole ?? '') && !empty($rp->$role)) {
+            $otherRoleUrls[] = $cfg['url']($rp->$role);
+        }
+    }
+@endphp
+<script type="speculationrules">
+{!! json_encode(['prerender' => [['urls' => $otherRoleUrls, 'eagerness' => 'eager']]], JSON_UNESCAPED_SLASHES) !!}
+</script>
+<style>
+/* Cross-fade between a person's role profiles (both pages include this
+   partial, so both opt in). Browsers without support just navigate. */
+@view-transition { navigation: auto; }
+</style>
 <style>
 .role-switcher-bar {
     display: flex;
