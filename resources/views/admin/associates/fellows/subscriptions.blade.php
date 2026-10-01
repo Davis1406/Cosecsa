@@ -41,6 +41,21 @@
 .sc-val   { font-size:.95rem; font-weight:700; color:#222; }
 .fee-hint { font-size:.72rem; color:#6c757d; margin-top:3px; }
 .fee-hint a { color:#a02626; font-weight:600; }
+/* Dark mode: the light surfaces above (some set inline) use the DESIGN.md dark palette */
+body.dark-mode .subs-table th { background:#252c3b; color:#f48a8a; border-color:#3d3f57; }
+body.dark-mode .subs-table td { border-color:#2d3748; }
+body.dark-mode .subs-table tfoot { background:#252c3b !important; }
+body.dark-mode .subs-table tfoot td { color:#e2e8f0 !important; }
+body.dark-mode .subs-table tfoot td[style*="155724"], body.dark-mode .subs-table tfoot span[style*="155724"] { color:#6ee7a0 !important; }
+body.dark-mode .subs-table tfoot span[style*="a02626"] { color:#f48a8a !important; }
+body.dark-mode .card-header[style*="fafafa"] { background:#252c3b !important; border-bottom-color:#3d3f57 !important; }
+body.dark-mode .card-header[style*="fafafa"] .card-title { color:#f48a8a !important; }
+body.dark-mode .summary-chip { background:#1e2330; border-color:#2d3748; }
+body.dark-mode .summary-chip .sc-icon { background:rgba(244,138,138,.15); color:#f48a8a; }
+body.dark-mode .sc-label { color:#94a3b8; }
+body.dark-mode .sc-val { color:#f1f5f9; }
+body.dark-mode .sc-val[style*="a02626"] { color:#f48a8a !important; }
+body.dark-mode .form-label { color:#cbd5e0; }
 body.dark-mode .fee-hint { color:#94a3b8; }
 body.dark-mode .fee-hint a { color:#f48a8a; }
 </style>

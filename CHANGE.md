@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-01) — Fellow subscriptions page unreadable in dark mode
+- On `admin/associates/fellows/subscriptions/{id}` the table header (Year, Status, Amount Due, Amount Paid, Date Paid, Mode) kept its light pink background (`#fff5f5`) in dark mode and was hard to read. The card header (`#fafafa`), the totals row (`#f9f9f9`) and the four summary chips (`#fff`) had the same problem.
+- Added dark-mode rules using the DESIGN.md dark palette: header and totals rows `#252c3b`, chips `#1e2330`, light text, and the dark-mode maroon `#f48a8a` / green for the outstanding and fully-paid figures. Light mode is unchanged.
+- Checked with a local headless-Chrome screenshot of the page in dark mode.
+- **Files:** `resources/views/admin/associates/fellows/subscriptions.blade.php` (CSS only).
+
 ### Changed (2026-10-01) — Fellow subscriptions: Amount Due is a fee-catalogue dropdown with "Other"
 - On the **Add Subscription Year** and **Edit Subscription** modals, Amount Due is now a dropdown of the fee catalogue's active **Annual Subscription** fees (e.g. "Overseas Fellow — USD 120.00"), highest first, followed by **Other amount…**, which shows a box for typing any amount.
 - **Add:** the fee matching the fellow's fellowship type is preselected and labelled with the type, e.g. "Fellows — USD 100.00 (Fellow by Examination)". Honorary fellows and fellows with no type start on Other.
