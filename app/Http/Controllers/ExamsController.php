@@ -852,7 +852,10 @@ class ExamsController extends Controller
         return view('admin.exams.overall_results', [
             'header_title'      => 'Overall Exam Results',
             'results'           => collect($d->results ?? []),
-            'summary'           => (array) ($d->summary ?? []),
+            // Nested year → programme → result counts; the view indexes them
+            // as arrays ($counts['Pass']), so decode as arrays — ->object()
+            // made the inner levels stdClass and the page 500'd.
+            'summary'           => $response->json('summary') ?? [],
             'programmes'        => collect($d->programmes ?? []),
             'years'             => collect($d->years ?? []),
             'selectedYear'      => $d->selected_year ?? null,

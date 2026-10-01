@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-01) — Overall Exam Results page returned a 500
+- `admin/exams/overall_results` failed with `Cannot use object of type stdClass as array`. The API's `summary` (year → programme → Pass/Fail/Absent counts) was decoded with `->object()` and only the top level cast to an array, so the view's `$counts['Pass']` hit a `stdClass`. The log shows the same error since at least 2026-07-09, so it is long-standing, not caused by today's data changes.
+- `ExamsController::overallResults()` now passes `$response->json('summary')` (nested arrays). Rendered against the live API data (22 years) without error.
+- **Files:** `app/Http/Controllers/ExamsController.php`.
+
 ### Data correction (2026-10-01) — Emmanuel Malekwa's MCS 2023 result added by hand
 - Added `capsule_exam_results` 4180 (capsule_id 900001632): Emmanuel Malekwa, MCS 2023, score 70.85, **Pass**, linked to trainee 351 (`MW/2022/26`); there is no 2023 MCS candidate row. Stored like the existing MCS rows (specialty and exam type `MCS`, programme 10). Supplied by the admin; it was never imported. Backup first: `/var/backups/cosecsa_2026-10-01_110651_pre_malekwa_mcs2023.sql`; logged in `activity_logs`.
 - The trainee detail API now returns only this result for him.
