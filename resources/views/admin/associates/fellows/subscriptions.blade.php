@@ -331,7 +331,7 @@ body.dark-mode .fee-hint a { color:#f48a8a; }
                             <label class="form-label">Mode of Payment</label>
                             <select name="mode_of_payment" class="form-control form-control-sm">
                                 <option value="">— Select —</option>
-                                @foreach(['Bank Transfer','Cheque','Cash','Online','Waived'] as $m)
+                                @foreach(['Bank Transfer','Cheque','Cash','Online','Country Office','Waived'] as $m)
                                     <option value="{{ $m }}">{{ $m }}</option>
                                 @endforeach
                             </select>
@@ -411,7 +411,7 @@ body.dark-mode .fee-hint a { color:#f48a8a; }
                             <label class="form-label">Mode of Payment</label>
                             <select name="mode_of_payment" id="edit_mode" class="form-control form-control-sm">
                                 <option value="">— Select —</option>
-                                @foreach(['Bank Transfer','Cheque','Cash','Online','Waived'] as $m)
+                                @foreach(['Bank Transfer','Cheque','Cash','Online','Country Office','Waived'] as $m)
                                     <option value="{{ $m }}">{{ $m }}</option>
                                 @endforeach
                             </select>

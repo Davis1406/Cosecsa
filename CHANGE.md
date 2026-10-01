@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added (2026-10-01) — "Country Office" payment mode on fellow subscriptions
+- **Mode of Payment** on the Add Subscription Year and Edit Subscription modals now includes **Country Office**, between Online and Waived. `fellow_subscriptions.mode_of_payment` is `varchar(50)` and the API doesn't restrict its values, so no API change is needed.
+- The programme-entry and exam-fee payment modes on the fellow add/edit forms are unchanged.
+- **Files:** `resources/views/admin/associates/fellows/subscriptions.blade.php`.
+
 ### Fixed (2026-10-01) — Finance couldn't save fellow subscriptions; Amount Due prefilled from the fee catalogue
 - **Edit Subscription didn't save and went to the dashboard** (seen on `admin/associates/fellows/subscriptions/6146`, record 3804). `PermissionMiddleware` maps every `admin/associates/fellows/...` URL to the **Fellows** module. The Finance Officer role has Fees manage but not Fellows manage, so every save was redirected to the dashboard before reaching the API. The dashboard doesn't show flash messages, so there was no visible error.
   - `config/admin_permissions.php`: `admin/associates/fellows/subscriptions` now maps to `['fellows', 'fees']`. Either module's permission is enough, so the Finance Officer (fees) and the Administrative Officer (fellows) can both add, edit and delete subscription years. Editing the fellow profile itself still needs Fellows.
