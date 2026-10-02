@@ -437,6 +437,8 @@ public function dashboard()
         $data['examinerGroups'] = $examinerGroups;
         $data['examinerGroupIds'] = $examinerGroupIds;
         $data['currentYear'] = $currentYear;
+        $data['userRoles'] = Auth::user()->getRoles();
+        $data['activeRole'] = Auth::user()->getActiveRole();
 
         return view('examiner.dashboard', $data);
     }

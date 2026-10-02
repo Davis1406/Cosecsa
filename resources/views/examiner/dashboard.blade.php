@@ -7,6 +7,42 @@
         <div class="content-wrapper">
             <section class="content">
                 @include('_message')
+
+                {{-- ═══════ ROLE SWITCHER (multi-role users only) ═══════ --}}
+                @php
+                    $roleNames = [1=>'Admin',2=>'Trainee',4=>'Programme Director',5=>'Country Rep',7=>'Fellow',8=>'Member',9=>'Examiner'];
+                    $roleIcons = [1=>'fa-shield-alt',2=>'fa-user-graduate',4=>'fa-chalkboard-teacher',5=>'fa-globe-africa',7=>'fa-award',8=>'fa-id-badge',9=>'fa-user-md'];
+                @endphp
+                @if(!empty($userRoles) && count($userRoles) > 1)
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="card mb-0" style="border-left:4px solid #a02626;border-radius:8px;">
+                            <div class="card-body py-2 px-3 d-flex align-items-center flex-wrap gap-2">
+                                <span style="font-size:.8rem;font-weight:700;color:#a02626;letter-spacing:.5px;text-transform:uppercase;margin-right:10px;">
+                                    <i class="fas fa-exchange-alt mr-1"></i>Switch Profile
+                                </span>
+                                @foreach($userRoles as $r)
+                                    @if($r != $activeRole)
+                                    <form action="{{ route('switch.role') }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <input type="hidden" name="role" value="{{ $r }}">
+                                        <button type="submit" class="btn btn-sm mr-1"
+                                            style="background:#fff8e1;border:1px solid #e8d48b;color:#856404;font-size:.78rem;border-radius:20px;padding:3px 12px;">
+                                            <i class="fas {{ $roleIcons[$r] ?? 'fa-user' }} mr-1"></i>
+                                            {{ $roleNames[$r] ?? 'Role '.$r }}
+                                        </button>
+                                    </form>
+                                    @endif
+                                @endforeach
+                                <span class="ml-auto" style="font-size:.75rem;color:#999;">
+                                    Currently: <strong style="color:#a02626;">{{ $roleNames[$activeRole] ?? 'Examiner' }}</strong>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <section class="multi_step_form">
                     <form id="msform" method="POST" action="{{ route('examiner.add') }}" enctype="multipart/form-data">
                         {{ csrf_field() }}
