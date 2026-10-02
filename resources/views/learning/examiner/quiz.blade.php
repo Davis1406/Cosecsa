@@ -1,4 +1,4 @@
-@extends('layout.app')
+@extends($layout ?? 'layout.app')
 
 @section('content')
 @php

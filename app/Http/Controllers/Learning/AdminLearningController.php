@@ -110,7 +110,8 @@ class AdminLearningController extends Controller
 
     // GET admin/exams/learning/preview — the course as examiners see it. Uses the
     // learner endpoints (GET only), so viewing never records progress; preview=1
-    // skips the API's confirmed-attendance check.
+    // skips the API's confirmed-attendance check. Rendered with a standalone
+    // layout (no admin chrome) so it embeds cleanly in the admin preview modal.
     public function previewCover()
     {
         $response = $this->api->get('learning/course', ['user_id' => Auth::id(), 'preview' => 1]);
@@ -118,7 +119,7 @@ class AdminLearningController extends Controller
             return $fail;
         }
 
-        return view('learning.examiner.cover', $response->json() + ['preview' => true]);
+        return view('learning.examiner.cover', $response->json() + ['preview' => true, 'layout' => 'learning.examiner._standalone']);
     }
 
     // GET admin/exams/learning/preview/{slug}
@@ -132,7 +133,7 @@ class AdminLearningController extends Controller
         $data = $response->json();
         $data['blocks'] = LearningView::blocks($data['blocks']);
 
-        return view('learning.examiner.player', $data + ['preview' => true]);
+        return view('learning.examiner.player', $data + ['preview' => true, 'layout' => 'learning.examiner._standalone']);
     }
 
     // GET admin/exams/learning/preview/{slug}/quiz — questions only; submitting is disabled
@@ -149,7 +150,7 @@ class AdminLearningController extends Controller
                 ->with('error', 'You have passed this quiz on your own account, so its questions are hidden.');
         }
 
-        return view('learning.examiner.quiz', $response->json() + ['preview' => true]);
+        return view('learning.examiner.quiz', $response->json() + ['preview' => true, 'layout' => 'learning.examiner._standalone']);
     }
 
     // GET admin/exams/learning/videos
