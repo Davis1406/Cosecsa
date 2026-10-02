@@ -30,17 +30,19 @@
                                 <span class="badge-red">Awaiting upload</span>
                             @endif
                         </div>
-                        @if($block['video_url'])
-                            <div class="mt-2">
-                                <video controls preload="metadata" src="{{ $block['video_url'] }}" style="width:100%; max-height:240px; border-radius:8px; background:#000;"></video>
-                            </div>
-                        @endif
+                        <div class="va-frame mt-2">
+                            @if($block['video_url'])
+                                <video controls preload="metadata" src="{{ $block['video_url'] }}"></video>
+                            @else
+                                <span class="muted">No video yet</span>
+                            @endif
+                        </div>
                         <form method="POST" action="{{ route('admin.exams.learning.videos.upload') }}" enctype="multipart/form-data" class="mt-2">
                             @csrf
                             <input type="hidden" name="block_id" value="{{ $block['id'] }}">
-                            <div class="d-flex flex-wrap" style="gap:8px;">
-                                <input type="file" name="video" accept="video/mp4,video/quicktime,video/webm,video/x-m4v" class="form-control" style="max-width:340px;" required>
-                                <input type="text" name="video_label" value="{{ $block['label'] }}" placeholder="Label (optional)" class="form-control" style="max-width:260px;">
+                            <div class="va-form">
+                                <input type="file" name="video" accept="video/mp4,video/quicktime,video/webm,video/x-m4v" class="form-control" required>
+                                <input type="text" name="video_label" value="{{ $block['label'] }}" placeholder="Label (optional)" class="form-control">
                                 <button type="submit" class="btn btn-primary">Upload</button>
                             </div>
                         </form>
@@ -55,5 +57,13 @@
 @push('styles')
 @include('learning.partials.styles')
 @include('learning.admin._styles')
-<style>.lms .video-admin-list { display: flex; flex-direction: column; gap: 16px; }</style>
+<style>
+    /* Square video tiles, two per row (one on phones) — matches the course player. */
+    .lms .video-admin-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; max-width: 860px; }
+    .lms .va-frame { aspect-ratio: 1 / 1; background: #0f172a; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .lms .va-frame video { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .lms .va-frame .muted { color: #94a3b8; font-size: 13px; }
+    .lms .va-form { display: flex; flex-direction: column; gap: 8px; }
+    @media (max-width: 640px) { .lms .video-admin-list { grid-template-columns: minmax(0, 1fr); } }
+</style>
 @endpush
