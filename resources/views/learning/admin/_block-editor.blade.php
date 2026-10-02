@@ -36,7 +36,9 @@
 <form method="POST" action="{{ route('admin.exams.learning.block.update', $block->id) }}"
       data-block-editor
       data-preview-url="{{ route('admin.exams.learning.block.preview', $block->id) }}"
-      data-upload-url="{{ route('admin.exams.learning.block.image', $block->id) }}">
+      data-upload-url="{{ route('admin.exams.learning.block.image', $block->id) }}"
+      data-editor-url="{{ route('admin.exams.learning.block.editor', $block->id) }}"
+      data-list-url="{{ route('admin.exams.learning.block.list-items', $block->id) }}">
     @csrf
     <div class="editor-split">
         <section class="editor-pane card">
@@ -130,12 +132,30 @@
 
             <div class="editor-fields">
                 @foreach($fields as $field)
-                    <div class="editor-field" data-path="{{ $field['path'] }}">
-                        <label class="editor-label">{{ $field['label'] }}</label>
+                    @php
+                        $isListItem = $block->type === 'list' && preg_match('/^items\.(\d+)$/', $field['path'], $listMatch);
+                        $listIndex = $isListItem ? (int) $listMatch[1] : null;
+                    @endphp
+                    <div class="editor-field {{ $isListItem ? 'list-item-field' : '' }}" data-path="{{ $field['path'] }}" @if($isListItem) data-list-index="{{ $listIndex }}" @endif>
+                        @if($isListItem)
+                            <div class="flex-between list-item-head">
+                                <label class="editor-label" style="margin-bottom:0;">{{ $field['label'] }}</label>
+                                <button type="button" class="list-item-remove" data-list-remove title="Remove this item">Remove</button>
+                            </div>
+                        @else
+                            <label class="editor-label">{{ $field['label'] }}</label>
+                        @endif
                         <div class="editable-field" contenteditable="true" spellcheck="true" data-placeholder="Empty"></div>
                         <input type="hidden" name="fields[{{ implode('][', explode('.', $field['path'])) }}]" value="{{ $field['value'] }}" data-text-input>
                     </div>
                 @endforeach
+
+                @if($block->type === 'list')
+                    <button type="button" class="btn btn-light btn-sm list-item-add" data-list-add>
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="vertical-align:-1px; margin-right:4px;"><path d="M12 5v14M5 12h14"/></svg>
+                        Add item
+                    </button>
+                @endif
 
                 @if(!empty($images))
                     <div class="editor-images-divider">

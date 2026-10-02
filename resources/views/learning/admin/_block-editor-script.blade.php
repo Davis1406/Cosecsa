@@ -350,6 +350,39 @@
             host.classList.remove('is-editing');
         });
 
+        // ── List items (bullets / numbered / checkboxes): add & remove ────
+        const refreshEditor = async () => {
+            const res = await fetch(form.dataset.editorUrl, { headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'text/html' } });
+            if (!res.ok) throw new Error('bad response');
+            const container = form.parentElement;
+            form.outerHTML = await res.text();
+            const next = container.querySelector('[data-block-editor]');
+            if (next) LmsBlockEditor(next);
+        };
+        const postList = async (action, index) => {
+            const fd = new FormData();
+            fd.append('action', action);
+            if (index !== null && index !== undefined) fd.append('index', index);
+            const res = await fetch(form.dataset.listUrl, { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf }, body: fd });
+            if (!res.ok) { setStatus('Failed', 'error'); throw new Error('bad response'); }
+        };
+
+        form.querySelectorAll('[data-list-add]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const items = [...form.querySelectorAll('.list-item-field')];
+                const last = items.length ? items[items.length - 1].dataset.listIndex : null;
+                try { await postList('add', last); await refreshEditor(); } catch (e) {}
+            });
+        });
+        form.querySelectorAll('[data-list-remove]').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const index = btn.closest('.list-item-field')?.dataset.listIndex;
+                if (index === undefined || !confirm('Remove this item?')) return;
+                try { await postList('remove', index); await refreshEditor(); } catch (e) {}
+            });
+        });
+
         markPreviewVisible();
         bindPreviewInteractions();
     };

@@ -124,6 +124,35 @@ class AdminLearningController extends Controller
             $response->successful() ? 'Block moved.' : 'The block could not be moved. Please try again.');
     }
 
+    // POST admin/exams/learning/blocks/{id}/list-items  {action: add|remove, index?} — AJAX
+    public function listItems(Request $request, int $id)
+    {
+        $response = $this->api->post("learning/admin/blocks/{$id}/list-items", [
+            'action' => $request->input('action'),
+            'index' => $request->filled('index') ? $request->integer('index') : null,
+        ]);
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    // GET admin/exams/learning/blocks/{id}/editor — the block editor fragment, used
+    // to re-render the inline editor after add/remove of list items.
+    public function editorFragment(int $id)
+    {
+        $response = $this->api->get("learning/admin/blocks/{$id}");
+        abort_unless($response->successful(), 502);
+
+        $data = $response->json();
+
+        return view('learning.admin._block-editor', [
+            'block' => (object) $data['block'],
+            'fields' => $data['fields'],
+            'images' => $data['images'],
+            'module' => $data['module'],
+            'cancelUrl' => null,
+        ]);
+    }
+
     // POST admin/exams/learning/blocks/{id}/image (AJAX)
     public function uploadBlockImage(Request $request, int $id)
     {

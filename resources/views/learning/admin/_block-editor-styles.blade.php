@@ -20,6 +20,10 @@
         display: block; font-size: 11.5px; font-weight: 700; color: #475569;
         text-transform: uppercase; letter-spacing: .4px; margin-bottom: 6px;
     }
+    .list-item-head { margin-bottom: 6px; }
+    .list-item-remove { border: 0; background: transparent; color: #b91c1c; font-size: 12px; font-weight: 600; cursor: pointer; padding: 0; }
+    .list-item-remove:hover { text-decoration: underline; }
+    .list-item-add { margin-top: 4px; }
 
     /* ── Formatting toolbar ─────────────────────────────────────────────── */
     .rt-toolbar {
