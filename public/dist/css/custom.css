@@ -992,16 +992,9 @@ body.dark-mode .assoc-notes-form input[type=file] {
     color: #e2e8f0 !important;
 }
 
-/* Link hover/focus: a gold underline accent instead of Bootstrap's blue (#0056b3).
-   Text stays readable (brand maroon in light mode) so hover states are obvious
-   without the hard-to-read gold-on-white. Sidebar, dropdowns, header, pagination
-   and the pill/tab chrome keep their own hover styles (no gold underline). */
+/* Link hover/focus: readable maroon text (no underline accent). */
 a:hover, a:focus,
 .btn-link:hover, .btn-link:focus {
-  text-decoration: underline;
-  text-decoration-color: #FEC503;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
   transition: color .2s ease;
 }
 body:not(.dark-mode) a:hover, body:not(.dark-mode) a:focus,
@@ -1011,17 +1004,6 @@ body:not(.dark-mode) .btn-link:hover, body:not(.dark-mode) .btn-link:focus {
 body:not(.dark-mode) a.text-primary:hover, body:not(.dark-mode) a.text-primary:focus,
 body:not(.dark-mode) a.text-muted:hover, body:not(.dark-mode) a.text-muted:focus {
   color: #7f0a12 !important;
-}
-/* AdminLTE chrome keeps its own hover — no gold underline. */
-.nav-sidebar a:hover, .nav-sidebar a:focus,
-.dropdown-menu a:hover, .dropdown-menu a:focus,
-.main-header a:hover, .main-header a:focus,
-.page-link:hover, .page-link:focus,
-.nav-pills .nav-link:hover, .nav-pills .nav-link:focus,
-.nav-tabs .nav-link:hover, .nav-tabs .nav-link:focus,
-.accent-primary .nav-tabs .nav-link:hover,
-.accent-blue .nav-tabs .nav-link:hover {
-  text-decoration: none;
 }
 /* Pill tabs (e.g. Examiner Training admin) and tab headers hover in readable maroon. */
 body:not(.dark-mode) .nav-pills .nav-link:not(.active):hover,
