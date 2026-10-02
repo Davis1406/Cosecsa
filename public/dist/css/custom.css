@@ -1002,6 +1002,7 @@ a:hover, a:focus,
   text-decoration-color: #FEC503;
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
+  transition: color .2s ease;
 }
 body:not(.dark-mode) a:hover, body:not(.dark-mode) a:focus,
 body:not(.dark-mode) .btn-link:hover, body:not(.dark-mode) .btn-link:focus {

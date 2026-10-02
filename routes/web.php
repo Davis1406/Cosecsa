@@ -413,6 +413,7 @@ Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(
     Route::get('course', 'course')->name('.course');
     Route::get('modules/{id}', 'module')->whereNumber('id')->name('.module');
     Route::get('blocks/{id}/edit', 'editBlock')->whereNumber('id')->name('.block');
+    Route::post('blocks', 'addBlock')->name('.block.store');
     Route::post('blocks/{id}/preview', 'previewBlock')->whereNumber('id')->name('.block.preview');
     Route::post('blocks/{id}/image', 'uploadBlockImage')->whereNumber('id')->name('.block.image');
     Route::post('blocks/{id}/move', 'moveBlock')->whereNumber('id')->name('.block.move');

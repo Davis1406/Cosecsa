@@ -19,16 +19,24 @@
 
             <div class="flex-between mb-3">
                 <h5 style="font-size:16px; font-weight:700; margin:0;">Blocks ({{ count($blocks) }})</h5>
-                <span class="muted" style="font-size:12.5px;">
-                    @if($module['type'] === 'quiz')
-                        Questions are read-only.
-                    @else
-                        Click a block to edit it inline, or use the arrows to reorder.
-                    @endif
-                </span>
+                <div class="d-flex align-items-center" style="gap:12px;">
+                    <span class="muted" style="font-size:12.5px;">
+                        @if($module['type'] === 'quiz')
+                            Questions are read-only.
+                        @else
+                            Click a block to edit it inline, or use the arrows to reorder.
+                        @endif
+                    </span>
+                    @unless($module['type'] === 'quiz')
+                        <button type="button" class="btn btn-primary btn-sm" data-add-block-open>
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="vertical-align:-1px; margin-right:4px;"><path d="M12 5v14M5 12h14"/></svg>
+                            Add block
+                        </button>
+                    @endunless
+                </div>
             </div>
 
-            <div class="module-blocks">
+            <div class="module-blocks" data-focus-block="{{ session('focus_block') }}">
                 @foreach($blocks as $block)
                     @php
                         $blockObject = (object) [
@@ -39,7 +47,7 @@
                             'payload' => $block['payload'],
                         ];
                     @endphp
-                    <div class="lms-block" data-block-id="{{ $block['id'] }}">
+                    <div class="lms-block" data-block-id="{{ $block['id'] }}" style="--i: {{ $loop->index }}">
                         <div class="lms-block-bar">
                             <span class="badge-gray">{{ $block['type'] }}</span>
                             @if($block['variant'])<span class="badge-gray">{{ $block['variant'] }}</span>@endif
@@ -69,8 +77,68 @@
                             </div>
                         @endunless
                     </div>
+                    @unless($module['type'] === 'quiz')
+                        <button type="button" class="lms-block-insert" data-add-block-open data-after-id="{{ $block['id'] }}" title="Add a block after this one">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                            <span>Add block</span>
+                        </button>
+                    @endunless
                 @endforeach
+                @unless($module['type'] === 'quiz')
+                    <button type="button" class="lms-block-insert lms-block-insert-end" data-add-block-open>
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                        <span>Add block</span>
+                    </button>
+                @endunless
             </div>
+
+            @unless($module['type'] === 'quiz')
+                {{-- WordPress-style "Add block" picker --}}
+                <form id="add-block-form" method="POST" action="{{ route('admin.exams.learning.block.store') }}">
+                    @csrf
+                    <input type="hidden" name="module_id" value="{{ $module['id'] }}">
+                    <input type="hidden" name="type" value="">
+                    <input type="hidden" name="after_block_id" value="">
+                </form>
+
+                <div class="modal fade" id="addBlockModal" tabindex="-1" role="dialog" aria-labelledby="addBlockModalTitle" aria-hidden="true">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header py-2">
+                                <h5 class="modal-title" id="addBlockModalTitle">Add block</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            </div>
+                            <div class="modal-body">
+                                @if(empty($blockTypes))
+                                    <p class="muted" style="margin:0;">No block types are available right now.</p>
+                                @else
+                                    @php
+                                        $typeIcons = [
+                                            'paragraph' => '¶', 'heading' => 'H', 'heading_paragraph' => 'H¶', 'quote' => '❝', 'impact' => '!',
+                                            'list_bullets' => '•', 'list_numbered' => '№', 'checklist' => '✓',
+                                            'image' => '▨', 'image_text' => '▣', 'video' => '▶', 'divider' => '─',
+                                            'flashcard' => '⇄', 'labeledgraphic' => '◉', 'process' => '➤',
+                                        ];
+                                    @endphp
+                                    @foreach($blockTypes as $group => $types)
+                                        <div class="block-type-group">
+                                            <div class="block-type-group-label">{{ $group }}</div>
+                                            <div class="block-type-grid">
+                                                @foreach($types as $t)
+                                                    <button type="button" class="block-type-tile" data-type="{{ $t['id'] }}" title="{{ $t['hint'] ?? '' }}">
+                                                        <span class="block-type-icon">{{ $typeIcons[$t['id']] ?? '+' }}</span>
+                                                        <span class="block-type-label">{{ $t['label'] }}</span>
+                                                    </button>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endunless
         </div>
     </section>
 </div>
@@ -81,12 +149,22 @@
 @include('learning.admin._styles')
 @include('learning.admin._block-editor-styles')
 <style>
-    .module-blocks { display: flex; flex-direction: column; gap: 14px; max-width: 1000px; }
+    .module-blocks { display: flex; flex-direction: column; gap: 6px; max-width: 1000px; }
     .lms-block {
-        border: 1px solid #e6e9ef; border-radius: 14px; background: #fff;
-        overflow: hidden; transition: border-color .15s ease, box-shadow .15s ease;
+        position: relative; border: 1px solid #e6e9ef; border-radius: 14px; background: #fff;
+        overflow: hidden;
+        transition: border-color .25s ease, box-shadow .25s ease, transform .25s cubic-bezier(.22,1,.36,1);
+        animation: blockIn .35s cubic-bezier(.22,1,.36,1) both;
+        animation-delay: calc(var(--i, 0) * 45ms);
     }
-    .lms-block:hover { border-color: rgba(153,6,10,.35); box-shadow: 0 4px 14px rgba(16,24,40,.06); }
+    @keyframes blockIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .lms-block::before {
+        content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; z-index: 2;
+        background: linear-gradient(180deg, var(--brand), #FEC503);
+        transform: scaleY(0); transform-origin: top; transition: transform .3s cubic-bezier(.22,1,.36,1);
+    }
+    .lms-block:hover { border-color: rgba(153,6,10,.4); box-shadow: 0 6px 18px rgba(16,24,40,.10); transform: translateY(-2px); }
+    .lms-block:hover::before { transform: scaleY(1); }
     .lms-block.is-editing { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(153,6,10,.12); }
     .lms-block-bar {
         display: flex; align-items: center; gap: 8px; padding: 10px 14px;
@@ -99,6 +177,47 @@
     .lms-block-editor .editor-fields { max-height: none; }
     .lms-block-editor .preview-frame { max-height: 420px; }
     .lms-block-preview .block-reveal { cursor: default; }
+
+    /* ── Add-block insert between blocks ────────────────────────────────── */
+    .lms-block-insert {
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+        width: 100%; padding: 6px; margin: 2px 0;
+        border: 1.5px dashed #cbd5e1; border-radius: 10px; background: transparent;
+        color: #94a3b8; font-size: 12.5px; font-weight: 600; cursor: pointer;
+        opacity: .35; transition: opacity .2s ease, color .2s ease, border-color .2s ease, background .2s ease;
+    }
+    .lms-block-insert:hover {
+        opacity: 1; color: var(--brand); border-color: rgba(153,6,10,.5); background: rgba(153,6,10,.04);
+    }
+    .lms-block-insert-end { margin-top: 6px; }
+
+    /* ── Add-block picker ───────────────────────────────────────────────── */
+    .block-type-group { margin-bottom: 18px; }
+    .block-type-group:last-child { margin-bottom: 0; }
+    .block-type-group-label {
+        font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase;
+        letter-spacing: .8px; margin-bottom: 10px;
+    }
+    .block-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    @media (max-width: 640px) { .block-type-grid { grid-template-columns: 1fr 1fr; } }
+    .block-type-tile {
+        display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+        border: 1.5px solid #e6e9ef; border-radius: 12px; background: #fff; cursor: pointer;
+        text-align: left; font: inherit;
+        transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .block-type-tile:hover {
+        border-color: var(--brand); transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(16,24,40,.10); background: rgba(153,6,10,.03);
+    }
+    .block-type-icon {
+        flex: 0 0 38px; width: 38px; height: 38px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(153,6,10,.08); color: var(--brand);
+        font-size: 18px; font-weight: 700;
+    }
+    .block-type-label { font-size: 13.5px; font-weight: 600; color: #1e293b; }
+
     @media (max-width: 900px) { .lms-block-bar { flex-wrap: wrap; } }
 </style>
 @endpush
@@ -147,6 +266,44 @@
                 window.location.reload();
             });
         });
+
+        // ── Add block ───────────────────────────────────────────────────────
+        const addForm = document.getElementById('add-block-form');
+        const addModal = document.getElementById('addBlockModal');
+        if (addForm && addModal) {
+            let afterId = '';
+            document.querySelectorAll('[data-add-block-open]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    afterId = btn.dataset.afterId || '';
+                    $('#addBlockModal').modal('show');
+                });
+            });
+            addModal.querySelectorAll('.block-type-tile').forEach(tile => {
+                tile.addEventListener('click', () => {
+                    addForm.querySelector('[name="type"]').value = tile.dataset.type;
+                    addForm.querySelector('[name="after_block_id"]').value = afterId;
+                    addForm.submit();
+                });
+            });
+        }
+
+        // ── Open a freshly-added block's editor (focus_block flash) ───────
+        const wrapper = document.querySelector('.module-blocks');
+        const focusId = wrapper && wrapper.dataset.focusBlock;
+        if (focusId) {
+            const host = document.querySelector('.lms-block[data-block-id="' + focusId + '"]');
+            if (host) {
+                const editor = host.querySelector('.lms-block-editor');
+                if (editor) {
+                    editor.hidden = false;
+                    host.classList.add('is-editing');
+                    const form = editor.querySelector('[data-block-editor]');
+                    LmsBlockEditor(form);
+                    host.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    form.querySelector('.editable-field')?.focus();
+                }
+            }
+        }
     })();
 </script>
 @endpush

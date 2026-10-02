@@ -59,7 +59,28 @@ class AdminLearningController extends Controller
             return $fail;
         }
 
-        return view('learning.admin.module', $response->json());
+        $data = $response->json();
+        $types = $this->api->get('learning/admin/block-types');
+        $data['blockTypes'] = $types->successful() ? $types->json('types') : [];
+
+        return view('learning.admin.module', $data);
+    }
+
+    // POST admin/exams/learning/blocks  {module_id, type, after_block_id?}
+    public function addBlock(Request $request)
+    {
+        $response = $this->api->post('learning/admin/blocks', [
+            'module_id' => $request->integer('module_id'),
+            'type' => $request->input('type'),
+            'after_block_id' => $request->filled('after_block_id') ? $request->integer('after_block_id') : null,
+        ]);
+
+        if ($response->successful()) {
+            // Redirect back and open the new block's editor (focus_block).
+            return back()->with('success', $response->json('message'))->with('focus_block', $response->json('block.id'));
+        }
+
+        return back()->with('error', $response->json('message') ?: 'The block could not be added. Please try again.');
     }
 
     // GET admin/exams/learning/blocks/{id}/edit
