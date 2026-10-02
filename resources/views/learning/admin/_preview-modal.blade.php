@@ -19,7 +19,10 @@
         var $frame = $('#lmsPreviewFrame');
         if (!$modal.length) return;
 
-        $(document).on('click', '#lmsPreviewLink', function (e) {
+        // The "Preview course" tab plus any per-module "Preview" buttons
+        // (data-lms-preview) all open the course in this modal instead of
+        // navigating away from the admin page.
+        $(document).on('click', '#lmsPreviewLink, [data-lms-preview]', function (e) {
             e.preventDefault();
             $frame.attr('src', this.href);
             $modal.modal('show');

@@ -10,7 +10,7 @@
 
             <div class="mb-3">
                 <a href="{{ route('admin.exams.learning.course') }}" class="btn btn-light btn-sm">← All modules</a>
-                <a href="{{ route('admin.exams.learning.preview.module', $module['slug']) }}" class="btn btn-light btn-sm">Preview as examiner</a>
+                <a href="{{ route('admin.exams.learning.preview.module', $module['slug']) }}" class="btn btn-light btn-sm" data-lms-preview>Preview as examiner</a>
             </div>
 
             @if($module['type'] === 'quiz')
