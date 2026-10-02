@@ -59,6 +59,13 @@
                                 <button type="button" class="btn btn-light btn-sm lms-block-move" data-move="down"
                                         data-move-url="{{ route('admin.exams.learning.block.move', $block['id']) }}"
                                         title="Move down" @disabled($loop->last)>↓</button>
+                                <form method="POST" action="{{ route('admin.exams.learning.block.duplicate', $block['id']) }}" style="display:inline;">
+                                    @csrf
+                                    <button type="submit" class="btn btn-light btn-sm" title="Duplicate this block">
+                                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:3px;"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                                        Duplicate
+                                    </button>
+                                </form>
                                 <button type="button" class="btn btn-light btn-sm lms-block-edit">Edit</button>
                             @endunless
                         </div>

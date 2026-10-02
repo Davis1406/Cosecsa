@@ -124,6 +124,15 @@ class AdminLearningController extends Controller
             $response->successful() ? 'Block moved.' : 'The block could not be moved. Please try again.');
     }
 
+    // POST admin/exams/learning/blocks/{id}/duplicate
+    public function duplicateBlock(Request $request, int $id)
+    {
+        $response = $this->api->post("learning/admin/blocks/{$id}/duplicate");
+
+        return back()->with($response->successful() ? 'success' : 'error',
+            $response->successful() ? 'Block duplicated.' : 'The block could not be duplicated. Please try again.');
+    }
+
     // POST admin/exams/learning/blocks/{id}/list-items  {action: add|remove, index?} — AJAX
     public function listItems(Request $request, int $id)
     {
