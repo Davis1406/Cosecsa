@@ -117,7 +117,6 @@
                         @if($preview)
                             {{-- Preview never records progress: plain links instead of the advance form. --}}
                             <a href="{{ $next ? route($lr.'.module', $next['slug']) : route($lr) }}" class="pn-card pn-next pn-primary">
-                                <span class="pn-dir">{{ $next ? 'Next module' : 'End of course' }}</span>
                                 <span class="pn-title">{{ $next ? $next['title'] : 'Back to course home' }} →</span>
                             </a>
                         @elseif($module['type'] === 'quiz' && ! $completed)
@@ -129,7 +128,6 @@
                             <form method="POST" action="{{ route($lr.'.advance', $module['slug']) }}" class="pn-form" data-advance>
                                 @csrf
                                 <button type="submit" class="pn-card pn-next pn-primary">
-                                    <span class="pn-dir">{{ $next ? 'Next module' : 'All done' }}</span>
                                     <span class="pn-title">{{ $next ? $next['title'] : 'Finish course' }} →</span>
                                 </button>
                             </form>
@@ -351,7 +349,7 @@
         videos.forEach(v => v.addEventListener('play', () => videos.forEach(other => { if (other !== v) pause(other); })));
     })();
 
-    // ── "Next module": completes this module, then navigates ───────────────
+    // ── "Next": completes this module, then navigates ────────────────────────
     document.querySelectorAll('[data-advance]').forEach(form => {
         form.addEventListener('submit', () => {
             form.querySelector('.pn-card').classList.add('is-loading');
