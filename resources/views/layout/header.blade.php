@@ -1020,12 +1020,14 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                             </a>
                         </li>
 
+                        @if (\App\Support\LearningView::canAccess(Auth::id()))
                         <li class="nav-item">
                             <a href="{{ url('examiner/learning') }}" class="nav-link">
                                 <i class="nav-icon fas fa-graduation-cap"></i>
                                 <p>Examiner Training</p>
                             </a>
                         </li>
+                        @endif
 
                         <li class="nav-item">
                             <a href="{{ url('examiner/profile_settings') }}"
@@ -1587,7 +1589,7 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
         color: #93c5fd;
     }
     body.dark-mode a:not(.btn):not(.nav-link):not(.dropdown-item):not(.page-link):hover {
-        color: #bfdbfe;
+        color: #FEC503;
     }
 
     /* ── Dark mode: dropdown menus ── */

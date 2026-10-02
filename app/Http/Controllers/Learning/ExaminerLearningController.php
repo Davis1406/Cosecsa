@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Auth;
 
 /**
  * Examiner Training course for examiners — examiner/learning.
- * Content and progress live in cosecsa-api (internal/learning/*).
+ * Content and progress live in cosecsa-api (internal/learning/*), which also
+ * limits the course to examiners who confirmed attendance for this year.
  */
 class ExaminerLearningController extends Controller
 {
@@ -106,6 +107,11 @@ class ExaminerLearningController extends Controller
     {
         if ($response->successful()) {
             return null;
+        }
+
+        // 403: not confirmed for this year's exams — the API's message says so.
+        if ($response->status() === 403) {
+            return redirect('examiner/dashboard')->with('error', $response->json('message'));
         }
 
         $message = $response->status() === 404

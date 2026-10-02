@@ -109,10 +109,11 @@ class AdminLearningController extends Controller
     }
 
     // GET admin/exams/learning/preview — the course as examiners see it. Uses the
-    // learner endpoints (GET only), so viewing never records progress.
+    // learner endpoints (GET only), so viewing never records progress; preview=1
+    // skips the API's confirmed-attendance check.
     public function previewCover()
     {
-        $response = $this->api->get('learning/course', ['user_id' => Auth::id()]);
+        $response = $this->api->get('learning/course', ['user_id' => Auth::id(), 'preview' => 1]);
         if ($fail = $this->failed($response)) {
             return $fail;
         }
@@ -123,7 +124,7 @@ class AdminLearningController extends Controller
     // GET admin/exams/learning/preview/{slug}
     public function previewModule(string $slug)
     {
-        $response = $this->api->get("learning/modules/{$slug}", ['user_id' => Auth::id()]);
+        $response = $this->api->get("learning/modules/{$slug}", ['user_id' => Auth::id(), 'preview' => 1]);
         if ($fail = $this->failed($response, 'admin/exams/learning/preview')) {
             return $fail;
         }
@@ -137,7 +138,7 @@ class AdminLearningController extends Controller
     // GET admin/exams/learning/preview/{slug}/quiz — questions only; submitting is disabled
     public function previewQuiz(string $slug)
     {
-        $response = $this->api->get("learning/quiz/{$slug}", ['user_id' => Auth::id()]);
+        $response = $this->api->get("learning/quiz/{$slug}", ['user_id' => Auth::id(), 'preview' => 1]);
         if ($fail = $this->failed($response, 'admin/exams/learning/preview')) {
             return $fail;
         }

@@ -991,3 +991,16 @@ body.dark-mode .assoc-notes-form input[type=file] {
     border-color: #4a5568 !important;
     color: #e2e8f0 !important;
 }
+
+/* Link hover/focus: COSECSA gold (#FEC503) instead of Bootstrap's blue (#0056b3).
+   Bootstrap's a:hover outranks a plain class colour, so links styled with a class
+   used to turn blue on hover. Buttons, sidebar and dropdown items keep their own
+   hover styles (their rules are more specific). */
+a:hover, a:focus,
+.btn-link:hover, .btn-link:focus,
+.page-link:hover, .page-link:focus {
+  color: #FEC503;
+}
+a.text-primary:hover, a.text-primary:focus {
+  color: #FEC503 !important;
+}

@@ -11,8 +11,8 @@ Built on **AdminLTE 3** + **Bootstrap 4** with a custom layer (`dist/css/custom.
 |---|---|---|
 | **Maroon / Primary** | `#a02626` | CTA buttons, active nav links, focus rings, brand heading |
 | **Maroon Dark** | `#870f0f` | Hover state on primary buttons |
-| **Maroon Deep** | `#7f0a12` | Hover state on links |
-| **Gold / Accent** | `#FEC503` | Secondary accent, badges, notification dots |
+| **Maroon Deep** | `#7f0a12` | Deep maroon accents |
+| **Gold / Accent** | `#FEC503` | Secondary accent, badges, notification dots, link hover/focus (light + dark) |
 | **Teal** | `#004356` | Tile accent (hospitals, primary stats) |
 
 ```
@@ -69,7 +69,7 @@ Teal    ████  #004356
 | **Muted text** | `#94a3b8` | Subtitles, empty states, disabled |
 | **Placeholder** | `#718096` | Input placeholders |
 | **Link / accent** | `#f48a8a` | Links and table anchors in dark mode |
-| **Link hover** | `#ffb3b3` | Link hover in dark mode |
+| **Link hover** | `#FEC503` | Link hover in dark mode (gold, same as light) |
 | **Tile label** | `#9ca3af` | `.stitch-tile-label` in dark mode |
 | **Gold text** | `#3a2a00` | Text on gold badge background |
 

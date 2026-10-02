@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Services\ApiClient;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 /**
@@ -11,6 +13,24 @@ use Illuminate\Support\Str;
  */
 class LearningView
 {
+    /**
+     * Whether the examiner menu shows the course link: only examiners who confirmed
+     * attendance for this year (the API decides and enforces it on every request).
+     * Shown if the API can't be reached, so an outage doesn't hide it for everyone.
+     */
+    public static function canAccess(int $userId): bool
+    {
+        return Cache::remember("learning_access_{$userId}", 600, function () use ($userId) {
+            try {
+                $response = app(ApiClient::class)->get('learning/access', ['user_id' => $userId]);
+            } catch (\Illuminate\Http\Client\ConnectionException) {
+                return true;
+            }
+
+            return $response->successful() ? (bool) $response->json('allowed') : true;
+        });
+    }
+
     public static function imageUrl(?array $image): ?string
     {
         return $image['resolved_url'] ?? null;
