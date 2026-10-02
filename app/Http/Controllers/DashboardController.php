@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\UserRole;
@@ -26,21 +27,72 @@ public function dashboard()
 
         switch ($activeRole) {
             case 1:
-                // Admin dashboard logic. Counts are sourced from the same API
-                // endpoints the list pages use, so the tiles reconcile with the
-                // respective tables (trainees, candidates, fellows, hospitals).
-                // Trainees use the reports drill-down endpoint (filter=all) so
-                // the tile matches the "Showing X of Y" total on the reports
-                // table, which includes trainees promoted to Fellow.
-                $trainees   = collect($this->api->get('trainees/reports/list', ['filter' => 'all'])->object() ?? []);
-                $candidates = collect($this->api->get('candidates/list-data')->object()->candidates ?? []);
-                $fellows    = collect($this->api->get('fellows/list-data')->object()->fellows ?? []);
-                $hospitals  = $this->api->get('admin/hospitals')->object();
+                // Dashboard tiles come from a lightweight API stats endpoint
+                // (COUNT queries + a small alumni slice) instead of the full
+                // trainees/fellows/candidates datasets, cached for 5 minutes —
+                // the numbers change rarely. Falls back to the full datasets
+                // only if the API is unreachable.
+                $stats = Cache::get('admin_dashboard_stats');
+                if (! $stats) {
+                    $res = $this->api->get('dashboard/stats');
+                    if ($res->successful()) {
+                        $stats = $res->json();
+                        Cache::put('admin_dashboard_stats', $stats, 300);
+                    }
+                }
 
-                $data['traineeCount']            = $trainees->count();
-                $data['CandidateCount']          = $candidates->where('exam_year', (string) date('Y'))->count();
-                $data['FellowsCount']            = $fellows->count();
-                $data['accreditedHospitalCount'] = $hospitals->total_active ?? 0;
+                if ($stats) {
+                    $data['traineeCount']            = $stats['trainee_count'] ?? 0;
+                    $data['CandidateCount']          = $stats['candidate_count'] ?? 0;
+                    $data['FellowsCount']            = $stats['fellows_count'] ?? 0;
+                    $data['accreditedHospitalCount'] = $stats['hospital_count'] ?? 0;
+
+                    $alumni = $stats['alumni'] ?? [];
+                    $data['alumniYearLabels'] = collect($alumni['labels'] ?? []);
+                    $data['alumniYearTotals'] = collect($alumni['totals'] ?? []);
+                    $data['alumniYearFemale'] = collect($alumni['female'] ?? []);
+                    $data['allAlumniCount']   = $alumni['all'] ?? 0;
+                    $data['femaleAlumniCount'] = $alumni['female_all'] ?? 0;
+                } else {
+                    $trainees   = collect($this->api->get('trainees/reports/list', ['filter' => 'all'])->object() ?? []);
+                    $candidates = collect($this->api->get('candidates/list-data')->object()->candidates ?? []);
+                    $fellows    = collect($this->api->get('fellows/list-data')->object()->fellows ?? []);
+                    $hospitals  = $this->api->get('admin/hospitals')->object();
+
+                    $data['traineeCount']            = $trainees->count();
+                    $data['CandidateCount']          = $candidates->where('exam_year', (string) date('Y'))->count();
+                    $data['FellowsCount']            = $fellows->count();
+                    $data['accreditedHospitalCount'] = $hospitals->total_active ?? 0;
+
+                    // Alumni chart: primary fellowship entry + one extra entry
+                    // per additional FCS specialty, same as the API endpoint.
+                    $alumniEntries = collect();
+                    foreach ($fellows->where('category_id', 5)->where('is_alumni', 1) as $p) {
+                        $alumniEntries->push(['year' => $p->fellowship_year, 'gender' => $p->gender]);
+                    }
+                    foreach ($fellows->where('category_id', 5)->where('is_alumni', 1) as $e) {
+                        if (! empty($e->second_fcs_specialty)) {
+                            $alumniEntries->push(['year' => $e->second_fcs_year, 'gender' => $e->gender]);
+                        }
+                        if (! empty($e->third_fcs_specialty)) {
+                            $alumniEntries->push(['year' => $e->third_fcs_year, 'gender' => $e->gender]);
+                        }
+                    }
+
+                    $byYear = $alumniEntries
+                        ->groupBy(fn ($e) => $e['year'] ?: 'Unknown')
+                        ->sortKeys()
+                        ->map(fn ($group) => [
+                            'total'  => $group->count(),
+                            'female' => $group->where('gender', 'Female')->count(),
+                        ]);
+
+                    $data['alumniYearLabels'] = $byYear->keys();
+                    $data['alumniYearTotals'] = $byYear->pluck('total');
+                    $data['alumniYearFemale'] = $byYear->pluck('female');
+                    $data['allAlumniCount']   = $alumniEntries->count();
+                    $data['femaleAlumniCount'] = $alumniEntries->where('gender', 'Female')->count();
+                }
 
                 // Unread messages / pending tasks — shown as a red count
                 // above the Admission Data / Calendar row.
@@ -58,42 +110,6 @@ public function dashboard()
                     ->where('assigned_to', $userId)
                     ->where('status', '!=', 'done')
                     ->count();
-
-                // Admission Data chart: Alumni (Fellow by Exam, category_id=5
-                // + is_alumni=1) by graduation year, split out by female
-                // graduates. "All Alumni" also counts each additional FCS
-                // specialty as its own entry in its own year — same logic
-                // used by the "All Alumni" filter on the Fellows list, so
-                // the totals here reconcile with that page. Built from the
-                // API fellows payload (same source as the Fellows list).
-                $primaryAlumni = $fellows->where('category_id', 5)->where('is_alumni', 1);
-
-                $alumniEntries = collect();
-                foreach ($primaryAlumni as $p) {
-                    $alumniEntries->push((object) ['year' => $p->fellowship_year, 'gender' => $p->gender]);
-                }
-                foreach ($primaryAlumni as $e) {
-                    if (!empty($e->second_fcs_specialty)) {
-                        $alumniEntries->push((object) ['year' => $e->second_fcs_year, 'gender' => $e->gender]);
-                    }
-                    if (!empty($e->third_fcs_specialty)) {
-                        $alumniEntries->push((object) ['year' => $e->third_fcs_year, 'gender' => $e->gender]);
-                    }
-                }
-
-                $byYear = $alumniEntries
-                    ->groupBy(fn ($e) => $e->year ?: 'Unknown')
-                    ->sortKeys()
-                    ->map(fn ($group) => [
-                        'total'  => $group->count(),
-                        'female' => $group->where('gender', 'Female')->count(),
-                    ]);
-
-                $data['alumniYearLabels'] = $byYear->keys();
-                $data['alumniYearTotals'] = $byYear->pluck('total');
-                $data['alumniYearFemale'] = $byYear->pluck('female');
-                $data['allAlumniCount']   = $alumniEntries->count();
-                $data['femaleAlumniCount'] = $alumniEntries->where('gender', 'Female')->count();
 
                 return view('admin.dashboard', $data);
                 
