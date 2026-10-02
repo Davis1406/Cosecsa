@@ -85,4 +85,57 @@ class LearningView
     {
         return array_map(fn ($b) => (object) $b, $blocks);
     }
+
+    /**
+     * Groups a module's blocks for the player: back-to-back videos become one
+     * two-column grid of square tiles. A video "unit" is the video plus the
+     * paragraph right after it (its explanation) and the subheading right before
+     * it (its "Watch this…" lead-in). Returns segments:
+     *   ['block' => $block] or ['heading' => ?$block, 'units' => [['lead', 'video', 'after']]]
+     * Lead-ins stay on their tiles only when every tile in the grid has one;
+     * otherwise the first one (e.g. "Please watch the following animations:")
+     * is shown above the grid.
+     */
+    public static function segments(array $blocks): array
+    {
+        $segments = [];
+        $count = count($blocks);
+
+        for ($i = 0; $i < $count; $i++) {
+            $block = $blocks[$i];
+            if ($block->type !== 'multimedia') {
+                $segments[] = ['block' => $block];
+                continue;
+            }
+
+            $unit = ['lead' => null, 'video' => $block, 'after' => null];
+            $next = $blocks[$i + 1] ?? null;
+            if ($next && $next->type === 'text' && $next->variant === 'paragraph') {
+                $unit['after'] = $next;
+                $i++;
+            }
+
+            $last = end($segments);
+            if ($last && isset($last['block']) && $last['block']->type === 'text' && $last['block']->variant === 'subheading') {
+                $unit['lead'] = array_pop($segments)['block'];
+                $last = end($segments);
+            }
+
+            if ($last && isset($last['units'])) {
+                $segments[array_key_last($segments)]['units'][] = $unit;
+            } else {
+                $segments[] = ['heading' => null, 'units' => [$unit]];
+            }
+        }
+
+        foreach ($segments as &$segment) {
+            if (isset($segment['units']) && (count($segment['units']) === 1
+                    || collect($segment['units'])->contains(fn ($u) => ! $u['lead']))) {
+                $segment['heading'] = $segment['units'][0]['lead'];
+                $segment['units'][0]['lead'] = null;
+            }
+        }
+
+        return $segments;
+    }
 }

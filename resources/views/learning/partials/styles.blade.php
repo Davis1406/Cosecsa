@@ -186,6 +186,18 @@
     .vp-text span { font-size: 12.5px; color: #94a3b8; }
     .video-caption { font-size: 12.5px; color: #64748b; text-align: center; margin-top: 8px; }
 
+    /* back-to-back videos: square tiles, two per row (blocks/video-grid) */
+    .video-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-bottom: 26px; align-items: start; }
+    .video-card { border: 1px solid #e6e9ef; border-radius: 14px; padding: 14px; background: #fff; }
+    .pm-content .video-card .block { margin-bottom: 12px; }
+    .pm-content .video-card .block-reveal:last-child .block { margin-bottom: 0; }
+    /* Square frame; contain keeps the whole 16:9 animation visible inside it. */
+    .video-card .video-frame { aspect-ratio: 1 / 1; display: flex; align-items: center; background: #0f172a; }
+    .video-card .block-video video { height: 100%; object-fit: contain; }
+    .video-card .video-placeholder { aspect-ratio: 1 / 1; }
+    .video-card .block-paragraph { font-size: 14px; line-height: 1.6; }
+    @media (max-width: 640px) { .video-grid { grid-template-columns: minmax(0, 1fr); } }
+
     .block-divider hr { border: 0; border-top: 1px solid #e6e9ef; margin: 10px 0; }
 
     /* flashcards */

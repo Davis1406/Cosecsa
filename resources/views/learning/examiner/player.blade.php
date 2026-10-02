@@ -79,8 +79,12 @@
                     </div>
 
                     <div class="pm-content card card-pad">
-                        @foreach($blocks as $block)
-                            @include('learning.blocks._dispatch', ['block' => $block])
+                        @foreach(\App\Support\LearningView::segments($blocks) as $segment)
+                            @isset($segment['units'])
+                                @include('learning.blocks.video-grid', $segment)
+                            @else
+                                @include('learning.blocks._dispatch', ['block' => $segment['block']])
+                            @endisset
                         @endforeach
 
                         @if($module['type'] === 'quiz')
