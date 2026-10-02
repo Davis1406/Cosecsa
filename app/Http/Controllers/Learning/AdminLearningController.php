@@ -148,6 +148,7 @@ class AdminLearningController extends Controller
         $response = $this->api->post("learning/admin/blocks/{$id}/list-items", [
             'action' => $request->input('action'),
             'index' => $request->filled('index') ? $request->integer('index') : null,
+            'fields' => $request->input('fields', []),
         ]);
 
         return response()->json($response->json(), $response->status());

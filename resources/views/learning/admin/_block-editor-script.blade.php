@@ -360,7 +360,7 @@
             if (next) LmsBlockEditor(next);
         };
         const postList = async (action, index) => {
-            const fd = new FormData();
+            const fd = collect(); // include current (possibly unsaved) content so add/remove doesn't drop it
             fd.append('action', action);
             if (index !== null && index !== undefined) fd.append('index', index);
             const res = await fetch(form.dataset.listUrl, { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf }, body: fd });
