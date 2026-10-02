@@ -167,7 +167,7 @@ public function dashboard()
         $empty = [
             'trainees' => [], 'candidates' => [], 'examiners' => [], 'fellows' => [],
             'programme_directors' => [], 'trainers' => [], 'members' => [], 'country_reps' => [],
-            'hospitals' => [], 'countries' => [],
+            'hospitals' => [], 'countries' => [], 'fees' => [], 'exam_results' => [], 'salesforce' => [],
         ];
 
         $q = trim($request->input('q', ''));
@@ -176,6 +176,23 @@ public function dashboard()
         }
 
         $like = '%' . $q . '%';
+
+        // Fees, exam results and Salesforce applications live in the cosecsa-api
+        // database — query them through the internal API and merge the sections
+        // in. Kept additive so a slow/unreachable API only drops those sections.
+        $fees = $examResults = $salesforce = [];
+        $apiExtra = $this->api->get('global-search', ['q' => $q]);
+        if ($apiExtra->successful()) {
+            $extra = $apiExtra->json();
+            $toRows = fn (array $rows) => collect($rows)->map(fn ($r) => [
+                'name' => $r['name'],
+                'sub'  => $r['sub'] ?? null,
+                'url'  => url($r['url']),
+            ])->all();
+            $fees        = $toRows($extra['fees'] ?? []);
+            $examResults = $toRows($extra['exam_results'] ?? []);
+            $salesforce  = $toRows($extra['salesforce'] ?? []);
+        }
 
         // Trainees
         //
@@ -409,10 +426,13 @@ public function dashboard()
                 'url'  => url('admin/countries/view/' . $r->id),
             ]);
 
-        return response()->json(compact(
-            'trainees', 'candidates', 'examiners', 'fellows', 'programme_directors', 'trainers', 'members', 'country_reps',
-            'hospitals', 'countries'
-        ));
+        return response()->json(array_merge([
+            'trainees' => $trainees, 'candidates' => $candidates, 'examiners' => $examiners, 'fellows' => $fellows,
+            'programme_directors' => $programme_directors, 'trainers' => $trainers, 'members' => $members, 'country_reps' => $country_reps,
+            'hospitals' => $hospitals, 'countries' => $countries,
+        ], [
+            'fees' => $fees, 'exam_results' => $examResults, 'salesforce' => $salesforce,
+        ]));
     }
 
     // Updated examiner form method

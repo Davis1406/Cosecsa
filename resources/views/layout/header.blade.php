@@ -354,6 +354,9 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
             { key: 'country_reps', label: 'Country Reps', icon: 'fas fa-flag' },
             { key: 'hospitals',    label: 'Hospitals',    icon: 'fas fa-hospital' },
             { key: 'countries',    label: 'Countries',    icon: 'fas fa-globe-africa' },
+            { key: 'fees',         label: 'Fees',         icon: 'fas fa-money-bill-wave' },
+            { key: 'exam_results', label: 'Exam Results', icon: 'fas fa-clipboard-check' },
+            { key: 'salesforce',   label: 'Salesforce Applications', icon: 'fas fa-cloud-upload-alt' },
         ];
         var total = 0;
         sections.forEach(function (s) {
