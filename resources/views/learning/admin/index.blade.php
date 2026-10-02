@@ -11,7 +11,7 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <div class="card card-pad mb-3 mb-md-0">
-                        <div class="muted" style="font-size:12px; font-weight:700; text-transform:uppercase;">Examiners</div>
+                        <div class="muted" style="font-size:12px; font-weight:700; text-transform:uppercase;">Confirmed examiners</div>
                         <div style="font-size:30px; font-weight:800;">{{ count($learners) }}</div>
                     </div>
                 </div>

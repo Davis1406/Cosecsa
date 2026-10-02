@@ -94,6 +94,15 @@ class AdminLearningController extends Controller
             $response->successful() ? 'Block saved.' : 'The block could not be saved. Please try again.');
     }
 
+    // POST admin/exams/learning/blocks/{id}/move  {direction: up|down}
+    public function moveBlock(Request $request, int $id)
+    {
+        $response = $this->api->post("learning/admin/blocks/{$id}/move", ['direction' => $request->input('direction')]);
+
+        return back()->with($response->successful() ? 'success' : 'error',
+            $response->successful() ? 'Block moved.' : 'The block could not be moved. Please try again.');
+    }
+
     // POST admin/exams/learning/blocks/{id}/image (AJAX)
     public function uploadBlockImage(Request $request, int $id)
     {
