@@ -419,6 +419,7 @@ Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(
     Route::post('blocks/{id}/image', 'uploadBlockImage')->whereNumber('id')->name('.block.image');
     Route::post('blocks/{id}/list-items', 'listItems')->whereNumber('id')->name('.block.list-items');
     Route::post('blocks/{id}/duplicate', 'duplicateBlock')->whereNumber('id')->name('.block.duplicate');
+    Route::post('blocks/{id}/delete', 'deleteBlock')->whereNumber('id')->name('.block.delete');
     Route::post('blocks/{id}/move', 'moveBlock')->whereNumber('id')->name('.block.move');
     Route::post('blocks/{id}', 'updateBlock')->whereNumber('id')->name('.block.update');
     Route::get('preview', 'previewCover')->name('.preview');

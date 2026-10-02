@@ -66,6 +66,14 @@
                                         Duplicate
                                     </button>
                                 </form>
+                                <form method="POST" action="{{ route('admin.exams.learning.block.delete', $block['id']) }}" style="display:inline;"
+                                      onsubmit="return confirm('Delete this block? This cannot be undone.')">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete this block">
+                                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:3px;"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg>
+                                        Delete
+                                    </button>
+                                </form>
                                 <button type="button" class="btn btn-light btn-sm lms-block-edit">Edit</button>
                             @endunless
                         </div>
