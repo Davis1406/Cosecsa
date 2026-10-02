@@ -421,6 +421,7 @@ Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(
     Route::get('preview/{slug}/quiz', 'previewQuiz')->name('.preview.quiz');
     Route::get('videos', 'videos')->name('.videos');
     Route::post('videos', 'uploadVideo')->name('.videos.upload');
+    Route::post('videos/new', 'addVideo')->name('.videos.add');
     Route::post('logo', 'uploadLogo')->name('.logo');
     Route::post('logo/remove', 'removeLogo')->name('.logo.remove');
 });

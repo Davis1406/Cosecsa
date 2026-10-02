@@ -181,6 +181,25 @@ class AdminLearningController extends Controller
             $response->successful() ? 'Video uploaded and linked to the module.' : 'The video could not be uploaded.');
     }
 
+    // POST admin/exams/learning/videos/new — an extra video in a module (end, or after a block)
+    public function addVideo(Request $request)
+    {
+        $request->validate([
+            'module_id' => ['required', 'integer'],
+            'after_block_id' => ['nullable', 'integer'],
+            'video' => ['required', 'file', 'mimes:mp4,mov,webm,m4v', 'max:409600'],
+            'video_label' => ['nullable', 'string', 'max:255'],
+            'caption' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $response = $this->api->postStream('learning/admin/videos/new',
+            $request->only('module_id', 'after_block_id', 'video_label', 'caption'),
+            'video', $request->file('video'));
+
+        return back()->with($response->successful() ? 'success' : 'error',
+            $response->successful() ? $response->json('message') : ($response->json('message') ?: 'The video could not be added.'));
+    }
+
     // POST admin/exams/learning/logo
     public function uploadLogo(Request $request)
     {
