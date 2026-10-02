@@ -13,6 +13,9 @@
                         <span class="fas fa-arrow-left"></span> Programme Directors List
                     </a>
                 </div>
+                <div class="col-sm-6 text-right">
+                    @include('admin._impersonate_button', ['userId' => $pd->user_id ?? null])
+                </div>
             </div>
         </div><!-- /.container-fluid -->
     </section>

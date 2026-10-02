@@ -192,31 +192,36 @@
     .lms-block-insert-end { margin-top: 6px; }
 
     /* ── Add-block picker ───────────────────────────────────────────────── */
-    .block-type-group { margin-bottom: 18px; }
+    .block-type-group { margin-bottom: 22px; }
     .block-type-group:last-child { margin-bottom: 0; }
     .block-type-group-label {
-        font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase;
-        letter-spacing: .8px; margin-bottom: 10px;
+        font-family: 'Source Sans Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-size: 14px; font-weight: 700; color: #334155;
+        margin-bottom: 12px;
     }
-    .block-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    @media (max-width: 640px) { .block-type-grid { grid-template-columns: 1fr 1fr; } }
+    .block-type-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    @media (max-width: 640px) { .block-type-grid { grid-template-columns: 1fr; } }
     .block-type-tile {
-        display: flex; align-items: center; gap: 12px; padding: 12px 14px;
-        border: 1.5px solid #e6e9ef; border-radius: 12px; background: #fff; cursor: pointer;
-        text-align: left; font: inherit;
+        display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+        border: 1.5px solid #e2e8f0; border-radius: 10px; background: #fff; cursor: pointer;
+        text-align: left;
+        font-family: 'Source Sans Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease, background .18s ease;
     }
     .block-type-tile:hover {
-        border-color: var(--brand); transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(16,24,40,.10); background: rgba(153,6,10,.03);
+        border-color: var(--brand); transform: translateY(-1px);
+        box-shadow: 0 5px 14px rgba(16,24,40,.10); background: rgba(153,6,10,.03);
     }
     .block-type-icon {
-        flex: 0 0 38px; width: 38px; height: 38px; border-radius: 10px;
+        flex: 0 0 44px; width: 44px; height: 44px; border-radius: 10px;
         display: flex; align-items: center; justify-content: center;
-        background: rgba(153,6,10,.08); color: var(--brand);
-        font-size: 18px; font-weight: 700;
+        background: #f4f6f9; color: #a02626;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 22px; font-weight: 700;
     }
-    .block-type-label { font-size: 13.5px; font-weight: 600; color: #1e293b; }
+    .block-type-label {
+        font-size: 16px; font-weight: 600; color: #212529; line-height: 1.3;
+    }
 
     @media (max-width: 900px) { .lms-block-bar { flex-wrap: wrap; } }
 </style>
