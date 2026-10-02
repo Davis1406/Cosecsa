@@ -257,25 +257,22 @@
         display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
     }
 
-    .pm-prevnext { display: flex; justify-content: space-between; gap: 16px; margin-top: 28px; max-width: 820px; }
-    .pn-form { flex: 1; max-width: 46%; display: flex; }
+    .pm-prevnext { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 20px; max-width: 820px; }
+    .pn-form { display: flex; }
     .pn-card {
-        flex: 1; max-width: 46%; display: flex; flex-direction: column; gap: 3px;
-        padding: 16px 20px; border-radius: 14px;
-        border: 1px solid #e6e9ef; background: #fff;
+        display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+        padding: 7px 14px; border-radius: 999px; overflow: hidden;
+        border: 1px solid #e2e8f0; background: #fff;
         font: inherit; text-align: left; cursor: pointer;
-        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, opacity .2s ease;
+        transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, opacity .2s ease;
     }
-    .pn-form .pn-card { max-width: none; }
-    .pn-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(16,24,40,.08); border-color: var(--brand); }
-    .pn-prev { align-items: flex-start; }
-    .pn-next { align-items: flex-end; text-align: right; }
+    .pn-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,24,40,.08); border-color: var(--brand); }
     .pn-primary { background: var(--brand); border-color: var(--brand); }
-    .pn-primary:hover { background: var(--brand); box-shadow: 0 10px 26px rgba(153,6,10,.28); }
+    .pn-primary:hover { background: var(--brand); box-shadow: 0 6px 16px rgba(153,6,10,.28); }
     .pn-primary.is-loading { opacity: .75; pointer-events: none; }
-    .pn-dir { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: #94a3b8; }
-    .pn-primary .pn-dir { color: rgba(255,255,255,.75); }
-    .pn-title { font-size: 14px; font-weight: 700; color: #1e293b; }
+    .pn-dir { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #94a3b8; white-space: nowrap; }
+    .pn-primary .pn-dir { color: rgba(255,255,255,.8); }
+    .pn-title { font-size: 13px; font-weight: 600; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pn-primary .pn-title { color: #fff; }
 
     /* Leaving the page after "Next" — content eases out while the request runs */
@@ -301,8 +298,9 @@
         .player-main { padding: 8px 0 60px; }
         .pm-title { font-size: 23px; }
         .pm-content { padding: 24px 18px; }
-        .pm-prevnext { flex-direction: column-reverse; }
-        .pn-card, .pn-form { max-width: none; }
+        .pm-prevnext { flex-direction: column-reverse; align-items: stretch; }
+        .pn-card, .pn-form { max-width: none; width: 100%; }
+        .pn-card { justify-content: center; }
         .block-image-aside { flex-direction: column; }
     }
 
