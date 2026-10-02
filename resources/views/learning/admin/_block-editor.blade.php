@@ -133,7 +133,7 @@
             <div class="editor-fields">
                 @foreach($fields as $field)
                     @php
-                        $isListItem = $block->type === 'list' && preg_match('/^items\.(\d+)$/', $field['path'], $listMatch);
+                        $isListItem = $block->type === 'list' && preg_match('/^items\.(\d+)(\.|$)/', $field['path'], $listMatch);
                         $listIndex = $isListItem ? (int) $listMatch[1] : null;
                     @endphp
                     <div class="editor-field {{ $isListItem ? 'list-item-field' : '' }}" data-path="{{ $field['path'] }}" @if($isListItem) data-list-index="{{ $listIndex }}" @endif>
