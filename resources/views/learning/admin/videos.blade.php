@@ -32,7 +32,7 @@
                         </div>
                         <div class="va-frame mt-2">
                             @if($block['video_url'])
-                                <video controls preload="metadata" src="{{ $block['video_url'] }}"></video>
+                                <video controls preload="none" data-src="{{ $block['video_url'] }}"></video>
                             @else
                                 <span class="muted">No video yet</span>
                             @endif
@@ -66,4 +66,22 @@
     .lms .va-form { display: flex; flex-direction: column; gap: 8px; }
     @media (max-width: 640px) { .lms .video-admin-list { grid-template-columns: minmax(0, 1fr); } }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+    // Load the videos one at a time. Twelve <video preload> tags at once fill the
+    // browser's per-host connection limit and none of them finish loading.
+    (async function () {
+        for (const video of document.querySelectorAll('.va-frame video[data-src]')) {
+            video.preload = 'metadata';
+            video.src = video.dataset.src;
+            await new Promise(function (done) {
+                video.addEventListener('loadeddata', done, { once: true });
+                video.addEventListener('error', done, { once: true });
+                setTimeout(done, 8000);
+            });
+        }
+    })();
+</script>
 @endpush
