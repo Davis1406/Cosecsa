@@ -8,7 +8,10 @@
             @include('learning.partials.flash')
             @include('learning.admin._tabs')
 
-            <div class="mb-3"><a href="{{ route('admin.exams.learning.course') }}" class="btn btn-light btn-sm">← All modules</a></div>
+            <div class="mb-3">
+                <a href="{{ route('admin.exams.learning.course') }}" class="btn btn-light btn-sm">← All modules</a>
+                <a href="{{ route('admin.exams.learning.preview.module', $module['slug']) }}" class="btn btn-light btn-sm">Preview as examiner</a>
+            </div>
 
             @if($module['type'] === 'quiz')
                 <div class="alert alert-info">Quiz questions are part of the course import and are not editable here.</div>

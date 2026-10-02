@@ -3,11 +3,14 @@
 @section('content')
 @php
     $position = collect($modules)->search(fn ($m) => $m['id'] === $module['id']) + 1;
+    $preview = $preview ?? false;
+    $lr = $preview ? 'admin.exams.learning.preview' : 'examiner.learning';
 @endphp
 <div class="content-wrapper">
     <section class="content pt-3">
         <div class="container-fluid lms" style="--brand: {{ $course['color'] }}">
             @include('learning.partials.flash')
+            @includeWhen($preview, 'learning.partials.preview-bar')
             <div class="reading-progress" aria-hidden="true"><span id="reading-progress-fill"></span></div>
 
             <div class="player-shell">
@@ -15,7 +18,7 @@
                 <aside class="player-sidebar" id="player-sidebar" aria-label="Course modules">
                     <div class="ps-head">
                         <div class="ps-head-row">
-                            <a href="{{ route('examiner.learning') }}" class="ps-home">
+                            <a href="{{ route($lr) }}" class="ps-home">
                                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                                 Course home
                             </a>
@@ -36,7 +39,7 @@
                     <nav class="ps-nav">
                         <div class="ps-nav-label">Modules</div>
                         @foreach($modules as $i => $m)
-                            <a href="{{ route('examiner.learning.module', $m['slug']) }}"
+                            <a href="{{ route($lr.'.module', $m['slug']) }}"
                                class="ps-item {{ $m['id'] === $module['id'] ? 'active' : '' }}" style="--i: {{ $i }}"
                                @if($m['id'] === $module['id']) aria-current="page" @endif>
                                 <span class="ps-num {{ $m['completed'] ? 'done' : '' }}">
@@ -82,13 +85,15 @@
 
                         @if($module['type'] === 'quiz')
                             <div class="pm-complete">
-                                @if($completed)
-                                    <a href="{{ route('examiner.learning.result', $module['slug']) }}" class="btn btn-primary">View quiz result</a>
+                                @if($preview)
+                                    <a href="{{ route($lr.'.quiz', $module['slug']) }}" class="btn btn-primary">Preview quiz</a>
+                                @elseif($completed)
+                                    <a href="{{ route($lr.'.result', $module['slug']) }}" class="btn btn-primary">View quiz result</a>
                                 @elseif($quiz_score !== null)
-                                    <a href="{{ route('examiner.learning.quiz', $module['slug']) }}" class="btn btn-primary">Retake quiz</a>
-                                    <a href="{{ route('examiner.learning.result', $module['slug']) }}" class="btn btn-light">Last attempt: {{ round($quiz_score) }}%</a>
+                                    <a href="{{ route($lr.'.quiz', $module['slug']) }}" class="btn btn-primary">Retake quiz</a>
+                                    <a href="{{ route($lr.'.result', $module['slug']) }}" class="btn btn-light">Last attempt: {{ round($quiz_score) }}%</a>
                                 @else
-                                    <a href="{{ route('examiner.learning.quiz', $module['slug']) }}" class="btn btn-primary">Start quiz</a>
+                                    <a href="{{ route($lr.'.quiz', $module['slug']) }}" class="btn btn-primary">Start quiz</a>
                                 @endif
                             </div>
                         @endif
@@ -97,7 +102,7 @@
                     {{-- Prev / next. "Next" completes this module and moves on. --}}
                     <div class="pm-prevnext">
                         @if($prev)
-                            <a href="{{ route('examiner.learning.module', $prev['slug']) }}" class="pn-card pn-prev">
+                            <a href="{{ route($lr.'.module', $prev['slug']) }}" class="pn-card pn-prev">
                                 <span class="pn-dir">← Previous</span>
                                 <span class="pn-title">{{ $prev['title'] }}</span>
                             </a>
@@ -105,13 +110,19 @@
                             <span></span>
                         @endif
 
-                        @if($module['type'] === 'quiz' && ! $completed)
-                            <a href="{{ route('examiner.learning.quiz', $module['slug']) }}" class="pn-card pn-next pn-primary">
+                        @if($preview)
+                            {{-- Preview never records progress: plain links instead of the advance form. --}}
+                            <a href="{{ $next ? route($lr.'.module', $next['slug']) : route($lr) }}" class="pn-card pn-next pn-primary">
+                                <span class="pn-dir">{{ $next ? 'Next module' : 'End of course' }}</span>
+                                <span class="pn-title">{{ $next ? $next['title'] : 'Back to course home' }} →</span>
+                            </a>
+                        @elseif($module['type'] === 'quiz' && ! $completed)
+                            <a href="{{ route($lr.'.quiz', $module['slug']) }}" class="pn-card pn-next pn-primary">
                                 <span class="pn-dir">Continue</span>
                                 <span class="pn-title">{{ $quiz_score !== null ? 'Retake quiz' : 'Start quiz' }} →</span>
                             </a>
                         @else
-                            <form method="POST" action="{{ route('examiner.learning.advance', $module['slug']) }}" class="pn-form" data-advance>
+                            <form method="POST" action="{{ route($lr.'.advance', $module['slug']) }}" class="pn-form" data-advance>
                                 @csrf
                                 <button type="submit" class="pn-card pn-next pn-primary">
                                     <span class="pn-dir">{{ $next ? 'Next module' : 'All done' }}</span>

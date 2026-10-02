@@ -54,6 +54,7 @@
                             @else
                                 <span class="badge-gray">{{ ucfirst($module['type']) }}</span>
                             @endif
+                            <a href="{{ route('admin.exams.learning.preview.module', $module['slug']) }}" class="btn btn-light btn-sm">Preview</a>
                             @if($module['type'] === 'quiz')
                                 <a href="{{ route('admin.exams.learning.module', $module['id']) }}" class="btn btn-light btn-sm">View</a>
                             @else

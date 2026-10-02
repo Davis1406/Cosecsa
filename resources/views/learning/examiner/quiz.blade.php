@@ -1,12 +1,17 @@
 @extends('layout.app')
 
 @section('content')
+@php
+    $preview = $preview ?? false;
+    $lr = $preview ? 'admin.exams.learning.preview' : 'examiner.learning';
+@endphp
 <div class="content-wrapper">
     <section class="content pt-3">
         <div class="container-fluid lms" style="--brand: {{ $course['color'] }}">
             @include('learning.partials.flash')
+            @includeWhen($preview, 'learning.partials.preview-bar')
             <div class="quiz-wrap">
-                <a href="{{ route('examiner.learning.module', $module['slug']) }}" class="back-link">← Back to the course</a>
+                <a href="{{ route($lr.'.module', $module['slug']) }}" class="back-link">← Back to the course</a>
                 <div class="card card-pad">
                     <div class="quiz-head">
                         <div class="flex-between mb-2">
@@ -25,7 +30,8 @@
                         <div class="progress-track mt-2"><div class="progress-fill" id="quiz-progress" style="width:0%"></div></div>
                     </div>
 
-                    <form method="POST" action="{{ route('examiner.learning.submit', $module['slug']) }}" id="quiz-form">
+                    {{-- Preview has no submit route: answers are never sent or scored. --}}
+                    <form method="POST" action="{{ $preview ? '#' : route($lr.'.submit', $module['slug']) }}" id="quiz-form" @if($preview) onsubmit="return false" @endif>
                         @csrf
                         <div class="quiz-questions">
                             @foreach($questions as $q)
@@ -45,7 +51,11 @@
                         </div>
                         <div class="quiz-footer">
                             <span class="muted" id="quiz-answered">0 / {{ count($questions) }} answered</span>
-                            <button type="submit" class="btn btn-primary btn-lg" id="quiz-submit">Submit quiz</button>
+                            @if($preview)
+                                <button type="button" class="btn btn-primary btn-lg" disabled title="Submitting is turned off in preview">Submit quiz</button>
+                            @else
+                                <button type="submit" class="btn btn-primary btn-lg" id="quiz-submit">Submit quiz</button>
+                            @endif
                         </div>
                     </form>
                 </div>

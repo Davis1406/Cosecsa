@@ -7,6 +7,7 @@ use App\Services\ApiClient;
 use App\Support\LearningView;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Examiner Training administration — admin/exams/learning (Examinations menu).
@@ -105,6 +106,49 @@ class AdminLearningController extends Controller
             ['path' => $request->input('path')], ['image' => $request->file('image')]);
 
         return response()->json($response->json(), $response->status());
+    }
+
+    // GET admin/exams/learning/preview — the course as examiners see it. Uses the
+    // learner endpoints (GET only), so viewing never records progress.
+    public function previewCover()
+    {
+        $response = $this->api->get('learning/course', ['user_id' => Auth::id()]);
+        if ($fail = $this->failed($response)) {
+            return $fail;
+        }
+
+        return view('learning.examiner.cover', $response->json() + ['preview' => true]);
+    }
+
+    // GET admin/exams/learning/preview/{slug}
+    public function previewModule(string $slug)
+    {
+        $response = $this->api->get("learning/modules/{$slug}", ['user_id' => Auth::id()]);
+        if ($fail = $this->failed($response, 'admin/exams/learning/preview')) {
+            return $fail;
+        }
+
+        $data = $response->json();
+        $data['blocks'] = LearningView::blocks($data['blocks']);
+
+        return view('learning.examiner.player', $data + ['preview' => true]);
+    }
+
+    // GET admin/exams/learning/preview/{slug}/quiz — questions only; submitting is disabled
+    public function previewQuiz(string $slug)
+    {
+        $response = $this->api->get("learning/quiz/{$slug}", ['user_id' => Auth::id()]);
+        if ($fail = $this->failed($response, 'admin/exams/learning/preview')) {
+            return $fail;
+        }
+
+        // The API hides the questions from anyone who has already passed.
+        if ($response->json('passed')) {
+            return redirect()->route('admin.exams.learning.preview.module', $slug)
+                ->with('error', 'You have passed this quiz on your own account, so its questions are hidden.');
+        }
+
+        return view('learning.examiner.quiz', $response->json() + ['preview' => true]);
     }
 
     // GET admin/exams/learning/videos

@@ -416,6 +416,9 @@ Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(
     Route::post('blocks/{id}/preview', 'previewBlock')->whereNumber('id')->name('.block.preview');
     Route::post('blocks/{id}/image', 'uploadBlockImage')->whereNumber('id')->name('.block.image');
     Route::post('blocks/{id}', 'updateBlock')->whereNumber('id')->name('.block.update');
+    Route::get('preview', 'previewCover')->name('.preview');
+    Route::get('preview/{slug}', 'previewModule')->name('.preview.module');
+    Route::get('preview/{slug}/quiz', 'previewQuiz')->name('.preview.quiz');
     Route::get('videos', 'videos')->name('.videos');
     Route::post('videos', 'uploadVideo')->name('.videos.upload');
     Route::post('logo', 'uploadLogo')->name('.logo');

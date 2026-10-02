@@ -1,10 +1,15 @@
 @extends('layout.app')
 
 @section('content')
+@php
+    $preview = $preview ?? false;
+    $lr = $preview ? 'admin.exams.learning.preview' : 'examiner.learning';
+@endphp
 <div class="content-wrapper">
     <section class="content pt-3">
         <div class="container-fluid lms" style="--brand: {{ $course['color'] }}">
             @include('learning.partials.flash')
+            @includeWhen($preview, 'learning.partials.preview-bar')
 
             <div class="course-hero">
                 <div class="hero-inner">
@@ -33,10 +38,10 @@
 
                         @if($completed)
                             <div class="alert alert-success">🎉 Congratulations — you have completed this course!</div>
-                            <a href="{{ route('examiner.learning.module', end($modules)['slug']) }}" class="btn btn-primary btn-lg">Review completion page</a>
+                            <a href="{{ route($lr.'.module', end($modules)['slug']) }}" class="btn btn-primary btn-lg">Review completion page</a>
                         @elseif($next_slug)
                             <div class="hero-actions">
-                                <a href="{{ route('examiner.learning.module', $next_slug) }}" class="btn btn-primary btn-lg">
+                                <a href="{{ route($lr.'.module', $next_slug) }}" class="btn btn-primary btn-lg">
                                     {{ $progress_percent > 0 ? 'Resume course' : 'Start course' }}
                                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                                 </a>
@@ -51,6 +56,7 @@
                 </div>
             </div>
 
+            @unless($preview)
             <div class="card card-pad mb-3 mt-4">
                 <div class="flex-between mb-2">
                     <div>
@@ -61,10 +67,11 @@
                 </div>
                 <div class="progress-track"><div class="progress-fill" style="width: {{ $progress_percent }}%;"></div></div>
             </div>
+            @endunless
 
-            <div class="module-list mb-4">
+            <div class="module-list mb-4 {{ $preview ? 'mt-4' : '' }}">
                 @foreach($modules as $idx => $module)
-                    <a href="{{ route('examiner.learning.module', $module['slug']) }}" class="module-row card">
+                    <a href="{{ route($lr.'.module', $module['slug']) }}" class="module-row card">
                         <div class="module-num {{ $module['completed'] ? 'done' : '' }}">
                             @if($module['completed']) ✓ @else {{ str_pad($idx + 1, 2, '0', STR_PAD_LEFT) }} @endif
                         </div>
