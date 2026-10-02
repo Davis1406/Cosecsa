@@ -107,6 +107,12 @@ class FellowsController extends Controller
         }
 
         if ($response->failed()) {
+            \Illuminate\Support\Facades\Log::warning('Fellow add rejected by API', [
+                'status' => $response->status(),
+                'message' => $response->json('message'),
+                'errors' => $response->json('errors'),
+            ]);
+
             return redirect()->back()->withInput()
                 ->with('error', $response->json('message') ?? 'Failed to add fellow.');
         }
