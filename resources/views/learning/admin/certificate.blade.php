@@ -27,7 +27,7 @@
                 <div class="col-xl-4 mb-3">
                     <div class="card card-pad">
                         <p class="muted mb-3" style="font-size:13px;">
-                            Examiners receive this certificate when they finish the course. Edit the wording — the preview updates as you type.
+                            Examiners receive this certificate when they finish the course. Edit the wording — the preview updates as you type — then press <strong>Save certificate</strong>.
                             Leave a line blank to hide it. In any line you can use
                             <code>{name}</code> (the examiner), <code>{course}</code> and <code>{date}</code> (completion date).
                             The preview uses <strong>{{ $sampleName }}</strong> and today's date.
@@ -53,11 +53,12 @@
                                         <span id="sigScaleLabel" style="font-size:12px; min-width:40px;"></span>
                                         <button type="button" class="btn btn-light btn-sm" id="sigPosReset">Reset</button>
                                     </div>
-                                    <small class="text-muted">Drag the signature on the preview to place it (for example across the line), then press <strong>Save wording</strong>.</small>
+                                    <small class="text-muted">Drag the signature on the preview to place it (for example across the line), then press <strong>Save certificate</strong>.</small>
+                                    <div class="mt-2"><button type="submit" form="certForm" class="btn btn-primary btn-sm">Save certificate</button></div>
                                 </div>
                             @endif
                             <div class="d-flex flex-wrap" style="gap:10px;">
-                                <button type="submit" class="btn btn-primary">Save wording</button>
+                                <button type="submit" class="btn btn-primary">Save certificate</button>
                                 <button type="button" class="btn btn-light" id="certReset">Reset to default wording</button>
                             </div>
                         </form>
@@ -86,14 +87,22 @@
                 </div>
                 <div class="col-xl-8 mb-3">
                     <div class="cert-preview-col">
-                        <h5 style="font-size:16px; font-weight:700; margin-bottom:10px;">Preview</h5>
-                        @include('learning.partials.certificate', ['cert' => $cert, 'name' => $sampleName, 'signature' => $signature, 'logo' => asset('dist/img/Cosecsa_Logo.png'), 'fitTop' => 112])
+                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2" style="gap:8px;">
+                            <h5 style="font-size:16px; font-weight:700; margin:0;">Preview</h5>
+                            <div class="d-flex" style="gap:8px;">
+                                <button type="button" class="btn btn-light btn-sm" onclick="lmsOpenCertificateModal('{{ route('admin.exams.learning.certificate.modal') }}').catch(function () { alert('The demo could not be loaded.'); })">▶ Demo as examiner</button>
+                                <button type="button" class="btn btn-light btn-sm" onclick="downloadCertificatePng(this, 'COSECSA-Examiner-Training-Certificate-preview.png')">Download PNG</button>
+                                <button type="submit" form="certForm" class="btn btn-primary btn-sm">Save certificate</button>
+                            </div>
+                        </div>
+                        @include('learning.partials.certificate', ['cert' => $cert, 'name' => $sampleName, 'signature' => $signature, 'logo' => asset('dist/img/Cosecsa_Logo.png'), 'fitTop' => 122])
                     </div>
                 </div>
             </div>
         </div>
     </section>
 </div>
+@include('learning.partials.certificate-modal-shell')
 @endsection
 
 @push('styles')

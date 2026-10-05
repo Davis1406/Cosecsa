@@ -116,19 +116,26 @@
 
                         @if($preview)
                             {{-- Preview never records progress: plain links instead of the advance form. --}}
-                            <a href="{{ $next ? route($lr.'.module', $next['slug']) : route($lr) }}" class="pn-card pn-next pn-primary">
-                                <span class="pn-title">{{ $next ? $next['title'] : 'Back to course home' }} →</span>
-                            </a>
+                            @if($next)
+                                <a href="{{ route($lr.'.module', $next['slug']) }}" class="pn-card pn-next pn-primary">
+                                    <span class="pn-title">{{ $next['title'] }} →</span>
+                                </a>
+                            @else
+                                {{-- Demo of the examiner's completion: opens the certificate modal, records nothing. --}}
+                                <button type="button" class="pn-card pn-next pn-primary" data-demo-certificate="{{ route('admin.exams.learning.certificate.modal') }}">
+                                    <span class="pn-title">🎓 Get your certificate (demo)</span>
+                                </button>
+                            @endif
                         @elseif($module['type'] === 'quiz' && ! $completed)
                             <a href="{{ route($lr.'.quiz', $module['slug']) }}" class="pn-card pn-next pn-primary">
                                 <span class="pn-dir">Continue</span>
                                 <span class="pn-title">{{ $quiz_score !== null ? 'Retake quiz' : 'Start quiz' }} →</span>
                             </a>
                         @else
-                            <form method="POST" action="{{ route($lr.'.advance', $module['slug']) }}" class="pn-form" data-advance>
+                            <form method="POST" action="{{ route($lr.'.advance', $module['slug']) }}" class="pn-form" @if($next) data-advance @else data-certificate @endif>
                                 @csrf
                                 <button type="submit" class="pn-card pn-next pn-primary">
-                                    <span class="pn-title">{{ $next ? $next['title'] : 'Finish course' }} →</span>
+                                    <span class="pn-title">{{ $next ? $next['title'].' →' : '🎓 Get your certificate' }}</span>
                                 </button>
                             </form>
                         @endif
@@ -137,6 +144,8 @@
             </div>
 
             @include('learning.partials.lightbox')
+
+            @include('learning.partials.certificate-modal-shell')
         </div>
     </section>
 </div>
@@ -144,6 +153,8 @@
 
 @push('styles')
 @include('learning.partials.styles')
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="{{ asset('dist/css/lms-certificate.css') }}" rel="stylesheet">
 <style>
     .reading-progress {
         position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 1000;
@@ -310,6 +321,7 @@
 @endpush
 
 @push('scripts')
+@include('learning.partials.certificate-script')
 @include('learning.partials.scripts')
 <script>
     // ── Reading progress bar ───────────────────────────────────────────────
@@ -356,6 +368,39 @@
             document.body.classList.add('is-leaving');
         });
     });
+    // ── Last module: "Get your certificate" completes the course, then opens the certificate in a modal ──
+    document.querySelectorAll('form[data-certificate]').forEach(form => {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = form.querySelector('.pn-card');
+            btn.classList.add('is-loading');
+
+            try {
+                const done = await fetch(form.action, {
+                    method: 'POST', body: new FormData(form), credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                if (!done.ok) throw new Error('advance failed');
+                const info = await done.json();
+                await window.lmsOpenCertificateModal(info.modal);
+                btn.classList.remove('is-loading');
+            } catch (err) {
+                // Fall back to a normal submit, which lands on the certificate page.
+                form.submit();
+            }
+        });
+    });
+
+    // ── Admin preview: demo of the completion modal (no progress is recorded) ──
+    document.querySelectorAll('[data-demo-certificate]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            btn.classList.add('is-loading');
+            try { await window.lmsOpenCertificateModal(btn.dataset.demoCertificate); }
+            catch (err) { alert('The certificate demo could not be loaded.'); }
+            btn.classList.remove('is-loading');
+        });
+    });
+
     // Undo the leaving state if the page is restored from the back/forward cache
     window.addEventListener('pageshow', (e) => {
         if (!e.persisted) return;

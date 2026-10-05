@@ -6,9 +6,9 @@
 @php
     $show = fn ($key) => trim((string) ($cert[$key] ?? '')) !== '' ? '' : 'display:none;';
 @endphp
-<div class="lmscert-fit" id="lmscertFit"@isset($fitTop) data-fit-top="{{ $fitTop }}"@endisset>
-    <div class="lmscert-stage" id="lmscertStage">
-        <div class="lmscert" id="lmscert">
+<div class="lmscert-fit"@unless($plain ?? false) id="lmscertFit"@endunless @isset($fitTop) data-fit-top="{{ $fitTop }}"@endisset>
+    <div class="lmscert-stage"@unless($plain ?? false) id="lmscertStage"@endunless>
+        <div class="lmscert"@unless($plain ?? false) id="lmscert"@endunless>
             <div class="lmscert-bar"></div>
             <div class="lmscert-inner">
                 <div>

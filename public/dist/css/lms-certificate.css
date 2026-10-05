@@ -91,11 +91,26 @@
 .lmscert-cpd-value { font-size: 30px; font-weight: 800; line-height: 1.1; }
 .lmscert-cpd-label { font-size: 8.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; line-height: 1.1; margin-top: 2px; }
 
+/* Completion modal */
+.lmscert-modal { position: relative; }
+.lmscert-close { position: absolute; top: -6px; right: 0; z-index: 3; font-size: 30px; }
+.lmscert-congrats { text-align: center; margin: 0 0 12px; animation: lmsPop .6s cubic-bezier(.2,1.4,.4,1) both; }
+.lmscert-congrats h4 { font-weight: 800; color: #500E19; margin: 0 0 2px; }
+.lmscert-congrats p { margin: 0; color: #64748b; font-size: 14px; }
+.lmscert-congrats-icon { font-size: 40px; line-height: 1; animation: lmsBounce 1.2s ease .3s 2; }
+.lmscert-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 14px; }
+@keyframes lmsPop { from { opacity: 0; transform: scale(.85) translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes lmsBounce { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px) rotate(-8deg); } 60% { transform: translateY(0) rotate(6deg); } }
+@media (prefers-reduced-motion: reduce) { .lmscert-congrats, .lmscert-congrats-icon { animation: none; } }
+
+/* Printing: a clean copy of the certificate (#lmscertPrint, added by certificate-script on
+   beforeprint) is the only thing on the page, so it prints the same from a modal or a full page. */
+#lmscertPrint { display: none; }
 @media print {
     @page { size: 1440px 810px; margin: 0; }
-    body * { visibility: hidden; }
-    .lmscert-fit, .lmscert-fit * { visibility: visible; }
-    .lmscert-fit { position: absolute; left: 0; top: 0; width: 1440px !important; height: 810px !important; overflow: visible; }
-    .lmscert-stage { transform: none !important; }
-    .lmscert { box-shadow: none; }
+    html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; overflow: visible !important; height: auto !important; }
+    body > *:not(#lmscertPrint) { display: none !important; }
+    #lmscertPrint { display: block; width: 1440px; height: 810px; overflow: hidden; }
+    #lmscertPrint .lmscert { box-shadow: none; outline: 0; }
+    #lmscertPrint .is-draggable { outline: 0 !important; }
 }

@@ -251,6 +251,27 @@ class AdminLearningController extends Controller
         ]);
     }
 
+    // GET admin/exams/learning/certificate/modal — demo of what an examiner sees on finishing the course
+    // (the certificate modal as an HTML fragment, using the admin's own name; nothing is recorded)
+    public function certificateModal()
+    {
+        $response = $this->api->get('learning/certificate', ['user_id' => Auth::id(), 'preview' => 1]);
+        abort_unless($response->successful(), 502);
+
+        $data = $response->json();
+        $cert = LearningView::certificateText($data['certificate'], $data['name'], $data['course']['title'], now()->toDateString());
+        $firstName = explode(' ', trim(preg_replace('/^(dr|prof|professor|mr|mrs|ms|miss)\.?\s+/i', '', $data['name'])))[0];
+
+        return view('learning.examiner._certificate-modal', [
+            'cert' => $cert,
+            'name' => $data['name'],
+            'firstName' => $firstName,
+            'course' => $data['course'],
+            'signature' => $data['signature'] ?? null,
+            'demo' => true,
+        ]);
+    }
+
     // POST admin/exams/learning/certificate — save the wording, or reset it to the defaults
     public function saveCertificate(Request $request)
     {
@@ -284,7 +305,7 @@ class AdminLearningController extends Controller
         $response = $this->api->post('learning/admin/certificate', $payload);
 
         return back()->with($response->successful() ? 'success' : 'error',
-            $response->successful() ? 'Certificate wording saved.' : 'The certificate could not be saved. Please try again.');
+            $response->successful() ? 'Certificate saved.' : 'The certificate could not be saved. Please try again.');
     }
 
     // POST admin/exams/learning/certificate/signature

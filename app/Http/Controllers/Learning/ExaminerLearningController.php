@@ -47,6 +47,27 @@ class ExaminerLearningController extends Controller
         return view('learning.examiner.certificate', ['cert' => $cert, 'name' => $data['name'], 'course' => $data['course'], 'signature' => $data['signature'] ?? null]);
     }
 
+    // GET examiner/learning/certificate/modal — the certificate as modal content (HTML fragment)
+    public function certificateModal()
+    {
+        $response = $this->api->get('learning/certificate', ['user_id' => Auth::id()]);
+        abort_unless($response->successful(), $response->status() === 403 ? 403 : 502);
+
+        $data = $response->json();
+        $cert = LearningView::certificateText($data['certificate'], $data['name'], $data['course']['title'], $data['completed_at']);
+
+        // "Dr Hannah Getachew" → "Hannah"
+        $firstName = explode(' ', trim(preg_replace('/^(dr|prof|professor|mr|mrs|ms|miss)\.?\s+/i', '', $data['name'])))[0];
+
+        return view('learning.examiner._certificate-modal', [
+            'cert' => $cert,
+            'name' => $data['name'],
+            'firstName' => $firstName,
+            'course' => $data['course'],
+            'signature' => $data['signature'] ?? null,
+        ]);
+    }
+
     // GET examiner/learning/{slug}
     public function module(string $slug)
     {
@@ -69,10 +90,15 @@ class ExaminerLearningController extends Controller
             return $fail;
         }
 
+        // The last module's "Get your certificate" button calls this with AJAX and opens the modal itself.
+        if (request()->expectsJson()) {
+            return response()->json(['goto' => $response->json('goto'), 'modal' => route('examiner.learning.certificate.modal')]);
+        }
+
         return match ($response->json('goto')) {
             'module' => redirect()->route('examiner.learning.module', $response->json('slug')),
             'quiz' => redirect()->route('examiner.learning.quiz', $response->json('slug')),
-            default => redirect()->route('examiner.learning')->with('success', 'You have completed the Examiner Training course.'),
+            default => redirect()->route('examiner.learning.certificate'),
         };
     }
 

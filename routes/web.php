@@ -412,6 +412,7 @@ Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(
     Route::get('users/{id}', 'userProgress')->whereNumber('id')->name('.user');
     Route::get('course', 'course')->name('.course');
     Route::get('certificate', 'certificate')->name('.certificate');
+    Route::get('certificate/modal', 'certificateModal')->name('.certificate.modal');
     Route::post('certificate', 'saveCertificate')->name('.certificate.save');
     Route::post('certificate/signature', 'uploadSignature')->name('.certificate.signature');
     Route::post('certificate/signature/remove', 'removeSignature')->name('.certificate.signature.remove');
@@ -560,6 +561,7 @@ Route::group(['middleware' => 'examiner'], function(){
     Route::prefix('examiner/learning')->name('examiner.learning')->controller(\App\Http\Controllers\Learning\ExaminerLearningController::class)->group(function () {
         Route::get('/', 'cover');
         Route::get('certificate', 'certificate')->name('.certificate');
+        Route::get('certificate/modal', 'certificateModal')->name('.certificate.modal');
         Route::get('{slug}', 'module')->name('.module');
         Route::post('{slug}/next', 'advance')->name('.advance');
         Route::get('{slug}/quiz', 'quiz')->name('.quiz');
