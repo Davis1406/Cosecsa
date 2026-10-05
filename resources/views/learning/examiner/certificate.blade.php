@@ -18,7 +18,7 @@
                 </div>
             </div>
 
-            @include('learning.partials.certificate', ['cert' => $cert, 'name' => $name, 'logo' => asset('dist/img/Cosecsa_Logo.png')])
+            @include('learning.partials.certificate', ['cert' => $cert, 'name' => $name, 'signature' => $signature, 'logo' => asset('dist/img/Cosecsa_Logo.png')])
         </div>
     </section>
 </div>

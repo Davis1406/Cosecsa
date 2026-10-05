@@ -48,12 +48,33 @@
                                 <button type="button" class="btn btn-light" id="certReset">Reset to default wording</button>
                             </div>
                         </form>
+
+                        <hr>
+                        <div class="mb-1" style="font-weight:600; font-size:13px;">Signature image</div>
+                        <small class="text-muted d-block mb-2">
+                            Appears above the signature line. Use a PNG with a transparent background if you can (max 2 MB; PNG, JPG or WebP).
+                        </small>
+                        @if($signature)
+                            <div class="mb-2"><img src="{{ $signature }}" alt="Current signature" style="max-height:70px; max-width:100%; background:#f8f9fa; border:1px solid #e5e7eb; border-radius:6px; padding:6px;"></div>
+                        @endif
+                        <form method="POST" action="{{ route('admin.exams.learning.certificate.signature') }}" enctype="multipart/form-data" class="d-flex flex-wrap align-items-center" style="gap:10px;">
+                            @csrf
+                            <input type="file" name="signature" id="sigFile" accept="image/png,image/jpeg,image/webp" required class="form-control-file" style="max-width:100%;">
+                            <button type="submit" class="btn btn-primary btn-sm">{{ $signature ? 'Replace signature' : 'Upload signature' }}</button>
+                        </form>
+                        @error('signature')<div class="text-danger" style="font-size:12px;">{{ $message }}</div>@enderror
+                        @if($signature)
+                            <form method="POST" action="{{ route('admin.exams.learning.certificate.signature.remove') }}" class="mt-2">
+                                @csrf
+                                <button type="submit" class="btn btn-light btn-sm" onclick="return confirm('Remove the signature image?');">Remove signature</button>
+                            </form>
+                        @endif
                     </div>
                 </div>
                 <div class="col-xl-8 mb-3">
                     <div class="cert-preview-col">
                         <h5 style="font-size:16px; font-weight:700; margin-bottom:10px;">Preview</h5>
-                        @include('learning.partials.certificate', ['cert' => $cert, 'name' => $sampleName, 'logo' => asset('dist/img/Cosecsa_Logo.png'), 'fitTop' => 112])
+                        @include('learning.partials.certificate', ['cert' => $cert, 'name' => $sampleName, 'signature' => $signature, 'logo' => asset('dist/img/Cosecsa_Logo.png'), 'fitTop' => 112])
                     </div>
                 </div>
             </div>
@@ -100,8 +121,23 @@
             }
         });
         var hasSig = document.getElementById('cf-sig1_name').value.trim() || document.getElementById('cf-sig1_title').value.trim();
-        document.querySelector('[data-cert-sig]').style.visibility = hasSig ? '' : 'hidden';
+        var sigImg = document.querySelector('[data-cert-sigimg]');
+        document.querySelector('[data-cert-sig]').style.visibility = (hasSig || (sigImg && sigImg.style.display !== 'none')) ? '' : 'hidden';
     }
+
+    // Preview a chosen signature file on the certificate before it is uploaded.
+    document.getElementById('sigFile').addEventListener('change', function () {
+        var file = this.files && this.files[0];
+        var img = document.querySelector('[data-cert-sigimg]');
+        if (!file || !img) { return; }
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            img.src = e.target.result;
+            img.style.display = '';
+            document.querySelector('[data-cert-sig]').style.visibility = '';
+        };
+        reader.readAsDataURL(file);
+    });
 
     document.getElementById('certForm').addEventListener('input', refresh);
     document.getElementById('certReset').addEventListener('click', function () {

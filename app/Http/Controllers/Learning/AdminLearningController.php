@@ -245,6 +245,7 @@ class AdminLearningController extends Controller
             'settings' => $data['certificate'],
             'defaults' => $data['defaults'],
             'course' => $data['course'],
+            'signature' => $data['signature'] ?? null,
             'sampleName' => $data['sample_name'],
             'sampleDate' => now()->toDateString(),
         ]);
@@ -277,6 +278,25 @@ class AdminLearningController extends Controller
 
         return back()->with($response->successful() ? 'success' : 'error',
             $response->successful() ? 'Certificate wording saved.' : 'The certificate could not be saved. Please try again.');
+    }
+
+    // POST admin/exams/learning/certificate/signature
+    public function uploadSignature(Request $request)
+    {
+        $request->validate(['signature' => ['required', 'file', 'mimes:png,jpg,jpeg,webp', 'max:2048']]);
+        $response = $this->api->postWithFile('learning/admin/certificate/signature', [], ['signature' => $request->file('signature')]);
+
+        return back()->with($response->successful() ? 'success' : 'error',
+            $response->successful() ? 'Signature uploaded.' : 'The signature could not be uploaded.');
+    }
+
+    // POST admin/exams/learning/certificate/signature/remove
+    public function removeSignature()
+    {
+        $response = $this->api->post('learning/admin/certificate/signature/remove');
+
+        return back()->with($response->successful() ? 'success' : 'error',
+            $response->successful() ? 'Signature removed.' : 'The signature could not be removed.');
     }
 
     // GET admin/exams/learning/videos

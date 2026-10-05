@@ -44,7 +44,7 @@ class ExaminerLearningController extends Controller
         $data = $response->json();
         $cert = LearningView::certificateText($data['certificate'], $data['name'], $data['course']['title'], $data['completed_at']);
 
-        return view('learning.examiner.certificate', ['cert' => $cert, 'name' => $data['name'], 'course' => $data['course']]);
+        return view('learning.examiner.certificate', ['cert' => $cert, 'name' => $data['name'], 'course' => $data['course'], 'signature' => $data['signature'] ?? null]);
     }
 
     // GET examiner/learning/{slug}

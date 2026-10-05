@@ -66,8 +66,9 @@
 .lmscert-course { font-size: 29px; font-weight: 700; color: #2d3748; margin: 4px 0; }
 .lmscert-detail { font-size: 22px; color: #888; margin: 6px 0 8px; }
 
-.lmscert-sigs { display: flex; justify-content: center; align-items: flex-end; margin-top: 44px; }
+.lmscert-sigs { display: flex; justify-content: center; align-items: flex-end; margin-top: 24px; }
 .lmscert-sig { width: 420px; text-align: center; min-height: 72px; }
+.lmscert-sig-img { display: block; max-height: 84px; max-width: 320px; margin: 0 auto -6px; object-fit: contain; }
 .lmscert-sig-line { border-top: 1.5px solid #2d3748; margin: 4px auto; width: 80%; }
 .lmscert-sig-name { font-weight: 700; font-size: 22px; color: #2d3748; }
 .lmscert-sig-title { font-size: 17px; color: #888; }
