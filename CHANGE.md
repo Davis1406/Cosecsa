@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-05) — Sponsored by / Programme Entry Fee are exam-only too
+- On the fellow add/edit form, **Sponsored by**, **Prog. Entry Fee Year** and **Entry Mode of Payment** now hide for every Fellowship Type except **Fellow by Examination** (category 5), matching the other exam fields. They sit alongside the registration/subscription fee fields, which stay for all types.
+- **Files:** `resources/views/admin/associates/fellows/{add,edit}.blade.php`. No API change.
+
 ### Changed (2026-10-05) — Fellowship registration & subscription fees are saved; Country Office payment mode
 - The Fees & Finance section now has editable **Registration Fee (USD)**, **Annual Subscription Fee (USD)** and **Fee Year** fields. They are prefilled from the fee catalogue for the selected Fellowship Type (e.g. **Fellow By Election** → Registration `500.00`, Annual Subscription `100.00`); **Fee Year** defaults to the current year. Changing the Fellowship Type refills the amounts; on Edit a saved amount is kept until the type changes.
 - Saved on the fellow record via new cosecsa-api columns `registration_fee_amount`, `annual_subscription_fee_amount` and `fee_year` (migration `2026_10_05_120000_add_fees_to_fellows_table`). ⚠️ **Coordinate:** deploy cosecsa-api first (runs the migration), then this app.

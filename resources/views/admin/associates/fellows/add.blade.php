@@ -307,15 +307,15 @@
                             Registration and subscription amounts are prefilled from the fee catalogue for the selected Fellowship Type; adjust if needed.
                         </p>
                         <div class="form-row">
-                            <div class="form-group col-md-4">
+                            <div class="form-group col-md-4 exam-only">
                                 <label class="form-label">Sponsored by</label>
                                 <input type="text" name="sponsored_by" class="form-control form-control-sm" placeholder="e.g. NORHED, Self-funded">
                             </div>
-                            <div class="form-group col-md-4">
+                            <div class="form-group col-md-4 exam-only">
                                 <label class="form-label">Prog. Entry Fee Year</label>
                                 <input type="text" name="prog_entry_fee_year" class="form-control form-control-sm">
                             </div>
-                            <div class="form-group col-md-4">
+                            <div class="form-group col-md-4 exam-only">
                                 <label class="form-label">Entry Mode of Payment</label>
                                 <select name="prog_entry_mode_payment" class="form-control form-control-sm">
                                     <option value="">— Select —</option>

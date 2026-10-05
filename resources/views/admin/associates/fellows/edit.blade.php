@@ -438,12 +438,12 @@
                     </p>
 
                     <div class="ms2-row">
-                        <div class="ms2-col">
+                        <div class="ms2-col exam-only">
                             <label class="ms2-label">Sponsored By</label>
                             <input type="text" name="sponsored_by" class="ms2-input"
                                    value="{{ $fellow->sponsored_by }}">
                         </div>
-                        <div class="ms2-col">
+                        <div class="ms2-col exam-only">
                             <label class="ms2-label">Prog. Entry Fee Year</label>
                             <input type="text" name="prog_entry_fee_year" class="ms2-input"
                                    value="{{ $fellow->prog_entry_fee_year }}">
@@ -451,7 +451,7 @@
                     </div>
 
                     <div class="ms2-row">
-                        <div class="ms2-col">
+                        <div class="ms2-col exam-only">
                             <label class="ms2-label">Entry Mode of Payment</label>
                             <select name="prog_entry_mode_payment" class="ms2-input">
                                 <option value="">— Select —</option>
