@@ -38,7 +38,12 @@
 
                         @if($completed)
                             <div class="alert alert-success">🎉 Congratulations — you have completed this course!</div>
-                            <a href="{{ route($lr.'.module', end($modules)['slug']) }}" class="btn btn-primary btn-lg">Review completion page</a>
+                            <div class="hero-actions">
+                                @unless($preview)
+                                    <a href="{{ route('examiner.learning.certificate') }}" class="btn btn-primary btn-lg">View your certificate</a>
+                                @endunless
+                                <a href="{{ route($lr.'.module', end($modules)['slug']) }}" class="btn btn-primary btn-lg">Review completion page</a>
+                            </div>
                         @elseif($next_slug)
                             <div class="hero-actions">
                                 <a href="{{ route($lr.'.module', $next_slug) }}" class="btn btn-primary btn-lg">

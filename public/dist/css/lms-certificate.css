@@ -1,0 +1,92 @@
+/* Examiner Training completion certificate — fixed 1440 x 810 (16:9) slide.
+   Shared by the examiner certificate page and the admin wording/preview page
+   (resources/views/learning/partials/certificate.blade.php). The page scales the
+   .lmscert-stage wrapper to fit; the certificate itself is always full size. */
+
+.lmscert-fit { width: 100%; overflow: hidden; position: relative; }
+.lmscert-stage { width: 1440px; height: 810px; transform-origin: top left; }
+
+.lmscert {
+    width: 1440px;
+    height: 810px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    background-color: #FAF8F5;
+    background-image: linear-gradient(180deg, #FBF8F2 0%, #F3ECDB 100%);
+    border: 12px solid #500E19;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18), inset 0 0 0 3px rgba(201,152,52,0.60);
+    position: relative;
+    overflow: hidden;
+    font-family: 'Nunito', sans-serif;
+    text-align: center;
+}
+.lmscert *, .lmscert *::before, .lmscert *::after { box-sizing: border-box; }
+.lmscert-bar { height: 10px; background: linear-gradient(90deg, #380911, #500E19, #380911); flex: none; }
+
+.lmscert-inner {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 14px 70px 56px;
+    position: relative;
+}
+.lmscert-inner > * { flex-shrink: 0; }
+.lmscert-inner::before, .lmscert-inner::after {
+    content: ''; position: absolute; width: 60px; height: 60px; border: 3px solid rgba(201,152,52,0.65);
+}
+.lmscert-inner::before { top: 16px; left: 16px; border-right: none; border-bottom: none; }
+.lmscert-inner::after  { bottom: 16px; right: 16px; border-left: none; border-top: none; }
+
+.lmscert-logo { height: 96px; max-width: 190px; object-fit: contain; margin: 0 auto; display: block; }
+.lmscert-org {
+    font-size: 33px; font-weight: 800; letter-spacing: 0.8px; color: #380911;
+    text-transform: uppercase; line-height: 1.3; margin-top: 6px; white-space: nowrap;
+}
+.lmscert-divider {
+    width: 680px; height: 2px; margin: 14px auto 10px;
+    background: linear-gradient(90deg, transparent, #C99834 15%, #C99834 85%, transparent);
+}
+.lmscert-heading {
+    font-family: 'Playfair Display', serif; font-style: italic; font-size: 58px; font-weight: 700;
+    color: #2d3748; margin: 2px 0; line-height: 1.2; letter-spacing: 1px;
+    display: flex; align-items: center; justify-content: center; gap: 36px;
+}
+.lmscert-heading::before, .lmscert-heading::after { content: ''; width: 170px; height: 2px; background: linear-gradient(90deg, transparent, #C99834); }
+.lmscert-heading::after { background: linear-gradient(270deg, transparent, #C99834); }
+.lmscert-subtitle { font-size: 22px; color: #888; letter-spacing: 2px; text-transform: uppercase; margin: 8px 0 6px; }
+.lmscert-name {
+    font-family: 'Playfair Display', serif; font-size: 56px; font-weight: 700; color: #6B1724;
+    margin: 4px 0 2px; line-height: 1.2; letter-spacing: 1px;
+}
+.lmscert-name-rule { height: 2px; width: 640px; margin: 0 auto 8px; background: linear-gradient(90deg, transparent, rgba(201,152,52,0.8), transparent); }
+.lmscert-body { font-size: 24px; color: #555; margin: 4px 0; letter-spacing: 0.3px; }
+.lmscert-course { font-size: 29px; font-weight: 700; color: #2d3748; margin: 4px 0; }
+.lmscert-detail { font-size: 22px; color: #888; margin: 6px 0 8px; }
+
+.lmscert-sigs { display: flex; justify-content: space-around; align-items: flex-end; margin-top: 28px; padding: 0 230px; gap: 200px; }
+.lmscert-sig { flex: 1; text-align: center; min-height: 72px; }
+.lmscert-sig-line { border-top: 1.5px solid #2d3748; margin: 4px auto; width: 80%; }
+.lmscert-sig-name { font-weight: 700; font-size: 22px; color: #2d3748; }
+.lmscert-sig-title { font-size: 17px; color: #888; }
+
+.lmscert-cpd {
+    position: absolute; left: 100px; bottom: 42px; width: 80px; height: 80px; border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, #f9eec1, #d4af5e 62%, #a8892f);
+    border: 2px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.20), inset 0 0 0 2px #C9A84C;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.35); padding: 6px;
+}
+.lmscert-cpd-value { font-size: 30px; font-weight: 800; line-height: 1.1; }
+.lmscert-cpd-label { font-size: 8.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; line-height: 1.1; margin-top: 2px; }
+
+@media print {
+    @page { size: 1440px 810px; margin: 0; }
+    body * { visibility: hidden; }
+    .lmscert-fit, .lmscert-fit * { visibility: visible; }
+    .lmscert-fit { position: absolute; left: 0; top: 0; width: 1440px !important; height: 810px !important; overflow: visible; }
+    .lmscert-stage { transform: none !important; }
+    .lmscert { box-shadow: none; }
+}

@@ -411,6 +411,8 @@ Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(
     Route::get('/', 'index');
     Route::get('users/{id}', 'userProgress')->whereNumber('id')->name('.user');
     Route::get('course', 'course')->name('.course');
+    Route::get('certificate', 'certificate')->name('.certificate');
+    Route::post('certificate', 'saveCertificate')->name('.certificate.save');
     Route::get('modules/{id}', 'module')->whereNumber('id')->name('.module');
     Route::get('blocks/{id}/edit', 'editBlock')->whereNumber('id')->name('.block');
     Route::post('blocks', 'addBlock')->name('.block.store');
@@ -555,6 +557,7 @@ Route::group(['middleware' => 'examiner'], function(){
     // Examiner Training course (content/progress via cosecsa-api internal/learning/*)
     Route::prefix('examiner/learning')->name('examiner.learning')->controller(\App\Http\Controllers\Learning\ExaminerLearningController::class)->group(function () {
         Route::get('/', 'cover');
+        Route::get('certificate', 'certificate')->name('.certificate');
         Route::get('{slug}', 'module')->name('.module');
         Route::post('{slug}/next', 'advance')->name('.advance');
         Route::get('{slug}/quiz', 'quiz')->name('.quiz');

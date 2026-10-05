@@ -26,6 +26,9 @@
                                     <a href="{{ route('examiner.learning.module', $next['slug']) }}" class="btn btn-primary">Continue → {{ $next['title'] }}</a>
                                 @else
                                     <a href="{{ route('examiner.learning') }}" class="btn btn-primary">Back to course home</a>
+                                    @if($course_complete ?? false)
+                                        <a href="{{ route('examiner.learning.certificate') }}" class="btn btn-light">View your certificate</a>
+                                    @endif
                                 @endif
                             @else
                                 <a href="{{ route('examiner.learning.quiz', $module['slug']) }}" class="btn btn-primary">Retake quiz</a>

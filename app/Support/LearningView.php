@@ -31,6 +31,17 @@ class LearningView
         });
     }
 
+    /**
+     * Certificate wording with {name}, {course} and {date} filled in for one examiner.
+     * `$certificate` is the API's saved wording; `$date` is a Y-m-d string.
+     */
+    public static function certificateText(array $certificate, string $name, string $course, string $date): array
+    {
+        $vars = ['{name}' => $name, '{course}' => $course, '{date}' => \Illuminate\Support\Carbon::parse($date)->format('j F Y')];
+
+        return array_map(fn ($text) => strtr((string) $text, $vars), $certificate);
+    }
+
     public static function imageUrl(?array $image): ?string
     {
         return $image['resolved_url'] ?? null;

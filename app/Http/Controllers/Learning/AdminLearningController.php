@@ -231,6 +231,56 @@ class AdminLearningController extends Controller
         return view('learning.examiner.quiz', $response->json() + ['preview' => true, 'layout' => 'learning.examiner._standalone']);
     }
 
+    // GET admin/exams/learning/certificate — edit the certificate wording with a live preview
+    public function certificate()
+    {
+        $response = $this->api->get('learning/admin/certificate', ['user_id' => Auth::id()]);
+        if ($fail = $this->failed($response)) {
+            return $fail;
+        }
+
+        $data = $response->json();
+
+        return view('learning.admin.certificate', [
+            'settings' => $data['certificate'],
+            'defaults' => $data['defaults'],
+            'course' => $data['course'],
+            'sampleName' => $data['sample_name'],
+            'sampleDate' => now()->toDateString(),
+        ]);
+    }
+
+    // POST admin/exams/learning/certificate — save the wording, or reset it to the defaults
+    public function saveCertificate(Request $request)
+    {
+        $fields = ['org_name', 'heading', 'subtitle', 'body_text', 'course_name', 'detail_text',
+            'sig1_name', 'sig1_title', 'sig2_name', 'sig2_title', 'cpd_points'];
+
+        $request->validate([
+            'org_name' => ['nullable', 'string', 'max:160'],
+            'heading' => ['nullable', 'string', 'max:80'],
+            'subtitle' => ['nullable', 'string', 'max:120'],
+            'body_text' => ['nullable', 'string', 'max:160'],
+            'course_name' => ['nullable', 'string', 'max:200'],
+            'detail_text' => ['nullable', 'string', 'max:200'],
+            'sig1_name' => ['nullable', 'string', 'max:80'],
+            'sig1_title' => ['nullable', 'string', 'max:80'],
+            'sig2_name' => ['nullable', 'string', 'max:80'],
+            'sig2_title' => ['nullable', 'string', 'max:80'],
+            'cpd_points' => ['nullable', 'string', 'max:10'],
+        ]);
+
+        $payload = [];
+        foreach ($fields as $field) {
+            $payload[$field] = (string) $request->input($field, '');
+        }
+
+        $response = $this->api->post('learning/admin/certificate', $payload);
+
+        return back()->with($response->successful() ? 'success' : 'error',
+            $response->successful() ? 'Certificate wording saved.' : 'The certificate could not be saved. Please try again.');
+    }
+
     // GET admin/exams/learning/videos
     public function videos()
     {

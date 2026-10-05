@@ -29,6 +29,24 @@ class ExaminerLearningController extends Controller
         return view('learning.examiner.cover', $response->json());
     }
 
+    // GET examiner/learning/certificate — available once every module is complete
+    public function certificate()
+    {
+        $response = $this->api->get('learning/certificate', ['user_id' => Auth::id()]);
+
+        if ($response->status() === 403 && ! str_contains((string) $response->json('message'), 'confirmed')) {
+            return redirect()->route('examiner.learning')->with('error', $response->json('message'));
+        }
+        if ($fail = $this->failed($response)) {
+            return $fail;
+        }
+
+        $data = $response->json();
+        $cert = LearningView::certificateText($data['certificate'], $data['name'], $data['course']['title'], $data['completed_at']);
+
+        return view('learning.examiner.certificate', ['cert' => $cert, 'name' => $data['name'], 'course' => $data['course']]);
+    }
+
     // GET examiner/learning/{slug}
     public function module(string $slug)
     {
