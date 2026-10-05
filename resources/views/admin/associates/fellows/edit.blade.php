@@ -410,7 +410,32 @@
             <div class="ms2-fieldset" id="fieldset-4">
                 <div class="ms2-body">
 
-                    @include('admin.associates.fellows._fellowship_fee_hint')
+                    <div class="ms2-row">
+                        <div class="ms2-col">
+                            <label class="ms2-label">Registration Fee (USD)</label>
+                            <input type="text" name="registration_fee_amount" id="fellowRegistrationFee" class="ms2-input"
+                                   value="{{ $fellow->registration_fee_amount }}">
+                        </div>
+                        <div class="ms2-col">
+                            <label class="ms2-label">Annual Subscription Fee (USD)</label>
+                            <input type="text" name="annual_subscription_fee_amount" id="fellowSubscriptionFee" class="ms2-input"
+                                   value="{{ $fellow->annual_subscription_fee_amount }}">
+                        </div>
+                    </div>
+
+                    <div class="ms2-row">
+                        <div class="ms2-col">
+                            <label class="ms2-label">Fee Year</label>
+                            <input type="text" name="fee_year" class="ms2-input"
+                                   value="{{ $fellow->fee_year ?: date('Y') }}">
+                        </div>
+                        <div class="ms2-col"></div>
+                    </div>
+
+                    <p class="small text-muted mb-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Registration and subscription amounts are prefilled from the fee catalogue for the selected Fellowship Type; adjust if needed.
+                    </p>
 
                     <div class="ms2-row">
                         <div class="ms2-col">
@@ -430,7 +455,7 @@
                             <label class="ms2-label">Entry Mode of Payment</label>
                             <select name="prog_entry_mode_payment" class="ms2-input">
                                 <option value="">— Select —</option>
-                                @foreach(['Bank Transfer','Cheque','Cash','Online','Waived'] as $m)
+                                @foreach(['Bank Transfer','Cheque','Cash','Online','Country Office','Waived'] as $m)
                                     <option value="{{ $m }}" {{ $fellow->prog_entry_mode_payment==$m ? 'selected':'' }}>{{ $m }}</option>
                                 @endforeach
                             </select>
@@ -460,7 +485,7 @@
                             <label class="ms2-label">Exam Fee Mode</label>
                             <select name="exam_fee_mode_payment" class="ms2-input">
                                 <option value="">— Select —</option>
-                                @foreach(['Bank Transfer','Cheque','Cash','Online','Waived'] as $m)
+                                @foreach(['Bank Transfer','Cheque','Cash','Online','Country Office','Waived'] as $m)
                                     <option value="{{ $m }}" {{ $fellow->exam_fee_mode_payment==$m ? 'selected':'' }}>{{ $m }}</option>
                                 @endforeach
                             </select>
@@ -492,6 +517,7 @@
 </div>
 
 @include('admin.associates.fellows._add_hospital_modal')
+@include('admin.associates.fellows._fellow_category_js')
 
 <script>
 function goToStep(n) {

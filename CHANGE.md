@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-05) — Fellowship registration & subscription fees are saved; Country Office payment mode
+- The Fees & Finance section now has editable **Registration Fee (USD)**, **Annual Subscription Fee (USD)** and **Fee Year** fields. They are prefilled from the fee catalogue for the selected Fellowship Type (e.g. **Fellow By Election** → Registration `500.00`, Annual Subscription `100.00`); **Fee Year** defaults to the current year. Changing the Fellowship Type refills the amounts; on Edit a saved amount is kept until the type changes.
+- Saved on the fellow record via new cosecsa-api columns `registration_fee_amount`, `annual_subscription_fee_amount` and `fee_year` (migration `2026_10_05_120000_add_fees_to_fellows_table`). ⚠️ **Coordinate:** deploy cosecsa-api first (runs the migration), then this app.
+- **Country Office** added to the **Entry Mode of Payment** and **Exam Fee Mode** dropdowns (matching the subscriptions page).
+- Replaces the read-only fee hint added earlier today with the editable fields.
+- **Files:** `resources/views/admin/associates/fellows/{add,edit}.blade.php`, new `_fellow_category_js.blade.php` (removes `_fellowship_fee_hint.blade.php`).
+
 ### Changed (2026-10-05) — Fellow form: non-exam fellowship types hide exam fields; defaults; fees in section 4
 - On `admin/associates/fellows/add` and `/edit/{id}`, the exam-related fields now only apply to **Fellow by Examination** (category 5). Selecting any other fellowship type (Member, Associate Fellow, Fellow By Election, Foundation / Overseas / Honorary, …) hides:
   - **Intake / Admission Year**, **MCS Qualification Year**, **Country of MCS Training**, **Supervised by**, **Upcoming Exam Year**, **Previous Exam Year** (section 2 / step 2);

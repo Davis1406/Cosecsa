@@ -288,7 +288,24 @@
                         </h3>
                     </div>
                     <div class="card-body">
-                        @include('admin.associates.fellows._fellowship_fee_hint')
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label class="form-label">Registration Fee (USD)</label>
+                                <input type="text" name="registration_fee_amount" id="fellowRegistrationFee" class="form-control form-control-sm" placeholder="e.g. 500.00">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label class="form-label">Annual Subscription Fee (USD)</label>
+                                <input type="text" name="annual_subscription_fee_amount" id="fellowSubscriptionFee" class="form-control form-control-sm" placeholder="e.g. 100.00">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label class="form-label">Fee Year</label>
+                                <input type="text" name="fee_year" class="form-control form-control-sm" value="{{ old('fee_year', date('Y')) }}" placeholder="e.g. {{ date('Y') }}">
+                            </div>
+                        </div>
+                        <p class="small text-muted mb-2">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Registration and subscription amounts are prefilled from the fee catalogue for the selected Fellowship Type; adjust if needed.
+                        </p>
                         <div class="form-row">
                             <div class="form-group col-md-4">
                                 <label class="form-label">Sponsored by</label>
@@ -302,7 +319,7 @@
                                 <label class="form-label">Entry Mode of Payment</label>
                                 <select name="prog_entry_mode_payment" class="form-control form-control-sm">
                                     <option value="">— Select —</option>
-                                    @foreach(['Bank Transfer','Cheque','Cash','Online','Waived'] as $m)
+                                    @foreach(['Bank Transfer','Cheque','Cash','Online','Country Office','Waived'] as $m)
                                         <option value="{{ $m }}">{{ $m }}</option>
                                     @endforeach
                                 </select>
@@ -325,7 +342,7 @@
                                 <label class="form-label">Exam Fee Mode</label>
                                 <select name="exam_fee_mode_payment" class="form-control form-control-sm">
                                     <option value="">— Select —</option>
-                                    @foreach(['Bank Transfer','Cheque','Cash','Online','Waived'] as $m)
+                                    @foreach(['Bank Transfer','Cheque','Cash','Online','Country Office','Waived'] as $m)
                                         <option value="{{ $m }}">{{ $m }}</option>
                                     @endforeach
                                 </select>
@@ -357,6 +374,7 @@
 </div>
 
 @include('admin.associates.fellows._add_hospital_modal')
+@include('admin.associates.fellows._fellow_category_js')
 
 @push('scripts')
 <script>
