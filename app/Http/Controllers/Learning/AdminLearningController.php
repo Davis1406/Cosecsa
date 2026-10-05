@@ -255,7 +255,7 @@ class AdminLearningController extends Controller
     public function saveCertificate(Request $request)
     {
         $fields = ['org_name', 'heading', 'subtitle', 'body_text', 'course_name', 'detail_text',
-            'sig1_name', 'sig1_title', 'cpd_points'];
+            'sig1_name', 'sig1_title', 'sig1_x', 'sig1_y', 'sig1_scale', 'cpd_points'];
 
         $request->validate([
             'org_name' => ['nullable', 'string', 'max:160'],
@@ -266,6 +266,9 @@ class AdminLearningController extends Controller
             'detail_text' => ['nullable', 'string', 'max:200'],
             'sig1_name' => ['nullable', 'string', 'max:80'],
             'sig1_title' => ['nullable', 'string', 'max:80'],
+            'sig1_x' => ['nullable', 'numeric', 'between:-400,400'],
+            'sig1_y' => ['nullable', 'numeric', 'between:-250,250'],
+            'sig1_scale' => ['nullable', 'numeric', 'between:30,250'],
             'cpd_points' => ['nullable', 'string', 'max:10'],
         ]);
 
@@ -273,6 +276,10 @@ class AdminLearningController extends Controller
         foreach ($fields as $field) {
             $payload[$field] = (string) $request->input($field, '');
         }
+        // Placement can't be blank: fall back to the centred, 100% default.
+        $payload['sig1_x'] = $payload['sig1_x'] !== '' ? $payload['sig1_x'] : '0';
+        $payload['sig1_y'] = $payload['sig1_y'] !== '' ? $payload['sig1_y'] : '0';
+        $payload['sig1_scale'] = $payload['sig1_scale'] !== '' ? $payload['sig1_scale'] : '100';
 
         $response = $this->api->post('learning/admin/certificate', $payload);
 

@@ -68,7 +68,15 @@
 
 .lmscert-sigs { display: flex; justify-content: center; align-items: flex-end; margin-top: 24px; }
 .lmscert-sig { width: 420px; text-align: center; min-height: 72px; }
-.lmscert-sig-img { display: block; max-height: 84px; max-width: 320px; margin: 0 auto -6px; object-fit: contain; }
+.lmscert-sig-imgbox { position: relative; height: 84px; margin-bottom: -6px; z-index: 2; }
+/* Anchored to the bottom centre of the box; --sx/--sy (px) and --ss (scale) place it. */
+.lmscert-sig-img {
+    position: absolute; left: 50%; bottom: 0; height: 84px; max-width: none;
+    transform-origin: 50% 100%;
+    transform: translate(calc(-50% + var(--sx, 0px)), var(--sy, 0px)) scale(var(--ss, 1));
+}
+.lmscert-sig-img.is-draggable { cursor: grab; touch-action: none; outline: 2px dashed rgba(153,6,10,.45); outline-offset: 4px; }
+.lmscert-sig-img.is-dragging { cursor: grabbing; }
 .lmscert-sig-line { border-top: 1.5px solid #2d3748; margin: 4px auto; width: 80%; }
 .lmscert-sig-name { font-weight: 700; font-size: 22px; color: #2d3748; }
 .lmscert-sig-title { font-size: 17px; color: #888; }

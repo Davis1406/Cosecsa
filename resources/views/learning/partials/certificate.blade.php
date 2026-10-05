@@ -26,7 +26,10 @@
                 <div class="lmscert-divider"></div>
                 <div class="lmscert-sigs">
                     <div class="lmscert-sig" data-cert-sig style="{{ trim(($cert['sig1_name'] ?? '').($cert['sig1_title'] ?? '')) === '' && ! ($signature ?? null) ? 'visibility:hidden;' : '' }}">
-                        <img class="lmscert-sig-img" data-cert-sigimg src="{{ $signature ?? '' }}" alt="Signature" style="{{ ($signature ?? null) ? '' : 'display:none;' }}">
+                        <div class="lmscert-sig-imgbox">
+                            <img class="lmscert-sig-img" data-cert-sigimg src="{{ $signature ?? '' }}" alt="Signature" draggable="false"
+                                 style="--sx: {{ (float) ($cert['sig1_x'] ?? 0) }}px; --sy: {{ (float) ($cert['sig1_y'] ?? 0) }}px; --ss: {{ (float) ($cert['sig1_scale'] ?? 100) / 100 }}; {{ ($signature ?? null) ? '' : 'display:none;' }}">
+                        </div>
                         <div class="lmscert-sig-line"></div>
                         <div class="lmscert-sig-name" data-cert="sig1_name">{{ $cert['sig1_name'] }}</div>
                         <div class="lmscert-sig-title" data-cert="sig1_title" style="{{ $show('sig1_title') }}">{{ $cert['sig1_title'] }}</div>

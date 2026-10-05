@@ -34,6 +34,8 @@
                         </p>
                         <form method="POST" action="{{ route('admin.exams.learning.certificate.save') }}" id="certForm">
                             @csrf
+                            <input type="hidden" name="sig1_x" id="sigX" value="{{ old('sig1_x', $settings['sig1_x']) }}">
+                            <input type="hidden" name="sig1_y" id="sigY" value="{{ old('sig1_y', $settings['sig1_y']) }}">
                             @foreach($fields as $key => [$label, $hint])
                                 <div class="mb-3">
                                     <label for="cf-{{ $key }}" style="font-weight:600; font-size:13px; margin-bottom:4px;">{{ $label }}</label>
@@ -43,6 +45,17 @@
                                     @error($key)<div class="text-danger" style="font-size:12px;">{{ $message }}</div>@enderror
                                 </div>
                             @endforeach
+                            @if($signature)
+                                <div class="mb-3" id="sigPlacement">
+                                    <label for="sigScale" style="font-weight:600; font-size:13px; margin-bottom:4px;">Signature size and position</label>
+                                    <div class="d-flex align-items-center" style="gap:10px;">
+                                        <input type="range" class="custom-range" id="sigScale" name="sig1_scale" min="30" max="250" step="1" value="{{ old('sig1_scale', $settings['sig1_scale']) }}">
+                                        <span id="sigScaleLabel" style="font-size:12px; min-width:40px;"></span>
+                                        <button type="button" class="btn btn-light btn-sm" id="sigPosReset">Reset</button>
+                                    </div>
+                                    <small class="text-muted">Drag the signature on the preview to place it (for example across the line), then press <strong>Save wording</strong>.</small>
+                                </div>
+                            @endif
                             <div class="d-flex flex-wrap" style="gap:10px;">
                                 <button type="submit" class="btn btn-primary">Save wording</button>
                                 <button type="button" class="btn btn-light" id="certReset">Reset to default wording</button>
@@ -138,6 +151,53 @@
         };
         reader.readAsDataURL(file);
     });
+
+    // ── Drag / resize the signature ───────────────────────────────────────────
+    (function () {
+        var img = document.querySelector('[data-cert-sigimg]');
+        var xIn = document.getElementById('sigX'), yIn = document.getElementById('sigY');
+        var scaleIn = document.getElementById('sigScale'), label = document.getElementById('sigScaleLabel');
+        if (!img || !xIn) { return; }
+
+        function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+        function apply() {
+            img.style.setProperty('--sx', (parseFloat(xIn.value) || 0) + 'px');
+            img.style.setProperty('--sy', (parseFloat(yIn.value) || 0) + 'px');
+            if (scaleIn) {
+                img.style.setProperty('--ss', (parseFloat(scaleIn.value) || 100) / 100);
+                if (label) { label.textContent = Math.round(scaleIn.value) + '%'; }
+            }
+        }
+        apply();
+        img.classList.add('is-draggable');
+
+        var start = null;
+        img.addEventListener('pointerdown', function (e) {
+            e.preventDefault();
+            img.setPointerCapture(e.pointerId);
+            img.classList.add('is-dragging');
+            // the on-screen scale of the 1440px certificate
+            var shown = document.getElementById('lmscert').getBoundingClientRect().width / 1440;
+            start = { cx: e.clientX, cy: e.clientY, x: parseFloat(xIn.value) || 0, y: parseFloat(yIn.value) || 0, k: shown || 1 };
+        });
+        img.addEventListener('pointermove', function (e) {
+            if (!start) { return; }
+            xIn.value = clamp(Math.round(start.x + (e.clientX - start.cx) / start.k), -400, 400);
+            yIn.value = clamp(Math.round(start.y + (e.clientY - start.cy) / start.k), -250, 250);
+            apply();
+        });
+        function end() { start = null; img.classList.remove('is-dragging'); }
+        img.addEventListener('pointerup', end);
+        img.addEventListener('pointercancel', end);
+
+        if (scaleIn) { scaleIn.addEventListener('input', apply); }
+        var reset = document.getElementById('sigPosReset');
+        if (reset) {
+            reset.addEventListener('click', function () {
+                xIn.value = 0; yIn.value = 0; scaleIn.value = 100; apply();
+            });
+        }
+    })();
 
     document.getElementById('certForm').addEventListener('input', refresh);
     document.getElementById('certReset').addEventListener('click', function () {
