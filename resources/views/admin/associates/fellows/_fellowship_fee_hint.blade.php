@@ -1,8 +1,12 @@
 {{--
-    Read-only fee hint under the Fellowship Type select on the fellow
-    add/edit pages. Shows the catalogue's "Fellowship Registration" and
-    "Annual Subscription" fee that best match the chosen fellowship type.
-    The map ($fellowshipFees) is built in FellowsController::fellowshipFeesByCategory().
+    Fee hint shown in section 4 (Fees & Finance) on the fellow add/edit pages,
+    plus the category-driven field logic:
+      - Only "Fellow by Examination" (category 5) has exam-related fields; every
+        other fellowship type hides them (.exam-only).
+      - The hint lists the catalogue's "Fellowship Registration" and
+        "Annual Subscription" fee that best match the chosen fellowship type.
+    The fee map ($fellowshipFees) is built in
+    FellowsController::fellowshipFeesByCategory().
 --}}
 @php $feeMap = $fellowshipFees ?? []; @endphp
 <div id="fellowFeeHint"
@@ -16,18 +20,31 @@
 @push('scripts')
 <script>
 $(function () {
-    var box = document.getElementById('fellowFeeHint');
-    if (!box) return;
+    // Only "Fellow by Examination" keeps the exam fields (Intake/MCS/Exam years,
+    // exam fees, etc.); every other fellowship type hides them.
+    var EXAM_CATEGORY = '5';
 
-    var text = document.getElementById('fellowFeeHintText');
-    var map  = {};
-    try { map = JSON.parse(box.getAttribute('data-fees') || '{}') || {}; } catch (e) { map = {}; }
+    function applyExamFields() {
+        var sel = document.querySelector('select[name="category_id"]');
+        var isExam = sel && String(sel.value) === EXAM_CATEGORY;
 
-    function money(fee) {
-        return fee.currency + ' ' + Number(fee.amount).toFixed(2);
+        document.querySelectorAll('.exam-only').forEach(function (el) {
+            el.style.display = isExam ? '' : 'none';
+        });
     }
 
-    function render() {
+    function renderFeeHint() {
+        var box = document.getElementById('fellowFeeHint');
+        if (!box) return;
+
+        var text = document.getElementById('fellowFeeHintText');
+        var map  = {};
+        try { map = JSON.parse(box.getAttribute('data-fees') || '{}') || {}; } catch (e) { map = {}; }
+
+        function money(fee) {
+            return fee.currency + ' ' + Number(fee.amount).toFixed(2);
+        }
+
         var sel = document.querySelector('select[name="category_id"]');
         var val = sel ? String(sel.value) : '';
         var entry = map[val] || null;
@@ -49,8 +66,15 @@ $(function () {
     }
 
     var sel = document.querySelector('select[name="category_id"]');
-    if (sel) sel.addEventListener('change', render);
-    render();
+    if (sel) {
+        sel.addEventListener('change', function () {
+            applyExamFields();
+            renderFeeHint();
+        });
+    }
+
+    applyExamFields();
+    renderFeeHint();
 });
 </script>
 @endpush

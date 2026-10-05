@@ -162,8 +162,6 @@
                         </div>
                     </div>
 
-                    @include('admin.associates.fellows._fellowship_fee_hint')
-
                     <div class="ms2-row">
                         <div class="ms2-col">
                             <label class="ms2-label">Promoted to Fellow?</label>
@@ -180,12 +178,12 @@
                     </div>
 
                     <div class="ms2-row">
-                        <div class="ms2-col">
+                        <div class="ms2-col exam-only">
                             <label class="ms2-label">Intake / Admission Year</label>
                             <input type="text" name="admission_year" class="ms2-input"
                                    value="{{ $fellow->admission_year }}" placeholder="e.g. 2015">
                         </div>
-                        <div class="ms2-col">
+                        <div class="ms2-col exam-only">
                             <label class="ms2-label">MCS Qualification Year</label>
                             <input type="text" name="mcs_qualification_year" class="ms2-input"
                                    value="{{ $fellow->mcs_qualification_year }}">
@@ -198,7 +196,7 @@
                             <input type="text" name="fellowship_year" class="ms2-input"
                                    value="{{ $fellow->fellowship_year }}">
                         </div>
-                        <div class="ms2-col">
+                        <div class="ms2-col exam-only">
                             <label class="ms2-label">Country of MCS Training</label>
                             <input type="text" name="country_mcs_training" class="ms2-input"
                                    value="{{ $fellow->country_mcs_training }}">
@@ -251,7 +249,7 @@
                     </div>
 
                     <div class="ms2-row">
-                        <div class="ms2-col">
+                        <div class="ms2-col exam-only">
                             <label class="ms2-label">Supervised By</label>
                             <input type="text" name="supervised_by" class="ms2-input"
                                    value="{{ $fellow->supervised_by }}">
@@ -259,7 +257,7 @@
                         <div class="ms2-col">
                             <label class="ms2-label">Registered By</label>
                             <input type="text" name="registered_by" class="ms2-input"
-                                   value="{{ $fellow->registered_by }}">
+                                   value="{{ $fellow->registered_by ?: 'Secretariat' }}">
                         </div>
                     </div>
 
@@ -267,9 +265,9 @@
                         <div class="ms2-col">
                             <label class="ms2-label">Secretariat Reg. Date</label>
                             <input type="date" name="secretariat_registration_date" class="ms2-input"
-                                   value="{{ $fellow->secretariat_registration_date }}">
+                                   value="{{ $fellow->secretariat_registration_date ?: date('Y-m-d') }}">
                         </div>
-                        <div class="ms2-col">
+                        <div class="ms2-col exam-only">
                             <label class="ms2-label">Upcoming Exam Year</label>
                             <input type="text" name="exam_year_upcoming" class="ms2-input"
                                    value="{{ $fellow->exam_year_upcoming }}">
@@ -277,7 +275,7 @@
                     </div>
 
                     <div class="ms2-row">
-                        <div class="ms2-col">
+                        <div class="ms2-col exam-only">
                             <label class="ms2-label">Previous Exam Year</label>
                             <input type="text" name="exam_year_previous" class="ms2-input"
                                    value="{{ $fellow->exam_year_previous }}">
@@ -412,6 +410,8 @@
             <div class="ms2-fieldset" id="fieldset-4">
                 <div class="ms2-body">
 
+                    @include('admin.associates.fellows._fellowship_fee_hint')
+
                     <div class="ms2-row">
                         <div class="ms2-col">
                             <label class="ms2-label">Sponsored By</label>
@@ -435,7 +435,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="ms2-col">
+                        <div class="ms2-col exam-only">
                             <label class="ms2-label">Exam Fee Year</label>
                             <input type="text" name="exam_fee_year" class="ms2-input"
                                    value="{{ $fellow->exam_fee_year }}">
@@ -443,12 +443,12 @@
                     </div>
 
                     <div class="ms2-row">
-                        <div class="ms2-col">
+                        <div class="ms2-col exam-only">
                             <label class="ms2-label">Exam Fee Date Paid</label>
                             <input type="date" name="exam_fee_date_paid" class="ms2-input"
                                    value="{{ $fellow->exam_fee_date_paid }}">
                         </div>
-                        <div class="ms2-col">
+                        <div class="ms2-col exam-only">
                             <label class="ms2-label">Exam Fee Amount (USD)</label>
                             <input type="text" name="exam_fee_amount_paid" class="ms2-input"
                                    value="{{ $fellow->exam_fee_amount_paid }}">
@@ -456,7 +456,7 @@
                     </div>
 
                     <div class="ms2-row">
-                        <div class="ms2-col">
+                        <div class="ms2-col exam-only">
                             <label class="ms2-label">Exam Fee Mode</label>
                             <select name="exam_fee_mode_payment" class="ms2-input">
                                 <option value="">— Select —</option>
@@ -465,7 +465,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="ms2-col">
+                        <div class="ms2-col exam-only">
                             <label class="ms2-label">Exam Fee Verified</label>
                             <select name="exam_fee_payment_verified" class="ms2-input">
                                 <option value="0" {{ !$fellow->exam_fee_payment_verified ? 'selected':'' }}>No / Pending</option>

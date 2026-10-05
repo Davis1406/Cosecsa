@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-05) — Fellow form: non-exam fellowship types hide exam fields; defaults; fees in section 4
+- On `admin/associates/fellows/add` and `/edit/{id}`, the exam-related fields now only apply to **Fellow by Examination** (category 5). Selecting any other fellowship type (Member, Associate Fellow, Fellow By Election, Foundation / Overseas / Honorary, …) hides:
+  - **Intake / Admission Year**, **MCS Qualification Year**, **Country of MCS Training**, **Supervised by**, **Upcoming Exam Year**, **Previous Exam Year** (section 2 / step 2);
+  - **Exam Fee Year**, **Exam Fee Date Paid**, **Exam Fee Amount**, **Exam Fee Mode**, **Exam Fee Verified** (Fees & Finance / step 4).
+  They reappear when "Fellow by Examination" is chosen. Hiding is presentational only — nothing is deleted.
+- **Registered by** now defaults to `Secretariat` and **Secretariat Reg. Date** to today's date. Both are kept for every type; an existing saved value is never overwritten on edit.
+- The applicable catalogue fee block (Fellowship Registration / Annual Subscription for the selected type) now sits at the top of **4. Fees & Finance** and updates with the Fellowship Type.
+- **Files:** `resources/views/admin/associates/fellows/{add,edit}.blade.php`, `resources/views/admin/associates/fellows/_fellowship_fee_hint.blade.php`. No API change.
+
 ### Added (2026-10-05) — "Add Fellow from Associate" covers every associate type
 - ⚠️ **Coordinate:** requires the matching cosecsa-api deploy (`FellowController::searchAssociates` / `storeFromAssociate` now accept the extra source types). The modal's new options 422/400 without it.
 - The **Add Fellow from Associate** modal on `admin/associates/fellows/list` previously searched only Examiners, Country Reps and Members. It now also lists **Programme Directors**, **Trainees**, **Candidates** and **Trainers (ToT)** — everyone on the Associates menu.

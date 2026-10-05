@@ -162,13 +162,12 @@
                                 </select>
                             </div>
                         </div>
-                        @include('admin.associates.fellows._fellowship_fee_hint')
                         <div class="form-row">
-                            <div class="form-group col-md-3">
+                            <div class="form-group col-md-3 exam-only">
                                 <label class="form-label">Intake / Admission Year</label>
                                 <input type="text" name="admission_year" class="form-control form-control-sm" placeholder="e.g. 2015">
                             </div>
-                            <div class="form-group col-md-3">
+                            <div class="form-group col-md-3 exam-only">
                                 <label class="form-label">MCS Qualification Year</label>
                                 <input type="text" name="mcs_qualification_year" class="form-control form-control-sm" placeholder="e.g. 2016">
                             </div>
@@ -176,31 +175,31 @@
                                 <label class="form-label">Fellowship Year</label>
                                 <input type="text" name="fellowship_year" class="form-control form-control-sm" placeholder="e.g. 2018">
                             </div>
-                            <div class="form-group col-md-3">
+                            <div class="form-group col-md-3 exam-only">
                                 <label class="form-label">Country of MCS Training</label>
                                 <input type="text" name="country_mcs_training" class="form-control form-control-sm">
                             </div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group col-md-4">
+                            <div class="form-group col-md-4 exam-only">
                                 <label class="form-label">Supervised by</label>
                                 <input type="text" name="supervised_by" class="form-control form-control-sm" placeholder="e.g. Dr John Doe">
                             </div>
                             <div class="form-group col-md-4">
                                 <label class="form-label">Registered by</label>
-                                <input type="text" name="registered_by" class="form-control form-control-sm">
+                                <input type="text" name="registered_by" class="form-control form-control-sm" value="{{ old('registered_by', 'Secretariat') }}">
                             </div>
                             <div class="form-group col-md-4">
                                 <label class="form-label">Secretariat Reg. Date</label>
-                                <input type="date" name="secretariat_registration_date" class="form-control form-control-sm">
+                                <input type="date" name="secretariat_registration_date" class="form-control form-control-sm" value="{{ old('secretariat_registration_date', date('Y-m-d')) }}">
                             </div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group col-md-3">
+                            <div class="form-group col-md-3 exam-only">
                                 <label class="form-label">Upcoming Exam Year</label>
                                 <input type="text" name="exam_year_upcoming" class="form-control form-control-sm">
                             </div>
-                            <div class="form-group col-md-3">
+                            <div class="form-group col-md-3 exam-only">
                                 <label class="form-label">Previous Exam Year</label>
                                 <input type="text" name="exam_year_previous" class="form-control form-control-sm">
                             </div>
@@ -289,6 +288,7 @@
                         </h3>
                     </div>
                     <div class="card-body">
+                        @include('admin.associates.fellows._fellowship_fee_hint')
                         <div class="form-row">
                             <div class="form-group col-md-4">
                                 <label class="form-label">Sponsored by</label>
@@ -309,19 +309,19 @@
                             </div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group col-md-3">
+                            <div class="form-group col-md-3 exam-only">
                                 <label class="form-label">Exam Fee Year</label>
                                 <input type="text" name="exam_fee_year" class="form-control form-control-sm">
                             </div>
-                            <div class="form-group col-md-3">
+                            <div class="form-group col-md-3 exam-only">
                                 <label class="form-label">Exam Fee Date Paid</label>
                                 <input type="date" name="exam_fee_date_paid" class="form-control form-control-sm">
                             </div>
-                            <div class="form-group col-md-3">
+                            <div class="form-group col-md-3 exam-only">
                                 <label class="form-label">Exam Fee Amount (USD)</label>
                                 <input type="text" name="exam_fee_amount_paid" class="form-control form-control-sm" placeholder="e.g. 500.00">
                             </div>
-                            <div class="form-group col-md-3">
+                            <div class="form-group col-md-3 exam-only">
                                 <label class="form-label">Exam Fee Mode</label>
                                 <select name="exam_fee_mode_payment" class="form-control form-control-sm">
                                     <option value="">— Select —</option>
@@ -332,7 +332,7 @@
                             </div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group col-md-4">
+                            <div class="form-group col-md-4 exam-only">
                                 <label class="form-label">Exam Fee Verified</label>
                                 <select name="exam_fee_payment_verified" class="form-control form-control-sm">
                                     <option value="0">No / Pending</option>
