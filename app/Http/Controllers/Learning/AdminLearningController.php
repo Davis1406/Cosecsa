@@ -254,7 +254,7 @@ class AdminLearningController extends Controller
     public function saveCertificate(Request $request)
     {
         $fields = ['org_name', 'heading', 'subtitle', 'body_text', 'course_name', 'detail_text',
-            'sig1_name', 'sig1_title', 'sig2_name', 'sig2_title', 'cpd_points'];
+            'sig1_name', 'sig1_title', 'cpd_points'];
 
         $request->validate([
             'org_name' => ['nullable', 'string', 'max:160'],
@@ -265,8 +265,6 @@ class AdminLearningController extends Controller
             'detail_text' => ['nullable', 'string', 'max:200'],
             'sig1_name' => ['nullable', 'string', 'max:80'],
             'sig1_title' => ['nullable', 'string', 'max:80'],
-            'sig2_name' => ['nullable', 'string', 'max:80'],
-            'sig2_title' => ['nullable', 'string', 'max:80'],
             'cpd_points' => ['nullable', 'string', 'max:10'],
         ]);
 

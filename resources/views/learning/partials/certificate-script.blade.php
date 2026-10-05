@@ -6,7 +6,11 @@
     var stage = document.getElementById('lmscertStage');
 
     function fitCertificate() {
-        var scale = Math.min(1, fit.parentElement.clientWidth / 1440);
+        // Fit both the width of the container and the height of the screen.
+        var top = fit.getAttribute('data-fit-top');
+        top = top !== null ? parseFloat(top) : fit.getBoundingClientRect().top + window.scrollY;
+        var byHeight = (window.innerHeight - top - 20) / 810;
+        var scale = Math.max(0.2, Math.min(1, fit.parentElement.clientWidth / 1440, byHeight));
         stage.style.transform = 'scale(' + scale + ')';
         fit.style.height = (810 * scale) + 'px';
     }

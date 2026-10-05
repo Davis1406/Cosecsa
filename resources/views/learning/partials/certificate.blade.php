@@ -6,7 +6,7 @@
 @php
     $show = fn ($key) => trim((string) ($cert[$key] ?? '')) !== '' ? '' : 'display:none;';
 @endphp
-<div class="lmscert-fit" id="lmscertFit">
+<div class="lmscert-fit" id="lmscertFit"@isset($fitTop) data-fit-top="{{ $fitTop }}"@endisset>
     <div class="lmscert-stage" id="lmscertStage">
         <div class="lmscert" id="lmscert">
             <div class="lmscert-bar"></div>
@@ -25,13 +25,11 @@
                 <div class="lmscert-detail" data-cert="detail_text" style="{{ $show('detail_text') }}">{{ $cert['detail_text'] }}</div>
                 <div class="lmscert-divider"></div>
                 <div class="lmscert-sigs">
-                    @foreach([1, 2] as $n)
-                        <div class="lmscert-sig" data-cert-sig="{{ $n }}" style="{{ trim(($cert["sig{$n}_name"] ?? '').($cert["sig{$n}_title"] ?? '')) === '' ? 'visibility:hidden;' : '' }}">
-                            <div class="lmscert-sig-line"></div>
-                            <div class="lmscert-sig-name" data-cert="sig{{ $n }}_name">{{ $cert["sig{$n}_name"] }}</div>
-                            <div class="lmscert-sig-title" data-cert="sig{{ $n }}_title">{{ $cert["sig{$n}_title"] }}</div>
-                        </div>
-                    @endforeach
+                    <div class="lmscert-sig" data-cert-sig style="{{ trim(($cert['sig1_name'] ?? '').($cert['sig1_title'] ?? '')) === '' ? 'visibility:hidden;' : '' }}">
+                        <div class="lmscert-sig-line"></div>
+                        <div class="lmscert-sig-name" data-cert="sig1_name">{{ $cert['sig1_name'] }}</div>
+                        <div class="lmscert-sig-title" data-cert="sig1_title" style="{{ $show('sig1_title') }}">{{ $cert['sig1_title'] }}</div>
+                    </div>
                 </div>
                 <div class="lmscert-cpd" data-cert-cpd style="{{ $show('cpd_points') }}">
                     <div class="lmscert-cpd-value" data-cert="cpd_points">{{ $cert['cpd_points'] }}</div>

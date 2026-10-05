@@ -8,10 +8,8 @@
         'body_text'   => ['Line below the name', ''],
         'course_name' => ['Course line', 'Use {course} for the course title.'],
         'detail_text' => ['Detail line', 'Use {date} for the date the examiner completed the course.'],
-        'sig1_name'   => ['Left signature — name', ''],
-        'sig1_title'  => ['Left signature — title', ''],
-        'sig2_name'   => ['Right signature — name', ''],
-        'sig2_title'  => ['Right signature — title', ''],
+        'sig1_name'   => ['Signature — name', 'Shown centred under a signature line.'],
+        'sig1_title'  => ['Signature — title', 'Optional, e.g. a role. Leave blank to show the name only.'],
         'cpd_points'  => ['CPD points', 'Leave blank to hide the badge.'],
     ];
     $cert = \App\Support\LearningView::certificateText($settings, $sampleName, $course['title'], $sampleDate);
@@ -25,36 +23,39 @@
             @include('learning.partials.flash')
             @include('learning.admin._tabs')
 
-            <div class="card card-pad mb-3">
-                <p class="muted mb-3" style="font-size:13px;">
-                    Examiners receive this certificate when they finish the course. Edit the wording below — the preview updates as you type.
-                    Leave a line blank to hide it. In any line you can use
-                    <code>{name}</code> (the examiner), <code>{course}</code> and <code>{date}</code> (completion date).
-                    The preview uses <strong>{{ $sampleName }}</strong> and today's date.
-                </p>
-                <form method="POST" action="{{ route('admin.exams.learning.certificate.save') }}" id="certForm">
-                    @csrf
-                    <div class="row">
-                        @foreach($fields as $key => [$label, $hint])
-                            <div class="col-md-6 mb-3">
-                                <label for="cf-{{ $key }}" style="font-weight:600; font-size:13px; margin-bottom:4px;">{{ $label }}</label>
-                                <input type="text" class="form-control" id="cf-{{ $key }}" name="{{ $key }}"
-                                       value="{{ old($key, $settings[$key]) }}" data-default="{{ $defaults[$key] }}" data-field="{{ $key }}">
-                                @if($hint)<small class="text-muted">{{ $hint }}</small>@endif
-                                @error($key)<div class="text-danger" style="font-size:12px;">{{ $message }}</div>@enderror
+            <div class="row">
+                <div class="col-xl-4 mb-3">
+                    <div class="card card-pad">
+                        <p class="muted mb-3" style="font-size:13px;">
+                            Examiners receive this certificate when they finish the course. Edit the wording — the preview updates as you type.
+                            Leave a line blank to hide it. In any line you can use
+                            <code>{name}</code> (the examiner), <code>{course}</code> and <code>{date}</code> (completion date).
+                            The preview uses <strong>{{ $sampleName }}</strong> and today's date.
+                        </p>
+                        <form method="POST" action="{{ route('admin.exams.learning.certificate.save') }}" id="certForm">
+                            @csrf
+                            @foreach($fields as $key => [$label, $hint])
+                                <div class="mb-3">
+                                    <label for="cf-{{ $key }}" style="font-weight:600; font-size:13px; margin-bottom:4px;">{{ $label }}</label>
+                                    <input type="text" class="form-control" id="cf-{{ $key }}" name="{{ $key }}"
+                                           value="{{ old($key, $settings[$key]) }}" data-default="{{ $defaults[$key] }}" data-field="{{ $key }}">
+                                    @if($hint)<small class="text-muted">{{ $hint }}</small>@endif
+                                    @error($key)<div class="text-danger" style="font-size:12px;">{{ $message }}</div>@enderror
+                                </div>
+                            @endforeach
+                            <div class="d-flex flex-wrap" style="gap:10px;">
+                                <button type="submit" class="btn btn-primary">Save wording</button>
+                                <button type="button" class="btn btn-light" id="certReset">Reset to default wording</button>
                             </div>
-                        @endforeach
+                        </form>
                     </div>
-                    <div class="d-flex" style="gap:10px;">
-                        <button type="submit" class="btn btn-primary">Save wording</button>
-                        <button type="button" class="btn btn-light" id="certReset">Reset to default wording</button>
+                </div>
+                <div class="col-xl-8 mb-3">
+                    <div class="cert-preview-col">
+                        <h5 style="font-size:16px; font-weight:700; margin-bottom:10px;">Preview</h5>
+                        @include('learning.partials.certificate', ['cert' => $cert, 'name' => $sampleName, 'logo' => asset('dist/img/Cosecsa_Logo.png'), 'fitTop' => 112])
                     </div>
-                </form>
-            </div>
-
-            <div class="card card-pad mb-3">
-                <h5 style="font-size:16px; font-weight:700; margin-bottom:12px;">Preview</h5>
-                @include('learning.partials.certificate', ['cert' => $cert, 'name' => $sampleName, 'logo' => asset('dist/img/Cosecsa_Logo.png')])
+                </div>
             </div>
         </div>
     </section>
@@ -66,6 +67,10 @@
 @include('learning.admin._styles')
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link href="{{ asset('dist/css/lms-certificate.css') }}" rel="stylesheet">
+<style>
+    /* Keep the preview in view while editing on wide screens */
+    @media (min-width: 1200px) { .cert-preview-col { position: sticky; top: 70px; } }
+</style>
 @endpush
 
 @push('scripts')
@@ -90,14 +95,12 @@
             el.textContent = text;
             if (key === 'cpd_points') {
                 document.querySelector('[data-cert-cpd]').style.display = text ? '' : 'none';
-            } else if (key.indexOf('sig') !== 0) {
+            } else if (key !== 'sig1_name') {
                 el.style.display = text ? '' : 'none';
             }
         });
-        [1, 2].forEach(function (n) {
-            var has = document.getElementById('cf-sig' + n + '_name').value.trim() || document.getElementById('cf-sig' + n + '_title').value.trim();
-            document.querySelector('[data-cert-sig="' + n + '"]').style.visibility = has ? '' : 'hidden';
-        });
+        var hasSig = document.getElementById('cf-sig1_name').value.trim() || document.getElementById('cf-sig1_title').value.trim();
+        document.querySelector('[data-cert-sig]').style.visibility = hasSig ? '' : 'hidden';
     }
 
     document.getElementById('certForm').addEventListener('input', refresh);
