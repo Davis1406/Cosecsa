@@ -3,7 +3,7 @@
 @section('content')
 <div class="content-wrapper">
     <section class="content pt-3">
-        <div class="container-fluid">
+        <div class="container-fluid lmscert-page">
             @include('learning.partials.flash')
 
             <div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="gap:12px;">
