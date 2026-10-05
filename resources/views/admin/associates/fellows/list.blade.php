@@ -219,6 +219,10 @@
                         <option value="examiner">Examiners</option>
                         <option value="country_rep">Country Representatives</option>
                         <option value="member">Members</option>
+                        <option value="programme_director">Programme Directors</option>
+                        <option value="trainee">Trainees</option>
+                        <option value="candidate">Candidates</option>
+                        <option value="trainer">Trainers (ToT)</option>
                     </select>
                 </div>
 

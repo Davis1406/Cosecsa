@@ -4,6 +4,25 @@
 
 ## [Unreleased]
 
+### Added (2026-10-05) — "Add Fellow from Associate" covers every associate type
+- ⚠️ **Coordinate:** requires the matching cosecsa-api deploy (`FellowController::searchAssociates` / `storeFromAssociate` now accept the extra source types). The modal's new options 422/400 without it.
+- The **Add Fellow from Associate** modal on `admin/associates/fellows/list` previously searched only Examiners, Country Reps and Members. It now also lists **Programme Directors**, **Trainees**, **Candidates** and **Trainers (ToT)** — everyone on the Associates menu.
+- The ToT `trainers` table has no login, so a trainer is matched to a `users` row by **email**; if none exists the modal says so (create the login first) instead of failing silently.
+- The new fellow inherits the source record's name, email, gender, country, phone, specialty/programme and — for programme directors — their hospital/organisation.
+- **Files:** `resources/views/admin/associates/fellows/list.blade.php`. Needs the matching cosecsa-api deploy.
+
+### Added (2026-10-05) — Applicable fee shown on the fellow Add/Edit pages
+- The **Fellowship Type** select on `admin/associates/fellows/add` and `/edit/{id}` now shows a read-only hint of the matching fee(s) from the fee catalogue: the **Fellowship Registration** fee and the **Annual Subscription** fee for that fellowship type (e.g. *Fellow By Election → Registration — Fellowship By Election/Reg: USD 500.00 · Annual Subscription — Fellows: USD 100.00*). Honorary fellows show none (normally exempt). It updates as the type changes.
+- Matching is done in `FellowsController::fellowshipFeesByCategory()` by comparing the category name against the catalogue's fee names (the same word-scoring used to prefill subscription amounts). Nothing is saved — it's guidance for staff.
+- **Files:** `app/Http/Controllers/FellowsController.php`, new `resources/views/admin/associates/fellows/_fellowship_fee_hint.blade.php`, `add.blade.php`, `edit.blade.php`. No API change (reads `fees/catalogue`).
+
+### Added (2026-10-05) — Pick a hospital from the system (and add one) on the fellow form
+- **Current Hospital / Organisation** on `admin/associates/fellows/add` was a plain text box; it is now the same searchable list of every active hospital as the Edit page, with a **+ New** button beside it.
+- **+ New** opens an Add Hospital modal (name + country) that creates a real hospital through cosecsa-api (`admin/hospitals`), then adds it to the dropdown and selects it. The hospital lookup cache is cleared so it appears everywhere.
+- The Edit page gets the same **+ New** button next to its existing hospital dropdown.
+- The hospital quick-create lives under `admin/associates/fellows/...`, so `fellows.manage` is enough (the internal API call isn't re-checked against the lookups module).
+- **Files:** `app/Http/Controllers/FellowsController.php` (`quickAddHospital()`), `routes/web.php`, new `resources/views/admin/associates/fellows/_add_hospital_modal.blade.php`, `add.blade.php`, `edit.blade.php`. No cosecsa-api change.
+
 ### Added (2026-10-02) — Examiner Training course inside the MIS
 - ⚠️ **Coordinate:** deploy together with cosecsa-api `feat/learning` (migration + `internal/learning/*` endpoints + `lms:import`). These pages read everything from the API.
 - **Examiners:** sidebar → **Examiner Training** (`examiner/learning`): course page, module player (module sidebar, rich content blocks, image preview, checklists, flashcards, process steps, labelled graphics, videos), the 20-question quiz with retakes, and results. **Next module** marks the module complete. Uses the normal MIS login and `examiner` middleware.

@@ -162,6 +162,8 @@
                         </div>
                     </div>
 
+                    @include('admin.associates.fellows._fellowship_fee_hint')
+
                     <div class="ms2-row">
                         <div class="ms2-col">
                             <label class="ms2-label">Promoted to Fellow?</label>
@@ -373,17 +375,25 @@
                         </div>
                         <div class="ms2-col">
                             <label class="ms2-label">Current Hospital / Organisation</label>
-                            <select name="organization" class="ms2-input select2-tags" data-placeholder="Search or type a hospital / organisation…">
-                                <option value=""></option>
-                                @php $hospitalOpts = ($getHospital ?? collect())->pluck('name'); @endphp
-                                @if($fellow->organization && !$hospitalOpts->contains($fellow->organization))
-                                    {{-- Existing free-text value that doesn't match a real hospital record — keep it selectable. --}}
-                                    <option value="{{ $fellow->organization }}" selected>{{ $fellow->organization }}</option>
-                                @endif
-                                @foreach($hospitalOpts as $h)
-                                    <option value="{{ $h }}" {{ $fellow->organization==$h ? 'selected':'' }}>{{ $h }}</option>
-                                @endforeach
-                            </select>
+                            <div class="d-flex align-items-start">
+                                <div style="flex:1 1 auto; min-width:0;">
+                                    <select name="organization" class="ms2-input select2-tags" data-placeholder="Search or type a hospital / organisation…">
+                                        <option value=""></option>
+                                        @php $hospitalOpts = ($getHospital ?? collect())->pluck('name'); @endphp
+                                        @if($fellow->organization && !$hospitalOpts->contains($fellow->organization))
+                                            {{-- Existing free-text value that doesn't match a real hospital record — keep it selectable. --}}
+                                            <option value="{{ $fellow->organization }}" selected>{{ $fellow->organization }}</option>
+                                        @endif
+                                        @foreach($hospitalOpts as $h)
+                                            <option value="{{ $h }}" {{ $fellow->organization==$h ? 'selected':'' }}>{{ $h }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary ml-2" style="white-space:nowrap;"
+                                        data-toggle="modal" data-target="#addHospitalModal" title="Add a new hospital">
+                                    <i class="fas fa-plus"></i> New
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -480,6 +490,8 @@
 
 </div>
 </div>
+
+@include('admin.associates.fellows._add_hospital_modal')
 
 <script>
 function goToStep(n) {

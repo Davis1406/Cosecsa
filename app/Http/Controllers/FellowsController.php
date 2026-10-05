@@ -5,10 +5,26 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\FetchesAssociateNotes;
 use App\Services\ApiClient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class FellowsController extends Controller
 {
     use FetchesAssociateNotes;
+
+    // Fee lookup is word-matched against the fee catalogue by these category
+    // names, the same labels the add/edit Fellowship Type dropdowns show.
+    private const FELLOWSHIP_CATEGORIES = [
+        1  => 'Member',
+        2  => 'Associate Fellow',
+        3  => 'Affiliate Member',
+        4  => 'Associate Member',
+        5  => 'Fellow by Examination',
+        6  => 'Foundation Fellow',
+        7  => 'Fellow By Election',
+        8  => 'Honorary Fellow (ASEA)',
+        9  => 'Overseas Fellow',
+        10 => 'Honorary Fellow (COSECSA)',
+    ];
 
     public function __construct(private ApiClient $api) {}
 
@@ -88,9 +104,11 @@ class FellowsController extends Controller
 
     public function add()
     {
-        // Country list still comes from the local DB — lightweight reference data.
-        $data['getCountry']   = \App\Models\Country::getCountry();
-        $data['header_title'] = 'Add New Fellow';
+        // Country/hospital lists still come from the local DB — lightweight reference data.
+        $data['getCountry']     = \App\Models\Country::getCountry();
+        $data['getHospital']    = \App\Models\HospitalModel::getHospital();
+        $data['fellowshipFees'] = $this->fellowshipFeesByCategory();
+        $data['header_title']   = 'Add New Fellow';
         return view('admin.associates.fellows.add', $data);
     }
 
@@ -186,10 +204,11 @@ class FellowsController extends Controller
             return redirect('admin/associates/fellows/list')->with('error', 'Fellow not found');
         }
 
-        $data['getCountry']   = \App\Models\Country::getCountry();
-        $data['getHospital']  = \App\Models\HospitalModel::getHospital();
-        $data['header_title'] = 'Edit Fellow';
-        $data['fellow']       = $response->object()->fellow;
+        $data['getCountry']     = \App\Models\Country::getCountry();
+        $data['getHospital']    = \App\Models\HospitalModel::getHospital();
+        $data['fellowshipFees'] = $this->fellowshipFeesByCategory();
+        $data['header_title']   = 'Edit Fellow';
+        $data['fellow']         = $response->object()->fellow;
 
         return view('admin.associates.fellows.edit', $data);
     }
@@ -288,10 +307,9 @@ class FellowsController extends Controller
         ] : null;
     }
 
-    // Active Annual Subscription fees from the fee catalogue — the options of
-    // the subscription modals' Amount Due dropdown. Empty if the API is down
-    // (the modals then fall back to typing the amount under "Other").
-    protected function subscriptionFees()
+    // Every active fee from the catalogue, flattened out of its fee_group.
+    // Empty if the API is down.
+    protected function catalogueFees()
     {
         $response = $this->api->get('fees/catalogue');
         if ($response->failed()) {
@@ -300,9 +318,123 @@ class FellowsController extends Controller
 
         return collect((array) ($response->object()->fee_types ?? []))
             ->flatten(1)
-            ->filter(fn ($fee) => ! empty($fee->applies_to_subscription) && ! empty($fee->is_active))
+            ->filter(fn ($fee) => ! empty($fee->is_active))
+            ->values();
+    }
+
+    // Active Annual Subscription fees from the fee catalogue — the options of
+    // the subscription modals' Amount Due dropdown. Empty if the API is down
+    // (the modals then fall back to typing the amount under "Other").
+    protected function subscriptionFees()
+    {
+        return $this->catalogueFees()
+            ->filter(fn ($fee) => ! empty($fee->applies_to_subscription))
             ->sortByDesc('amount')
             ->values();
+    }
+
+    // Fellowship Type (category) → the applicable catalogue fee(s): the
+    // best-matching "Fellowship Registration" fee and "Annual Subscription"
+    // fee for each category name. Shown read-only on the fellow add/edit
+    // pages so staff can see what the selected fellowship type costs.
+    protected function fellowshipFeesByCategory(): array
+    {
+        $fees = $this->catalogueFees();
+        if ($fees->isEmpty()) {
+            return [];
+        }
+
+        $map = [];
+        foreach (self::FELLOWSHIP_CATEGORIES as $id => $name) {
+            $registration = $this->bestFellowshipFee($fees, $name, 'Fellowship Registration');
+            $subscription = $this->bestFellowshipFee($fees, $name, 'Annual Subscription');
+
+            if ($registration || $subscription) {
+                $map[$id] = [
+                    'label'        => $name,
+                    'registration' => $registration,
+                    'subscription' => $subscription,
+                ];
+            }
+        }
+
+        return $map;
+    }
+
+    // Best fee within a group for a fellowship type name: words are compared
+    // singularised ("Fellows" = "Fellow"), scoring +1 per shared word and
+    // −0.5 per word the type name doesn't have, so "Fellow by Election"
+    // beats "Fellows" for "Fellowship By Election/Reg". Honorary fellows are
+    // normally exempt, so no fee is suggested for them.
+    protected function bestFellowshipFee($fees, string $categoryName, string $feeGroup): ?array
+    {
+        if (stripos($categoryName, 'honorary') !== false) {
+            return null;
+        }
+
+        $words = fn (string $s) => array_values(array_unique(array_filter(array_map(
+            fn ($w) => rtrim($w, 's'),
+            preg_split('/[^a-z]+/', strtolower($s))
+        ), fn ($w) => strlen($w) > 2)));
+
+        $catWords = $words($categoryName);
+        $best = null;
+        $bestShared = 0;
+        $bestScore = -INF;
+
+        foreach ($fees->where('fee_group', $feeGroup) as $fee) {
+            $feeWords = $words($fee->name);
+            $shared = count(array_intersect($feeWords, $catWords));
+            if ($shared === 0) {
+                continue;
+            }
+
+            $score = $shared - 0.5 * (count($feeWords) - $shared);
+            if ($shared > $bestShared || ($shared === $bestShared && $score > $bestScore)) {
+                $best = $fee;
+                $bestShared = $shared;
+                $bestScore = $score;
+            }
+        }
+
+        return $best ? [
+            'name'     => $best->name,
+            'amount'   => (float) $best->amount,
+            'currency' => $best->currency ?? 'USD',
+            'group'    => $best->fee_group,
+        ] : null;
+    }
+
+    // Inline "add a hospital" on the fellow add/edit form: creates a real
+    // hospital through cosecsa-api and returns it so the dropdown can select
+    // it. Kept under the fellows route, so fellows.manage is enough (the
+    // internal API call isn't re-checked against the lookups module).
+    public function quickAddHospital(Request $request)
+    {
+        $request->validate([
+            'name'       => 'required|string|max:255',
+            'country_id' => 'required|integer',
+        ]);
+
+        $response = $this->api->post('admin/hospitals', $request->only(['name', 'country_id']));
+
+        if ($response->failed()) {
+            return response()->json(
+                ['message' => $response->json('message') ?? 'Failed to create hospital.'],
+                $response->status() ?: 500
+            );
+        }
+
+        // The hospital dropdown is populated from the cached lookup list.
+        Cache::forget('lookup:hospitals');
+
+        $data     = $response->object();
+        $hospital = is_object($data) ? ($data->hospital ?? null) : null;
+
+        return response()->json([
+            'id'   => $hospital->id ?? null,
+            'name' => $hospital->name ?? $request->name,
+        ]);
     }
 
     public function storeSubscription(Request $request, $id)

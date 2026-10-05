@@ -338,6 +338,8 @@ Route::post('admin/associates/fellows/{id}/quick-update', [FellowsController::cl
 Route::post('admin/associates/fellows/{id}/add-role', [FellowsController::class,'addRole'])->name('fellows.add-role');
 Route::get('admin/associates/fellows/search', [FellowsController::class,'search'])->name('fellows.search');
 Route::post('admin/associates/fellows/quick-create', [FellowsController::class,'quickCreate'])->name('fellows.quick-create');
+// Inline "add a hospital" from the fellow add/edit form (creates a real hospital via cosecsa-api).
+Route::post('admin/associates/fellows/quick-add-hospital', [FellowsController::class,'quickAddHospital'])->name('fellows.quick-add-hospital');
 // Add a fellow from an existing Examiner/Country Rep/Member (reuses their login).
 Route::get('admin/associates/fellows/search-associates', [FellowsController::class,'searchAssociates'])->name('fellows.search-associates');
 Route::post('admin/associates/fellows/from-associate', [FellowsController::class,'addFromAssociate'])->name('fellows.from-associate');

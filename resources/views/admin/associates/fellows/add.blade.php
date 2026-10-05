@@ -162,6 +162,7 @@
                                 </select>
                             </div>
                         </div>
+                        @include('admin.associates.fellows._fellowship_fee_hint')
                         <div class="form-row">
                             <div class="form-group col-md-3">
                                 <label class="form-label">Intake / Admission Year</label>
@@ -260,7 +261,21 @@
                             </div>
                             <div class="form-group col-md-6">
                                 <label class="form-label">Current Hospital / Organisation</label>
-                                <input type="text" name="organization" class="form-control form-control-sm">
+                                <div class="d-flex align-items-start">
+                                    <div style="flex:1 1 auto; min-width:0;">
+                                        <select name="organization" class="form-control form-control-sm select2-tags"
+                                                data-placeholder="Search or type a hospital / organisation…">
+                                            <option value=""></option>
+                                            @foreach(($getHospital ?? collect())->pluck('name') as $h)
+                                                <option value="{{ $h }}">{{ $h }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ml-2" style="white-space:nowrap;"
+                                            data-toggle="modal" data-target="#addHospitalModal" title="Add a new hospital">
+                                        <i class="fas fa-plus"></i> New
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -341,7 +356,13 @@
     </section>
 </div>
 
+@include('admin.associates.fellows._add_hospital_modal')
+
+@push('scripts')
 <script>
-$(function () { bsCustomFileInput.init(); });
+$(function () {
+    if (typeof bsCustomFileInput !== 'undefined') bsCustomFileInput.init();
+});
 </script>
+@endpush
 @endsection
