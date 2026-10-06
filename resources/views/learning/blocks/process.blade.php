@@ -14,7 +14,7 @@
         @endif
         <div class="process-body">
             @if($intro && ($intro['title'] ?? null))
-                <h4 class="process-title">{{ $intro['title'] }}</h4>
+                <h4 class="process-title">{!! \App\Support\LearningView::html($intro['title'] ?? null) !!}</h4>
             @endif
             @if($intro && ($intro['description'] ?? null))
                 <div class="process-desc">{!! \App\Support\LearningView::html($intro['description']) !!}</div>
@@ -29,7 +29,7 @@
                     <div class="process-step {{ $i === 0 ? 'active' : '' }}" data-step="{{ $i }}">
                         <div class="step-head">
                             <span class="step-num">{{ $i + 1 }}</span>
-                            <span class="step-title">{{ $step['title'] ?? 'Step ' . ($i + 1) }}</span>
+                            <span class="step-title">{!! \App\Support\LearningView::html($step['title'] ?? 'Step ' . ($i + 1)) !!}</span>
                         </div>
                         <div class="step-body">
                             @if($stepUrl)@include('learning.blocks._img', ['img' => $stepImg, 'url' => $stepUrl, 'frameDefaults' => ['radius' => 10]])@endif
