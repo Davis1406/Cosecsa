@@ -134,7 +134,7 @@ class TraineesApplicationImport implements ToCollection, WithHeadingRow, WithChu
         $sfsEmail    = trim($row['sfs_username'] ?? '');
         $loginEmail  = $sfsEmail ?: $email;
 
-        // "Status" column = payment/invoice status (Complete, Invoiced, Deferred, Paid & Deffered, Rejected…)
+        // "Status" column = payment/invoice status (Complete, Invoiced, Deferred, Paid & Deferred, Rejected…)
         // "Application Status" column = enrolment status — NOT used for the import gate
         $payStatus = strtolower(trim($row['status'] ?? ''));
 
