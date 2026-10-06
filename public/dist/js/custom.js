@@ -153,9 +153,9 @@ $(function () {
     // Trainees
     // Cols: #(0) Name(1) Gender(2) AdmNo(3) Email(4) Programme(5) Hospital(6)
     //       Country(7) Status(8) | hidden: SFSUser(9) SFSPass(10) AdmLetter(11)
-    //       InvLetter(12) AdmYear(13) ProgYear(14) ExamYear(15) ProgDuration(16)
-    //       Invoice#(17) InvDate(18) InvStatus(19) Sponsor(20) ModePayment(21)
-    //       AmtPaid(22) DatePaid(23) | Action(24)
+    //       InvLetter(12) AdmYear(13) ProgYear(14) ExamYear(15) ResumeYear(16)
+    //       ProgDuration(17) Invoice#(18) InvDate(19) InvStatus(20) Sponsor(21)
+    //       ModePayment(22) AmtPaid(23) DatePaid(24) | Action(25)
     // ═══════════════════════════════════════════════════════════════════════════════
     if ($("#traineestable").length) {
         showLoader("traineestable");
@@ -167,7 +167,7 @@ $(function () {
             "buttons": [
                 { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
                   className: "btn btn-success btn-sm", title: "Trainees List",
-                  exportOptions: { columns: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23] } },
+                  exportOptions: { columns: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24] } },
                 { extend: "pdfHtml5", text: '<i class="fas fa-file-pdf mr-1"></i> PDF',
                   className: "btn btn-danger btn-sm", title: "Trainees List",
                   orientation: "landscape", pageSize: "A4", exportOptions: { columns: [1,2,3,4,5,6,7,8] } },
@@ -186,7 +186,7 @@ $(function () {
                 { "visible": false }, { "visible": false }, { "visible": false },
                 { "visible": false }, { "visible": false }, { "visible": false },
                 { "visible": false }, { "visible": false }, { "visible": false },
-                { "visible": true,  "orderable": false, "searchable": false }  // 24 Action
+                { "visible": false }, { "visible": true,  "orderable": false, "searchable": false }  // 25 Action
             ],
             "initComplete": function () { hideLoader("traineestable"); },
             "drawCallback": function () {
