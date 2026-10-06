@@ -123,7 +123,7 @@ class TraineeController extends Controller
         $fields = $request->only([
             'firstname', 'middlename', 'lastname', 'email', 'password', 'personal_email',
             'gender', 'status', 'programme_id', 'hospital_id', 'country_id', 'entry_number',
-            'admission_letter_status', 'invitation_letter_status', 'admission_year',
+            'admission_letter_status', 'invitation_letter_status', 'admission_year', 'resume_year',
             'training_year', 'exam_year', 'programme_period', 'invoice_number',
             'invoice_date', 'invoice_amount', 'invoice_status', 'fee_paid', 'sponsor',
             'mode_of_payment', 'amount_paid', 'payment_date',
@@ -162,7 +162,7 @@ class TraineeController extends Controller
             'firstname', 'middlename', 'lastname', 'email', 'password', 'personal_email',
             'gender', 'status', 'programme_id', 'hospital_id', 'country_id', 'entry_number',
             'admission_letter_status', 'invitation_letter_status', 'sfs_username', 'sfs_password',
-            'admission_year', 'exam_year', 'training_year', 'programme_period', 'invoice_number',
+            'admission_year', 'resume_year', 'exam_year', 'training_year', 'programme_period', 'invoice_number',
             'invoice_date', 'invoice_amount', 'invoice_status', 'fee_paid', 'sponsor',
             'mode_of_payment', 'amount_paid', 'payment_date',
         ]);

@@ -121,6 +121,7 @@
                                                 <th>Admission Year</th>
                                                 <th>Programme Year</th>
                                                 <th>Exam Year</th>
+                                                <th>Resume Year</th>
                                                 <th>Programme Duration</th>
                                                 <th>Invoice Number</th>
                                                 <th>Invoice Date</th>
@@ -138,6 +139,7 @@
                                                     data-programme="{{ $value->programme_name ?? '' }}"
                                                     data-year="{{ $value->exam_year ?? '' }}"
                                                     data-admissionyear="{{ $value->admission_year ?? '' }}"
+                                                    data-resumeyear="{{ $value->resume_year ?? '' }}"
                                                     data-status="{{ $value->status ?? '' }}"
                                                     data-gender="{{ $value->gender ?? '' }}"
                                                     data-hospital="{{ $value->hospital_name ?? '' }}">
@@ -147,6 +149,9 @@
                                                            class="trainee-name-link font-weight-500">
                                                             {{ $value->name }}
                                                         </a>
+                                                    @if($value->resume_year ?? null)
+                                                        <span class="badge badge-info ml-1" title="Deferred — resuming in {{ $value->resume_year }}">Resuming {{ $value->resume_year }}</span>
+                                                    @endif
                                                     </td>
                                                     <td>{{ $value->gender }}</td>
                                                     <td>{{ $value->entry_number }}</td>
@@ -163,6 +168,7 @@
                                                     <td>{{ $value->admission_year }}</td>
                                                     <td>{{ $value->programme_year }}</td>
                                                     <td>{{ $value->exam_year }}</td>
+                                                    <td>{{ $value->resume_year ?? '' }}</td>
                                                     <td>{{ $value->programme_period }} Years</td>
                                                     <td>{{ $value->invoice_number }}</td>
                                                     <td>{{ $value->invoice_date }}</td>
@@ -256,7 +262,6 @@ $(document).ready(function () {
             { id: 'filterCountry',       val: String($row.data('country')      || '') },
             { id: 'filterProgramme',     val: String($row.data('programme')    || '') },
             { id: 'filterYear',          val: String($row.data('year')         || '') },
-            { id: 'filterAdmissionYear', val: String($row.data('admissionyear')|| '') },
             { id: 'filterStatus',        val: String($row.data('status')       || '') },
             { id: 'filterGender',        val: String($row.data('gender')       || '') },
             { id: 'filterHospital',      val: String($row.data('hospital')     || '') },
@@ -264,6 +269,15 @@ $(document).ready(function () {
         for (var i = 0; i < filters.length; i++) {
             var checked = getChecked(filters[i].id);
             if (checked.length && checked.indexOf(filters[i].val) === -1) return false;
+        }
+
+        // Admission Year matches the original intake OR the resume/cohort year,
+        // so a trainee who deferred and resumes later also appears under that year.
+        var checkedAdm = getChecked('filterAdmissionYear');
+        if (checkedAdm.length) {
+            var adm = String($row.data('admissionyear') || '');
+            var res = String($row.data('resumeyear')    || '');
+            if (checkedAdm.indexOf(adm) === -1 && checkedAdm.indexOf(res) === -1) return false;
         }
         return true;
     });

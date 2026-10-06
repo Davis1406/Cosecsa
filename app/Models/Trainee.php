@@ -28,6 +28,7 @@ class Trainee extends Model
         'admission_letter_status',
         'invitation_letter_status',
         'admission_year',
+        'resume_year',
         'exam_year',
         'training_year',
         'programme_period',

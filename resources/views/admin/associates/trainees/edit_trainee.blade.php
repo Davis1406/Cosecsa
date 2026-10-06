@@ -229,6 +229,15 @@
                                 <option value="Inactive"  {{ $trainee->status == 'Inactive'  ? 'selected' : '' }}>Inactive</option>
                             </select>
                         </div>
+                        <div class="ms2-col">
+                            <label class="ms2-label">Resume Year <small class="text-muted">(deferred trainees)</small></label>
+                            <select name="resume_year" class="ms2-input">
+                                <option value="">None</option>
+                                @for($y = 2020; $y <= 2035; $y++)
+                                    <option value="{{ $y }}" {{ (string) ($trainee->resume_year ?? '') === (string) $y ? 'selected' : '' }}>{{ $y }}</option>
+                                @endfor
+                            </select>
+                        </div>
                     </div>
 
                     <div class="ms2-row">

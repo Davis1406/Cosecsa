@@ -234,6 +234,16 @@
                                 Exam <span class="tag-label">{{ $trainee->exam_year ?: '—' }}</span>
                             </span>
 
+                            {{-- Resume / cohort year (deferred trainees) --}}
+                            <span class="tag-pill tag-blue tag-editable"
+                                  data-field="resume_year"
+                                  data-value="{{ $trainee->resume_year ?? '' }}"
+                                  data-type="number"
+                                  title="Year this trainee resumes after a deferral — also lists them under this cohort">
+                                <i class="fas fa-edit tag-edit-icon"></i>
+                                Resuming <span class="tag-label">{{ ($trainee->resume_year ?? null) ?: '—' }}</span>
+                            </span>
+
                             {{-- Programme --}}
                             <span class="tag-pill tag-grey tag-editable"
                                   data-field="programme_id"
@@ -898,7 +908,7 @@ $(document).ready(function () {
 
     function fieldLabel(field) {
         var map = {
-            admission_year:'Admission Year', exam_year:'Exam Year',
+            admission_year:'Admission Year', exam_year:'Exam Year', resume_year:'Resume Year',
             programme_id:'Programme', country_id:'Country',
             status:'Status', invoice_status:'Invoice Status',
             admission_letter_status:'Adm. Letter Status'
