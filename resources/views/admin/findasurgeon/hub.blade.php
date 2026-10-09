@@ -10,6 +10,8 @@
     body.dark-mode #fasHubTabs.nav-tabs .nav-link { color:#e0a5a5 !important; }
     body.dark-mode #fasHubTabs.nav-tabs .nav-link.active { color:#fff !important; background:#a02626 !important; }
     .fas-muted { color:#6b7280; } body.dark-mode .fas-muted { color:#94a3b8; }
+    .fas-pane form.form-inline .form-control { width:auto; max-width:none; }
+    .fas-pane form.form-inline input[type=text] { field-sizing:content; min-width:8ch; }
     .fas-pane.loading { opacity:.5; pointer-events:none; transition:opacity .15s; }
     @media print {
         .main-sidebar, .main-header, #fasHubTabs, .fas-noprint, .main-footer { display:none !important; }

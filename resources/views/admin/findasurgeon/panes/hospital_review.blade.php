@@ -18,7 +18,7 @@
                 <div class="card-body">
                     <form method="get" class="form-inline mb-3">
                         @if (! $pending)<input type="hidden" name="show" value="dismissed">@endif
-                        <input type="text" name="q" value="{{ request('q') }}" class="form-control mr-2 mb-2" placeholder="Hospital name…" style="max-width:220px;">
+                        <input type="text" size="17" name="q" value="{{ request('q') }}" class="form-control mr-2 mb-2" placeholder="Hospital name…">
                         <select name="country_id" class="form-control mr-2 mb-2">
                             <option value="">All countries</option>
                             @foreach ($countries as $c)<option value="{{ $c->id }}" {{ (string) request('country_id') === (string) $c->id ? 'selected' : '' }}>{{ $c->country_name }}</option>@endforeach
@@ -42,10 +42,11 @@
 
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
-                            <thead><tr><th>Hospital as typed</th><th>Country</th><th>Fellows</th><th>Closest listed hospitals</th><th class="text-right">Actions</th></tr></thead>
+                            <thead><tr><th>#</th><th>Hospital as typed</th><th>Country</th><th>Fellows</th><th>Closest listed hospitals</th><th class="text-right">Actions</th></tr></thead>
                             <tbody>
                             @forelse ($groups as $g)
                                 <tr>
+                                    <td class="fas-muted">{{ $loop->iteration }}</td>
                                     <td style="min-width:220px;">
                                         <strong>{{ $g->name }}</strong>
                                         @if ($g->typed_by_fellow)
@@ -96,7 +97,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="text-center fas-muted py-4">{{ $pending ? 'Nothing to review. Every hospital a Fellow uses is on the official list.' : 'No dismissed names.' }}</td></tr>
+                                <tr><td colspan="6" class="text-center fas-muted py-4">{{ $pending ? 'Nothing to review. Every hospital a Fellow uses is on the official list.' : 'No dismissed names.' }}</td></tr>
                             @endforelse
                             </tbody>
                         </table>

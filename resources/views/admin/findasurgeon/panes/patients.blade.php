@@ -6,7 +6,7 @@
             <div class="card">
                 <div class="card-body">
                     <form method="get" class="form-inline mb-3">
-                        <input type="text" name="q" value="{{ request('q') }}" class="form-control mr-2 mb-2" placeholder="Name, email or phone…" style="max-width:260px;">
+                        <input type="text" size="24" name="q" value="{{ request('q') }}" class="form-control mr-2 mb-2" placeholder="Name, email or phone…">
                         <select name="status" class="form-control mr-2 mb-2">
                             <option value="">All accounts</option>
                             <option value="verified" {{ request('status') === 'verified' ? 'selected' : '' }}>Verified</option>
@@ -24,12 +24,13 @@
                     <div class="table-responsive">
                         <table class="table table-hover table-sm mb-0">
                             <thead><tr>
-                                <th>Patient</th><th>Email</th><th>Phone</th><th>Status</th>
+                                <th>#</th><th>Patient</th><th>Email</th><th>Phone</th><th>Status</th>
                                 <th class="text-center">Saved</th><th>Joined</th><th>Last login</th><th>Last active</th><th></th>
                             </tr></thead>
                             <tbody>
                             @forelse ($patients as $p)
                                 <tr>
+                                    <td class="fas-muted">{{ $patients->firstItem() + $loop->index }}</td>
                                     <td><strong>{{ $p->full_name }}</strong></td>
                                     <td>{{ $p->email ?: '—' }}</td>
                                     <td>{{ $p->phone ?: '—' }}</td>
@@ -44,7 +45,7 @@
                                     <td class="text-right"><button type="button" class="btn btn-xs btn-outline-dark js-patient" data-id="{{ $p->id }}">Details</button></td>
                                 </tr>
                             @empty
-                                <tr><td colspan="9" class="text-center fas-muted py-4">No patients match.</td></tr>
+                                <tr><td colspan="10" class="text-center fas-muted py-4">No patients match.</td></tr>
                             @endforelse
                             </tbody>
                         </table>

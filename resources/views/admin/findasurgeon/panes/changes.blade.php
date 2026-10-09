@@ -6,7 +6,7 @@
             <div class="card">
                 <div class="card-body">
                     <form method="get" class="form-inline mb-3">
-                        <input type="text" name="q" value="{{ request('q') }}" class="form-control mr-2 mb-2" placeholder="Fellow or value…" style="max-width:220px;">
+                        <input type="text" size="19" name="q" value="{{ request('q') }}" class="form-control mr-2 mb-2" placeholder="Fellow or value…">
                         <select name="field" class="form-control mr-2 mb-2">
                             <option value="">All fields</option>
                             @foreach ($fields as $f)<option value="{{ $f }}" {{ request('field') === $f ? 'selected' : '' }}>{{ $f }}</option>@endforeach
@@ -25,10 +25,11 @@
 
                     <div class="table-responsive">
                         <table class="table table-hover table-sm mb-0">
-                            <thead><tr><th style="white-space:nowrap;">When</th><th>Fellow</th><th>Field</th><th>Before</th><th>After</th><th>By</th></tr></thead>
+                            <thead><tr><th>#</th><th style="white-space:nowrap;">When</th><th>Fellow</th><th>Field</th><th>Before</th><th>After</th><th>By</th></tr></thead>
                             <tbody>
                             @forelse ($changes as $c)
                                 <tr>
+                                    <td class="fas-muted">{{ $changes->firstItem() + $loop->index }}</td>
                                     <td style="white-space:nowrap;">{{ \Carbon\Carbon::parse($c->created_at)->format('d M Y H:i') }}</td>
                                     <td><strong>{{ $c->fellow_name }}</strong><div class="fas-muted" style="font-size:.78rem;">{{ $c->country_name }}</div></td>
                                     <td>{{ $c->field }}@if ($c->note)<div class="fas-muted" style="font-size:.76rem;">{{ $c->note }}</div>@endif</td>
@@ -37,7 +38,7 @@
                                     <td>@if ($c->source === 'secretariat') <span class="badge badge-warning">Secretariat</span> @else <span class="badge badge-light border">Fellow</span> @endif</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="6" class="text-center fas-muted py-4">No changes recorded yet.</td></tr>
+                                <tr><td colspan="7" class="text-center fas-muted py-4">No changes recorded yet.</td></tr>
                             @endforelse
                             </tbody>
                         </table>

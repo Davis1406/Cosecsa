@@ -6,7 +6,7 @@
             <div class="card">
                 <div class="card-body">
                     <form method="get" class="form-inline mb-3">
-                        <input type="text" name="q" value="{{ request('q') }}" class="form-control mr-2 mb-2" placeholder="Name, email or hospital…" style="max-width:260px;">
+                        <input type="text" size="27" name="q" value="{{ request('q') }}" class="form-control mr-2 mb-2" placeholder="Name, email or hospital…">
                         <select name="country_id" class="form-control mr-2 mb-2">
                             <option value="">All countries</option>
                             @foreach ($countries as $c)
@@ -26,13 +26,14 @@
                     <div class="table-responsive">
                         <table class="table table-hover table-sm mb-0">
                             <thead><tr>
-                                <th>Fellow</th><th>Email</th><th>Phone</th><th>Country</th><th>Specialty</th><th>Hospital</th>
+                                <th>#</th><th>Fellow</th><th>Email</th><th>Phone</th><th>Country</th><th>Specialty</th><th>Hospital</th>
                                 <th class="text-center">Photo</th><th class="text-center">Bio</th><th class="text-center">Edits</th>
                                 <th>Last login</th><th>Last active</th>
                             </tr></thead>
                             <tbody>
                             @forelse ($fellows as $f)
                                 <tr>
+                                    <td class="fas-muted">{{ $fellows->firstItem() + $loop->index }}</td>
                                     <td><strong>{{ $f->name }}</strong></td>
                                     <td>{{ $f->personal_email ?: '—' }}</td>
                                     <td>{{ $f->phone_number ?: '—' }}</td>
@@ -49,7 +50,7 @@
                                     <td>{{ $f->last_active ? \Carbon\Carbon::parse($f->last_active)->diffForHumans() : '—' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="11" class="text-center fas-muted py-4">No Fellows match.</td></tr>
+                                <tr><td colspan="12" class="text-center fas-muted py-4">No Fellows match.</td></tr>
                             @endforelse
                             </tbody>
                         </table>
