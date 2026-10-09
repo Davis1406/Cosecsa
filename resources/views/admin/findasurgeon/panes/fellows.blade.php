@@ -13,11 +13,6 @@
                                 <option value="{{ $c->id }}" {{ request('country_id') == $c->id ? 'selected' : '' }}>{{ $c->country_name }}</option>
                             @endforeach
                         </select>
-                        <select name="usage" class="form-control mr-2 mb-2">
-                            <option value="">All Fellows</option>
-                            <option value="used" {{ request('usage') === 'used' ? 'selected' : '' }}>Has used the app</option>
-                            <option value="never" {{ request('usage') === 'never' ? 'selected' : '' }}>Never signed in</option>
-                        </select>
                         <button class="btn btn-sm btn-dark mr-2 mb-2" type="submit">Filter</button>
                         <a href="{{ route('admin.findasurgeon.fellows') }}" class="btn btn-sm btn-outline-secondary mb-2">Reset</a>
                         <span class="ml-auto fas-muted mb-2">{{ number_format($fellows->total()) }} Fellow{{ $fellows->total() == 1 ? '' : 's' }}</span>
@@ -50,13 +45,13 @@
                                     <td>{{ $f->last_active ? \Carbon\Carbon::parse($f->last_active)->diffForHumans() : '—' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="12" class="text-center fas-muted py-4">No Fellows match.</td></tr>
+                                <tr><td colspan="12" class="text-center fas-muted py-4">No Fellow has signed in to the app yet.</td></tr>
                             @endforelse
                             </tbody>
                         </table>
                     </div>
                     <div class="mt-3">{!! $fellows->links() !!}</div>
-                    <p class="fas-muted mt-3 mb-0" style="font-size:.8rem;"><i class="fas fa-info-circle mr-1"></i>Active Fellows only. Sign-in times are recorded from 9 Oct 2026; earlier logins are unknown, so "Never signed in" means none seen since then.</p>
+                    <p class="fas-muted mt-3 mb-0" style="font-size:.8rem;"><i class="fas fa-info-circle mr-1"></i>Only Fellows who have signed in to the app are listed. Sign-ins are recorded from 9 Oct 2026, so earlier logins do not appear.</p>
                 </div>
             </div>
 </div>

@@ -31,7 +31,7 @@ class FindASurgeonController extends Controller
 
     public function fellows(Request $request)
     {
-        $response = $this->api->get('findasurgeon/fellows', $request->only(['q', 'usage', 'country_id', 'page']));
+        $response = $this->api->get('findasurgeon/fellows', $request->only(['q', 'country_id', 'page']) + ['usage' => 'used']);
         abort_unless($response->successful(), 500, 'Failed to load Fellows.');
         $data = $response->object();
 
