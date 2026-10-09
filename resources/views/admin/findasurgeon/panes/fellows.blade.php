@@ -1,17 +1,7 @@
-@extends('layout.app')
 
-@section('title', 'Find A Surgeon · Fellows')
 
-@section('content')
-<div class="content-wrapper">
-    <section class="content-header">
-        <div class="container-fluid"><h1 style="font-size:1.4rem;">Find A Surgeon · Fellows</h1></div>
-    </section>
-
-    <section class="content">
-        <div class="container-fluid">
-            @include('_message')
-            @include('admin.findasurgeon._tabs')
+<div class="fas-pane-head mb-3"></div>
+<div>
 
             <div class="card">
                 <div class="card-body">
@@ -68,7 +58,4 @@
                     <p class="fas-muted mt-3 mb-0" style="font-size:.8rem;"><i class="fas fa-info-circle mr-1"></i>Active Fellows only. Sign-in times are recorded from 9 Oct 2026; earlier logins are unknown, so "Never signed in" means none seen since then.</p>
                 </div>
             </div>
-        </div>
-    </section>
 </div>
-@endsection

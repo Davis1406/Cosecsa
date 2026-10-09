@@ -1,17 +1,7 @@
-@extends('layout.app')
 
-@section('title', 'Find A Surgeon · Patients')
 
-@section('content')
-<div class="content-wrapper">
-    <section class="content-header">
-        <div class="container-fluid"><h1 style="font-size:1.4rem;">Find A Surgeon · Patients</h1></div>
-    </section>
-
-    <section class="content">
-        <div class="container-fluid">
-            @include('_message')
-            @include('admin.findasurgeon._tabs')
+<div class="fas-pane-head mb-3"></div>
+<div>
 
             <div class="card">
                 <div class="card-body">
@@ -49,7 +39,7 @@
                                     </td>
                                     <td class="text-center">{{ $p->favourites_count }}</td>
                                     <td>{{ \Carbon\Carbon::parse($p->created_at)->format('d M Y') }}</td>
-                                    <td>{{ $p->app_last_login_at ? \Carbon\Carbon::parse($p->app_last_login_at)->format('d M Y H:i') : '—' }}</td>
+                                    <td>{{ ($p->app_last_login_at ?? null) ? \Carbon\Carbon::parse($p->app_last_login_at)->format('d M Y H:i') : '—' }}</td>
                                     <td>{{ $p->last_active ? \Carbon\Carbon::parse($p->last_active)->diffForHumans() : '—' }}</td>
                                     <td class="text-right"><button type="button" class="btn btn-xs btn-outline-dark js-patient" data-id="{{ $p->id }}">Details</button></td>
                                 </tr>
@@ -63,8 +53,6 @@
                     <p class="fas-muted mt-3 mb-0" style="font-size:.8rem;"><i class="fas fa-lock mr-1"></i>Patient contact details are personal data: use them for support only.</p>
                 </div>
             </div>
-        </div>
-    </section>
 </div>
 
 <div class="modal fade" id="patientModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -76,16 +64,14 @@
         </div>
     </div>
 </div>
-@endsection
 
-@push('scripts')
 <script>
 (function () {
     var base = @json(url('admin/find-a-surgeon/patients'));
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
     function when(s) { return s ? new Date(s.replace(' ', 'T')).toLocaleString() : '—'; }
 
-    $(document).on('click', '.js-patient', function () {
+    $(document).off('click.fasPat', '.js-patient').on('click.fasPat', '.js-patient', function () {
         var id = $(this).data('id');
         $('#pmTitle').text('Patient'); $('#pmBody').html('<p class="fas-muted">Loading…</p>');
         $('#patientModal').modal('show');
@@ -114,4 +100,3 @@
     });
 })();
 </script>
-@endpush

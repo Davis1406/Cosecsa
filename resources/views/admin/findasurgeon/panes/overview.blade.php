@@ -1,6 +1,4 @@
-@extends('layout.app')
 
-@section('title', 'Find A Surgeon')
 
 @php
     $p = $data->patients;  $d = $data->directory;  $c = $data->changes;  $h = $data->hospital_review;  $ch = $data->charts;
@@ -15,7 +13,6 @@
     ];
 @endphp
 
-@push('styles')
 <style>
     .fas-kpi { border-radius:12px; border:1px solid rgba(0,0,0,.08); padding:14px 16px; height:100%; background:#fff; }
     body.dark-mode .fas-kpi { background:#1e2330; border-color:#2d3748; }
@@ -27,31 +24,21 @@
     .fas-chart.tall { height:320px; }
     .fas-alert { border-left:4px solid #FEC503; }
     @media print {
-        .main-sidebar, .main-header, .fas-tabs, .fas-noprint, .main-footer { display:none !important; }
+        .main-sidebar, .main-header, #fasHubTabs, .fas-noprint, .main-footer { display:none !important; }
         .content-wrapper { margin-left:0 !important; }
         .card { break-inside:avoid; }
     }
 </style>
-@endpush
 
-@section('content')
-<div class="content-wrapper">
-    <section class="content-header">
-        <div class="container-fluid">
+<div class="fas-pane-head mb-3">
             <div class="d-flex justify-content-between align-items-center flex-wrap">
                 <div>
-                    <h1 style="font-size:1.4rem;">Find A Surgeon</h1>
                     <div class="fas-muted" style="font-size:.85rem;">Patient app activity, directory health and what Fellows are changing. Generated {{ \Carbon\Carbon::parse($data->generated_at)->format('d M Y, H:i') }}.</div>
                 </div>
                 <button type="button" class="btn btn-outline-secondary btn-sm fas-noprint" onclick="window.print()"><i class="fas fa-print mr-1"></i> Print / save as PDF</button>
             </div>
         </div>
-    </section>
-
-    <section class="content">
-        <div class="container-fluid">
-            @include('_message')
-            @include('admin.findasurgeon._tabs')
+<div>
 
             @if ($h->groups_pending > 0)
                 <div class="alert alert-light fas-alert shadow-sm d-flex justify-content-between align-items-center flex-wrap">
@@ -104,12 +91,8 @@
                 </div></div></div>
                 <div class="col-lg-4 mb-3"><div class="card h-100"><div class="card-header"><strong>Listed Fellows by country</strong> <span class="fas-muted">· top 10</span></div><div class="card-body"><div class="fas-chart"><canvas id="chCountry"></canvas></div></div></div></div>
             </div>
-        </div>
-    </section>
 </div>
-@endsection
 
-@push('scripts')
 <script>
 (function () {
     var C = @json($ch);
@@ -147,4 +130,3 @@
         options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: ints, y: noGrid } } });
 })();
 </script>
-@endpush

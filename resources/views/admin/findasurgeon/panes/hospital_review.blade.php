@@ -1,31 +1,18 @@
-@extends('layout.app')
 
-@section('title', 'Find A Surgeon · Hospital Review')
 
 @php
     $canManage = Auth::user()->hasPermission('findasurgeon.manage');
     $pending   = $showing === 'pending';
 @endphp
 
-@push('styles')
 <style>
     .hr-chip { display:inline-block; padding:1px 8px; margin:0 4px 4px 0; border-radius:10px; background:#f1f3f5; font-size:.78rem; }
     body.dark-mode .hr-chip { background:#2b3040; }
     .hr-sugg { margin:0 6px 6px 0; }
 </style>
-@endpush
 
-@section('content')
-<div class="content-wrapper">
-    <section class="content-header">
-        <div class="container-fluid"><h1 style="font-size:1.4rem;">Find A Surgeon · Hospital Review</h1>
-            <div class="fas-muted" style="font-size:.85rem;">Fellows pick their Current Hospital from the official list. When theirs is not listed they type it, and it waits here. Link it to the right hospital, add it to the list, or dismiss it.</div></div>
-    </section>
-
-    <section class="content">
-        <div class="container-fluid">
-            @include('_message')
-            @include('admin.findasurgeon._tabs')
+<div class="fas-pane-head mb-3"><div class="fas-muted" style="font-size:.85rem;">Fellows pick their Current Hospital from the official list. When theirs is not listed they type it, and it waits here. Link it to the right hospital, add it to the list, or dismiss it.</div></div>
+<div>
 
             <div class="card">
                 <div class="card-body">
@@ -116,8 +103,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
 </div>
 
 @if ($canManage && $pending)
@@ -169,10 +154,8 @@
     </div>
 </div>
 @endif
-@endsection
 
 @if ($canManage && $pending)
-@push('scripts')
 <script>
 (function () {
     var hospitals = @json($hospitals->map(fn ($h) => ['id' => $h->id, 'name' => $h->name, 'country_id' => $h->country_id])->values());
@@ -185,7 +168,7 @@
         list.forEach(function (h) { $s.append($('<option>').val(h.id).text(h.name)); });
     }
 
-    $(document).on('click', '.js-link', function () {
+    $(document).off('click.fasHr', '.js-link').on('click.fasHr', '.js-link', function () {
         var d = $(this).data(); countryId = d.country || null;
         $('#lmName').text(d.name); $('#lmCount').text(d.count);
         $('#lmNameIn').val(d.name); $('#lmCountryIn').val(d.country || '');
@@ -193,7 +176,7 @@
     });
     $('#lmAll').on('change', fillHospitals);
 
-    $(document).on('click', '.js-add', function () {
+    $(document).off('click.fasHr2', '.js-add').on('click.fasHr2', '.js-add', function () {
         var d = $(this).data();
         $('#amName').text(d.name); $('#amCount').text(d.count);
         $('#amNameIn').val(d.name); $('#amCountryIn').val(d.country || '');
@@ -202,5 +185,4 @@
     });
 })();
 </script>
-@endpush
 @endif

@@ -18,10 +18,7 @@ class FindASurgeonController extends Controller
         $response = $this->api->get('findasurgeon/overview');
         abort_unless($response->successful(), 500, 'Failed to load the Find A Surgeon overview.');
 
-        return view('admin.findasurgeon.overview', [
-            'header_title' => 'Find A Surgeon',
-            'data'         => $response->object(),
-        ]);
+        return $this->page(request(), 'overview', ['data' => $response->object()]);
     }
 
     public function patients(Request $request)
@@ -29,10 +26,7 @@ class FindASurgeonController extends Controller
         $response = $this->api->get('findasurgeon/patients', $request->only(['q', 'status', 'with_favourites', 'page']));
         abort_unless($response->successful(), 500, 'Failed to load patients.');
 
-        return view('admin.findasurgeon.patients', [
-            'header_title' => 'Find A Surgeon · Patients',
-            'patients'     => $this->paginator($response->object(), $request),
-        ]);
+        return $this->page($request, 'patients', ['patients' => $this->paginator($response->object(), $request)]);
     }
 
     public function fellows(Request $request)
@@ -41,10 +35,9 @@ class FindASurgeonController extends Controller
         abort_unless($response->successful(), 500, 'Failed to load Fellows.');
         $data = $response->object();
 
-        return view('admin.findasurgeon.fellows', [
-            'header_title' => 'Find A Surgeon · Fellows',
-            'fellows'      => $this->paginator($data->fellows ?? null, $request),
-            'countries'    => collect($data->countries ?? []),
+        return $this->page($request, 'fellows', [
+            'fellows'   => $this->paginator($data->fellows ?? null, $request),
+            'countries' => collect($data->countries ?? []),
         ]);
     }
 
@@ -62,12 +55,11 @@ class FindASurgeonController extends Controller
         abort_unless($response->successful(), 500, 'Failed to load the hospital review.');
         $data = $response->object();
 
-        return view('admin.findasurgeon.hospital_review', [
-            'header_title' => 'Find A Surgeon · Hospital Review',
-            'groups'       => collect($data->groups ?? []),
-            'countries'    => collect($data->countries ?? []),
-            'hospitals'    => collect($data->hospitals ?? []),
-            'showing'      => $request->input('show') === 'dismissed' ? 'dismissed' : 'pending',
+        return $this->page($request, 'hospitals', [
+            'groups'    => collect($data->groups ?? []),
+            'countries' => collect($data->countries ?? []),
+            'hospitals' => collect($data->hospitals ?? []),
+            'showing'   => $request->input('show') === 'dismissed' ? 'dismissed' : 'pending',
         ]);
     }
 
@@ -97,10 +89,27 @@ class FindASurgeonController extends Controller
         abort_unless($response->successful(), 500, 'Failed to load profile changes.');
         $data = $response->object();
 
-        return view('admin.findasurgeon.changes', [
-            'header_title' => 'Find A Surgeon · Profile Changes',
-            'changes'      => $this->paginator($data, $request),
-            'fields'       => collect($data->fields ?? []),
+        return $this->page($request, 'changes', [
+            'changes' => $this->paginator($data, $request),
+            'fields'  => collect($data->fields ?? []),
+        ]);
+    }
+
+    // One hub page with in-page tabs. A tab loaded after the page is fetched with
+    // ?partial=1 and gets just its own fragment.
+    private function page(Request $request, string $tab, array $data)
+    {
+        $pane = 'admin.findasurgeon.panes.' . ($tab === 'hospitals' ? 'hospital_review' : $tab);
+
+        if ($request->boolean('partial')) {
+            return view($pane, $data);
+        }
+
+        return view('admin.findasurgeon.hub', [
+            'header_title' => 'Find A Surgeon',
+            'active'       => $tab,
+            'pane'         => $pane,
+            'paneData'     => $data,
         ]);
     }
 
@@ -119,7 +128,7 @@ class FindASurgeonController extends Controller
     private function paginator(?object $raw, Request $request): LengthAwarePaginator
     {
         if (! $raw) {
-            return new LengthAwarePaginator([], 0, 25, 1, ['path' => $request->url(), 'query' => $request->query()]);
+            return new LengthAwarePaginator([], 0, 25, 1, ['path' => $request->url(), 'query' => $request->except('partial')]);
         }
 
         return new LengthAwarePaginator(
@@ -127,7 +136,7 @@ class FindASurgeonController extends Controller
             $raw->total ?? 0,
             $raw->per_page ?? 25,
             $raw->current_page ?? 1,
-            ['path' => $request->url(), 'query' => $request->query()]
+            ['path' => $request->url(), 'query' => $request->except('partial')]
         );
     }
 }

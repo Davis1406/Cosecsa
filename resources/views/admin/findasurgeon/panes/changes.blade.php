@@ -1,18 +1,7 @@
-@extends('layout.app')
 
-@section('title', 'Find A Surgeon · Profile Changes')
 
-@section('content')
-<div class="content-wrapper">
-    <section class="content-header">
-        <div class="container-fluid"><h1 style="font-size:1.4rem;">Find A Surgeon · Profile Changes</h1>
-            <div class="fas-muted" style="font-size:.85rem;">What Fellows changed on their own profile from the app, and what the Secretariat changed here. Recorded since this section went live.</div></div>
-    </section>
-
-    <section class="content">
-        <div class="container-fluid">
-            @include('_message')
-            @include('admin.findasurgeon._tabs')
+<div class="fas-pane-head mb-3"><div class="fas-muted" style="font-size:.85rem;">What Fellows changed on their own profile from the app, and what the Secretariat changed here. Recorded since this section went live.</div></div>
+<div>
 
             <div class="card">
                 <div class="card-body">
@@ -56,7 +45,4 @@
                     <div class="mt-3">{!! $changes->links() !!}</div>
                 </div>
             </div>
-        </div>
-    </section>
 </div>
-@endsection
