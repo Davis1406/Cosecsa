@@ -904,7 +904,7 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                                     <i class="right fas fa-angle-left"></i>
                                 </p>
                             </a>
-                            <ul class="nav nav-treeview">
+                            <ul class="nav nav-treeview" style="padding-left: 20px;">
                                 <li class="nav-item">
                                     <a href="{{ route('admin.findasurgeon.overview') }}"
                                         class="nav-link @if ($fasOpen && Request::segment(3) == null) active @endif">
