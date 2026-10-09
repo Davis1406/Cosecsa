@@ -67,7 +67,7 @@
 </div>
 
 <script>
-(function () {
+(function (run) { if (window.jQuery && window.Chart) { run(); } else { window.addEventListener('load', run); } })(function () {
     var base = @json(url('admin/find-a-surgeon/patients'));
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
     function when(s) { return s ? new Date(s.replace(' ', 'T')).toLocaleString() : '—'; }
@@ -99,5 +99,5 @@
             $('#pmBody').html(html);
         }).fail(function () { $('#pmBody').html('<p class="text-danger">Could not load this patient.</p>'); });
     });
-})();
+});
 </script>

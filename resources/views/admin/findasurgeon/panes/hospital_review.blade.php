@@ -158,7 +158,7 @@
 
 @if ($canManage && $pending)
 <script>
-(function () {
+(function (run) { if (window.jQuery && window.Chart) { run(); } else { window.addEventListener('load', run); } })(function () {
     var hospitals = @json($hospitals->map(fn ($h) => ['id' => $h->id, 'name' => $h->name, 'country_id' => $h->country_id])->values());
     var countryId = null;
 
@@ -184,6 +184,6 @@
         $('#amHospital').val(d.name); if (d.country) { $('#amCountry').val(String(d.country)); } else { $('#amCountry').prop('selectedIndex', -1); }
         $('#addModal').modal('show');
     });
-})();
+});
 </script>
 @endif

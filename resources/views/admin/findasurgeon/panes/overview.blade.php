@@ -94,7 +94,7 @@
 </div>
 
 <script>
-(function () {
+(function (run) { if (window.jQuery && window.Chart) { run(); } else { window.addEventListener('load', run); } })(function () {
     var C = @json($ch);
     var completeness = @json(collect($completeness)->map(fn ($r) => ['label' => $r[0], 'pct' => $pct($r[1], $d->listed)])->values());
     var maroon = '#a02626', gold = '#FEC503', slate = '#475569';
@@ -128,5 +128,5 @@
 
     make('chCountry', { type: 'bar', data: { labels: C.fellows_by_country.map(function (r) { return r.country; }), datasets: [{ data: C.fellows_by_country.map(function (r) { return r.fellows; }), backgroundColor: gold, borderRadius: 4 }] },
         options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: ints, y: noGrid } } });
-})();
+});
 </script>
