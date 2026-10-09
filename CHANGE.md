@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Added (2026-10-09) — Find A Surgeon section (menu below Messages)
+- New sidebar menu **Find A Surgeon** (below Messages; needs the new `findasurgeon.view` permission, and `findasurgeon.manage` to act on the hospital review). Four pages under `admin/find-a-surgeon`:
+  - **Overview & Report**: patient accounts (total, verified, new/active in 30 days, saves), directory health (listed Fellows, photo/bio/city/hospital/subspecialty completeness), and charts (new patients per week, Fellow edits per week, what Fellows edit, most-saved surgeons, saves by specialty, Fellows by country). Print / save as PDF button.
+  - **Patients**: searchable list (verified / not, has saved surgeons, joined, last active) with a detail view of contact details and saved surgeons. Staff-only personal data.
+  - **Hospital Review**: hospital names Fellows typed because theirs was not on the official list (and older entries that never matched), grouped by name and country, with the closest listed hospitals. Actions: **Link** to a listed hospital, **Add to list** (creates an unaccredited hospital, which also shows in other hospital pickers), **Dismiss** / restore.
+  - **Profile Changes**: before/after log of what Fellows changed from the app (and what the Secretariat changed via the review), filterable by field, source, date and Fellow.
+- Files: `app/Http/Controllers/FindASurgeonController.php`, `resources/views/admin/findasurgeon/*`, `routes/web.php`, `layout/header.blade.php` (menu), `config/admin_permissions.php` (module + route map).
+- ⚠️ **Coordinate:** deploy cosecsa-api first (migration + `internal/findasurgeon/*` endpoints). Only Super Admin and Master Admin get the new permissions automatically; grant it to other roles under Roles & Permissions.
+
 ### Changed (2026-10-05) — Sponsored by / Programme Entry Fee are exam-only too
 - On the fellow add/edit form, **Sponsored by**, **Prog. Entry Fee Year** and **Entry Mode of Payment** now hide for every Fellowship Type except **Fellow by Examination** (category 5), matching the other exam fields. They sit alongside the registration/subscription fee fields, which stay for all types.
 - **Files:** `resources/views/admin/associates/fellows/{add,edit}.blade.php`. No API change.

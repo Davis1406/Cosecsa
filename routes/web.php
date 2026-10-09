@@ -131,6 +131,20 @@ Route::get('track/open/{token}', [ExamsController::class, 'trackEmailOpen'])->na
 // Admin Routes
 Route::group(['middleware' => ['admin', 'permission']], function(){
 
+    // Find A Surgeon (FindASurgeon mobile app: patients, directory stats, hospital review, Fellow changes)
+    Route::prefix('admin/find-a-surgeon')->name('admin.findasurgeon.')->group(function () {
+        $c = \App\Http\Controllers\FindASurgeonController::class;
+        Route::get('/',                         [$c, 'overview'])->name('overview');
+        Route::get('/patients',                 [$c, 'patients'])->name('patients');
+        Route::get('/patients/{id}',            [$c, 'patient'])->whereNumber('id')->name('patient');
+        Route::get('/hospitals',                [$c, 'hospitals'])->name('hospitals');
+        Route::post('/hospitals/link',          [$c, 'hospitalLink'])->name('hospitals.link');
+        Route::post('/hospitals/add',           [$c, 'hospitalAdd'])->name('hospitals.add');
+        Route::post('/hospitals/dismiss',       [$c, 'hospitalDismiss'])->name('hospitals.dismiss');
+        Route::post('/hospitals/restore',       [$c, 'hospitalRestore'])->name('hospitals.restore');
+        Route::get('/changes',                  [$c, 'changes'])->name('changes');
+    });
+
     Route::get('admin/roles/list', [\App\Http\Controllers\RoleController::class, 'list']);
     Route::get('admin/roles/add',  [\App\Http\Controllers\RoleController::class, 'add']);
     Route::post('admin/roles/add', [\App\Http\Controllers\RoleController::class, 'insert']);

@@ -98,6 +98,11 @@ return [
             'view'   => 'See fellow label and designation settings',
             'manage' => 'Add, edit, delete fellow labels and designations',
         ],
+        'findasurgeon' => [
+            'label'  => 'Find A Surgeon',
+            'view'   => 'See FindASurgeon patients, directory statistics, Fellow profile changes and the typed-hospital review',
+            'manage' => 'Link, add or dismiss hospitals typed by Fellows',
+        ],
         'system_logs' => [
             'label'  => 'System Logs',
             'view'   => 'See login history, record changes, and dispatched emails',
@@ -152,6 +157,7 @@ return [
         'admin/fees'                    => 'fees',
         'admin/settings'                => 'settings',
         'admin/logs'                    => 'system_logs',
+        'admin/find-a-surgeon'          => 'findasurgeon',
         'admin/reports'                 => 'reports',
         'admin/transcripts'             => 'transcripts',
         'admin/settings/transcript-templates' => 'transcripts',

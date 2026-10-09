@@ -894,6 +894,49 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                             </a>
                         </li>
 
+                        @if (Auth::user()->hasPermission('findasurgeon.view'))
+                        @php($fasOpen = Request::segment(2) == 'find-a-surgeon')
+                        <li class="nav-item @if ($fasOpen) menu-open @endif">
+                            <a href="#" class="nav-link @if ($fasOpen) active @endif">
+                                <i class="nav-icon fas fa-user-md"></i>
+                                <p>
+                                    Find A Surgeon
+                                    <i class="right fas fa-angle-left"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.findasurgeon.overview') }}"
+                                        class="nav-link @if ($fasOpen && Request::segment(3) == null) active @endif">
+                                        <i class="fas fa-chart-pie nav-icon"></i>
+                                        <p>Overview &amp; Report</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.findasurgeon.patients') }}"
+                                        class="nav-link @if ($fasOpen && Request::segment(3) == 'patients') active @endif">
+                                        <i class="fas fa-users nav-icon"></i>
+                                        <p>Patients</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.findasurgeon.hospitals') }}"
+                                        class="nav-link @if ($fasOpen && Request::segment(3) == 'hospitals') active @endif">
+                                        <i class="fas fa-hospital nav-icon"></i>
+                                        <p>Hospital Review</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.findasurgeon.changes') }}"
+                                        class="nav-link @if ($fasOpen && Request::segment(3) == 'changes') active @endif">
+                                        <i class="fas fa-history nav-icon"></i>
+                                        <p>Profile Changes</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        @endif
+
                         <li class="nav-item">
                             <a href="{{ url('profile/change_password') }}"
                                 class="nav-link @if (Request::segment(2) == 'change_password') active @endif">
