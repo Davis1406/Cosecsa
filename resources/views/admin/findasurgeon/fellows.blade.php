@@ -52,7 +52,7 @@
                                     <td class="text-center">{!! $f->has_photo ? '<i class="fas fa-check text-success"></i>' : '<span class="fas-muted">—</span>' !!}</td>
                                     <td class="text-center">{!! $f->has_bio ? '<i class="fas fa-check text-success"></i>' : '<span class="fas-muted">—</span>' !!}</td>
                                     <td class="text-center">
-                                        @if ($f->changes_count) <a href="{{ route('admin.findasurgeon.changes', ['fellow' => $f->id]) }}">{{ $f->changes_count }}</a>
+                                        @if ($f->changes_count) <a href="{{ route('admin.findasurgeon.changes', ['q' => $f->name]) }}">{{ $f->changes_count }}</a>
                                         @else <span class="fas-muted">0</span> @endif
                                     </td>
                                     <td>{{ $f->app_last_login_at ? \Carbon\Carbon::parse($f->app_last_login_at)->format('d M Y H:i') : '—' }}</td>
