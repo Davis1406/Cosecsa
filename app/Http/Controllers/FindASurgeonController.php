@@ -35,6 +35,19 @@ class FindASurgeonController extends Controller
         ]);
     }
 
+    public function fellows(Request $request)
+    {
+        $response = $this->api->get('findasurgeon/fellows', $request->only(['q', 'usage', 'country_id', 'page']));
+        abort_unless($response->successful(), 500, 'Failed to load Fellows.');
+        $data = $response->object();
+
+        return view('admin.findasurgeon.fellows', [
+            'header_title' => 'Find A Surgeon · Fellows',
+            'fellows'      => $this->paginator($data->fellows ?? null, $request),
+            'countries'    => collect($data->countries ?? []),
+        ]);
+    }
+
     // JSON for the patient detail modal.
     public function patient($id)
     {

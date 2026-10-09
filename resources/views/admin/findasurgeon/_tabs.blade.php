@@ -8,6 +8,7 @@
 <ul class="nav nav-tabs fas-tabs mb-3">
     <li class="nav-item"><a class="nav-link {{ $seg === null ? 'active' : '' }}" href="{{ route('admin.findasurgeon.overview') }}"><i class="fas fa-chart-pie mr-1"></i> Overview &amp; Report</a></li>
     <li class="nav-item"><a class="nav-link {{ $seg === 'patients' ? 'active' : '' }}" href="{{ route('admin.findasurgeon.patients') }}"><i class="fas fa-users mr-1"></i> Patients</a></li>
+    <li class="nav-item"><a class="nav-link {{ $seg === 'fellows' ? 'active' : '' }}" href="{{ route('admin.findasurgeon.fellows') }}"><i class="fas fa-user-md mr-1"></i> Fellows</a></li>
     <li class="nav-item"><a class="nav-link {{ $seg === 'hospitals' ? 'active' : '' }}" href="{{ route('admin.findasurgeon.hospitals') }}"><i class="fas fa-hospital mr-1"></i> Hospital Review</a></li>
     <li class="nav-item"><a class="nav-link {{ $seg === 'changes' ? 'active' : '' }}" href="{{ route('admin.findasurgeon.changes') }}"><i class="fas fa-history mr-1"></i> Profile Changes</a></li>
 </ul>

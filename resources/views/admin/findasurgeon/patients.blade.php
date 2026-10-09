@@ -35,7 +35,7 @@
                         <table class="table table-hover table-sm mb-0">
                             <thead><tr>
                                 <th>Patient</th><th>Email</th><th>Phone</th><th>Status</th>
-                                <th class="text-center">Saved</th><th>Joined</th><th>Last active</th><th></th>
+                                <th class="text-center">Saved</th><th>Joined</th><th>Last login</th><th>Last active</th><th></th>
                             </tr></thead>
                             <tbody>
                             @forelse ($patients as $p)
@@ -49,11 +49,12 @@
                                     </td>
                                     <td class="text-center">{{ $p->favourites_count }}</td>
                                     <td>{{ \Carbon\Carbon::parse($p->created_at)->format('d M Y') }}</td>
+                                    <td>{{ $p->app_last_login_at ? \Carbon\Carbon::parse($p->app_last_login_at)->format('d M Y H:i') : '—' }}</td>
                                     <td>{{ $p->last_active ? \Carbon\Carbon::parse($p->last_active)->diffForHumans() : '—' }}</td>
                                     <td class="text-right"><button type="button" class="btn btn-xs btn-outline-dark js-patient" data-id="{{ $p->id }}">Details</button></td>
                                 </tr>
                             @empty
-                                <tr><td colspan="8" class="text-center fas-muted py-4">No patients match.</td></tr>
+                                <tr><td colspan="9" class="text-center fas-muted py-4">No patients match.</td></tr>
                             @endforelse
                             </tbody>
                         </table>
@@ -96,6 +97,7 @@
                 + '<div class="col-md-6"><div class="fas-muted">Phone</div><div>' + esc(p.phone || '—') + '</div></div>'
                 + '<div class="col-md-4 mt-2"><div class="fas-muted">Status</div><div>' + (p.verified ? '<span class="badge badge-success">Verified</span>' : '<span class="badge badge-secondary">Not verified</span>') + '</div></div>'
                 + '<div class="col-md-4 mt-2"><div class="fas-muted">Joined</div><div>' + esc(when(p.created_at)) + '</div></div>'
+                + '<div class="col-md-4 mt-2"><div class="fas-muted">Last login</div><div>' + esc(when(p.last_login)) + '</div></div>'
                 + '<div class="col-md-4 mt-2"><div class="fas-muted">Last active</div><div>' + esc(when(p.last_active)) + '</div></div>'
                 + '<div class="col-md-4 mt-2"><div class="fas-muted">Signed-in devices</div><div>' + esc(p.signed_in_devices) + '</div></div>'
                 + '</div><h6>Saved surgeons (' + p.favourites.length + ')</h6>';

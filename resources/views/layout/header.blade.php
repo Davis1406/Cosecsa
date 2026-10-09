@@ -920,6 +920,13 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                                     </a>
                                 </li>
                                 <li class="nav-item">
+                                    <a href="{{ route('admin.findasurgeon.fellows') }}"
+                                        class="nav-link @if ($fasOpen && Request::segment(3) == 'fellows') active @endif">
+                                        <i class="fas fa-user-md nav-icon"></i>
+                                        <p>Fellows</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
                                     <a href="{{ route('admin.findasurgeon.hospitals') }}"
                                         class="nav-link @if ($fasOpen && Request::segment(3) == 'hospitals') active @endif">
                                         <i class="fas fa-hospital nav-icon"></i>

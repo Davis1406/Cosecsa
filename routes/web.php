@@ -136,6 +136,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
         $c = \App\Http\Controllers\FindASurgeonController::class;
         Route::get('/',                         [$c, 'overview'])->name('overview');
         Route::get('/patients',                 [$c, 'patients'])->name('patients');
+        Route::get('/fellows',                  [$c, 'fellows'])->name('fellows');
         Route::get('/patients/{id}',            [$c, 'patient'])->whereNumber('id')->name('patient');
         Route::get('/hospitals',                [$c, 'hospitals'])->name('hospitals');
         Route::post('/hospitals/link',          [$c, 'hospitalLink'])->name('hospitals.link');
