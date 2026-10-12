@@ -389,7 +389,7 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
 <aside class="main-sidebar sidebar-dark-primary elevation-4" id="main-sidebar">
     <!-- Brand Logo -->
     <a href="" class="brand-link">
-        <img src="{{ asset('dist/img/Cosecsa_Logo.png') }}" alt="Cosecsa Logo"
+        <img src="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}" alt="Cosecsa Logo"
             class="brand-image img-circle elevation-3" style="opacity: .8">
         <span class="brand-text font-weight-light">COSECSA-MIS</span>
     </a>
@@ -400,8 +400,7 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
             <!-- Sidebar user panel (optional) -->
             <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                 <div class="image">
-                    @php $authPhoto = Auth::user()->profile_image ?? null; @endphp
-                    <img src="{{ $authPhoto ? asset('storage/' . $authPhoto) : asset('dist/img/user.png') }}"
+                    <img src="{{ Auth::user()->photoUrl() ?: asset('dist/img/user.png') }}"
                          class="img-circle elevation-2" alt="User Image"
                          style="width:34px;height:34px;object-fit:cover;">
                 </div>
@@ -995,9 +994,13 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ url('fellow/dashboard') }}#tab-account"
-                               class="nav-link"
-                               onclick="localStorage.setItem('fellowActiveTab','#tab-account');">
+                            <a href="{{ url('fellow/dashboard') }}#tab-personal" class="nav-link">
+                                <i class="nav-icon fas fa-id-card"></i>
+                                <p>My Profile</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url('fellow/dashboard') }}#tab-account" class="nav-link">
                                 <i class="nav-icon fas fa-cog"></i>
                                 <p>Profile Settings</p>
                             </a>

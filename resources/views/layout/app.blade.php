@@ -41,9 +41,9 @@
     <link rel="stylesheet" href="{{ asset('dist/css/adminlte.min.css') }}">
 
     <!-- Favicon -->
-    <link rel="shortcut icon" type="image/png" href="{{ asset('dist/img/Cosecsa_Logo.png') }}">
-    <link rel="icon"          type="image/png" href="{{ asset('dist/img/Cosecsa_Logo.png') }}">
-    <link rel="apple-touch-icon"               href="{{ asset('dist/img/Cosecsa_Logo.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}">
+    <link rel="icon"          type="image/png" href="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}">
+    <link rel="apple-touch-icon"               href="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}">
 
     <!-- DataTables -->
     <link rel="stylesheet" href="{{ asset('plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
@@ -78,7 +78,7 @@
 
         <!-- Preloader — covers page until CSS + JS fully initialise, preventing FOUC -->
         <div class="preloader flex-column justify-content-center align-items-center">
-            <img class="animation__shake" src="{{asset('dist/img/Cosecsa_Logo.png')}}" alt="COSECSA" height="60" width="60">
+            <img class="animation__shake" src="{{asset('dist/img/Cosecsa_Logo_sm.png')}}" alt="COSECSA" height="60" width="60">
         </div>
 
         @include('layout.header')

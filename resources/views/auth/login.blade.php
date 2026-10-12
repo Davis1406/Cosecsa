@@ -6,7 +6,7 @@
     <title>Login | COSECSA MIS</title>
     <link rel="stylesheet" href="{{ asset('plugins/fontawesome-free/css/all.min.css') }}">
     <link rel="stylesheet" href="{{ asset('dist/css/adminlte.min.css') }}">
-    <link rel="icon" href="{{ asset('dist/img/Cosecsa_Logo.png') }}">
+    <link rel="icon" href="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}">
 
     <style>
         /* Login Box */
@@ -134,7 +134,7 @@
 <div class="login-box">
     <div class="card card-outline card-primary">
         <div class="card-header text-center">
-            <img src="{{ asset('dist/img/Cosecsa_Logo.png') }}" alt="COSECSA Logo">
+            <img src="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}" alt="COSECSA Logo">
             <br>
             <a href="#" class="h1" style="color: #a02626;"><b>COSECSA-MIS</b></a>
         </div>

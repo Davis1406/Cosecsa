@@ -17,6 +17,8 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     private ?array $permissionKeys = null;
+    private ?string $photoUrlCache = null;
+    private bool $photoUrlLoaded = false;
 
     protected $fillable = [
         'name',
@@ -268,7 +270,33 @@ class User extends Authenticatable
             $yearId = self::getCurrentYearId();
         }
 
-        $query = self::select(
+        $examiners = self::examinerQuery()->where('users.user_type', '9')->orderBy('users.id', 'asc')->get();
+
+        return self::decorateExaminers($examiners, $yearId);
+    }
+
+    // One examiner (by examiners.id or examiners.user_id), with the same
+    // groups/shifts/history fields as getExaminers(). Doesn't require
+    // users.user_type = 9, so a fellow who is also an examiner (user_type 7)
+    // is found too — getExaminers()->firstWhere('user_id', …) missed them and
+    // loaded all ~760 examiners (≈5 s) to find one.
+    public static function findExaminer(array $where, $yearId = null)
+    {
+        $query = self::examinerQuery();
+        foreach ($where as $column => $value) {
+            $query->where('examiners.' . $column, $value);
+        }
+
+        $examiner = $query->first();
+
+        return $examiner
+            ? self::decorateExaminers(collect([$examiner]), $yearId ?: self::getCurrentYearId())->first()
+            : null;
+    }
+
+    private static function examinerQuery()
+    {
+        return self::select(
             'users.id as user_id',
             'users.name as examiner_name',
             'users.email as email',
@@ -285,11 +313,11 @@ class User extends Authenticatable
             ->join('user_roles', function ($join) {
                 $join->on('user_roles.user_id', '=', 'users.id')
                     ->where('user_roles.is_active', '=', 1);
-            })
-            ->where('users.user_type', '9');
+            });
+    }
 
-        $examiners = $query->orderBy('users.id', 'asc')->get();
-
+    private static function decorateExaminers($examiners, $yearId)
+    {
         $examiners->each(function ($examiner) use ($yearId) {
             $groups = \DB::table('exams_groups')
                 ->join('examiners_groups', 'exams_groups.group_id', '=', 'examiners_groups.id')
@@ -757,6 +785,32 @@ class User extends Authenticatable
     public function roles()
     {
         return $this->hasMany(UserRole::class);
+    }
+
+    // This person's photo URL for the header/sidebar and their dashboards:
+    // their account photo, else their fellow photo, else their examiner
+    // passport photo — resolved to whichever server holds the file.
+    public function photoUrl(): ?string
+    {
+        if ($this->photoUrlLoaded) {
+            return $this->photoUrlCache;
+        }
+
+        $paths = [
+            $this->profile_image,
+            DB::table('fellows')->where('user_id', $this->id)->value('profile_image'),
+            DB::table('examiners')->where('user_id', $this->id)->value('passport_image'),
+        ];
+        $url = null;
+        foreach ($paths as $p) {
+            if ($url = \App\Support\ApiAsset::media($p)) {
+                break;
+            }
+        }
+
+        $this->photoUrlLoaded = true;
+
+        return $this->photoUrlCache = $url;
     }
 
     public function hasRole($roleType)

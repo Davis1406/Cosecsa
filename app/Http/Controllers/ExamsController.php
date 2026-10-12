@@ -1103,7 +1103,7 @@ class ExamsController extends Controller
         $user = Auth::user();
 
         // Get examiner details using the same method as admin
-        $examiner = User::getExaminers()->firstWhere('user_id', $user->id);
+        $examiner = User::findExaminer(['user_id' => $user->id]);
 
         if (!$examiner) {
             return redirect('examiner/dashboard')->with('error', 'Examiner profile not found');
@@ -1197,7 +1197,7 @@ class ExamsController extends Controller
         $user = Auth::user();
 
         // Get examiner details
-        $examiner = User::getExaminers()->firstWhere('user_id', $user->id);
+        $examiner = User::findExaminer(['user_id' => $user->id]);
 
         if (!$examiner) {
             return redirect('examiner/profile_settings')->with('error', 'Examiner profile not found');
@@ -1414,7 +1414,7 @@ class ExamsController extends Controller
         $currentExaminer = Auth::user();
 
         // Security check: make sure examiner can only edit their own profile
-        $examiner = User::getExaminers()->where('examin_id', $id)->first();
+        $examiner = User::findExaminer(['id' => $id]);
 
         if (!$examiner || $examiner->user_id != $currentExaminer->id) {
             return redirect('examiner/profile_settings')->with('error', 'Unauthorized access');

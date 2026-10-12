@@ -391,8 +391,13 @@ body.dark-mode .stat-chip     { background:#2d3748 !important; }
                 {{-- Tabs --}}
                 <ul class="nav fellow-tabs mb-0" id="fellowTabs" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" data-toggle="tab" href="#tab-personal" role="tab">
-                            <i class="fas fa-id-card mr-1"></i>Personal
+                        <a class="nav-link active" data-toggle="tab" href="#tab-college" role="tab">
+                            <i class="fas fa-chart-bar mr-1"></i>College Report
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#tab-personal" role="tab">
+                            <i class="fas fa-id-card mr-1"></i>My Profile
                         </a>
                     </li>
                     <li class="nav-item">
@@ -416,11 +421,6 @@ body.dark-mode .stat-chip     { background:#2d3748 !important; }
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" data-toggle="tab" href="#tab-college" role="tab">
-                            <i class="fas fa-university mr-1"></i>College
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link" data-toggle="tab" href="#tab-account" role="tab">
                             <i class="fas fa-cog mr-1"></i>Account
                         </a>
@@ -430,7 +430,7 @@ body.dark-mode .stat-chip     { background:#2d3748 !important; }
                 <div class="tab-content">
 
                     {{-- ═══ TAB 1: PERSONAL DETAILS ═══ --}}
-                    <div class="tab-pane fade show active" id="tab-personal" role="tabpanel">
+                    <div class="tab-pane fade" id="tab-personal" role="tabpanel">
                         <div class="card" style="border-top-left-radius:0;border-top-right-radius:0;">
                             <div class="card-body">
 
@@ -845,7 +845,7 @@ body.dark-mode .stat-chip     { background:#2d3748 !important; }
                     </div>
 
                     {{-- ═══ TAB 6: COLLEGE INFO ═══ --}}
-                    <div class="tab-pane fade" id="tab-college" role="tabpanel">
+                    <div class="tab-pane fade show active" id="tab-college" role="tabpanel">
                         <div class="card" style="border-top-left-radius:0;border-top-right-radius:0;">
                             <div class="card-body">
 
@@ -867,33 +867,42 @@ body.dark-mode .stat-chip     { background:#2d3748 !important; }
                                     COSECSA is an independent, not-for-profit organisation that sets standards for and promotes quality surgical training and care in East, Central and Southern Africa. It brings together surgical professionals, training hospitals, and national associations across 14 countries to expand access to safe surgical care.
                                 </p>
 
-                                <p class="sect-div">Key Facts</p>
-                                <div class="row">
-                                    <div class="col-6 col-md-3 mb-2">
-                                        <div class="stat-chip bg-white" style="flex-direction:column;align-items:flex-start;padding:12px 14px;">
-                                            <div class="chip-val" style="color:#a02626;">14</div>
-                                            <div class="chip-label">Member Countries</div>
+                                @if($college)
+                                    @php $alumni = $college['alumni'] ?? []; @endphp
+                                    <p class="sect-div">College at a Glance</p>
+                                    <div class="row">
+                                        @foreach([
+                                            ['Fellows', $college['fellows_count'] ?? 0, 'stitch-tile-maroon'],
+                                            ['Trainees in Training', $college['trainee_count'] ?? 0, 'stitch-tile-teal'],
+                                            ['Candidates '.date('Y'), $college['candidate_count'] ?? 0, 'stitch-tile-gold'],
+                                            ['Accredited Hospitals', $college['hospital_count'] ?? 0, 'stitch-tile-green'],
+                                        ] as [$label, $value, $cls])
+                                            <div class="col-6 col-md-3 mb-2">
+                                                <div class="stitch-tile {{ $cls }}">
+                                                    <div class="stitch-tile-label">{{ $label }}</div>
+                                                    <div class="stitch-tile-value">{{ number_format($value) }}</div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+
+                                    <p class="sect-div mt-2">
+                                        Alumni by Year
+                                        <span class="text-muted font-weight-normal" style="text-transform:none;letter-spacing:0;">
+                                            ({{ number_format($alumni['all'] ?? 0) }} alumni, {{ number_format($alumni['female_all'] ?? 0) }} female)
+                                        </span>
+                                    </p>
+                                    <div class="row">
+                                        <div class="col-md-8 mb-3">
+                                            <div style="position:relative;height:280px;"><canvas id="collegeAlumniChart"></canvas></div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <div style="position:relative;height:280px;"><canvas id="collegeGenderChart"></canvas></div>
                                         </div>
                                     </div>
-                                    <div class="col-6 col-md-3 mb-2">
-                                        <div class="stat-chip bg-white" style="flex-direction:column;align-items:flex-start;padding:12px 14px;">
-                                            <div class="chip-val" style="color:#28a745;">1,800+</div>
-                                            <div class="chip-label">Fellows</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 col-md-3 mb-2">
-                                        <div class="stat-chip bg-white" style="flex-direction:column;align-items:flex-start;padding:12px 14px;">
-                                            <div class="chip-val" style="color:#17a2b8;">120+</div>
-                                            <div class="chip-label">Training Hospitals</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 col-md-3 mb-2">
-                                        <div class="stat-chip bg-white" style="flex-direction:column;align-items:flex-start;padding:12px 14px;">
-                                            <div class="chip-val" style="color:#856404;">1993</div>
-                                            <div class="chip-label">Founded</div>
-                                        </div>
-                                    </div>
-                                </div>
+                                @else
+                                    <p class="text-muted" style="font-size:.85rem;">College figures are unavailable right now.</p>
+                                @endif
 
                                 <p class="sect-div">Programmes</p>
                                 @php
@@ -1031,14 +1040,44 @@ body.dark-mode .stat-chip     { background:#2d3748 !important; }
 @push('scripts')
 <script>
 $(document).ready(function () {
-    // Restore active tab from localStorage
-    var saved = localStorage.getItem('fellowActiveTab');
-    if (saved) {
-        $('#fellowTabs a[href="' + saved + '"]').tab('show');
+    // The URL hash picks the tab (sidebar: Dashboard → College Report,
+    // My Profile → #tab-personal, Profile Settings → #tab-account); the
+    // College Report is the default. Not remembered across visits, so
+    // Dashboard always opens on the report.
+    function showHashTab() {
+        if (location.hash) { $('#fellowTabs a[href="' + location.hash + '"]').tab('show'); }
     }
+    showHashTab();
+    $(window).on('hashchange', showHashTab);
     $('#fellowTabs a').on('shown.bs.tab', function (e) {
-        localStorage.setItem('fellowActiveTab', $(e.target).attr('href'));
+        history.replaceState(null, '', $(e.target).attr('href'));
     });
+
+    @if($college)
+    // College Report charts (same data as the admin dashboard).
+    new Chart(document.getElementById('collegeAlumniChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: @json($college['alumni']['labels'] ?? []),
+            datasets: [
+                { label: 'Total Alumni', data: @json($college['alumni']['totals'] ?? []), backgroundColor: '#a02626', borderColor: '#a02626', type: 'bar' },
+                { label: 'Female Graduates', data: @json($college['alumni']['female'] ?? []), backgroundColor: '#FEC503', borderColor: '#FEC503', type: 'line', fill: false, tension: 0.3 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+    new Chart(document.getElementById('collegeGenderChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Male Alumni', 'Female Alumni'],
+            datasets: [{
+                data: [{{ ($college['alumni']['all'] ?? 0) - ($college['alumni']['female_all'] ?? 0) }}, {{ $college['alumni']['female_all'] ?? 0 }}],
+                backgroundColor: ['#a02626', '#FEC503']
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+    @endif
 });
 </script>
 @endpush

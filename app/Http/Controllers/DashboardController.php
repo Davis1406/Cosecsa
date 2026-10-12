@@ -32,14 +32,7 @@ public function dashboard()
                 // trainees/fellows/candidates datasets, cached for 5 minutes —
                 // the numbers change rarely. Falls back to the full datasets
                 // only if the API is unreachable.
-                $stats = Cache::get('admin_dashboard_stats');
-                if (! $stats) {
-                    $res = $this->api->get('dashboard/stats');
-                    if ($res->successful()) {
-                        $stats = $res->json();
-                        Cache::put('admin_dashboard_stats', $stats, 300);
-                    }
-                }
+                $stats = $this->collegeStats();
 
                 if ($stats) {
                     $data['traineeCount']            = $stats['trainee_count'] ?? 0;
@@ -117,22 +110,23 @@ public function dashboard()
                 return view('trainee.dashboard', $data);
                 
             case 7:
-                $fellow = User::getFellows()->firstWhere('user_id', Auth::id());
+                // Just this fellow (getFellows() loaded all ~2,000 to find one).
+                $fellow = DB::table('fellows')
+                    ->join('users', 'users.id', '=', 'fellows.user_id')
+                    ->leftJoin('programmes', 'fellows.programme_id', '=', 'programmes.id')
+                    ->leftJoin('categories', 'fellows.category_id', '=', 'categories.id')
+                    ->leftJoin('countries', 'fellows.country_id', '=', 'countries.id')
+                    ->where('fellows.user_id', Auth::id())
+                    ->select('users.id as user_id', 'users.name as fellow_name', 'users.email as email',
+                             'fellows.id as fellow_id', 'fellows.user_id as f_id', 'fellows.personal_email as personal_email',
+                             'fellows.*', 'programmes.name as programme_name',
+                             'countries.country_name as country_name', 'categories.category_name as fellowship_type')
+                    ->first();
                 if ($fellow) {
-                    $examinerPassport = DB::table('examiners')
-                        ->where('user_id', Auth::id())
-                        ->value('passport_image');
-                    $imagePath = null;
-                    foreach ([$fellow->profile_image, $examinerPassport] as $p) {
-                        if (!empty($p) && !str_starts_with(basename($p), 'capsule_')) {
-                            $imagePath = $p;
-                            break;
-                        }
-                    }
-                    $fellow->profile_image_url = $imagePath
-                        ? 'https://cosecsamis.org/storage/' . ltrim($imagePath, '/')
-                        : null;
+                    $fellow->profile_image_url = Auth::user()->photoUrl();
                 }
+                // College Report tab: same figures as the admin dashboard.
+                $data['college'] = $this->collegeStats();
                 $data['fellow'] = $fellow;
 
                 // Load subscriptions if fellow record exists
@@ -477,5 +471,22 @@ public function dashboard()
         $data['activeRole'] = Auth::user()->getActiveRole();
 
         return view('examiner.dashboard', $data);
+    }
+
+    // College-wide counts + alumni-by-year slice (API dashboard/stats),
+    // cached 5 minutes. Shown on the admin dashboard and the fellow's
+    // College Report tab. Null if the API is unreachable.
+    private function collegeStats(): ?array
+    {
+        $stats = Cache::get('admin_dashboard_stats');
+        if (! $stats) {
+            $res = $this->api->get('dashboard/stats');
+            if ($res->successful()) {
+                $stats = $res->json();
+                Cache::put('admin_dashboard_stats', $stats, 300);
+            }
+        }
+
+        return $stats ?: null;
     }
 }

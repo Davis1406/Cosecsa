@@ -25,4 +25,22 @@ class ApiAsset
 
         return $base . '/storage/' . ltrim($path, '/');
     }
+
+    // A stored photo/document path → its public URL, whichever server has it.
+    // Same rule as cosecsa-api's MediaUrl: newer fellow photos are written to
+    // this app's own public storage (served from this host); everything else
+    // lives on the API's public disk. Capsule-imported paths were never
+    // copied, so they resolve to null.
+    public static function media(?string $path): ?string
+    {
+        if (empty($path) || str_starts_with(basename($path), 'capsule_')) {
+            return null;
+        }
+
+        $path = ltrim($path, '/');
+
+        return \Illuminate\Support\Facades\Storage::disk('public')->exists($path)
+            ? asset('storage/' . $path)
+            : self::url($path);
+    }
 }
