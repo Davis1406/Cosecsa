@@ -45,6 +45,7 @@ Route::post('switch-role', [AuthController::class, 'switchRole'])->middleware('a
 
 Route::get('select-role', [AuthController::class, 'showRoleSelection'])->name('select.role');
 Route::post('select-role', [AuthController::class, 'selectRole']);
+Route::get('change-role', [AuthController::class, 'changeRole'])->name('change.role');
 
 // Runs while logged in AS the impersonated (non-admin) user, so this can't
 // sit behind the 'admin' middleware — stop() itself checks the

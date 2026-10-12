@@ -156,7 +156,12 @@
                 $roleName = $roleNames[$roleId] ?? 'Unknown Role';
             @endphp
 
-            <p class="login-box-msg">Login as <strong>{{ $roleName }}</strong></p>
+            <p class="login-box-msg mb-1">Login as <strong>{{ $roleName }}</strong></p>
+            <p class="text-center mb-3" style="font-size:.85rem;">
+                <a href="{{ route('change.role') }}" style="color:#a02626;">
+                    <i class="fas fa-exchange-alt mr-1"></i>Change role
+                </a>
+            </p>
 
             <form method="POST" action="{{ url('login') }}">
                 @csrf

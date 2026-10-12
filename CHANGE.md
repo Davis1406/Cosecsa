@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-12) — Login page: change the role you're logging in as
+- After picking a role on the role-selection page, it stayed in the session (`pending_role`), so `/` kept showing "Login as <role>" with no way to pick another. The login page now has a **Change role** link (`change-role`, new `AuthController::changeRole()`) that clears it and returns to role selection, with the previous role pre-selected.
+- **Files:** `app/Http/Controllers/AuthController.php`, `routes/web.php`, `resources/views/auth/{login,role-selection}.blade.php`.
+
 ### Fixed (2026-10-12) — Fellow/examiner side: photos, examiner Profile, College Report dashboard, slow Examiner Training
 - **Photos:** the fellow dashboard built photo URLs as `https://cosecsamis.org/storage/…`, but examiner passports (and older fellow photos) live on the API's storage, so they 404'd (e.g. Charles SUNGANI). New `ApiAsset::media()` uses the same rule as cosecsa-api's `MediaUrl` (this app's public storage if the file is there, otherwise the API's). New `User::photoUrl()` (account photo → fellow photo → examiner passport, resolved that way) now feeds the fellow dashboard and the **sidebar avatar** for everyone (it used `users.profile_image` only, so fellows/examiners showed the placeholder). Examiner profile/attendance pages use `ApiAsset::media()` for passports too.
 - **Examiner Profile didn't open for fellow-examiners:** `examiner/profile_settings`, the ID badge and self-edit looked the examiner up in `User::getExaminers()`, which only includes `users.user_type = 9` — a fellow who is also an examiner (user_type 7) got "Examiner profile not found" and was sent back to the dashboard. They now use new `User::findExaminer()` (one examiner, same group/shift/history fields, no user_type restriction). It also loaded all ~760 examiners with per-row queries (≈4.9 s) to find one.

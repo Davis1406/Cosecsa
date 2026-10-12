@@ -135,6 +135,17 @@ class AuthController extends Controller
         return redirect()->route('login');
     }
 
+    // "Change role" on the login page: forget the role picked on the
+    // role-selection page so another one can be chosen. pending_role
+    // otherwise stays in the session and / keeps showing that login.
+    public function changeRole()
+    {
+        session()->flash('previous_role', session('pending_role'));
+        session()->forget('pending_role');
+
+        return redirect()->route('select.role');
+    }
+
     public function switchRole(Request $request)
     {
         $role = (int) $request->role;

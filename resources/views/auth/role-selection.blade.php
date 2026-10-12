@@ -175,7 +175,7 @@
                         <option value="">-- Choose Role --</option>
                         @if(isset($availableRoles) && count($availableRoles))
                             @foreach($availableRoles as $role)
-                                <option value="{{ $role['id'] }}">
+                                <option value="{{ $role['id'] }}" {{ (int) session('previous_role') === $role['id'] ? 'selected' : '' }}>
                                     {{ $role['name'] }}
                                 </option>
                             @endforeach
