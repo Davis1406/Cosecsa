@@ -2,19 +2,27 @@
 @php
     $latest = $shares->first();
     $when = fn ($at) => \Illuminate\Support\Carbon::parse($at)->format('d M Y, H:i');
+    $canDelete = Auth::user()->isSuperAdmin() || Auth::user()->hasPermission('transcripts.manage');
 @endphp
 
 <div class="d-flex justify-content-between align-items-center flex-wrap mb-2" style="gap:.5rem;">
     <p class="sect-div mb-0">Transcript</p>
     <div>
         @if($latest)
-            <a href="{{ url('admin/transcripts/copy/'.$userId) }}" target="_blank" class="btn btn-sm btn-cosecsa-outline">
+            <a href="{{ url('admin/transcripts/copy/'.$userId) }}" target="_blank" class="btn btn-sm btn-cosecsa-yellow">
                 <i class="fas fa-file-pdf mr-1"></i> Open PDF
             </a>
         @endif
         <a href="{{ url('admin/transcripts/edit/'.$userId) }}" class="btn btn-sm btn-cosecsa">
             <i class="fas fa-file-signature mr-1"></i> {{ $record ? 'Edit / Share Again' : 'Issue Transcript' }}
         </a>
+        @if($record && $canDelete)
+            <form method="POST" action="{{ url('admin/transcripts/delete/'.$userId) }}" class="d-inline"
+                  onsubmit="return confirm('Delete this transcript, including every shared copy kept here? Emails already sent are not affected.');">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash mr-1"></i> Delete Transcript</button>
+            </form>
+        @endif
     </div>
 </div>
 
@@ -29,18 +37,26 @@
     <p class="sect-div mt-3">Share History</p>
     <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
         <thead>
-            <tr><th>Shared</th><th>Sent to</th><th>By</th><th class="text-right">Copy</th></tr>
+            <tr><th style="width:36px;">#</th><th>Shared</th><th>Sent to</th><th>By</th><th class="text-right">Copy</th></tr>
         </thead>
         <tbody>
             @foreach($shares as $s)
                 <tr>
+                    <td>{{ $loop->iteration }}</td>
                     <td>{{ $when($s['at']) }}</td>
                     <td>{{ $s['sent_to'] }}</td>
                     <td>{{ $s['by_name'] ?? '—' }}</td>
-                    <td class="text-right">
-                        <a href="{{ url('admin/transcripts/copy/'.$userId.'?dispatch='.$s['dispatch_id']) }}" target="_blank" class="cosecsa-link">
-                            <i class="fas fa-file-pdf mr-1"></i>View
+                    <td class="text-right" style="white-space:nowrap;">
+                        <a href="{{ url('admin/transcripts/copy/'.$userId.'?dispatch='.$s['dispatch_id']) }}" target="_blank" class="btn btn-sm btn-cosecsa-yellow">
+                            <i class="fas fa-file-pdf mr-1"></i> View
                         </a>
+                        @if($canDelete)
+                            <form method="POST" action="{{ url('admin/transcripts/delete/'.$userId.'/share/'.$s['dispatch_id']) }}" class="d-inline"
+                                  onsubmit="return confirm('Delete this shared transcript and its saved copy? The fellow keeps the email they received.');">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-danger" title="Delete this share"><i class="fas fa-trash"></i></button>
+                            </form>
+                        @endif
                     </td>
                 </tr>
             @endforeach
@@ -49,8 +65,8 @@
 @elseif($record)
     <p class="text-muted mb-0" style="font-size:.85rem;">
         A transcript was saved on {{ $when($record['updated_at']) }} but has not been shared with the fellow yet.
-        <a href="{{ url('admin/transcripts/pdf/'.$userId) }}" target="_blank" class="cosecsa-link ml-1">
-            <i class="fas fa-file-pdf mr-1"></i>Preview saved version
+        <a href="{{ url('admin/transcripts/pdf/'.$userId) }}" target="_blank" class="btn btn-sm btn-cosecsa-yellow ml-1">
+            <i class="fas fa-file-pdf mr-1"></i> Preview saved version
         </a>
     </p>
 @else

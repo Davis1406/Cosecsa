@@ -16,13 +16,13 @@
             </p>
           </div>
           <div class="col-sm-6 text-right">
-            <a href="{{ url('admin/transcripts') }}" class="btn btn-cosecsa-outline">
+            <a href="{{ url('admin/transcripts') }}" class="btn btn-cosecsa-dark">
               <i class="fas fa-arrow-left mr-1"></i> Back
             </a>
-            <button type="button" class="btn btn-cosecsa-outline" data-toggle="modal" data-target="#transcriptPreviewModal">
+            <button type="button" class="btn btn-cosecsa-yellow" data-toggle="modal" data-target="#transcriptPreviewModal">
               <i class="fas fa-eye mr-1"></i> Preview
             </button>
-            <a href="{{ url('admin/transcripts/pdf/'.$userId) }}" target="_blank" class="btn btn-cosecsa-outline">
+            <a href="{{ url('admin/transcripts/pdf/'.$userId) }}" target="_blank" class="btn btn-cosecsa-yellow">
               <i class="fas fa-file-pdf mr-1"></i> Download PDF
             </a>
             <button type="submit" form="transcriptForm" class="btn btn-cosecsa">
@@ -43,7 +43,7 @@
               Shared with <strong>{{ $record->sent_to }}</strong> on
               {{ \Illuminate\Support\Carbon::parse($record->sent_at)->format('d M Y, H:i') }}.
             </span>
-            <a href="{{ url('admin/transcripts/copy/'.$userId) }}" target="_blank" class="btn btn-sm btn-cosecsa-outline mt-1">
+            <a href="{{ url('admin/transcripts/copy/'.$userId) }}" target="_blank" class="btn btn-sm btn-cosecsa-yellow mt-1">
               <i class="fas fa-download mr-1"></i> Sent copy
             </a>
           </div>
@@ -111,7 +111,7 @@
             <div class="card-header">
               <h3 class="card-title">Course / Qualification Rows</h3>
               <div class="card-tools">
-                <button type="button" class="btn btn-sm btn-cosecsa-outline" id="addRowBtn">
+                <button type="button" class="btn btn-sm btn-cosecsa-dark" id="addRowBtn">
                   <i class="fas fa-plus mr-1"></i> Add Row
                 </button>
               </div>
@@ -137,7 +137,7 @@
                         <td><input type="text" class="form-control form-control-sm" name="courses[{{ $loop->index }}][course_name]" value="{{ $c->course_name }}"></td>
                         <td><input type="text" class="form-control form-control-sm" name="courses[{{ $loop->index }}][academic_year]" value="{{ $c->academic_year }}"></td>
                         <td><input type="text" class="form-control form-control-sm" name="courses[{{ $loop->index }}][result]" value="{{ $c->result }}"></td>
-                        <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger removeRowBtn"><i class="fas fa-times"></i></button></td>
+                        <td class="text-center"><button type="button" class="btn btn-sm btn-danger removeRowBtn"><i class="fas fa-times"></i></button></td>
                       </tr>
                     @endforeach
                   </tbody>
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
       <td><input type="text" class="form-control form-control-sm" name="courses[${i}][course_name]"></td>
       <td><input type="text" class="form-control form-control-sm" name="courses[${i}][academic_year]"></td>
       <td><input type="text" class="form-control form-control-sm" name="courses[${i}][result]"></td>
-      <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger removeRowBtn"><i class="fas fa-times"></i></button></td>
+      <td class="text-center"><button type="button" class="btn btn-sm btn-danger removeRowBtn"><i class="fas fa-times"></i></button></td>
     </tr>`;
   }
 

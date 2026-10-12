@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-12) — Transcripts: # column, delete, solid buttons
+- **Transcript History** has a **#** column (follows the current sort/page) and, for staff with `transcripts.manage` (or Super Admin), a **Delete** button: a shared row deletes that share and its kept PDF; a "saved, not shared" row deletes the saved transcript. Both confirm first. The fellow's **Transcript** tab has the same per-share delete, a **Delete Transcript** button, and a # column on its share history.
+- Buttons on the Transcripts page, transcript edit page and fellow Transcript tab are solid: maroon `btn-cosecsa` (main action), gold `btn-cosecsa-yellow` (view/preview/download), new slate `btn-cosecsa-dark` (Back, Add Row; lighter slate in dark mode), red `btn-danger` (delete).
+- All solid COSECSA buttons (`btn-cosecsa`, `-yellow`, `-dark`) app-wide now lift slightly with a shadow on hover, press back on click, and show a gold focus ring for keyboard users.
+- **Files:** `app/Http/Controllers/TranscriptController.php` (`destroy`, `destroyShare`), `routes/web.php`, `resources/views/admin/transcripts/{search,edit,_profile}.blade.php`, `resources/views/layout/header.blade.php`. ⚠️ **Coordinate:** cosecsa-api delete endpoints first.
+
 ### Added (2026-10-12) — Transcript History; Transcript tab on the fellow profile
 - `admin/transcripts` gains a **Transcript History** card: every share (date, fellow, programme, sent to, by, **Sent copy** PDF of exactly what was emailed) and transcripts saved but not shared (**Preview**), each with **Open**. The fellow name links to their profile's Transcript tab.
 - The fellow profile (`admin/associates/fellows/view/{id}`) has a **Transcript** tab (needs `transcripts.view`), loaded when first opened: the latest shared transcript embedded in the page, its share history with each copy, and **Issue Transcript** / **Edit / Share Again**. Replaces the small "Transcript" row added to the Fellowship tab earlier today.

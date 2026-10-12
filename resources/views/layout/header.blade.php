@@ -1126,6 +1126,28 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
     }
     .btn-cosecsa-yellow { background:#FEC503; border-color:#FEC503; color:#3a2a00; }
     .btn-cosecsa-yellow:hover, .btn-cosecsa-yellow:focus { background:#e6b200; border-color:#e6b200; color:#3a2a00; }
+    /* Solid slate for neutral actions (Back, Add Row) — DESIGN.md "Slate". */
+    .btn-cosecsa-dark { font-size:.82rem; font-weight:500; padding:.38rem .85rem; border-radius:5px; line-height:1.4;
+        background:#2d3748; border:1px solid #2d3748; color:#fff; }
+    .btn-cosecsa-dark.btn-sm { font-size:.75rem; padding:.22rem .55rem; border-radius:4px; }
+    .btn-cosecsa-dark:hover, .btn-cosecsa-dark:focus { background:#1a202c; border-color:#1a202c; color:#fff; }
+    body.dark-mode .btn-cosecsa-dark, html.dark-mode .btn-cosecsa-dark { background:#4a5568; border-color:#4a5568; color:#fff; }
+    body.dark-mode .btn-cosecsa-dark:hover, html.dark-mode .btn-cosecsa-dark:hover,
+    body.dark-mode .btn-cosecsa-dark:focus, html.dark-mode .btn-cosecsa-dark:focus { background:#718096; border-color:#718096; color:#fff; }
+    /* Solid buttons: lift + shadow on hover, press back down, visible keyboard focus. */
+    .btn-cosecsa, .btn-cosecsa-yellow, .btn-cosecsa-dark {
+        transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+    .btn-cosecsa:hover, .btn-cosecsa-yellow:hover, .btn-cosecsa-dark:hover {
+        transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,.22);
+    }
+    .btn-cosecsa:active, .btn-cosecsa-yellow:active, .btn-cosecsa-dark:active { transform: none; box-shadow: none; }
+    .btn-cosecsa:focus-visible, .btn-cosecsa-yellow:focus-visible, .btn-cosecsa-dark:focus-visible {
+        outline: none; box-shadow: 0 0 0 .2rem rgba(254,197,3,.55);
+    }
+    body.dark-mode .btn-cosecsa:hover, body.dark-mode .btn-cosecsa-yellow:hover, body.dark-mode .btn-cosecsa-dark:hover {
+        box-shadow: 0 3px 10px rgba(0,0,0,.55);
+    }
 
     /* Safety net for plain Bootstrap-colored buttons (btn-danger, etc.)
        sitting in a page toolbar — same compact sizing as the cosecsa

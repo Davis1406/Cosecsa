@@ -13,7 +13,7 @@
           </div>
           @if(Auth::user()->hasPermission('transcripts.manage'))
           <div class="col-sm-6 text-right">
-            <a href="{{ url('admin/settings/transcript-templates') }}" class="btn btn-cosecsa-outline">
+            <a href="{{ url('admin/settings/transcript-templates') }}" class="btn btn-cosecsa-yellow">
               <i class="fas fa-file-alt mr-1"></i> Manage Templates
             </a>
           </div>
@@ -68,17 +68,19 @@
             </div>
           </div>
           <div class="card-body">
+            @php $canDelete = Auth::user()->isSuperAdmin() || Auth::user()->hasPermission('transcripts.manage'); @endphp
             @if($history->isEmpty())
               <p class="text-muted mb-0" style="font-size:.85rem;">No transcripts have been issued yet.</p>
             @else
               <table id="transcriptHistoryTable" class="table table-sm table-hover mb-0" style="font-size:.85rem;">
                 <thead>
-                  <tr><th>Date</th><th>Fellow</th><th>Programme</th><th>Status</th><th>Sent to</th><th>By</th><th class="text-right">Actions</th></tr>
+                  <tr><th style="width:36px;">#</th><th>Date</th><th>Fellow</th><th>Programme</th><th>Status</th><th>Sent to</th><th>By</th><th class="text-right">Actions</th></tr>
                 </thead>
                 <tbody>
                   @foreach($history as $h)
                     @php $at = \Illuminate\Support\Carbon::parse($h['at']); @endphp
                     <tr>
+                      <td class="row-num"></td>
                       <td data-order="{{ $at->timestamp }}">{{ $at->format('d M Y, H:i') }}</td>
                       <td>
                         @if($h['fellow_id'])
@@ -99,17 +101,32 @@
                       <td>{{ $h['by_name'] ?: '—' }}</td>
                       <td class="text-right" style="white-space:nowrap;">
                         @if($h['kind'] === 'shared')
-                          <a href="{{ url('admin/transcripts/copy/'.$h['user_id'].'?dispatch='.$h['dispatch_id']) }}" target="_blank" class="btn btn-sm btn-cosecsa-outline">
+                          <a href="{{ url('admin/transcripts/copy/'.$h['user_id'].'?dispatch='.$h['dispatch_id']) }}" target="_blank" class="btn btn-sm btn-cosecsa-yellow">
                             <i class="fas fa-file-pdf mr-1"></i> Sent copy
                           </a>
                         @else
-                          <a href="{{ url('admin/transcripts/pdf/'.$h['user_id']) }}" target="_blank" class="btn btn-sm btn-cosecsa-outline">
+                          <a href="{{ url('admin/transcripts/pdf/'.$h['user_id']) }}" target="_blank" class="btn btn-sm btn-cosecsa-yellow">
                             <i class="fas fa-eye mr-1"></i> Preview
                           </a>
                         @endif
-                        <a href="{{ url('admin/transcripts/edit/'.$h['user_id']) }}" class="btn btn-sm btn-cosecsa-outline">
+                        <a href="{{ url('admin/transcripts/edit/'.$h['user_id']) }}" class="btn btn-sm btn-cosecsa">
                           <i class="fas fa-file-signature mr-1"></i> Open
                         </a>
+                        @if($canDelete)
+                          @if($h['kind'] === 'shared')
+                            <form method="POST" action="{{ url('admin/transcripts/delete/'.$h['user_id'].'/share/'.$h['dispatch_id']) }}" class="d-inline"
+                                  onsubmit="return confirm('Delete this shared transcript and its saved copy? The fellow keeps the email they received.');">
+                              @csrf
+                              <button type="submit" class="btn btn-sm btn-danger" title="Delete this share"><i class="fas fa-trash"></i></button>
+                            </form>
+                          @else
+                            <form method="POST" action="{{ url('admin/transcripts/delete/'.$h['user_id']) }}" class="d-inline"
+                                  onsubmit="return confirm('Delete the saved transcript for {{ addslashes($h['full_name']) }}?');">
+                              @csrf
+                              <button type="submit" class="btn btn-sm btn-danger" title="Delete this transcript"><i class="fas fa-trash"></i></button>
+                            </form>
+                          @endif
+                        @endif
                       </td>
                     </tr>
                   @endforeach
@@ -127,7 +144,15 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   if (document.getElementById('transcriptHistoryTable')) {
-    $('#transcriptHistoryTable').DataTable({ pageLength: 10, order: [[0, 'desc']], columnDefs: [{ orderable: false, targets: -1 }] });
+    $('#transcriptHistoryTable').DataTable({
+      pageLength: 10,
+      order: [[1, 'desc']],
+      columnDefs: [{ orderable: false, searchable: false, targets: [0, -1] }],
+      drawCallback: function () {
+        var api = this.api(), start = api.page.info().start;
+        api.column(0, { page: 'current' }).nodes().each(function (cell, i) { cell.innerHTML = start + i + 1; });
+      }
+    });
   }
 
   const input = document.getElementById('transcriptSearchInput');

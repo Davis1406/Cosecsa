@@ -102,6 +102,22 @@ class TranscriptController extends Controller
         ]);
     }
 
+    public function destroy($userId)
+    {
+        $response = $this->api->delete("transcripts/{$userId}");
+
+        return back()->with($response->failed() ? 'error' : 'success',
+            $response->json('message') ?? ($response->failed() ? 'Could not delete the transcript.' : 'Transcript deleted.'));
+    }
+
+    public function destroyShare($userId, $dispatchId)
+    {
+        $response = $this->api->delete("transcripts/{$userId}/shares/{$dispatchId}");
+
+        return back()->with($response->failed() ? 'error' : 'success',
+            $response->json('message') ?? ($response->failed() ? 'Could not delete the shared transcript.' : 'Shared transcript deleted.'));
+    }
+
     public function sentCopy(Request $request, $userId)
     {
         $response = $this->api->get("transcripts/{$userId}/copy", $request->only('dispatch'));
