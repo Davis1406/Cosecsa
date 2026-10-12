@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-12) — Dropdowns: consistent inset arrow; role-selection page aligned
+- Every single-choice `select.form-control` (≈160 across the app) now draws its own chevron inset from the right edge (`custom.css`), instead of the browser's native arrow sitting flush against the border; `form-control-sm` gets a smaller one, dark mode a light one. Multi-selects/listboxes, Select2/Tom Select and Bootstrap `.custom-select` are unaffected.
+- `select-role`: the role dropdown and the Reset Role / Continue buttons share one 46px height, the dropdown uses the same inset chevron, and the label is bolder.
+- **Files:** `public/dist/css/custom.css`, `resources/views/auth/role-selection.blade.php`.
+
 ### Fixed (2026-10-12) — Login page: change the role you're logging in as
 - After picking a role on the role-selection page, it stayed in the session (`pending_role`), so `/` kept showing "Login as <role>" with no way to pick another. The login page now has a **Change role** link (`change-role`, new `AuthController::changeRole()`) that clears it and returns to role selection, with the previous role pre-selected.
 - **Files:** `app/Http/Controllers/AuthController.php`, `routes/web.php`, `resources/views/auth/{login,role-selection}.blade.php`.
