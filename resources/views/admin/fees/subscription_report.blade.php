@@ -311,6 +311,35 @@
                     </form>
 
                     <div class="table-responsive">
+                        @php
+                            // Compact row data; the table is built client-side (deferRender).
+                            $srRows = collect($rows)->values()->map(function ($row) use ($selectedYears, $year, $multi) {
+                                $parts = preg_split('/\s+/', trim($row->name));
+                                $out = [
+                                    'id' => $row->fellow_id, 'name' => $row->name, 'email' => $row->email,
+                                    'country' => $row->country_name, 'ftype' => $row->fellowship_type,
+                                    'ini' => strtoupper(mb_substr($parts[0] ?? '', 0, 1) . mb_substr(count($parts) > 1 ? end($parts) : '', 0, 1)),
+                                ];
+                                if ($multi) {
+                                    $out['ys'] = collect($selectedYears)->map(fn ($y) => [
+                                        'st' => $row->years[$y]->effective_status ?? 'None',
+                                        'paid' => $row->years[$y]->amount_paid ?? null,
+                                    ])->values();
+                                    $out['total'] = $row->total_paid;
+                                    $out['outst'] = $row->outstanding;
+                                } else {
+                                    $r = $row->years[$year] ?? null;
+                                    $out['st'] = $r->effective_status ?? 'None';
+                                    $out['due'] = $r->amount_due ?? null;
+                                    $out['paid'] = $r->amount_paid ?? null;
+                                    $out['outst'] = $r->outstanding ?? null;
+                                    $out['date'] = $r->date_paid ?? null;
+                                    $out['mode'] = (!$r || !$r->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $r->mode_of_payment)) ? null : $r->mode_of_payment;
+                                }
+                                return $out;
+                            });
+                        @endphp
+                        <script type="application/json" id="srRows">{!! json_encode($srRows, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
                         <table id="subscriptionReportTable" class="table mb-0" style="width:100%;">
                             <thead>
                                 <tr>
@@ -333,52 +362,7 @@
                                     <th class="no-export"></th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @foreach($rows as $i => $row)
-                                @php
-                                    $parts = preg_split('/\s+/', trim($row->name));
-                                    $initials = strtoupper(mb_substr($parts[0] ?? '', 0, 1) . mb_substr(count($parts) > 1 ? end($parts) : '', 0, 1));
-                                    $r = $row->years[$year] ?? null;
-                                    $mode = (!$r || !$r->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $r->mode_of_payment)) ? null : $r->mode_of_payment;
-                                @endphp
-                                <tr data-fellow="{{ $row->fellow_id }}">
-                                    <td class="muted">{{ $i + 1 }}</td>
-                                    <td>
-                                        <div class="sr-who">
-                                            <span class="sr-avatar" data-initials="{{ $initials }}"></span>
-                                            <div>
-                                                <div class="nm">{{ $row->name }}</div>
-                                                @if($row->email)<div class="em">{{ $row->email }}</div>@endif
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>{{ $row->country_name ?? '—' }}</td>
-                                    <td>{{ $row->fellowship_type ?? '—' }}</td>
-                                    @if($multi)
-                                        @foreach($selectedYears as $y)
-                                            @php $yr = $row->years[$y] ?? null; $st = $yr->effective_status ?? 'None'; @endphp
-                                            <td class="yc" data-order="{{ $st }}">
-                                                <span class="sr-pill s-{{ $st }}">{{ $st === 'None' ? 'No Record' : $st }}</span>
-                                                @if($yr && $yr->amount_paid !== null)<small>{{ number_format($yr->amount_paid, 2) }}</small>@endif
-                                            </td>
-                                        @endforeach
-                                        <td class="num" data-order="{{ $row->total_paid }}">{{ number_format($row->total_paid, 2) }}</td>
-                                        <td class="num" data-order="{{ $row->outstanding }}">{{ number_format($row->outstanding, 2) }}</td>
-                                    @else
-                                        @php $st = $r->effective_status ?? 'None'; @endphp
-                                        <td data-order="{{ $st }}">
-                                            <span class="sr-pill s-{{ $st }}">{{ $st === 'None' ? 'No Record' : $st }}</span>
-                                        </td>
-                                        <td class="num" data-order="{{ $r->amount_due ?? -1 }}">{{ isset($r->amount_due) ? number_format($r->amount_due, 2) : '—' }}</td>
-                                        <td class="num" data-order="{{ $r->amount_paid ?? -1 }}">{{ isset($r->amount_paid) ? number_format($r->amount_paid, 2) : '—' }}</td>
-                                        <td class="num" data-order="{{ $r->outstanding ?? -1 }}">{{ isset($r->outstanding) ? number_format($r->outstanding, 2) : '—' }}</td>
-                                        <td data-order="{{ $r->date_paid ?? '' }}">{{ !empty($r->date_paid) ? \Carbon\Carbon::parse($r->date_paid)->format('d M Y') : '—' }}</td>
-                                        <td>{{ $mode ?? '—' }}</td>
-                                    @endif
-                                    <td class="no-export text-right"><i class="fas fa-chevron-right sr-go"></i></td>
-                                </tr>
-                                @endforeach
-                            </tbody>
+                            <tbody></tbody>
                         </table>
                     </div>
                 </div>
@@ -531,8 +515,65 @@ COSECSA Secretariat</textarea>
 @push('scripts')
 <script>
 $(document).ready(function () {
-    var exportCols = { columns: ':not(.no-export)' };
+    var exportCols = { columns: ':not(.no-export)', orthogonal: 'export' };
+    var srMulti = @json((bool) $multi);
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    function esc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+    function money(v) { return Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function stLabel(st) { return st === 'None' ? 'No Record' : st; }
+    function pill(st) { return '<span class="sr-pill s-' + esc(st) + '">' + esc(stLabel(st)) + '</span>'; }
+    // Amount column: '—' when absent; sorts with absent first (-1), as before.
+    function amount(key) {
+        return { data: key, className: 'num', render: function (d, type) {
+            if (type === 'sort' || type === 'type') return d == null ? -1 : Number(d);
+            return d == null ? '—' : money(d);
+        } };
+    }
+    var srCols = [
+        { data: null, defaultContent: '', className: 'muted' },
+        { data: 'name', render: function (d, type, r) {
+            if (type === 'sort') return d || '';
+            if (type !== 'display') return (d || '') + (r.email ? ' ' + r.email : '');
+            return '<div class="sr-who"><span class="sr-avatar" data-initials="' + esc(r.ini) + '"></span><div>' +
+                '<div class="nm">' + esc(d) + '</div>' + (r.email ? '<div class="em">' + esc(r.email) + '</div>' : '') + '</div></div>';
+        } },
+        { data: 'country', render: function (d, type) { return type === 'display' ? esc(d || '—') : (d || '—'); } },
+        { data: 'ftype', render: function (d, type) { return type === 'display' ? esc(d || '—') : (d || '—'); } }
+    ];
+    if (srMulti) {
+        @json(array_values($selectedYears)).forEach(function (y, k) {
+            srCols.push({ data: null, className: 'yc', render: function (d, type, r) {
+                var c = r.ys[k];
+                if (type === 'sort' || type === 'type') return c.st;
+                var paid = c.paid != null ? money(c.paid) : '';
+                if (type !== 'display') return stLabel(c.st) + (paid ? ' ' + paid : '');
+                return pill(c.st) + (paid ? '<small>' + paid + '</small>' : '');
+            } });
+        });
+        srCols.push(amount('total'), amount('outst'));
+    } else {
+        srCols.push(
+            { data: 'st', render: function (d, type) { return type === 'display' ? pill(d) : (type === 'sort' || type === 'type' ? d : stLabel(d)); } },
+            amount('due'), amount('paid'), amount('outst'),
+            { data: 'date', render: function (d, type) {
+                if (type === 'sort' || type === 'type') return d || '';
+                var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || '');
+                return m ? m[3] + ' ' + months[+m[2] - 1] + ' ' + m[1] : '—';
+            } },
+            { data: 'mode', render: function (d, type) { return type === 'display' ? esc(d || '—') : (d || '—'); } }
+        );
+    }
+    srCols.push({ data: null, className: 'no-export text-right', defaultContent: '<i class="fas fa-chevron-right sr-go"></i>' });
+
     $('#subscriptionReportTable').DataTable({
+        deferRender: true,
+        data: JSON.parse(document.getElementById('srRows').textContent || '[]'),
+        columns: srCols,
+        createdRow: function (tr, r) { tr.setAttribute('data-fellow', r.id); },
         dom: 'Brtip',
         buttons: [
             { extend: 'copyHtml5',  className: 'btn-sm', exportOptions: exportCols },

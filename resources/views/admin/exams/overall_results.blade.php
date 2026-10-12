@@ -199,6 +199,13 @@
                     <div class="tab-pane fade" id="tab-detail" role="tabpanel">
                         <div class="card">
                             <div class="card-body p-0">
+                                {{-- Rows are built client-side from this JSON (deferRender). --}}
+                                <script type="application/json" id="detailRows">{!! json_encode(collect($results)->values()->map(fn ($r, $i) => [
+                                    'n' => $i + 1, 'name' => $r->trainee_name ?: $r->contact_name, 'email' => $r->email ?? null,
+                                    'prog' => $r->programme_name ?? $r->specialty ?? null, 'year' => $r->exam_year,
+                                    'p1' => $r->part1_score, 'p2' => $r->part2_score, 'res' => $r->result ?? null,
+                                    'fid' => $r->fellow_id ?? null, 'tid' => $r->trainee_id ?? null,
+                                ]), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
                                 <table id="detailTable" class="table table-sm table-bordered table-striped detail-table mb-0">
                                     <thead>
                                         <tr>
@@ -213,52 +220,7 @@
                                             <th>Profile</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        @foreach($results as $i => $r)
-                                        @php
-                                            $rRes = strtolower($r->result ?? '');
-                                            $rBg  = $rRes === 'pass'   ? '#d4edda' :
-                                                    ($rRes === 'fail'   ? '#f8d7da' :
-                                                    ($rRes === 'absent' ? '#fff3cd' : '#e9ecef'));
-                                            $rClr = $rRes === 'pass'   ? '#155724' :
-                                                    ($rRes === 'fail'   ? '#721c24' :
-                                                    ($rRes === 'absent' ? '#856404' : '#495057'));
-                                            $displayName = $r->trainee_name ?: $r->contact_name;
-                                        @endphp
-                                        <tr>
-                                            <td>{{ $i + 1 }}</td>
-                                            <td>{{ $displayName }}</td>
-                                            <td>{{ $r->email ?? '—' }}</td>
-                                            <td>{{ $r->programme_name ?? $r->specialty ?? '—' }}</td>
-                                            <td>{{ $r->exam_year }}</td>
-                                            <td class="text-center">
-                                                {{ $r->part1_score !== null ? number_format($r->part1_score, 2) : '—' }}
-                                            </td>
-                                            <td class="text-center">
-                                                {{ $r->part2_score !== null ? number_format($r->part2_score, 2) : '—' }}
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="badge" style="background:{{ $rBg }};color:{{ $rClr }};padding:3px 8px;font-size:.8rem;">
-                                                    {{ strtoupper($r->result ?? '—') }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @if($r->fellow_id)
-                                                <a href="{{ url('admin/associates/fellows/view/'.$r->fellow_id) }}"
-                                                   class="btn btn-xs btn-light border" title="View fellow profile">
-                                                    <i class="fas fa-user-graduate text-success"></i>
-                                                </a>
-                                                @elseif($r->trainee_id)
-                                                <a href="{{ url('admin/associates/trainees/view/'.$r->trainee_id) }}"
-                                                   class="btn btn-xs btn-light border" title="View trainee">
-                                                    <i class="fas fa-eye text-info"></i>
-                                                </a>
-                                                @else —
-                                                @endif
-                                            </td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
+                                    <tbody></tbody>
                                 </table>
                             </div>
                         </div>
@@ -280,7 +242,43 @@ $(document).ready(function () {
         order: [[0, 'desc'], [1, 'asc']],
         columnDefs: [{ orderable: false, targets: [] }]
     });
+    function esc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+    function txt(d, type) { var v = d == null || d === '' ? '—' : d; return type === 'display' ? esc(v) : v; }
+    function score(d, type) {
+        if (type === 'sort' || type === 'type') return d == null ? -1 : Number(d);
+        return d == null ? '—' : Number(d).toFixed(2);
+    }
+    var resColours = { pass: ['#d4edda', '#155724'], fail: ['#f8d7da', '#721c24'], absent: ['#fff3cd', '#856404'] };
+    var fellowUrl = @json(url('admin/associates/fellows/view')), traineeUrl = @json(url('admin/associates/trainees/view'));
+
     $('#detailTable').DataTable({
+        deferRender: true,
+        data: JSON.parse(document.getElementById('detailRows').textContent || '[]'),
+        columns: [
+            { data: 'n' },
+            { data: 'name', render: txt },
+            { data: 'email', render: txt },
+            { data: 'prog', render: txt },
+            { data: 'year', render: txt },
+            { data: 'p1', className: 'text-center', render: score },
+            { data: 'p2', className: 'text-center', render: score },
+            { data: 'res', className: 'text-center', render: function (d, type) {
+                var label = d ? String(d).toUpperCase() : '—';
+                if (type !== 'display') return label;
+                var c = resColours[String(d || '').toLowerCase()] || ['#e9ecef', '#495057'];
+                return '<span class="badge" style="background:' + c[0] + ';color:' + c[1] + ';padding:3px 8px;font-size:.8rem;">' + esc(label) + '</span>';
+            } },
+            { data: null, orderable: false, searchable: false, render: function (d, type, r) {
+                if (type !== 'display') return '';
+                if (r.fid) return '<a href="' + fellowUrl + '/' + r.fid + '" class="btn btn-xs btn-light border" title="View fellow profile"><i class="fas fa-user-graduate text-success"></i></a>';
+                if (r.tid) return '<a href="' + traineeUrl + '/' + r.tid + '" class="btn btn-xs btn-light border" title="View trainee"><i class="fas fa-eye text-info"></i></a>';
+                return '—';
+            } }
+        ],
         pageLength: 25,
         order: [[4, 'desc'], [1, 'asc']]
     });

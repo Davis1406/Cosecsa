@@ -157,7 +157,15 @@ $hpFilterDefs = [
 
 <div class="card">
     <div class="card-body">
-        <table id="hospitalProgrammesTable" class="table table-bordered table-striped">
+        {{-- Rows are built client-side from this JSON (custom.js, deferRender). --}}
+        <script type="application/json" id="hpRows">{!! json_encode(collect($getHospitalProgrammes)->values()->map(fn ($d, $i) => [
+            'n' => $i + 1, 'id' => $d->id, 'hid' => $d->hospital_id, 'pid' => $d->programme_id,
+            'hospital' => $d->hospital_name, 'programme' => $d->programme_name, 'country' => $d->country_name,
+            'acc' => $d->accredited_date, 'exp' => $d->expiry_date, 'status' => $d->status,
+        ]), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+        <table id="hospitalProgrammesTable" class="table table-bordered table-striped"
+               data-app-url="{{ url('') }}"
+               data-can-delete="{{ Auth::user()->isSuperAdmin() || Auth::user()->hasPermission('lookups.manage') ? 1 : 0 }}">
             <thead>
                 <tr>
                     <th>#</th>
@@ -170,69 +178,7 @@ $hpFilterDefs = [
                     <th>Action</th>
                 </tr>
             </thead>
-            <tbody>
-                @foreach($getHospitalProgrammes as $index => $data)
-                @php $statusLow = strtolower($data->status); @endphp
-                <tr
-                    data-programme="{{ $data->programme_name }}"
-                    data-country="{{ $data->country_name }}"
-                    data-status="{{ $data->status }}"
-                >
-                    <td>{{ $index + 1 }}</td>
-                    <td>
-                        <a href="{{ url('admin/hospital/view_hospital/'.$data->hospital_id) }}" class="entity-link">
-                            {{ $data->hospital_name }}
-                        </a>
-                    </td>
-                    <td>
-                        <a href="{{ url('admin/programmes/view/'.$data->programme_id) }}" class="entity-link">
-                            {{ $data->programme_name }}
-                        </a>
-                    </td>
-                    <td>{{ $data->country_name }}</td>
-                    <td>{{ $data->accredited_date }}</td>
-                    <td>{{ $data->expiry_date }}</td>
-                    <td>
-                        <span class="dot dot-{{ $statusLow }}"></span>{{ $data->status }}
-                        <button type="button" class="btn btn-xs toggle-status-btn ml-1
-                            @if($statusLow === 'expired') btn-outline-success @else btn-outline-danger @endif"
-                            data-hp-id="{{ $data->id }}"
-                            data-hospital-id="{{ $data->hospital_id }}"
-                            data-programme-id="{{ $data->programme_id }}"
-                            data-hospital="{{ $data->hospital_name }}"
-                            data-programme="{{ $data->programme_name }}"
-                            data-accredited="{{ $data->accredited_date }}"
-                            data-expiry="{{ $data->expiry_date }}"
-                            data-flag="{{ $statusLow === 'expired' ? 'expired' : 'active' }}"
-                            title="@if($statusLow === 'expired') Activate accreditation @else Mark as expired @endif">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </td>
-                    <td class="text-center" style="white-space:nowrap;">
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
-                                    type="button" data-toggle="dropdown"
-                                    aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                                <a class="dropdown-item" href="{{ url('admin/hospitalprogrammes/edit/' . $data->id) }}">
-                                    <i class="fas fa-edit text-warning mr-2"></i> Edit
-                                </a>
-                                @if(Auth::user()->isSuperAdmin() || Auth::user()->hasPermission('lookups.manage'))
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-danger"
-                                   href="{{ url('admin/hospitalprogrammes/delete/' . $data->id) }}"
-                                   onclick="return confirm('Delete this programme record?')">
-                                    <i class="fas fa-trash mr-2"></i> Delete
-                                </a>
-                                @endif
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
+            <tbody></tbody>
         </table>
     </div>
 </div>
@@ -324,15 +270,14 @@ $(document).ready(function () {
         );
     }
 
-    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, row) {
         if (settings.nTable.id !== 'hospitalProgrammesTable') return true;
-        var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
         var chkProg    = getChecked('hpFilterProgramme');
         var chkCountry = getChecked('hpFilterCountry');
         var chkStatus  = getChecked('hpFilterStatus');
-        if (chkProg.length    && chkProg.indexOf(String($row.data('programme') || '')) === -1) return false;
-        if (chkCountry.length && chkCountry.indexOf(String($row.data('country')   || '')) === -1) return false;
-        if (chkStatus.length  && chkStatus.indexOf(String($row.data('status')     || '')) === -1) return false;
+        if (chkProg.length    && chkProg.indexOf(String(row.programme || '')) === -1) return false;
+        if (chkCountry.length && chkCountry.indexOf(String(row.country   || '')) === -1) return false;
+        if (chkStatus.length  && chkStatus.indexOf(String(row.status     || '')) === -1) return false;
         return true;
     });
 

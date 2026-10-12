@@ -17,13 +17,15 @@ class HospitalController extends Controller
         $params = $request->only(['country_id', 'programme_id', 'flag', 'search']);
 
         // Fetch accreditation rows, hospital list, and HP list in parallel via API.
-        $dashRes  = $this->api->get('admin/hospitals/dashboard', $params);
-        $hospRes  = $this->api->get('admin/hospitals');
-        $hpRes    = $this->api->get('admin/hospital-programmes');
+        $res = $this->api->getAll([
+            'dash' => ['admin/hospitals/dashboard', $params],
+            'hosp' => ['admin/hospitals'],
+            'hp'   => ['admin/hospital-programmes'],
+        ]);
 
-        $dash = $dashRes->object();
-        $hosp = $hospRes->object();
-        $hp   = $hpRes->object();
+        $dash = $res['dash']?->object();
+        $hosp = $res['hosp']?->object();
+        $hp   = $res['hp']?->object();
 
         // hospListData mirrors what buildHospitalListData() used to return.
         $hospListData = [

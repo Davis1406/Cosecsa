@@ -15,6 +15,7 @@
     #hospHubTabs.nav-tabs .nav-link.active { color:#fff; background:#a02626; border-color:#a02626 #a02626 #a02626; font-weight:600; }
     body.dark-mode #hospHubTabs.nav-tabs .nav-link { color:#e0a5a5 !important; }
     body.dark-mode #hospHubTabs.nav-tabs .nav-link.active { color:#fff !important; background:#a02626 !important; }
+    #followUpTable td.small-pd { font-size:.8rem; }
 
     .fchk-filter-wrap  { position:relative; display:inline-block; }
     .fchk-filter-panel { position:absolute; top:calc(100% + 4px); left:0; z-index:1055;
@@ -211,6 +212,18 @@
             </div>
             <div class="card-body p-0">
               <div class="table-responsive">
+                {{-- Rows are built client-side from this JSON (deferRender). --}}
+                <script type="application/json" id="followUpRows">{!! json_encode($rows->values()->map(fn ($r) => [
+                    'id' => $r->id, 'hid' => $r->hospital_id, 'pid' => $r->programme_id,
+                    'hospital' => $r->hospital_name, 'country' => $r->country_name, 'programme' => $r->programme_name,
+                    'pd' => $r->pd_names, 'pdSpecific' => (bool) $r->pd_is_specific,
+                    'acc' => $r->accredited_date, 'exp' => $r->expiry_date,
+                    'accF' => \Carbon\Carbon::parse($r->accredited_date)->format('d M Y'),
+                    'expF' => \Carbon\Carbon::parse($r->expiry_date)->format('d M Y'),
+                    'flag' => $r->flag, 'remind' => count($r->reminder_emails) > 0,
+                    'apd' => [$r->assigned_pd_id, $r->assigned_pd_name, $r->assigned_pd_email, $r->assigned_pd_phone,
+                              $r->assigned_pd_assistant_pd, $r->assigned_pd_assistant_email],
+                ]), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
                 <table id="followUpTable" class="table table-striped table-sm mb-0 accred-table">
                   <thead>
                     <tr>
@@ -219,88 +232,7 @@
                       <th>Accredited</th><th>Expiry</th><th>Status</th><th></th>
                     </tr>
                   </thead>
-                  <tbody>
-                    @foreach($rows as $r)
-                      <tr>
-                        <td>
-                          @if(count($r->reminder_emails))
-                            <input type="checkbox" name="hospital_programme_ids[]" value="{{ $r->id }}">
-                          @endif
-                        </td>
-                        <td><a href="{{ url('admin/hospital/view_hospital/'.$r->hospital_id) }}" class="entity-link">{{ $r->hospital_name }}</a></td>
-                        <td>{{ $r->country_name ?: '—' }}</td>
-                        <td>{{ $r->programme_name }}</td>
-                        <td style="font-size:.8rem;">
-                          {{ $r->pd_names ?: 'No PD on file' }}
-                          @if($r->pd_names && !$r->pd_is_specific)
-                            <span class="text-muted d-block" style="font-size:.72rem;">(hospital-wide)</span>
-                          @endif
-                        </td>
-                        <td>{{ \Carbon\Carbon::parse($r->accredited_date)->format('d M Y') }}</td>
-                        <td>{{ \Carbon\Carbon::parse($r->expiry_date)->format('d M Y') }}</td>
-                        <td>
-                          @if($r->flag === 'expired')
-                            <span class="badge badge-danger">Expired</span>
-                          @elseif($r->flag === 'expiring_soon')
-                            <span class="badge" style="background:#FEC503;color:#3a2a00;">Expiring Soon</span>
-                          @else
-                            <span class="badge badge-success">Active</span>
-                          @endif
-                          <button type="button" class="btn btn-xs toggle-status-btn ml-1
-                            @if($r->flag === 'expired') btn-outline-success @else btn-outline-danger @endif"
-                            data-hp-id="{{ $r->id }}"
-                            data-hospital-id="{{ $r->hospital_id }}"
-                            data-programme-id="{{ $r->programme_id }}"
-                            data-hospital="{{ $r->hospital_name }}"
-                            data-programme="{{ $r->programme_name }}"
-                            data-accredited="{{ $r->accredited_date }}"
-                            data-expiry="{{ $r->expiry_date }}"
-                            data-flag="{{ $r->flag }}"
-                            title="@if($r->flag === 'expired') Activate accreditation @else Mark as expired @endif">
-                            <i class="fas fa-sync-alt"></i>
-                          </button>
-                        </td>
-                        <td>
-                          <div class="dropdown">
-                            <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
-                                    type="button" data-toggle="dropdown"
-                                    aria-haspopup="true" aria-expanded="false">
-                              <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                              <a class="dropdown-item" href="{{ url('admin/hospitalprogrammes/edit/'.$r->id) }}">
-                                <i class="fas fa-edit text-warning mr-2"></i> Edit Accreditation
-                              </a>
-                              <a class="dropdown-item pd-modal-trigger" href="#" data-toggle="modal" data-target="#pdModal"
-                                 data-hp-id="{{ $r->id }}"
-                                 data-hospital="{{ $r->hospital_name }}"
-                                 data-programme="{{ $r->programme_name }}"
-                                 data-pd-id="{{ $r->assigned_pd_id }}"
-                                 data-name="{{ $r->assigned_pd_name }}"
-                                 data-email="{{ $r->assigned_pd_email }}"
-                                 data-phone="{{ $r->assigned_pd_phone }}"
-                                 data-assistant-pd="{{ $r->assigned_pd_assistant_pd }}"
-                                 data-assistant-email="{{ $r->assigned_pd_assistant_email }}">
-                                <i class="fas fa-user-md text-primary mr-2"></i> {{ $r->assigned_pd_id ? 'Edit' : 'Add' }} PD
-                              </a>
-                              @if(count($r->reminder_emails))
-                                <div class="dropdown-divider"></div>
-                                <form method="POST" action="{{ url('admin/hospital/reminders/'.$r->id.'/send') }}">
-                                  @csrf
-                                  <button type="submit" class="dropdown-item">
-                                    <i class="fas fa-paper-plane mr-2" style="color:#a05a00;"></i> Send Reminder
-                                  </button>
-                                </form>
-                              @endif
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    @endforeach
-                    @if($rows->isEmpty())
-                      <tr><td colspan="8" class="text-center text-muted py-3">No accreditations match these filters.</td></tr>
-                    @endif
-                  </tbody>
+                  <tbody></tbody>
                 </table>
               </div>
             </div>
@@ -465,14 +397,73 @@
 @push('scripts')
 <script>
 $(function () {
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  var hospUrl = @json(url('admin/hospital/view_hospital')), hpEditUrl = @json(url('admin/hospitalprogrammes/edit')),
+      reminderUrl = @json(url('admin/hospital/reminders'));
+  var flagLabel = { expired: 'Expired', expiring_soon: 'Expiring Soon' };
+
   var followUpDt = $('#followUpTable').DataTable({
+    deferRender: true,
+    data: JSON.parse(document.getElementById('followUpRows').textContent || '[]'),
+    columns: [
+      { data: null, render: function (d, type, r) {
+          return type === 'display' && r.remind ? '<input type="checkbox" name="hospital_programme_ids[]" value="' + r.id + '">' : '';
+      } },
+      { data: 'hospital', render: function (d, type, r) {
+          return type === 'display' ? '<a href="' + hospUrl + '/' + r.hid + '" class="entity-link">' + esc(d) + '</a>' : (d || '');
+      } },
+      { data: 'country', render: function (d, type) { return type === 'display' ? esc(d || '—') : (d || '—'); } },
+      { data: 'programme', render: function (d, type) { return type === 'display' ? esc(d) : (d || ''); } },
+      { data: 'pd', className: 'small-pd', render: function (d, type, r) {
+          var text = d || 'No PD on file';
+          if (type !== 'display') return text;
+          return esc(text) + (d && !r.pdSpecific ? '<span class="text-muted d-block" style="font-size:.72rem;">(hospital-wide)</span>' : '');
+      } },
+      { data: 'accF', render: function (d, type, r) { return type === 'sort' || type === 'type' ? r.acc : d; } },
+      { data: 'expF', render: function (d, type, r) { return type === 'sort' || type === 'type' ? r.exp : d; } },
+      { data: 'flag', render: function (d, type, r) {
+          var label = flagLabel[d] || 'Active';
+          if (type !== 'display') return label;
+          var badge = d === 'expired' ? '<span class="badge badge-danger">Expired</span>'
+                    : d === 'expiring_soon' ? '<span class="badge" style="background:#FEC503;color:#3a2a00;">Expiring Soon</span>'
+                    : '<span class="badge badge-success">Active</span>';
+          return badge + '<button type="button" class="btn btn-xs toggle-status-btn ml-1 ' + (d === 'expired' ? 'btn-outline-success' : 'btn-outline-danger') + '"' +
+              ' data-hp-id="' + r.id + '" data-hospital-id="' + r.hid + '" data-programme-id="' + r.pid + '"' +
+              ' data-hospital="' + esc(r.hospital) + '" data-programme="' + esc(r.programme) + '"' +
+              ' data-accredited="' + esc(r.acc) + '" data-expiry="' + esc(r.exp) + '" data-flag="' + esc(d) + '"' +
+              ' title="' + (d === 'expired' ? 'Activate accreditation' : 'Mark as expired') + '"><i class="fas fa-sync-alt"></i></button>';
+      } },
+      { data: null, render: function (d, type, r) {
+          if (type !== 'display') return '';
+          var a = r.apd;
+          var items =
+            '<a class="dropdown-item" href="' + hpEditUrl + '/' + r.id + '"><i class="fas fa-edit text-warning mr-2"></i> Edit Accreditation</a>' +
+            '<a class="dropdown-item pd-modal-trigger" href="#" data-toggle="modal" data-target="#pdModal"' +
+              ' data-hp-id="' + r.id + '" data-hospital="' + esc(r.hospital) + '" data-programme="' + esc(r.programme) + '"' +
+              ' data-pd-id="' + esc(a[0]) + '" data-name="' + esc(a[1]) + '" data-email="' + esc(a[2]) + '" data-phone="' + esc(a[3]) + '"' +
+              ' data-assistant-pd="' + esc(a[4]) + '" data-assistant-email="' + esc(a[5]) + '">' +
+              '<i class="fas fa-user-md text-primary mr-2"></i> ' + (a[0] ? 'Edit' : 'Add') + ' PD</a>';
+          if (r.remind) {
+            // Posts the page's reminder form (CSRF) to this row's own endpoint.
+            items += '<div class="dropdown-divider"></div>' +
+              '<button type="submit" class="dropdown-item" formaction="' + reminderUrl + '/' + r.id + '/send">' +
+              '<i class="fas fa-paper-plane mr-2" style="color:#a05a00;"></i> Send Reminder</button>';
+          }
+          return '<div class="dropdown"><button class="btn btn-sm btn-light border dropdown-toggle action-btn" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>' +
+            '<div class="dropdown-menu dropdown-menu-right shadow-sm">' + items + '</div></div>';
+      } }
+    ],
     pageLength: 25,
     lengthMenu: [10, 25, 50, 100],
     order: [],
     columnDefs: [
       { orderable: false, targets: [0, 8] }
     ],
-    language: { search: '', searchPlaceholder: 'Search…' },
+    language: { search: '', searchPlaceholder: 'Search…', emptyTable: 'No accreditations match these filters.' },
     initComplete: function () { $('#followUpTable').css('opacity', 1); }
   });
 
@@ -505,8 +496,8 @@ document.getElementById('checkAll').addEventListener('change', function () {
   document.querySelectorAll('input[name="hospital_programme_ids[]"]').forEach(cb => cb.checked = this.checked);
 });
 
-document.querySelectorAll('.pd-modal-trigger').forEach(function (link) {
-  link.addEventListener('click', function (e) {
+// Delegated: rows are built per page (deferRender).
+$(document).on('click', '.pd-modal-trigger', function (e) {
     e.preventDefault();
     const d = this.dataset;
     document.getElementById('pdModalForm').action = "{{ url('admin/hospital/pd') }}/" + d.hpId + "/save";
@@ -522,7 +513,6 @@ document.querySelectorAll('.pd-modal-trigger').forEach(function (link) {
     document.getElementById('pdAssistantFields').style.display = hasAssistant ? 'block' : 'none';
     document.getElementById('pdAssistantName').value = d.assistantPd || '';
     document.getElementById('pdAssistantEmail').value = d.assistantEmail || '';
-  });
 });
 
 document.getElementById('pdHasAssistant').addEventListener('change', function () {

@@ -603,24 +603,77 @@ $(function () {
     // ═══════════════════════════════════════════════════════════════════════════════
     if ($("#examinerconfirmationtable").length) {
         showLoader("examinerconfirmationtable");
-        $("#examinerconfirmationtable").DataTable({
+        // Rows come from the page's #ecRows JSON (was ~7 KB of HTML per row).
+        var $ec = $("#examinerconfirmationtable");
+        var ecApp = $ec.data("app-url"), ecCsrf = $ec.data("csrf"), ecFrom = $ec.data("from"),
+            ecQuery = $ec.data("query") || {}, ecBack = $ec.data("back"), ecReset = $ec.data("reset-url");
+        var ecDash = function (d, type) { var v = d == null || d === "" ? "-" : d; return type === "display" ? dtEsc(v) : v; };
+        var ecHidden = function (name, value) { return '<input type="hidden" name="' + dtEsc(name) + '" value="' + dtEsc(value) + '">'; };
+        $ec.DataTable({
             "responsive": true, "lengthChange": true, "autoWidth": false,
-            "stateSave": true, "paging": true, "processing": true,
-            "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
+            "stateSave": true, "paging": true, "processing": true, "deferRender": true,
+            "data": JSON.parse(document.getElementById("ecRows").textContent || "[]"),
+            "buttons": ["copy", "csv", "excel", "pdf", "colvis"].map(function (b) {
+                return b === "colvis" ? b : { extend: b, exportOptions: { orthogonal: "export" } };
+            }),
             "columns": [
-                { "visible": true  }, // #
-                { "visible": true  }, // Name
-                { "visible": false }, // Email
-                { "visible": false }, // Fellowship Status
-                { "visible": true  }, // Country
-                { "visible": true  }, // Specialty
-                { "visible": true  }, // Availability
-                { "visible": false }, // Shift
-                { "visible": true  }, // Participation
-                { "visible": true  }, // Source
-                { "visible": true  }, // Email Status
-                { "visible": true  }, // Updated At
-                { "orderable": false } // Action
+                { "data": "n" }, // #
+                { "data": "name", "render": function (d, type, r) { // Name
+                    return type === "display" ? dtLink(ecApp + "/admin/exams/view_examiner/" + r.id, d || "-", "").replace("<a ", '<a class="cosecsa-link" ') : (d || "-");
+                } },
+                { "data": "email", "visible": false, "render": ecDash }, // Email
+                { "data": "fellow", "visible": false, "render": function (d, type, r) { // Fellowship Status
+                    if (type !== "display") return d ? "Fellow" : "Not Fellow";
+                    if (!d) return '<span class="badge" style="background:#f0f0f0;color:#777;">Not Fellow</span>';
+                    return '<span class="badge" style="background:#d4edda;color:#155724;" title="' + (r.fno ? "Fellow ID " + dtEsc(r.fno) : "") + '">Fellow</span>' +
+                        (r.fid ? '<a href="' + ecApp + '/admin/associates/fellows/view/' + r.fid + '" class="cosecsa-link" style="font-size:11px;display:block;">view fellow</a>' : "");
+                } },
+                { "data": "country", "render": function (d, type, r) { // Country
+                    if (type !== "display") return d || "-";
+                    return r.cid ? '<a href="' + ecApp + '/admin/countries/view/' + r.cid + '" class="cosecsa-link">' + dtEsc(d || "-") + '</a>' : dtEsc(d || "-");
+                } },
+                { "data": "spec", "render": ecDash }, // Specialty
+                { "data": "avail", "render": function (d, type) { // Availability
+                    var list = d || [];
+                    if (list.indexOf("Not Available") !== -1) {
+                        return type === "display" ? '<span style="color:#a02626;font-weight:600;">Not Available</span>' : "Not Available";
+                    }
+                    return ecDash(list.join(", "), type);
+                } },
+                { "data": "shiftName", "visible": false, "render": function (d, type) { // Shift
+                    if (type !== "display") return d || "—";
+                    return d ? '<span class="badge badge-info" style="font-size:.75rem;">' + dtEsc(d) + '</span>' : '<span class="text-muted">—</span>';
+                } },
+                { "data": "part", "render": ecDash }, // Participation
+                { "data": "dsrc", "render": function (d, type) { // Source
+                    var label = d === "self" ? "Self" : (d === "admin" ? "Admin" : "-");
+                    if (type !== "display") return label;
+                    return d === "self" ? '<span class="badge-source-self">Self</span>'
+                         : d === "admin" ? '<span class="badge-source-admin">Admin</span>' : '<span class="badge-email-none">-</span>';
+                } },
+                { "data": "opened", "render": function (d, type, r) { // Email Status
+                    if (type !== "display") return d ? "Opened" : "-";
+                    return d ? '<span class="badge-email-opened" title="' + dtEsc(r.emailTitle) + '">Opened</span>' : '<span class="badge-email-none">-</span>';
+                } },
+                { "data": "upd", "render": function (d, type, r) { // Updated At
+                    if (type === "sort" || type === "type") return r.updSort || "";
+                    return d || "-";
+                } },
+                { "data": null, "orderable": false, "searchable": false, "render": function (d, type, r) { // Action
+                    if (type !== "display") return "";
+                    var view = '<form action="' + ecApp + '/admin/exams/view_examiner/' + r.id + '" method="POST" style="display:inline;">' +
+                        ecHidden("_token", ecCsrf) + ecHidden("from", ecFrom) +
+                        Object.keys(ecQuery).map(function (k) { return ecHidden(k, ecQuery[k]); }).join("") +
+                        '<button type="submit" class="dropdown-item"><i class="fa fa-eye"></i> View</button></form>';
+                    var reset = '<form method="POST" action="' + String(ecReset).replace("__ID__", r.id) + '" class="ec-reset" data-name="' + dtEsc(r.name) + '">' +
+                        ecHidden("_token", ecCsrf) + ecHidden("type", "soft") + ecHidden("back", ecBack) +
+                        '<button type="submit" class="dropdown-item text-warning"><i class="fas fa-undo mr-1"></i> Reset Confirmation</button></form>';
+                    var del = '<a href="#" class="dropdown-item text-danger ec-delete" data-id="' + r.id + '" data-name="' + dtEsc(r.name) + '"><i class="fa fa-trash mr-1"></i> Delete Examiner</a>';
+                    return '<div class="dropdown"><button class="btn btn-sm btn-light border dropdown-toggle action-btn" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>' +
+                        '<div class="dropdown-menu dropdown-menu-right shadow-sm">' + view +
+                        '<a href="' + ecApp + '/admin/exams/edit_examiner/' + r.id + '" class="dropdown-item"><i class="fa fa-edit"></i> Edit</a>' +
+                        '<div class="dropdown-divider"></div>' + reset + del + '</div></div>';
+                } }
             ],
             "stateLoadParams": function (settings, data) {
                 if (!data || (data.columns && data.columns.length !== 13)) { return false; }
@@ -633,6 +686,14 @@ $(function () {
             "initComplete": function () { hideLoader("examinerconfirmationtable"); },
             "drawCallback": function () { reinitDropdowns(this); }
         }).buttons().container().appendTo('#examinerconfirmationtable_wrapper .col-md-6:eq(0)');
+
+        $ec.on("submit", "form.ec-reset", function () {
+            return confirm("Reset the availability confirmation for " + $(this).data("name") + "? This will clear their submitted availability.");
+        });
+        $ec.on("click", "a.ec-delete", function (e) {
+            e.preventDefault();
+            showDeleteModal($(this).data("id"), String($(this).data("name") || ""));
+        });
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -743,12 +804,51 @@ $(function () {
         }).buttons().container().appendTo('#fcsresultstable_wrapper .col-md-6:eq(0)');
     }
 
+    // Accreditations (Hospital Accreditation tab + Accreditations page): rows
+    // come from the partial's #hpRows JSON; deferRender builds only the page shown.
     if ($("#hospitalProgrammesTable").length) {
+        var $hp = $("#hospitalProgrammesTable");
+        var hpApp = $hp.data("app-url"), hpCanDelete = $hp.data("can-delete") === 1;
         showLoader("hospitalProgrammesTable");
-        $("#hospitalProgrammesTable").DataTable({
+        $hp.DataTable({
             "responsive": true, "lengthChange": true, "autoWidth": false,
-            "paging": true, "stateSave": true,
-            "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
+            "paging": true, "stateSave": true, "deferRender": true,
+            "data": JSON.parse((document.getElementById("hpRows") || {}).textContent || "[]"),
+            "buttons": ["copy", "csv", "excel", "pdf", "colvis"].map(function (b) {
+                return b === "colvis" ? b : { extend: b, exportOptions: { orthogonal: "export" } };
+            }),
+            "columns": [
+                { "data": "n" },
+                { "data": "hospital", "render": function (d, type, r) {
+                    return type === "display" ? '<a href="' + hpApp + '/admin/hospital/view_hospital/' + r.hid + '" class="entity-link">' + dtEsc(d) + '</a>' : (d || "");
+                } },
+                { "data": "programme", "render": function (d, type, r) {
+                    return type === "display" ? '<a href="' + hpApp + '/admin/programmes/view/' + r.pid + '" class="entity-link">' + dtEsc(d) + '</a>' : (d || "");
+                } },
+                { "data": "country", "render": dtText },
+                { "data": "acc", "render": dtText },
+                { "data": "exp", "render": dtText },
+                { "data": "status", "render": function (d, type, r) {
+                    if (type !== "display") return d || "";
+                    var low = String(d || "").toLowerCase(), expired = low === "expired";
+                    return '<span class="dot dot-' + dtEsc(low) + '"></span>' + dtEsc(d) +
+                        '<button type="button" class="btn btn-xs toggle-status-btn ml-1 ' + (expired ? "btn-outline-success" : "btn-outline-danger") + '"' +
+                        ' data-hp-id="' + r.id + '" data-hospital-id="' + r.hid + '" data-programme-id="' + r.pid + '"' +
+                        ' data-hospital="' + dtEsc(r.hospital) + '" data-programme="' + dtEsc(r.programme) + '"' +
+                        ' data-accredited="' + dtEsc(r.acc) + '" data-expiry="' + dtEsc(r.exp) + '" data-flag="' + (expired ? "expired" : "active") + '"' +
+                        ' title="' + (expired ? "Activate accreditation" : "Mark as expired") + '"><i class="fas fa-sync-alt"></i></button>';
+                } },
+                { "data": null, "orderable": false, "searchable": false, "className": "text-center", "render": function (d, type, r) {
+                    if (type !== "display") return "";
+                    var items = dtMenuItem(hpApp + "/admin/hospitalprogrammes/edit/" + r.id, "fas fa-edit text-warning", "Edit");
+                    if (hpCanDelete) {
+                        items += '<div class="dropdown-divider"></div>' +
+                            dtMenuItem(hpApp + "/admin/hospitalprogrammes/delete/" + r.id, "fas fa-trash", "Delete", { cls: "text-danger", confirm: "Delete this programme record?" });
+                    }
+                    return dtActionMenu(items);
+                } }
+            ],
+            "drawCallback": function () { reinitDropdowns(this); },
             "initComplete": function () { hideLoader("hospitalProgrammesTable"); }
         }).buttons().container().appendTo('#hospitalProgrammesTable_wrapper .col-md-6:eq(0)');
     }

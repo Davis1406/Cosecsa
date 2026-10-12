@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Performance (2026-10-12) — Subscription Report, Overall Results, Examiner Confirmation, Hospital Accreditation build rows client-side
+- Same approach as the other lists: rows are embedded as compact JSON and DataTables builds only the visible page (`deferRender`). Tables converted: `#subscriptionReportTable` (2,079 rows, 3.4 MB), Overall Results `#detailTable` (1,918 rows, 2.9 MB), `#examinerconfirmationtable` (321 rows, 2.2 MB — ~7 KB per row), Hospital Accreditation `#followUpTable` (1.5 MB) and the Accreditations tab `#hospitalProgrammesTable` (1.2 MB). Filters, tile filters, sorting (dates/amounts by raw value), exports (plain text), the subscription drawer, PD modal, status toggle, Reset Confirmation and Delete Examiner work as before (delegated handlers where rows are built later).
+- Hospital Accreditation's three API calls (dashboard rows, hospitals, accreditations) now run concurrently via new `ApiClient::getAll()` — the comment said "in parallel" but they ran one after another.
+- **Fix:** each Follow-up row's **Send Reminder** was a `<form>` nested inside the bulk-reminder form; browsers drop nested forms, so it actually submitted the bulk form (reminding whichever rows were ticked, not that row). It is now a `formaction` button posting to `admin/hospital/reminders/{id}/send`.
+- **System Logs:** tabs are compact (scoped `.logs-tabs`, .82rem) instead of the oversized default tabs, the filter row uses small inputs and solid COSECSA buttons (gold Filter, maroon Clear, gold View), and times use a 12-hour clock with AM/PM (was 24-hour `H` with AM/PM, e.g. "14:00 PM").
+- **Files:** `app/Services/ApiClient.php`, `app/Http/Controllers/HospitalController.php`, `resources/views/admin/{fees/subscription_report,exams/overall_results,exams/examiner_confirmation,hospital/dashboard,hospitalprogrammes/_list_content,logs/index}.blade.php`, `public/dist/js/custom.js`. No API change.
+
 ### Changed (2026-10-12) — Transcripts: # column, delete, solid buttons
 - **Transcript History** has a **#** column (follows the current sort/page) and, for staff with `transcripts.manage` (or Super Admin), a **Delete** button: a shared row deletes that share and its kept PDF; a "saved, not shared" row deletes the saved transcript. Both confirm first. The fellow's **Transcript** tab has the same per-share delete, a **Delete Transcript** button, and a # column on its share history.
 - Buttons on the Transcripts page, transcript edit page and fellow Transcript tab are solid: maroon `btn-cosecsa` (main action), gold `btn-cosecsa-yellow` (view/preview/download), new slate `btn-cosecsa-dark` (Back, Add Row; lighter slate in dark mode), red `btn-cosecsa-danger` (delete; same size as the other COSECSA buttons).

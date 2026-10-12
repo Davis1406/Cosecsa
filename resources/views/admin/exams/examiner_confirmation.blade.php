@@ -214,7 +214,48 @@
                                         </div>
                                     </div>
 
-                                    <table id="examinerconfirmationtable" class="table table-bordered table-striped">
+                                    @php
+                                        // Compact row data; the table is built client-side (custom.js, deferRender).
+                                        $parseAvail = function ($raw) {
+                                            if (empty($raw)) return [];
+                                            $d = json_decode($raw, true);
+                                            if (is_string($d)) return json_decode($d, true) ?: [];
+                                            if (is_array($d)) return $d;
+                                            return json_decode(str_replace('\\"', '"', $raw), true) ?: [];
+                                        };
+                                        $ecRows = collect($getExaminers)->values()->map(function ($v, $i) use ($parseAvail) {
+                                            $avail = $parseAvail($v->exam_availability ?? null);
+                                            $sorted = $avail; sort($sorted);
+                                            $emailed = !empty($v->last_email_sent_at);
+                                            return [
+                                                'n' => $i + 1, 'id' => $v->id, 'name' => $v->examiner_name ?? null, 'email' => $v->email ?? null,
+                                                'fellow' => (bool) ($v->is_fellow ?? false),
+                                                'fno' => $v->matched_fellow_id_number ?? null, 'fid' => $v->matched_fellow_id ?? null,
+                                                'cid' => $v->country_id ?? null, 'country' => $v->country_name ?? null,
+                                                'spec' => $v->specialty ?? null,
+                                                'avail' => array_values($avail),
+                                                'availKey' => count($sorted) === 2 && in_array('FCS', $sorted) && in_array('MCS', $sorted) ? 'MCS+FCS' : implode('', $sorted),
+                                                'shift' => (string) ($v->shift ?? '0'),
+                                                'shiftName' => (!empty($v->shift) && $v->shift != 0) ? \App\Models\User::getShiftName($v->shift) : null,
+                                                'part' => $v->participation_type ?? null,
+                                                'src' => $v->history_source ?? '',
+                                                'dsrc' => $v->history_source ?? ($emailed ? 'self' : null),
+                                                'emailKey' => $v->last_email_opened_at ? 'opened' : ($emailed ? 'sent' : 'none'),
+                                                'opened' => (bool) ($v->last_email_opened_at || $emailed),
+                                                'emailTitle' => $v->last_email_opened_at ? 'Opened '.$v->last_email_opened_at : ($emailed ? 'Sent '.$v->last_email_sent_at : ''),
+                                                'upd' => $v->history_updated_at ? \Carbon\Carbon::parse($v->history_updated_at)->setTimezone('Africa/Nairobi')->format('d M Y H:i') : null,
+                                                'updSort' => $v->history_updated_at ?? '',
+                                            ];
+                                        });
+                                    @endphp
+                                    <script type="application/json" id="ecRows">{!! json_encode($ecRows, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+                                    <table id="examinerconfirmationtable" class="table table-bordered table-striped"
+                                           data-app-url="{{ url('') }}"
+                                           data-csrf="{{ csrf_token() }}"
+                                           data-from="{{ request()->path() }}"
+                                           data-query="{{ json_encode((object) request()->query()) }}"
+                                           data-back="{{ request()->fullUrl() }}"
+                                           data-reset-url="{{ route('examiner.reset.confirmation', '__ID__') }}">
                                         <thead>
                                             <tr>
                                                 <th>#</th>
@@ -232,155 +273,7 @@
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            @foreach ($getExaminers as $index => $value)
-                                                @php
-                                                    $rowAvail = [];
-                                                    if (!empty($value->exam_availability)) {
-                                                        $dec = json_decode($value->exam_availability, true);
-                                                        if (is_string($dec)) $dec = json_decode($dec, true) ?: [];
-                                                        $rowAvail = is_array($dec) ? $dec : [];
-                                                    }
-                                                    sort($rowAvail);
-                                                    $availKey = count($rowAvail) === 2 && in_array('FCS',$rowAvail) && in_array('MCS',$rowAvail)
-                                                        ? 'MCS+FCS'
-                                                        : implode('', $rowAvail);
-                                                @endphp
-                                                <tr
-                                                    data-specialty="{{ $value->specialty ?? '' }}"
-                                                    data-availability="{{ $availKey }}"
-                                                    data-shift="{{ $value->shift ?? '0' }}"
-                                                    data-participation="{{ $value->participation_type ?? '' }}"
-                                                    data-country="{{ $value->country_name ?? '' }}"
-                                                    data-source="{{ $value->history_source ?? '' }}"
-                                                    data-email="{{ $value->last_email_opened_at ? 'opened' : ($value->last_email_sent_at ? 'sent' : 'none') }}"
-                                                >
-                                                    @php
-                                                        $emailedBefore = !empty($value->last_email_sent_at);
-                                                        $displaySource = $value->history_source ?? ($emailedBefore ? 'self' : null);
-                                                        $displayEmailOpened = $value->last_email_opened_at || $emailedBefore;
-                                                    @endphp
-                                                    <td>{{ $index + 1 }}</td>
-                                                    <td><a href="{{ url('admin/exams/view_examiner/'.$value->id) }}" class="cosecsa-link">{{ $value->examiner_name ?? '-' }}</a></td>
-                                                    <td>{{ $value->email ?? '-' }}</td>
-                                                    <td>
-                                                        @if($value->is_fellow)
-                                                            <span class="badge" style="background:#d4edda;color:#155724;" title="{{ $value->matched_fellow_id_number ? 'Fellow ID '.$value->matched_fellow_id_number : '' }}">Fellow</span>
-                                                            @if(!empty($value->matched_fellow_id))
-                                                                <a href="{{ url('admin/associates/fellows/view/'.$value->matched_fellow_id) }}" class="cosecsa-link" style="font-size:11px;display:block;">view fellow</a>
-                                                            @endif
-                                                        @else
-                                                            <span class="badge" style="background:#f0f0f0;color:#777;">Not Fellow</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" class="cosecsa-link">{{ $value->country_name ?? '-' }}</a>@else{{ $value->country_name ?? '-' }}@endif</td>
-                                                    <td>{{ $value->specialty ?? '-' }}</td>
-                                                    <td>
-                                                        @php
-                                                            $availability = [];
-                                                            if (!empty($value->exam_availability)) {
-                                                                $decoded = json_decode($value->exam_availability, true);
-                                                                if (is_string($decoded)) {
-                                                                    $availability = json_decode($decoded, true) ?: [];
-                                                                } elseif (is_array($decoded)) {
-                                                                    $availability = $decoded;
-                                                                } else {
-                                                                    $availability = json_decode(str_replace('\\"', '"', $value->exam_availability), true) ?: [];
-                                                                }
-                                                            }
-                                                        @endphp
-                                                        @if(in_array('Not Available', $availability))
-                                                            <span style="color:#a02626;font-weight:600;">Not Available</span>
-                                                        @elseif(count($availability))
-                                                            {{ implode(', ', $availability) }}
-                                                        @else
-                                                            -
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if(!empty($value->shift) && $value->shift != 0)
-                                                            <span class="badge badge-info" style="font-size:.75rem;">
-                                                                {{ \App\Models\User::getShiftName($value->shift) }}
-                                                            </span>
-                                                        @else
-                                                            <span class="text-muted">—</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>{{ $value->participation_type ?? '-' }}</td>
-                                                    <td>
-                                                        @if($displaySource === 'self')
-                                                            <span class="badge-source-self">Self</span>
-                                                        @elseif($displaySource === 'admin')
-                                                            <span class="badge-source-admin">Admin</span>
-                                                        @else
-                                                            <span class="badge-email-none">-</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if($displayEmailOpened)
-                                                            <span class="badge-email-opened" title="{{ $value->last_email_opened_at ? 'Opened '.$value->last_email_opened_at : 'Sent '.$value->last_email_sent_at }}">
-                                                                Opened
-                                                            </span>
-                                                        @else
-                                                            <span class="badge-email-none">-</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>{{ $value->history_updated_at ? \Carbon\Carbon::parse($value->history_updated_at)->setTimezone('Africa/Nairobi')->format('d M Y H:i') : '-' }}</td>
-                                                    <td>
-                                                        <div class="dropdown">
-                                                            <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
-                                                                type="button" data-toggle="dropdown"
-                                                                aria-haspopup="true" aria-expanded="false">
-                                                                <i class="fas fa-ellipsis-v"></i>
-                                                            </button>
-                                                            <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                                                                <!-- View form -->
-                                                                <form
-                                                                    action="{{ url("admin/exams/view_examiner/{$value->id}") }}"
-                                                                    method="POST" style="display:inline;">
-                                                                    @csrf
-                                                                    <input type="hidden" name="from"
-                                                                        value="{{ request()->path() }}">
-                                                                    @foreach (request()->query() as $key => $val)
-                                                                        <input type="hidden" name="{{ $key }}"
-                                                                            value="{{ $val }}">
-                                                                    @endforeach
-                                                                    <button type="submit" class="dropdown-item">
-                                                                        <i class="fa fa-eye"></i> View
-                                                                    </button>
-                                                                </form>
-
-                                                                <a href="{{ url("admin/exams/edit_examiner/$value->id") }}"
-                                                                    class="dropdown-item">
-                                                                    <i class="fa fa-edit"></i> Edit
-                                                                </a>
-
-                                                                <div class="dropdown-divider"></div>
-
-                                                                {{-- Reset confirmation (direct POST, no soft/hard choice) --}}
-                                                                <form method="POST"
-                                                                      action="{{ route('examiner.reset.confirmation', $value->id) }}"
-                                                                      onsubmit="return confirm('Reset the availability confirmation for {{ addslashes($value->examiner_name) }}? This will clear their submitted availability.')">
-                                                                    @csrf
-                                                                    <input type="hidden" name="type" value="soft">
-                                                                    <input type="hidden" name="back" value="{{ request()->fullUrl() }}">
-                                                                    <button type="submit" class="dropdown-item text-warning">
-                                                                        <i class="fas fa-undo mr-1"></i> Reset Confirmation
-                                                                    </button>
-                                                                </form>
-
-                                                                {{-- Delete examiner (soft/hard modal) --}}
-                                                                <a href="#" class="dropdown-item text-danger"
-                                                                   onclick="showDeleteModal({{ $value->id }}, '{{ addslashes($value->examiner_name) }}'); return false;">
-                                                                    <i class="fa fa-trash mr-1"></i> Delete Examiner
-                                                                </a>
-                                                            </div>
-                                                        </div>
-
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
+                                        <tbody></tbody>
                                     </table>
                                 </div>
                                 <!-- /.card-body -->
@@ -516,22 +409,21 @@
             }
 
             // ── Custom DataTable search extension ──────────────────────────────
-            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, row) {
                 if (settings.nTable.id !== 'examinerconfirmationtable') return true;
-                var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
 
                 function chkMatch(filterId, rowVal) {
                     var checked = getChecked(filterId);
                     return !checked.length || checked.indexOf(String(rowVal)) !== -1;
                 }
 
-                if (!chkMatch('filter-specialty',    $row.data('specialty')    || '')) return false;
-                if (!chkMatch('filter-availability', $row.data('availability') || '')) return false;
-                if (!chkMatch('filter-shift',        String($row.data('shift'))))      return false;
-                if (!chkMatch('filter-participation',$row.data('participation')|| '')) return false;
-                if (!chkMatch('filter-country',      $row.data('country')      || '')) return false;
-                if (!chkMatch('filter-source',       $row.data('source')       || '')) return false;
-                if (!chkMatch('filter-email',        $row.data('email')        || '')) return false;
+                if (!chkMatch('filter-specialty',    row.spec     || '')) return false;
+                if (!chkMatch('filter-availability', row.availKey || '')) return false;
+                if (!chkMatch('filter-shift',        row.shift))          return false;
+                if (!chkMatch('filter-participation',row.part     || '')) return false;
+                if (!chkMatch('filter-country',      row.country  || '')) return false;
+                if (!chkMatch('filter-source',       row.src      || '')) return false;
+                if (!chkMatch('filter-email',        row.emailKey || '')) return false;
 
                 return true;
             });

@@ -48,6 +48,25 @@ class ApiClient
         ])->all();
     }
 
+    /**
+     * GETs to different paths, sent concurrently: ['key' => [path, query]].
+     * Returns responses keyed the same way; one that couldn't connect is null.
+     */
+    public function getAll(array $requests): array
+    {
+        $headers = Auth::check() ? ['X-Actor-Id' => Auth::id(), 'X-Actor-Name' => Auth::user()->name] : [];
+
+        $responses = Http::pool(fn (Pool $pool) => collect($requests)->map(
+            fn ($req, $key) => $pool->as((string) $key)
+                ->withToken($this->token)->withHeaders($headers)->timeout(30)
+                ->get($this->url($req[0]), $req[1] ?? [])
+        )->all());
+
+        return collect($requests)->mapWithKeys(fn ($r, $key) => [
+            $key => ($responses[(string) $key] ?? null) instanceof Response ? $responses[(string) $key] : null,
+        ])->all();
+    }
+
     public function post(string $path, array $data = []): Response
     {
         return $this->pending()

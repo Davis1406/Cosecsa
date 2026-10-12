@@ -20,8 +20,19 @@
       <div class="container-fluid">
         @include('_message')
 
-        <ul class="nav nav-tabs mb-3">
-        <style>.nav-tabs .nav-link.active{background-color:#a02626!important;color:#fff!important;border-color:#a02626!important;}.nav-tabs .nav-link{color:#a02626!important;}.nav-tabs .nav-link:hover{background-color:#FEC503!important;color:#000!important;border-color:#FEC503!important;}</style>
+        <style>
+          .logs-tabs { border-bottom: 2px solid #a02626; gap: 4px; }
+          .logs-tabs .nav-link {
+            font-size: .82rem; font-weight: 500; padding: .38rem .9rem; line-height: 1.4;
+            color: #a02626 !important; border: 1px solid transparent; border-bottom: 0; border-radius: 5px 5px 0 0;
+            transition: background-color .15s ease, color .15s ease;
+          }
+          .logs-tabs .nav-link i { font-size: .85em; }
+          .logs-tabs .nav-link:hover { background-color: #FEC503 !important; color: #3a2a00 !important; border-color: #FEC503 !important; }
+          .logs-tabs .nav-link.active { background-color: #a02626 !important; color: #fff !important; border-color: #a02626 !important; }
+          body.dark-mode .logs-tabs .nav-link:not(.active):not(:hover) { color: #f48a8a !important; }
+        </style>
+        <ul class="nav nav-tabs logs-tabs mb-3">
           <li class="nav-item">
             <a class="nav-link {{ $tab === 'logins' ? 'active' : '' }}" href="{{ url('admin/logs?tab=logins') }}">
               <i class="fas fa-sign-in-alt mr-1"></i> Logins
@@ -43,24 +54,24 @@
           <div class="card-body">
             <form method="get" class="form-inline mb-3">
               <input type="hidden" name="tab" value="{{ $tab }}">
-              <input type="text" name="q" value="{{ request('q') }}" class="form-control mr-2"
+              <input type="text" name="q" value="{{ request('q') }}" class="form-control form-control-sm mr-2"
                      placeholder="Search…" style="max-width:240px;">
               @if($tab === 'changes')
-                <select name="model_type" class="form-control mr-2">
+                <select name="model_type" class="form-control form-control-sm mr-2">
                   <option value="">All record types</option>
                   @foreach($modelTypes ?? [] as $mt)
                     <option value="{{ $mt }}" {{ request('model_type')===$mt?'selected':'' }}>{{ $mt }}</option>
                   @endforeach
                 </select>
-                <select name="action" class="form-control mr-2">
+                <select name="action" class="form-control form-control-sm mr-2">
                   <option value="">All actions</option>
                   <option value="created" {{ request('action')==='created'?'selected':'' }}>Created</option>
                   <option value="updated" {{ request('action')==='updated'?'selected':'' }}>Updated</option>
                   <option value="deleted" {{ request('action')==='deleted'?'selected':'' }}>Deleted</option>
                 </select>
               @endif
-              <button type="submit" class="btn mr-2" style="background-color:#FEC503;border-color:#FEC503;color:#000;">Filter</button>
-              <a href="{{ url('admin/logs?tab='.$tab) }}" class="btn" style="background-color:#a02626;border-color:#a02626;color:#fff;">Clear</a>
+              <button type="submit" class="btn btn-sm btn-cosecsa-yellow mr-2"><i class="fas fa-filter mr-1"></i> Filter</button>
+              <a href="{{ url('admin/logs?tab='.$tab) }}" class="btn btn-sm btn-cosecsa"><i class="fas fa-times mr-1"></i> Clear</a>
             </form>
 
             @if($tab === 'logins')
@@ -79,7 +90,7 @@
                         <td>{{ $r->email }}</td>
                         <td>{{ $roleNames[$r->role_type] ?? '—' }}</td>
                         <td>{{ $r->ip_address }}</td>
-                        <td>{{ date('d-m-Y H:i A', strtotime($r->logged_in_at)) }}</td>
+                        <td>{{ date('d-m-Y h:i A', strtotime($r->logged_in_at)) }}</td>
                       </tr>
                     @endforeach
                     @if($records->isEmpty())
@@ -100,7 +111,7 @@
                     @foreach($records as $r)
                       <tr>
                         <td>{{ $loop->iteration + ($records->currentPage()-1)*$records->perPage() }}</td>
-                        <td>{{ date('d-m-Y H:i A', strtotime($r->created_at)) }}</td>
+                        <td>{{ date('d-m-Y h:i A', strtotime($r->created_at)) }}</td>
                         <td>{{ $r->user_name }}</td>
                         <td>
                           <span class="badge {{ $r->action==='deleted'?'badge-danger':($r->action==='created'?'badge-success':'badge-warning') }}">
@@ -136,7 +147,7 @@
                     @foreach($records as $r)
                       <tr>
                         <td>{{ $loop->iteration + ($records->currentPage()-1)*$records->perPage() }}</td>
-                        <td>{{ date('d-m-Y H:i A', strtotime($r->sent_at)) }}</td>
+                        <td>{{ date('d-m-Y h:i A', strtotime($r->sent_at)) }}</td>
                         <td>{{ $r->to_address }}</td>
                         <td>
                           @if($r->from_name ?? null)
@@ -155,9 +166,9 @@
                         <td>{{ $r->subject }}</td>
                         <td>{{ $r->mailable ? class_basename($r->mailable) : '—' }}</td>
                         <td>
-                          <button type="button" class="btn btn-sm btn-cosecsa-outline pr-view-email-btn"
+                          <button type="button" class="btn btn-sm btn-cosecsa-yellow pr-view-email-btn"
                                   data-id="{{ $r->id }}" data-subject="{{ $r->subject }}" data-to="{{ $r->to_address }}"
-                                  data-sent-at="{{ date('d-m-Y H:i A', strtotime($r->sent_at)) }}">
+                                  data-sent-at="{{ date('d-m-Y h:i A', strtotime($r->sent_at)) }}">
                             <i class="fas fa-eye mr-1"></i> View
                           </button>
                         </td>
