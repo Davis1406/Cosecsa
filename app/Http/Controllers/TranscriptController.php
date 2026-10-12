@@ -112,8 +112,8 @@ class TranscriptController extends Controller
 
         $filename = 'COSECSA Transcript.pdf';
         if ($cd = $response->header('Content-Disposition')) {
-            if (preg_match('/filename=["\']?([^"\';\s]+)/', $cd, $m)) {
-                $filename = $m[1];
+            if (preg_match('/filename="([^"]+)"|filename=([^;\s]+)/', $cd, $m)) {
+                $filename = $m[1] ?: $m[2];
             }
         }
 
@@ -130,8 +130,8 @@ class TranscriptController extends Controller
 
         $filename = "COSECSA Transcript.pdf";
         if ($cd = $response->header('Content-Disposition')) {
-            if (preg_match('/filename=["\']?([^"\';\s]+)/', $cd, $m)) {
-                $filename = $m[1];
+            if (preg_match('/filename="([^"]+)"|filename=([^;\s]+)/', $cd, $m)) {
+                $filename = $m[1] ?: $m[2];
             }
         }
 
