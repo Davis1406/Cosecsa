@@ -95,7 +95,7 @@
             height: 46px;
             padding: 0 20px;
             font-size: 1rem;
-            display: flex; align-items: center; justify-content: center;
+            display: flex; align-items: center; justify-content: center; gap: .45rem;
         }
         
         .btn-custom:hover {
@@ -108,7 +108,7 @@
             height: 46px;
             padding: 0 20px;
             font-size: 1rem;
-            display: flex; align-items: center; justify-content: center;
+            display: flex; align-items: center; justify-content: center; gap: .45rem;
         }
         
         .card.card-outline.card-primary {
