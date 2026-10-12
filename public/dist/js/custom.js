@@ -292,7 +292,8 @@ $(function () {
     // ═══════════════════════════════════════════════════════════════════════════════
     if ($("#candidatestable").length) {
         var $ct = $("#candidatestable");
-        var cBase = $ct.data("base-url"), cApp = $ct.data("app-url"), cCanDelete = $ct.data("can-delete") === 1;
+        var cBase = $ct.data("base-url"), cApp = $ct.data("app-url"), cCanDelete = $ct.data("can-delete") === 1,
+            cCanManage = $ct.data("can-manage") === 1, cCsrf = $ct.data("csrf");
         var craw = { "render": dtDashText };
         showLoader("candidatestable");
         $ct.DataTable({
@@ -306,12 +307,12 @@ $(function () {
             "buttons": [
                 { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
                   className: "btn btn-success btn-sm", title: "Candidates List",
-                  exportOptions: { columns: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], orthogonal: "export" } },
+                  exportOptions: { columns: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17], orthogonal: "export" } },
                 { extend: "pdfHtml5", text: '<i class="fas fa-file-pdf mr-1"></i> PDF',
                   className: "btn btn-danger btn-sm", title: "Candidates List",
-                  orientation: "landscape", pageSize: "A4", exportOptions: { columns: [1,2,3,4,5,6,7,8], orthogonal: "export" } },
+                  orientation: "landscape", pageSize: "A4", exportOptions: { columns: [1,2,3,4,5,6,7,8,9,10], orthogonal: "export" } },
                 { extend: "print", text: '<i class="fas fa-print mr-1"></i> Print',
-                  className: "btn btn-secondary btn-sm", exportOptions: { columns: [1,2,3,4,5,6,7,8], orthogonal: "export" } },
+                  className: "btn btn-secondary btn-sm", exportOptions: { columns: [1,2,3,4,5,6,7,8,9,10], orthogonal: "export" } },
                 { extend: "colvis", text: '<i class="fas fa-columns mr-1"></i> Columns',
                   className: "btn btn-outline-secondary btn-sm" }
             ],
@@ -337,7 +338,19 @@ $(function () {
                     return paid ? '<span class="badge badge-success"><i class="fas fa-check mr-1"></i>Paid</span>'
                                 : '<span class="badge badge-danger">Unpaid</span>';
                 } },
-                // hidden (export / search) columns 9–15
+                { "data": "part1_result", "render": function (d, type, r) { // 9 Part I
+                    var pct = r.part1_overall != null ? Number(r.part1_overall).toFixed(2).replace(/\.?0+$/, "") + "%" : "";
+                    if (type === "sort" || type === "type") return r.part1_overall != null ? Number(r.part1_overall) : -1;
+                    if (type !== "display") return d ? d + (pct ? " " + pct : "") : "";
+                    if (!d) return '<span class="text-muted">—</span>';
+                    return '<span class="badge ' + (d === "Pass" ? "badge-success" : "badge-danger") + '">' + dtEsc(d) + '</span>' +
+                        (pct ? ' <small class="text-muted">' + pct + '</small>' : "");
+                } },
+                { "data": "part_two_promoted_at", "render": function (d, type) { // 10 Part II
+                    if (type !== "display") return d ? "Promoted" : "";
+                    return d ? '<span class="badge" style="background:#FEC503;color:#3a2a00;">Promoted</span>' : '<span class="text-muted">—</span>';
+                } },
+                // hidden (export / search) columns 11–17
                 $.extend({ "data": "personal_email", "visible": false }, craw),
                 { "data": "repeat_paper_one", "visible": false, "render": function (d, type) { return dtText(d || "No", type); } },
                 { "data": "repeat_paper_two", "visible": false, "render": function (d, type) { return dtText(d || "No", type); } },
@@ -345,12 +358,20 @@ $(function () {
                 $.extend({ "data": "sponsor", "visible": false }, craw),
                 $.extend({ "data": "exam_year", "visible": false }, craw),
                 $.extend({ "data": "mode_of_payment", "visible": false }, craw),
-                { "data": null, "orderable": false, "searchable": false, "className": "text-center", // 16 Action
+                { "data": null, "orderable": false, "searchable": false, "className": "text-center", // 18 Action
                   "render": function (d, type, r) {
                     if (type !== "display") return "";
                     var id = r.candidates_id || 0;
                     var items = dtMenuItem(cBase + "/view/" + id, "fas fa-eye text-info", "View") +
                                 dtMenuItem(cBase + "/edit/" + id, "fas fa-edit text-warning", "Edit");
+                    if (cCanManage) {
+                        var promoted = !!r.part_two_promoted_at;
+                        items += '<form method="POST" action="' + cBase + '/part-two/' + id + '" class="cand-part-two" data-promoted="' + (promoted ? 1 : 0) + '">' +
+                            '<input type="hidden" name="_token" value="' + dtEsc(cCsrf) + '">' +
+                            '<input type="hidden" name="promote" value="' + (promoted ? 0 : 1) + '">' +
+                            '<button type="submit" class="dropdown-item"><i class="fas ' + (promoted ? 'fa-undo text-secondary' : 'fa-level-up-alt text-success') + ' mr-2"></i> ' +
+                            (promoted ? "Remove Part II promotion" : "Promote to Part II") + '</button></form>';
+                    }
                     if (cCanDelete) {
                         items += '<div class="dropdown-divider"></div>' +
                             dtMenuItem(cBase + "/delete/" + (r.c_id || 0), "fas fa-trash", "Delete", { cls: "text-danger", confirm: "Delete this candidate?" });
@@ -360,6 +381,12 @@ $(function () {
             ],
             "initComplete": function () { hideLoader("candidatestable"); },
             "drawCallback": function () { dtNumberRows(this.api()); reinitDropdowns(this); }
+        });
+
+        $ct.on("submit", "form.cand-part-two", function () {
+            return confirm($(this).data("promoted") === 1
+                ? "Remove this candidate's promotion to Part II?"
+                : "Promote this candidate to Part II?");
         });
     }
 

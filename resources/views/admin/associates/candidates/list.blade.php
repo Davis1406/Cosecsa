@@ -14,6 +14,9 @@
                            class="btn btn-sm btn-outline-secondary mr-1">
                             <i class="fas fa-chart-bar mr-1"></i> Analytics
                         </a>
+                        <a href="{{ url('admin/associates/candidates/part-one') }}" class="btn btn-sm btn-cosecsa mr-1">
+                            <i class="fas fa-file-import mr-1"></i> Upload Part I Results
+                        </a>
                         <a href="{{ url('admin/associates/candidates/import') }}"
                            class="btn btn-sm mr-1"
                            style="color:#333; background-color:#FEC503; border-color:#FEC503;">
@@ -44,6 +47,8 @@
                             ['id'=>'filterYear',      'label'=>'Exam Year', 'options'=>$filterYears,             'default'=>[(string)date('Y')], 'optLabels'=>[]],
                             ['id'=>'filterGender',    'label'=>'Gender',    'options'=>collect(['Male','Female']),'default'=>[], 'optLabels'=>[]],
                             ['id'=>'filterFeePaid',   'label'=>'Fee Paid',  'options'=>collect(['Yes','No']),     'default'=>[], 'optLabels'=>['Yes'=>'Paid','No'=>'Not Paid']],
+                            ['id'=>'filterPartOne',   'label'=>'Part I',    'options'=>collect(['Pass','Fail','None']), 'default'=>[], 'optLabels'=>['None'=>'No result yet']],
+                            ['id'=>'filterPartTwo',   'label'=>'Part II',   'options'=>collect(['Yes','No']),     'default'=>[], 'optLabels'=>['Yes'=>'Promoted','No'=>'Not promoted']],
                         ];
                         @endphp
                         <div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
@@ -94,7 +99,9 @@
                                        data-rows-url="{{ url('admin/associates/candidates/list-rows') }}"
                                        data-base-url="{{ url('admin/associates/candidates') }}"
                                        data-app-url="{{ url('') }}"
-                                       data-can-delete="{{ Auth::user()->isSuperAdmin() ? 1 : 0 }}">
+                                       data-can-delete="{{ Auth::user()->isSuperAdmin() ? 1 : 0 }}"
+                                       data-can-manage="{{ Auth::user()->isSuperAdmin() || Auth::user()->hasPermission('candidates.manage') ? 1 : 0 }}"
+                                       data-csrf="{{ csrf_token() }}">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -106,6 +113,8 @@
                                             <th>Country</th>
                                             <th>Gender</th>
                                             <th>Fee Paid</th>
+                                            <th>Part I</th>
+                                            <th>Part II</th>
                                             {{-- Hidden columns for export / search --}}
                                             <th>Email</th>
                                             <th>Repeat P1</th>
@@ -232,6 +241,9 @@ $(document).ready(function () {
         if (chkYear.length      && chkYear.indexOf(String(row.exam_year           || '')) === -1) return false;
         if (chkGender.length    && chkGender.indexOf(String(row.gender            || '')) === -1) return false;
         if (chkFeePaid.length   && chkFeePaid.indexOf(String(row.fee_paid || 'No'))      === -1) return false;
+        var chkPartOne = getChecked('filterPartOne'), chkPartTwo = getChecked('filterPartTwo');
+        if (chkPartOne.length   && chkPartOne.indexOf(row.part1_result || 'None')       === -1) return false;
+        if (chkPartTwo.length   && chkPartTwo.indexOf(row.part_two_promoted_at ? 'Yes' : 'No') === -1) return false;
         return true;
     });
 

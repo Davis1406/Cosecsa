@@ -291,6 +291,11 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
   Route::post('admin/associates/candidates/add', [CandidatesController::class,'insert'])->name('admin.associates.candidates.add');
   Route::get('admin/associates/candidates/import',  [CandidatesController::class,'import']);
   Route::post('admin/associates/candidates/import', [CandidatesController::class, 'importData'])->name('candidates.import.data');
+  // Part I results upload (preview → confirm) and Part II promotion
+  Route::get('admin/associates/candidates/part-one',          [\App\Http\Controllers\PartOneResultsController::class, 'upload']);
+  Route::post('admin/associates/candidates/part-one/preview', [\App\Http\Controllers\PartOneResultsController::class, 'preview']);
+  Route::post('admin/associates/candidates/part-one/import',  [\App\Http\Controllers\PartOneResultsController::class, 'import']);
+  Route::post('admin/associates/candidates/part-two/{id}',    [\App\Http\Controllers\PartOneResultsController::class, 'setPartTwo']);
   Route::get('admin/associates/candidates/view/{id}',  [CandidatesController::class,'view'])->name('candidates.view');
   Route::post('admin/associates/candidates/{id}/notes', [AssociateNoteController::class,'store'])->name('candidate.notes.store')->defaults('type', 'candidate');
   Route::post('admin/associates/candidates/notes/{noteId}/delete', [AssociateNoteController::class,'destroy'])->name('candidate.notes.destroy')->defaults('type', 'candidate');

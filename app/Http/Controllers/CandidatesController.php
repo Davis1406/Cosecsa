@@ -63,7 +63,7 @@ class CandidatesController extends Controller
         $keys = ['candidates_id', 'c_id', 'name', 'entry_number', 'candidate_id', 'programme_id', 'programme_name',
                  'hospital_id', 'hospital_name', 'country_id', 'country_name', 'gender', 'fee_paid',
                  'personal_email', 'repeat_paper_one', 'repeat_paper_two', 'mmed', 'sponsor', 'exam_year',
-                 'mode_of_payment'];
+                 'mode_of_payment', 'part1_overall', 'part1_result', 'part_two_promoted_at'];
 
         $rows = collect($this->api->get('candidates/list-data')->object()->candidates ?? [])
             ->map(fn ($c) => array_intersect_key((array) $c, array_flip($keys)))

@@ -77,11 +77,12 @@
                         </div>
                         <div>
                             <label class="d-block mb-1 small font-weight-bold text-muted">Result</label>
-                            <select name="result" class="form-control form-control-sm" style="width:120px;" onchange="this.form.submit()">
+                            <select name="result" class="form-control form-control-sm" style="width:200px;" onchange="this.form.submit()">
                                 <option value="">All results</option>
                                 <option value="Pass"   {{ $selectedResult == 'Pass'   ? 'selected' : '' }}>Pass</option>
                                 <option value="Fail"   {{ $selectedResult == 'Fail'   ? 'selected' : '' }}>Fail</option>
                                 <option value="Absent" {{ $selectedResult == 'Absent' ? 'selected' : '' }}>Absent</option>
+                                <option value="Part I Pass" {{ $selectedResult == 'Part I Pass' ? 'selected' : '' }}>Part I Pass (no Part II yet)</option>
                             </select>
                         </div>
                         <div class="d-flex" style="gap:.4rem;">
@@ -154,6 +155,7 @@
                                             <th class="text-center" style="color:#155724;">Pass</th>
                                             <th class="text-center" style="color:#721c24;">Fail</th>
                                             <th class="text-center">Absent</th>
+                                            <th class="text-center" title="Passed Part I, no Part II result recorded">Part I Pass</th>
                                             <th class="text-center">Total</th>
                                             <th class="text-center">Pass Rate</th>
                                         </tr>
@@ -165,7 +167,8 @@
                                                 $p = $counts['Pass']   ?? 0;
                                                 $f = $counts['Fail']   ?? 0;
                                                 $a = $counts['Absent'] ?? 0;
-                                                $tot = $p + $f + $a;
+                                                $p1 = $counts['Part I Pass'] ?? 0;
+                                                $tot = $p + $f + $a + $p1;
                                                 $rate = ($p + $f) > 0 ? round($p / ($p + $f) * 100) : null;
                                             @endphp
                                             <tr>
@@ -179,6 +182,9 @@
                                                 </td>
                                                 <td class="text-center">
                                                     @if($a)<span class="count-pill val-absent">{{ $a }}</span>@else <span class="text-muted">—</span>@endif
+                                                </td>
+                                                <td class="text-center">
+                                                    @if($p1)<span class="count-pill" style="background:#FEC503;color:#3a2a00;">{{ $p1 }}</span>@else <span class="text-muted">—</span>@endif
                                                 </td>
                                                 <td class="text-center"><span style="font-size:1.05rem;font-weight:700;">{{ $tot }}</span></td>
                                                 <td class="text-center">
@@ -252,7 +258,7 @@ $(document).ready(function () {
         if (type === 'sort' || type === 'type') return d == null ? -1 : Number(d);
         return d == null ? '—' : Number(d).toFixed(2);
     }
-    var resColours = { pass: ['#d4edda', '#155724'], fail: ['#f8d7da', '#721c24'], absent: ['#fff3cd', '#856404'] };
+    var resColours = { pass: ['#d4edda', '#155724'], fail: ['#f8d7da', '#721c24'], absent: ['#fff3cd', '#856404'], 'part i pass': ['#FEC503', '#3a2a00'] };
     var fellowUrl = @json(url('admin/associates/fellows/view')), traineeUrl = @json(url('admin/associates/trainees/view'));
 
     $('#detailTable').DataTable({
