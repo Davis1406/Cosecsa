@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-12) — Transcript page buttons use the COSECSA button styles
+- `admin/transcripts/edit/{userId}` used Bootstrap grey/dark/green/blue buttons. The header now matches College Letters: **Back**, **Preview** and **Download PDF** as `btn-cosecsa-outline`, plus a maroon **Share Transcript** (`btn-cosecsa`) that submits the form from the top. The bottom Share button, **Add Row** and the **Sent copy** link use the same classes. Row remove stays the red outline.
+- **Files:** `resources/views/admin/transcripts/edit.blade.php`. No API change.
+
 ### Fixed (2026-10-12) — Transcript Preview showed nothing; "Save Transcript" becomes "Share Transcript"
 - **Preview was blank** on `admin/transcripts/edit/{userId}` (e.g. `/8522`): the modal's PDF loader listened for `show.bs.modal` with native `addEventListener`, but Bootstrap 4 only fires modal events through jQuery, so the iframe never loaded. Now bound with `$(...).on(...)`.
 - Preview now renders the form **as it is on screen** (unsaved edits included), via a new `POST admin/transcripts/preview/{userId}` → cosecsa-api `transcripts/{userId}/preview`. Nothing is saved. Staff with only `transcripts.view` (who can't POST) still preview the last saved version.
