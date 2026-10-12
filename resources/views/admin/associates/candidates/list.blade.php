@@ -89,7 +89,11 @@
                                 <small class="text-muted" id="filteredCount"></small>
                             </div>
                             <div class="card-body">
-                                <table id="candidatestable" class="table table-bordered table-striped">
+                                <table id="candidatestable" class="table table-bordered table-striped"
+                                       data-rows-url="{{ url('admin/associates/candidates/list-rows') }}"
+                                       data-base-url="{{ url('admin/associates/candidates') }}"
+                                       data-app-url="{{ url('') }}"
+                                       data-can-delete="{{ Auth::user()->isSuperAdmin() ? 1 : 0 }}">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -112,89 +116,7 @@
                                             <th>Action</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        @foreach ($getRecord as $value)
-                                        @php $cid = $value->candidates_id ?? 0; @endphp
-                                        <tr data-country="{{ $value->country_name ?? '' }}"
-                                            data-programme="{{ $value->programme_name ?? '' }}"
-                                            data-gender="{{ $value->gender ?? '' }}"
-                                            data-year="{{ $value->exam_year ?? '' }}"
-                                            data-feepaid="{{ $value->fee_paid ?? 'No' }}">
-                                            <td class="row-num"></td>
-                                            {{-- Clickable name → view --}}
-                                            <td>
-                                                <a href="{{ url('admin/associates/candidates/view/' . $cid) }}"
-                                                   class="candidate-name-link font-weight-500">
-                                                    {{ $value->name ?? '-' }}
-                                                </a>
-                                            </td>
-                                            <td>{{ $value->entry_number ?? '-' }}</td>
-                                            <td>
-                                                @if(!empty($value->candidate_id))
-                                                    <span class="badge badge-secondary" style="font-size:.78rem;letter-spacing:.5px;">{{ $value->candidate_id }}</span>
-                                                @else
-                                                    <span class="text-muted" style="font-size:.78rem;">—</span>
-                                                @endif
-                                            </td>
-                                            <td>@if(!empty($value->programme_id))<a href="{{ url('admin/programmes/view/'.$value->programme_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->programme_name ?? '-' }}</a>@else{{ $value->programme_name ?? '-' }}@endif</td>
-                                            <td>@if(!empty($value->hospital_id))<a href="{{ url('admin/hospital/view_hospital/'.$value->hospital_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->hospital_name ?? '-' }}</a>@else{{ $value->hospital_name ?? '-' }}@endif</td>
-                                            <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->country_name ?? '-' }}</a>@else{{ $value->country_name ?? '-' }}@endif</td>
-                                            <td>
-                                                @if(($value->gender ?? '') === 'Female')
-                                                    <span>Female</span>
-                                                @elseif(($value->gender ?? '') === 'Male')
-                                                    <span>Male</span>
-                                                @else -
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @if(($value->fee_paid ?? 'No') === 'Yes')
-                                                    <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Paid</span>
-                                                @else
-                                                    <span class="badge badge-danger">Unpaid</span>
-                                                @endif
-                                            </td>
-                                            {{-- Hidden columns for export / search --}}
-                                            <td>{{ $value->personal_email ?? '-' }}</td>
-                                            <td>{{ $value->repeat_paper_one ?? 'No' }}</td>
-                                            <td>{{ $value->repeat_paper_two ?? 'No' }}</td>
-                                            <td>{{ $value->mmed ?? 'No' }}</td>
-                                            <td>{{ $value->sponsor ?? '-' }}</td>
-                                            <td>{{ $value->exam_year ?? '-' }}</td>
-                                            <td>{{ $value->mode_of_payment ?? '-' }}</td>
-                                            {{-- Dropdown action button --}}
-                                            <td class="text-center" style="white-space:nowrap;">
-                                                <div class="dropdown">
-                                                    <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
-                                                            type="button"
-                                                            data-toggle="dropdown"
-                                                            aria-haspopup="true"
-                                                            aria-expanded="false">
-                                                        <i class="fas fa-ellipsis-v"></i>
-                                                    </button>
-                                                    <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                                                        <a class="dropdown-item"
-                                                           href="{{ url('admin/associates/candidates/view/' . $cid) }}">
-                                                            <i class="fas fa-eye text-info mr-2"></i> View
-                                                        </a>
-                                                        <a class="dropdown-item"
-                                                           href="{{ url('admin/associates/candidates/edit/' . $cid) }}">
-                                                            <i class="fas fa-edit text-warning mr-2"></i> Edit
-                                                        </a>
-                                                        @if(Auth::user()->isSuperAdmin())
-                                                        <div class="dropdown-divider"></div>
-                                                        <a class="dropdown-item text-danger"
-                                                           href="{{ url('admin/associates/candidates/delete/' . ($value->c_id ?? 0)) }}"
-                                                           onclick="return confirm('Delete this candidate?')">
-                                                            <i class="fas fa-trash mr-2"></i> Delete
-                                                        </a>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
+                                    <tbody></tbody>
                                 </table>
                             </div>
                         </div>
@@ -295,9 +217,8 @@ $(document).ready(function () {
     }
 
     // DataTable custom search filter
-    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, row) {
         if (settings.nTable.id !== 'candidatestable') return true;
-        var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
 
         var chkCountry   = getChecked('filterCountry');
         var chkProgramme = getChecked('filterProgramme');
@@ -305,11 +226,11 @@ $(document).ready(function () {
         var chkGender    = getChecked('filterGender');
         var chkFeePaid   = getChecked('filterFeePaid');
 
-        if (chkCountry.length   && chkCountry.indexOf(String($row.data('country')    || '')) === -1) return false;
-        if (chkProgramme.length && chkProgramme.indexOf(String($row.data('programme')|| '')) === -1) return false;
-        if (chkYear.length      && chkYear.indexOf(String($row.data('year')          || '')) === -1) return false;
-        if (chkGender.length    && chkGender.indexOf(String($row.data('gender')      || '')) === -1) return false;
-        if (chkFeePaid.length   && chkFeePaid.indexOf(String($row.data('feepaid')    || '')) === -1) return false;
+        if (chkCountry.length   && chkCountry.indexOf(String(row.country_name   || '')) === -1) return false;
+        if (chkProgramme.length && chkProgramme.indexOf(String(row.programme_name || '')) === -1) return false;
+        if (chkYear.length      && chkYear.indexOf(String(row.exam_year           || '')) === -1) return false;
+        if (chkGender.length    && chkGender.indexOf(String(row.gender            || '')) === -1) return false;
+        if (chkFeePaid.length   && chkFeePaid.indexOf(String(row.fee_paid || 'No'))      === -1) return false;
         return true;
     });
 
@@ -363,8 +284,9 @@ $(document).ready(function () {
         $('#filteredCount').text('');
     });
 
-    // Apply default year filter on page load
-    redraw();
+    // Apply default year filter once the rows have loaded
+    $('#candidatestable').on('init.dt', redraw);
+    updateCardTitle();
 });
 </script>
 @endpush

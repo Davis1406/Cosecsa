@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Performance (2026-10-12) — Candidates list opens immediately; rows load after
+- `admin/associates/candidates/list` (was 8 MB / 4.2 s) uses the same JSON-row approach as Fellows/Trainees: filters render first, rows from the new `admin/associates/candidates/list-rows`. The default "current exam year" filter applies once rows load.
+- **Files:** `app/Http/Controllers/CandidatesController.php` (`list`, `listRows`), `routes/web.php`, `resources/views/admin/associates/candidates/list.blade.php`, `public/dist/js/custom.js`. ⚠️ **Coordinate:** cosecsa-api candidates `list-data?rows=0` first.
+
 ### Performance (2026-10-12) — Trainees list opens immediately; rows load after
 - Same approach as the Fellows list below: `admin/associates/trainees/trainees` renders with filters only (API `list-data?rows=0`), rows come from the new `admin/associates/trainees/list-rows` and DataTables renders only the visible page. Was 9.7 MB of HTML and 5.4 s.
 - Shared helpers for JSON-row tables (`dtAjax`, `dtText`, `dtRefLink`, `dtActionMenu`, `dtMenuItem`, `dtNumberRows`) are now in `custom.js`; Fellows uses them too.

@@ -282,6 +282,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
 
   //Candidates Route
   Route::get('admin/associates/candidates/list', [CandidatesController::class,'list']);
+  Route::get('admin/associates/candidates/list-rows', [CandidatesController::class,'listRows']);
   Route::get('admin/associates/candidates/add',  [CandidatesController::class,'add']);
   Route::post('admin/associates/candidates/add', [CandidatesController::class,'insert'])->name('admin.associates.candidates.add');
   Route::get('admin/associates/candidates/import',  [CandidatesController::class,'import']);

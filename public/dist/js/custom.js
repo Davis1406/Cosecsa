@@ -281,40 +281,75 @@ $(function () {
     //       MMed(12) Sponsor(13) ExamYear(14) ModePayment(15) | Action(16)
     // ═══════════════════════════════════════════════════════════════════════════════
     if ($("#candidatestable").length) {
+        var $ct = $("#candidatestable");
+        var cBase = $ct.data("base-url"), cApp = $ct.data("app-url"), cCanDelete = $ct.data("can-delete") === 1;
+        var craw = { "render": dtDashText };
         showLoader("candidatestable");
-        $("#candidatestable").DataTable({
+        $ct.DataTable({
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "stateSave": true, "paging": true, "pageLength": 25,
+            "deferRender": true,
+            "ajax": dtAjax($ct),
+            "language": { "loadingRecords": "Loading candidates…" },
             "order": [[1, "asc"]],
             "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
             "buttons": [
                 { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
                   className: "btn btn-success btn-sm", title: "Candidates List",
-                  exportOptions: { columns: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15] } },
+                  exportOptions: { columns: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], orthogonal: "export" } },
                 { extend: "pdfHtml5", text: '<i class="fas fa-file-pdf mr-1"></i> PDF',
                   className: "btn btn-danger btn-sm", title: "Candidates List",
-                  orientation: "landscape", pageSize: "A4", exportOptions: { columns: [1,2,3,4,5,6,7,8] } },
+                  orientation: "landscape", pageSize: "A4", exportOptions: { columns: [1,2,3,4,5,6,7,8], orthogonal: "export" } },
                 { extend: "print", text: '<i class="fas fa-print mr-1"></i> Print',
-                  className: "btn btn-secondary btn-sm", exportOptions: { columns: [1,2,3,4,5,6,7,8] } },
+                  className: "btn btn-secondary btn-sm", exportOptions: { columns: [1,2,3,4,5,6,7,8], orthogonal: "export" } },
                 { extend: "colvis", text: '<i class="fas fa-columns mr-1"></i> Columns',
                   className: "btn btn-outline-secondary btn-sm" }
             ],
             "columns": [
-                { "visible": true,  "orderable": false, "searchable": false }, // 0  #
-                { "visible": true  }, { "visible": true  }, { "visible": true  },
-                { "visible": true  }, { "visible": true  }, { "visible": true  },
-                { "visible": true  }, { "visible": true  },
-                { "visible": false }, { "visible": false }, { "visible": false },
-                { "visible": false }, { "visible": false }, { "visible": false },
-                { "visible": false },
-                { "visible": true,  "orderable": false, "searchable": false }  // 16 Action
+                { "data": null, "defaultContent": "", "className": "row-num", "orderable": false, "searchable": false }, // 0 #
+                { "data": "name", "render": function (d, type, r) {
+                    if (type !== "display") return dtDash(d);
+                    return '<a href="' + cBase + '/view/' + (r.candidates_id || 0) + '" class="candidate-name-link font-weight-500">' + dtEsc(dtDash(d)) + '</a>';
+                } },
+                $.extend({ "data": "entry_number" }, craw),
+                { "data": "candidate_id", "render": function (d, type) {
+                    if (type !== "display") return d || "—";
+                    return d ? '<span class="badge badge-secondary" style="font-size:.78rem;letter-spacing:.5px;">' + dtEsc(d) + '</span>'
+                             : '<span class="text-muted" style="font-size:.78rem;">—</span>';
+                } },
+                { "data": "programme_name", "render": function (d, type, r) { return dtRefLink(cApp + "/admin/programmes/view/", r.programme_id, dtDash(d), type); } },
+                { "data": "hospital_name", "render": function (d, type, r) { return dtRefLink(cApp + "/admin/hospital/view_hospital/", r.hospital_id, dtDash(d), type); } },
+                { "data": "country_name", "render": function (d, type, r) { return dtRefLink(cApp + "/admin/countries/view/", r.country_id, dtDash(d), type); } },
+                { "data": "gender", "render": function (d, type) { return dtDashText(d === "Female" || d === "Male" ? d : null, type); } },
+                { "data": "fee_paid", "render": function (d, type) {
+                    var paid = (d || "No") === "Yes";
+                    if (type !== "display") return paid ? "Paid" : "Unpaid";
+                    return paid ? '<span class="badge badge-success"><i class="fas fa-check mr-1"></i>Paid</span>'
+                                : '<span class="badge badge-danger">Unpaid</span>';
+                } },
+                // hidden (export / search) columns 9–15
+                $.extend({ "data": "personal_email", "visible": false }, craw),
+                { "data": "repeat_paper_one", "visible": false, "render": function (d, type) { return dtText(d || "No", type); } },
+                { "data": "repeat_paper_two", "visible": false, "render": function (d, type) { return dtText(d || "No", type); } },
+                { "data": "mmed", "visible": false, "render": function (d, type) { return dtText(d || "No", type); } },
+                $.extend({ "data": "sponsor", "visible": false }, craw),
+                $.extend({ "data": "exam_year", "visible": false }, craw),
+                $.extend({ "data": "mode_of_payment", "visible": false }, craw),
+                { "data": null, "orderable": false, "searchable": false, "className": "text-center", // 16 Action
+                  "render": function (d, type, r) {
+                    if (type !== "display") return "";
+                    var id = r.candidates_id || 0;
+                    var items = dtMenuItem(cBase + "/view/" + id, "fas fa-eye text-info", "View") +
+                                dtMenuItem(cBase + "/edit/" + id, "fas fa-edit text-warning", "Edit");
+                    if (cCanDelete) {
+                        items += '<div class="dropdown-divider"></div>' +
+                            dtMenuItem(cBase + "/delete/" + (r.c_id || 0), "fas fa-trash", "Delete", { cls: "text-danger", confirm: "Delete this candidate?" });
+                    }
+                    return dtActionMenu(items);
+                } }
             ],
             "initComplete": function () { hideLoader("candidatestable"); },
-            "drawCallback": function () {
-                this.api().column(0, { search: "applied", order: "applied" })
-                    .nodes().each(function (cell, i) { cell.innerHTML = i + 1; });
-                reinitDropdowns(this);
-            }
+            "drawCallback": function () { dtNumberRows(this.api()); reinitDropdowns(this); }
         });
     }
 

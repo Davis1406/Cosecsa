@@ -43,18 +43,33 @@ class CandidatesController extends Controller
         return response()->json($response->json());
     }
 
+    // Page renders with filters only; rows load from listRows() after.
     public function list()
     {
-        $response = $this->api->get('candidates/list-data');
+        $response = $this->api->get('candidates/list-data', ['rows' => 0]);
         $data = $response->object();
 
         return view('admin.associates.candidates.list', [
-            'getRecord'       => collect($data->candidates ?? []),
             'header_title'    => 'Candidates List',
             'filterCountries' => collect($data->filterCountries ?? []),
             'filterProgrammes'=> collect($data->filterProgrammes ?? []),
             'filterYears'     => collect($data->filterYears ?? []),
         ]);
+    }
+
+    // JSON rows for the Candidates table (rendered client-side, see custom.js).
+    public function listRows()
+    {
+        $keys = ['candidates_id', 'c_id', 'name', 'entry_number', 'candidate_id', 'programme_id', 'programme_name',
+                 'hospital_id', 'hospital_name', 'country_id', 'country_name', 'gender', 'fee_paid',
+                 'personal_email', 'repeat_paper_one', 'repeat_paper_two', 'mmed', 'sponsor', 'exam_year',
+                 'mode_of_payment'];
+
+        $rows = collect($this->api->get('candidates/list-data')->object()->candidates ?? [])
+            ->map(fn ($c) => array_intersect_key((array) $c, array_flip($keys)))
+            ->values();
+
+        return response()->json(['rows' => $rows]);
     }
 
     public function view($id)
