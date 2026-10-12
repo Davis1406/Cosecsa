@@ -282,39 +282,104 @@ $(function () {
     // Fellows — #(0) Name(1) Email(2) Country(3) Specialty(4) Type(5) Year(6)
     //           Hospital/Organisation(7) Action(8)
     // ═══════════════════════════════════════════════════════════════════════════════
+    // Rows come as JSON from data-rows-url after the page has rendered, and
+    // deferRender only builds the <tr>s for the page being shown, so the page
+    // no longer ships ~2,000 server-rendered rows (was 9 MB of HTML).
     if ($("#fellowstable").length) {
+        var $ft = $("#fellowstable");
+        var fBase = $ft.data("base-url");
+        var appUrl = $ft.data("app-url");
+        var canTranscript = $ft.data("can-transcript") === 1;
+        var canDelete = $ft.data("can-delete") === 1;
+        var esc = function (v) {
+            return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) {
+                return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+            });
+        };
+        var link = function (href, text, style) {
+            return '<a href="' + href + '" style="' + style + 'text-decoration:none;">' + esc(text) + '</a>';
+        };
+        var plain = function (v) { return v == null || v === "" ? "-" : v; };
+
         showLoader("fellowstable");
-        $("#fellowstable").DataTable({
+        $ft.DataTable({
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "paging": true, "pageLength": 25, "stateSave": true,
+            "deferRender": true,
+            "ajax": { "url": $ft.data("rows-url"), "dataSrc": function (json) {
+                $ft.data("extra-rows", json.extra || []);
+                return json.rows || [];
+            } },
+            "language": { "loadingRecords": "Loading fellows…" },
             "order": [[1, "asc"]],
             "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
             "buttons": [
                 { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
                   className: "btn btn-success btn-sm", title: "Fellows List",
-                  exportOptions: { columns: [1,2,3,4,5,6,7] } },
+                  exportOptions: { columns: [1,2,3,4,5,6,7], orthogonal: "export" } },
                 { extend: "pdfHtml5", text: '<i class="fas fa-file-pdf mr-1"></i> PDF',
                   className: "btn btn-danger btn-sm", title: "Fellows List",
-                  orientation: "landscape", pageSize: "A4", exportOptions: { columns: [1,2,3,4,5,6,7] } },
+                  orientation: "landscape", pageSize: "A4", exportOptions: { columns: [1,2,3,4,5,6,7], orthogonal: "export" } },
                 { extend: "print", text: '<i class="fas fa-print mr-1"></i> Print',
-                  className: "btn btn-secondary btn-sm", exportOptions: { columns: [1,2,3,4,5,6,7] } },
+                  className: "btn btn-secondary btn-sm", exportOptions: { columns: [1,2,3,4,5,6,7], orthogonal: "export" } },
                 { extend: "colvis", text: '<i class="fas fa-columns mr-1"></i> Columns',
                   className: "btn btn-outline-secondary btn-sm" }
             ],
             "columns": [
-                { "visible": true,  "orderable": false, "searchable": false },
-                { "visible": true  }, { "visible": true  }, { "visible": true  },
-                { "visible": true  }, { "visible": true  }, { "visible": true  },
-                // Hospital/Organisation — off by default (extra subquery per
-                // row, and not everyone needs it); staff can turn it on via
-                // the Columns button.
-                { "visible": false },
-                { "visible": true,  "orderable": false, "searchable": false }
+                { "data": null, "defaultContent": "", "className": "row-num", "orderable": false, "searchable": false },
+                { "data": "name", "render": function (d, type, r) {
+                    var multi = r.specs > 1;
+                    // Multi-specialty fellows sort first, then alphabetically.
+                    if (type === "sort") return (multi ? "0_" : "1_") + (d || "");
+                    if (type !== "display") return plain(d);
+                    if (r.kind === "extra") {
+                        return link(fBase + "/view/" + r.id, d || "-", "color:#3a7a1a;") +
+                            ' <span class="text-muted small">(add\'l specialty)</span>';
+                    }
+                    var html = link(fBase + "/view/" + r.id, d || "-", multi ? "color:#a02626; font-weight:600;" : "color:#222;");
+                    if (multi) {
+                        html += '<sup class="fellow-spec-count" title="' + r.specs + ' FCS specialties">' + r.specs + '</sup>';
+                    }
+                    return '<span style="display:inline-flex; align-items:center; gap:4px;">' + html + '</span>';
+                } },
+                { "data": "email", "render": function (d, type) { return type === "display" ? esc(plain(d)) : plain(d); } },
+                { "data": "country", "render": function (d, type, r) {
+                    if (type !== "display") return plain(d);
+                    return r.cid && r.kind !== "extra"
+                        ? link(appUrl + "/admin/countries/view/" + r.cid, plain(d), "color:#a02626;font-weight:500;")
+                        : esc(plain(d));
+                } },
+                { "data": "specialty", "render": function (d, type, r) {
+                    if (type !== "display") return plain(d);
+                    return r.pid ? link(appUrl + "/admin/programmes/view/" + r.pid, plain(d), "color:#a02626;font-weight:500;") : esc(plain(d));
+                } },
+                { "data": "ftype", "render": function (d, type) { return type === "display" ? esc(plain(d)) : plain(d); } },
+                { "data": "year", "render": function (d, type) { return type === "display" ? esc(plain(d)) : plain(d); } },
+                // Hospital/Organisation — off by default; staff can turn it on
+                // via the Columns button.
+                { "data": "hospital", "visible": false, "render": function (d, type) { return type === "display" ? esc(plain(d)) : plain(d); } },
+                { "data": null, "orderable": false, "searchable": false, "className": "text-center",
+                  "render": function (d, type, r) {
+                    if (type !== "display" || r.kind === "extra") return "";
+                    var items =
+                        '<a class="dropdown-item" href="' + fBase + '/view/' + r.id + '"><i class="fas fa-eye text-info mr-2"></i> View</a>' +
+                        '<a class="dropdown-item" href="' + fBase + '/edit/' + r.id + '"><i class="fas fa-edit text-warning mr-2"></i> Edit</a>';
+                    if (canTranscript && r.ftype === "Fellow by Examination") {
+                        items += '<a class="dropdown-item" href="' + appUrl + '/admin/transcripts/edit/' + r.uid + '"><i class="fas fa-file-signature text-secondary mr-2"></i> Issue Transcript</a>';
+                    }
+                    if (canDelete) {
+                        items += '<div class="dropdown-divider"></div>' +
+                            '<a class="dropdown-item text-danger" href="' + fBase + '/delete/' + r.fid + '" onclick="return confirm(\'Delete this fellow?\')"><i class="fas fa-trash mr-2"></i> Delete</a>';
+                    }
+                    return '<div class="dropdown"><button class="btn btn-sm btn-light border dropdown-toggle action-btn" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>' +
+                        '<div class="dropdown-menu dropdown-menu-right shadow-sm">' + items + '</div></div>';
+                } }
             ],
             "initComplete": function () { hideLoader("fellowstable"); },
             "drawCallback": function () {
-                this.api().column(0, { search: "applied", order: "applied" })
-                    .nodes().each(function (cell, i) { cell.innerHTML = i + 1; });
+                // Only the current page's rows exist (deferRender).
+                var api = this.api(), start = api.page.info().start;
+                api.column(0, { page: "current" }).nodes().each(function (cell, i) { cell.innerHTML = start + i + 1; });
                 reinitDropdowns(this);
             }
         });

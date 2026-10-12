@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Performance (2026-10-12) — Fellows list opens immediately; rows load after
+- `admin/associates/fellows/list` used to wait for the API and render all ~2,080 fellows into the page (9.4 MB of HTML, 2.4 s before the first byte, ~4 s to load). The page now renders with just the filters (API `list-data?rows=0`, ~36 ms). The table rows come as JSON from the new `admin/associates/fellows/list-rows`, and DataTables builds HTML only for the 25 rows on screen (`deferRender`).
+- Search, sorting (multi-specialty fellows first), the checkbox filters, the "All Alumni" additional-specialty rows, Columns, and Excel/PDF/Print export (plain text via `orthogonal: "export"`) work as before. Action menus respect the same permissions (Issue Transcript needs `transcripts.view`; Delete is Super Admin only).
+- **Files:** `app/Http/Controllers/FellowsController.php` (`list`, new `listRows`), `routes/web.php`, `resources/views/admin/associates/fellows/list.blade.php`, `public/dist/js/custom.js` (`#fellowstable`). ⚠️ **Coordinate:** needs cosecsa-api `541a08c` (lean `list-data`, `?rows=0`); already deployed.
+
 ### Performance (2026-10-12) — Permission checks remembered per request; JS compressed and assets cached
 - `User::hasPermission()` now keeps the role's permission keys on the user object for the rest of the request. List pages call it once per row (≈2,000 times on the Fellows list), and each call was a separate file-cache read.
 - **Server (no code):** new Apache conf `/etc/apache2/conf-available/cosecsa-perf.conf` (enabled; backup of `/etc/apache2` at `/root/apache2-conf-backup-20261012131503.tgz`). JS is now gzipped (Apache sends `.js` as `text/javascript`, which the stock `deflate.conf` skipped): `pdfmake.min.js` 1.35 MB → 537 KB, jQuery 89 → 31 KB. MIS/API public assets get `Cache-Control`: CSS/JS 1 day, images/fonts 30 days, `?v=`-stamped CSS/JS 1 year (`immutable`). Undo: `a2disconf cosecsa-perf && systemctl reload apache2`.

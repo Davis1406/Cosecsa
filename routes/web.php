@@ -339,6 +339,7 @@ Route::get('admin/associates/reps/delete/{id}', [CountryRepsController::class,'d
 
 //Fellows's Route
 Route::get('admin/associates/fellows/list', [FellowsController::class,'list']);
+Route::get('admin/associates/fellows/list-rows', [FellowsController::class,'listRows']);
 
 Route::get('admin/associates/fellows/add',  [FellowsController::class,'add']);
 Route::post('admin/associates/fellows/add', [FellowsController::class,'insert'])->name('admin.associates.fellows.add');

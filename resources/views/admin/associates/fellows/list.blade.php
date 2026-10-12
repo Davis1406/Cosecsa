@@ -98,7 +98,12 @@
                         <div class="card">
                             <div class="card-header"><h3 class="card-title">Fellows</h3></div>
                             <div class="card-body">
-                                <table id="fellowstable" class="table table-bordered table-striped">
+                                <table id="fellowstable" class="table table-bordered table-striped"
+                                       data-rows-url="{{ url('admin/associates/fellows/list-rows') }}"
+                                       data-base-url="{{ url('admin/associates/fellows') }}"
+                                       data-app-url="{{ url('') }}"
+                                       data-can-transcript="{{ Auth::user()->hasPermission('transcripts.view') ? 1 : 0 }}"
+                                       data-can-delete="{{ Auth::user()->isSuperAdmin() ? 1 : 0 }}">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -112,82 +117,7 @@
                                             <th>Action</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        @foreach ($getFellows as $value)
-                                        <tr data-row-kind="primary"
-                                            data-country="{{ $value->country_name ?? '' }}"
-                                            data-programme="{{ $value->programme_name ?? '' }}"
-                                            data-ftype="{{ $value->fellowship_type ?? '' }}"
-                                            data-year="{{ $value->fellowship_year ?? '' }}"
-                                            data-gender="{{ $value->gender ?? '' }}"
-                                            data-alumni="{{ $value->is_alumni ?? 0 }}">
-                                            <td class="row-num"></td>
-                                            @php
-                                                $specCount = 1
-                                                    + (!empty($value->second_fcs_specialty) ? 1 : 0)
-                                                    + (!empty($value->third_fcs_specialty)  ? 1 : 0);
-                                                $multiSpec = $specCount > 1;
-                                                // Multi-specialty fellows sort first by default, then
-                                                // alphabetically within each group.
-                                                $nameSortKey = ($multiSpec ? '0_' : '1_') . ($value->fellow_name ?? '');
-                                            @endphp
-                                            <td data-order="{{ $nameSortKey }}">
-                                                <span style="display:inline-flex; align-items:center; gap:4px;">
-                                                    <a href="{{ url('admin/associates/fellows/view/' . ($value->fellow_id ?? 0)) }}"
-                                                       style="{{ $multiSpec ? 'color:#a02626; font-weight:600;' : 'color:#222;' }} text-decoration:none;">{{ $value->fellow_name ?? '-' }}</a>
-                                                    @if($multiSpec)
-                                                        <sup style="
-                                                            background:#a02626; color:#fff;
-                                                            border-radius:50%; width:14px; height:14px;
-                                                            font-size:.6rem; font-weight:700;
-                                                            display:inline-flex; align-items:center; justify-content:center;
-                                                            line-height:1; flex-shrink:0;
-                                                        " title="{{ $specCount }} FCS specialties">{{ $specCount }}</sup>
-                                                    @endif
-                                                </span>
-                                            </td>
-                                            <td>{{ $value->personal_email ?? '-' }}</td>
-                                            <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->country_name ?? '-' }}</a>@else{{ $value->country_name ?? '-' }}@endif</td>
-                                            <td>@if(!empty($value->programme_id))<a href="{{ url('admin/programmes/view/'.$value->programme_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->current_specialty ?: ($value->programme_name ? preg_replace('/^FCS\s+/i','', $value->programme_name) : '-') }}</a>@else{{ $value->current_specialty ?: ($value->programme_name ? preg_replace('/^FCS\s+/i','', $value->programme_name) : '-') }}@endif</td>
-                                            <td>{{ $value->fellowship_type ?? '-' }}</td>
-                                            <td>{{ $value->fellowship_year ?? '-' }}</td>
-                                            <td>{{ $value->trained_hospital ?: ($value->organization ?: '-') }}</td>
-                                            <td class="text-center" style="white-space:nowrap;">
-                                                <div class="dropdown">
-                                                    <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
-                                                            type="button" data-toggle="dropdown"
-                                                            aria-haspopup="true" aria-expanded="false">
-                                                        <i class="fas fa-ellipsis-v"></i>
-                                                    </button>
-                                                    <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                                                        <a class="dropdown-item"
-                                                           href="{{ url('admin/associates/fellows/view/' . ($value->fellow_id ?? 0)) }}">
-                                                            <i class="fas fa-eye text-info mr-2"></i> View
-                                                        </a>
-                                                        <a class="dropdown-item"
-                                                           href="{{ url('admin/associates/fellows/edit/' . ($value->fellow_id ?? 0)) }}">
-                                                            <i class="fas fa-edit text-warning mr-2"></i> Edit
-                                                        </a>
-                                                        @if(Auth::user()->hasPermission('transcripts.view') && $value->fellowship_type === 'Fellow by Examination')
-                                                        <a class="dropdown-item"
-                                                           href="{{ url('admin/transcripts/edit/' . $value->user_id) }}">
-                                                            <i class="fas fa-file-signature text-secondary mr-2"></i> Issue Transcript
-                                                        </a>
-                                                        @endif
-                                                        @if(Auth::user()->isSuperAdmin())
-                                                        <div class="dropdown-divider"></div>
-                                                        <a class="dropdown-item text-danger"
-                                                           href="{{ url('admin/associates/fellows/delete/' . ($value->f_id ?? 0)) }}"
-                                                           onclick="return confirm('Delete this fellow?')">
-                                                            <i class="fas fa-trash mr-2"></i> Delete
-                                                        </a>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
+                                    <tbody></tbody>
                                 </table>
                             </div> <!-- /.card-body -->
                         </div> <!-- /.card -->
@@ -274,7 +204,6 @@
     </div>
 </div>
 
-<script type="application/json" id="extraAlumniRowsData">{!! json_encode($extraAlumniRows ?? []) !!}</script>
 @endsection
 
 @push('styles')
@@ -305,6 +234,11 @@
     .chk-filter-btn { white-space: nowrap; }
     /* ── Table ── */
     #fellowstable td { vertical-align: middle; }
+    .fellow-spec-count {
+        background:#a02626; color:#fff; border-radius:50%; width:14px; height:14px;
+        font-size:.6rem; font-weight:700; display:inline-flex; align-items:center;
+        justify-content:center; line-height:1; flex-shrink:0;
+    }
     .action-btn { padding: 2px 8px; line-height: 1.4; border-radius: 4px; }
     .action-btn:hover { background-color: #f0f0f0; }
     .dropdown-menu { min-width: 130px; font-size: .875rem; }
@@ -343,10 +277,9 @@ $(document).ready(function () {
         );
     }
 
-    // DataTable custom search filter
-    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+    // DataTable custom search filter (rows are JSON objects, see custom.js)
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, row) {
         if (settings.nTable.id !== 'fellowstable') return true;
-        var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
 
         var chkProgramme = getChecked('filterProgramme');
         var chkCountry   = getChecked('filterCountry');
@@ -355,15 +288,15 @@ $(document).ready(function () {
         var chkGender    = getChecked('filterGender');
         var chkAlumni    = getChecked('filterAlumni');
 
-        if (chkProgramme.length && chkProgramme.indexOf(String($row.data('programme') || '')) === -1) return false;
-        if (chkCountry.length   && chkCountry.indexOf(String($row.data('country')     || '')) === -1) return false;
-        if (chkType.length      && chkType.indexOf(String($row.data('ftype')          || '')) === -1) return false;
-        if (chkYear.length      && chkYear.indexOf(String($row.data('year')           || '')) === -1) return false;
-        if (chkGender.length    && chkGender.indexOf(String($row.data('gender')       || '')) === -1) return false;
+        if (chkProgramme.length && chkProgramme.indexOf(String(row.programme || '')) === -1) return false;
+        if (chkCountry.length   && chkCountry.indexOf(String(row.country     || '')) === -1) return false;
+        if (chkType.length      && chkType.indexOf(String(row.ftype          || '')) === -1) return false;
+        if (chkYear.length      && chkYear.indexOf(String(row.year           || '')) === -1) return false;
+        if (chkGender.length    && chkGender.indexOf(String(row.gender       || '')) === -1) return false;
         if (chkAlumni.length) {
             var wantsYes = chkAlumni.indexOf('unique') !== -1 || chkAlumni.indexOf('all') !== -1;
             var wantsNo  = chkAlumni.indexOf('0') !== -1;
-            var rowAlumni = String($row.data('alumni'));
+            var rowAlumni = String(row.alumni);
             if (!((wantsYes && rowAlumni === '1') || (wantsNo && rowAlumni === '0'))) return false;
         }
         return true;
@@ -372,36 +305,27 @@ $(document).ready(function () {
     // ── "All Alumni" split-specialty rows — added/removed from the table
     // (not just hidden), so the default row count never changes unless this
     // view is actively selected. ──
-    var extraAlumniRows = JSON.parse(document.getElementById('extraAlumniRowsData').textContent || '[]');
     var extraRowsAdded  = false;
 
-    function buildExtraRowHtml(r) {
-        var name = (r.name || '-').replace(/</g, '&lt;');
-        var email = (r.email || '-').replace(/</g, '&lt;');
-        var country = (r.country_name || '-').replace(/</g, '&lt;');
-        var specialty = (r.specialty || '-').replace(/^FCS\s+/i, '').replace(/</g, '&lt;');
-        return '<tr data-row-kind="extra" data-country="' + country + '" data-programme="" ' +
-            'data-ftype="Fellow by Examination" data-year="' + (r.year || '') + '" data-gender="" data-alumni="1">' +
-            '<td class="row-num"></td>' +
-            '<td><a href="' + '{{ url("admin/associates/fellows/view") }}' + '/' + r.fellow_id + '" style="color:#3a7a1a;text-decoration:none;">' + name + ' <span class="text-muted small">(add\'l specialty)</span></a></td>' +
-            '<td>' + email + '</td>' +
-            '<td>' + country + '</td>' +
-            '<td>' + specialty + '</td>' +
-            '<td>Fellow by Examination</td>' +
-            '<td>' + (r.year || '-') + '</td>' +
-            '<td></td>' +
-            '</tr>';
+    // Additional-specialty rows (loaded with the table data) as row objects.
+    function extraRowData(r) {
+        return {
+            kind: 'extra', id: r.fellow_id, name: r.name, email: r.email,
+            cid: r.country_id, country: r.country_name, pid: null, programme: '',
+            specialty: (r.specialty || '').replace(/^FCS\s+/i, '') || null,
+            ftype: 'Fellow by Examination', year: r.year, hospital: null,
+            gender: '', alumni: 1, specs: 1
+        };
     }
 
     function syncExtraAlumniRows() {
         var dt = $('#fellowstable').DataTable();
         var wantsAll = getChecked('filterAlumni').indexOf('all') !== -1;
         if (wantsAll && !extraRowsAdded) {
-            var nodes = extraAlumniRows.map(function (r) { return $(buildExtraRowHtml(r))[0]; });
-            dt.rows.add(nodes).draw(false);
+            dt.rows.add(($('#fellowstable').data('extra-rows') || []).map(extraRowData)).draw(false);
             extraRowsAdded = true;
         } else if (!wantsAll && extraRowsAdded) {
-            dt.rows(function (idx, d, node) { return $(node).data('row-kind') === 'extra'; }).remove().draw(false);
+            dt.rows(function (idx, d) { return d.kind === 'extra'; }).remove().draw(false);
             extraRowsAdded = false;
         }
     }

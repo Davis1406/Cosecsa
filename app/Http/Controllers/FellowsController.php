@@ -28,21 +28,51 @@ class FellowsController extends Controller
 
     public function __construct(private ApiClient $api) {}
 
+    // The page renders with filters only; the table rows come from listRows()
+    // after load, so the page no longer waits on (or ships) 2,000 rendered rows.
     public function list()
     {
-        $response = $this->api->get('fellows/list-data');
+        $response = $this->api->get('fellows/list-data', ['rows' => 0]);
         $data = $response->object();
 
         return view('admin.associates.fellows.list', [
             'header_title'      => 'Fellows',
-            'getFellows'        => collect($data->fellows ?? []),
             'filterCountries'   => collect($data->filterCountries ?? []),
             'filterTypes'       => collect($data->filterTypes ?? []),
             'filterProgrammes'  => collect($data->filterProgrammes ?? []),
             'filterYears'       => collect($data->filterYears ?? []),
             'uniqueAlumniCount' => $data->uniqueAlumniCount ?? 0,
             'allAlumniCount'    => $data->allAlumniCount ?? 0,
-            'extraAlumniRows'   => $data->extraAlumniRows ?? [],
+        ]);
+    }
+
+    // JSON rows for the Fellows table (DataTables renders them client-side).
+    public function listRows()
+    {
+        $data = $this->api->get('fellows/list-data')->object();
+
+        $rows = collect($data->fellows ?? [])->map(fn ($f) => [
+            'id'        => $f->fellow_id,
+            'uid'       => $f->user_id,
+            'fid'       => $f->f_id,
+            'name'      => $f->fellow_name,
+            'email'     => $f->personal_email,
+            'cid'       => $f->country_id,
+            'country'   => $f->country_name,
+            'pid'       => $f->programme_id,
+            'programme' => $f->programme_name,
+            'specialty' => $f->current_specialty ?: ($f->programme_name ? preg_replace('/^FCS\s+/i', '', $f->programme_name) : null),
+            'ftype'     => $f->fellowship_type,
+            'year'      => $f->fellowship_year,
+            'hospital'  => $f->trained_hospital ?: $f->organization,
+            'gender'    => $f->gender,
+            'alumni'    => (int) ($f->is_alumni ?? 0),
+            'specs'     => 1 + (! empty($f->second_fcs_specialty) ? 1 : 0) + (! empty($f->third_fcs_specialty) ? 1 : 0),
+        ])->values();
+
+        return response()->json([
+            'rows'  => $rows,
+            'extra' => $data->extraAlumniRows ?? [],
         ]);
     }
 
