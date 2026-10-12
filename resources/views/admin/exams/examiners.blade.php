@@ -131,7 +131,13 @@
                         </div>
 
                         <div class="card-body">
-                            <table id="examinerstable" class="table table-bordered table-striped">
+                            {{-- Rows are built client-side from this JSON (see custom.js #examinerstable). --}}
+                            <script type="application/json" id="examinersRows">{!! json_encode($getExaminers->values(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+                            <table id="examinerstable" class="table table-bordered table-striped"
+                                   data-app-url="{{ url('') }}"
+                                   data-csrf="{{ csrf_token() }}"
+                                   data-from="{{ request()->path() }}"
+                                   data-can-delete="{{ Auth::user()->isSuperAdmin() ? 1 : 0 }}">
                                 <thead>
                                     <tr>
                                         <th style="width:36px;">
@@ -149,87 +155,7 @@
                                         <th>Action</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    @foreach ($getExaminers as $value)
-                                    <tr class="examiner-row {{ $value->participated_last_year ? 'last-year-row' : '' }}"
-                                        data-desig="{{ $value->examiner_designation ?? '' }}"
-                                        data-role="{{ ucfirst($value->role_name ?? '') }}"
-                                        data-status="{{ $value->status ?? 'Active' }}"
-                                        data-programmes="{{ $value->specialty ?? '' }}">
-                                        <td>
-                                            <input type="checkbox" class="row-chk"
-                                                   value="{{ $value->examin_id }}"
-                                                   data-email="{{ $value->email }}"
-                                                   data-name="{{ $value->examiner_name }}">
-                                        </td>
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td><a href="{{ url('admin/exams/view_examiner/'.$value->examin_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->examiner_name }}</a></td>
-                                        <td>{{ $value->email }}</td>
-                                        <td>@if($value->country_id)<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->country_name }}</a>@else{{ $value->country_name }}@endif</td>
-                                        <td>{{ $value->examiner_id }}</td>
-                                        <td>{{ $value->specialty ?? '—' }}</td>
-                                        <td>
-                                            @if(!empty($value->examiner_designation))
-                                                <span class="badge badge-pill" style="background:#a02626;color:#fff;font-size:.75rem;">
-                                                    {{ $value->examiner_designation }}
-                                                </span>
-                                            @else
-                                                <span class="text-muted">—</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($value->shift_id)
-                                                <span class="badge badge-info" style="font-size:.75rem;">
-                                                    {{ \App\Models\User::getShiftName($value->shift_id) }}
-                                                </span>
-                                            @else
-                                                <span class="text-muted">—</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($value->internal_notes)
-                                                @php $notePreview = Str::limit($value->internal_notes, 60); @endphp
-                                                <span class="text-muted" style="font-size:.8rem;cursor:default;"
-                                                      data-toggle="tooltip" data-placement="left"
-                                                      title="{{ e($value->internal_notes) }}">
-                                                    {{ $notePreview }}
-                                                </span>
-                                            @else
-                                                <span class="text-muted" style="font-size:.8rem;">—</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <div class="dropdown">
-                                                <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
-                                                    type="button" data-toggle="dropdown">
-                                                    <i class="fas fa-ellipsis-v"></i>
-                                                </button>
-                                                <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                                                    <form action="{{ url("admin/exams/view_examiner/{$value->examin_id}") }}"
-                                                          method="POST" style="display:inline;">
-                                                        @csrf
-                                                        <input type="hidden" name="from" value="{{ request()->path() }}">
-                                                        <button type="submit" class="dropdown-item">
-                                                            <i class="fa fa-eye"></i> View
-                                                        </button>
-                                                    </form>
-                                                    <a href="{{ url('admin/exams/edit_examiner/' . $value->examin_id) }}"
-                                                       class="dropdown-item">
-                                                        <i class="fa fa-edit"></i> Edit
-                                                    </a>
-                                                    @if(Auth::user()->isSuperAdmin())
-                                                    <a href="{{ url('admin/exams/delete/' . $value->ex_id) }}"
-                                                       class="dropdown-item text-danger"
-                                                       onclick="return confirm('Are you sure?')">
-                                                        <i class="fa fa-trash"></i> Delete
-                                                    </a>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
+                                <tbody></tbody>
                             </table>
                         </div>
                     </div>
@@ -453,18 +379,16 @@ $(function () {
     });
 
     // ── Unified DataTable search extension ────────────────────────────────────
-    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, row) {
         if (settings.nTable.id !== 'examinerstable') return true;
 
-        var $row = $(table.row(dataIndex).node());
-
         // Last-year participant filter
-        if (filterMode === 'lastyear' && !$row.hasClass('last-year-row')) return false;
+        if (filterMode === 'lastyear' && !row.participated_last_year) return false;
 
         // Programme — substring OR-match against data-programmes
         var chkProgramme = getChecked('filter-programme');
         if (chkProgramme.length) {
-            var allProgs = ($row.data('programmes') || '').toLowerCase();
+            var allProgs = (row.specialty || '').toLowerCase();
             var anyMatch = chkProgramme.some(function (p) { return allProgs.indexOf(p.toLowerCase()) !== -1; });
             if (!anyMatch) return false;
         }
@@ -475,16 +399,16 @@ $(function () {
 
         // Designation — exact match from data-desig
         var chkDesig = getChecked('filter-designation');
-        if (chkDesig.length && chkDesig.indexOf(($row.data('desig') || '').trim()) === -1) return false;
+        if (chkDesig.length && chkDesig.indexOf((row.examiner_designation || '').trim()) === -1) return false;
 
         // Status — exact match from data-status
         var chkStatus = getChecked('filter-status');
-        if (chkStatus.length && chkStatus.indexOf($row.data('status') || 'Active') === -1) return false;
+        if (chkStatus.length && chkStatus.indexOf(row.status || 'Active') === -1) return false;
 
         // Role — case-insensitive from data-role
         var chkRole = getChecked('filter-role');
         if (chkRole.length) {
-            var rowRole = ($row.data('role') || '').trim().toLowerCase();
+            var rowRole = (row.role_name || '').trim().toLowerCase();
             if (!chkRole.some(function (r) { return r.toLowerCase() === rowRole; })) return false;
         }
 

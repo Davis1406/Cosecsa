@@ -157,11 +157,21 @@ $(function () {
             (extra && extra.confirm ? ' onclick="return confirm(\'' + extra.confirm + '\')"' : "") +
             '><i class="' + icon + ' mr-2"></i> ' + label + '</a>';
     }
+    // Uses the request _dt_prefetch.blade.php started early when there is one,
+    // falling back to a normal request.
     function dtAjax($table, onJson) {
-        return { "url": $table.data("rows-url"), "dataSrc": function (json) {
+        var url = $table.data("rows-url");
+        var rows = function (json) {
             if (onJson) onJson(json);
             return json.rows || [];
-        } };
+        };
+        var early = window.dtRowsPrefetch && window.dtRowsPrefetch[url];
+        if (!early) return { "url": url, "dataSrc": rows };
+        delete window.dtRowsPrefetch[url];
+        return function (data, callback) {
+            early.then(null, function () { return $.getJSON(url); })
+                 .then(function (json) { callback({ data: rows(json) }); });
+        };
     }
     // "#" column: number the current page's rows (only those exist with deferRender).
     function dtNumberRows(api) {
@@ -511,32 +521,79 @@ $(function () {
     // ═══════════════════════════════════════════════════════════════════════════════
     // Examiners
     // ═══════════════════════════════════════════════════════════════════════════════
+    // Rows come from the page's #examinersRows JSON; deferRender builds only
+    // the visible page (was ~3.5 MB of server-rendered rows).
     if ($("#examinerstable").length) {
+        var $et = $("#examinerstable");
+        var eApp = $et.data("app-url"), eCsrf = $et.data("csrf"), eFrom = $et.data("from"), eCanDelete = $et.data("can-delete") === 1;
+        var shiftNames = { 1: "Morning", 2: "Morning & Afternoon", 3: "Afternoon" };
+        var dash = '<span class="text-muted">—</span>';
+        var eExport = { columns: ":visible:not(:first-child):not(:last-child)", orthogonal: "export" };
         showLoader("examinerstable");
-        $("#examinerstable").DataTable({
+        $et.DataTable({
             "responsive": true, "lengthChange": true, "autoWidth": false,
-            "paging": true, "stateSave": true,
-            "buttons": ["copy", "csv", "excel", "pdf", "colvis"],
+            "paging": true, "stateSave": true, "deferRender": true,
+            "data": JSON.parse(document.getElementById("examinersRows").textContent || "[]"),
+            "buttons": [
+                { extend: "copy", exportOptions: eExport }, { extend: "csv", exportOptions: eExport },
+                { extend: "excel", exportOptions: eExport }, { extend: "pdf", exportOptions: eExport }, "colvis"
+            ],
+            "createdRow": function (tr, r) {
+                $(tr).addClass("examiner-row" + (r.participated_last_year ? " last-year-row" : ""));
+            },
             "columns": [
                 // Col 0: checkbox — not sortable/searchable
-                { "orderable": false, "searchable": false },
-                { "visible": true  }, // #
-                { "visible": true  }, // Name
-                { "visible": true  }, // Email
-                { "visible": true  }, // Country
-                { "visible": true  }, // Examiner ID
-                { "visible": true  }, // Specialty
-                { "visible": true  }, // Designation
-                { "visible": false }, // Shift
-                { "visible": true  }, // Notes
+                { "data": null, "orderable": false, "searchable": false, "render": function (d, type, r) {
+                    if (type !== "display") return "";
+                    return '<input type="checkbox" class="row-chk" value="' + r.examin_id + '" data-email="' + dtEsc(r.email) + '" data-name="' + dtEsc(r.examiner_name) + '">';
+                } },
+                { "data": null, "defaultContent": "", "className": "row-num", "orderable": false, "searchable": false }, // #
+                { "data": "examiner_name", "render": function (d, type, r) { // Name
+                    return type === "display" ? dtLink(eApp + "/admin/exams/view_examiner/" + r.examin_id, d || "", "color:#a02626;font-weight:500;") : (d || "");
+                } },
+                { "data": "email", "render": dtText }, // Email
+                { "data": "country_name", "render": function (d, type, r) { return dtRefLink(eApp + "/admin/countries/view/", r.country_id, d, type); } }, // Country
+                { "data": "examiner_id", "render": dtText }, // Examiner ID
+                { "data": "specialty", "render": function (d, type) { return dtText(d || "—", type); } }, // Specialty
+                { "data": "examiner_designation", "render": function (d, type) { // Designation
+                    if (type !== "display") return d || "—";
+                    return d ? '<span class="badge badge-pill" style="background:#a02626;color:#fff;font-size:.75rem;">' + dtEsc(d) + '</span>' : dash;
+                } },
+                { "data": "shift_id", "visible": false, "render": function (d, type) { // Shift
+                    var name = d ? (shiftNames[d] || "Unknown Shift") : "";
+                    if (type !== "display") return name || "—";
+                    return d ? '<span class="badge badge-info" style="font-size:.75rem;">' + name + '</span>' : dash;
+                } },
+                { "data": "internal_notes", "render": function (d, type) { // Notes
+                    if (type !== "display") return d || "—";
+                    if (!d) return '<span class="text-muted" style="font-size:.8rem;">—</span>';
+                    var preview = d.length > 60 ? d.substring(0, 60) + "..." : d;
+                    return '<span class="text-muted" style="font-size:.8rem;cursor:default;" data-toggle="tooltip" data-placement="left" title="' + dtEsc(d) + '">' + dtEsc(preview) + '</span>';
+                } },
                 // Col 10: Action — not sortable/searchable
-                { "orderable": false, "searchable": false }
+                { "data": null, "orderable": false, "searchable": false, "render": function (d, type, r) {
+                    if (type !== "display") return "";
+                    var items =
+                        '<form action="' + eApp + '/admin/exams/view_examiner/' + r.examin_id + '" method="POST" style="display:inline;">' +
+                        '<input type="hidden" name="_token" value="' + dtEsc(eCsrf) + '"><input type="hidden" name="from" value="' + dtEsc(eFrom) + '">' +
+                        '<button type="submit" class="dropdown-item"><i class="fa fa-eye"></i> View</button></form>' +
+                        '<a href="' + eApp + '/admin/exams/edit_examiner/' + r.examin_id + '" class="dropdown-item"><i class="fa fa-edit"></i> Edit</a>';
+                    if (eCanDelete) {
+                        items += '<a href="' + eApp + '/admin/exams/delete/' + r.ex_id + '" class="dropdown-item text-danger" onclick="return confirm(\'Are you sure?\')"><i class="fa fa-trash"></i> Delete</a>';
+                    }
+                    return '<div class="dropdown"><button class="btn btn-sm btn-light border dropdown-toggle action-btn" type="button" data-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button>' +
+                        '<div class="dropdown-menu dropdown-menu-right shadow-sm">' + items + '</div></div>';
+                } }
             ],
             "stateLoadParams": function (settings, data) {
                 if (!data || (data.columns && data.columns.length !== 11)) { return false; }
             },
             "initComplete": function () { hideLoader("examinerstable"); },
-            "drawCallback": function () { reinitDropdowns(this); }
+            "drawCallback": function () {
+                var api = this.api(), start = api.page.info().start;
+                api.column(1, { page: "current" }).nodes().each(function (cell, i) { cell.innerHTML = start + i + 1; });
+                reinitDropdowns(this);
+            }
         }).buttons().container().appendTo('#examinerstable_wrapper .col-md-6:eq(0)');
     }
 

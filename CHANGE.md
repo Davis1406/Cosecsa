@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Performance (2026-10-12) — Examiners list builds rows client-side; JSON-row lists start their request early
+- `admin/exams/examiners` (was 3.5 MB of rendered rows, each with its own View form + CSRF token) now embeds the examiner rows as JSON (`#examinersRows`) and DataTables builds only the visible page. Selection/Email Selected, the participant toggle, all filters, Shift column and exports work on row data. Exports now skip the checkbox and Action columns.
+- Fellows, Trainees and Candidates start their `list-rows` request at the top of the page (`admin/_dt_prefetch.blade.php`) instead of after all scripts have loaded; `dtAjax()` uses it, falling back to a normal request.
+- **Files:** `resources/views/admin/exams/examiners.blade.php`, `resources/views/admin/_dt_prefetch.blade.php`, the three list views, `public/dist/js/custom.js`. No API change.
+
 ### Performance (2026-10-12) — Candidates list opens immediately; rows load after
 - `admin/associates/candidates/list` (was 8 MB / 4.2 s) uses the same JSON-row approach as Fellows/Trainees: filters render first, rows from the new `admin/associates/candidates/list-rows`. The default "current exam year" filter applies once rows load.
 - **Files:** `app/Http/Controllers/CandidatesController.php` (`list`, `listRows`), `routes/web.php`, `resources/views/admin/associates/candidates/list.blade.php`, `public/dist/js/custom.js`. ⚠️ **Coordinate:** cosecsa-api candidates `list-data?rows=0` first.

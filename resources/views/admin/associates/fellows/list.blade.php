@@ -1,6 +1,7 @@
 @extends('layout.app')
 
 @section('content')
+@include('admin._dt_prefetch', ['url' => url('admin/associates/fellows/list-rows')])
 <div class="wrapper">
     <div class="content-wrapper">
         <section class="content-header">
