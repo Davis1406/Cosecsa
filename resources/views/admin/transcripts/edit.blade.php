@@ -12,13 +12,13 @@
             <a href="{{ url('admin/transcripts') }}" class="btn btn-secondary">
               <i class="fas fa-arrow-left mr-1"></i> Back to Search
             </a>
+            <button type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#transcriptPreviewModal">
+              <i class="fas fa-eye mr-1"></i> Preview
+            </button>
+            <a href="{{ url('admin/transcripts/pdf/'.$userId) }}" target="_blank" class="btn btn-success">
+              <i class="fas fa-file-pdf mr-1"></i> Download PDF
+            </a>
             @if($recordExists)
-              <button type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#transcriptPreviewModal">
-                <i class="fas fa-eye mr-1"></i> Preview
-              </button>
-              <a href="{{ url('admin/transcripts/pdf/'.$userId) }}" target="_blank" class="btn btn-success">
-                <i class="fas fa-file-pdf mr-1"></i> Download PDF
-              </a>
               <button type="button" class="btn btn-primary" id="btnSendTranscript">
                 <i class="fas fa-paper-plane mr-1"></i> Send Transcript
               </button>
@@ -52,7 +52,7 @@
           <div class="alert alert-info" style="font-size:.85rem;">
             <i class="fas fa-info-circle mr-1"></i> Candidate details pre-filled from their existing record where available,
             and the course table below pre-filled with the standard MCS/FCS course list — review, edit, add, or remove
-            rows as needed, then save. The PDF option appears once saved.
+            rows as needed. <strong>Preview</strong> and <strong>Download PDF</strong> work now; save first to email the transcript.
           </div>
         @endif
 
@@ -159,7 +159,6 @@
     </section>
   </div>
 
-  @if($recordExists)
   <div class="modal fade" id="transcriptPreviewModal" tabindex="-1" role="dialog" aria-labelledby="transcriptPreviewLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document" style="max-width:900px;">
       <div class="modal-content" style="height:85vh;">
@@ -173,7 +172,6 @@
       </div>
     </div>
   </div>
-  @endif
 @endsection
 
 @push('scripts')
