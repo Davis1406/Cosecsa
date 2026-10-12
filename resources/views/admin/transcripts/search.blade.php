@@ -117,13 +117,13 @@
                             <form method="POST" action="{{ url('admin/transcripts/delete/'.$h['user_id'].'/share/'.$h['dispatch_id']) }}" class="d-inline"
                                   onsubmit="return confirm('Delete this shared transcript and its saved copy? The fellow keeps the email they received.');">
                               @csrf
-                              <button type="submit" class="btn btn-sm btn-danger" title="Delete this share"><i class="fas fa-trash"></i></button>
+                              <button type="submit" class="btn btn-sm btn-cosecsa-danger" title="Delete this share"><i class="fas fa-trash"></i></button>
                             </form>
                           @else
                             <form method="POST" action="{{ url('admin/transcripts/delete/'.$h['user_id']) }}" class="d-inline"
                                   onsubmit="return confirm('Delete the saved transcript for {{ addslashes($h['full_name']) }}?');">
                               @csrf
-                              <button type="submit" class="btn btn-sm btn-danger" title="Delete this transcript"><i class="fas fa-trash"></i></button>
+                              <button type="submit" class="btn btn-sm btn-cosecsa-danger" title="Delete this transcript"><i class="fas fa-trash"></i></button>
                             </form>
                           @endif
                         @endif

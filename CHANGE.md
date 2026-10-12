@@ -6,9 +6,9 @@
 
 ### Changed (2026-10-12) — Transcripts: # column, delete, solid buttons
 - **Transcript History** has a **#** column (follows the current sort/page) and, for staff with `transcripts.manage` (or Super Admin), a **Delete** button: a shared row deletes that share and its kept PDF; a "saved, not shared" row deletes the saved transcript. Both confirm first. The fellow's **Transcript** tab has the same per-share delete, a **Delete Transcript** button, and a # column on its share history.
-- Buttons on the Transcripts page, transcript edit page and fellow Transcript tab are solid: maroon `btn-cosecsa` (main action), gold `btn-cosecsa-yellow` (view/preview/download), new slate `btn-cosecsa-dark` (Back, Add Row; lighter slate in dark mode), red `btn-danger` (delete).
+- Buttons on the Transcripts page, transcript edit page and fellow Transcript tab are solid: maroon `btn-cosecsa` (main action), gold `btn-cosecsa-yellow` (view/preview/download), new slate `btn-cosecsa-dark` (Back, Add Row; lighter slate in dark mode), red `btn-cosecsa-danger` (delete; same size as the other COSECSA buttons).
 - Dark mode: link-buttons inside tables no longer get the pink table-link colour (`custom.css` rule now `table a[href]:not(.btn)`), so their text stays white on maroon / dark on gold.
-- All solid COSECSA buttons (`btn-cosecsa`, `-yellow`, `-dark`) app-wide now lift slightly with a shadow on hover, press back on click, and show a gold focus ring for keyboard users.
+- All solid COSECSA buttons (`btn-cosecsa`, `-yellow`, `-dark`, `-danger`) app-wide now lift slightly with a shadow on hover, press back on click, and show a gold focus ring for keyboard users.
 - **Files:** `app/Http/Controllers/TranscriptController.php` (`destroy`, `destroyShare`), `routes/web.php`, `resources/views/admin/transcripts/{search,edit,_profile}.blade.php`, `resources/views/layout/header.blade.php`. ⚠️ **Coordinate:** cosecsa-api delete endpoints first.
 
 ### Added (2026-10-12) — Transcript History; Transcript tab on the fellow profile

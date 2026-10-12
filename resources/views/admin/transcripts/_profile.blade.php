@@ -20,7 +20,7 @@
             <form method="POST" action="{{ url('admin/transcripts/delete/'.$userId) }}" class="d-inline"
                   onsubmit="return confirm('Delete this transcript, including every shared copy kept here? Emails already sent are not affected.');">
                 @csrf
-                <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash mr-1"></i> Delete Transcript</button>
+                <button type="submit" class="btn btn-sm btn-cosecsa-danger"><i class="fas fa-trash mr-1"></i> Delete Transcript</button>
             </form>
         @endif
     </div>
@@ -54,7 +54,7 @@
                             <form method="POST" action="{{ url('admin/transcripts/delete/'.$userId.'/share/'.$s['dispatch_id']) }}" class="d-inline"
                                   onsubmit="return confirm('Delete this shared transcript and its saved copy? The fellow keeps the email they received.');">
                                 @csrf
-                                <button type="submit" class="btn btn-sm btn-danger" title="Delete this share"><i class="fas fa-trash"></i></button>
+                                <button type="submit" class="btn btn-sm btn-cosecsa-danger" title="Delete this share"><i class="fas fa-trash"></i></button>
                             </form>
                         @endif
                     </td>

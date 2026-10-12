@@ -1134,18 +1134,23 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
     body.dark-mode .btn-cosecsa-dark, html.dark-mode .btn-cosecsa-dark { background:#4a5568; border-color:#4a5568; color:#fff; }
     body.dark-mode .btn-cosecsa-dark:hover, html.dark-mode .btn-cosecsa-dark:hover,
     body.dark-mode .btn-cosecsa-dark:focus, html.dark-mode .btn-cosecsa-dark:focus { background:#718096; border-color:#718096; color:#fff; }
+    /* Solid red for delete actions, sized like the other COSECSA buttons. */
+    .btn-cosecsa-danger { font-size:.82rem; font-weight:500; padding:.38rem .85rem; border-radius:5px; line-height:1.4;
+        background:#dc3545; border:1px solid #dc3545; color:#fff; }
+    .btn-cosecsa-danger.btn-sm { font-size:.75rem; padding:.22rem .55rem; border-radius:4px; }
+    .btn-cosecsa-danger:hover, .btn-cosecsa-danger:focus { background:#b02a37; border-color:#b02a37; color:#fff; }
     /* Solid buttons: lift + shadow on hover, press back down, visible keyboard focus. */
-    .btn-cosecsa, .btn-cosecsa-yellow, .btn-cosecsa-dark {
+    .btn-cosecsa, .btn-cosecsa-yellow, .btn-cosecsa-dark, .btn-cosecsa-danger {
         transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease;
     }
-    .btn-cosecsa:hover, .btn-cosecsa-yellow:hover, .btn-cosecsa-dark:hover {
+    .btn-cosecsa:hover, .btn-cosecsa-yellow:hover, .btn-cosecsa-dark:hover, .btn-cosecsa-danger:hover {
         transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,.22);
     }
-    .btn-cosecsa:active, .btn-cosecsa-yellow:active, .btn-cosecsa-dark:active { transform: none; box-shadow: none; }
-    .btn-cosecsa:focus-visible, .btn-cosecsa-yellow:focus-visible, .btn-cosecsa-dark:focus-visible {
+    .btn-cosecsa:active, .btn-cosecsa-yellow:active, .btn-cosecsa-dark:active, .btn-cosecsa-danger:active { transform: none; box-shadow: none; }
+    .btn-cosecsa:focus-visible, .btn-cosecsa-yellow:focus-visible, .btn-cosecsa-dark:focus-visible, .btn-cosecsa-danger:focus-visible {
         outline: none; box-shadow: 0 0 0 .2rem rgba(254,197,3,.55);
     }
-    body.dark-mode .btn-cosecsa:hover, body.dark-mode .btn-cosecsa-yellow:hover, body.dark-mode .btn-cosecsa-dark:hover {
+    body.dark-mode .btn-cosecsa:hover, body.dark-mode .btn-cosecsa-yellow:hover, body.dark-mode .btn-cosecsa-dark:hover, body.dark-mode .btn-cosecsa-danger:hover {
         box-shadow: 0 3px 10px rgba(0,0,0,.55);
     }
 

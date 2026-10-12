@@ -137,7 +137,7 @@
                         <td><input type="text" class="form-control form-control-sm" name="courses[{{ $loop->index }}][course_name]" value="{{ $c->course_name }}"></td>
                         <td><input type="text" class="form-control form-control-sm" name="courses[{{ $loop->index }}][academic_year]" value="{{ $c->academic_year }}"></td>
                         <td><input type="text" class="form-control form-control-sm" name="courses[{{ $loop->index }}][result]" value="{{ $c->result }}"></td>
-                        <td class="text-center"><button type="button" class="btn btn-sm btn-danger removeRowBtn"><i class="fas fa-times"></i></button></td>
+                        <td class="text-center"><button type="button" class="btn btn-sm btn-cosecsa-danger removeRowBtn"><i class="fas fa-times"></i></button></td>
                       </tr>
                     @endforeach
                   </tbody>
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
       <td><input type="text" class="form-control form-control-sm" name="courses[${i}][course_name]"></td>
       <td><input type="text" class="form-control form-control-sm" name="courses[${i}][academic_year]"></td>
       <td><input type="text" class="form-control form-control-sm" name="courses[${i}][result]"></td>
-      <td class="text-center"><button type="button" class="btn btn-sm btn-danger removeRowBtn"><i class="fas fa-times"></i></button></td>
+      <td class="text-center"><button type="button" class="btn btn-sm btn-cosecsa-danger removeRowBtn"><i class="fas fa-times"></i></button></td>
     </tr>`;
   }
 
