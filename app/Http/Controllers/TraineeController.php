@@ -16,13 +16,13 @@ class TraineeController extends Controller
 
     public function __construct(private ApiClient $api) {}
 
+    // Page renders with filters only; rows load from listRows() after.
     public function list()
     {
-        $response = $this->api->get('trainees/list-data');
+        $response = $this->api->get('trainees/list-data', ['rows' => 0]);
         $data = $response->object();
 
         return view('admin.associates.trainees.trainees', [
-            'getRecord'           => collect($data->trainees ?? []),
             'header_title'        => 'Trainees List',
             'filterCountries'     => collect($data->filterCountries ?? []),
             'filterProgrammes'    => collect($data->filterProgrammes ?? []),
@@ -31,6 +31,23 @@ class TraineeController extends Controller
             'filterStatuses'      => collect($data->filterStatuses ?? []),
             'filterHospitals'     => collect($data->filterHospitals ?? []),
         ]);
+    }
+
+    // JSON rows for the Trainees table (rendered client-side, see custom.js).
+    public function listRows()
+    {
+        $keys = ['trainee_id', 't_id', 'name', 'gender', 'entry_number', 'personal_email',
+                 'programme_id', 'programme_name', 'hospital_id', 'hospital_name', 'country_id', 'country_name',
+                 'status', 'user_email', 'user_password', 'admission_letter_status', 'invitation_letter_status',
+                 'admission_year', 'programme_year', 'exam_year', 'resume_year', 'programme_period',
+                 'invoice_number', 'invoice_date', 'invoice_status', 'sponsor', 'mode_of_payment',
+                 'amount_paid', 'payment_date'];
+
+        $rows = collect($this->api->get('trainees/list-data')->object()->trainees ?? [])
+            ->map(fn ($t) => array_intersect_key((array) $t, array_flip($keys)))
+            ->values();
+
+        return response()->json(['rows' => $rows]);
     }
 
     public function view($id)

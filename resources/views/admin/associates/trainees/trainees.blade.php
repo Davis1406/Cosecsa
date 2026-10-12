@@ -101,7 +101,11 @@
                                     <small class="text-muted" id="filteredCount"></small>
                                 </div>
                                 <div class="card-body">
-                                    <table id="traineestable" class="table table-bordered table-striped">
+                                    <table id="traineestable" class="table table-bordered table-striped"
+                                           data-rows-url="{{ url('admin/associates/trainees/list-rows') }}"
+                                           data-base-url="{{ url('admin/associates/trainees') }}"
+                                           data-app-url="{{ url('') }}"
+                                           data-can-delete="{{ Auth::user()->isSuperAdmin() ? 1 : 0 }}">
                                         <thead>
                                             <tr>
                                                 <th>#</th>
@@ -133,83 +137,7 @@
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            @foreach ($getRecord as $value)
-                                                <tr data-country="{{ $value->country_name ?? '' }}"
-                                                    data-programme="{{ $value->programme_name ?? '' }}"
-                                                    data-year="{{ $value->exam_year ?? '' }}"
-                                                    data-admissionyear="{{ $value->admission_year ?? '' }}"
-                                                    data-resumeyear="{{ $value->resume_year ?? '' }}"
-                                                    data-status="{{ $value->status ?? '' }}"
-                                                    data-gender="{{ $value->gender ?? '' }}"
-                                                    data-hospital="{{ $value->hospital_name ?? '' }}">
-                                                    <td class="row-num"></td>
-                                                    <td>
-                                                        <a href="{{ url('admin/associates/trainees/view/' . $value->trainee_id) }}"
-                                                           class="trainee-name-link font-weight-500">
-                                                            {{ $value->name }}
-                                                        </a>
-                                                    @if($value->resume_year ?? null)
-                                                        <span class="badge badge-info ml-1" title="Deferred — resuming in {{ $value->resume_year }}">Resuming {{ $value->resume_year }}</span>
-                                                    @endif
-                                                    </td>
-                                                    <td>{{ $value->gender }}</td>
-                                                    <td>{{ $value->entry_number }}</td>
-                                                    <td>{{ $value->personal_email }}</td>
-                                                    <td>@if($value->programme_id)<a href="{{ url('admin/programmes/view/'.$value->programme_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->programme_name }}</a>@else{{ $value->programme_name }}@endif</td>
-                                                    <td>@if($value->hospital_id)<a href="{{ url('admin/hospital/view_hospital/'.$value->hospital_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->hospital_name }}</a>@else{{ $value->hospital_name }}@endif</td>
-                                                    <td>@if($value->country_id)<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{ $value->country_name }}</a>@else{{ $value->country_name }}@endif</td>
-                                                    <td>{{ $value->status }}</td>
-                                                    {{-- Hidden columns --}}
-                                                    <td>{{ $value->user_email }}</td>
-                                                    <td>{{ $value->user_password }}</td>
-                                                    <td>{{ $value->admission_letter_status }}</td>
-                                                    <td>{{ $value->invitation_letter_status }}</td>
-                                                    <td>{{ $value->admission_year }}</td>
-                                                    <td>{{ $value->programme_year }}</td>
-                                                    <td>{{ $value->exam_year }}</td>
-                                                    <td>{{ $value->resume_year ?? '' }}</td>
-                                                    <td>{{ $value->programme_period }} Years</td>
-                                                    <td>{{ $value->invoice_number }}</td>
-                                                    <td>{{ $value->invoice_date }}</td>
-                                                    <td>{{ $value->invoice_status }}</td>
-                                                    <td>{{ $value->sponsor }}</td>
-                                                    <td>{{ $value->mode_of_payment }}</td>
-                                                    <td>{{ $value->amount_paid }}</td>
-                                                    <td>{{ $value->payment_date }}</td>
-                                                    {{-- Dropdown action --}}
-                                                    <td class="text-center" style="white-space:nowrap;">
-                                                        <div class="dropdown">
-                                                            <button class="btn btn-sm btn-light border dropdown-toggle action-btn"
-                                                                    type="button"
-                                                                    data-toggle="dropdown"
-                                                                    aria-haspopup="true"
-                                                                    aria-expanded="false">
-                                                                <i class="fas fa-ellipsis-v"></i>
-                                                            </button>
-                                                            <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                                                                <a class="dropdown-item"
-                                                                   href="{{ url('admin/associates/trainees/view/' . $value->trainee_id) }}">
-                                                                    <i class="fas fa-eye text-info mr-2"></i> View
-                                                                </a>
-                                                                <a class="dropdown-item"
-                                                                   href="{{ url('admin/associates/trainees/edit/' . $value->trainee_id) }}">
-                                                                    <i class="fas fa-edit text-warning mr-2"></i> Edit
-                                                                </a>
-                                                                @if(Auth::user()->isSuperAdmin())
-                                                                <div class="dropdown-divider"></div>
-                                                                <a class="dropdown-item text-danger"
-                                                                   href="{{ url('admin/associates/trainees/delete/' . $value->t_id) }}"
-                                                                   onclick="return confirm('Delete this trainee?')">
-                                                                    <i class="fas fa-trash mr-2"></i> Delete
-                                                                </a>
-                                                                @endif
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
+                                        <tbody></tbody>
                                     </table>
                                 </div>
                                 </div>
@@ -255,16 +183,15 @@ $(document).ready(function () {
     }
 
     // ── DataTable custom search ───────────────────────────────────────────────
-    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, row) {
         if (settings.nTable.id !== 'traineestable') return true;
-        var $row     = $($(settings.nTable).DataTable().row(dataIndex).node());
         var filters  = [
-            { id: 'filterCountry',       val: String($row.data('country')      || '') },
-            { id: 'filterProgramme',     val: String($row.data('programme')    || '') },
-            { id: 'filterYear',          val: String($row.data('year')         || '') },
-            { id: 'filterStatus',        val: String($row.data('status')       || '') },
-            { id: 'filterGender',        val: String($row.data('gender')       || '') },
-            { id: 'filterHospital',      val: String($row.data('hospital')     || '') },
+            { id: 'filterCountry',       val: String(row.country_name   || '') },
+            { id: 'filterProgramme',     val: String(row.programme_name || '') },
+            { id: 'filterYear',          val: String(row.exam_year      || '') },
+            { id: 'filterStatus',        val: String(row.status         || '') },
+            { id: 'filterGender',        val: String(row.gender         || '') },
+            { id: 'filterHospital',      val: String(row.hospital_name  || '') },
         ];
         for (var i = 0; i < filters.length; i++) {
             var checked = getChecked(filters[i].id);
@@ -275,8 +202,8 @@ $(document).ready(function () {
         // so a trainee who deferred and resumes later also appears under that year.
         var checkedAdm = getChecked('filterAdmissionYear');
         if (checkedAdm.length) {
-            var adm = String($row.data('admissionyear') || '');
-            var res = String($row.data('resumeyear')    || '');
+            var adm = String(row.admission_year || '');
+            var res = String(row.resume_year    || '');
             if (checkedAdm.indexOf(adm) === -1 && checkedAdm.indexOf(res) === -1) return false;
         }
         return true;

@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Performance (2026-10-12) — Trainees list opens immediately; rows load after
+- Same approach as the Fellows list below: `admin/associates/trainees/trainees` renders with filters only (API `list-data?rows=0`), rows come from the new `admin/associates/trainees/list-rows` and DataTables renders only the visible page. Was 9.7 MB of HTML and 5.4 s.
+- Shared helpers for JSON-row tables (`dtAjax`, `dtText`, `dtRefLink`, `dtActionMenu`, `dtMenuItem`, `dtNumberRows`) are now in `custom.js`; Fellows uses them too.
+- The hidden **SFS Password** export column is unchanged (still `users.password`). ⚠️ 275 trainee accounts store that password in plain text rather than a bcrypt hash; to be handled separately.
+- **Files:** `app/Http/Controllers/TraineeController.php` (`list`, `listRows`), `routes/web.php`, `resources/views/admin/associates/trainees/trainees.blade.php`, `public/dist/js/custom.js`. ⚠️ **Coordinate:** cosecsa-api `?rows=0` on trainees `list-data` first.
+
 ### Performance (2026-10-12) — Fellows list opens immediately; rows load after
 - `admin/associates/fellows/list` used to wait for the API and render all ~2,080 fellows into the page (9.4 MB of HTML, 2.4 s before the first byte, ~4 s to load). The page now renders with just the filters (API `list-data?rows=0`, ~36 ms). The table rows come as JSON from the new `admin/associates/fellows/list-rows`, and DataTables builds HTML only for the 25 rows on screen (`deferRender`).
 - Search, sorting (multi-specialty fellows first), the checkbox filters, the "All Alumni" additional-specialty rows, Columns, and Excel/PDF/Print export (plain text via `orthogonal: "export"`) work as before. Action menus respect the same permissions (Issue Transcript needs `transcripts.view`; Delete is Super Admin only).

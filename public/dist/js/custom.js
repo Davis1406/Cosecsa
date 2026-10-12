@@ -128,6 +128,47 @@ $(function () {
         $(tableEl).find('[data-toggle="dropdown"]').dropdown();
     }
 
+    // ── Tables whose rows arrive as JSON (<table data-rows-url="...">) ─────────
+    // The page renders without rows; DataTables fetches them and, with
+    // deferRender, only builds <tr>s for the page on screen. Column renderers
+    // return HTML for "display" and plain text for sort/search/export.
+    function dtEsc(v) {
+        return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+    }
+    function dtDash(v) { return v == null || v === "" ? "-" : v; }
+    function dtText(d, type) { return type === "display" ? dtEsc(d) : (d == null ? "" : d); }
+    function dtDashText(d, type) { return type === "display" ? dtEsc(dtDash(d)) : dtDash(d); }
+    function dtLink(href, text, style) {
+        return '<a href="' + href + '" style="' + (style || "") + 'text-decoration:none;">' + dtEsc(text) + '</a>';
+    }
+    // Maroon link when there's an id to link to, plain text otherwise.
+    function dtRefLink(url, id, text, type) {
+        if (type !== "display") return text == null ? "" : text;
+        return id ? dtLink(url + id, text == null ? "" : text, "color:#a02626;font-weight:500;") : dtEsc(text);
+    }
+    function dtActionMenu(items) {
+        return '<div class="dropdown"><button class="btn btn-sm btn-light border dropdown-toggle action-btn" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>' +
+            '<div class="dropdown-menu dropdown-menu-right shadow-sm">' + items + '</div></div>';
+    }
+    function dtMenuItem(href, icon, label, extra) {
+        return '<a class="dropdown-item' + (extra && extra.cls ? " " + extra.cls : "") + '" href="' + href + '"' +
+            (extra && extra.confirm ? ' onclick="return confirm(\'' + extra.confirm + '\')"' : "") +
+            '><i class="' + icon + ' mr-2"></i> ' + label + '</a>';
+    }
+    function dtAjax($table, onJson) {
+        return { "url": $table.data("rows-url"), "dataSrc": function (json) {
+            if (onJson) onJson(json);
+            return json.rows || [];
+        } };
+    }
+    // "#" column: number the current page's rows (only those exist with deferRender).
+    function dtNumberRows(api) {
+        var start = api.page.info().start;
+        api.column(0, { page: "current" }).nodes().each(function (cell, i) { cell.innerHTML = start + i + 1; });
+    }
+
     // ── Global DataTables defaults ───────────────────────────────────────────────
     $.extend(true, $.fn.dataTable.defaults, {
         "dom": '<"row"<"col-md-6"l><"col-md-6"f>>rt<"row"<"col-md-5"i><"col-md-7"p>>'
@@ -158,42 +199,78 @@ $(function () {
     //       ModePayment(22) AmtPaid(23) DatePaid(24) | Action(25)
     // ═══════════════════════════════════════════════════════════════════════════════
     if ($("#traineestable").length) {
+        var $tt = $("#traineestable");
+        var tBase = $tt.data("base-url"), tApp = $tt.data("app-url"), tCanDelete = $tt.data("can-delete") === 1;
+        var traw = { "render": dtText };
         showLoader("traineestable");
-        $("#traineestable").DataTable({
+        $tt.DataTable({
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "stateSave": true, "paging": true, "pageLength": 25,
+            "deferRender": true,
+            "ajax": dtAjax($tt),
+            "language": { "loadingRecords": "Loading trainees…" },
             "order": [[1, "asc"]],
             "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
             "buttons": [
                 { extend: "excelHtml5", text: '<i class="fas fa-file-excel mr-1"></i> Excel',
                   className: "btn btn-success btn-sm", title: "Trainees List",
-                  exportOptions: { columns: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24] } },
+                  exportOptions: { columns: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24], orthogonal: "export" } },
                 { extend: "pdfHtml5", text: '<i class="fas fa-file-pdf mr-1"></i> PDF',
                   className: "btn btn-danger btn-sm", title: "Trainees List",
-                  orientation: "landscape", pageSize: "A4", exportOptions: { columns: [1,2,3,4,5,6,7,8] } },
+                  orientation: "landscape", pageSize: "A4", exportOptions: { columns: [1,2,3,4,5,6,7,8], orthogonal: "export" } },
                 { extend: "print", text: '<i class="fas fa-print mr-1"></i> Print',
-                  className: "btn btn-secondary btn-sm", exportOptions: { columns: [1,2,3,4,5,6,7,8] } },
+                  className: "btn btn-secondary btn-sm", exportOptions: { columns: [1,2,3,4,5,6,7,8], orthogonal: "export" } },
                 { extend: "colvis", text: '<i class="fas fa-columns mr-1"></i> Columns',
                   className: "btn btn-outline-secondary btn-sm" }
             ],
             "columns": [
-                { "visible": true,  "orderable": false, "searchable": false }, // 0  #
-                { "visible": true  }, { "visible": true  }, { "visible": true  },
-                { "visible": true  }, { "visible": true  }, { "visible": true  },
-                { "visible": true  }, { "visible": true  },
-                { "visible": false }, { "visible": false }, { "visible": false },
-                { "visible": false }, { "visible": false }, { "visible": false },
-                { "visible": false }, { "visible": false }, { "visible": false },
-                { "visible": false }, { "visible": false }, { "visible": false },
-                { "visible": false }, { "visible": false }, { "visible": false },
-                { "visible": false }, { "visible": true,  "orderable": false, "searchable": false }  // 25 Action
+                { "data": null, "defaultContent": "", "className": "row-num", "orderable": false, "searchable": false }, // 0 #
+                { "data": "name", "render": function (d, type, r) {
+                    if (type !== "display") return d == null ? "" : d;
+                    var html = '<a href="' + tBase + '/view/' + r.trainee_id + '" class="trainee-name-link font-weight-500">' + dtEsc(d) + '</a>';
+                    if (r.resume_year) {
+                        html += ' <span class="badge badge-info ml-1" title="Deferred — resuming in ' + dtEsc(r.resume_year) + '">Resuming ' + dtEsc(r.resume_year) + '</span>';
+                    }
+                    return html;
+                } },
+                $.extend({ "data": "gender" }, traw),
+                $.extend({ "data": "entry_number" }, traw),
+                $.extend({ "data": "personal_email" }, traw),
+                { "data": "programme_name", "render": function (d, type, r) { return dtRefLink(tApp + "/admin/programmes/view/", r.programme_id, d, type); } },
+                { "data": "hospital_name", "render": function (d, type, r) { return dtRefLink(tApp + "/admin/hospital/view_hospital/", r.hospital_id, d, type); } },
+                { "data": "country_name", "render": function (d, type, r) { return dtRefLink(tApp + "/admin/countries/view/", r.country_id, d, type); } },
+                $.extend({ "data": "status" }, traw),
+                // hidden (export) columns 9–24
+                $.extend({ "data": "user_email", "visible": false }, traw),
+                $.extend({ "data": "user_password", "visible": false }, traw),
+                $.extend({ "data": "admission_letter_status", "visible": false }, traw),
+                $.extend({ "data": "invitation_letter_status", "visible": false }, traw),
+                $.extend({ "data": "admission_year", "visible": false }, traw),
+                $.extend({ "data": "programme_year", "visible": false }, traw),
+                $.extend({ "data": "exam_year", "visible": false }, traw),
+                $.extend({ "data": "resume_year", "visible": false }, traw),
+                { "data": "programme_period", "visible": false, "render": function (d, type) { return dtText((d == null ? "" : d) + " Years", type); } },
+                $.extend({ "data": "invoice_number", "visible": false }, traw),
+                $.extend({ "data": "invoice_date", "visible": false }, traw),
+                $.extend({ "data": "invoice_status", "visible": false }, traw),
+                $.extend({ "data": "sponsor", "visible": false }, traw),
+                $.extend({ "data": "mode_of_payment", "visible": false }, traw),
+                $.extend({ "data": "amount_paid", "visible": false }, traw),
+                $.extend({ "data": "payment_date", "visible": false }, traw),
+                { "data": null, "orderable": false, "searchable": false, "className": "text-center", // 25 Action
+                  "render": function (d, type, r) {
+                    if (type !== "display") return "";
+                    var items = dtMenuItem(tBase + "/view/" + r.trainee_id, "fas fa-eye text-info", "View") +
+                                dtMenuItem(tBase + "/edit/" + r.trainee_id, "fas fa-edit text-warning", "Edit");
+                    if (tCanDelete) {
+                        items += '<div class="dropdown-divider"></div>' +
+                            dtMenuItem(tBase + "/delete/" + r.t_id, "fas fa-trash", "Delete", { cls: "text-danger", confirm: "Delete this trainee?" });
+                    }
+                    return dtActionMenu(items);
+                } }
             ],
             "initComplete": function () { hideLoader("traineestable"); },
-            "drawCallback": function () {
-                this.api().column(0, { search: "applied", order: "applied" })
-                    .nodes().each(function (cell, i) { cell.innerHTML = i + 1; });
-                reinitDropdowns(this);
-            }
+            "drawCallback": function () { dtNumberRows(this.api()); reinitDropdowns(this); }
         });
     }
 
@@ -291,25 +368,14 @@ $(function () {
         var appUrl = $ft.data("app-url");
         var canTranscript = $ft.data("can-transcript") === 1;
         var canDelete = $ft.data("can-delete") === 1;
-        var esc = function (v) {
-            return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) {
-                return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-            });
-        };
-        var link = function (href, text, style) {
-            return '<a href="' + href + '" style="' + style + 'text-decoration:none;">' + esc(text) + '</a>';
-        };
-        var plain = function (v) { return v == null || v === "" ? "-" : v; };
+        var esc = dtEsc, link = dtLink, plain = dtDash;
 
         showLoader("fellowstable");
         $ft.DataTable({
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "paging": true, "pageLength": 25, "stateSave": true,
             "deferRender": true,
-            "ajax": { "url": $ft.data("rows-url"), "dataSrc": function (json) {
-                $ft.data("extra-rows", json.extra || []);
-                return json.rows || [];
-            } },
+            "ajax": dtAjax($ft, function (json) { $ft.data("extra-rows", json.extra || []); }),
             "language": { "loadingRecords": "Loading fellows…" },
             "order": [[1, "asc"]],
             "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
@@ -362,26 +428,20 @@ $(function () {
                   "render": function (d, type, r) {
                     if (type !== "display" || r.kind === "extra") return "";
                     var items =
-                        '<a class="dropdown-item" href="' + fBase + '/view/' + r.id + '"><i class="fas fa-eye text-info mr-2"></i> View</a>' +
-                        '<a class="dropdown-item" href="' + fBase + '/edit/' + r.id + '"><i class="fas fa-edit text-warning mr-2"></i> Edit</a>';
+                        dtMenuItem(fBase + "/view/" + r.id, "fas fa-eye text-info", "View") +
+                        dtMenuItem(fBase + "/edit/" + r.id, "fas fa-edit text-warning", "Edit");
                     if (canTranscript && r.ftype === "Fellow by Examination") {
-                        items += '<a class="dropdown-item" href="' + appUrl + '/admin/transcripts/edit/' + r.uid + '"><i class="fas fa-file-signature text-secondary mr-2"></i> Issue Transcript</a>';
+                        items += dtMenuItem(appUrl + "/admin/transcripts/edit/" + r.uid, "fas fa-file-signature text-secondary", "Issue Transcript");
                     }
                     if (canDelete) {
                         items += '<div class="dropdown-divider"></div>' +
-                            '<a class="dropdown-item text-danger" href="' + fBase + '/delete/' + r.fid + '" onclick="return confirm(\'Delete this fellow?\')"><i class="fas fa-trash mr-2"></i> Delete</a>';
+                            dtMenuItem(fBase + "/delete/" + r.fid, "fas fa-trash", "Delete", { cls: "text-danger", confirm: "Delete this fellow?" });
                     }
-                    return '<div class="dropdown"><button class="btn btn-sm btn-light border dropdown-toggle action-btn" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>' +
-                        '<div class="dropdown-menu dropdown-menu-right shadow-sm">' + items + '</div></div>';
+                    return dtActionMenu(items);
                 } }
             ],
             "initComplete": function () { hideLoader("fellowstable"); },
-            "drawCallback": function () {
-                // Only the current page's rows exist (deferRender).
-                var api = this.api(), start = api.page.info().start;
-                api.column(0, { page: "current" }).nodes().each(function (cell, i) { cell.innerHTML = start + i + 1; });
-                reinitDropdowns(this);
-            }
+            "drawCallback": function () { dtNumberRows(this.api()); reinitDropdowns(this); }
         });
     }
 
