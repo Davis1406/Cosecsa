@@ -6,6 +6,7 @@
 
 ### Changed (2026-10-12) — Transcript page buttons use the COSECSA button styles
 - `admin/transcripts/edit/{userId}` used Bootstrap grey/dark/green/blue buttons. The header now matches College Letters: **Back**, **Preview** and **Download PDF** as `btn-cosecsa-outline`, plus a maroon **Share Transcript** (`btn-cosecsa`) that submits the form from the top. The bottom Share button, **Add Row** and the **Sent copy** link use the same classes. Row remove stays the red outline.
+- The cyan Bootstrap `alert-info` banner at the top is gone; its guidance is now a muted subtitle under the page title (as on College Letters). **Add Row** sits right in the card header (`card-tools`) instead of floating mid-header.
 - **Files:** `resources/views/admin/transcripts/edit.blade.php`. No API change.
 
 ### Fixed (2026-10-12) — Transcript Preview showed nothing; "Save Transcript" becomes "Share Transcript"

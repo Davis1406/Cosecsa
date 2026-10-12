@@ -7,6 +7,13 @@
         <div class="row mb-2 align-items-center">
           <div class="col-sm-6">
             <h1 style="font-size:1.4rem;">Issue Transcript — {{ $record->full_name }}</h1>
+            <p class="text-muted mb-0" style="font-size:.85rem;">
+              @if(!$recordExists)
+                Pre-filled from the fellow's record and the standard MCS/FCS course list — review before sharing.
+              @else
+                Preview shows the form as filled in; Share saves it, emails it to the fellow and keeps a copy on their profile.
+              @endif
+            </p>
           </div>
           <div class="col-sm-6 text-right">
             <a href="{{ url('admin/transcripts') }}" class="btn btn-cosecsa-outline">
@@ -39,15 +46,6 @@
             <a href="{{ url('admin/transcripts/copy/'.$userId) }}" target="_blank" class="btn btn-sm btn-cosecsa-outline mt-1">
               <i class="fas fa-download mr-1"></i> Sent copy
             </a>
-          </div>
-        @endif
-
-        @if(!$recordExists)
-          <div class="alert alert-info" style="font-size:.85rem;">
-            <i class="fas fa-info-circle mr-1"></i> Candidate details pre-filled from their existing record where available,
-            and the course table below pre-filled with the standard MCS/FCS course list — review, edit, add, or remove
-            rows as needed. <strong>Preview</strong> shows the transcript as filled in below; <strong>Share Transcript</strong> saves it,
-            emails it to the fellow and keeps a copy on their profile.
           </div>
         @endif
 
@@ -110,11 +108,13 @@
           </div>
 
           <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header">
               <h3 class="card-title">Course / Qualification Rows</h3>
-              <button type="button" class="btn btn-sm btn-cosecsa-outline" id="addRowBtn">
-                <i class="fas fa-plus mr-1"></i> Add Row
-              </button>
+              <div class="card-tools">
+                <button type="button" class="btn btn-sm btn-cosecsa-outline" id="addRowBtn">
+                  <i class="fas fa-plus mr-1"></i> Add Row
+                </button>
+              </div>
             </div>
             <div class="card-body p-0">
               <div class="table-responsive">
