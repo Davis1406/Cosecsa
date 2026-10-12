@@ -16,6 +16,8 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    private ?array $permissionKeys = null;
+
     protected $fillable = [
         'name',
         'email',
@@ -853,12 +855,14 @@ class User extends Authenticatable
             return false;
         }
 
-        $keys = \Illuminate\Support\Facades\Cache::remember(
+        // Kept on the instance too: list pages call this once per row, and each
+        // Cache::remember() is a file read with the file cache driver.
+        $this->permissionKeys ??= \Illuminate\Support\Facades\Cache::remember(
             "user_permissions_{$this->id}",
             300,
             fn () => $this->adminRole?->permissions()->pluck('key')->all() ?? []
         );
 
-        return in_array($key, $keys, true);
+        return in_array($key, $this->permissionKeys, true);
     }
 }

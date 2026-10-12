@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Performance (2026-10-12) — Permission checks remembered per request; JS compressed and assets cached
+- `User::hasPermission()` now keeps the role's permission keys on the user object for the rest of the request. List pages call it once per row (≈2,000 times on the Fellows list), and each call was a separate file-cache read.
+- **Server (no code):** new Apache conf `/etc/apache2/conf-available/cosecsa-perf.conf` (enabled; backup of `/etc/apache2` at `/root/apache2-conf-backup-20261012131503.tgz`). JS is now gzipped (Apache sends `.js` as `text/javascript`, which the stock `deflate.conf` skipped): `pdfmake.min.js` 1.35 MB → 537 KB, jQuery 89 → 31 KB. MIS/API public assets get `Cache-Control`: CSS/JS 1 day, images/fonts 30 days, `?v=`-stamped CSS/JS 1 year (`immutable`). Undo: `a2disconf cosecsa-perf && systemctl reload apache2`.
+- HTTP/2 not enabled: Apache 2.4.52 disables it under `mpm_prefork`, which `mod_php` needs. It needs a move to `mpm_event` + PHP-FPM for every site.
+- **Files:** `app/Models/User.php`. No API change.
+
 ### Changed (2026-10-12) — Transcript page buttons use the COSECSA button styles
 - `admin/transcripts/edit/{userId}` used Bootstrap grey/dark/green/blue buttons. The header now matches College Letters: **Back**, **Preview** and **Download PDF** as `btn-cosecsa-outline`, plus a maroon **Share Transcript** (`btn-cosecsa`) that submits the form from the top. The bottom Share button, **Add Row** and the **Sent copy** link use the same classes. Row remove stays the red outline.
 - The cyan Bootstrap `alert-info` banner at the top is gone; its guidance is now a muted subtitle under the page title (as on College Letters). **Add Row** sits right in the card header (`card-tools`) instead of floating mid-header.
