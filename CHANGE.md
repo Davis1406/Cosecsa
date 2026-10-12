@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added (2026-10-12) — Transcript History; Transcript tab on the fellow profile
+- `admin/transcripts` gains a **Transcript History** card: every share (date, fellow, programme, sent to, by, **Sent copy** PDF of exactly what was emailed) and transcripts saved but not shared (**Preview**), each with **Open**. The fellow name links to their profile's Transcript tab.
+- The fellow profile (`admin/associates/fellows/view/{id}`) has a **Transcript** tab (needs `transcripts.view`), loaded when first opened: the latest shared transcript embedded in the page, its share history with each copy, and **Issue Transcript** / **Edit / Share Again**. Replaces the small "Transcript" row added to the Fellowship tab earlier today.
+- Search-result and Manage Templates buttons use the COSECSA button styles.
+- **Files:** `app/Http/Controllers/TranscriptController.php` (`search`, `profile`, `sentCopy`), `app/Http/Controllers/FellowsController.php`, `routes/web.php`, `resources/views/admin/transcripts/{search,_profile}.blade.php`, `resources/views/admin/associates/fellows/view.blade.php`. ⚠️ **Coordinate:** cosecsa-api `transcript_dispatches` migration + history endpoints first.
+
 ### Performance (2026-10-12) — Trainers and Fees lists build rows client-side
 - `admin/associates/trainers/list` (4.7 MB) and `admin/fees` (8 MB, 3,027 rows; each row carried its full record in an `onclick` plus a delete form with its own CSRF token) now embed their rows as JSON and DataTables builds only the visible page. Trainers' filters, stat-tile filters, delete confirmation and server-side export are unchanged; Fees' edit button passes the row's data to `editPayment()` as before.
 - Examiners export no longer includes the empty "#" column.

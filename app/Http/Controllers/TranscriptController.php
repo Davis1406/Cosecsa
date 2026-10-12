@@ -23,6 +23,7 @@ class TranscriptController extends Controller
             'header_title' => 'Transcripts',
             'q'            => $q,
             'results'      => $results,
+            'history'      => collect($this->api->get('transcripts/history')->json('history') ?? []),
         ]);
     }
 
@@ -89,9 +90,21 @@ class TranscriptController extends Controller
         ]);
     }
 
-    public function sentCopy($userId)
+    // Transcript section of a fellow's profile (loaded when its tab is opened).
+    public function profile($userId)
     {
-        $response = $this->api->get("transcripts/{$userId}/copy");
+        $data = $this->api->get("transcripts/{$userId}/history")->json();
+
+        return view('admin.transcripts._profile', [
+            'userId' => $userId,
+            'record' => $data['record'] ?? null,
+            'shares' => collect($data['shares'] ?? []),
+        ]);
+    }
+
+    public function sentCopy(Request $request, $userId)
+    {
+        $response = $this->api->get("transcripts/{$userId}/copy", $request->only('dispatch'));
 
         if ($response->failed()) {
             return back()->with('error', $response->json('message') ?? 'No sent transcript found.');

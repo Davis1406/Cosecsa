@@ -605,6 +605,9 @@ body.dark-mode .admin-action-bar span[style*="a02626"] { color:#f48a8a !importan
                             @endif
                         </a>
                     </li>
+                    @if(Auth::user()->hasPermission('transcripts.view'))
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-transcript">Transcript</a></li>
+                    @endif
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-admin">Admin Notes</a></li>
                 </ul>
 
@@ -895,18 +898,6 @@ body.dark-mode .admin-action-bar span[style*="a02626"] { color:#f48a8a !importan
                         <div class="field-row"><span class="field-lbl">Country of MCS Training</span><span class="field-val">{{ $fellow->country_mcs_training ?? '—' }}</span></div>
                         <div class="field-row"><span class="field-lbl">Upcoming Exam Year</span><span class="field-val">{{ $fellow->exam_year_upcoming ?? '—' }}</span></div>
                         <div class="field-row"><span class="field-lbl">Previous Exam Year</span><span class="field-val">{{ $fellow->exam_year_previous ?? '—' }}</span></div>
-
-                        @if($sharedTranscript && Auth::user()->hasPermission('transcripts.view'))
-                            <p class="sect-div">Transcript</p>
-                            <div class="field-row"><span class="field-lbl">Shared</span>
-                                <span class="field-val">
-                                    {{ \Illuminate\Support\Carbon::parse($sharedTranscript->sent_at)->format('d M Y, H:i') }} to {{ $sharedTranscript->sent_to }}
-                                    <a href="{{ url('admin/transcripts/copy/'.$sharedTranscript->user_id) }}" target="_blank" class="cosecsa-link ml-2">
-                                        <i class="fas fa-file-pdf mr-1"></i>View copy
-                                    </a>
-                                </span>
-                            </div>
-                        @endif
                     </div>
 
                     {{-- ── TAB: Fees & Payments ── --}}
@@ -1155,6 +1146,14 @@ body.dark-mode .admin-action-bar span[style*="a02626"] { color:#f48a8a !importan
                     </div>
 
                     {{-- ── TAB: Admin Notes ── --}}
+                    @if(Auth::user()->hasPermission('transcripts.view'))
+                    {{-- ── TAB: Transcript (loaded when first opened) ── --}}
+                    <div class="tab-pane fade" id="tab-transcript"
+                         data-src="{{ url('admin/transcripts/profile/'.($fellow->user_id ?? 0)) }}">
+                        <p class="text-muted mb-0" style="font-size:.85rem;"><i class="fas fa-spinner fa-spin mr-1"></i> Loading transcript…</p>
+                    </div>
+                    @endif
+
                     <div class="tab-pane fade" id="tab-admin">
                         <p class="sect-div">Account & System Info</p>
                         <div class="field-row"><span class="field-lbl">User ID</span><span class="field-val">{{ $fellow->user_id ?? '—' }}</span></div>
@@ -1205,6 +1204,19 @@ body.dark-mode .admin-action-bar span[style*="a02626"] { color:#f48a8a !importan
 @push('scripts')
 <script>
 $(document).ready(function () {
+    // Transcript tab: fetch its content the first time it is shown.
+    $('#fellowTabs a[href="#tab-transcript"]').on('show.bs.tab', function () {
+        var $pane = $('#tab-transcript');
+        if ($pane.data('loaded')) return;
+        $pane.data('loaded', true);
+        $pane.load($pane.data('src'), function (r, status) {
+            if (status === 'error') {
+                $pane.data('loaded', false)
+                     .html('<p class="text-danger mb-0" style="font-size:.85rem;">Could not load the transcript.</p>');
+            }
+        });
+    });
+
     // A URL hash (e.g. from the Fees page) wins over the last-viewed tab.
     if (location.hash) {
         $('#fellowTabs a[href="' + location.hash + '"]').tab('show');

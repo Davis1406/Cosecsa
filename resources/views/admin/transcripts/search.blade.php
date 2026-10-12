@@ -13,7 +13,7 @@
           </div>
           @if(Auth::user()->hasPermission('transcripts.manage'))
           <div class="col-sm-6 text-right">
-            <a href="{{ url('admin/settings/transcript-templates') }}" class="btn btn-outline-secondary">
+            <a href="{{ url('admin/settings/transcript-templates') }}" class="btn btn-cosecsa-outline">
               <i class="fas fa-file-alt mr-1"></i> Manage Templates
             </a>
           </div>
@@ -45,7 +45,7 @@
                       <td>{{ $r->name }}</td>
                       <td>{{ $r->ref }}</td>
                       <td>
-                        <a href="{{ url('admin/transcripts/edit/'.$r->user_id) }}" class="btn btn-sm btn-primary">
+                        <a href="{{ url('admin/transcripts/edit/'.$r->user_id) }}" class="btn btn-sm btn-cosecsa">
                           <i class="fas fa-file-signature mr-1"></i> Issue / Edit Transcript
                         </a>
                       </td>
@@ -59,6 +59,65 @@
             </div>
           </div>
         </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Transcript History</h3>
+            <div class="card-tools text-muted" style="font-size:.85rem;">
+              {{ $history->where('kind', 'shared')->count() }} shared · {{ $history->where('kind', 'saved')->count() }} saved, not shared
+            </div>
+          </div>
+          <div class="card-body">
+            @if($history->isEmpty())
+              <p class="text-muted mb-0" style="font-size:.85rem;">No transcripts have been issued yet.</p>
+            @else
+              <table id="transcriptHistoryTable" class="table table-sm table-hover mb-0" style="font-size:.85rem;">
+                <thead>
+                  <tr><th>Date</th><th>Fellow</th><th>Programme</th><th>Status</th><th>Sent to</th><th>By</th><th class="text-right">Actions</th></tr>
+                </thead>
+                <tbody>
+                  @foreach($history as $h)
+                    @php $at = \Illuminate\Support\Carbon::parse($h['at']); @endphp
+                    <tr>
+                      <td data-order="{{ $at->timestamp }}">{{ $at->format('d M Y, H:i') }}</td>
+                      <td>
+                        @if($h['fellow_id'])
+                          <a href="{{ url('admin/associates/fellows/view/'.$h['fellow_id']) }}#tab-transcript" class="cosecsa-link">{{ $h['full_name'] }}</a>
+                        @else
+                          {{ $h['full_name'] }}
+                        @endif
+                      </td>
+                      <td>{{ $h['programme'] ?: '—' }}</td>
+                      <td>
+                        @if($h['kind'] === 'shared')
+                          <span class="badge badge-success">Shared</span>
+                        @else
+                          <span class="badge badge-secondary">Saved, not shared</span>
+                        @endif
+                      </td>
+                      <td>{{ $h['sent_to'] ?: '—' }}</td>
+                      <td>{{ $h['by_name'] ?: '—' }}</td>
+                      <td class="text-right" style="white-space:nowrap;">
+                        @if($h['kind'] === 'shared')
+                          <a href="{{ url('admin/transcripts/copy/'.$h['user_id'].'?dispatch='.$h['dispatch_id']) }}" target="_blank" class="btn btn-sm btn-cosecsa-outline">
+                            <i class="fas fa-file-pdf mr-1"></i> Sent copy
+                          </a>
+                        @else
+                          <a href="{{ url('admin/transcripts/pdf/'.$h['user_id']) }}" target="_blank" class="btn btn-sm btn-cosecsa-outline">
+                            <i class="fas fa-eye mr-1"></i> Preview
+                          </a>
+                        @endif
+                        <a href="{{ url('admin/transcripts/edit/'.$h['user_id']) }}" class="btn btn-sm btn-cosecsa-outline">
+                          <i class="fas fa-file-signature mr-1"></i> Open
+                        </a>
+                      </td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            @endif
+          </div>
+        </div>
       </div>
     </section>
   </div>
@@ -67,6 +126,10 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  if (document.getElementById('transcriptHistoryTable')) {
+    $('#transcriptHistoryTable').DataTable({ pageLength: 10, order: [[0, 'desc']], columnDefs: [{ orderable: false, targets: -1 }] });
+  }
+
   const input = document.getElementById('transcriptSearchInput');
   const resultsBox = document.getElementById('transcriptSearchResults');
   const resultsBody = document.getElementById('transcriptResultsBody');
@@ -98,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function () {
           rows.forEach(r => {
             resultsBody.insertAdjacentHTML('beforeend',
               `<tr><td>${r.name}</td><td>${r.ref ?? ''}</td><td>
-                 <a href="{{ url('admin/transcripts/edit') }}/${r.user_id}" class="btn btn-sm btn-primary">
+                 <a href="{{ url('admin/transcripts/edit') }}/${r.user_id}" class="btn btn-sm btn-cosecsa">
                    <i class="fas fa-file-signature mr-1"></i> Issue / Edit Transcript
                  </a>
                </td></tr>`);
