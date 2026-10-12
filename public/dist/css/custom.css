@@ -433,11 +433,13 @@ body.dark-mode table a.cosecsa-link:hover {
     color: #ffb3b3 !important;
 }
 
-/* Any table link that still uses the inline burgundy — lift it in dark mode */
-body.dark-mode table a[href] {
+/* Any table link that still uses the inline burgundy — lift it in dark mode.
+   Not links styled as buttons: those keep their own text colour (white on
+   maroon, dark on gold), which pink would make unreadable. */
+body.dark-mode table a[href]:not(.btn) {
     color: #f48a8a !important;
 }
-body.dark-mode table a[href]:hover {
+body.dark-mode table a[href]:not(.btn):hover {
     color: #ffb3b3 !important;
 }
 
