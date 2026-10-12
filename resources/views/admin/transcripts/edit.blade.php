@@ -13,18 +13,40 @@
               <i class="fas fa-arrow-left mr-1"></i> Back to Search
             </a>
             @if($recordExists)
+              <button type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#transcriptPreviewModal">
+                <i class="fas fa-eye mr-1"></i> Preview
+              </button>
               <a href="{{ url('admin/transcripts/pdf/'.$userId) }}" target="_blank" class="btn btn-success">
-                <i class="fas fa-file-pdf mr-1"></i> View / Download PDF
+                <i class="fas fa-file-pdf mr-1"></i> Download PDF
               </a>
+              <button type="button" class="btn btn-primary" id="btnSendTranscript">
+                <i class="fas fa-paper-plane mr-1"></i> Send Transcript
+              </button>
             @endif
           </div>
         </div>
       </div>
     </section>
 
+    <form id="sendTranscriptForm" method="post" action="{{ url('admin/transcripts/send/'.$userId) }}" class="d-none">
+      @csrf
+    </form>
+
     <section class="content">
       <div class="container-fluid">
         @include('_message')
+
+        @if($recordExists && !empty($record->sent_at))
+          <div class="alert alert-success d-flex justify-content-between align-items-center flex-wrap" style="font-size:.85rem;">
+            <span><i class="fas fa-check-circle mr-1"></i>
+              Sent to <strong>{{ $record->sent_to }}</strong> on
+              {{ \Illuminate\Support\Carbon::parse($record->sent_at)->format('d M Y, H:i') }}.
+            </span>
+            <a href="{{ url('admin/transcripts/copy/'.$userId) }}" target="_blank" class="btn btn-sm btn-outline-success mt-1">
+              <i class="fas fa-download mr-1"></i> Sent copy
+            </a>
+          </div>
+        @endif
 
         @if(!$recordExists)
           <div class="alert alert-info" style="font-size:.85rem;">
@@ -136,6 +158,22 @@
       </div>
     </section>
   </div>
+
+  @if($recordExists)
+  <div class="modal fade" id="transcriptPreviewModal" tabindex="-1" role="dialog" aria-labelledby="transcriptPreviewLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document" style="max-width:900px;">
+      <div class="modal-content" style="height:85vh;">
+        <div class="modal-header">
+          <h5 class="modal-title" id="transcriptPreviewLabel"><i class="fas fa-file-pdf mr-1"></i> Transcript Preview</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body p-0" style="flex:1 1 auto;">
+          <iframe id="transcriptPreviewFrame" src="about:blank" title="Transcript preview" style="width:100%; height:100%; border:0;"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+  @endif
 @endsection
 
 @push('scripts')
@@ -163,6 +201,29 @@ document.addEventListener('DOMContentLoaded', function () {
     const btn = e.target.closest('.removeRowBtn');
     if (btn) btn.closest('tr').remove();
   });
+
+  // ── Preview modal (lazy-loads the PDF only when opened) ──
+  const previewModal = document.getElementById('transcriptPreviewModal');
+  if (previewModal) {
+    const frame = document.getElementById('transcriptPreviewFrame');
+    const previewUrl = @json(url('admin/transcripts/pdf/'.$userId));
+    previewModal.addEventListener('show.bs.modal', function () {
+      if (frame.src === 'about:blank') frame.src = previewUrl;
+    });
+    previewModal.addEventListener('hidden.bs.modal', function () {
+      frame.src = 'about:blank';
+    });
+  }
+
+  // ── Send transcript (email + keep a copy on the profile) ──
+  const sendBtn = document.getElementById('btnSendTranscript');
+  if (sendBtn) {
+    sendBtn.addEventListener('click', function () {
+      if (confirm('Email this transcript to the candidate and keep a copy on their profile?')) {
+        document.getElementById('sendTranscriptForm').submit();
+      }
+    });
+  }
 });
 </script>
 @endpush

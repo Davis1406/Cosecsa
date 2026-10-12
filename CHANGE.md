@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-12) — Countries page: revolving globe restored
+- The D3 auto-rotating globe on `admin/countries/list` had been replaced (in the working tree) by a static, flat interactive map. Restored the committed globe design: directory rows, quick-view slide panel, auto-rotation, drag-to-rotate, and Reset View. The unused flat-map files (`resources/views/admin/countries/_map.blade.php`, `public/dist/js/pages/countries-map.js`, `public/dist/css/countries-map.css`, `public/dist/data/world-map.json`, `config/continents.php`) are left on disk but no longer referenced.
+- **Files:** `resources/views/admin/countries/list.blade.php`. No API change.
+
+### Added (2026-10-12) — Transcript page: Preview + Send Transcript
+- `admin/transcripts/edit/{userId}` gains a **Preview** button (in-page modal rendering the transcript PDF, lazy-loaded) and a **Send Transcript** button that emails the PDF to the fellow via cosecsa-api and keeps a copy on their profile.
+- When a transcript has been sent, the page shows "Sent to `<email>` on `<date>`" with a **Sent copy** download link.
+- **Files:** `app/Http/Controllers/TranscriptController.php` (`send`, `sentCopy`), `routes/web.php`, `resources/views/admin/transcripts/edit.blade.php`. ⚠️ **Coordinate:** needs the matching cosecsa-api deploy (migration + `transcripts/{userId}/send` and `/copy`).
+
 ### Added (2026-10-09) — Find A Surgeon section (menu below Messages)
 - New sidebar menu **Find A Surgeon** (below Messages; needs the new `findasurgeon.view` permission, and `findasurgeon.manage` to act on the hospital review). Four pages under `admin/find-a-surgeon`:
   - **Overview & Report**: patient accounts (total, verified, new/active in 30 days, saves), directory health (listed Fellows, photo/bio/city/hospital/subspecialty completeness), and charts (new patients per week, Fellow edits per week, what Fellows edit, most-saved surgeons, saves by specialty, Fellows by country). Print / save as PDF button.

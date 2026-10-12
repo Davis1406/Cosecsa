@@ -66,6 +66,39 @@ class TranscriptController extends Controller
         return redirect("admin/transcripts/edit/{$userId}")->with('success', 'Transcript details saved.');
     }
 
+    public function send($userId)
+    {
+        $response = $this->api->post("transcripts/{$userId}/send");
+
+        if ($response->failed()) {
+            return back()->with('error', $response->json('message') ?? 'Could not send the transcript.');
+        }
+
+        return back()->with('success', $response->json('message') ?? 'Transcript sent.');
+    }
+
+    public function sentCopy($userId)
+    {
+        $response = $this->api->get("transcripts/{$userId}/copy");
+
+        if ($response->failed()) {
+            return back()->with('error', $response->json('message') ?? 'No sent transcript found.');
+        }
+
+        $filename = 'COSECSA Transcript.pdf';
+        if ($cd = $response->header('Content-Disposition')) {
+            if (preg_match('/filename=["\']?([^"\';\s]+)/', $cd, $m)) {
+                $filename = $m[1];
+            }
+        }
+
+        return response($response->body(), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => "inline; filename=\"{$filename}\"",
+            'Cache-Control'       => 'private, max-age=0, must-revalidate',
+        ]);
+    }
+
     public function pdf($userId)
     {
         $response = $this->api->get("transcripts/{$userId}/pdf");

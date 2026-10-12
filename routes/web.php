@@ -167,6 +167,8 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::get('admin/transcripts/search-live', [\App\Http\Controllers\TranscriptController::class, 'searchLive'])->name('admin.transcripts.search-live');
     Route::get('admin/transcripts/edit/{userId}', [\App\Http\Controllers\TranscriptController::class, 'edit'])->name('admin.transcripts.edit');
     Route::post('admin/transcripts/edit/{userId}', [\App\Http\Controllers\TranscriptController::class, 'save'])->name('admin.transcripts.save');
+    Route::post('admin/transcripts/send/{userId}', [\App\Http\Controllers\TranscriptController::class, 'send'])->name('admin.transcripts.send');
+    Route::get('admin/transcripts/copy/{userId}', [\App\Http\Controllers\TranscriptController::class, 'sentCopy'])->name('admin.transcripts.copy');
     Route::get('admin/transcripts/pdf/{userId}', [\App\Http\Controllers\TranscriptController::class, 'pdf'])->name('admin.transcripts.pdf');
 
     Route::get('admin/settings/transcript-templates', [\App\Http\Controllers\TranscriptTemplateController::class, 'list'])->name('admin.transcript_templates.list');
