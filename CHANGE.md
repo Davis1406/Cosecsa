@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-12) — Transcript Preview showed nothing; "Save Transcript" becomes "Share Transcript"
+- **Preview was blank** on `admin/transcripts/edit/{userId}` (e.g. `/8522`): the modal's PDF loader listened for `show.bs.modal` with native `addEventListener`, but Bootstrap 4 only fires modal events through jQuery, so the iframe never loaded. Now bound with `$(...).on(...)`.
+- Preview now renders the form **as it is on screen** (unsaved edits included), via a new `POST admin/transcripts/preview/{userId}` → cosecsa-api `transcripts/{userId}/preview`. Nothing is saved. Staff with only `transcripts.view` (who can't POST) still preview the last saved version.
+- The form button is now **Share Transcript**: it saves the details, emails the PDF to the fellow and keeps the sent copy on their profile, in one step. The separate header "Send Transcript" button and the MIS `admin/transcripts/send` route are removed. If saving works but the email fails, the page says so and the details stay saved.
+- The fellow profile (`admin/associates/fellows/view/{id}`, Fellowship tab) shows a **Transcript** row once one has been shared: date, recipient and a **View copy** link to the retained PDF (needs `transcripts.view`).
+- **Files:** `app/Http/Controllers/TranscriptController.php`, `app/Http/Controllers/FellowsController.php`, `routes/web.php`, `resources/views/admin/transcripts/edit.blade.php`, `resources/views/admin/associates/fellows/view.blade.php`. ⚠️ **Coordinate:** deploy cosecsa-api first (new `transcripts/{userId}/preview` route).
+
 ### Fixed (2026-10-12) — Countries page: revolving globe restored
 - The D3 auto-rotating globe on `admin/countries/list` had been replaced (in the working tree) by a static, flat interactive map. Restored the committed globe design: directory rows, quick-view slide panel, auto-rotation, drag-to-rotate, and Reset View. The unused flat-map files (`resources/views/admin/countries/_map.blade.php`, `public/dist/js/pages/countries-map.js`, `public/dist/css/countries-map.css`, `public/dist/data/world-map.json`, `config/continents.php`) are left on disk but no longer referenced.
 - **Files:** `resources/views/admin/countries/list.blade.php`. No API change.

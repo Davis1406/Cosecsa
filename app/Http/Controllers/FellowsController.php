@@ -99,6 +99,8 @@ class FellowsController extends Controller
             'fellowHospitals'    => \App\Models\HospitalModel::getHospital(),
             'fellowCategories'   => \Illuminate\Support\Facades\DB::table('categories')->orderBy('category_name')->get(),
             'notes'              => $this->associateNotes('fellow', $id),
+            'sharedTranscript'   => \App\Models\TranscriptRecord::where('user_id', $data->fellow->user_id ?? 0)
+                                        ->whereNotNull('sent_at')->first(['user_id', 'sent_at', 'sent_to']),
         ]);
     }
 

@@ -55,26 +55,38 @@ class TranscriptController extends Controller
         ]);
     }
 
+    // Share = save the details, then email the PDF to the fellow; the API keeps
+    // the sent copy on their profile.
     public function save(Request $request, $userId)
     {
         $response = $this->api->post("transcripts/{$userId}", $request->except('_token'));
 
         if ($response->failed()) {
-            return back()->with('error', $response->json('message') ?? 'Error saving transcript.');
+            return back()->withInput()->with('error', $response->json('message') ?? 'Error saving transcript.');
         }
 
-        return redirect("admin/transcripts/edit/{$userId}")->with('success', 'Transcript details saved.');
+        $sent = $this->api->post("transcripts/{$userId}/send");
+
+        if ($sent->failed()) {
+            return redirect("admin/transcripts/edit/{$userId}")
+                ->with('error', 'Transcript details saved, but it was not shared: ' . ($sent->json('message') ?? 'unknown error.'));
+        }
+
+        return redirect("admin/transcripts/edit/{$userId}")->with('success', $sent->json('message') ?? 'Transcript shared.');
     }
 
-    public function send($userId)
+    public function preview(Request $request, $userId)
     {
-        $response = $this->api->post("transcripts/{$userId}/send");
+        $response = $this->api->post("transcripts/{$userId}/preview", $request->except('_token'));
 
         if ($response->failed()) {
-            return back()->with('error', $response->json('message') ?? 'Could not send the transcript.');
+            return response($response->json('message') ?? 'Could not render the preview.', $response->status());
         }
 
-        return back()->with('success', $response->json('message') ?? 'Transcript sent.');
+        return response($response->body(), 200, [
+            'Content-Type'  => 'application/pdf',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     public function sentCopy($userId)

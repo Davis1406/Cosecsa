@@ -895,6 +895,18 @@ body.dark-mode .admin-action-bar span[style*="a02626"] { color:#f48a8a !importan
                         <div class="field-row"><span class="field-lbl">Country of MCS Training</span><span class="field-val">{{ $fellow->country_mcs_training ?? '—' }}</span></div>
                         <div class="field-row"><span class="field-lbl">Upcoming Exam Year</span><span class="field-val">{{ $fellow->exam_year_upcoming ?? '—' }}</span></div>
                         <div class="field-row"><span class="field-lbl">Previous Exam Year</span><span class="field-val">{{ $fellow->exam_year_previous ?? '—' }}</span></div>
+
+                        @if($sharedTranscript && Auth::user()->hasPermission('transcripts.view'))
+                            <p class="sect-div">Transcript</p>
+                            <div class="field-row"><span class="field-lbl">Shared</span>
+                                <span class="field-val">
+                                    {{ \Illuminate\Support\Carbon::parse($sharedTranscript->sent_at)->format('d M Y, H:i') }} to {{ $sharedTranscript->sent_to }}
+                                    <a href="{{ url('admin/transcripts/copy/'.$sharedTranscript->user_id) }}" target="_blank" class="cosecsa-link ml-2">
+                                        <i class="fas fa-file-pdf mr-1"></i>View copy
+                                    </a>
+                                </span>
+                            </div>
+                        @endif
                     </div>
 
                     {{-- ── TAB: Fees & Payments ── --}}

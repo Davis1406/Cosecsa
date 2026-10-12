@@ -18,19 +18,10 @@
             <a href="{{ url('admin/transcripts/pdf/'.$userId) }}" target="_blank" class="btn btn-success">
               <i class="fas fa-file-pdf mr-1"></i> Download PDF
             </a>
-            @if($recordExists)
-              <button type="button" class="btn btn-primary" id="btnSendTranscript">
-                <i class="fas fa-paper-plane mr-1"></i> Send Transcript
-              </button>
-            @endif
           </div>
         </div>
       </div>
     </section>
-
-    <form id="sendTranscriptForm" method="post" action="{{ url('admin/transcripts/send/'.$userId) }}" class="d-none">
-      @csrf
-    </form>
 
     <section class="content">
       <div class="container-fluid">
@@ -39,7 +30,7 @@
         @if($recordExists && !empty($record->sent_at))
           <div class="alert alert-success d-flex justify-content-between align-items-center flex-wrap" style="font-size:.85rem;">
             <span><i class="fas fa-check-circle mr-1"></i>
-              Sent to <strong>{{ $record->sent_to }}</strong> on
+              Shared with <strong>{{ $record->sent_to }}</strong> on
               {{ \Illuminate\Support\Carbon::parse($record->sent_at)->format('d M Y, H:i') }}.
             </span>
             <a href="{{ url('admin/transcripts/copy/'.$userId) }}" target="_blank" class="btn btn-sm btn-outline-success mt-1">
@@ -52,11 +43,12 @@
           <div class="alert alert-info" style="font-size:.85rem;">
             <i class="fas fa-info-circle mr-1"></i> Candidate details pre-filled from their existing record where available,
             and the course table below pre-filled with the standard MCS/FCS course list — review, edit, add, or remove
-            rows as needed. <strong>Preview</strong> and <strong>Download PDF</strong> work now; save first to email the transcript.
+            rows as needed. <strong>Preview</strong> shows the transcript as filled in below; <strong>Share Transcript</strong> saves it,
+            emails it to the fellow and keeps a copy on their profile.
           </div>
         @endif
 
-        <form method="post" action="{{ url('admin/transcripts/edit/'.$userId) }}">
+        <form method="post" action="{{ url('admin/transcripts/edit/'.$userId) }}" id="transcriptForm">
           @csrf
 
           <div class="card">
@@ -152,7 +144,7 @@
           </div>
 
           <button type="submit" class="btn btn-primary mb-4">
-            <i class="fas fa-save mr-1"></i> Save Transcript
+            <i class="fas fa-share-square mr-1"></i> Share Transcript
           </button>
         </form>
       </div>
@@ -200,28 +192,47 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btn) btn.closest('tr').remove();
   });
 
-  // ── Preview modal (lazy-loads the PDF only when opened) ──
-  const previewModal = document.getElementById('transcriptPreviewModal');
-  if (previewModal) {
-    const frame = document.getElementById('transcriptPreviewFrame');
-    const previewUrl = @json(url('admin/transcripts/pdf/'.$userId));
-    previewModal.addEventListener('show.bs.modal', function () {
-      if (frame.src === 'about:blank') frame.src = previewUrl;
-    });
-    previewModal.addEventListener('hidden.bs.modal', function () {
-      frame.src = 'about:blank';
-    });
-  }
+  const form = document.getElementById('transcriptForm');
 
-  // ── Send transcript (email + keep a copy on the profile) ──
-  const sendBtn = document.getElementById('btnSendTranscript');
-  if (sendBtn) {
-    sendBtn.addEventListener('click', function () {
-      if (confirm('Email this transcript to the candidate and keep a copy on their profile?')) {
-        document.getElementById('sendTranscriptForm').submit();
-      }
-    });
-  }
+  // ── Preview modal: renders the form as it is now (nothing is saved) ──
+  // Bootstrap 4 fires modal events through jQuery only, so bind with $().on.
+  const frame = document.getElementById('transcriptPreviewFrame');
+  let previewBlobUrl = null;
+  @if(Auth::user()->hasPermission('transcripts.manage'))
+  $('#transcriptPreviewModal').on('show.bs.modal', function () {
+    fetch(@json(url('admin/transcripts/preview/'.$userId)), {
+      method: 'POST',
+      body: new FormData(form),
+      headers: { 'Accept': 'application/pdf' },
+      credentials: 'same-origin',
+    })
+      .then(r => r.ok ? r.blob() : r.text().then(t => Promise.reject(t)))
+      .then(blob => {
+        previewBlobUrl = URL.createObjectURL(blob);
+        frame.src = previewBlobUrl;
+      })
+      .catch(msg => {
+        frame.srcdoc = '<p style="font-family:sans-serif;padding:1rem;color:#a02626;">Could not load the preview. '
+          + String(msg || '').replace(/</g, '&lt;').slice(0, 300) + '</p>';
+      });
+  });
+  @else
+  $('#transcriptPreviewModal').on('show.bs.modal', function () {
+    frame.src = @json(url('admin/transcripts/pdf/'.$userId));
+  });
+  @endif
+  $('#transcriptPreviewModal').on('hidden.bs.modal', function () {
+    frame.removeAttribute('srcdoc');
+    frame.src = 'about:blank';
+    if (previewBlobUrl) { URL.revokeObjectURL(previewBlobUrl); previewBlobUrl = null; }
+  });
+
+  // ── Share = save + email to the fellow + keep a copy on their profile ──
+  form.addEventListener('submit', function (e) {
+    if (!confirm('Save this transcript, email it to the fellow and keep a copy on their profile?')) {
+      e.preventDefault();
+    }
+  });
 });
 </script>
 @endpush
