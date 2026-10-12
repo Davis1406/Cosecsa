@@ -528,7 +528,8 @@ $(function () {
         var eApp = $et.data("app-url"), eCsrf = $et.data("csrf"), eFrom = $et.data("from"), eCanDelete = $et.data("can-delete") === 1;
         var shiftNames = { 1: "Morning", 2: "Morning & Afternoon", 3: "Afternoon" };
         var dash = '<span class="text-muted">—</span>';
-        var eExport = { columns: ":visible:not(:first-child):not(:last-child)", orthogonal: "export" };
+        // Export the data columns (2–9) that are currently shown; not the checkbox, #, or Action.
+        var eExport = { columns: function (idx) { return idx > 1 && idx < 10 && $et.DataTable().column(idx).visible(); }, orthogonal: "export" };
         showLoader("examinerstable");
         $et.DataTable({
             "responsive": true, "lengthChange": true, "autoWidth": false,

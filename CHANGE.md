@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Performance (2026-10-12) — Trainers and Fees lists build rows client-side
+- `admin/associates/trainers/list` (4.7 MB) and `admin/fees` (8 MB, 3,027 rows; each row carried its full record in an `onclick` plus a delete form with its own CSRF token) now embed their rows as JSON and DataTables builds only the visible page. Trainers' filters, stat-tile filters, delete confirmation and server-side export are unchanged; Fees' edit button passes the row's data to `editPayment()` as before.
+- Examiners export no longer includes the empty "#" column.
+- **Files:** `resources/views/admin/associates/trainers/list.blade.php`, `resources/views/admin/fees/manage.blade.php`, `public/dist/js/custom.js`. No API change.
+
 ### Performance (2026-10-12) — Examiners list builds rows client-side; JSON-row lists start their request early
 - `admin/exams/examiners` (was 3.5 MB of rendered rows, each with its own View form + CSRF token) now embeds the examiner rows as JSON (`#examinersRows`) and DataTables builds only the visible page. Selection/Email Selected, the participant toggle, all filters, Shift column and exports work on row data. Exports now skip the checkbox and Action columns.
 - Fellows, Trainees and Candidates start their `list-rows` request at the top of the page (`admin/_dt_prefetch.blade.php`) instead of after all scripts have loaded; `dtAjax()` uses it, falling back to a normal request.

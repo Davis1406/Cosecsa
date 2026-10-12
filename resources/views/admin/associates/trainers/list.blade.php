@@ -127,6 +127,8 @@
                             </div>
                             <!-- /.card-header -->
                             <div class="card-body">
+                                {{-- Rows are built client-side from this JSON (deferRender). --}}
+                                <script type="application/json" id="trainersRows">{!! json_encode(collect($getRecord)->values(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
                                 <table id="trtable" class="table table-bordered table-striped">
                                     <thead>
                                         <tr>
@@ -142,90 +144,7 @@
                                             <th class="no-print">Action</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        @foreach ($getRecord as $value)
-                                        @php
-                                            $countries = collect($value->countries ?? []);
-                                            $countryNames = $countries->pluck('name');
-                                            $countryIds = $countries->pluck('id');
-                                            $yearIds = collect($value->tot_years ?? [])->pluck('id');
-                                            $yearShorts = collect($value->tot_years ?? [])->pluck('label_short');
-                                            $specialtyIds = $value->programme_id ? [$value->programme_id] : [];
-                                        @endphp
-                                        <tr class="user-row"
-                                            data-country="{{ $countryIds->implode(',') }}"
-                                            data-year="{{ $yearIds->implode(',') }}"
-                                            data-specialty="{{ implode(',', $specialtyIds) }}"
-                                            data-master="{{ !empty($value->is_master_trainer) ? '1' : '0' }}"
-                                            data-ss="{{ !empty($value->is_specialty_surgeon) ? '1' : '0' }}"
-                                            data-sub="{{ !empty($value->is_subspecialty) ? '1' : '0' }}">
-                                            <td>{{ $value->id }}</td>
-                                            <td>
-                                                <a href="{{ url('admin/associates/trainers/view/' . $value->id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">
-                                                    {{ $value->name }}
-                                                </a>
-                                            </td>
-                                            <td>{{ $value->email ?: '—' }}</td>
-                                            <td>
-                                                @if(!empty($value->hospital))
-                                                    <a href="{{ url('admin/hospital/view_hospital/' . $value->hospital->id) }}" class="entity-link">{{ $value->hospital->name }}</a>
-                                                @else
-                                                    {{ $value->organisation ?: '—' }}
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @forelse($countries as $c)
-                                                    <a href="{{ url('admin/countries/view/' . $c->id) }}" class="entity-link">{{ $c->name }}</a>@if(!$loop->last), @endif
-                                                @empty
-                                                    {{ $value->country_name_raw ?: '—' }}
-                                                @endforelse
-                                            </td>
-                                            <td>
-                                                @if($value->programme_id)
-                                                    <a href="{{ url('admin/programmes/view/' . $value->programme_id) }}" class="entity-link">{{ $value->specialty }}</a>
-                                                @else
-                                                    {{ $value->specialty ?: '—' }}
-                                                    @if(!empty($value->is_subspecialty))
-                                                        <span class="badge badge-light border">subspecialty</span>
-                                                    @endif
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @forelse($yearShorts as $year)
-                                                    <span class="badge badge-secondary">{{ $year }}</span>
-                                                @empty
-                                                    —
-                                                @endforelse
-                                            </td>
-                                            <td class="text-center">
-                                                @if(!empty($value->is_master_trainer))<i class="fas fa-check-circle text-success"></i>@else <span class="text-muted">—</span> @endif
-                                            </td>
-                                            <td class="text-center">
-                                                @if(!empty($value->is_specialty_surgeon))<i class="fas fa-check-circle text-success"></i>@else <span class="text-muted">—</span> @endif
-                                            </td>
-                                            <td class="text-center no-print" style="white-space:nowrap;">
-                                                <div class="dropdown">
-                                                    <button class="btn btn-sm btn-light border dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                        <i class="fas fa-ellipsis-v"></i>
-                                                    </button>
-                                                    <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                                                        <a class="dropdown-item" href="{{ url('admin/associates/trainers/view/' . $value->id) }}">
-                                                            <i class="fas fa-eye text-info mr-2"></i> View
-                                                        </a>
-                                                        <a class="dropdown-item" href="{{ url('admin/associates/trainers/edit/' . $value->id) }}">
-                                                            <i class="fas fa-edit text-warning mr-2"></i> Edit
-                                                        </a>
-                                                        <div class="dropdown-divider"></div>
-                                                        <a class="dropdown-item text-danger" href="{{ url('admin/associates/trainers/delete/' . $value->id) }}"
-                                                           onclick="return confirm('Delete {{ addslashes($value->name) }} from the Trainers roster?')">
-                                                            <i class="fas fa-trash mr-2"></i> Delete
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
+                                    <tbody></tbody>
                                 </table>
                             </div>
                             <!-- /.card-body -->
@@ -305,7 +224,70 @@
 <script>
 $(document).ready(function () {
 
-    var dt = $('#trtable').DataTable({ pageLength: 50 });
+    // Rows come from #trainersRows; only the visible page is built (deferRender).
+    var trBase = @json(url('admin/associates/trainers'));
+    var trApp  = @json(url(''));
+    function esc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+    function entity(href, text) { return '<a href="' + href + '" class="entity-link">' + esc(text) + '</a>'; }
+    var tick = '<i class="fas fa-check-circle text-success"></i>', none = '<span class="text-muted">—</span>';
+
+    var dt = $('#trtable').DataTable({
+        pageLength: 50,
+        deferRender: true,
+        data: JSON.parse(document.getElementById('trainersRows').textContent || '[]'),
+        createdRow: function (tr) { $(tr).addClass('user-row'); },
+        columns: [
+            { data: 'id' },
+            { data: 'name', render: function (d, type, r) {
+                return type === 'display'
+                    ? '<a href="' + trBase + '/view/' + r.id + '" style="color:#a02626;font-weight:500;text-decoration:none;">' + esc(d) + '</a>' : (d || '');
+            } },
+            { data: 'email', render: function (d, type) { return type === 'display' ? esc(d || '—') : (d || '—'); } },
+            { data: null, render: function (d, type, r) {
+                var text = r.hospital ? r.hospital.name : (r.organisation || '—');
+                return type === 'display' && r.hospital ? entity(trApp + '/admin/hospital/view_hospital/' + r.hospital.id, text) : (type === 'display' ? esc(text) : text);
+            } },
+            { data: null, render: function (d, type, r) {
+                var cs = r.countries || [];
+                if (!cs.length) return type === 'display' ? esc(r.country_name_raw || '—') : (r.country_name_raw || '—');
+                if (type !== 'display') return cs.map(function (c) { return c.name; }).join(', ');
+                return cs.map(function (c) { return entity(trApp + '/admin/countries/view/' + c.id, c.name); }).join(', ');
+            } },
+            { data: 'specialty', render: function (d, type, r) {
+                if (type !== 'display') return d || '—';
+                if (r.programme_id) return entity(trApp + '/admin/programmes/view/' + r.programme_id, d);
+                return esc(d || '—') + (r.is_subspecialty ? ' <span class="badge badge-light border">subspecialty</span>' : '');
+            } },
+            { data: null, render: function (d, type, r) {
+                var ys = (r.tot_years || []).map(function (y) { return y.label_short; });
+                if (type !== 'display') return ys.join(' ') || '—';
+                return ys.length ? ys.map(function (y) { return '<span class="badge badge-secondary">' + esc(y) + '</span>'; }).join(' ') : '—';
+            } },
+            { data: 'is_master_trainer', className: 'text-center', render: function (d, type) { return type === 'display' ? (d ? tick : none) : (d ? 'Yes' : ''); } },
+            { data: 'is_specialty_surgeon', className: 'text-center', render: function (d, type) { return type === 'display' ? (d ? tick : none) : (d ? 'Yes' : ''); } },
+            { data: null, orderable: false, searchable: false, className: 'text-center no-print', render: function (d, type, r) {
+                if (type !== 'display') return '';
+                return '<div class="dropdown"><button class="btn btn-sm btn-light border dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>' +
+                    '<div class="dropdown-menu dropdown-menu-right shadow-sm">' +
+                    '<a class="dropdown-item" href="' + trBase + '/view/' + r.id + '"><i class="fas fa-eye text-info mr-2"></i> View</a>' +
+                    '<a class="dropdown-item" href="' + trBase + '/edit/' + r.id + '"><i class="fas fa-edit text-warning mr-2"></i> Edit</a>' +
+                    '<div class="dropdown-divider"></div>' +
+                    '<a class="dropdown-item text-danger tr-delete" href="' + trBase + '/delete/' + r.id + '" data-name="' + esc(r.name) + '"><i class="fas fa-trash mr-2"></i> Delete</a>' +
+                    '</div></div>';
+            } }
+        ]
+    });
+
+    $('#trtable').on('click', '.tr-delete', function () {
+        return confirm('Delete ' + $(this).data('name') + ' from the Trainers roster?');
+    });
+
+    // Row data for the filters below: id lists for multi-valued fields.
+    function ids(list) { return (list || []).map(function (x) { return String(x.id); }).join(','); }
 
     function getChecked(filterId) {
         return $('.chk-option[data-filter="' + filterId + '"]:checked')
@@ -337,13 +319,12 @@ $(document).ready(function () {
         return checkedValues.some(function (v) { return rowValues.indexOf(v) !== -1; });
     }
 
-    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, row) {
         if (settings.nTable.id !== 'trtable') return true;
-        var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
-        if (!rowMatchesAny($row.data('year'),      getChecked('trFilterYear')))      return false;
-        if (!rowMatchesAny($row.data('country'),   getChecked('trFilterCountry')))   return false;
-        if (!rowMatchesAny($row.data('specialty'), getChecked('trFilterSpecialty'))) return false;
-        if ($('#trFilterMaster').is(':checked') && String($row.data('master')) !== '1') return false;
+        if (!rowMatchesAny(ids(row.tot_years),  getChecked('trFilterYear')))      return false;
+        if (!rowMatchesAny(ids(row.countries),  getChecked('trFilterCountry')))   return false;
+        if (!rowMatchesAny(row.programme_id ? String(row.programme_id) : '', getChecked('trFilterSpecialty'))) return false;
+        if ($('#trFilterMaster').is(':checked') && !row.is_master_trainer) return false;
         return true;
     });
 
@@ -427,11 +408,10 @@ $(document).ready(function () {
         redraw();
     });
 
-    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, row) {
         if (settings.nTable.id !== 'trtable') return true;
-        var $row = $($(settings.nTable).DataTable().row(dataIndex).node());
-        if (trStatFilter === 'ss'  && String($row.data('ss'))  !== '1') return false;
-        if (trStatFilter === 'sub' && String($row.data('sub')) !== '1') return false;
+        if (trStatFilter === 'ss'  && !row.is_specialty_surgeon) return false;
+        if (trStatFilter === 'sub' && !row.is_subspecialty) return false;
         return true;
     });
 

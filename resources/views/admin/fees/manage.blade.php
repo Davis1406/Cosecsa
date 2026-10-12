@@ -211,6 +211,8 @@
                         </form>
                     </div>
                     <div class="card-body p-0">
+                        {{-- Rows are built client-side from this JSON (deferRender). --}}
+                        <script type="application/json" id="feesRows">{!! json_encode($log->values(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
                         <table id="feesTable" class="table table-sm table-bordered table-striped fees-table mb-0" style="width:100%;">
                             <thead>
                                 <tr>
@@ -227,57 +229,7 @@
                                     <th class="no-export">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @foreach($log as $i => $row)
-                                @php
-                                    $profileUrl = match($row->payer_type) {
-                                        'fellow'    => url('admin/associates/fellows/view/' . $row->payer_id) . '#tab-subs',
-                                        'trainee'   => url('admin/associates/trainees/view/' . $row->payer_id) . '#tab-fees',
-                                        'candidate' => url('admin/associates/candidates/view/' . $row->payer_id) . '#ctab-fees',
-                                        'applicant' => url('admin/salesforce/view/' . $row->payer_id),
-                                        default     => null,
-                                    };
-                                @endphp
-                                <tr>
-                                    <td>{{ $i + 1 }}</td>
-                                    <td>
-                                        @if($profileUrl)
-                                            <a href="{{ $profileUrl }}" class="entity-link">{{ $row->payer_name }}</a>
-                                        @else
-                                            {{ $row->payer_name }}
-                                        @endif
-                                    </td>
-                                    <td>{{ ucfirst($row->payer_type) }}</td>
-                                    <td>{{ $row->fee_group }} — {{ $row->fee_name }}</td>
-                                    <td>{{ (!$row->reference_number || strtolower($row->reference_number) === 'null') ? '—' : $row->reference_number }}</td>
-                                    @php $balance = max(0, ($row->amount_due ?? 0) - ($row->amount_paid ?? 0)); @endphp
-                                    <td>{{ $balance > 0 ? number_format($balance, 2) : '—' }}</td>
-                                    <td>{{ number_format($row->amount_paid ?? 0, 2) }}</td>
-                                    <td>
-                                        <span class="status-pill status-{{ $row->status }}">
-                                            @if($row->status === 'Partial')
-                                                Partial ({{ number_format($row->amount_paid ?? 0, 0) }}/{{ number_format($row->amount_due ?? 0, 0) }})
-                                            @else
-                                                {{ $row->status }}
-                                            @endif
-                                        </span>
-                                    </td>
-                                    <td>{{ $row->date_paid ? \Carbon\Carbon::parse($row->date_paid)->format('d M Y') : '—' }}</td>
-                                    <td>{{ (!$row->mode_of_payment || preg_match('/^\d{4}-\d{2}-\d{2}/', $row->mode_of_payment)) ? '—' : $row->mode_of_payment }}</td>
-                                    <td class="no-export">
-                                        <button type="button" class="btn btn-xs btn-outline-warning"
-                                                onclick='editPayment({!! json_encode($row) !!})'>
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <form method="POST" action="{{ url('admin/fees/payment/' . $row->row_key) }}" style="display:inline;"
-                                              onsubmit="return confirm('Delete this payment record?');">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="btn btn-xs btn-outline-danger"><i class="fas fa-trash"></i></button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
+                            <tbody></tbody>
                         </table>
                     </div>
                 </div>
@@ -353,7 +305,68 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
+    var feeUrls = {
+        fellow:    @json(url('admin/associates/fellows/view')),
+        trainee:   @json(url('admin/associates/trainees/view')),
+        candidate: @json(url('admin/associates/candidates/view')),
+        applicant: @json(url('admin/salesforce/view'))
+    };
+    var feeTabs = { fellow: '#tab-subs', trainee: '#tab-fees', candidate: '#ctab-fees', applicant: '' };
+    var feeDeleteBase = @json(url('admin/fees/payment'));
+    var feeCsrf = @json(csrf_token());
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    function esc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+    function money(v, dp) {
+        return Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+    }
+    function dmy(v) { // 'YYYY-MM-DD…' → 'd M Y', as Carbon format('d M Y')
+        var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v || '');
+        return m ? m[3] + ' ' + months[+m[2] - 1] + ' ' + m[1] : (v || '—');
+    }
+    function txt(fn) { return function (d, type, r) { var t = fn(r); return type === 'display' ? esc(t) : t; }; }
+
     $('#feesTable').DataTable({
+        deferRender: true,
+        data: JSON.parse(document.getElementById('feesRows').textContent || '[]'),
+        columns: [
+            { data: null, defaultContent: '' },
+            { data: 'payer_name', render: function (d, type, r) {
+                if (type !== 'display') return d || '';
+                var base = feeUrls[r.payer_type];
+                return base ? '<a href="' + base + '/' + r.payer_id + feeTabs[r.payer_type] + '" class="entity-link">' + esc(d) + '</a>' : esc(d);
+            } },
+            { data: 'payer_type', render: txt(function (r) { var t = r.payer_type || ''; return t.charAt(0).toUpperCase() + t.slice(1); }) },
+            { data: 'fee_name', render: txt(function (r) { return (r.fee_group || '') + ' — ' + (r.fee_name || ''); }) },
+            { data: 'reference_number', render: txt(function (r) {
+                var v = r.reference_number; return (!v || String(v).toLowerCase() === 'null') ? '—' : v;
+            }) },
+            { data: null, render: txt(function (r) {
+                var b = Math.max(0, (r.amount_due || 0) - (r.amount_paid || 0)); return b > 0 ? money(b, 2) : '—';
+            }) },
+            { data: 'amount_paid', render: txt(function (r) { return money(r.amount_paid, 2); }) },
+            { data: 'status', render: function (d, type, r) {
+                var label = d === 'Partial' ? 'Partial (' + money(r.amount_paid, 0) + '/' + money(r.amount_due, 0) + ')' : (d || '');
+                return type === 'display' ? '<span class="status-pill status-' + esc(d) + '">' + esc(label) + '</span>' : label;
+            } },
+            { data: 'date_paid', render: function (d, type) {
+                if (type === 'sort' || type === 'type') return d || '';
+                return d ? dmy(d) : '—';
+            } },
+            { data: 'mode_of_payment', render: txt(function (r) {
+                var v = r.mode_of_payment; return (!v || /^\d{4}-\d{2}-\d{2}/.test(v)) ? '—' : v;
+            }) },
+            { data: null, className: 'no-export', render: function (d, type, r) {
+                if (type !== 'display') return '';
+                return '<button type="button" class="btn btn-xs btn-outline-warning fee-edit"><i class="fas fa-edit"></i></button> ' +
+                    '<form method="POST" action="' + feeDeleteBase + '/' + encodeURIComponent(r.row_key) + '" style="display:inline;" onsubmit="return confirm(\'Delete this payment record?\');">' +
+                    '<input type="hidden" name="_token" value="' + esc(feeCsrf) + '"><input type="hidden" name="_method" value="DELETE">' +
+                    '<button type="submit" class="btn btn-xs btn-outline-danger"><i class="fas fa-trash"></i></button></form>';
+            } }
+        ],
         dom: 'Bfrtip',
         buttons: [
             { extend: 'copyHtml5',  className: 'btn-sm', exportOptions: { columns: ':not(.no-export)' } },
@@ -368,6 +381,10 @@ $(document).ready(function () {
         ],
         pageLength: 25,
         order: [] // keep the server's most-recently-touched-first order
+    });
+
+    $('#feesTable').on('click', '.fee-edit', function () {
+        editPayment($('#feesTable').DataTable().row($(this).closest('tr')).data());
     });
 });
 
