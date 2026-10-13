@@ -1629,11 +1629,14 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
 
     /* ── Dark mode: links ── */
     body.dark-mode a:not(.btn):not(.nav-link):not(.dropdown-item):not(.page-link):not(.breadcrumb-item a) {
-        color: #93c5fd;
+        color: #f48a8a; /* DESIGN.md dark-mode link colour (was light blue) */
     }
     body.dark-mode a:not(.btn):not(.nav-link):not(.dropdown-item):not(.page-link):hover {
         color: #FEC503;
     }
+    /* Inactive tabs inside pages: readable link colour on dark backgrounds. */
+    body.dark-mode .content-wrapper .nav-tabs .nav-link:not(.active) { color: #f48a8a; }
+    body.dark-mode .content-wrapper .nav-tabs .nav-link:not(.active):hover { color: #FEC503; }
 
     /* ── Dark mode: dropdown menus ── */
     body.dark-mode .dropdown-menu {

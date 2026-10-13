@@ -1017,6 +1017,12 @@ body.dark-mode .assoc-notes-form input[type=file] {
     color: #e2e8f0 !important;
 }
 
+/* Links: COSECSA maroon at rest instead of Bootstrap's blue (#007bff), app-wide.
+   Specificity of a bare `a`, so page and component link styles (sidebar, tiles,
+   name links, buttons…) still win; dark mode has its own rule in header.blade.php. */
+a:where(:not(.btn):not(.dropdown-item):not(.page-link)) { color: #a02626; }
+.btn-link { color: #a02626; }
+
 /* Link hover/focus: readable maroon text (no underline accent). */
 a:hover, a:focus,
 .btn-link:hover, .btn-link:focus {
