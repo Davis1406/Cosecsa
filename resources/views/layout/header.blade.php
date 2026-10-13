@@ -1765,12 +1765,14 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
         color: #ffffff !important;
     }
     body.dark-mode .btn-outline-primary {
-        color: #93c5fd !important;
-        border-color: #3b82f6 !important;
+        color: #f87171 !important;
+        border-color: #f87171 !important;
         background-color: transparent !important;
     }
-    body.dark-mode .btn-outline-primary:hover {
-        background-color: #1d4ed8 !important;
+    body.dark-mode .btn-outline-primary:hover,
+    body.dark-mode .btn-outline-primary.active {
+        background-color: #a02626 !important;
+        border-color: #a02626 !important;
         color: #ffffff !important;
     }
     body.dark-mode .btn-outline-danger {

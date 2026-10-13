@@ -23,7 +23,7 @@
                   <i class="fas fa-user-graduate"></i>
                 </div>
               </div>
-              <a href="{{url('admin/associates/trainees/trainees')}}" class="modern-tile-link" style="color:#06b6d4;">
+              <a href="{{url('admin/associates/trainees/trainees')}}" class="modern-tile-link" style="color:#004356;">
                 View Details <i class="fas fa-arrow-circle-right"></i>
               </a>
             </div>
