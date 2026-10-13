@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-13) — Salesforce page: one tile per stage
+- `admin/salesforce` shows **Total** plus a tile for every Salesforce stage, in process order — Application Received, Question, In the Approval Process, Payment Verification Pending, Approved, Invoiced, Complete, Rejected, Withdrawn by applicant, Closed (any new stage is added automatically). Previously Received / Question / In the Approval Process / Payment Verification Pending were folded into "Pending", Rejected and Withdrawn shared a tile, and Closed had none. Clicking a tile filters the table to that stage (`?tile=`) and keeps every tile's count; click again to clear.
+- Tiles sit in a responsive grid (`.sf-tiles`) so all 11 fit on one row on wide screens and wrap evenly on smaller ones.
+- **Files:** `app/Http/Controllers/SalesforceSyncController.php`, `resources/views/admin/salesforce/index.blade.php`. ⚠️ **Coordinate:** cosecsa-api `?tile=` (deployed).
+
 ### Changed (2026-10-13) — Candidates Part I column; global search opens the exact exam result
 - Candidates list: **Fee Paid**, **Part I** and **Part II** are centred in their columns, and Part I shows Pass/Fail only (the marks are on Overall Results and the Part I upload preview).
 - Overall Results accepts `?q=<name>`: opens the **Detail** tab filtered to that person (search also covers the name on the result itself, which can differ from the trainee name); `#tab-detail` opens that tab. Exam-result hits in the global search use it, instead of landing on the year's summary.

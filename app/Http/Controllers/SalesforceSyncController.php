@@ -16,7 +16,7 @@ class SalesforceSyncController extends Controller
     {
         $response = $this->api->get('salesforce/', $request->only([
             'q', 'stage', 'programme', 'country', 'level',
-            'received', 'approved', 'application_year', 'group',
+            'received', 'approved', 'application_year', 'group', 'tile',
         ]));
 
         if ($response->failed()) {
@@ -55,6 +55,7 @@ class SalesforceSyncController extends Controller
             'approvedStageCount' => $data->approvedStageCount ?? 0,
             'invoicedCount'   => $data->invoicedCount ?? 0,
             'group'           => $data->group ?? null,
+            'tile'            => $data->tile ?? null,
             'pendingCount'    => $data->pendingCount ?? null,
             'rejectedCount'   => $data->rejectedCount ?? 0,
         ]);

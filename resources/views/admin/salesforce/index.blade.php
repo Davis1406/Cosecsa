@@ -26,6 +26,13 @@
     .stat-card.st-neutral { background: linear-gradient(135deg, #495057, #6c757d); box-shadow:0 2px 10px rgba(73,80,87,.25); }
     .stat-number { font-size: 26px; font-weight: 700; margin-bottom: 2px; }
     .stat-label  { font-size: 12px; opacity: .9; text-transform:uppercase; letter-spacing:.03em; }
+    /* One tile per stage: a grid that fits all of them on wide screens and
+       wraps evenly on narrow ones; labels may take two lines. */
+    .sf-tiles { display:grid; grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:10px; margin-bottom:16px; }
+    .sf-tiles .stat-card { margin-bottom:0; padding:12px 10px; display:flex; flex-direction:column; justify-content:center; min-height:84px; }
+    .sf-tiles .stat-number { font-size:22px; }
+    .sf-tiles .stat-label { font-size:10.5px; line-height:1.25; }
+    .stat-card.st-total { background: linear-gradient(135deg, #2d3748, #4a5568); box-shadow:0 2px 10px rgba(45,55,72,.25); }
 
     .chart-container { background:#fff; border-radius:8px; padding:18px; box-shadow:0 1px 6px rgba(0,0,0,.08); margin-bottom:22px; }
     body.dark-mode .chart-container { background:#374151; }
@@ -160,27 +167,34 @@
                     </form>
                 </div>
 
-                {{-- ── Stat cards (click to filter the table; click again to clear) ── --}}
+                {{-- ── Stat cards: Total + one per Salesforce stage (click to filter the
+                     table; click again to clear). Counts ignore the tile filter. ── --}}
                 @php
-                    $tiles = [
-                        null       => ['Total Applications', '',            $total,                                'Show all applications'],
-                        'pending'  => ['Pending',            'st-pending',  $pendingCount ?? $receivedCount,      'Received, in the approval process, awaiting payment verification or with a question'],
-                        'approved' => ['Approved',           'st-approved', $approvedStageCount ?? 0,             'Stage: Approved'],
-                        'invoiced' => ['Invoiced',           'st-invoiced', $invoicedCount ?? 0,                  'Stage: Invoiced'],
-                        'complete' => ['Complete',           'st-good',     $approvedCount,                       'Stage: Complete'],
-                        'rejected' => ['Rejected / Withdrawn','st-warn',    $rejectedCount,                       'Stage: Rejected or Withdrawn by applicant'],
+                    // Salesforce process order; any other stage is appended.
+                    $stageOrder = ['Application Received', 'Question', 'In the Approval Process', 'Payment Verification Pending',
+                                   'Approved', 'Invoiced', 'Complete', 'Rejected', 'Withdrawn by applicant', 'Closed'];
+                    $stageClass = [
+                        'Application Received' => 'st-pending', 'Question' => 'st-warn', 'In the Approval Process' => 'st-pending',
+                        'Payment Verification Pending' => 'st-invoiced', 'Approved' => 'st-approved', 'Invoiced' => 'st-invoiced',
+                        'Complete' => 'st-good', 'Rejected' => '', 'Withdrawn by applicant' => '', 'Closed' => 'st-neutral',
                     ];
+                    $tileStages = collect($stageOrder)->merge($stages)->unique()->values();
+                    $activeTile = $tile ?? null;
                 @endphp
-                <div class="row">
-                    @foreach($tiles as $key => [$label, $cls, $n, $hint])
-                        @php $isActive = ($group ?? null) === ($key ?: null); @endphp
-                        <div class="col-6 col-md-4 col-xl-2">
-                            <a href="{{ request()->fullUrlWithQuery(['group' => ($key && !$isActive) ? $key : null, 'stage' => null]) }}"
-                               class="stat-card stat-link {{ $cls }} {{ $isActive ? 'stat-active' : '' }}" title="{{ $hint }}">
-                                <div class="stat-number">{{ number_format($n) }}</div>
-                                <div class="stat-label">{{ $label }}</div>
-                            </a>
-                        </div>
+                <div class="sf-tiles">
+                    <a href="{{ request()->fullUrlWithQuery(['tile' => null, 'group' => null, 'stage' => null]) }}"
+                       class="stat-card stat-link st-total {{ !$activeTile && !($group ?? null) ? 'stat-active' : '' }}" title="Show all applications">
+                        <div class="stat-number">{{ number_format($total) }}</div>
+                        <div class="stat-label">Total Applications</div>
+                    </a>
+                    @foreach($tileStages as $st)
+                        @php $isActive = $activeTile === $st; @endphp
+                        <a href="{{ request()->fullUrlWithQuery(['tile' => $isActive ? null : $st, 'group' => null, 'stage' => null]) }}"
+                           class="stat-card stat-link {{ $stageClass[$st] ?? 'st-neutral' }} {{ $isActive ? 'stat-active' : '' }}"
+                           title="Stage: {{ $st }}">
+                            <div class="stat-number">{{ number_format($stageCounts[$st] ?? 0) }}</div>
+                            <div class="stat-label">{{ $st }}</div>
+                        </a>
                     @endforeach
                 </div>
 
