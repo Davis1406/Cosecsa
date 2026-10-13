@@ -4,7 +4,12 @@
     $isQuote = ($payload['type'] ?? '') === 'quote';
 @endphp
 
-@if($isQuote)
+@if(($block->type ?? '') === 'MULTIPLE_CHOICE')
+    <div class="block">
+        <div class="block-paragraph" style="font-weight:600; margin-bottom:4px;">{!! \App\Support\LearningView::html($payload['title'] ?? null) !!}</div>
+        <div class="muted" style="font-size:12.5px;">{{ count($payload['answers'] ?? []) }} answer options · quiz question</div>
+    </div>
+@elseif($isQuote)
     @php
         $item = $items[0] ?? [];
         $name = $item['name'] ?? null;

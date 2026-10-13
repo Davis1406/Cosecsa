@@ -115,6 +115,21 @@ class AdminLearningController extends Controller
             $response->successful() ? 'Block saved.' : 'The block could not be saved. Please try again.');
     }
 
+    // POST admin/exams/learning/blocks/{id}/quiz — save a quiz question (title,
+    // options, correct answer, feedback). Saving resets that quiz's learner progress.
+    public function updateQuiz(Request $request, int $id)
+    {
+        $response = $this->api->post("learning/admin/blocks/{$id}/quiz", [
+            'title' => $request->input('title'),
+            'answers' => $request->input('answers', []),
+            'corrects' => $request->input('corrects', []),
+            'feedback' => $request->input('feedback'),
+        ]);
+
+        return back()->with($response->successful() ? 'success' : 'error',
+            $response->successful() ? $response->json('message') : ($response->json('message') ?: 'The question could not be saved. Please try again.'));
+    }
+
     // POST admin/exams/learning/blocks/{id}/move  {direction: up|down}
     public function moveBlock(Request $request, int $id)
     {

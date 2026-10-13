@@ -14,7 +14,7 @@
             </div>
 
             @if($module['type'] === 'quiz')
-                <div class="alert alert-info mb-3">Quiz questions are part of the course import and are not editable here.</div>
+                <div class="alert alert-info mb-3">Quiz questions came in with the course import. Click <strong>Edit question</strong> to change the wording, options or correct answer — saving resets that question's learner attempts so everyone retakes it.</div>
             @endif
 
             <div class="flex-between mb-3">
@@ -22,7 +22,7 @@
                 <div class="d-flex align-items-center" style="gap:12px;">
                     <span class="muted" style="font-size:12.5px;">
                         @if($module['type'] === 'quiz')
-                            Questions are read-only.
+                            Click a question to edit it inline.
                         @else
                             Click a block to edit it inline, or use the arrows to reorder.
                         @endif
@@ -52,7 +52,9 @@
                             <span class="badge-gray">{{ $block['type'] }}</span>
                             @if($block['variant'])<span class="badge-gray">{{ $block['variant'] }}</span>@endif
                             <span class="flex-spacer"></span>
-                            @unless($module['type'] === 'quiz')
+                            @if($module['type'] === 'quiz')
+                                <button type="button" class="btn btn-light btn-sm lms-block-edit">Edit question</button>
+                            @else
                                 <button type="button" class="btn btn-light btn-sm lms-block-move" data-move="up"
                                         data-move-url="{{ route('admin.exams.learning.block.move', $block['id']) }}"
                                         title="Move up" @disabled($loop->first)>↑</button>
@@ -75,13 +77,19 @@
                                     </button>
                                 </form>
                                 <button type="button" class="btn btn-light btn-sm lms-block-edit">Edit</button>
-                            @endunless
+                            @endif
                         </div>
                         <div class="lms-block-preview">
                             @include('learning.blocks._dispatch', ['block' => $blockObject])
                         </div>
-                        @unless($module['type'] === 'quiz')
-                            <div class="lms-block-editor" hidden>
+                        <div class="lms-block-editor" hidden>
+                            @if($module['type'] === 'quiz')
+                                @include('learning.admin._quiz-editor', [
+                                    'block' => $blockObject,
+                                    'module' => $module,
+                                    'cancelUrl' => null,
+                                ])
+                            @else
                                 @include('learning.admin._block-editor', [
                                     'block' => $blockObject,
                                     'fields' => $block['fields'],
@@ -89,8 +97,8 @@
                                     'module' => $module,
                                     'cancelUrl' => null,
                                 ])
-                            </div>
-                        @endunless
+                            @endif
+                        </div>
                     </div>
                     @unless($module['type'] === 'quiz')
                         <button type="button" class="lms-block-insert" data-add-block-open data-after-id="{{ $block['id'] }}" title="Add a block after this one">
@@ -163,6 +171,7 @@
 @include('learning.partials.styles')
 @include('learning.admin._styles')
 @include('learning.admin._block-editor-styles')
+@include('learning.admin._quiz-editor-styles')
 <style>
     .module-blocks { display: flex; flex-direction: column; gap: 6px; max-width: 1000px; }
     .lms-block {
@@ -261,8 +270,8 @@
                 block.classList.toggle('is-editing', open);
                 if (open) {
                     const form = editor.querySelector('[data-block-editor]');
-                    LmsBlockEditor(form);
-                    form.querySelector('.editable-field')?.focus();
+                    if (form) LmsBlockEditor(form);
+                    editor.querySelector('.editable-field, textarea')?.focus();
                 }
             };
 
@@ -318,9 +327,9 @@
                     editor.hidden = false;
                     host.classList.add('is-editing');
                     const form = editor.querySelector('[data-block-editor]');
-                    LmsBlockEditor(form);
+                    if (form) LmsBlockEditor(form);
                     host.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    form.querySelector('.editable-field')?.focus();
+                    editor.querySelector('.editable-field, textarea')?.focus();
                 }
             }
         }

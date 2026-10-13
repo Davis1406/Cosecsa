@@ -18,13 +18,21 @@
         <a href="{{ route('admin.exams.learning.module', $module['id']) }}" class="btn btn-light btn-sm">← Back to module</a>
     </div>
 
-    @include('learning.admin._block-editor', [
-        'block' => $blockObject,
-        'fields' => $fields,
-        'images' => $images,
-        'module' => $module,
-        'cancelUrl' => route('admin.exams.learning.module', $module['id']),
-    ])
+    @if(($blockObject->type ?? '') === 'MULTIPLE_CHOICE' && ($module['type'] ?? '') === 'quiz')
+        @include('learning.admin._quiz-editor', [
+            'block' => $blockObject,
+            'module' => $module,
+            'cancelUrl' => route('admin.exams.learning.module', $module['id']),
+        ])
+    @else
+        @include('learning.admin._block-editor', [
+            'block' => $blockObject,
+            'fields' => $fields,
+            'images' => $images,
+            'module' => $module,
+            'cancelUrl' => route('admin.exams.learning.module', $module['id']),
+        ])
+    @endif
     </div>
     </section>
 </div>
@@ -34,11 +42,13 @@
 @include('learning.partials.styles')
 @include('learning.admin._styles')
 @include('learning.admin._block-editor-styles')
+@include('learning.admin._quiz-editor-styles')
 @endpush
 
 @push('scripts')
 @include('learning.admin._block-editor-script')
 <script>
-    LmsBlockEditor(document.querySelector('[data-block-editor]'), { globalSave: true });
+    const qeForm = document.querySelector('[data-quiz-editor]');
+    if (!qeForm) LmsBlockEditor(document.querySelector('[data-block-editor]'), { globalSave: true });
 </script>
 @endpush
