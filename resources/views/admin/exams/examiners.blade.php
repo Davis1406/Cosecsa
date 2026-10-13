@@ -258,7 +258,7 @@
     .paginate_button>.page-link:focus, .paginate_button.active>.page-link:focus { box-shadow: none !important; outline: none !important; }
 
     /* 2025 badge */
-    .badge-primary { background-color: #0055a5; font-size: .72rem; }
+    .badge-primary { font-size: .72rem; }
 
     /* Recipient pills */
     .recipient-pill {

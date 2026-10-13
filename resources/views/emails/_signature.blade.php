@@ -16,8 +16,8 @@
   @endif
   <p style="margin:6px 0 0;">
     <span style="color:#c99400;">E:</span>
-    <a href="mailto:{{ $senderEmail ?? config('mail.from.address') }}" style="color:#2a6ebb; text-decoration:none;">{{ $senderEmail ?? config('mail.from.address') }}</a>
+    <a href="mailto:{{ $senderEmail ?? config('mail.from.address') }}" style="color:#a02626; text-decoration:none;">{{ $senderEmail ?? config('mail.from.address') }}</a>
     &nbsp;<span style="color:#c99400;">W:</span>
-    <a href="https://www.cosecsa.org" style="color:#2a6ebb; text-decoration:none;">www.cosecsa.org</a>
+    <a href="https://www.cosecsa.org" style="color:#a02626; text-decoration:none;">www.cosecsa.org</a>
   </p>
 </div>

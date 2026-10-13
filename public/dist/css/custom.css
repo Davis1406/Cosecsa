@@ -1022,7 +1022,27 @@ body.dark-mode .assoc-notes-form input[type=file] {
    name links, buttons…) still win; dark mode has its own rule in header.blade.php. */
 a:where(:not(.btn):not(.dropdown-item):not(.page-link)) { color: #a02626; }
 .btn-link { color: #a02626; }
-/* Outline "primary" buttons: maroon, not Bootstrap blue (solid .btn-primary is already maroon). */
+/* ── Bootstrap "primary" (blue) and "info" (cyan) → COSECSA maroon / teal ──
+   Nothing restyled solid .btn-primary, so it was Bootstrap blue in light mode
+   and AdminLTE's #3f6791 in dark mode. Each rule is repeated with
+   body.dark-mode so it outranks AdminLTE's `.dark-mode .x` versions. */
+.btn-primary, body.dark-mode .btn-primary { color: #fff; background-color: #a02626; border-color: #a02626; }
+.btn-primary:hover, .btn-primary:focus, .btn-primary.active, .btn-primary:not(:disabled):not(.disabled):active,
+body.dark-mode .btn-primary:hover, body.dark-mode .btn-primary:focus, body.dark-mode .btn-primary.active,
+body.dark-mode .btn-primary:not(:disabled):not(.disabled):active { color: #fff; background-color: #870f0f; border-color: #870f0f; }
+.btn-primary:focus, body.dark-mode .btn-primary:focus { box-shadow: 0 0 0 .2rem rgba(160,38,38,.3); }
+.btn-info, body.dark-mode .btn-info { color: #fff; background-color: #004356; border-color: #004356; }
+.btn-info:hover, .btn-info:focus, .btn-info.active, .btn-info:not(:disabled):not(.disabled):active,
+body.dark-mode .btn-info:hover, body.dark-mode .btn-info:focus, body.dark-mode .btn-info.active,
+body.dark-mode .btn-info:not(:disabled):not(.disabled):active { color: #fff; background-color: #0b6a83; border-color: #0b6a83; }
+.badge-primary, body.dark-mode .badge-primary, .bg-primary, body.dark-mode .bg-primary { background-color: #a02626 !important; color: #fff; }
+.badge-info, body.dark-mode .badge-info, .bg-info, body.dark-mode .bg-info { background-color: #0b6a83 !important; color: #fff; }
+.text-primary { color: #a02626 !important; }
+body.dark-mode .text-primary { color: #f48a8a !important; }
+.text-info { color: #0b6a83 !important; }
+body.dark-mode .text-info { color: #5fb3c9 !important; }
+
+/* Outline "primary" buttons: maroon, not Bootstrap blue. */
 .btn-outline-primary { color: #a02626; border-color: #a02626; }
 .btn-outline-primary:hover, .btn-outline-primary:focus,
 .btn-outline-primary:not(:disabled):not(.disabled).active,

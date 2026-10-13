@@ -181,9 +181,9 @@
                                                         </p>
                                                         <p style="margin:6px 0 0;">
                                                             <span style="color:#c99400;">Email:</span>
-                                                            <a href="#" style="color:#2a6ebb;">{{ $user->email }}</a>
+                                                            <a href="#" style="color:#a02626;">{{ $user->email }}</a>
                                                             &nbsp;<span style="color:#c99400;">W:</span>
-                                                            <a href="#" style="color:#2a6ebb;">www.cosecsa.org</a>
+                                                            <a href="#" style="color:#a02626;">www.cosecsa.org</a>
                                                         </p>
                                                     </div>
                                                 </div>

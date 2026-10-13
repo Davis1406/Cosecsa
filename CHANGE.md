@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-13) — Dark mode: no blue page numbers, buttons or badges
+- **Pagination in dark mode** used AdminLTE's blue (`.dark-mode .page-item .page-link` → `#3f6791`), which outranked our rule. Page numbers are now light red `#f48a8a` (gold on hover), current page maroon, disabled grey.
+- **Solid `btn-primary` was never maroon**: DESIGN.md said it was overridden, but no rule existed, so it was Bootstrap blue (light) / `#3f6791` (dark) — e.g. Roles & Permissions. Now maroon in both modes (darker on hover). `btn-info` (cyan, e.g. Fellows "Analytics", Examiners "Upload Confirmation") → COSECSA teal; `badge-primary` / `bg-primary` → maroon; `badge-info` / `bg-info` → teal; `text-primary` → maroon (light red in dark mode); `text-info` → teal. Each rule is repeated with `body.dark-mode` to outrank AdminLTE's dark versions. Examiners' local blue `.badge-primary` override removed.
+- Email signature links (Profile Settings preview + real emails in both apps) are maroon instead of blue `#2a6ebb`.
+- Checked by loading all 46 sidebar pages in dark mode and flagging any link/tab/button/badge/page number with blue text or background; chart series colours and decorative chips (not links) are unchanged.
+- **Files:** `public/dist/css/custom.css`, `resources/views/layout/header.blade.php`, `resources/views/admin/exams/examiners.blade.php`, `resources/views/emails/_signature.blade.php`, `resources/views/profile/change_password.blade.php`.
+
 ### Changed (2026-10-13) — Links are COSECSA maroon, not Bootstrap blue; Salesforce: no Withdrawn tile
 - Links without their own colour used Bootstrap's blue (`#007bff`) — e.g. the inactive "Summary by Programme & Year" tab on Overall Results. `custom.css` now gives links maroon `#a02626` at rest (bare-`a` specificity, so component/page link styles still apply; buttons, dropdown items and pagination unchanged) and `.btn-link` too. Dark mode links were light blue (`#93c5fd`); now DESIGN.md's `#f48a8a` (gold on hover), including inactive tabs inside pages.
 - Salesforce: the **Withdrawn by applicant** tile is removed (like Closed — still counted in Total and available in the Stage filter).
