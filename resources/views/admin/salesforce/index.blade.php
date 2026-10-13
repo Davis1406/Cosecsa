@@ -33,7 +33,7 @@
         /* Wide screens: every tile on one row (--n = number of tiles). */
         .sf-tiles { grid-template-columns:repeat(var(--n), minmax(0, 1fr)); }
     }
-    .sf-tiles .stat-card { margin-bottom:0; padding:12px 6px 10px; display:flex; flex-direction:column; justify-content:flex-start; min-height:88px; }
+    .sf-tiles .stat-card { margin-bottom:0; padding:10px 6px; display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:88px; }
     .sf-tiles .stat-number { font-size:22px; line-height:1.15; }
     .sf-tiles .stat-label { font-size:10px; line-height:1.25; letter-spacing:.02em; word-break:normal; overflow-wrap:anywhere; }
     .stat-card.st-total { background: linear-gradient(135deg, #2d3748, #4a5568); box-shadow:0 2px 10px rgba(45,55,72,.25); }
@@ -80,7 +80,7 @@
                         <a href="{{ url('admin/salesforce/populate-trainees') }}" class="btn btn-light btn-sm font-weight-bold" style="color:#a02626;">
                             <i class="fas fa-user-graduate mr-1"></i>Populate Trainees
                         </a>
-                        <button type="button" onclick="window.print()" class="btn btn-light btn-sm font-weight-bold" style="color:#a02626;">
+                        <button type="button" onclick="sfPrintReport()" class="btn btn-light btn-sm font-weight-bold" style="color:#a02626;">
                             <i class="fas fa-print mr-1"></i>Print / Export Report
                         </button>
                         <form method="POST" action="{{ route('admin.salesforce.sync') }}">
@@ -228,16 +228,16 @@
                 @else
 
                 {{-- ── Visual report (collapsible) ─────────────────────────────── --}}
-                <div class="card">
+                <div class="card collapsed-card" id="sfVisualReport">
                     <div class="card-header d-flex justify-content-between align-items-center" style="background:#f8f0f0;">
                         <h6 class="mb-0 font-weight-bold" style="color:#a02626;">
                             <i class="fas fa-chart-pie mr-2"></i>Visual Report
                         </h6>
-                        <button type="button" class="btn btn-sm btn-outline-secondary no-print" data-card-widget="collapse">
-                            <i class="fas fa-minus"></i>
+                        <button type="button" class="btn btn-sm btn-outline-secondary no-print" data-card-widget="collapse" title="Show / hide the charts">
+                            <i class="fas fa-plus"></i>
                         </button>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body" style="display:none;">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="chart-container">
@@ -359,6 +359,16 @@
 
 @push('scripts')
 <script>
+// Print / Export Report prints the Visual Report: open it first if it's collapsed.
+function sfPrintReport() {
+    var $card = $('#sfVisualReport');
+    if ($card.length && $card.hasClass('collapsed-card')) {
+        $card.CardWidget('expand');
+        setTimeout(function () { window.print(); }, 600);
+    } else {
+        window.print();
+    }
+}
 $(document).ready(function () {
     $('#applicationsTable').DataTable({
         dom: 'Bfrtip',
@@ -399,11 +409,16 @@ $(document).ready(function () {
         return colors;
     }
 
+    var sfCharts = [];
     function makeChart(id, config) {
         var el = document.getElementById(id);
         if (!el) return;
-        new Chart(el.getContext('2d'), config);
+        sfCharts.push(new Chart(el.getContext('2d'), config));
     }
+    // The report starts collapsed: size the charts once it's opened.
+    $('#sfVisualReport').on('expanded.lte.cardwidget', function () {
+        sfCharts.forEach(function (c) { c.resize(); });
+    });
 
     // ── Stage breakdown (horizontal bar, sequential ramp by rank) ──────────────
     if (raw.stage.data.length) {

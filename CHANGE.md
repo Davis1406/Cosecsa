@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-13) — Salesforce page: centred tile text; Visual Report collapsed by default
+- Tile numbers and labels are centred vertically and horizontally in each tile.
+- The **Visual Report** card starts collapsed (click **+** to open); its charts are resized when it opens. **Print / Export Report** opens it first, then prints, so the printout still has the charts.
+- **Files:** `resources/views/admin/salesforce/index.blade.php`.
+
 ### Changed (2026-10-13) — Salesforce tiles: Pending = Received + In the Approval Process; no Closed tile
 - **Pending** now combines Application Received and In the Approval Process (clicking it lists both; `?tile=Application Received|In the Approval Process` — cosecsa-api `tile` accepts several stages). The **Closed** tile is removed (closed applications still count in Total). Remaining tiles: Total, Pending, Question, Payment Verification Pending, Approved, Invoiced, Complete, Rejected, Withdrawn by applicant.
 - **Files:** `resources/views/admin/salesforce/index.blade.php`; cosecsa-api `SalesforceSyncController` (deployed).
