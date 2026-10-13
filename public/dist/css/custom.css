@@ -1516,7 +1516,9 @@ body.dark-mode .table-warning > th {
     background-color: rgba(254, 197, 3, .16) !important;
 }
 /* AdminLTE's dark-mode green (#00bc8c) is too light for white text. */
-body.dark-mode .btn-success { background-color: #00866a; border-color: #00866a; }
+body.dark-mode .btn-success,
+body.dark-mode .btn-success:disabled,
+body.dark-mode .btn-success.disabled { background-color: #00866a; border-color: #00866a; }
 body.dark-mode .btn-success:hover { background-color: #006e57; border-color: #006e57; }
 body.dark-mode .mini-stat-lbl { color: #a0aec0 !important; }
 body.dark-mode .page-item.disabled .page-link { color: #94a3b8 !important; }
