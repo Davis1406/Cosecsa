@@ -174,30 +174,44 @@
                 {{-- ── Stat cards: Total + one per Salesforce stage (click to filter the
                      table; click again to clear). Counts ignore the tile filter. ── --}}
                 @php
-                    // Salesforce process order; any other stage is appended.
-                    $stageOrder = ['Application Received', 'Question', 'In the Approval Process', 'Payment Verification Pending',
-                                   'Approved', 'Invoiced', 'Complete', 'Rejected', 'Withdrawn by applicant', 'Closed'];
-                    $stageClass = [
-                        'Application Received' => 'st-pending', 'Question' => 'st-warn', 'In the Approval Process' => 'st-pending',
-                        'Payment Verification Pending' => 'st-invoiced', 'Approved' => 'st-approved', 'Invoiced' => 'st-invoiced',
-                        'Complete' => 'st-good', 'Rejected' => '', 'Withdrawn by applicant' => '', 'Closed' => 'st-neutral',
+                    // Tiles in Salesforce process order: label => [stages, colour].
+                    // Pending = received + in the approval process. Closed has no
+                    // tile (still counted in Total); any other new stage gets its own.
+                    $tileDefs = [
+                        'Pending'                      => [['Application Received', 'In the Approval Process'], 'st-pending'],
+                        'Question'                     => [['Question'], 'st-warn'],
+                        'Payment Verification Pending' => [['Payment Verification Pending'], 'st-invoiced'],
+                        'Approved'                     => [['Approved'], 'st-approved'],
+                        'Invoiced'                     => [['Invoiced'], 'st-invoiced'],
+                        'Complete'                     => [['Complete'], 'st-good'],
+                        'Rejected'                     => [['Rejected'], ''],
+                        'Withdrawn by applicant'       => [['Withdrawn by applicant'], ''],
                     ];
-                    $tileStages = collect($stageOrder)->merge($stages)->unique()->values();
+                    $covered = collect($tileDefs)->flatMap(fn ($d) => $d[0])->push('Closed');
+                    foreach ($stages as $st) {
+                        if (! $covered->contains($st)) {
+                            $tileDefs[$st] = [[$st], 'st-neutral'];
+                        }
+                    }
                     $activeTile = $tile ?? null;
                 @endphp
-                <div class="sf-tiles" style="--n: {{ $tileStages->count() + 1 }};">
+                <div class="sf-tiles" style="--n: {{ count($tileDefs) + 1 }};">
                     <a href="{{ request()->fullUrlWithQuery(['tile' => null, 'group' => null, 'stage' => null]) }}"
                        class="stat-card stat-link st-total {{ !$activeTile && !($group ?? null) ? 'stat-active' : '' }}" title="Show all applications">
                         <div class="stat-number">{{ number_format($total) }}</div>
                         <div class="stat-label">Total Applications</div>
                     </a>
-                    @foreach($tileStages as $st)
-                        @php $isActive = $activeTile === $st; @endphp
-                        <a href="{{ request()->fullUrlWithQuery(['tile' => $isActive ? null : $st, 'group' => null, 'stage' => null]) }}"
-                           class="stat-card stat-link {{ $stageClass[$st] ?? 'st-neutral' }} {{ $isActive ? 'stat-active' : '' }}"
-                           title="Stage: {{ $st }}">
-                            <div class="stat-number">{{ number_format($stageCounts[$st] ?? 0) }}</div>
-                            <div class="stat-label">{{ $st }}</div>
+                    @foreach($tileDefs as $label => [$tStages, $cls])
+                        @php
+                            $key = implode('|', $tStages);
+                            $isActive = $activeTile === $key;
+                            $n = collect($tStages)->sum(fn ($st) => $stageCounts[$st] ?? 0);
+                        @endphp
+                        <a href="{{ request()->fullUrlWithQuery(['tile' => $isActive ? null : $key, 'group' => null, 'stage' => null]) }}"
+                           class="stat-card stat-link {{ $cls }} {{ $isActive ? 'stat-active' : '' }}"
+                           title="Stage: {{ implode(' + ', $tStages) }}">
+                            <div class="stat-number">{{ number_format($n) }}</div>
+                            <div class="stat-label">{{ $label }}</div>
                         </a>
                     @endforeach
                 </div>

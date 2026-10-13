@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-13) — Salesforce tiles: Pending = Received + In the Approval Process; no Closed tile
+- **Pending** now combines Application Received and In the Approval Process (clicking it lists both; `?tile=Application Received|In the Approval Process` — cosecsa-api `tile` accepts several stages). The **Closed** tile is removed (closed applications still count in Total). Remaining tiles: Total, Pending, Question, Payment Verification Pending, Approved, Invoiced, Complete, Rejected, Withdrawn by applicant.
+- **Files:** `resources/views/admin/salesforce/index.blade.php`; cosecsa-api `SalesforceSyncController` (deployed).
+
 ### Changed (2026-10-13) — Salesforce page: one tile per stage
 - `admin/salesforce` shows **Total** plus a tile for every Salesforce stage, in process order — Application Received, Question, In the Approval Process, Payment Verification Pending, Approved, Invoiced, Complete, Rejected, Withdrawn by applicant, Closed (any new stage is added automatically). Previously Received / Question / In the Approval Process / Payment Verification Pending were folded into "Pending", Rejected and Withdrawn shared a tile, and Closed had none. Clicking a tile filters the table to that stage (`?tile=`) and keeps every tile's count; click again to clear.
 - Tiles sit in a responsive grid (`.sf-tiles`) so all 11 fit on one row on wide screens and wrap evenly on smaller ones.
