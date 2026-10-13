@@ -1485,6 +1485,13 @@ html.dark-mode body.dark-mode [style*="background-color:#fec503" i] *,
 html.dark-mode body.dark-mode [style*="background-color: #fec503" i] * {
     color: #3a2a00 !important;
 }
+/* Dark table-header rules repaint inline-gold <th>s grey; keep them gold. */
+html.dark-mode body.dark-mode th[style*="background:#fec503" i],
+html.dark-mode body.dark-mode th[style*="background: #fec503" i],
+html.dark-mode body.dark-mode th[style*="background-color:#fec503" i],
+html.dark-mode body.dark-mode th[style*="background-color: #fec503" i] {
+    background-color: #FEC503 !important;
+}
 [style*="background:#fec503" i],
 [style*="background:#fec503" i] *,
 [style*="background: #fec503" i],
@@ -1501,6 +1508,15 @@ body.dark-mode [style*="color: #a02626" i]:not([style*="background" i]),
 body.dark-mode .fee-amount {
     color: #f48a8a !important;
 }
-body.dark-mode .badge-warning { color: #1f2d3d !important; }
+html.dark-mode body.dark-mode .badge-warning { color: #1f2d3d !important; }
+/* Bootstrap's pale-yellow table rows keep light text in dark mode; tint them instead. */
+body.dark-mode .table-warning,
+body.dark-mode .table-warning > td,
+body.dark-mode .table-warning > th {
+    background-color: rgba(254, 197, 3, .16) !important;
+}
+/* AdminLTE's dark-mode green (#00bc8c) is too light for white text. */
+body.dark-mode .btn-success { background-color: #00866a; border-color: #00866a; }
+body.dark-mode .btn-success:hover { background-color: #006e57; border-color: #006e57; }
 body.dark-mode .mini-stat-lbl { color: #a0aec0 !important; }
 body.dark-mode .page-item.disabled .page-link { color: #94a3b8 !important; }
