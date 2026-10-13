@@ -167,6 +167,7 @@
     .chk-filter-btn { white-space: nowrap; }
     /* ── Table ── */
     #candidatestable td { vertical-align: middle; }
+    #candidatestable th.text-center { white-space: nowrap; }
     .candidate-name-link {
         color: #333;
         text-decoration: none;
