@@ -212,7 +212,7 @@
                                     'p1' => $r->part1_score, 'p2' => $r->part2_score, 'res' => $r->result ?? null,
                                     'fid' => $r->fellow_id ?? null, 'tid' => $r->trainee_id ?? null,
                                 ]), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
-                                <table id="detailTable" class="table table-sm table-bordered table-striped detail-table mb-0">
+                                <table id="detailTable" class="table table-sm table-bordered table-striped detail-table mb-0" style="width:100%;">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -292,6 +292,11 @@ $(document).ready(function () {
         ],
         pageLength: 25,
         order: [[4, 'desc'], [1, 'asc']]
+    });
+
+    // The detail table is built while its tab is hidden; size its columns when shown.
+    $('a[href="#tab-detail"]').on('shown.bs.tab', function () {
+        $('#detailTable').DataTable().columns.adjust();
     });
 
     // ?q=<name> (from the global search): open the Detail tab filtered to that person.
