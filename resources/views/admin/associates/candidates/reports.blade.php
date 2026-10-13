@@ -352,7 +352,7 @@ $(document).ready(function () {
           options: $.extend(true, {}, chartOpts, {
             indexAxis: 'y',
             plugins: { legend: { display: false } },
-            scales: { x: { beginAtZero:true, grid:{color:'#f0f0f0'}, ticks:{font:{size:10}} },
+            scales: { x: { beginAtZero:true, grid:{color:cosecsaChartGrid}, ticks:{font:{size:10}} },
                       y: { grid:{display:false}, ticks:{font:{size:10}} } }
           })
         });
@@ -399,7 +399,7 @@ $(document).ready(function () {
           options: $.extend(true, {}, chartOpts, {
             plugins: { legend:{display:false} },
             scales: { x: { grid:{display:false}, ticks:{font:{size:10}} },
-                      y: { beginAtZero:true, grid:{color:'#f0f0f0'}, ticks:{font:{size:10}} } }
+                      y: { beginAtZero:true, grid:{color:cosecsaChartGrid}, ticks:{font:{size:10}} } }
           })
         });
 

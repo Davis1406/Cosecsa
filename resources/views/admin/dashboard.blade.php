@@ -23,7 +23,7 @@
                   <i class="fas fa-user-graduate"></i>
                 </div>
               </div>
-              <a href="{{url('admin/associates/trainees/trainees')}}" class="modern-tile-link" style="color:#004356;">
+              <a href="{{url('admin/associates/trainees/trainees')}}" class="modern-tile-link tile-link-teal">
                 View Details <i class="fas fa-arrow-circle-right"></i>
               </a>
             </div>
@@ -40,7 +40,7 @@
                   <i class="fas fa-hospital"></i>
                 </div>
               </div>
-              <a href="{{url('admin/hospital/list')}}" class="modern-tile-link" style="color:#22c55e;">
+              <a href="{{url('admin/hospital/list')}}" class="modern-tile-link tile-link-green">
                 View Details <i class="fas fa-arrow-circle-right"></i>
               </a>
             </div>
@@ -57,7 +57,7 @@
                   <i class="fas fa-user-check"></i>
                 </div>
               </div>
-              <a href="{{url('admin/associates/candidates/list')}}" class="modern-tile-link" style="color:#f59e0b;">
+              <a href="{{url('admin/associates/candidates/list')}}" class="modern-tile-link tile-link-amber">
                 View Details <i class="fas fa-arrow-circle-right"></i>
               </a>
             </div>
@@ -74,7 +74,7 @@
                   <i class="fas fa-award"></i>
                 </div>
               </div>
-              <a href="{{url('admin/associates/fellows/list')}}" class="modern-tile-link" style="color:#a02626;">
+              <a href="{{url('admin/associates/fellows/list')}}" class="modern-tile-link tile-link-maroon">
                 View Details <i class="fas fa-arrow-circle-right"></i>
               </a>
             </div>

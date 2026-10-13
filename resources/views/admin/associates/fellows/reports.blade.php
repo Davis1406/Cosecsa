@@ -291,7 +291,7 @@ $(document).ready(function () {
           options: $.extend(true,{}, chartOpts, {
             indexAxis:'y',
             plugins:{ legend:{display:false} },
-            scales:{ x:{beginAtZero:true, grid:{color:'#f0f0f0'}, ticks:{font:{size:10}}},
+            scales:{ x:{beginAtZero:true, grid:{color:cosecsaChartGrid}, ticks:{font:{size:10}}},
                      y:{grid:{display:false}, ticks:{font:{size:10}}} }
           })
         });
@@ -324,7 +324,7 @@ $(document).ready(function () {
           options: $.extend(true,{}, chartOpts, {
             plugins:{ legend:{display:false} },
             scales:{ x:{grid:{display:false}, ticks:{font:{size:10}}},
-                     y:{beginAtZero:true, grid:{color:'#f0f0f0'}, ticks:{font:{size:10}}} }
+                     y:{beginAtZero:true, grid:{color:cosecsaChartGrid}, ticks:{font:{size:10}}} }
           })
         });
 
@@ -355,7 +355,7 @@ $(document).ready(function () {
           options: $.extend(true,{}, chartOpts, {
             indexAxis:'y',
             plugins:{ legend:{display:false} },
-            scales:{ x:{beginAtZero:true, grid:{color:'#f0f0f0'}, ticks:{font:{size:10}}},
+            scales:{ x:{beginAtZero:true, grid:{color:cosecsaChartGrid}, ticks:{font:{size:10}}},
                      y:{grid:{display:false}, ticks:{font:{size:10}}} }
           })
         });
@@ -376,7 +376,7 @@ $(document).ready(function () {
             plugins:{ legend:{position:'top', labels:{boxWidth:10,font:{size:10}}},
                       tooltip:{mode:'index',intersect:false} },
             scales:{ x:{stacked:true, grid:{display:false}, ticks:{font:{size:10}}},
-                     y:{stacked:true, beginAtZero:true, grid:{color:'#f0f0f0'}, ticks:{font:{size:10}}} }
+                     y:{stacked:true, beginAtZero:true, grid:{color:cosecsaChartGrid}, ticks:{font:{size:10}}} }
           })
         });
 
@@ -406,7 +406,7 @@ $(document).ready(function () {
             plugins:{ legend:{position:'top', labels:{boxWidth:10,font:{size:10}}},
                       tooltip:{mode:'index',intersect:false} },
             scales:{ x:{grid:{display:false}, ticks:{font:{size:10}}},
-                     y:{beginAtZero:true, grid:{color:'#f0f0f0'}, ticks:{font:{size:10}}} }
+                     y:{beginAtZero:true, grid:{color:cosecsaChartGrid}, ticks:{font:{size:10}}} }
           })
         });
 

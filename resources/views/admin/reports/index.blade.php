@@ -283,7 +283,7 @@ $(document).ready(function () {
         plugins: { legend: { display: false } },
         scales: {
           x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-          y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 10 } } }
+          y: { beginAtZero: true, grid: { color: cosecsaChartGrid }, ticks: { font: { size: 10 } } }
         }
       }
     });

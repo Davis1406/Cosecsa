@@ -430,7 +430,7 @@ $(document).ready(function () {
                 indexAxis: 'y', responsive: true, maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
-                    datalabels: { anchor: 'end', align: 'end', color: '#555', font: { size: 11, weight: 'bold' } }
+                    datalabels: { anchor: 'end', align: 'end', color: cosecsaChartText, font: { size: 11, weight: 'bold' } }
                 },
                 scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
             },
@@ -464,7 +464,7 @@ $(document).ready(function () {
                 indexAxis: 'y', responsive: true, maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
-                    datalabels: { anchor: 'end', align: 'end', color: '#555', font: { size: 11, weight: 'bold' } }
+                    datalabels: { anchor: 'end', align: 'end', color: cosecsaChartText, font: { size: 11, weight: 'bold' } }
                 },
                 scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
             },
@@ -482,7 +482,7 @@ $(document).ready(function () {
                 indexAxis: 'y', responsive: true, maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
-                    datalabels: { anchor: 'end', align: 'end', color: '#555', font: { size: 11, weight: 'bold' } }
+                    datalabels: { anchor: 'end', align: 'end', color: cosecsaChartText, font: { size: 11, weight: 'bold' } }
                 },
                 scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
             },

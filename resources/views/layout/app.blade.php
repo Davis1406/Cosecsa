@@ -129,6 +129,25 @@
 
     <!-- ChartJS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Chart text/grid colours follow the theme: Chart.js defaults to #666
+        // text, which is unreadable on dark backgrounds. Charts created later
+        // pick these up; toggling the theme re-applies and redraws them.
+        (function () {
+            if (!window.Chart) return;
+            function applyChartTheme() {
+                var dark = document.body.classList.contains('dark-mode');
+                Chart.defaults.color = dark ? '#cbd5e0' : '#4a5568';
+                Chart.defaults.borderColor = dark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)';
+                Object.values(Chart.instances || {}).forEach(function (c) { c.update('none'); });
+            }
+            // For charts that set their own label/grid colours: theme-aware values.
+            window.cosecsaChartText = function () { return document.body.classList.contains('dark-mode') ? '#e2e8f0' : '#555'; };
+            window.cosecsaChartGrid = function () { return document.body.classList.contains('dark-mode') ? 'rgba(255,255,255,0.08)' : '#f0f0f0'; };
+            applyChartTheme();
+            new MutationObserver(applyChartTheme).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        })();
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 

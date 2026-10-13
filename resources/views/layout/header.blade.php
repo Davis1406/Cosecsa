@@ -1545,10 +1545,16 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
         background-color: rgba(255,255,255,0.1) !important;
     }
 
-    body.dark-mode .modern-tile-link,
-    html.dark-mode .modern-tile-link {
-        opacity: 0.9;
-    }
+    /* Dashboard tile "View Details" links: one tone per tile, readable in both themes. */
+    .tile-link-teal   { color: #004356; }
+    .tile-link-green  { color: #22c55e; }
+    .tile-link-amber  { color: #f59e0b; }
+    .tile-link-maroon { color: #a02626; }
+    /* !important: the generic dark-mode link rule below is far more specific. */
+    body.dark-mode .modern-tile-link.tile-link-teal   { color: #5fb3c9 !important; }
+    body.dark-mode .modern-tile-link.tile-link-green  { color: #4ade80 !important; }
+    body.dark-mode .modern-tile-link.tile-link-amber  { color: #fbbf24 !important; }
+    body.dark-mode .modern-tile-link.tile-link-maroon { color: #f48a8a !important; }
 
     /* Dark mode modern cards */
     body.dark-mode .modern-card,
