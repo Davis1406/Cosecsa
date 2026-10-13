@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-13) — Links are COSECSA maroon, not Bootstrap blue; Salesforce: no Withdrawn tile
+- Links without their own colour used Bootstrap's blue (`#007bff`) — e.g. the inactive "Summary by Programme & Year" tab on Overall Results. `custom.css` now gives links maroon `#a02626` at rest (bare-`a` specificity, so component/page link styles still apply; buttons, dropdown items and pagination unchanged) and `.btn-link` too. Dark mode links were light blue (`#93c5fd`); now DESIGN.md's `#f48a8a` (gold on hover), including inactive tabs inside pages.
+- Salesforce: the **Withdrawn by applicant** tile is removed (like Closed — still counted in Total and available in the Stage filter).
+- **Files:** `public/dist/css/custom.css`, `resources/views/layout/header.blade.php`, `resources/views/admin/salesforce/index.blade.php`.
+
 ### Changed (2026-10-13) — Salesforce page: centred tile text; Visual Report collapsed by default
 - Tile numbers and labels are centred vertically and horizontally in each tile.
 - The **Visual Report** card starts collapsed (click **+** to open); its charts are resized when it opens. **Print / Export Report** opens it first, then prints, so the printout still has the charts.

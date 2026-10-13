@@ -175,8 +175,8 @@
                      table; click again to clear). Counts ignore the tile filter. ── --}}
                 @php
                     // Tiles in Salesforce process order: label => [stages, colour].
-                    // Pending = received + in the approval process. Closed has no
-                    // tile (still counted in Total); any other new stage gets its own.
+                    // Pending = received + in the approval process. Closed and Withdrawn
+                    // have no tile; any other new stage gets its own.
                     $tileDefs = [
                         'Pending'                      => [['Application Received', 'In the Approval Process'], 'st-pending'],
                         'Question'                     => [['Question'], 'st-warn'],
@@ -185,9 +185,9 @@
                         'Invoiced'                     => [['Invoiced'], 'st-invoiced'],
                         'Complete'                     => [['Complete'], 'st-good'],
                         'Rejected'                     => [['Rejected'], ''],
-                        'Withdrawn by applicant'       => [['Withdrawn by applicant'], ''],
                     ];
-                    $covered = collect($tileDefs)->flatMap(fn ($d) => $d[0])->push('Closed');
+                    // No tiles for these (still counted in Total, and in the Stage filter).
+                    $covered = collect($tileDefs)->flatMap(fn ($d) => $d[0])->push('Closed', 'Withdrawn by applicant');
                     foreach ($stages as $st) {
                         if (! $covered->contains($st)) {
                             $tileDefs[$st] = [[$st], 'st-neutral'];
