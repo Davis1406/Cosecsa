@@ -28,10 +28,14 @@
     .stat-label  { font-size: 12px; opacity: .9; text-transform:uppercase; letter-spacing:.03em; }
     /* One tile per stage: a grid that fits all of them on wide screens and
        wraps evenly on narrow ones; labels may take two lines. */
-    .sf-tiles { display:grid; grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:10px; margin-bottom:16px; }
-    .sf-tiles .stat-card { margin-bottom:0; padding:12px 10px; display:flex; flex-direction:column; justify-content:center; min-height:84px; }
-    .sf-tiles .stat-number { font-size:22px; }
-    .sf-tiles .stat-label { font-size:10.5px; line-height:1.25; }
+    .sf-tiles { display:grid; grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:8px; margin-bottom:16px; }
+    @media (min-width: 1200px) {
+        /* Wide screens: every tile on one row (--n = number of tiles). */
+        .sf-tiles { grid-template-columns:repeat(var(--n), minmax(0, 1fr)); }
+    }
+    .sf-tiles .stat-card { margin-bottom:0; padding:12px 6px 10px; display:flex; flex-direction:column; justify-content:flex-start; min-height:88px; }
+    .sf-tiles .stat-number { font-size:22px; line-height:1.15; }
+    .sf-tiles .stat-label { font-size:10px; line-height:1.25; letter-spacing:.02em; word-break:normal; overflow-wrap:anywhere; }
     .stat-card.st-total { background: linear-gradient(135deg, #2d3748, #4a5568); box-shadow:0 2px 10px rgba(45,55,72,.25); }
 
     .chart-container { background:#fff; border-radius:8px; padding:18px; box-shadow:0 1px 6px rgba(0,0,0,.08); margin-bottom:22px; }
@@ -181,7 +185,7 @@
                     $tileStages = collect($stageOrder)->merge($stages)->unique()->values();
                     $activeTile = $tile ?? null;
                 @endphp
-                <div class="sf-tiles">
+                <div class="sf-tiles" style="--n: {{ $tileStages->count() + 1 }};">
                     <a href="{{ request()->fullUrlWithQuery(['tile' => null, 'group' => null, 'stage' => null]) }}"
                        class="stat-card stat-link st-total {{ !$activeTile && !($group ?? null) ? 'stat-active' : '' }}" title="Show all applications">
                         <div class="stat-number">{{ number_format($total) }}</div>
