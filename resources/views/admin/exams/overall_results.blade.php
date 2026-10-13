@@ -207,7 +207,7 @@
                             <div class="card-body p-0">
                                 {{-- Rows are built client-side from this JSON (deferRender). --}}
                                 <script type="application/json" id="detailRows">{!! json_encode(collect($results)->values()->map(fn ($r, $i) => [
-                                    'n' => $i + 1, 'name' => $r->trainee_name ?: $r->contact_name, 'email' => $r->email ?? null,
+                                    'n' => $i + 1, 'name' => $r->trainee_name ?: $r->contact_name, 'contact' => $r->contact_name, 'email' => $r->email ?? null,
                                     'prog' => $r->programme_name ?? $r->specialty ?? null, 'year' => $r->exam_year,
                                     'p1' => $r->part1_score, 'p2' => $r->part2_score, 'res' => $r->result ?? null,
                                     'fid' => $r->fellow_id ?? null, 'tid' => $r->trainee_id ?? null,
@@ -266,7 +266,12 @@ $(document).ready(function () {
         data: JSON.parse(document.getElementById('detailRows').textContent || '[]'),
         columns: [
             { data: 'n' },
-            { data: 'name', render: txt },
+            // Search also covers the name on the result itself (contact), which
+            // the global search links with (?q=) and can differ from the trainee name.
+            { data: 'name', render: function (d, type, r) {
+                if (type === 'filter') return (d || '') + ' ' + (r.contact || '');
+                return txt(d, type);
+            } },
             { data: 'email', render: txt },
             { data: 'prog', render: txt },
             { data: 'year', render: txt },
@@ -288,6 +293,15 @@ $(document).ready(function () {
         pageLength: 25,
         order: [[4, 'desc'], [1, 'asc']]
     });
+
+    // ?q=<name> (from the global search): open the Detail tab filtered to that person.
+    var q = @json(request('q'));
+    if (q) {
+        $('a[href="#tab-detail"]').tab('show');
+        $('#detailTable').DataTable().search(q).draw();
+    } else if (location.hash === '#tab-detail') {
+        $('a[href="#tab-detail"]').tab('show');
+    }
 });
 </script>
 @endpush

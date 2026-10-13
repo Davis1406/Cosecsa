@@ -332,21 +332,19 @@ $(function () {
                 { "data": "hospital_name", "render": function (d, type, r) { return dtRefLink(cApp + "/admin/hospital/view_hospital/", r.hospital_id, dtDash(d), type); } },
                 { "data": "country_name", "render": function (d, type, r) { return dtRefLink(cApp + "/admin/countries/view/", r.country_id, dtDash(d), type); } },
                 { "data": "gender", "render": function (d, type) { return dtDashText(d === "Female" || d === "Male" ? d : null, type); } },
-                { "data": "fee_paid", "render": function (d, type) {
+                { "data": "fee_paid", "className": "text-center", "render": function (d, type) {
                     var paid = (d || "No") === "Yes";
                     if (type !== "display") return paid ? "Paid" : "Unpaid";
                     return paid ? '<span class="badge badge-success"><i class="fas fa-check mr-1"></i>Paid</span>'
                                 : '<span class="badge badge-danger">Unpaid</span>';
                 } },
-                { "data": "part1_result", "render": function (d, type, r) { // 9 Part I
-                    var pct = r.part1_overall != null ? Number(r.part1_overall).toFixed(2).replace(/\.?0+$/, "") + "%" : "";
-                    if (type === "sort" || type === "type") return r.part1_overall != null ? Number(r.part1_overall) : -1;
-                    if (type !== "display") return d ? d + (pct ? " " + pct : "") : "";
+                // Part I: Pass/Fail only — the marks are on the results pages.
+                { "data": "part1_result", "className": "text-center", "render": function (d, type) { // 9 Part I
+                    if (type !== "display") return d || "";
                     if (!d) return '<span class="text-muted">—</span>';
-                    return '<span class="badge ' + (d === "Pass" ? "badge-success" : "badge-danger") + '">' + dtEsc(d) + '</span>' +
-                        (pct ? ' <small class="text-muted">' + pct + '</small>' : "");
+                    return '<span class="badge ' + (d === "Pass" ? "badge-success" : "badge-danger") + '">' + dtEsc(d) + '</span>';
                 } },
-                { "data": "part_two_promoted_at", "render": function (d, type) { // 10 Part II
+                { "data": "part_two_promoted_at", "className": "text-center", "render": function (d, type) { // 10 Part II
                     if (type !== "display") return d ? "Promoted" : "";
                     return d ? '<span class="badge" style="background:#FEC503;color:#3a2a00;">Promoted</span>' : '<span class="text-muted">—</span>';
                 } },

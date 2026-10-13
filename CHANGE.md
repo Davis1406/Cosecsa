@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-13) — Candidates Part I column; global search opens the exact exam result
+- Candidates list: **Fee Paid**, **Part I** and **Part II** are centred in their columns, and Part I shows Pass/Fail only (the marks are on Overall Results and the Part I upload preview).
+- Overall Results accepts `?q=<name>`: opens the **Detail** tab filtered to that person (search also covers the name on the result itself, which can differ from the trainee name); `#tab-detail` opens that tab. Exam-result hits in the global search use it, instead of landing on the year's summary.
+- **Files:** `public/dist/js/custom.js`, `resources/views/admin/exams/overall_results.blade.php`. ⚠️ **Coordinate:** cosecsa-api global search link change (deployed).
+
 ### Added (2026-10-12) — Upload Part I Results; Part II promotion; Overall Results "Part I Pass"
 - **Candidates → Upload Part I Results** (`admin/associates/candidates/part-one`): upload the examination officer's "Part I Results" spreadsheet → **preview** (nothing saved) → **Import**. The upload page lists the sheet's columns by role — **Match key** (External Ref = programme entry number, Class = programme + exam year), **Imported** (P I / P II points and %, Total, Overall %, Pass Mark, Remark, Student ID), **Compared only** (Repeat PI, MMED, Sponsor — differences flagged, record unchanged), **Not used**. The preview shows tiles (rows, matched, pass, fail, not matched, with warnings; click to filter), the same legend checked against the file, and every row with match status, the matched candidate, the imported columns highlighted, whether it will be promoted, and notes (class ≠ programme, Repeat PI/MMED/Sponsor differences, remark ≠ pass mark, updates an existing result). Confirm saves the results and, if ticked, marks passers as **promoted to Part II**. The file is kept between preview and confirm (`storage/app/part-one-uploads`, deleted after) so it isn't re-selected.
 - Candidates list: **Part I** (Pass/Fail + overall %) and **Part II** (Promoted) columns, **Part I** / **Part II** filters, and **Promote to Part II** / **Remove Part II promotion** in each row's menu (needs `candidates.manage`). Promotion is a mark only — examiner grouping/marking is unchanged.
