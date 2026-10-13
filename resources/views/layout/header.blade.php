@@ -1496,22 +1496,31 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
         color: #fee2e2;
     }
 
-    /* Dark mode pagination */
-    body.dark-mode .page-link {
-        background-color: #374151;
+    /* Dark mode pagination. Selectors match AdminLTE's own
+       (.dark-mode .page-item .page-link → blue #3f6791) so these win. */
+    body.dark-mode .page-item .page-link,
+    body.dark-mode .page-item:not(.active) .page-link {
+        background-color: #2b3040;
         border-color: #4a5568;
-        color: #e0e0e0;
+        color: #f48a8a;
     }
 
-    body.dark-mode .page-link:hover {
-        background-color: #4a5568;
+    body.dark-mode .page-item:not(.active):not(.disabled) .page-link:hover {
+        background-color: #374151;
         border-color: #6b7280;
-        color: #ffffff;
+        color: #FEC503;
     }
 
     body.dark-mode .page-item.active .page-link {
         background-color: #a02626;
         border-color: #a02626;
+        color: #ffffff;
+    }
+
+    body.dark-mode .page-item.disabled .page-link {
+        color: #6b7280;
+        background-color: #2b3040;
+        border-color: #4a5568;
     }
 
     /* Dark mode modern tiles */
