@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added (2026-10-15) — "Connection needed" page for examiner pages that are not available offline
+- Examiner pages that are not kept for offline use (Examiner Training `examiner/learning/*`, ID badge, attendance, ...) showed the browser's own "no internet / dino" screen when opened offline. The service worker (`public/examiner-sw.js`) now answers any `/examiner/…` page navigation that it does not cache: online it is passed straight through (redirects, sign-in expiry etc. behave as before); offline it returns a branded **"Connection needed"** page naming the page ("Examiner Training is only available online…"), with **Try again**, **Go to dashboard** and **View my results** (both work offline), the "You are offline" status, and an automatic reload when the connection returns.
+- A page that *can* be kept offline but was never saved on this device now gets the same design ("Not saved for offline use": open the dashboard once while online).
+- **Files:** `public/examiner-sw.js` only. Checked in a browser with a stubbed server (online pass-through and redirect, offline training page, never-saved page, Go to dashboard offline, reload on reconnect).
+
 ### Changed (2026-10-15) — Offline status badge sits above the footer
 - The "N marks waiting to sync / Offline" badge was pinned to the very bottom-left of the screen, on top of the page footer. It now sits just above the footer (the script measures `footer.main-footer` and keeps the badge 12px above it): bottom-left on small screens, centred over the content area on large screens (≥992px, following the sidebar open/closed), with its panel centred above it too. Checked at 390px and 1280px, including opening/collapsing the sidebar.
 - **Files:** `public/dist/js/examiner-offline.js`.
