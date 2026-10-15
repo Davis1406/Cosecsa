@@ -383,15 +383,17 @@ class CandidatesController extends Controller
      * fetch submit) ask for JSON instead so they can tell a saved mark from a
      * duplicate or a rejected one. $status is success | duplicate | invalid | error.
      */
-    private function submissionResponse(Request $request, string $status, string $message, int $httpCode)
+    private function submissionResponse(Request $request, string $status, string $message, int $httpCode, ?string $redirectTo = null)
     {
         if ($request->expectsJson()) {
             return response()->json(['status' => $status, 'message' => $message], $httpCode);
         }
 
-        return $status === 'success'
-            ? redirect()->back()->with('success', $message)
-            : back()->with('error', $message);
+        if ($status === 'success') {
+            return ($redirectTo ? redirect($redirectTo) : redirect()->back())->with('success', $message);
+        }
+
+        return back()->with('error', $message);
     }
 
     /** First problem with a marking submission, or null when it is acceptable. */
@@ -656,7 +658,14 @@ class CandidatesController extends Controller
     public function updateEvaluation(Request $request, $candidate_id, $station_id)
     {
         $examinerId = DB::table('examiners')->where('user_id', Auth::id())->value('id');
-        if (!$examinerId) return redirect()->back()->with('error', 'Examiner data not found.');
+        if (!$examinerId) return $this->submissionResponse($request, 'error', 'Examiner data not found.', 403);
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'question_marks'   => 'required|array|min:1',
+            'question_marks.*' => 'nullable|numeric|min:0',
+            'total_marks'      => 'required|numeric|min:0',
+        ]);
+        if ($validator->fails()) return $this->submissionResponse($request, 'invalid', $validator->errors()->first(), 422);
 
         $tables = [
             'mcs_results' => ['grade_field' => 'overall'], 'gs_results' => ['grade_field' => null],
@@ -673,7 +682,7 @@ class CandidatesController extends Controller
             if ($record) { $evaluation = $record; $sourceTable = $table; break; }
         }
 
-        if (!$evaluation) return redirect()->back()->with('error', 'Evaluation not found.');
+        if (!$evaluation) return $this->submissionResponse($request, 'invalid', 'Evaluation not found.', 422);
 
         $updateData = ['group_id' => $request->group_id, 'station_id' => $request->station_id, 'question_mark' => json_encode($request->question_marks ?? []), 'total' => $request->total_marks, 'remarks' => $request->remarks];
         $gradeField = $tables[$sourceTable]['grade_field'] ?? null;
@@ -681,7 +690,7 @@ class CandidatesController extends Controller
 
         DB::table($sourceTable)->where('candidate_id', $candidate_id)->where('station_id', $station_id)->where('examiner_id', $examinerId)->update($updateData);
 
-        return redirect('examiner/results')->with('success', 'Evaluation updated successfully.');
+        return $this->submissionResponse($request, 'success', 'Evaluation updated successfully.', 200, url('examiner/results'));
     }
 
     public function showFcsResubmitSelection($candidate_id)
@@ -748,13 +757,13 @@ class CandidatesController extends Controller
     public function updateEvaluationFcs(Request $request, $candidate_id)
     {
         $examinerId = DB::table('examiners')->where('user_id', Auth::id())->value('id');
-        if (!$examinerId) return redirect()->back()->with('error', 'Examiner data not found.');
+        if (!$examinerId) return $this->submissionResponse($request, 'error', 'Examiner data not found.', 403);
 
         $currentYearId = User::getCurrentYearId();
         $fcsTablesWithFormat = ['cardiothoracic_results'=>['grade_field'=>'grade'],'urology_results'=>['grade_field'=>'grade'],'paediatric_results'=>['grade_field'=>'grade'],'ent_results'=>['grade_field'=>'grade'],'plastic_surgery_results'=>['grade_field'=>'grade'],'neurosurgery_results'=>['grade_field'=>'grade'],'paediatric_orthopaedics_results'=>['grade_field'=>'grade'],'orthopaedic_results'=>['grade_field'=>'grade'],'fcs_results'=>['grade_field'=>'grade']];
 
         $questionMarks = $request->question_marks ?? [];
-        if (empty($questionMarks)) return redirect()->back()->with('error', 'No question marks provided.');
+        if (empty($questionMarks)) return $this->submissionResponse($request, 'invalid', 'No question marks provided.', 422);
 
         $updated = false;
         foreach ($fcsTablesWithFormat as $table => $settings) {
@@ -768,8 +777,8 @@ class CandidatesController extends Controller
             break;
         }
 
-        if (!$updated) return redirect()->back()->with('error', 'No evaluation found to update.');
-        return redirect('examiner/results')->with('success', 'Evaluation updated successfully.');
+        if (!$updated) return $this->submissionResponse($request, 'invalid', 'No evaluation found to update.', 422);
+        return $this->submissionResponse($request, 'success', 'Evaluation updated successfully.', 200, url('examiner/results'));
     }
 
     public function cardiothoracicSelection() { return view('examiner.exam_type_selection', ['header_title'=>'FCS Cardiothoracic - Select Exam Type','exam_name'=>'Cardiothoracic Surgery','exam_type'=>'cardiothoracic']); }

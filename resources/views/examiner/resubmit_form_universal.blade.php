@@ -7,7 +7,7 @@
                 @include('_message')
                 <section class="multi_step_form">
 
-                    <form id="msform" method="POST"
+                    <form id="msform" data-offline-submit data-offline-kind="update" data-offline-redirect="{{ url('examiner/results') }}" method="POST"
                           action="{{ route('examiner.update_evaluation.fcs', ['candidate_id' => $candidate->candidates_id]) }}"
                           enctype="multipart/form-data">
                         {{ csrf_field() }}
@@ -324,4 +324,5 @@
             document.getElementById('total_marks').value = total;
         }
     </script>
+    @include('examiner._offline')
 @endsection

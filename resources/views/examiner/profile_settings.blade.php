@@ -684,4 +684,5 @@ window.printBadge = function () {
 </script>
 @endpush
 
+    @include('examiner._offline')
 @endsection

@@ -130,4 +130,5 @@
             opacity: 0.9;
         }
     </style>
+    @include('examiner._offline')
 @endsection

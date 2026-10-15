@@ -241,4 +241,5 @@
             color: #6c757d;
         }
     </style>
+    @include('examiner._offline')
 @endsection

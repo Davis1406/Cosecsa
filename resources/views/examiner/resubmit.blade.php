@@ -6,7 +6,7 @@
             <section class="content">
                 @include('_message')
                 <section class="multi_step_form">
-                    <form id="msform" method="POST"  action="{{ route('candidateform.update', ['candidate_id' => $candidate->candidates_id, 'station_id' => $candidate->station_id]) }}" enctype="multipart/form-data" onsubmit="return validateTotalMarks()">
+                    <form id="msform" data-offline-submit data-offline-kind="update" data-offline-redirect="{{ url('examiner/results') }}" method="POST"  action="{{ route('candidateform.update', ['candidate_id' => $candidate->candidates_id, 'station_id' => $candidate->station_id]) }}" enctype="multipart/form-data" onsubmit="return validateTotalMarks()">
                         {{ csrf_field() }}
 
                         <div class="tittle">
@@ -159,4 +159,5 @@
             }
         });
     </script>
+    @include('examiner._offline')
 @endsection

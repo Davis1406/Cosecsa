@@ -8,8 +8,12 @@
  *   2. "prepares" the device by fetching those pages/lists while online;
  *   3. takes over submit on forms marked data-offline-submit: online it posts
  *      the mark as JSON, offline (or if the request cannot reach the server)
- *      it queues the mark in IndexedDB;
- *   4. syncs queued marks, in order, once the connection and session are back.
+ *      it queues the mark in IndexedDB. Forms that edit an existing mark add
+ *      data-offline-kind="update" (the latest queued edit of a mark replaces
+ *      an earlier one) and data-offline-redirect (where to go afterwards);
+ *   4. syncs queued marks, in order, once the connection and session are back;
+ *   5. forms marked data-requires-online (profile edit: uploads, password) are
+ *      not queued; offline, the examiner is told to reconnect first.
  *
  * Syncing is safe to repeat: the marking endpoints reject a second mark for
  * the same candidate/station/format with a "duplicate" status, which the queue
@@ -28,7 +32,7 @@
   var SYNC_INTERVAL_MS = 30000;
   var WARM_MAX_AGE_MS = 20 * 60 * 1000;
   var WARM_CONCURRENCY = 3;
-  var WARM_KEY = 'examiner-offline-warm-v2'; // bump to make every device re-download the offline pages
+  var WARM_KEY = 'examiner-offline-warm-v3'; // bump to make every device re-download the offline pages
   var FLASH_KEY = 'examiner-offline-flash';
 
   var state = { auth: false, syncing: false, warming: false, warmError: null };
@@ -188,21 +192,25 @@
     });
 
     var heading = document.querySelector('.tittle h2');
+    var kind = form.getAttribute('data-offline-kind') === 'update' ? 'update' : 'create';
     return {
       id: uuid(),
       userId: cfg.userId,
+      kind: kind,
+      redirect: form.getAttribute('data-offline-redirect') || '',
       url: form.action,
       fields: fields,
       createdAt: Date.now(),
       status: 'pending',
       error: '',
-      key: [form.action, fieldValue(form, 'candidate_id'), fieldValue(form, 'station_id'),
-            fieldValue(form, 'form_type'), fieldValue(form, 'exam_type')].join('|'),
+      key: [kind, form.action, fieldValue(form, 'candidate_id'), fieldValue(form, 'station_id'),
+            fieldValue(form, 'form_type'), fieldValue(form, 'exam_format'), fieldValue(form, 'exam_type')].join('|'),
       label: {
         exam: heading ? heading.textContent.replace(/\s+/g, ' ').trim() : 'Evaluation',
-        group: selectedText(form, 'group_id'),
-        candidate: selectedText(form, 'candidate_id'),
-        station: selectedText(form, 'station_id'),
+        // New marks pick these from dropdowns; edit forms show them as read-only text.
+        group: selectedText(form, 'group_id') || fieldValue(form, 'group_id_display'),
+        candidate: selectedText(form, 'candidate_id') || fieldValue(form, 'candidate_id_display'),
+        station: selectedText(form, 'station_id') || (fieldValue(form, 'station_id') ? 'Station ' + fieldValue(form, 'station_id') : ''),
       },
     };
   }
@@ -211,8 +219,16 @@
 
   function enqueue(item) {
     return queueAll().then(function (items) {
-      var clash = items.some(function (other) { return other.key === item.key; });
-      if (clash) return 'exists';
+      var same = items.filter(function (other) { return other.key === item.key; });
+
+      if (item.kind === 'update') {
+        // The latest edit of a mark wins: drop any earlier queued edit of it.
+        return Promise.all(same.map(function (other) { return queueDelete(other.id); })).then(function () {
+          return queuePut(item);
+        }).then(function () { return 'queued'; });
+      }
+
+      if (same.length) return 'exists';
       return queuePut(item).then(function () { return 'queued'; });
     });
   }
@@ -241,7 +257,7 @@
         var text = reason === 'auth'
           ? 'Saved on this device. Sign in again to submit it.'
           : 'Saved on this device. It will be submitted automatically when you are back online.';
-        finishAndReset(form, 'warning', text, reason !== 'auth');
+        finishAndReset(form, 'warning', text, reason !== 'auth', item.redirect);
       }, function () {
         toast('error', 'Could not save this mark on this device. Reconnect before submitting.');
         setBusy(false);
@@ -255,7 +271,7 @@
 
     submitNow(item, fieldValue(form, '_token')).then(function (result) {
       if (result.outcome === 'success') {
-        finishAndReset(form, 'success', result.message || 'Evaluation submitted successfully.');
+        finishAndReset(form, 'success', result.message || 'Evaluation submitted successfully.', true, item.redirect);
       } else if (result.outcome === 'duplicate' || result.outcome === 'invalid') {
         toast('error', result.message);
         setBusy(false);
@@ -280,11 +296,16 @@
   }
 
   /** Show a message and give the examiner a clean form, like the old redirect did. */
-  function finishAndReset(form, type, text, reload) {
+  function finishAndReset(form, type, text, reload, redirect) {
     refreshStatus();
     if (reload !== false && navigator.serviceWorker && navigator.serviceWorker.controller) {
       setFlash(type, text);
-      window.location.reload();
+      if (redirect) window.location.assign(redirect); else window.location.reload();
+      return;
+    }
+    if (reload !== false && redirect && navigator.onLine) {
+      setFlash(type, text);
+      window.location.assign(redirect);
       return;
     }
     // Reloading is not possible (no cached copy offline) or not wanted (session ended): reset in place.
@@ -501,13 +522,13 @@
     }
 
     lastItems.forEach(function (item) {
-      var label = [item.label.candidate, item.label.station, item.label.group].filter(Boolean).join(' · ');
+      var label = [item.kind === 'update' ? 'Edit' : '', item.label.candidate, item.label.station, item.label.group].filter(Boolean).join(' · ');
       var node = el('div', { class: 'eo-item' }, [
         el('strong', { text: label || 'Evaluation' }),
         el('small', { text: (item.label.exam || '') + ' — ' + formatTime(item.createdAt) }),
       ]);
       if (item.status === 'failed') {
-        node.appendChild(el('small', { class: 'eo-err', text: 'Rejected: ' + (item.error || 'unknown reason') + ' Re-enter it from the form if still needed.' }));
+        node.appendChild(el('small', { class: 'eo-err', text: 'Rejected: ' + (item.error || 'unknown reason') + (item.kind === 'update' ? ' Open the mark again and re-apply the edit if still needed.' : ' Re-enter it from the form if still needed.') }));
         node.appendChild(el('button', { class: 'eo-btn link', type: 'button', text: 'Discard', onclick: function () {
           queueDelete(item.id).then(refreshStatus);
         } }));
@@ -610,7 +631,7 @@
     var body = el('tbody');
     lastItems.forEach(function (item) {
       body.appendChild(el('tr', {}, [
-        el('td', { text: item.label.candidate || '-' }),
+        el('td', { text: (item.kind === 'update' ? 'Edit · ' : '') + (item.label.candidate || '-') }),
         el('td', { text: item.label.station || '-' }),
         el('td', { text: item.label.group || '-' }),
         el('td', { text: item.label.exam || '-' }),
@@ -632,6 +653,39 @@
       var flash = JSON.parse(raw);
       toast(flash.type, flash.text);
     } catch (e) { /* ignore */ }
+  }
+
+  // ── Editing a mark that already has an unsynced edit ────────────────────
+
+  /**
+   * The cached edit page still shows the server's old values. If this mark has
+   * an edit waiting on the device, say so and show the edited values instead.
+   */
+  function showQueuedEdit(form) {
+    var key = buildItem(form).key;
+    queueAll().then(function (items) {
+      var queued = items.filter(function (item) { return item.key === key; })[0];
+      if (!queued) return;
+
+      var byName = {};
+      queued.fields.forEach(function (pair) { (byName[pair[0]] = byName[pair[0]] || []).push(pair[1]); });
+
+      Object.keys(byName).forEach(function (name) {
+        if (name === '_token' || name === '_method') return;
+        var inputs = form.querySelectorAll('[name="' + name.replace(/"/g, '\\"') + '"]');
+        // Only restore when the form has the same number of inputs (same shape of marks).
+        if (inputs.length !== byName[name].length) return;
+        inputs.forEach(function (input, i) {
+          if (input.type === 'hidden' || input.readOnly || input.type === 'file') return;
+          input.value = byName[name][i];
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      });
+
+      var notice = el('div', { class: 'alert alert-warning', style: 'margin:0 10px 12px', text: 'You edited this mark on this device and it has not been submitted yet. The values below are your edit; saving again replaces it.' });
+      form.insertBefore(notice, form.firstChild);
+    }).catch(function () { /* no queue, nothing to restore */ });
   }
 
   // ── Logout ──────────────────────────────────────────────────────────────
@@ -662,6 +716,14 @@
 
     document.querySelectorAll('form[data-offline-submit]').forEach(function (form) {
       form.addEventListener('submit', function (event) { onSubmit(event, form); });
+      if (form.getAttribute('data-offline-kind') === 'update') showQueuedEdit(form);
+    });
+    document.querySelectorAll('form[data-requires-online]').forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        if (navigator.onLine) return;
+        event.preventDefault();
+        toast('error', 'You are offline. Reconnect to save changes to your profile.');
+      });
     });
     bindLogout();
 

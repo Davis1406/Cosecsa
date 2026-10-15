@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Support endpoints for offline marking on the examiner pages.
@@ -29,6 +30,12 @@ class ExaminerOfflineController extends Controller
         'paediatric'              => 7,
         'plastic_surgery'         => 8,
         'urology'                 => 9,
+    ];
+
+    /** Results tables with a Clinical/Viva split; one Resubmit flow per candidate. */
+    private const FCS_RESULT_TABLES = [
+        'cardiothoracic_results', 'urology_results', 'paediatric_results', 'ent_results',
+        'plastic_surgery_results', 'neurosurgery_results', 'paediatric_orthopaedics_results', 'orthopaedic_results',
     ];
 
     private const GS_PROGRAMME  = 2;
@@ -63,7 +70,61 @@ class ExaminerOfflineController extends Controller
             $paths[] = "examiner/{$type}/viva";
         }
 
-        return array_map(fn ($path) => url($path), $paths);
+        $paths[] = 'examiner/profile_settings';
+        $paths = array_merge($paths, $this->profilePaths(), $this->resultPaths());
+
+        return array_values(array_unique(array_map(fn ($path) => url($path), $paths)));
+    }
+
+    /** The examiner's own profile pages (viewable offline; saving needs a connection). */
+    private function profilePaths(): array
+    {
+        $examinerId = DB::table('examiners')->where('user_id', Auth::id())->value('id');
+
+        return $examinerId ? ["examiner/edit_info/{$examinerId}"] : [];
+    }
+
+    /**
+     * View / Resubmit pages for each result this examiner has already saved
+     * this year, so a mark can be reviewed and corrected without a connection.
+     * Sandbox (test_) marks have no such pages and are left out.
+     */
+    private function resultPaths(): array
+    {
+        $examinerId = DB::table('examiners')->where('user_id', Auth::id())->value('id');
+        $yearId = User::getCurrentYearId();
+        if (! $examinerId || ! $yearId) {
+            return [];
+        }
+
+        $paths = [];
+
+        foreach (['mcs_results', 'gs_results'] as $table) {
+            if (! Schema::hasTable($table)) continue;
+
+            $rows = DB::table($table)->where('examiner_id', $examinerId)->where('exam_year', $yearId)
+                ->select('candidate_id', 'station_id')->distinct()->get();
+            foreach ($rows as $row) {
+                $paths[] = "examiner/resubmit/{$row->candidate_id}/{$row->station_id}";
+                $paths[] = "examiner/view_results/{$row->candidate_id}/{$row->station_id}";
+            }
+        }
+
+        foreach (self::FCS_RESULT_TABLES as $table) {
+            if (! Schema::hasTable($table)) continue;
+
+            $rows = DB::table($table)->where('examiner_id', $examinerId)->where('exam_year', $yearId)
+                ->select('candidate_id', 'exam_format')->distinct()->get();
+            foreach ($rows as $row) {
+                $paths[] = "examiner/fcs-resubmit/{$row->candidate_id}";
+                $paths[] = "examiner/view_fcs_results/{$row->candidate_id}";
+                if (in_array($row->exam_format, ['clinical', 'viva'], true)) {
+                    $paths[] = "examiner/fcs-resubmit/{$row->candidate_id}/{$row->exam_format}";
+                }
+            }
+        }
+
+        return $paths;
     }
 
     /**

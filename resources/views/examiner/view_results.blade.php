@@ -77,4 +77,5 @@
     </section>
 </div>
 
+    @include('examiner._offline')
 @endsection

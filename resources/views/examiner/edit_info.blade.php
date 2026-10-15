@@ -33,7 +33,7 @@
                         </div>
                     </div>
 
-                    <form id="examinerForm" method="POST"
+                    <form id="examinerForm" data-requires-online method="POST"
                         action="{{ route('examiner.selfUpdate', ['id' => $examiner->id]) }}" enctype="multipart/form-data">
                         @csrf
                         <div class="form-content">
@@ -408,6 +408,7 @@
             </div>
         </section>
     </div>
+    @include('examiner._offline')
 @endsection
 @push('styles')
     <style>

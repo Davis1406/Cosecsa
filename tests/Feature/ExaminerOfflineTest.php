@@ -213,6 +213,94 @@ class ExaminerOfflineTest extends TestCase
         $this->assertSame('cardiothoracic_results', $real->source_table);
     }
 
+    // ── Editing (resubmitting) saved marks ──────────────────────────────
+
+    public function test_editing_an_mcs_mark_updates_it_and_replies_json(): void
+    {
+        $this->postJson('examiner/examiner_form', $this->flatPayload(['overall' => 'pass']))->assertStatus(201);
+
+        $this->postJson('examiner/resubmit/10/1', [
+            'group_id' => 3, 'station_id' => 1, 'question_marks' => [7, 8], 'total_marks' => 15, 'remarks' => 'Revised', 'grade' => 'borderline',
+        ])->assertOk()->assertJson(['status' => 'success']);
+
+        $row = DB::table('mcs_results')->first();
+        $this->assertSame('[7,8]', $row->question_mark);
+        $this->assertEquals(15, $row->total);
+        $this->assertSame('borderline', $row->overall);
+        $this->assertSame(1, DB::table('mcs_results')->count());
+    }
+
+    public function test_editing_the_same_mark_twice_is_safe_to_repeat(): void
+    {
+        $this->postJson('examiner/general_surgery', $this->flatPayload())->assertStatus(201);
+        $edit = ['group_id' => 3, 'station_id' => 1, 'question_marks' => [9], 'total_marks' => 9, 'remarks' => ''];
+
+        $this->postJson('examiner/resubmit/10/1', $edit)->assertOk();
+        $this->postJson('examiner/resubmit/10/1', $edit)->assertOk();
+
+        $this->assertSame('[9]', DB::table('gs_results')->value('question_mark'));
+        $this->assertSame(1, DB::table('gs_results')->count());
+    }
+
+    public function test_editing_a_mark_that_does_not_exist_or_has_no_marks_is_rejected(): void
+    {
+        $this->postJson('examiner/resubmit/10/1', ['question_marks' => [5], 'total_marks' => 5])
+            ->assertStatus(422)->assertJson(['status' => 'invalid', 'message' => 'Evaluation not found.']);
+
+        $this->postJson('examiner/general_surgery', $this->flatPayload())->assertStatus(201);
+        $this->postJson('examiner/resubmit/10/1', ['total_marks' => 5])->assertStatus(422)->assertJson(['status' => 'invalid']);
+        $this->assertSame('[4,5.5]', DB::table('gs_results')->value('question_mark'));
+    }
+
+    public function test_the_classic_edit_form_still_redirects_to_the_results_page(): void
+    {
+        $this->postJson('examiner/general_surgery', $this->flatPayload())->assertStatus(201);
+
+        $this->post('examiner/resubmit/10/1', ['group_id' => 3, 'station_id' => 1, 'question_marks' => [6], 'total_marks' => 6])
+            ->assertRedirect(url('examiner/results'))
+            ->assertSessionHas('success');
+    }
+
+    public function test_editing_an_fcs_mark_changes_only_that_format(): void
+    {
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical'))->assertStatus(201);
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('viva'))->assertStatus(201);
+
+        $this->postJson('examiner/fcs-resubmit/10', [
+            'form_type' => 'viva', 'group_id' => 3, 'station_id' => 1, 'question_marks' => [1, 2, 3], 'total_marks' => 6,
+        ])->assertOk()->assertJson(['status' => 'success']);
+
+        $this->assertSame('[1,2,3]', DB::table('cardiothoracic_results')->where('exam_format', 'viva')->value('question_mark'));
+        $this->assertSame('[3,4,5]', DB::table('cardiothoracic_results')->where('exam_format', 'clinical')->value('question_mark'));
+    }
+
+    public function test_fcs_edit_without_marks_or_without_an_existing_mark_is_rejected(): void
+    {
+        $this->postJson('examiner/fcs-resubmit/10', ['form_type' => 'viva', 'question_marks' => [1]])
+            ->assertStatus(422)->assertJson(['status' => 'invalid']);
+
+        $this->postJson('examiner/fcs-resubmit/10', ['form_type' => 'viva'])
+            ->assertStatus(422)->assertJson(['status' => 'invalid']);
+    }
+
+    public function test_manifest_lists_the_profile_pages_and_the_view_and_resubmit_pages_for_saved_results(): void
+    {
+        $this->postJson('examiner/examiner_form', $this->flatPayload(['overall' => 'pass']))->assertStatus(201);
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical'))->assertStatus(201);
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical', ['group_id' => 17, 'candidate_id' => 11]))->assertStatus(201); // sandbox
+
+        $pages = array_map(fn ($u) => parse_url($u, PHP_URL_PATH), $this->getJson('examiner/offline/manifest')->assertOk()->json('pages'));
+
+        foreach (['/examiner/profile_settings', '/examiner/edit_info/5',
+                  '/examiner/resubmit/10/1', '/examiner/view_results/10/1',
+                  '/examiner/fcs-resubmit/10', '/examiner/fcs-resubmit/10/clinical', '/examiner/view_fcs_results/10'] as $path) {
+            $this->assertContains($path, $pages);
+        }
+        $this->assertNotContains('/examiner/fcs-resubmit/10/viva', $pages);   // no viva mark yet
+        $this->assertNotContains('/examiner/fcs-resubmit/11', $pages);        // sandbox marks have no edit pages
+        $this->assertSame(count($pages), count(array_unique($pages)));
+    }
+
     // ── Offline support endpoints ───────────────────────────────────────
 
     public function test_token_endpoint_returns_a_fresh_token_and_the_user_and_is_not_cacheable(): void
@@ -235,8 +323,8 @@ class ExaminerOfflineTest extends TestCase
                   '/examiner/results', '/examiner/cardiothoracic', '/examiner/cardiothoracic/clinical', '/examiner/paediatric_orthopaedics/viva'] as $path) {
             $this->assertContains($path, $pages);
         }
-        // 4 fixed pages + 8 specialties x (selection, clinical, viva)
-        $this->assertCount(28, $pages);
+        // 4 fixed pages + profile (2) + 8 specialties x (selection, clinical, viva)
+        $this->assertCount(30, $pages);
 
         $data = array_map(fn ($u) => parse_url($u, PHP_URL_PATH), $manifest['data']);
         sort($data);
