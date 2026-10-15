@@ -6,7 +6,10 @@
  *
  *   - marking pages + candidate lists  -> network first, cached copy when the
  *                                         network is down or slow
- *   - scripts, styles, fonts, images   -> stale-while-revalidate
+ *   - scripts, styles, fonts, images   -> stale-while-revalidate, falling back to an
+ *                                         older cached version if the network is down
+ *   - every cached page also has its own scripts and styles downloaded with it, so a
+ *     page saved while online never needs a file that was not saved too
  *   - everything else (POSTs, admin pages, profile, results, ...) is left to
  *     the browser untouched.
  *
@@ -15,7 +18,7 @@
  * emptied when the account changes or on logout.
  */
 
-const VERSION = 'v1';
+const VERSION = 'v1';  // cache names; assets are re-checked on every visit, so this only changes if the cache layout does
 const PAGE_CACHE = `examiner-pages-${VERSION}`;
 const STATIC_CACHE = `examiner-static-${VERSION}`;
 const META_CACHE = `examiner-meta-${VERSION}`;
@@ -74,7 +77,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   if (url.origin === self.location.origin && isCacheablePage(url)) {
-    event.respondWith(networkFirst(request, url));
+    event.respondWith(networkFirst(request, url, event));
     return;
   }
 
@@ -92,7 +95,7 @@ function cacheKey(url) {
   return url.origin + url.pathname.replace(/\/$/, '');
 }
 
-async function networkFirst(request, url) {
+async function networkFirst(request, url, event) {
   const cache = await caches.open(PAGE_CACHE);
   const key = cacheKey(url);
 
@@ -102,6 +105,9 @@ async function networkFirst(request, url) {
     // page): never store that as the marking page.
     if (response.ok && !response.redirected) {
       await cache.put(key, response.clone());
+      if ((response.headers.get('content-type') || '').includes('text/html')) {
+        event.waitUntil(cachePageAssets(response.clone(), url.href));
+      }
     }
     return response;
   } catch (error) {
@@ -132,7 +138,55 @@ async function staleWhileRevalidate(request) {
   if (cached) return cached;
 
   const response = await refresh;
-  return response || Response.error();
+  if (response) return response;
+
+  // Offline and this exact file (e.g. app.js?v=<new deploy>) was never saved:
+  // an older copy of the same file is far better than nothing.
+  const older = await cache.match(request, { ignoreSearch: true });
+  return older || Response.error();
+}
+
+/**
+ * Download the scripts and stylesheets a page refers to and keep them, so the
+ * saved copy of the page can be opened offline with every file it asks for.
+ * Versioned URLs (?v=...) change on each deploy, which is why this matters.
+ */
+async function cachePageAssets(response, pageUrl) {
+  try {
+    const html = await response.text();
+    const cache = await caches.open(STATIC_CACHE);
+
+    for (const url of assetUrls(html, pageUrl)) {
+      if (await cache.match(url)) continue;
+      try {
+        const sameOrigin = new URL(url).origin === self.location.origin;
+        const asset = await fetch(url, { mode: sameOrigin ? 'same-origin' : 'no-cors', credentials: 'omit' });
+        if (asset.ok || asset.type === 'opaque') await cache.put(url, asset);
+      } catch (error) {
+        // one missing file must not stop the rest
+      }
+    }
+  } catch (error) {
+    // best effort only
+  }
+}
+
+/** Absolute URLs of the <script src> and <link rel="stylesheet"> files in a page. */
+function assetUrls(html, pageUrl) {
+  const found = new Set();
+  const add = (value) => {
+    if (!value || value.startsWith('data:') || value.startsWith('javascript:')) return;
+    try { found.add(new URL(value, pageUrl).href); } catch (error) { /* ignore */ }
+  };
+
+  for (const match of html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["']/gi)) add(match[1]);
+  for (const tag of html.matchAll(/<link\b[^>]*>/gi)) {
+    if (/\brel=["']?stylesheet/i.test(tag[0])) {
+      const href = /\bhref=["']([^"']+)["']/i.exec(tag[0]);
+      if (href) add(href[1]);
+    }
+  }
+  return found;
 }
 
 function fetchWithTimeout(request, ms) {

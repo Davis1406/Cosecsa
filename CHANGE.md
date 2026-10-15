@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-15) — Offline: saved pages lost their scripts after a deploy; result pages not kept
+- **Cause.** The offline copy of a page was saved without the scripts/styles it refers to. Our script URLs carry `?v=<file time>`, which changes on every deploy, so a page saved after a deploy asked for a script URL the device never downloaded: opened offline (e.g. dashboard → Results) it ran without `examiner-offline.js`, so no "saved on this device" card, no View/Edit/Discard buttons and no sync badge.
+- **Fix (`public/examiner-sw.js`).** Whenever a page is saved, the service worker now also downloads and keeps its `<script src>` and `<link rel=stylesheet>` files; and offline, a script/style that was never saved falls back to an older saved copy of the same file (ignoring `?v=`).
+- **Result pages (`examiner-offline.js`).** Each time the results page is opened online it saves every View / Resubmit page it links to (also the rows on other pages of the table, read from the DataTable; and the Clinical/Viva forms linked from an FCS resubmit page), so a result submitted after the device was last prepared can still be opened offline (e.g. `examiner/view_results/{candidate}/{station}`).
+- The offline readiness key was bumped (`examiner-offline-warm-v5`) so devices re-download the pages once and pick up their assets.
+- **Files:** `public/examiner-sw.js`, `public/dist/js/examiner-offline.js`. Checked in a browser with a stubbed server (deploy simulated by changing the script version, then going offline).
+
 ### Added (2026-10-15) — Results: view, edit and discard marks that are still on the device
 - Marks saved offline and not yet submitted had no View/Edit controls: they are not on the server, so there is no page for them. The "Saved on this device, not yet submitted" card on `examiner/results` now has **View**, **Edit** and **Discard** per mark (works offline). Edit opens a dialog with the mark's questions (grouped by case for FCS), grade, remarks and a live total; it keeps the original field order, refuses blank/negative marks and, for MCS/General Surgery, a total over 20. A rejected mark can be edited and is queued again. Saving re-reads the mark first: if it was submitted in the meantime the examiner is told to use Resubmit instead. Discard asks for confirmation.
 - Client only: `public/dist/js/examiner-offline.js` (no server change). Checked in a browser with a stubbed server (single-list and multi-case marks, validation, view, discard, and that sync submits the edited values).

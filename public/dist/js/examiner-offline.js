@@ -12,6 +12,9 @@
  *      data-offline-kind="update" (the latest queued edit of a mark replaces
  *      an earlier one) and data-offline-redirect (where to go afterwards);
  *   4. syncs queued marks, in order, once the connection and session are back;
+ *   4b. the results page saves the View / Resubmit pages it links to every time it
+ *      is opened online, so a result can be reviewed offline even if it was
+ *      submitted after the device was last prepared;
  *   5. on the results page, marks still waiting on the device can be viewed,
  *      edited and discarded from the "saved on this device" card;
  *   6. forms marked data-requires-online (profile edit: uploads, password) are
@@ -34,7 +37,7 @@
   var SYNC_INTERVAL_MS = 30000;
   var WARM_MAX_AGE_MS = 20 * 60 * 1000;
   var WARM_CONCURRENCY = 3;
-  var WARM_KEY = 'examiner-offline-warm-v4'; // bump to make every device re-download the offline pages
+  var WARM_KEY = 'examiner-offline-warm-v5'; // bump to make every device re-download the offline pages
   var FLASH_KEY = 'examiner-offline-flash';
 
   var state = { auth: false, syncing: false, warming: false, warmError: null };
@@ -454,6 +457,64 @@
     }).then(function () {
       state.warming = false;
       refreshStatus();
+    });
+  }
+
+  // ── Results page: keep every linked View / Resubmit page ────────────────
+
+  var RESULT_PAGE = /^\/examiner\/(?:(?:resubmit|view_results)\/\d+\/\d+|(?:fcs-resubmit|view_fcs_results)\/\d+)\/?$/;
+  var FCS_SELECTION = /^\/examiner\/fcs-resubmit\/\d+\/?$/;
+  var FCS_FORM_LINK = /\/examiner\/fcs-resubmit\/\d+\/(?:clinical|viva)/g;
+
+  /** Links to result pages, including rows on other pages of the DataTable (not in the DOM). */
+  function resultPageLinks() {
+    var anchors = Array.prototype.slice.call(document.querySelectorAll('a[href]'));
+
+    var jq = window.jQuery;
+    if (jq && jq.fn && jq.fn.dataTable) {
+      jq('table.dataTable').each(function () {
+        try {
+          anchors = anchors.concat(jq(this).DataTable().rows().nodes().to$().find('a[href]').toArray());
+        } catch (e) { /* not a DataTable */ }
+      });
+    }
+
+    var urls = {};
+    anchors.forEach(function (a) {
+      try {
+        var url = new URL(a.getAttribute('href'), window.location.href);
+        if (url.origin === window.location.origin && RESULT_PAGE.test(url.pathname)) urls[url.href] = true;
+      } catch (e) { /* ignore */ }
+    });
+    return Object.keys(urls);
+  }
+
+  function prefetchResultPages() {
+    if (!navigator.onLine || !('serviceWorker' in navigator)) return Promise.resolve();
+
+    return waitForController(5000).then(function (controlled) {
+      if (!controlled) return;
+
+      var queue = resultPageLinks();
+      var seen = {};
+      queue.forEach(function (u) { seen[u] = true; });
+
+      var worker = function () {
+        if (!queue.length) return Promise.resolve();
+        var url = queue.shift();
+        return fetch(url, { credentials: 'same-origin' }).then(function (response) {
+          // The FCS "resubmit" page links to its Clinical / Viva forms: keep those too.
+          if (!response.ok || response.redirected || !FCS_SELECTION.test(new URL(url).pathname)) return;
+          return response.text().then(function (html) {
+            (html.match(FCS_FORM_LINK) || []).forEach(function (path) {
+              var form = new URL(path, window.location.origin).href;
+              if (!seen[form]) { seen[form] = true; queue.push(form); }
+            });
+          });
+        }, function () { /* offline again: stop quietly */ }).then(worker);
+      };
+
+      return Promise.all([worker(), worker(), worker()]);
     });
   }
 
@@ -923,6 +984,13 @@
     }).then(function () {
       return prepareOffline(false);
     });
+
+    if (document.getElementById('examiner-offline-pending')) {
+      // The results page: after its table is built, keep every linked page for offline use.
+      var keepResultPages = function () { setTimeout(prefetchResultPages, 600); };
+      if (document.readyState === 'complete') keepResultPages();
+      else window.addEventListener('load', keepResultPages);
+    }
   }
 
   // For support and automated tests.
