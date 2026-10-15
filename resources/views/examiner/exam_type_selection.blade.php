@@ -191,4 +191,5 @@
         }
     </style>
 
+    @include('examiner._offline')
 @endsection

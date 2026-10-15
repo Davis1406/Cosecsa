@@ -56,6 +56,9 @@
                                 <p>Welcome to the COSECSA marking portal. Please choose the EXAM TYPE you want to evaluate:</p>
                             </div>
 
+                            <!-- Offline readiness (filled in by dist/js/examiner-offline.js) -->
+                            <div id="examiner-offline-status"></div>
+
                             <!-- Exam Type Selection Dropdown -->
                             <div class="form-group">
                                 <label for="exam_type" style="font-weight: bold;">Select Exam Type</label>
@@ -100,4 +103,5 @@
             }
         }
     </script>
+    @include('examiner._offline')
 @endsection

@@ -1,0 +1,271 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Tests\TestCase;
+
+/**
+ * Server side of offline marking: the JSON replies the browser queue relies
+ * on (success / duplicate / invalid), that the classic redirect flow still
+ * works, and the manifest + token endpoints.
+ *
+ * Uses an in-memory SQLite database with just the tables these endpoints touch.
+ */
+class ExaminerOfflineTest extends TestCase
+{
+    private int $examinerId = 5;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'database.default' => 'sqlite',
+            'database.connections.sqlite.database' => ':memory:',
+        ]);
+        DB::purge('sqlite');
+
+        $this->createSchema();
+        $this->seedBaseData();
+
+        $this->withoutMiddleware();
+        $this->actingAs(User::find(1));
+    }
+
+    // ── Marking endpoints ───────────────────────────────────────────────
+
+    public function test_mcs_mark_is_saved_and_reported_as_success(): void
+    {
+        $this->postJson('examiner/examiner_form', $this->flatPayload(['overall' => 'Pass']))
+            ->assertStatus(201)
+            ->assertJson(['status' => 'success']);
+
+        $row = DB::table('mcs_results')->first();
+        $this->assertSame(10, (int) $row->candidate_id);
+        $this->assertSame($this->examinerId, (int) $row->examiner_id);
+        $this->assertSame('pass', $row->overall);
+        $this->assertSame('[4,5.5]', $row->question_mark);
+        $this->assertSame(2, (int) $row->exam_year); // years.id of 2026
+    }
+
+    public function test_repeating_a_mark_is_a_duplicate_and_writes_nothing(): void
+    {
+        $payload = $this->flatPayload(['overall' => 'pass']);
+
+        $this->postJson('examiner/examiner_form', $payload)->assertStatus(201);
+        $this->postJson('examiner/examiner_form', $payload)
+            ->assertStatus(409)
+            ->assertJson(['status' => 'duplicate']);
+
+        $this->assertSame(1, DB::table('mcs_results')->count());
+    }
+
+    public function test_a_different_station_for_the_same_candidate_is_not_a_duplicate(): void
+    {
+        $this->postJson('examiner/examiner_form', $this->flatPayload(['overall' => 'pass']))->assertStatus(201);
+        $this->postJson('examiner/examiner_form', $this->flatPayload(['overall' => 'pass', 'station_id' => 2]))->assertStatus(201);
+
+        $this->assertSame(2, DB::table('mcs_results')->count());
+    }
+
+    public function test_incomplete_marks_are_rejected_not_stored(): void
+    {
+        $payload = $this->flatPayload(['overall' => 'pass']);
+        unset($payload['question_marks']);
+
+        $this->postJson('examiner/examiner_form', $payload)
+            ->assertStatus(422)
+            ->assertJson(['status' => 'invalid']);
+
+        $this->postJson('examiner/examiner_form', $this->flatPayload(['candidate_id' => 999999, 'overall' => 'pass']))
+            ->assertStatus(422);
+
+        $this->postJson('examiner/examiner_form', $this->flatPayload(['station_id' => 9, 'overall' => 'pass']))
+            ->assertStatus(422);
+
+        $this->assertSame(0, DB::table('mcs_results')->count());
+    }
+
+    public function test_general_surgery_mark_round_trip(): void
+    {
+        $payload = $this->flatPayload();
+
+        $this->postJson('examiner/general_surgery', $payload)->assertStatus(201)->assertJson(['status' => 'success']);
+        $this->postJson('examiner/general_surgery', $payload)->assertStatus(409)->assertJson(['status' => 'duplicate']);
+
+        $this->assertSame(1, DB::table('gs_results')->count());
+    }
+
+    public function test_fcs_mark_is_saved_per_format_and_duplicates_are_per_format(): void
+    {
+        $clinical = $this->fcsPayload('clinical');
+        $viva = $this->fcsPayload('viva');
+
+        $this->postJson('examiner/submit-exam', $clinical)->assertStatus(201)->assertJson(['status' => 'success']);
+        $this->postJson('examiner/submit-exam', $clinical)->assertStatus(409)->assertJson(['status' => 'duplicate']);
+        $this->postJson('examiner/submit-exam', $viva)->assertStatus(201);
+
+        $this->assertSame(2, DB::table('cardiothoracic_results')->count());
+        $this->assertSame('[3,4,5]', DB::table('cardiothoracic_results')->where('exam_format', 'clinical')->value('question_mark'));
+    }
+
+    public function test_fcs_rejects_an_unknown_exam_type(): void
+    {
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical', ['exam_type' => 'nonsense']))
+            ->assertStatus(422)
+            ->assertJson(['status' => 'invalid']);
+    }
+
+    public function test_the_normal_form_post_still_redirects_back_with_a_flash_message(): void
+    {
+        $this->from('examiner/examiner_form')
+            ->post('examiner/examiner_form', $this->flatPayload(['overall' => 'pass']))
+            ->assertRedirect('examiner/examiner_form')
+            ->assertSessionHas('success');
+
+        $this->from('examiner/examiner_form')
+            ->post('examiner/examiner_form', $this->flatPayload(['overall' => 'pass']))
+            ->assertRedirect('examiner/examiner_form')
+            ->assertSessionHas('error');
+
+        $this->assertSame(1, DB::table('mcs_results')->count());
+    }
+
+    // ── Offline support endpoints ───────────────────────────────────────
+
+    public function test_token_endpoint_returns_a_fresh_token_and_the_user_and_is_not_cacheable(): void
+    {
+        $response = $this->withSession(['seed' => 1])->getJson('examiner/offline/token')->assertOk();
+
+        $response->assertJson(['user_id' => 1]);
+        $this->assertNotEmpty($response->json('token'));
+        $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
+    }
+
+    public function test_manifest_lists_marking_pages_and_only_the_candidate_lists_that_exist(): void
+    {
+        $manifest = $this->getJson('examiner/offline/manifest')->assertOk()->json();
+
+        $this->assertSame(1, $manifest['user_id']);
+
+        $pages = array_map(fn ($u) => parse_url($u, PHP_URL_PATH), $manifest['pages']);
+        foreach (['/examiner/dashboard', '/examiner/examiner_form', '/examiner/general_surgery',
+                  '/examiner/cardiothoracic', '/examiner/cardiothoracic/clinical', '/examiner/paediatric_orthopaedics/viva'] as $path) {
+            $this->assertContains($path, $pages);
+        }
+        // 3 fixed pages + 8 specialties x (selection, clinical, viva)
+        $this->assertCount(27, $pages);
+
+        $data = array_map(fn ($u) => parse_url($u, PHP_URL_PATH), $manifest['data']);
+        sort($data);
+        $this->assertSame([
+            '/get-exam-candidates/cardiothoracic/3',
+            '/get-gs-candidates/3',
+            '/get-mcs-candidates/4',
+        ], $data);
+    }
+
+    public function test_manifest_has_no_candidate_urls_without_a_current_exam_year(): void
+    {
+        DB::table('years')->delete();
+
+        $this->getJson('examiner/offline/manifest')->assertOk()->assertJson(['data' => []]);
+    }
+
+    // ── Fixtures ────────────────────────────────────────────────────────
+
+    private function flatPayload(array $overrides = []): array
+    {
+        return array_merge([
+            'candidate_id'   => 10,
+            'group_id'       => 3,
+            'station_id'     => 1,
+            'question_marks' => [4, 5.5],
+            'total_marks'    => 9.5,
+            'remarks'        => 'Good',
+        ], $overrides);
+    }
+
+    private function fcsPayload(string $format, array $overrides = []): array
+    {
+        return array_merge([
+            'exam_type'            => 'cardiothoracic',
+            'form_type'            => $format,
+            'candidate_id'         => 10,
+            'group_id'             => 3,
+            'station_id'           => 1,
+            'question_marks_case1' => [3, 4],
+            'question_marks_case2' => [5],
+            'total_marks'          => 12,
+            'remarks'              => '',
+        ], $overrides);
+    }
+
+    private function seedBaseData(): void
+    {
+        DB::table('users')->insert(['id' => 1, 'name' => 'Dr Examiner', 'email' => 'e@example.org', 'password' => 'x']);
+        DB::table('examiners')->insert(['id' => $this->examinerId, 'user_id' => 1]);
+        DB::table('years')->insert(['id' => 2, 'year_name' => '2026']);
+        DB::table('examiners_groups')->insert([['id' => 3, 'group_name' => 'A'], ['id' => 4, 'group_name' => 'B']]);
+
+        DB::table('candidates')->insert([
+            ['id' => 10, 'programme_id' => 1, 'group_id' => 3, 'exam_year' => '2026', 'entry_number' => 'PEN-1'],
+            ['id' => 11, 'programme_id' => 2, 'group_id' => 3, 'exam_year' => '2026', 'entry_number' => 'PEN-2'],
+            ['id' => 12, 'programme_id' => 10, 'group_id' => 4, 'exam_year' => '2026', 'entry_number' => 'PEN-3'],
+            ['id' => 13, 'programme_id' => 1, 'group_id' => 4, 'exam_year' => '2025', 'entry_number' => 'PEN-4'], // other year
+            ['id' => 14, 'programme_id' => 1, 'group_id' => null, 'exam_year' => '2026', 'entry_number' => 'PEN-5'], // ungrouped
+        ]);
+    }
+
+    private function createSchema(): void
+    {
+        Schema::create('users', function ($t) {
+            $t->increments('id');
+            $t->string('name')->nullable();
+            $t->string('email')->nullable();
+            $t->string('password')->nullable();
+            $t->string('remember_token')->nullable();
+            $t->timestamps();
+        });
+        Schema::create('examiners', function ($t) {
+            $t->increments('id');
+            $t->integer('user_id');
+        });
+        Schema::create('years', function ($t) {
+            $t->increments('id');
+            $t->string('year_name');
+        });
+        Schema::create('examiners_groups', function ($t) {
+            $t->increments('id');
+            $t->string('group_name');
+        });
+        Schema::create('candidates', function ($t) {
+            $t->increments('id');
+            $t->integer('programme_id')->nullable();
+            $t->integer('group_id')->nullable();
+            $t->string('exam_year')->nullable();
+            $t->string('candidate_id')->nullable();
+            $t->string('entry_number')->nullable();
+        });
+
+        foreach (['mcs_results', 'gs_results', 'cardiothoracic_results'] as $table) {
+            Schema::create($table, function ($t) use ($table) {
+                $t->increments('id');
+                $t->integer('candidate_id');
+                $t->integer('examiner_id');
+                $t->integer('station_id');
+                $t->integer('group_id')->nullable();
+                $t->text('question_mark')->nullable();
+                $t->decimal('total', 8, 2)->nullable();
+                $t->string('remarks')->nullable();
+                $t->integer('exam_year');
+                if ($table === 'mcs_results') $t->string('overall')->nullable();
+                if ($table === 'cardiothoracic_results') $t->string('exam_format')->nullable();
+                $t->timestamps();
+            });
+        }
+    }
+}

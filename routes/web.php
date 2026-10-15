@@ -639,6 +639,10 @@ Route::group(['middleware' => 'examiner'], function(){
     // Form submission routes
     Route::post('examiner/submit-exam', [CandidatesController::class, 'submitExamEvaluation'])->name('examiner.submit.exam');
 
+    // Offline marking support: what to cache, and a fresh CSRF token for syncing queued marks
+    Route::get('examiner/offline/manifest', [\App\Http\Controllers\ExaminerOfflineController::class, 'manifest'])->name('examiner.offline.manifest');
+    Route::get('examiner/offline/token', [\App\Http\Controllers\ExaminerOfflineController::class, 'token'])->name('examiner.offline.token');
+
     // Get candidates by group for specific exam
     Route::get('get-exam-candidates/{examType}/{groupId}', [CandidatesController::class, 'getExamCandidatesByGroup']);
 

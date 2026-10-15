@@ -274,7 +274,11 @@ class CandidatesController extends Controller
     public function storeEvaluation(Request $request)
     {
         $examiner = DB::table('examiners')->where('user_id', Auth::id())->first();
-        if (!$examiner) return back()->with('error', 'Examiner data not found.');
+        if (!$examiner) return $this->submissionResponse($request, 'error', 'Examiner data not found.', 403);
+
+        if ($error = $this->submissionError($request, flat: true)) {
+            return $this->submissionResponse($request, 'invalid', $error, 422);
+        }
 
         $currentYearId = User::getCurrentYearId();
 
@@ -286,7 +290,7 @@ class CandidatesController extends Controller
             ->first();
 
         if ($existingSubmission) {
-            return back()->with('error', 'Candidate marks already submitted for this station. Please use Resubmit to edit.');
+            return $this->submissionResponse($request, 'duplicate', 'Candidate marks already submitted for this station. Please use Resubmit to edit.', 409);
         }
 
         $evaluation = new CandidatesFormModel();
@@ -301,14 +305,18 @@ class CandidatesController extends Controller
         $evaluation->exam_year = $currentYearId;
         $evaluation->save();
 
-        return redirect()->back()->with('success', 'Evaluation submitted successfully.');
+        return $this->submissionResponse($request, 'success', 'Evaluation submitted successfully.', 201);
     }
 
     public function storegsEvaluation(Request $request)
     {
         $examiner = DB::table('examiners')->where('user_id', Auth::id())->first();
         if (!$examiner) {
-            return back()->with('error', 'Examiner data not found.');
+            return $this->submissionResponse($request, 'error', 'Examiner data not found.', 403);
+        }
+
+        if ($error = $this->submissionError($request, flat: true)) {
+            return $this->submissionResponse($request, 'invalid', $error, 422);
         }
 
         $currentYearId = User::getCurrentYearId();
@@ -321,7 +329,7 @@ class CandidatesController extends Controller
             ->first();
 
         if ($existingSubmission) {
-            return back()->with('error', 'Candidate marks already submitted for this station. Please use Resubmit to edit.');
+            return $this->submissionResponse($request, 'duplicate', 'Candidate marks already submitted for this station. Please use Resubmit to edit.', 409);
         }
 
         $evaluation = new GeneralSurgery();
@@ -335,7 +343,42 @@ class CandidatesController extends Controller
         $evaluation->exam_year = $currentYearId;
         $evaluation->save();
 
-        return redirect()->back()->with('success', 'GS Evaluation submitted successfully.');
+        return $this->submissionResponse($request, 'success', 'GS Evaluation submitted successfully.', 201);
+    }
+
+    /**
+     * Shared reply for the three marking forms. The forms normally post and
+     * redirect back with a flash message; the offline sync (and the forms'
+     * fetch submit) ask for JSON instead so they can tell a saved mark from a
+     * duplicate or a rejected one. $status is success | duplicate | invalid | error.
+     */
+    private function submissionResponse(Request $request, string $status, string $message, int $httpCode)
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['status' => $status, 'message' => $message], $httpCode);
+        }
+
+        return $status === 'success'
+            ? redirect()->back()->with('success', $message)
+            : back()->with('error', $message);
+    }
+
+    /** First problem with a marking submission, or null when it is acceptable. */
+    private function submissionError(Request $request, bool $flat): ?string
+    {
+        $rules = [
+            'candidate_id' => 'required|integer|exists:candidates,id',
+            'group_id'     => 'required|integer|exists:examiners_groups,id',
+            'station_id'   => 'required|integer|between:1,8',
+            'total_marks'  => 'required|numeric|min:0',
+        ];
+        if ($flat) {
+            $rules['question_marks']   = 'required|array|min:1';
+            $rules['question_marks.*'] = 'nullable|numeric|min:0';
+        }
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), $rules);
+        return $validator->fails() ? $validator->errors()->first() : null;
     }
 
     public function results()
@@ -750,15 +793,19 @@ class CandidatesController extends Controller
     public function submitExamEvaluation(Request $request)
     {
         $examiner = DB::table('examiners')->where('user_id', Auth::id())->first();
-        if (!$examiner) return back()->with('error', 'Examiner data not found.');
+        if (!$examiner) return $this->submissionResponse($request, 'error', 'Examiner data not found.', 403);
+
+        if ($error = $this->submissionError($request, flat: false)) {
+            return $this->submissionResponse($request, 'invalid', $error, 422);
+        }
 
         $currentYearId = User::getCurrentYearId();
         $tableMap = ['cardiothoracic'=>'cardiothoracic_results','urology'=>'urology_results','paediatric'=>'paediatric_results','ent'=>'ent_results','orthopaedic'=>'orthopaedic_results','plastic_surgery'=>'plastic_surgery_results','neurosurgery'=>'neurosurgery_results','paediatric_orthopaedics'=>'paediatric_orthopaedics_results'];
         $tableName = $tableMap[$request->exam_type] ?? null;
-        if (!$tableName) return back()->with('error', 'Invalid exam type.');
+        if (!$tableName) return $this->submissionResponse($request, 'invalid', 'Invalid exam type.', 422);
 
         $existingSubmission = DB::table($tableName)->where('candidate_id', $request->candidate_id)->where('examiner_id', $examiner->id)->where('station_id', $request->station_id)->where('exam_format', $request->form_type)->where('exam_year', $currentYearId)->first();
-        if ($existingSubmission) return back()->with('error', 'Candidate marks already submitted for this station and format. Please use Resubmit to edit.');
+        if ($existingSubmission) return $this->submissionResponse($request, 'duplicate', 'Candidate marks already submitted for this station and format. Please use Resubmit to edit.', 409);
 
         $questionMarks = [];
         foreach ($request->all() as $key => $value) {
@@ -772,6 +819,6 @@ class CandidatesController extends Controller
 
         DB::table($tableName)->insert(['candidate_id'=>$request->candidate_id,'examiner_id'=>$examiner->id,'station_id'=>$request->station_id,'group_id'=>$request->group_id,'exam_format'=>$request->form_type,'question_mark'=>json_encode($questionMarks),'total'=>$request->total_marks,'remarks'=>$request->remarks,'exam_year'=>$currentYearId,'created_at'=>now(),'updated_at'=>now()]);
 
-        return redirect()->back()->with('success', ucfirst($request->exam_type) . ' evaluation submitted successfully.');
+        return $this->submissionResponse($request, 'success', ucfirst($request->exam_type) . ' evaluation submitted successfully.', 201);
     }
 }
