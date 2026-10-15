@@ -617,7 +617,7 @@ class User extends Authenticatable
                     "$table.total as total_marks",
                     \DB::raw($settings['grade_is_null'] ? "NULL as grade" : "{$settings['grade_field']} as grade"),
                     "$table.remarks",
-                    "candidates.candidate_id as candidate_name",
+                    \DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_name"),
                     "examiners_groups.group_name as group_name",
                     \DB::raw("'$table' as source_table")
                 )

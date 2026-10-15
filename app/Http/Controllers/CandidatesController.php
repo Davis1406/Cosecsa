@@ -242,7 +242,7 @@ class CandidatesController extends Controller
             ->where('candidates.group_id', $groupId)
             ->where('candidates.exam_year', $currentYear)
             ->where('users.is_deleted', '0')
-            ->select('candidates.id as candidates_id', 'candidates.candidate_id', 'users.name', 'candidates.exam_year', 'candidates.group_id')
+            ->select('candidates.id as candidates_id', DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_id"), 'users.name', 'candidates.exam_year', 'candidates.group_id')
             ->orderBy('candidates.id', 'asc')
             ->get();
 
@@ -264,7 +264,7 @@ class CandidatesController extends Controller
             ->where('candidates.programme_id', 2)
             ->where('candidates.exam_year', $currentYear)
             ->where('users.is_deleted', '0')
-            ->select('candidates.id as candidates_id', 'candidates.candidate_id', 'users.name', 'candidates.exam_year')
+            ->select('candidates.id as candidates_id', DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_id"), 'users.name', 'candidates.exam_year')
             ->orderBy('candidates.id', 'asc')
             ->get();
 
@@ -363,7 +363,7 @@ class CandidatesController extends Controller
             $latestMcs = DB::table($mcsTable)->where('examiner_id', $examinerId)->where('exam_year', $currentExamYearId)->latest('created_at')->first();
             if ($latestMcs) $lastMcsTimestamp = $latestMcs->created_at;
             $mcsResults = DB::table($mcsTable)
-                ->select("{$mcsTable}.*", "{$mcsTable}.id as record_id", 'candidates.candidate_id as candidate_name', 'examiners_groups.group_name')
+                ->select("{$mcsTable}.*", "{$mcsTable}.id as record_id", DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_name"), 'examiners_groups.group_name')
                 ->join('candidates', "{$mcsTable}.candidate_id", '=', 'candidates.id')
                 ->join('examiners_groups', "{$mcsTable}.group_id", '=', 'examiners_groups.id')
                 ->where("{$mcsTable}.examiner_id", $examinerId)->where("{$mcsTable}.exam_year", $currentExamYearId)->get();
@@ -373,7 +373,7 @@ class CandidatesController extends Controller
             $latestGs = DB::table($gsTable)->where('examiner_id', $examinerId)->where('exam_year', $currentExamYearId)->latest('created_at')->first();
             if ($latestGs) $lastGsTimestamp = $latestGs->created_at;
             $gsResults = DB::table($gsTable)
-                ->select("{$gsTable}.*", "{$gsTable}.id as record_id", 'candidates.candidate_id as candidate_name', 'examiners_groups.group_name')
+                ->select("{$gsTable}.*", "{$gsTable}.id as record_id", DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_name"), 'examiners_groups.group_name')
                 ->join('candidates', "{$gsTable}.candidate_id", '=', 'candidates.id')
                 ->join('examiners_groups', "{$gsTable}.group_id", '=', 'examiners_groups.id')
                 ->where("{$gsTable}.examiner_id", $examinerId)->where("{$gsTable}.exam_year", $currentExamYearId)->get();
@@ -387,7 +387,7 @@ class CandidatesController extends Controller
                 $lastFcsTable = $table;
             }
             $records = DB::table($table)
-                ->select("{$table}.*", "{$table}.id as record_id", 'candidates.candidate_id as candidate_name', 'examiners_groups.group_name', DB::raw("'$table' as source_table"))
+                ->select("{$table}.*", "{$table}.id as record_id", DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_name"), 'examiners_groups.group_name', DB::raw("'$table' as source_table"))
                 ->join('candidates', "{$table}.candidate_id", '=', 'candidates.id')
                 ->join('examiners_groups', "{$table}.group_id", '=', 'examiners_groups.id')
                 ->where("{$table}.examiner_id", $examinerId)->where("{$table}.exam_year", $currentExamYearId)->get();
@@ -458,7 +458,7 @@ class CandidatesController extends Controller
         foreach ($fcsTablesWithFormat as $table) {
             if (!\Schema::hasTable($table)) continue;
             $records = DB::table($table)
-                ->select("{$table}.*", 'candidates.id as candidate_id', 'candidates.candidate_id as candidate_name', 'examiners.id as examiner_id', 'examiners_groups.group_name', DB::raw("'$table' as source_table"))
+                ->select("{$table}.*", 'candidates.id as candidate_id', DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_name"), 'examiners.id as examiner_id', 'examiners_groups.group_name', DB::raw("'$table' as source_table"))
                 ->join('candidates', "{$table}.candidate_id", '=', 'candidates.id')
                 ->join('examiners', "{$table}.examiner_id", '=', 'examiners.id')
                 ->join('examiners_groups', "{$table}.group_id", '=', 'examiners_groups.id')
@@ -498,7 +498,7 @@ class CandidatesController extends Controller
         foreach ($questionTables as $table) {
             if (!\Schema::hasTable($table)) continue;
             $records = DB::table($table)
-                ->select("{$table}.*", 'candidates.id as candidate_id', 'candidates.candidate_id as candidate_name', 'examiners.id as examiner_id', 'examiners_groups.group_name', DB::raw("'$table' as source_table"))
+                ->select("{$table}.*", 'candidates.id as candidate_id', DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_name"), 'examiners.id as examiner_id', 'examiners_groups.group_name', DB::raw("'$table' as source_table"))
                 ->join('candidates', "{$table}.candidate_id", '=', 'candidates.id')
                 ->join('examiners', "{$table}.examiner_id", '=', 'examiners.id')
                 ->join('examiners_groups', "{$table}.group_id", '=', 'examiners_groups.id')
@@ -542,7 +542,7 @@ class CandidatesController extends Controller
         foreach ($allTables as $table) {
             if (!\Schema::hasTable($table)) continue;
             $records = DB::table($table)
-                ->select("{$table}.*", 'candidates.id as candidates_id', 'candidates.candidate_id as candidate_name', 'examiners.id as examiner_id', 'examiners_groups.id as group_table_id', 'examiners_groups.group_name', DB::raw("'$table' as source_table"))
+                ->select("{$table}.*", 'candidates.id as candidates_id', DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_name"), 'examiners.id as examiner_id', 'examiners_groups.id as group_table_id', 'examiners_groups.group_name', DB::raw("'$table' as source_table"))
                 ->join('candidates', "{$table}.candidate_id", '=', 'candidates.id')
                 ->join('examiners', "{$table}.examiner_id", '=', 'examiners.id')
                 ->join('examiners_groups', "{$table}.group_id", '=', 'examiners_groups.id')
@@ -741,7 +741,7 @@ class CandidatesController extends Controller
         $candidates = DB::table('candidates')->join('users', 'candidates.user_id', '=', 'users.id')
             ->where('candidates.programme_id', $programmeId)->where('candidates.group_id', $groupId)
             ->where('candidates.exam_year', $currentYear)->where('users.is_deleted', 0)
-            ->select('candidates.id as candidates_id', 'candidates.candidate_id', 'users.name')
+            ->select('candidates.id as candidates_id', DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_id"), 'users.name')
             ->orderBy('candidates.id', 'asc')->get();
 
         return response()->json($candidates);
