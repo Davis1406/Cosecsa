@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-15) — Marks for TEST-… groups are saved to the test results tables
+- A group whose name starts with `TEST-` (e.g. `TEST-PART1`) is a sandbox. The MCS, General Surgery and FCS marking endpoints (`storeEvaluation`, `storegsEvaluation`, `submitExamEvaluation`) save marks for such a group to `test_<specialty>_results` instead of the real results table, and check duplicates there, so nothing reaches real results. They appear under Exams > Test Results (Delete / Delete All there remove them). If the test table is missing the mark is refused (422) rather than saved for real. Other groups are unchanged.
+- The examiner Results/Resubmit pages read the real tables only, so sandbox marks are not listed there; review and delete them under Test Results.
+- **Files:** `app/Http/Controllers/CandidatesController.php` (`resultsTable`), `tests/Feature/ExaminerOfflineTest.php` (+4 tests). Companion: cosecsa-api `exam-results/test` (2026-10-15).
+
 ### Added (2026-10-15) — Offline marking on the examiner pages
 - The examiner dashboard and marking forms (MCS, General Surgery, the eight FCS specialties) now work without a connection. A service worker (`public/examiner-sw.js`, scope `/examiner/`) keeps the marking pages and candidate lists, and `public/dist/js/examiner-offline.js` queues marks entered offline in IndexedDB and submits them, oldest first, when the connection and session are back. Nothing changes online except that submit now goes through `fetch` and the page reloads with a toast, as the redirect did.
 - The dashboard shows an "offline readiness" card (Prepare now / Update now). While anything is queued a bottom-left badge shows the count and opens a list (Sync now; Discard for marks the server rejected). Pages and the queue are bound to the signed-in examiner: switching account empties the cached pages, queued marks only ever go out from their own examiner's session, and logging out warns if marks are unsent.

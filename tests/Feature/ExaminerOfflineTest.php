@@ -134,6 +134,51 @@ class ExaminerOfflineTest extends TestCase
         $this->assertSame(1, DB::table('mcs_results')->count());
     }
 
+    // ── Sandbox (TEST-…) groups ─────────────────────────────────────────
+
+    public function test_marks_for_a_test_group_go_to_the_test_tables_only(): void
+    {
+        $this->postJson('examiner/examiner_form', $this->flatPayload(['group_id' => 17, 'overall' => 'pass']))->assertStatus(201);
+        $this->postJson('examiner/general_surgery', $this->flatPayload(['group_id' => 17]))->assertStatus(201);
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical', ['group_id' => 17]))->assertStatus(201);
+
+        foreach (['mcs_results', 'gs_results', 'cardiothoracic_results'] as $table) {
+            $this->assertSame(0, DB::table($table)->count(), "$table must stay untouched");
+            $this->assertSame(1, DB::table("test_$table")->count(), "test_$table should hold the mark");
+        }
+        $this->assertSame(17, (int) DB::table('test_mcs_results')->value('group_id'));
+    }
+
+    public function test_duplicates_in_a_test_group_are_detected_in_the_test_table(): void
+    {
+        $payload = $this->flatPayload(['group_id' => 17]);
+
+        $this->postJson('examiner/general_surgery', $payload)->assertStatus(201);
+        $this->postJson('examiner/general_surgery', $payload)->assertStatus(409);
+
+        $this->assertSame(1, DB::table('test_gs_results')->count());
+    }
+
+    public function test_a_real_mark_does_not_count_as_a_duplicate_of_a_test_mark(): void
+    {
+        $this->postJson('examiner/general_surgery', $this->flatPayload(['group_id' => 17]))->assertStatus(201);
+        $this->postJson('examiner/general_surgery', $this->flatPayload(['group_id' => 3]))->assertStatus(201);
+
+        $this->assertSame(1, DB::table('test_gs_results')->count());
+        $this->assertSame(1, DB::table('gs_results')->count());
+    }
+
+    public function test_a_test_group_never_falls_back_to_the_real_table_when_the_test_table_is_missing(): void
+    {
+        Schema::drop('test_gs_results');
+
+        $this->postJson('examiner/general_surgery', $this->flatPayload(['group_id' => 17]))
+            ->assertStatus(422)
+            ->assertJson(['status' => 'invalid']);
+
+        $this->assertSame(0, DB::table('gs_results')->count());
+    }
+
     // ── Offline support endpoints ───────────────────────────────────────
 
     public function test_token_endpoint_returns_a_fresh_token_and_the_user_and_is_not_cacheable(): void
@@ -209,7 +254,7 @@ class ExaminerOfflineTest extends TestCase
         DB::table('users')->insert(['id' => 1, 'name' => 'Dr Examiner', 'email' => 'e@example.org', 'password' => 'x']);
         DB::table('examiners')->insert(['id' => $this->examinerId, 'user_id' => 1]);
         DB::table('years')->insert(['id' => 2, 'year_name' => '2026']);
-        DB::table('examiners_groups')->insert([['id' => 3, 'group_name' => 'A'], ['id' => 4, 'group_name' => 'B']]);
+        DB::table('examiners_groups')->insert([['id' => 3, 'group_name' => 'A'], ['id' => 4, 'group_name' => 'B'], ['id' => 17, 'group_name' => 'TEST-PART1']]);
 
         DB::table('candidates')->insert([
             ['id' => 10, 'programme_id' => 1, 'group_id' => 3, 'exam_year' => '2026', 'entry_number' => 'PEN-1'],
@@ -251,7 +296,8 @@ class ExaminerOfflineTest extends TestCase
             $t->string('entry_number')->nullable();
         });
 
-        foreach (['mcs_results', 'gs_results', 'cardiothoracic_results'] as $table) {
+        $resultTables = ['mcs_results', 'gs_results', 'cardiothoracic_results'];
+        foreach (array_merge($resultTables, array_map(fn ($t) => "test_$t", $resultTables)) as $table) {
             Schema::create($table, function ($t) use ($table) {
                 $t->increments('id');
                 $t->integer('candidate_id');
@@ -262,8 +308,8 @@ class ExaminerOfflineTest extends TestCase
                 $t->decimal('total', 8, 2)->nullable();
                 $t->string('remarks')->nullable();
                 $t->integer('exam_year');
-                if ($table === 'mcs_results') $t->string('overall')->nullable();
-                if ($table === 'cardiothoracic_results') $t->string('exam_format')->nullable();
+                if (str_ends_with($table, 'mcs_results')) $t->string('overall')->nullable();
+                if (str_ends_with($table, 'cardiothoracic_results')) $t->string('exam_format')->nullable();
                 $t->timestamps();
             });
         }

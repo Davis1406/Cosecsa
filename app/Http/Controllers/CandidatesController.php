@@ -280,9 +280,12 @@ class CandidatesController extends Controller
             return $this->submissionResponse($request, 'invalid', $error, 422);
         }
 
+        $table = $this->resultsTable('mcs_results', $request->group_id);
+        if ($table === null) return $this->sandboxUnavailable($request);
+
         $currentYearId = User::getCurrentYearId();
 
-        $existingSubmission = DB::table('mcs_results')
+        $existingSubmission = DB::table($table)
             ->where('candidate_id', $request->candidate_id)
             ->where('examiner_id', $examiner->id)
             ->where('station_id', $request->station_id)
@@ -294,6 +297,7 @@ class CandidatesController extends Controller
         }
 
         $evaluation = new CandidatesFormModel();
+        $evaluation->setTable($table);
         $evaluation->candidate_id = $request->candidate_id;
         $evaluation->examiner_id = $examiner->id;
         $evaluation->station_id = $request->station_id;
@@ -319,9 +323,12 @@ class CandidatesController extends Controller
             return $this->submissionResponse($request, 'invalid', $error, 422);
         }
 
+        $table = $this->resultsTable('gs_results', $request->group_id);
+        if ($table === null) return $this->sandboxUnavailable($request);
+
         $currentYearId = User::getCurrentYearId();
 
-        $existingSubmission = DB::table('gs_results')
+        $existingSubmission = DB::table($table)
             ->where('candidate_id', $request->candidate_id)
             ->where('examiner_id', $examiner->id)
             ->where('station_id', $request->station_id)
@@ -333,6 +340,7 @@ class CandidatesController extends Controller
         }
 
         $evaluation = new GeneralSurgery();
+        $evaluation->setTable($table);
         $evaluation->candidate_id = $request->candidate_id;
         $evaluation->examiner_id = $examiner->id;
         $evaluation->station_id = $request->station_id;
@@ -344,6 +352,29 @@ class CandidatesController extends Controller
         $evaluation->save();
 
         return $this->submissionResponse($request, 'success', 'GS Evaluation submitted successfully.', 201);
+    }
+
+    /**
+     * Groups whose name starts with "TEST-" are sandboxes (used to try the
+     * examiner pages on real candidates before real grouping exists). Marks
+     * for them are saved to the matching test_<table> (shown under Exams >
+     * Test Results) and never touch the real results. Returns null when the
+     * sandbox table is missing, so a mark is never silently saved for real.
+     */
+    private function resultsTable(string $table, $groupId): ?string
+    {
+        $groupName = (string) DB::table('examiners_groups')->where('id', $groupId)->value('group_name');
+        if (strncasecmp($groupName, 'TEST-', 5) !== 0) {
+            return $table;
+        }
+
+        $sandbox = 'test_' . $table;
+        return \Illuminate\Support\Facades\Schema::hasTable($sandbox) ? $sandbox : null;
+    }
+
+    private function sandboxUnavailable(Request $request)
+    {
+        return $this->submissionResponse($request, 'invalid', 'The test results table is not available, so this mark was not saved.', 422);
     }
 
     /**
@@ -803,6 +834,9 @@ class CandidatesController extends Controller
         $tableMap = ['cardiothoracic'=>'cardiothoracic_results','urology'=>'urology_results','paediatric'=>'paediatric_results','ent'=>'ent_results','orthopaedic'=>'orthopaedic_results','plastic_surgery'=>'plastic_surgery_results','neurosurgery'=>'neurosurgery_results','paediatric_orthopaedics'=>'paediatric_orthopaedics_results'];
         $tableName = $tableMap[$request->exam_type] ?? null;
         if (!$tableName) return $this->submissionResponse($request, 'invalid', 'Invalid exam type.', 422);
+
+        $tableName = $this->resultsTable($tableName, $request->group_id);
+        if ($tableName === null) return $this->sandboxUnavailable($request);
 
         $existingSubmission = DB::table($tableName)->where('candidate_id', $request->candidate_id)->where('examiner_id', $examiner->id)->where('station_id', $request->station_id)->where('exam_format', $request->form_type)->where('exam_year', $currentYearId)->first();
         if ($existingSubmission) return $this->submissionResponse($request, 'duplicate', 'Candidate marks already submitted for this station and format. Please use Resubmit to edit.', 409);
