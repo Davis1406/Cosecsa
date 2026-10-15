@@ -20,5 +20,7 @@ yarn-error.log
 
 /database.sqlite
 /storage/db_backups
-/.claude/settings.local.json
-.devswarm-temp/
+
+# Local AI-tool folders: never commit or deploy them
+.claude/
+.devswarm*/
