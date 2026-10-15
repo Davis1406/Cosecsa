@@ -15,6 +15,9 @@
  *   4b. the results page saves the View / Resubmit pages it links to every time it
  *      is opened online, so a result can be reviewed offline even if it was
  *      submitted after the device was last prepared;
+ *   4c. on the results page a mark with a queued edit shows the edited values in the
+ *      table (tagged "Edited offline") until it syncs, and its card entry links back
+ *      to the Resubmit page;
  *   5. on the results page, marks still waiting on the device can be viewed,
  *      edited and discarded from the "saved on this device" card;
  *   6. forms marked data-requires-online (profile edit: uploads, password) are
@@ -542,6 +545,7 @@
       '.eo-dialog input,.eo-dialog select,.eo-dialog textarea{width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;font:inherit}',
       '.eo-dialog .eo-total{font-weight:700;margin-top:10px}.eo-dialog .eo-error{color:#c62828;margin-top:8px}',
       '.eo-dialog .eo-case{font-weight:700;color:#a02626;margin-top:12px}.eo-dialog .eo-row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}',
+      'a.eo-btn{display:inline-block;text-decoration:none;color:#000}a.eo-btn:hover{color:#000;text-decoration:none}',
       '.eo-btn.sec{background:#e0e0e0}.eo-btn.danger{background:#c62828;color:#fff}.eo-btns{display:flex;gap:6px;flex-wrap:wrap}',
       '.eo-ready{border-left:4px solid #FEC503;background:#fffdf3;border-radius:6px;padding:10px 14px;margin:0 0 16px;text-align:left;font-size:.88rem}',
       '.eo-ready.ok{border-left-color:#2e7d32}.eo-ready.bad{border-left-color:#c62828}',
@@ -676,6 +680,7 @@
       }
       renderReadiness();
       renderPendingCard();
+      applyPendingEdits();
     });
   }
 
@@ -737,7 +742,11 @@
         el('td', { text: item.label.exam || '-' }),
         el('td', { text: formatTime(item.createdAt) }),
         el('td', { text: item.status === 'failed' ? 'Rejected: ' + (item.error || 'unknown reason') : 'Waiting to sync' }),
-        el('td', {}, [el('div', { class: 'eo-btns' }, [
+        el('td', {}, [el('div', { class: 'eo-btns' }, item.kind === 'update' ? [
+          // An edit of a mark the server already has: go back to its Resubmit page (it shows the edited values).
+          el('a', { class: 'eo-btn', href: resubmitUrl(item), text: 'Resubmit' }),
+          el('button', { class: 'eo-btn danger', type: 'button', text: 'Discard', onclick: function () { discardItem(item); } }),
+        ] : [
           el('button', { class: 'eo-btn sec', type: 'button', text: 'View', onclick: function () { openItemDialog(item, false); } }),
           el('button', { class: 'eo-btn', type: 'button', text: 'Edit', onclick: function () { openItemDialog(item, true); } }),
           el('button', { class: 'eo-btn danger', type: 'button', text: 'Discard', onclick: function () { discardItem(item); } }),
@@ -758,6 +767,118 @@
       var flash = JSON.parse(raw);
       toast(flash.type, flash.text);
     } catch (e) { /* ignore */ }
+  }
+
+  // ── Results table: show queued edits until they sync ─────────────────────
+
+  var EDIT_MCS_GS = /\/examiner\/resubmit\/(\d+)\/(\d+)/;
+  var EDIT_FCS = /\/examiner\/fcs-resubmit\/(\d+)/;
+
+  /** Where to go to edit this mark again: the Resubmit page (clinical/viva form for FCS). */
+  function resubmitUrl(item) {
+    var path = new URL(item.url, window.location.href).pathname;
+    var fcs = EDIT_FCS.exec(path);
+    if (fcs) {
+      var format = parseItem(item).info.format;
+      return path.replace(/\/$/, '') + (format === 'clinical' || format === 'viva' ? '/' + format : '');
+    }
+    return path;
+  }
+
+  function plainNumber(text) {
+    var n = parseFloat(String(text).replace(/<[^>]*>/g, '').trim());
+    return isNaN(n) ? 0 : n;
+  }
+
+  function formatMark(n) { return String(Math.round(n * 10) / 10); }
+
+  function setCell(dt, tr, col, html) {
+    if (dt) { dt.cell(tr, col).data(html); return; }
+    var cells = tr.querySelectorAll('td');
+    if (cells[col]) cells[col].innerHTML = html;
+  }
+
+  /**
+   * The results table lists what the server holds, so after a mark is edited
+   * offline it would keep showing the old marks. Overlay the queued edits on
+   * their rows (and take them off again if an edit is discarded).
+   */
+  function applyPendingEdits() {
+    var jq = window.jQuery;
+    if (!document.getElementById('examiner-offline-pending') || !jq) return;
+
+    var edits = lastItems.filter(function (item) { return item.kind === 'update'; }).map(function (item) {
+      var path = new URL(item.url, window.location.href).pathname;
+      var plain = EDIT_MCS_GS.exec(path);
+      var fcs = plain ? null : EDIT_FCS.exec(path);
+      return { item: item, parsed: parseItem(item), key: plain ? 'm:' + plain[1] + ':' + plain[2] : (fcs ? 'f:' + fcs[1] : null) };
+    }).filter(function (edit) { return edit.key; });
+
+    jq('table.dataTable, table.table').each(function () {
+      var table = this;
+      if (jq(table).closest('#examiner-offline-pending').length) return;   // the "waiting" card has its own table
+      var dt = (jq.fn.dataTable && jq.fn.dataTable.isDataTable(table)) ? jq(table).DataTable() : null;
+      var rows = dt ? dt.rows().nodes().toArray() : Array.prototype.slice.call(table.querySelectorAll('tbody tr'));
+
+      rows.forEach(function (tr) {
+        var cells = tr.querySelectorAll('td');
+        if (cells.length < 5) return;
+
+        // put back what the server sent before laying the current edits over it
+        if (tr.getAttribute('data-eo-orig')) {
+          JSON.parse(tr.getAttribute('data-eo-orig')).forEach(function (cell) { setCell(dt, tr, cell.col, cell.html); });
+          tr.removeAttribute('data-eo-orig');
+        }
+
+        var key = null;
+        Array.prototype.forEach.call(tr.querySelectorAll('a[href]'), function (a) {
+          var path = a.getAttribute('href');
+          var plain = EDIT_MCS_GS.exec(path);
+          var fcs = plain ? null : EDIT_FCS.exec(path);
+          if (plain) key = 'm:' + plain[1] + ':' + plain[2];
+          else if (fcs) key = 'f:' + fcs[1];
+        });
+        var edit = key && edits.filter(function (e) { return e.key === key; }).pop();
+        if (!edit) return;
+
+        var wide = cells.length >= 10;
+        var changes = [];
+        var original = [];
+        var remember = function (col) { original.push({ col: col, html: cells[col].innerHTML }); };
+
+        if (wide && edit.key.charAt(0) === 'm') {
+          // Candidate | Group | Q1..Q5 | Total | Grade | Actions
+          for (var q = 0; q < 5; q++) {
+            remember(2 + q);
+            var group = edit.parsed.groups[0];
+            changes.push([2 + q, group && group.values[q] != null ? formatMark(parseFloat(group.values[q])) : '-']);
+          }
+          remember(7); changes.push([7, '<b>' + formatMark(parseFloat(edit.parsed.info.total) || 0) + '</b>']);
+          if (edit.parsed.info.gradeName) { remember(8); changes.push([8, edit.parsed.info.grade || '-']); }
+        } else if (!wide && edit.key.charAt(0) === 'f') {
+          // Candidate | Group | Clinical | Viva | Overall | Actions
+          var col = edit.parsed.info.format === 'viva' ? 3 : 2;
+          var clinical = col === 2 ? parseFloat(edit.parsed.info.total) || 0 : plainNumber(cells[2].textContent);
+          var viva = col === 3 ? parseFloat(edit.parsed.info.total) || 0 : plainNumber(cells[3].textContent);
+          remember(col); remember(4);
+          changes.push([col, '<b>' + formatMark(col === 2 ? clinical : viva) + '</b>']);
+          changes.push([4, '<b>' + formatMark(clinical + viva) + '</b>']);
+        } else {
+          return;
+        }
+
+        remember(0);
+        changes.push([0, original[original.length - 1].html + ' <span class="badge badge-warning" title="Edited on this device; it will be submitted when you are back online">Edited offline</span>']);
+
+        tr.setAttribute('data-eo-orig', JSON.stringify(original));
+        changes.forEach(function (change) { setCell(dt, tr, change[0], change[1]); });
+      });
+
+      if (dt) {
+        dt.draw(false);                                  // keep search / sort in step with what is shown
+        if (dt.responsive && dt.responsive.recalc) dt.responsive.recalc();
+      }
+    });
   }
 
   // ── View / edit / discard a mark that is still on the device ────────────
@@ -1016,7 +1137,7 @@
 
     if (document.getElementById('examiner-offline-pending')) {
       // The results page: after its table is built, keep every linked page for offline use.
-      var keepResultPages = function () { setTimeout(prefetchResultPages, 600); };
+      var keepResultPages = function () { setTimeout(applyPendingEdits, 700); setTimeout(prefetchResultPages, 600); };
       if (document.readyState === 'complete') keepResultPages();
       else window.addEventListener('load', keepResultPages);
     }
