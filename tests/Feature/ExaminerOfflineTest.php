@@ -283,7 +283,7 @@ class ExaminerOfflineTest extends TestCase
             ->assertStatus(422)->assertJson(['status' => 'invalid']);
     }
 
-    public function test_manifest_lists_the_profile_pages_and_the_view_and_resubmit_pages_for_saved_results(): void
+    public function test_manifest_lists_the_profile_pages_and_the_view_and_resubmit_pages_for_saved_and_sandbox_results(): void
     {
         $this->postJson('examiner/examiner_form', $this->flatPayload(['overall' => 'pass']))->assertStatus(201);
         $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical'))->assertStatus(201);
@@ -297,8 +297,62 @@ class ExaminerOfflineTest extends TestCase
             $this->assertContains($path, $pages);
         }
         $this->assertNotContains('/examiner/fcs-resubmit/10/viva', $pages);   // no viva mark yet
-        $this->assertNotContains('/examiner/fcs-resubmit/11', $pages);        // sandbox marks have no edit pages
+        $this->assertContains('/examiner/fcs-resubmit/11', $pages);           // sandbox marks can be edited too
+        $this->assertContains('/examiner/fcs-resubmit/11/clinical', $pages);
         $this->assertSame(count($pages), count(array_unique($pages)));
+    }
+
+    // ── Sandbox marks can be viewed and edited like real ones ───────────
+
+    public function test_a_sandbox_mark_can_be_edited_and_keeps_its_group(): void
+    {
+        $this->postJson('examiner/examiner_form', $this->flatPayload(['group_id' => 17, 'overall' => 'pass']))->assertStatus(201);
+
+        // The MCS/GS edit form posts the group's *name*, not its id; the edit must not write that into group_id.
+        $this->postJson('examiner/resubmit/10/1', [
+            'group_id' => 'PART1', 'station_id' => 1, 'question_marks' => [8, 9], 'total_marks' => 17, 'remarks' => 'Fixed', 'grade' => 'fail',
+        ])->assertOk()->assertJson(['status' => 'success']);
+
+        $row = DB::table('test_mcs_results')->first();
+        $this->assertSame('[8,9]', $row->question_mark);
+        $this->assertSame('fail', $row->overall);
+        $this->assertSame(17, (int) $row->group_id);
+        $this->assertSame(0, DB::table('mcs_results')->count());
+    }
+
+    public function test_a_real_mark_edit_no_longer_rewrites_its_group(): void
+    {
+        $this->postJson('examiner/general_surgery', $this->flatPayload(['group_id' => 4]))->assertStatus(201);
+
+        $this->postJson('examiner/resubmit/10/1', ['group_id' => 'A', 'station_id' => 1, 'question_marks' => [3], 'total_marks' => 3])->assertOk();
+
+        $this->assertSame(4, (int) DB::table('gs_results')->value('group_id'));
+    }
+
+    public function test_resubmit_and_view_pages_find_a_sandbox_mark(): void
+    {
+        $this->postJson('examiner/general_surgery', $this->flatPayload(['group_id' => 17]))->assertStatus(201);
+        $controller = app(\App\Http\Controllers\CandidatesController::class);
+
+        $edit = $controller->resubmit(10, 1);
+        $this->assertSame('examiner.gsresubmit', $edit->name());
+        $this->assertSame('TEST-PART1', $edit->getData()['candidate']->group_name);
+
+        $view = $controller->viewCandidateResults(10, 1);
+        $this->assertSame('PEN-1', $view->getData()['candidateResult']->candidate_name);
+    }
+
+    public function test_fcs_view_and_edit_pages_find_sandbox_marks_including_orthopaedic(): void
+    {
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical', ['group_id' => 17]))->assertStatus(201);
+        $controller = app(\App\Http\Controllers\CandidatesController::class);
+
+        $view = $controller->viewFcsResults(10);
+        $this->assertSame('examiner.view_fcs_results', $view->name());
+        $this->assertEquals(12, $view->getData()['candidateResult']->clinical_total);
+
+        $edit = $controller->resubmit(10, 1);
+        $this->assertSame('examiner.fcs_resubmit_selection', $edit->name());
     }
 
     // ── Offline support endpoints ───────────────────────────────────────
@@ -376,6 +430,7 @@ class ExaminerOfflineTest extends TestCase
         DB::table('users')->insert(['id' => 1, 'name' => 'Dr Examiner', 'email' => 'e@example.org', 'password' => 'x']);
         DB::table('examiners')->insert(['id' => $this->examinerId, 'user_id' => 1]);
         DB::table('years')->insert(['id' => 2, 'year_name' => '2026']);
+        DB::table('programmes')->insert(['id' => 1, 'name' => 'Cardiothoracic', 'programme_name' => 'Cardiothoracic']);
         DB::table('examiners_groups')->insert([['id' => 3, 'group_name' => 'A'], ['id' => 4, 'group_name' => 'B'], ['id' => 17, 'group_name' => 'TEST-PART1']]);
 
         DB::table('candidates')->insert([
@@ -408,6 +463,11 @@ class ExaminerOfflineTest extends TestCase
         Schema::create('examiners_groups', function ($t) {
             $t->increments('id');
             $t->string('group_name');
+        });
+        Schema::create('programmes', function ($t) {
+            $t->increments('id');
+            $t->string('name')->nullable();
+            $t->string('programme_name')->nullable();
         });
         Schema::create('candidates', function ($t) {
             $t->increments('id');

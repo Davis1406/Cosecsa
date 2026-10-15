@@ -496,6 +496,22 @@ class CandidatesController extends Controller
         ]);
     }
 
+    /** Each results table followed by its sandbox twin (test_<table>) when that exists. */
+    private function withSandbox(array $tables): array
+    {
+        $all = [];
+        foreach ($tables as $table) {
+            $all[] = $table;
+            if (\Schema::hasTable("test_{$table}")) $all[] = "test_{$table}";
+        }
+        return $all;
+    }
+
+    private function baseTable(?string $table): ?string
+    {
+        return $table === null ? null : preg_replace('/^test_/', '', $table);
+    }
+
     /**
      * This examiner's marks for the year from one results table, plus their
      * sandbox marks (saved to test_<table> for TEST-… groups, see
@@ -532,10 +548,10 @@ class CandidatesController extends Controller
         if (!$examinerId) return back()->with('error', 'Examiner data not found.');
 
         $currentExamYearId = User::getCurrentYearId();
-        $fcsTablesWithFormat = [
+        $fcsTablesWithFormat = $this->withSandbox([
             'cardiothoracic_results', 'urology_results', 'paediatric_results', 'ent_results',
-            'plastic_surgery_results', 'neurosurgery_results', 'paediatric_orthopaedics_results', 'fcs_results',
-        ];
+            'plastic_surgery_results', 'neurosurgery_results', 'paediatric_orthopaedics_results', 'orthopaedic_results', 'fcs_results',
+        ]);
 
         $candidateRecords = collect();
         $sourceTable = null;
@@ -576,7 +592,7 @@ class CandidatesController extends Controller
         if (!$examinerId) return back()->with('error', 'Examiner data not found.');
 
         $currentExamYearId = User::getCurrentYearId();
-        $questionTables = ['mcs_results', 'gs_results'];
+        $questionTables = $this->withSandbox(['mcs_results', 'gs_results']);
         $candidateRecords = collect();
         $sourceTable = null;
 
@@ -616,10 +632,10 @@ class CandidatesController extends Controller
         if (!$examinerId) return redirect()->back()->with('error', 'Examiner data not found.');
 
         $currentExamYearId = User::getCurrentYearId();
-        $allTables = array_merge(['mcs_results', 'gs_results'], [
+        $allTables = $this->withSandbox(array_merge(['mcs_results', 'gs_results'], [
             'cardiothoracic_results', 'urology_results', 'paediatric_results', 'ent_results',
             'plastic_surgery_results', 'neurosurgery_results', 'paediatric_orthopaedics_results', 'orthopaedic_results', 'fcs_results',
-        ]);
+        ]));
 
         $candidateRecords = collect();
         $sourceTable = null;
@@ -644,6 +660,7 @@ class CandidatesController extends Controller
 
         $fcsTablesWithFormat = ['cardiothoracic_results', 'urology_results', 'paediatric_results', 'ent_results', 'plastic_surgery_results', 'neurosurgery_results', 'paediatric_orthopaedics_results', 'orthopaedic_results', 'fcs_results'];
 
+        $sourceTable = $this->baseTable($sourceTable); // a sandbox mark is edited exactly like a real one
         if ($sourceTable === 'gs_results') return view('examiner.gsresubmit', ['candidate' => $candidate, 'header_title' => 'Resubmit GS Evaluation']);
         if ($sourceTable === 'mcs_results') return view('examiner.resubmit', ['candidate' => $candidate, 'header_title' => 'Resubmit MCS Evaluation']);
         if (in_array($sourceTable, $fcsTablesWithFormat)) {
@@ -676,7 +693,7 @@ class CandidatesController extends Controller
         ];
 
         $evaluation = $sourceTable = null;
-        foreach ($tables as $table => $settings) {
+        foreach ($this->withSandbox(array_keys($tables)) as $table) {
             if (!\Schema::hasTable($table)) continue;
             $record = DB::table($table)->where('candidate_id', $candidate_id)->where('station_id', $station_id)->where('examiner_id', $examinerId)->first();
             if ($record) { $evaluation = $record; $sourceTable = $table; break; }
@@ -684,8 +701,9 @@ class CandidatesController extends Controller
 
         if (!$evaluation) return $this->submissionResponse($request, 'invalid', 'Evaluation not found.', 422);
 
-        $updateData = ['group_id' => $request->group_id, 'station_id' => $request->station_id, 'question_mark' => json_encode($request->question_marks ?? []), 'total' => $request->total_marks, 'remarks' => $request->remarks];
-        $gradeField = $tables[$sourceTable]['grade_field'] ?? null;
+        // The group is read-only here (and the form posts its name, not its id), so it is never rewritten.
+        $updateData = ['station_id' => $request->station_id, 'question_mark' => json_encode($request->question_marks ?? []), 'total' => $request->total_marks, 'remarks' => $request->remarks];
+        $gradeField = $tables[$this->baseTable($sourceTable)]['grade_field'] ?? null;
         if ($gradeField) $updateData[$gradeField] = $request->grade;
 
         DB::table($sourceTable)->where('candidate_id', $candidate_id)->where('station_id', $station_id)->where('examiner_id', $examinerId)->update($updateData);
@@ -715,7 +733,7 @@ class CandidatesController extends Controller
         $programmeToExamType = [1=>'cardiothoracic',3=>'neurosurgery',4=>'orthopaedic',5=>'ent',6=>'paediatric_orthopaedics',7=>'paediatric',8=>'plastic_surgery',9=>'urology',2=>'gs',10=>'mcs'];
         $exam_type = $programmeToExamType[$candidate->programme_id] ?? 'unknown';
 
-        $fcsTablesWithFormat = ['cardiothoracic_results','urology_results','paediatric_results','ent_results','plastic_surgery_results','neurosurgery_results','paediatric_orthopaedics_results','orthopaedic_results','fcs_results'];
+        $fcsTablesWithFormat = $this->withSandbox(['cardiothoracic_results','urology_results','paediatric_results','ent_results','plastic_surgery_results','neurosurgery_results','paediatric_orthopaedics_results','orthopaedic_results','fcs_results']);
 
         $existingRecord = $foundTable = null;
         foreach ($fcsTablesWithFormat as $table) {
@@ -766,7 +784,8 @@ class CandidatesController extends Controller
         if (empty($questionMarks)) return $this->submissionResponse($request, 'invalid', 'No question marks provided.', 422);
 
         $updated = false;
-        foreach ($fcsTablesWithFormat as $table => $settings) {
+        foreach ($this->withSandbox(array_keys($fcsTablesWithFormat)) as $table) {
+            $settings = $fcsTablesWithFormat[$this->baseTable($table)];
             if (!\Schema::hasTable($table)) continue;
             $record = DB::table($table)->where('candidate_id', $candidate_id)->where('examiner_id', $examinerId)->where('exam_format', $request->exam_format ?? $request->form_type)->where('exam_year', $currentYearId)->first();
             if (!$record) continue;

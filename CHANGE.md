@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-15) — Results: View / Resubmit now work for test (TEST-… group) marks
+- The Results summary showed a "Test mark" label instead of the View and Resubmit buttons for marks saved to `test_*_results`, because the View / Resubmit pages and the update endpoints only looked in the real tables. They now look in each results table and its `test_` twin (`withSandbox()`), so test marks can be viewed and corrected exactly like real ones; the results rows show a small "Test" badge next to the candidate and always have the buttons. The offline manifest includes the sandbox marks' pages too.
+- `viewFcsResults` was missing `orthopaedic_results` (an Orthopaedic mark's View page said "No results"); added.
+- `updateEvaluation` (MCS/GS edit) no longer rewrites `group_id`: the group is read-only on that form and the form posts the group's *name* (e.g. "PART1"), not its id, which would have broken the mark's group join. The group of an existing mark is kept.
+- **Files:** `CandidatesController.php`, `ExaminerOfflineController.php`, `resources/views/examiner/results.blade.php`, `public/dist/js/examiner-offline.js` (warm key v4), `tests/Feature/ExaminerOfflineTest.php` (28 tests).
+
 ### Added (2026-10-15) — Offline: edit/resubmit saved marks and view the profile
 - **Resubmit offline.** The Resubmit and View pages for each result the examiner already has (MCS/GS `examiner/resubmit/{c}/{station}` + `view_results`, FCS `fcs-resubmit/{c}[/{format}]` + `view_fcs_results`) are listed in the offline manifest and cached. The three edit forms (`resubmit`, `gsresubmit`, `resubmit_form_universal`) now use the offline submit (`data-offline-kind="update"`): offline, the edit is queued and the examiner is taken to the results page, where a "saved on this device" card shows it as "Edit · <candidate>". Only the latest queued edit of a mark is kept. Reopening the edit page shows the queued values with a notice. Edits sync like new marks; an edit of a mark that no longer exists is rejected and kept for review (Discard).
 - **Server.** `updateEvaluation` (MCS/GS) and `updateEvaluationFcs` now reply with JSON (`{status: success|invalid|error, message}`) for JSON requests and still redirect to `examiner/results` for the classic form; they also validate that marks and a total were sent. Edits are idempotent, so a retried sync is harmless. Sandbox (`TEST-…`) marks have no edit pages.

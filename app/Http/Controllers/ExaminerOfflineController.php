@@ -76,6 +76,17 @@ class ExaminerOfflineController extends Controller
         return array_values(array_unique(array_map(fn ($path) => url($path), $paths)));
     }
 
+    /** Each results table followed by its sandbox twin (test_<table>) when that exists. */
+    private function withSandbox(array $tables): array
+    {
+        $all = [];
+        foreach ($tables as $table) {
+            $all[] = $table;
+            if (Schema::hasTable("test_{$table}")) $all[] = "test_{$table}";
+        }
+        return $all;
+    }
+
     /** The examiner's own profile pages (viewable offline; saving needs a connection). */
     private function profilePaths(): array
     {
@@ -86,8 +97,8 @@ class ExaminerOfflineController extends Controller
 
     /**
      * View / Resubmit pages for each result this examiner has already saved
-     * this year, so a mark can be reviewed and corrected without a connection.
-     * Sandbox (test_) marks have no such pages and are left out.
+     * this year (including sandbox test_ marks), so a mark can be reviewed and
+     * corrected without a connection.
      */
     private function resultPaths(): array
     {
@@ -99,7 +110,7 @@ class ExaminerOfflineController extends Controller
 
         $paths = [];
 
-        foreach (['mcs_results', 'gs_results'] as $table) {
+        foreach ($this->withSandbox(['mcs_results', 'gs_results']) as $table) {
             if (! Schema::hasTable($table)) continue;
 
             $rows = DB::table($table)->where('examiner_id', $examinerId)->where('exam_year', $yearId)
@@ -110,7 +121,7 @@ class ExaminerOfflineController extends Controller
             }
         }
 
-        foreach (self::FCS_RESULT_TABLES as $table) {
+        foreach ($this->withSandbox(self::FCS_RESULT_TABLES) as $table) {
             if (! Schema::hasTable($table)) continue;
 
             $rows = DB::table($table)->where('examiner_id', $examinerId)->where('exam_year', $yearId)

@@ -46,7 +46,7 @@
                                                 @endphp
 
                                                 <tr>
-                                                    <td>{{ $value->candidate_name }}</td>
+                                                    <td>{{ $value->candidate_name }}@if($value->is_test) <span class="badge badge-secondary" title="Saved for a TEST group (shown under Exams &gt; Test Results)">Test</span>@endif</td>
                                                     <td>{{ $value->group_name }}</td>
 
                                                     @for ($i = 0; $i < 5; $i++)
@@ -57,9 +57,6 @@
                                                     <td>{{ $value->overall ?? '-' }}</td>
 
                                                     <td>
-                                                        @if($value->is_test)
-                                                        <span class="badge badge-secondary" title="Saved for a TEST group; review or delete it under Exams &gt; Test Results">Test mark</span>
-                                                    @else
                                                         <div class="btn-group">
                                                             <a class="btn btn-info btn-sm"
                                                                href="{{ url('examiner/view_results/' . $value->candidate_id . '/' . $value->station_id) }}">
@@ -70,7 +67,6 @@
                                                                 Resubmit
                                                             </a>
                                                         </div>
-                                                    @endif
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -115,7 +111,7 @@
                                                 @endphp
 
                                                 <tr>
-                                                    <td>{{ $value->candidate_name }}</td>
+                                                    <td>{{ $value->candidate_name }}@if($value->is_test) <span class="badge badge-secondary" title="Saved for a TEST group (shown under Exams &gt; Test Results)">Test</span>@endif</td>
                                                     <td>{{ $value->group_name }}</td>
 
                                                     @for ($i = 0; $i < 5; $i++)
@@ -126,9 +122,6 @@
                                                     <td>{{ $value->overall ?? '-' }}</td>
 
                                                     <td>
-                                                        @if($value->is_test)
-                                                        <span class="badge badge-secondary" title="Saved for a TEST group; review or delete it under Exams &gt; Test Results">Test mark</span>
-                                                    @else
                                                         <div class="btn-group">
                                                             <a class="btn btn-info btn-sm"
                                                                href="{{ url('examiner/view_results/' . $value->candidate_id . '/' . $value->station_id) }}">
@@ -139,7 +132,6 @@
                                                                 Resubmit
                                                             </a>
                                                         </div>
-                                                    @endif
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -176,15 +168,12 @@
                                             <tbody>
                                             @foreach ($fcsResults as $value)
                                                 <tr>
-                                                    <td>{{ $value->candidate_name }}</td>
+                                                    <td>{{ $value->candidate_name }}@if($value->is_test) <span class="badge badge-secondary" title="Saved for a TEST group (shown under Exams &gt; Test Results)">Test</span>@endif</td>
                                                     <td>{{ $value->group_name }}</td>
                                                     <td><b>{{ $value->clinical_total }}</b></td>
                                                     <td><b>{{ $value->viva_total }}</b></td>
                                                     <td><b>{{ $value->overall_total }}</b></td>
                                                     <td>
-                                                        @if($value->is_test)
-                                                        <span class="badge badge-secondary" title="Saved for a TEST group; review or delete it under Exams &gt; Test Results">Test mark</span>
-                                                    @else
                                                         <div class="btn-group">
                                                             <a class="btn btn-info btn-sm"
                                                                href="{{ url('examiner/view_fcs_results/' . $value->candidate_id) }}">
@@ -195,7 +184,6 @@
                                                                 Resubmit
                                                             </a>
                                                         </div>
-                                                    @endif
                                                     </td>
                                                 </tr>
                                             @endforeach

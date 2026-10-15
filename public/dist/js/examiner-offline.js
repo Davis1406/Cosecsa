@@ -32,7 +32,7 @@
   var SYNC_INTERVAL_MS = 30000;
   var WARM_MAX_AGE_MS = 20 * 60 * 1000;
   var WARM_CONCURRENCY = 3;
-  var WARM_KEY = 'examiner-offline-warm-v3'; // bump to make every device re-download the offline pages
+  var WARM_KEY = 'examiner-offline-warm-v4'; // bump to make every device re-download the offline pages
   var FLASH_KEY = 'examiner-offline-flash';
 
   var state = { auth: false, syncing: false, warming: false, warmError: null };
