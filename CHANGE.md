@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-15) — Resubmit (Clinical / Viva choice) page: title and buttons overlapped on small screens
+- `examiner/resubmit/{candidate}/{station}` for an FCS specialty candidate shows `fcs_resubmit_selection` (choose Clinical or Viva). Its box was pinned to the middle of the screen with `position:absolute; top:50%; left:50%; transform:translate(-50%,-50%)` inside a `height:100vh` section. On a phone the content (two 250px-high cards, headings, Back button) is taller than the screen, so it spilled above the header (its title/heading were cut off and ran into the first card) and below onto the footer. The box now flows normally (`min-height` instead of `100vh`, no absolute centring), the title (`legend`) is centred and sized to fit, and on screens under 576px the cards are shorter. Cards stay side by side from 768px.
+- Checked at 280, 320, 360, 390, 414, 576, 768, 992 and 1280px: nothing overlaps or is cut off, and there is no sideways scroll. The MCS and General Surgery edit forms were checked at the same widths and need no change.
+- **Files:** `resources/views/examiner/fcs_resubmit_selection.blade.php`.
+
 ### Added (2026-10-15) — "Connection needed" page for examiner pages that are not available offline
 - Examiner pages that are not kept for offline use (Examiner Training `examiner/learning/*`, ID badge, attendance, ...) showed the browser's own "no internet / dino" screen when opened offline. The service worker (`public/examiner-sw.js`) now answers any `/examiner/…` page navigation that it does not cache: online it is passed straight through (redirects, sign-in expiry etc. behave as before); offline it returns a branded **"Connection needed"** page naming the page ("Examiner Training is only available online…"), with **Try again**, **Go to dashboard** and **View my results** (both work offline), the "You are offline" status, and an automatic reload when the connection returns.
 - A page that *can* be kept offline but was never saved on this device now gets the same design ("Not saved for offline use": open the dashboard once while online).

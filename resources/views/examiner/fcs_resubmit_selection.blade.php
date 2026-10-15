@@ -51,29 +51,38 @@
     </div>
 
     <style>
-        /* Center the fieldset vertically and horizontally */
+        /* The page flows normally (no absolute centering): the choice cards are taller
+           than a phone screen, and a box pinned to the middle of the screen spills
+           over the header, its own title and the footer. */
         .multi_step_form {
             width: 100%;
-            height: 100vh;
-            display: block;
+            height: auto;
+            min-height: calc(100vh - 160px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 12px;
+            background: transparent;
         }
 
         .exam-fieldset {
             border: 2.5px solid #a02626;
-            padding: 30px;
+            padding: 12px 30px 30px;
             border-radius: 10px;
+            width: 100%;
             max-width: 700px;
             margin: 0 auto;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            min-width: 0;
         }
 
         .exam-fieldset legend {
             font-size: 1.5rem;
             font-weight: bold;
             color: #a02626;
+            width: auto;
+            max-width: 100%;
+            padding: 0 10px;
+            text-align: center;
         }
 
         .exam-type-btn {
@@ -128,6 +137,15 @@
         .exam-type-btn p {
             font-size: 0.9rem;
             opacity: 0.9;
+        }
+
+        @media (max-width: 575.98px) {
+            .exam-fieldset { padding: 8px 16px 20px; }
+            .exam-fieldset legend { font-size: 1.15rem; }
+            .exam-type-btn { min-height: 150px; padding: 20px 16px; }
+            .exam-type-btn i { font-size: 2rem; margin-bottom: .5rem !important; }
+            .exam-type-btn h4 { font-size: 1.15rem; margin-bottom: 4px; }
+            .multi_step_form .row.mt-5 { margin-top: 1rem !important; }
         }
     </style>
     @include('examiner._offline')
