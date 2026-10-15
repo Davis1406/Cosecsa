@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-15) — Offline status badge sits above the footer
+- The "N marks waiting to sync / Offline" badge was pinned to the very bottom-left of the screen, on top of the page footer. It now sits just above the footer (the script measures `footer.main-footer` and keeps the badge 12px above it): bottom-left on small screens, centred over the content area on large screens (≥992px, following the sidebar open/closed), with its panel centred above it too. Checked at 390px and 1280px, including opening/collapsing the sidebar.
+- **Files:** `public/dist/js/examiner-offline.js`.
+
 ### Fixed (2026-10-15) — Offline: saved pages lost their scripts after a deploy; result pages not kept
 - **Cause.** The offline copy of a page was saved without the scripts/styles it refers to. Our script URLs carry `?v=<file time>`, which changes on every deploy, so a page saved after a deploy asked for a script URL the device never downloaded: opened offline (e.g. dashboard → Results) it ran without `examiner-offline.js`, so no "saved on this device" card, no View/Edit/Discard buttons and no sync badge.
 - **Fix (`public/examiner-sw.js`).** Whenever a page is saved, the service worker now also downloads and keeps its `<script src>` and `<link rel=stylesheet>` files; and offline, a script/style that was never saved falls back to an older saved copy of the same file (ignoring `?v=`).

@@ -525,7 +525,8 @@
       '.eo-toasts{position:fixed;top:64px;right:16px;z-index:2100;display:flex;flex-direction:column;gap:8px;max-width:360px}',
       '.eo-toast{padding:10px 14px;border-radius:6px;color:#fff;font-size:.9rem;box-shadow:0 2px 8px rgba(0,0,0,.25)}',
       '.eo-toast.success{background:#2e7d32}.eo-toast.error{background:#c62828}.eo-toast.warning{background:#8a5a00}',
-      '.eo-pill{position:fixed;left:16px;bottom:16px;z-index:2000;font-family:inherit}',
+      // Sits just above the page footer (its height is measured into --eo-footer): bottom-left on small screens, centred over the content on large ones.
+      '.eo-pill{position:fixed;left:16px;bottom:calc(var(--eo-footer,56px) + 12px);z-index:2000;font-family:inherit;max-width:calc(100vw - 32px)}',
       '.eo-pill button.eo-badge{border:0;border-radius:20px;padding:8px 16px;font-size:.85rem;font-weight:600;color:#fff;background:#37474f;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer}',
       '.eo-pill.pending button.eo-badge{background:#8a5a00}.eo-pill.error button.eo-badge{background:#c62828}',
       '.eo-panel{position:absolute;left:0;bottom:46px;width:340px;max-width:calc(100vw - 32px);max-height:60vh;overflow:auto;background:#fff;color:#251917;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.25);padding:12px;font-size:.85rem}',
@@ -544,6 +545,8 @@
       '.eo-btn.sec{background:#e0e0e0}.eo-btn.danger{background:#c62828;color:#fff}.eo-btns{display:flex;gap:6px;flex-wrap:wrap}',
       '.eo-ready{border-left:4px solid #FEC503;background:#fffdf3;border-radius:6px;padding:10px 14px;margin:0 0 16px;text-align:left;font-size:.88rem}',
       '.eo-ready.ok{border-left-color:#2e7d32}.eo-ready.bad{border-left-color:#c62828}',
+      // Large screens come last so they override the base rules above.
+      '@media (min-width:992px){.eo-pill{left:var(--eo-center,50%);transform:translateX(-50%)}.eo-panel{left:50%;transform:translateX(-50%)}}',
     ].join('');
     document.head.appendChild(el('style', { text: css }));
   }
@@ -566,6 +569,32 @@
     ui.pill.appendChild(ui.panel);
     ui.pill.appendChild(ui.badge);
     document.body.appendChild(ui.pill);
+    watchFooter();
+  }
+
+  /**
+   * Keep the badge just above the page footer, and (on large screens) centred
+   * over the content area: both depend on the footer, whose height and left
+   * edge change with the screen size and when the sidebar opens or closes.
+   */
+  function positionPill() {
+    var footer = document.querySelector('footer.main-footer');
+    if (!footer || !ui.pill) return;
+
+    var box = footer.getBoundingClientRect();
+    ui.pill.style.setProperty('--eo-footer', Math.round(box.height) + 'px');
+    ui.pill.style.setProperty('--eo-center', Math.round(box.left + box.width / 2) + 'px');
+  }
+
+  function watchFooter() {
+    positionPill();
+    window.addEventListener('resize', positionPill);
+    var footer = document.querySelector('footer.main-footer');
+    if (footer && window.ResizeObserver) new ResizeObserver(positionPill).observe(footer);
+    // the sidebar toggle animates the footer's left edge
+    document.addEventListener('transitionend', function (event) {
+      if (event.target && event.target.matches && event.target.matches('.content-wrapper, .main-footer, .main-sidebar')) positionPill();
+    });
   }
 
   function togglePanel(force) {
