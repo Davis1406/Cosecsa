@@ -619,7 +619,8 @@
       ]));
     });
     table.appendChild(body);
-    card.appendChild(table);
+    // Wide on a phone: scroll the table inside the card rather than letting it spill over the page.
+    card.appendChild(el('div', { style: 'overflow-x:auto;-webkit-overflow-scrolling:touch' }, [table]));
     host.appendChild(card);
   }
 

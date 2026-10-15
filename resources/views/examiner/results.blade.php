@@ -23,7 +23,7 @@
                                     </div>
 
                                     <div class="card-body">
-                                        <table id="mcsResultsTable" class="table table-bordered table-striped">
+                                        <table id="mcsResultsTable" class="table table-bordered table-striped dt-responsive w-100">
                                             <thead>
                                             <tr>
                                                 <th>Candidate ID</th>
@@ -92,7 +92,7 @@
                                     </div>
 
                                     <div class="card-body">
-                                        <table id="gsResultsTable" class="table table-bordered table-striped">
+                                        <table id="gsResultsTable" class="table table-bordered table-striped dt-responsive w-100">
                                             <thead>
                                             <tr>
                                                 <th>Candidate ID</th>
@@ -161,7 +161,7 @@
                                     </div>
 
                                     <div class="card-body">
-                                        <table id="fcsResultsTable" class="table table-bordered table-striped">
+                                        <table id="fcsResultsTable" class="table table-bordered table-striped dt-responsive w-100">
                                             <thead>
                                             <tr>
                                                 <th>Candidate ID</th>
@@ -225,29 +225,26 @@
         </div>
     </div>
 
-    <script>
-        $(document).ready(function() {
-            @if($showMcs)
-            $('#mcsResultsTable').DataTable({
-                "responsive": true,
-                "autoWidth": false,
-            });
-            @endif
-
-            @if($showGs)
-            $('#gsResultsTable').DataTable({
-                "responsive": true,
-                "autoWidth": false,
-            });
-            @endif
-
-            @if($showFcs)
-            $('#fcsResultsTable').DataTable({
-                "responsive": true,
-                "autoWidth": false,
-            });
-            @endif
-        });
-    </script>
     @include('examiner._offline')
 @endsection
+
+@push('scripts')
+<script>
+    // Collapse the least important columns first on narrow screens (they stay
+    // one tap away under the row's + control). Lower number = kept visible longer.
+    function initResultsTable(selector, priorities) {
+        var columnDefs = Object.keys(priorities).map(function (target) {
+            return { responsivePriority: priorities[target], targets: parseInt(target, 10) };
+        });
+        $(selector).DataTable({ responsive: true, autoWidth: false, columnDefs: columnDefs });
+    }
+
+    $(document).ready(function () {
+        // Candidate, Actions, Total, Grade, Group, then the five question marks.
+        var questionTable = { 0: 1, 9: 2, 7: 3, 8: 4, 1: 5, 2: 10, 3: 11, 4: 12, 5: 13, 6: 14 };
+        @if($showMcs) initResultsTable('#mcsResultsTable', questionTable); @endif
+        @if($showGs) initResultsTable('#gsResultsTable', questionTable); @endif
+        @if($showFcs) initResultsTable('#fcsResultsTable', { 0: 1, 5: 2, 4: 3, 2: 4, 3: 5, 1: 6 }); @endif
+    });
+</script>
+@endpush

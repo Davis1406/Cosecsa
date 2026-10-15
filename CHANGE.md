@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-15) — Results tables no longer overlap on small screens
+- **Examiner results** (`examiner/results`): the DataTables setup was an inline script in the page body, which runs before jQuery loads, so it never executed and the 10-column tables were plain, unwrapped tables that spilled over the card on phones and tablets. The script is now in `@push('scripts')` and the three tables use DataTables Responsive (`dt-responsive`): Candidate, Actions and Total stay visible, the question marks collapse behind a + control on narrow screens. The "saved on this device" card scrolls sideways inside itself instead of widening the page.
+- **Test Results** (`admin/exams/test_results`): DataTables' search/length/paging controls sat inside a fixed 900px scrolling wrapper, so on a phone they were centred off-screen over the table. The wrapper and `min-width` are gone and the table is responsive (Candidate, Total, Delete first). The empty-state row is now DataTables' own `emptyTable` message (a `colspan` row breaks Responsive), "Delete All" is right-aligned, and the outdated "expires 2026-08-20" banner text is replaced.
+- **Files:** `resources/views/examiner/results.blade.php`, `resources/views/admin/exams/test_results.blade.php`, `public/dist/js/examiner-offline.js`. Checked at 390 / 768 / 1280px.
+
 ### Changed (2026-10-15) — Examiner Results summary works offline and includes sandbox marks
 - `examiner/results` is now cached for offline use (read-only copy of what was last seen online) and listed in the offline manifest. While marks are still on the device a card at the top lists them ("Saved on this device, not yet submitted"); after they sync the page reloads to show them.
 - The summary also lists the examiner's sandbox marks (`test_<table>`, from `TEST-…` groups) next to the real ones; those rows show a "Test mark" badge instead of View/Resubmit, which only work on real results. FCS marks are grouped per candidate separately for real and sandbox.

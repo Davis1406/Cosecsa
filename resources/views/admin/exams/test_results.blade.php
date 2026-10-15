@@ -19,11 +19,9 @@
                             <i class="fas fa-flask"></i>
                             <div>
                                 <strong>This is test data, not real exam results.</strong>
-                                It comes from the Examiner App's temporary test clone
-                                (isolated <code>test_*</code> tables — see cosecsa-api's
-                                <code>TESTING.md</code>), created 2026-08-17 and set to
-                                auto-expire 2026-08-20. Nothing here affects real
-                                candidates, examiners, or results.
+                                Marks saved for <code>TEST-…</code> groups on the examiner pages, and by the
+                                Examiner App's test build, are kept in separate <code>test_*</code> tables.
+                                Nothing here affects real candidates, examiners, or results.
                             </div>
                         </div>
 
@@ -31,7 +29,7 @@
                             <div class="card-header d-flex align-items-center justify-content-between">
                                 <h3 class="card-title mb-0">{{ $header_title }}</h3>
                                 @if(!$results->isEmpty())
-                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDeleteAll()">
+                                <button type="button" class="btn btn-sm btn-outline-danger ml-auto" onclick="confirmDeleteAll()">
                                     <i class="fas fa-trash-alt mr-1"></i>Delete All
                                 </button>
                                 @endif
@@ -46,8 +44,7 @@
                                     equivalent real-world label so it reads <strong>N/A</strong> —
                                     both are expected, not missing data.
                                 </p>
-                                <div class="table-responsive">
-                                    <table id="testresultstable" class="table table-bordered table-striped" style="min-width:900px;">
+                                <table id="testresultstable" class="table table-bordered table-striped dt-responsive w-100">
                                         <thead>
                                             <tr>
                                                 <th>Specialty</th>
@@ -58,13 +55,13 @@
                                                 <th>Format</th>
                                                 <th>Total</th>
                                                 <th>Overall</th>
-                                                <th style="max-width:220px;">Remarks</th>
+                                                <th>Remarks</th>
                                                 <th>Submitted</th>
-                                                <th class="text-center" data-orderable="false">Delete</th>
+                                                <th class="text-center">Delete</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @forelse ($results as $r)
+                                            @foreach ($results as $r)
                                             <tr>
                                                 <td>{{ $r->specialty }}</td>
                                                 <td>{{ $r->candidate_code }}</td>
@@ -82,7 +79,7 @@
                                                 </td>
                                                 <td>{{ $r->total }}</td>
                                                 <td>{{ $r->overall ?? '—' }}</td>
-                                                <td style="max-width:220px;white-space:normal;word-break:break-word;">{{ $r->remarks ?? '' }}</td>
+                                                <td style="white-space:normal;word-break:break-word;">{{ $r->remarks ?? '' }}</td>
                                                 <td style="white-space:nowrap;">{{ $r->created_at }}</td>
                                                 <td class="text-center">
                                                     <form method="POST"
@@ -95,17 +92,9 @@
                                                     </form>
                                                 </td>
                                             </tr>
-                                            @empty
-                                            <tr>
-                                                <td colspan="11" class="text-center text-muted">
-                                                    No test submissions yet. Have an examiner log into the
-                                                    test build of the Examiner App and mark a candidate.
-                                                </td>
-                                            </tr>
-                                            @endforelse
+                                            @endforeach
                                         </tbody>
-                                    </table>
-                                </div>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -125,7 +114,28 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
-    $('#testresultstable').DataTable({ order: [[9, 'desc']], columnDefs: [{ orderable: false, targets: -1 }] });
+    // Responsive: on narrow screens the least important columns collapse into
+    // an expandable row (lower responsivePriority = kept visible longer).
+    $('#testresultstable').DataTable({
+        responsive: true,
+        autoWidth: false,
+        language: { emptyTable: 'No test submissions yet. Mark a candidate in a TEST-… group on the examiner pages, or in the Examiner App test build.' },
+        order: [[9, 'desc']],
+        columnDefs: [
+            { responsivePriority: 1, targets: 1 },   // Candidate ID
+            { responsivePriority: 2, targets: 6 },   // Total
+            { responsivePriority: 3, targets: -1 },  // Delete
+            { responsivePriority: 4, targets: 0 },   // Specialty
+            { responsivePriority: 5, targets: 4 },   // Station
+            { responsivePriority: 6, targets: 2 },   // Group
+            { responsivePriority: 7, targets: 9 },   // Submitted
+            { responsivePriority: 8, targets: 5 },   // Format
+            { responsivePriority: 9, targets: 7 },   // Overall
+            { responsivePriority: 10, targets: 3 },  // Examiner
+            { responsivePriority: 11, targets: 8 },  // Remarks
+            { orderable: false, targets: -1 }
+        ]
+    });
 });
 
 function confirmDeleteAll() {
