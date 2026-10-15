@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-10-15) — Results: view, edit and discard marks that are still on the device
+- Marks saved offline and not yet submitted had no View/Edit controls: they are not on the server, so there is no page for them. The "Saved on this device, not yet submitted" card on `examiner/results` now has **View**, **Edit** and **Discard** per mark (works offline). Edit opens a dialog with the mark's questions (grouped by case for FCS), grade, remarks and a live total; it keeps the original field order, refuses blank/negative marks and, for MCS/General Surgery, a total over 20. A rejected mark can be edited and is queued again. Saving re-reads the mark first: if it was submitted in the meantime the examiner is told to use Resubmit instead. Discard asks for confirmation.
+- Client only: `public/dist/js/examiner-offline.js` (no server change). Checked in a browser with a stubbed server (single-list and multi-case marks, validation, view, discard, and that sync submits the edited values).
+
 ### Fixed (2026-10-15) — Results: View / Resubmit now work for test (TEST-… group) marks
 - The Results summary showed a "Test mark" label instead of the View and Resubmit buttons for marks saved to `test_*_results`, because the View / Resubmit pages and the update endpoints only looked in the real tables. They now look in each results table and its `test_` twin (`withSandbox()`), so test marks can be viewed and corrected exactly like real ones; the results rows show a small "Test" badge next to the candidate and always have the buttons. The offline manifest includes the sandbox marks' pages too.
 - `viewFcsResults` was missing `orthopaedic_results` (an Orthopaedic mark's View page said "No results"); added.

@@ -12,7 +12,9 @@
  *      data-offline-kind="update" (the latest queued edit of a mark replaces
  *      an earlier one) and data-offline-redirect (where to go afterwards);
  *   4. syncs queued marks, in order, once the connection and session are back;
- *   5. forms marked data-requires-online (profile edit: uploads, password) are
+ *   5. on the results page, marks still waiting on the device can be viewed,
+ *      edited and discarded from the "saved on this device" card;
+ *   6. forms marked data-requires-online (profile edit: uploads, password) are
  *      not queued; offline, the examiner is told to reconnect first.
  *
  * Syncing is safe to repeat: the marking endpoints reject a second mark for
@@ -471,6 +473,14 @@
       '.eo-item .eo-err{color:#c62828}.eo-actions{display:flex;gap:8px;margin-top:8px}',
       '.eo-btn{border:0;border-radius:4px;padding:5px 12px;background:#FEC503;color:#000;font-weight:600;cursor:pointer}',
       '.eo-btn.link{background:none;color:#a02626;padding:0;text-decoration:underline}',
+      '.eo-overlay{position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:12px}',
+      '.eo-dialog{background:#fff;color:#251917;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.35);width:100%;max-width:460px;max-height:92vh;overflow:auto;padding:16px;font-size:.9rem}',
+      '.eo-dialog h4{margin:0 0 2px;font-size:1.05rem;color:#a02626}.eo-dialog .eo-sub{color:#666;margin-bottom:12px}',
+      '.eo-dialog label{display:block;font-weight:600;margin:10px 0 3px;font-size:.82rem}',
+      '.eo-dialog input,.eo-dialog select,.eo-dialog textarea{width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;font:inherit}',
+      '.eo-dialog .eo-total{font-weight:700;margin-top:10px}.eo-dialog .eo-error{color:#c62828;margin-top:8px}',
+      '.eo-dialog .eo-case{font-weight:700;color:#a02626;margin-top:12px}.eo-dialog .eo-row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}',
+      '.eo-btn.sec{background:#e0e0e0}.eo-btn.danger{background:#c62828;color:#fff}.eo-btns{display:flex;gap:6px;flex-wrap:wrap}',
       '.eo-ready{border-left:4px solid #FEC503;background:#fffdf3;border-radius:6px;padding:10px 14px;margin:0 0 16px;text-align:left;font-size:.88rem}',
       '.eo-ready.ok{border-left-color:#2e7d32}.eo-ready.bad{border-left-color:#c62828}',
     ].join('');
@@ -626,7 +636,7 @@
     else if (!navigator.onLine) card.appendChild(el('div', { text: 'They will be submitted automatically when you are back online.' }));
 
     var table = el('table', { class: 'table table-sm', style: 'margin:8px 0 0;background:#fff' }, [
-      el('thead', {}, [el('tr', {}, ['Candidate', 'Station', 'Group', 'Exam', 'Saved', 'Status'].map(function (h) { return el('th', { text: h }); }))]),
+      el('thead', {}, [el('tr', {}, ['Candidate', 'Station', 'Group', 'Exam', 'Saved', 'Status', 'Actions'].map(function (h) { return el('th', { text: h }); }))]),
     ]);
     var body = el('tbody');
     lastItems.forEach(function (item) {
@@ -637,6 +647,11 @@
         el('td', { text: item.label.exam || '-' }),
         el('td', { text: formatTime(item.createdAt) }),
         el('td', { text: item.status === 'failed' ? 'Rejected: ' + (item.error || 'unknown reason') : 'Waiting to sync' }),
+        el('td', {}, [el('div', { class: 'eo-btns' }, [
+          el('button', { class: 'eo-btn sec', type: 'button', text: 'View', onclick: function () { openItemDialog(item, false); } }),
+          el('button', { class: 'eo-btn', type: 'button', text: 'Edit', onclick: function () { openItemDialog(item, true); } }),
+          el('button', { class: 'eo-btn danger', type: 'button', text: 'Discard', onclick: function () { discardItem(item); } }),
+        ])]),
       ]));
     });
     table.appendChild(body);
@@ -653,6 +668,169 @@
       var flash = JSON.parse(raw);
       toast(flash.type, flash.text);
     } catch (e) { /* ignore */ }
+  }
+
+  // ── View / edit / discard a mark that is still on the device ────────────
+
+  var MARK_FIELD = /^question_marks(?:_case(\d+))?\[\]$/;
+  var GRADES = ['pass', 'borderline', 'fail'];
+
+  /** Pull the editable parts (marks, total, remarks, grade) out of a queued form post. */
+  function parseItem(item) {
+    var groups = [];
+    var byName = {};
+    var info = { total: '', remarks: '', gradeName: '', grade: '', format: '' };
+
+    item.fields.forEach(function (pair) {
+      var name = pair[0];
+      var value = pair[1];
+      var match = MARK_FIELD.exec(name);
+      if (match) {
+        if (!byName[name]) {
+          byName[name] = { name: name, caseNo: match[1] || '', values: [] };
+          groups.push(byName[name]);
+        }
+        byName[name].values.push(value);
+      } else if (name === 'total_marks') info.total = value;
+      else if (name === 'remarks') info.remarks = value;
+      else if (name === 'overall' || name === 'grade') { info.gradeName = name; info.grade = value; }
+      else if (name === 'form_type' || name === 'exam_format') info.format = value;
+    });
+
+    return { groups: groups, info: info, flat: groups.length === 1 && !groups[0].caseNo };
+  }
+
+  function closeDialog() {
+    var open = document.querySelector('.eo-overlay');
+    if (open && open.parentNode) open.parentNode.removeChild(open);
+  }
+
+  function sumMarks(inputs) {
+    var total = 0;
+    inputs.forEach(function (input) { total += parseFloat(input.value) || 0; });
+    return Math.round(total * 10) / 10;
+  }
+
+  function openItemDialog(item, editable) {
+    closeDialog();
+    var parsed = parseItem(item);
+    var inputs = [];
+
+    var overlay = el('div', { class: 'eo-overlay', onclick: function (event) { if (event.target === overlay) closeDialog(); } });
+    var box = el('div', { class: 'eo-dialog', role: 'dialog', 'aria-modal': 'true' });
+    overlay.appendChild(box);
+
+    var context = [item.label.candidate, item.label.station, item.label.group, parsed.info.format ? parsed.info.format : ''].filter(Boolean).join(' · ');
+    box.appendChild(el('h4', { text: (editable ? 'Edit' : 'View') + ' saved mark' + (item.kind === 'update' ? ' (edit)' : '') }));
+    box.appendChild(el('div', { class: 'eo-sub', text: (context || item.label.exam || '') + ' — saved ' + formatTime(item.createdAt) }));
+    if (item.status === 'failed') box.appendChild(el('div', { class: 'eo-error', text: 'Rejected by the server: ' + (item.error || 'unknown reason') }));
+
+    var totalNode = el('div', { class: 'eo-total' });
+    var errorNode = el('div', { class: 'eo-error' });
+    var refreshTotal = function () { totalNode.textContent = 'Total marks: ' + (editable ? sumMarks(inputs) : (parsed.info.total || sumMarks(inputs.length ? inputs : []))); };
+
+    parsed.groups.forEach(function (group) {
+      if (group.caseNo) box.appendChild(el('div', { class: 'eo-case', text: 'Case ' + group.caseNo }));
+      group.values.forEach(function (value, i) {
+        box.appendChild(el('label', { text: 'Question ' + (i + 1) }));
+        var input = el('input', { type: 'number', step: '0.5', min: '0', value: value });
+        if (!editable) input.setAttribute('readonly', 'readonly');
+        input.addEventListener('input', refreshTotal);
+        inputs.push(input);
+        box.appendChild(input);
+      });
+    });
+
+    var gradeSelect = null;
+    if (parsed.info.gradeName) {
+      box.appendChild(el('label', { text: 'Grade' }));
+      gradeSelect = el('select');
+      (GRADES.indexOf(parsed.info.grade) === -1 ? GRADES.concat([parsed.info.grade]) : GRADES).forEach(function (g) {
+        gradeSelect.appendChild(el('option', { value: g, text: g ? g.charAt(0).toUpperCase() + g.slice(1) : '—' }));
+      });
+      gradeSelect.value = parsed.info.grade;
+      if (!editable) gradeSelect.setAttribute('disabled', 'disabled');
+      box.appendChild(gradeSelect);
+    }
+
+    box.appendChild(el('label', { text: 'Remarks' }));
+    var remarks = el('textarea', { rows: '3' });
+    remarks.value = parsed.info.remarks;
+    if (!editable) remarks.setAttribute('readonly', 'readonly');
+    box.appendChild(remarks);
+
+    box.appendChild(totalNode);
+    refreshTotal();
+    box.appendChild(errorNode);
+
+    var row = el('div', { class: 'eo-row' });
+    if (editable) {
+      row.appendChild(el('button', { class: 'eo-btn sec', type: 'button', text: 'Cancel', onclick: closeDialog }));
+      row.appendChild(el('button', { class: 'eo-btn', type: 'button', text: 'Save changes', onclick: function () {
+        saveItemEdit(item, parsed, inputs, remarks, gradeSelect, errorNode);
+      } }));
+    } else {
+      row.appendChild(el('button', { class: 'eo-btn sec', type: 'button', text: 'Close', onclick: closeDialog }));
+      row.appendChild(el('button', { class: 'eo-btn', type: 'button', text: 'Edit', onclick: function () { openItemDialog(item, true); } }));
+    }
+    box.appendChild(row);
+
+    document.body.appendChild(overlay);
+  }
+
+  /** Validate the edited values and write them back into the queued post. */
+  function saveItemEdit(item, parsed, inputs, remarks, gradeSelect, errorNode) {
+    var bad = inputs.some(function (input) { return input.value === '' || isNaN(parseFloat(input.value)) || parseFloat(input.value) < 0; });
+    if (bad) { errorNode.textContent = 'Enter a mark of 0 or more for every question.'; return; }
+
+    var total = sumMarks(inputs);
+    // MCS and General Surgery (one list of questions) are marked out of 20 per station.
+    if (parsed.flat && total > 20) { errorNode.textContent = 'The total marks should not exceed 20 per station.'; return; }
+
+    // The mark may have been submitted since this dialog was opened: re-read it first.
+    queueAll().then(function (items) {
+      var current = items.filter(function (i) { return i.id === item.id; })[0];
+      if (!current) {
+        closeDialog();
+        toast('warning', 'This mark was just submitted. Use Resubmit on the results list to change it.');
+        if (navigator.onLine) setTimeout(function () { window.location.reload(); }, 1500);
+        return null;
+      }
+
+      var position = {};
+      var fields = current.fields.map(function (pair) {
+        var name = pair[0];
+        if (MARK_FIELD.test(name)) {
+          var index = position[name] = (position[name] || 0) + 1;
+          var group = parsed.groups.filter(function (g) { return g.name === name; })[0];
+          var flatIndex = 0;
+          for (var g = 0; g < parsed.groups.length && parsed.groups[g] !== group; g++) flatIndex += parsed.groups[g].values.length;
+          return [name, String(parseFloat(inputs[flatIndex + index - 1].value))];
+        }
+        if (name === 'total_marks') return [name, String(total)];
+        if (name === 'remarks') return [name, remarks.value];
+        if (gradeSelect && name === parsed.info.gradeName) return [name, gradeSelect.value];
+        return pair;
+      });
+
+      current.fields = fields;
+      current.status = 'pending';
+      current.error = '';
+      return queuePut(current).then(function () { return true; });
+    }).then(function (saved) {
+      if (!saved) return;
+      closeDialog();
+      toast('success', 'Changes saved on this device.' + (navigator.onLine ? '' : ' They will be submitted when you are back online.'));
+      return refreshStatus().then(function () { if (navigator.onLine) syncQueue(); });
+    }).catch(function () {
+      errorNode.textContent = 'Could not save the changes on this device.';
+    });
+  }
+
+  function discardItem(item) {
+    var label = [item.label.candidate, item.label.station].filter(Boolean).join(' · ') || 'this mark';
+    if (!window.confirm('Discard ' + label + '? It has not been submitted and will be lost.')) return;
+    queueDelete(item.id).then(refreshStatus).then(function () { toast('warning', 'Mark discarded.'); });
   }
 
   // ── Editing a mark that already has an unsynced edit ────────────────────
