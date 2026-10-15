@@ -179,6 +179,40 @@ class ExaminerOfflineTest extends TestCase
         $this->assertSame(0, DB::table('gs_results')->count());
     }
 
+    // ── Results summary ─────────────────────────────────────────────────
+
+    public function test_results_page_lists_real_and_sandbox_marks_and_flags_the_sandbox_ones(): void
+    {
+        $this->postJson('examiner/general_surgery', $this->flatPayload(['group_id' => 3]))->assertStatus(201);
+        $this->postJson('examiner/general_surgery', $this->flatPayload(['group_id' => 17, 'candidate_id' => 11, 'station_id' => 2]))->assertStatus(201);
+
+        $view = app(\App\Http\Controllers\CandidatesController::class)->results();
+        $rows = $view->getData()['gsResults']->sortBy('station_id')->values();
+
+        $this->assertCount(2, $rows);
+        $this->assertSame('PEN-1', $rows[0]->candidate_name);   // PEN shown: no candidate number yet
+        $this->assertFalse((bool) $rows[0]->is_test);
+        $this->assertSame('A', $rows[0]->group_name);
+        $this->assertTrue((bool) $rows[1]->is_test);
+        $this->assertSame('TEST-PART1', $rows[1]->group_name);
+    }
+
+    public function test_results_page_groups_fcs_marks_per_candidate_and_keeps_sandbox_apart(): void
+    {
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical', ['group_id' => 3]))->assertStatus(201);
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('viva', ['group_id' => 3]))->assertStatus(201);
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical', ['group_id' => 17]))->assertStatus(201);
+
+        $fcs = app(\App\Http\Controllers\CandidatesController::class)->results()->getData()['fcsResults'];
+
+        $this->assertCount(2, $fcs);
+        $real = $fcs->firstWhere('is_test', false);
+        $sandbox = $fcs->firstWhere('is_test', true);
+        $this->assertSame(24.0, (float) $real->overall_total);       // clinical 12 + viva 12
+        $this->assertSame(12.0, (float) $sandbox->overall_total);
+        $this->assertSame('cardiothoracic_results', $real->source_table);
+    }
+
     // ── Offline support endpoints ───────────────────────────────────────
 
     public function test_token_endpoint_returns_a_fresh_token_and_the_user_and_is_not_cacheable(): void
@@ -198,11 +232,11 @@ class ExaminerOfflineTest extends TestCase
 
         $pages = array_map(fn ($u) => parse_url($u, PHP_URL_PATH), $manifest['pages']);
         foreach (['/examiner/dashboard', '/examiner/examiner_form', '/examiner/general_surgery',
-                  '/examiner/cardiothoracic', '/examiner/cardiothoracic/clinical', '/examiner/paediatric_orthopaedics/viva'] as $path) {
+                  '/examiner/results', '/examiner/cardiothoracic', '/examiner/cardiothoracic/clinical', '/examiner/paediatric_orthopaedics/viva'] as $path) {
             $this->assertContains($path, $pages);
         }
-        // 3 fixed pages + 8 specialties x (selection, clinical, viva)
-        $this->assertCount(27, $pages);
+        // 4 fixed pages + 8 specialties x (selection, clinical, viva)
+        $this->assertCount(28, $pages);
 
         $data = array_map(fn ($u) => parse_url($u, PHP_URL_PATH), $manifest['data']);
         sort($data);

@@ -10,6 +10,9 @@
             <section class="content">
                 <div class="container-wrapper">
 
+                    {{-- Marks saved on this device that have not reached the server yet (filled in by dist/js/examiner-offline.js) --}}
+                    <div id="examiner-offline-pending"></div>
+
                     {{-- MCS RESULTS TABLE --}}
                     @if($showMcs && $mcsResults->isNotEmpty())
                         <div class="row">
@@ -54,6 +57,9 @@
                                                     <td>{{ $value->overall ?? '-' }}</td>
 
                                                     <td>
+                                                        @if($value->is_test)
+                                                        <span class="badge badge-secondary" title="Saved for a TEST group; review or delete it under Exams &gt; Test Results">Test mark</span>
+                                                    @else
                                                         <div class="btn-group">
                                                             <a class="btn btn-info btn-sm"
                                                                href="{{ url('examiner/view_results/' . $value->candidate_id . '/' . $value->station_id) }}">
@@ -64,6 +70,7 @@
                                                                 Resubmit
                                                             </a>
                                                         </div>
+                                                    @endif
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -119,6 +126,9 @@
                                                     <td>{{ $value->overall ?? '-' }}</td>
 
                                                     <td>
+                                                        @if($value->is_test)
+                                                        <span class="badge badge-secondary" title="Saved for a TEST group; review or delete it under Exams &gt; Test Results">Test mark</span>
+                                                    @else
                                                         <div class="btn-group">
                                                             <a class="btn btn-info btn-sm"
                                                                href="{{ url('examiner/view_results/' . $value->candidate_id . '/' . $value->station_id) }}">
@@ -129,6 +139,7 @@
                                                                 Resubmit
                                                             </a>
                                                         </div>
+                                                    @endif
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -171,6 +182,9 @@
                                                     <td><b>{{ $value->viva_total }}</b></td>
                                                     <td><b>{{ $value->overall_total }}</b></td>
                                                     <td>
+                                                        @if($value->is_test)
+                                                        <span class="badge badge-secondary" title="Saved for a TEST group; review or delete it under Exams &gt; Test Results">Test mark</span>
+                                                    @else
                                                         <div class="btn-group">
                                                             <a class="btn btn-info btn-sm"
                                                                href="{{ url('examiner/view_fcs_results/' . $value->candidate_id) }}">
@@ -181,6 +195,7 @@
                                                                 Resubmit
                                                             </a>
                                                         </div>
+                                                    @endif
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -234,4 +249,5 @@
             @endif
         });
     </script>
+    @include('examiner._offline')
 @endsection

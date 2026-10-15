@@ -24,10 +24,12 @@ const NETWORK_TIMEOUT_MS = 5000;
 
 // Pages and data worth keeping for offline marking. Anything else under
 // /examiner/ (profile, password, badge, learning, ...) is deliberately not cached.
+// The results summary is cached as a read-only copy of what was last seen online.
 const PAGE_PATTERNS = [
   /^\/examiner\/dashboard\/?$/,
   /^\/examiner\/examiner_form\/?$/,
   /^\/examiner\/general_surgery\/?$/,
+  /^\/examiner\/results\/?$/,
   /^\/examiner\/(cardiothoracic|urology|paediatric|orthopaedic|ent|plastic_surgery|neurosurgery|paediatric_orthopaedics)(\/(clinical|viva))?\/?$/,
   /^\/get-(mcs|gs)-candidates\/\d+\/?$/,
   /^\/get-exam-candidates\/[a-z_]+\/\d+\/?$/,

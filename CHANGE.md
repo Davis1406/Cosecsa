@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-15) — Examiner Results summary works offline and includes sandbox marks
+- `examiner/results` is now cached for offline use (read-only copy of what was last seen online) and listed in the offline manifest. While marks are still on the device a card at the top lists them ("Saved on this device, not yet submitted"); after they sync the page reloads to show them.
+- The summary also lists the examiner's sandbox marks (`test_<table>`, from `TEST-…` groups) next to the real ones; those rows show a "Test mark" badge instead of View/Resubmit, which only work on real results. FCS marks are grouped per candidate separately for real and sandbox.
+- The offline readiness key was bumped (`examiner-offline-warm-v2`) so devices re-download the pages once after this release.
+- **Files:** `CandidatesController.php` (`results`, `examinerResultRows`), `resources/views/examiner/results.blade.php`, `ExaminerOfflineController.php`, `public/examiner-sw.js`, `public/dist/js/examiner-offline.js`, `tests/Feature/ExaminerOfflineTest.php` (17 tests).
+
 ### Changed (2026-10-15) — Marks for TEST-… groups are saved to the test results tables
 - A group whose name starts with `TEST-` (e.g. `TEST-PART1`) is a sandbox. The MCS, General Surgery and FCS marking endpoints (`storeEvaluation`, `storegsEvaluation`, `submitExamEvaluation`) save marks for such a group to `test_<specialty>_results` instead of the real results table, and check duplicates there, so nothing reaches real results. They appear under Exams > Test Results (Delete / Delete All there remove them). If the test table is missing the mark is refused (422) rather than saved for real. Other groups are unchanged.
 - The examiner Results/Resubmit pages read the real tables only, so sandbox marks are not listed there; review and delete them under Test Results.

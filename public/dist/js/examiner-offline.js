@@ -28,7 +28,7 @@
   var SYNC_INTERVAL_MS = 30000;
   var WARM_MAX_AGE_MS = 20 * 60 * 1000;
   var WARM_CONCURRENCY = 3;
-  var WARM_KEY = 'examiner-offline-warm';
+  var WARM_KEY = 'examiner-offline-warm-v2'; // bump to make every device re-download the offline pages
   var FLASH_KEY = 'examiner-offline-flash';
 
   var state = { auth: false, syncing: false, warming: false, warmError: null };
@@ -342,6 +342,8 @@
         refreshStatus();
         if (result.synced || result.duplicates) {
           toast('success', plural(result.synced + result.duplicates, 'mark', 'marks') + ' synced.');
+          // The results page lists what the server holds: reload it to include what just synced.
+          if (document.getElementById('examiner-offline-pending')) setTimeout(function () { window.location.reload(); }, 1200);
         }
         if (result.failed) {
           toast('error', plural(result.failed, 'mark was', 'marks were') + ' rejected by the server. Open the sync badge for details.');
@@ -552,6 +554,7 @@
         if (!ui.panel.hasAttribute('hidden')) renderPanel();
       }
       renderReadiness();
+      renderPendingCard();
     });
   }
 
@@ -586,6 +589,38 @@
       box.appendChild(el('button', { class: 'eo-btn link', type: 'button', text: ready ? 'Update now' : 'Prepare now', onclick: function () { prepareOffline(true); } }));
     }
     host.appendChild(box);
+  }
+
+  /** On the results page: list the marks still on this device, ahead of the server's results. */
+  function renderPendingCard() {
+    var host = document.getElementById('examiner-offline-pending');
+    if (!host) return;
+    while (host.firstChild) host.removeChild(host.firstChild);
+    if (!lastItems.length) return;
+
+    var card = el('div', { class: 'eo-ready', style: 'margin-top:20px' }, [
+      el('strong', { text: 'Saved on this device, not yet submitted (' + lastItems.length + ')' }),
+    ]);
+    if (state.auth) card.appendChild(el('div', { class: 'eo-err', style: 'color:#c62828', text: 'Sign in again while online to submit them.' }));
+    else if (!navigator.onLine) card.appendChild(el('div', { text: 'They will be submitted automatically when you are back online.' }));
+
+    var table = el('table', { class: 'table table-sm', style: 'margin:8px 0 0;background:#fff' }, [
+      el('thead', {}, [el('tr', {}, ['Candidate', 'Station', 'Group', 'Exam', 'Saved', 'Status'].map(function (h) { return el('th', { text: h }); }))]),
+    ]);
+    var body = el('tbody');
+    lastItems.forEach(function (item) {
+      body.appendChild(el('tr', {}, [
+        el('td', { text: item.label.candidate || '-' }),
+        el('td', { text: item.label.station || '-' }),
+        el('td', { text: item.label.group || '-' }),
+        el('td', { text: item.label.exam || '-' }),
+        el('td', { text: formatTime(item.createdAt) }),
+        el('td', { text: item.status === 'failed' ? 'Rejected: ' + (item.error || 'unknown reason') : 'Waiting to sync' }),
+      ]));
+    });
+    table.appendChild(body);
+    card.appendChild(table);
+    host.appendChild(card);
   }
 
   function showStoredFlash() {

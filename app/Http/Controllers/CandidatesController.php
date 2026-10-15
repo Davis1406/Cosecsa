@@ -428,45 +428,23 @@ class CandidatesController extends Controller
             'paediatric_results', 'plastic_surgery_results',
         ];
 
-        $mcsResults = collect();
-        $gsResults = collect();
+        $mcsResults = $this->examinerResultRows($mcsTable, $examinerId, $currentExamYearId);
+        $gsResults  = $this->examinerResultRows($gsTable, $examinerId, $currentExamYearId);
         $fcsResults = collect();
-        $lastMcsTimestamp = $lastGsTimestamp = $lastFcsTimestamp = $lastFcsTable = null;
-
-        if (\Schema::hasTable($mcsTable)) {
-            $latestMcs = DB::table($mcsTable)->where('examiner_id', $examinerId)->where('exam_year', $currentExamYearId)->latest('created_at')->first();
-            if ($latestMcs) $lastMcsTimestamp = $latestMcs->created_at;
-            $mcsResults = DB::table($mcsTable)
-                ->select("{$mcsTable}.*", "{$mcsTable}.id as record_id", DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_name"), 'examiners_groups.group_name')
-                ->join('candidates', "{$mcsTable}.candidate_id", '=', 'candidates.id')
-                ->join('examiners_groups', "{$mcsTable}.group_id", '=', 'examiners_groups.id')
-                ->where("{$mcsTable}.examiner_id", $examinerId)->where("{$mcsTable}.exam_year", $currentExamYearId)->get();
-        }
-
-        if (\Schema::hasTable($gsTable)) {
-            $latestGs = DB::table($gsTable)->where('examiner_id', $examinerId)->where('exam_year', $currentExamYearId)->latest('created_at')->first();
-            if ($latestGs) $lastGsTimestamp = $latestGs->created_at;
-            $gsResults = DB::table($gsTable)
-                ->select("{$gsTable}.*", "{$gsTable}.id as record_id", DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_name"), 'examiners_groups.group_name')
-                ->join('candidates', "{$gsTable}.candidate_id", '=', 'candidates.id')
-                ->join('examiners_groups', "{$gsTable}.group_id", '=', 'examiners_groups.id')
-                ->where("{$gsTable}.examiner_id", $examinerId)->where("{$gsTable}.exam_year", $currentExamYearId)->get();
-        }
+        $lastFcsTimestamp = $lastFcsTable = null;
 
         foreach ($fcsGroupedTables as $table) {
-            if (!\Schema::hasTable($table)) continue;
-            $latest = DB::table($table)->where('examiner_id', $examinerId)->where('exam_year', $currentExamYearId)->latest('created_at')->first();
-            if ($latest && (!$lastFcsTimestamp || $latest->created_at > $lastFcsTimestamp)) {
-                $lastFcsTimestamp = $latest->created_at;
+            $records = $this->examinerResultRows($table, $examinerId, $currentExamYearId);
+            $latest = $records->max('created_at');
+            if ($latest && (!$lastFcsTimestamp || $latest > $lastFcsTimestamp)) {
+                $lastFcsTimestamp = $latest;
                 $lastFcsTable = $table;
             }
-            $records = DB::table($table)
-                ->select("{$table}.*", "{$table}.id as record_id", DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_name"), 'examiners_groups.group_name', DB::raw("'$table' as source_table"))
-                ->join('candidates', "{$table}.candidate_id", '=', 'candidates.id')
-                ->join('examiners_groups', "{$table}.group_id", '=', 'examiners_groups.id')
-                ->where("{$table}.examiner_id", $examinerId)->where("{$table}.exam_year", $currentExamYearId)->get();
             $fcsResults = $fcsResults->merge($records);
         }
+
+        $lastMcsTimestamp = $mcsResults->max('created_at');
+        $lastGsTimestamp  = $gsResults->max('created_at');
 
         $showMcs = !$mcsResults->isEmpty();
         $showGs = !$gsResults->isEmpty();
@@ -480,7 +458,7 @@ class CandidatesController extends Controller
 
         $fcsGroupedResults = collect();
         if ($showFcs) {
-            $fcsGroupedResults = $fcsResults->groupBy(fn($row) => $row->candidate_id . '-' . $row->source_table)
+            $fcsGroupedResults = $fcsResults->groupBy(fn($row) => $row->candidate_id . '-' . $row->source_table . '-' . $row->is_test)
                 ->map(function ($records) {
                     $clinical = $records->where('exam_format', 'clinical');
                     $viva = $records->where('exam_format', 'viva');
@@ -495,6 +473,7 @@ class CandidatesController extends Controller
                         'overall_total'  => $records->sum('total'),
                         'formats'        => $records->groupBy('exam_format'),
                         'source_table'   => $records->first()->source_table,
+                        'is_test'        => (bool) $records->first()->is_test,
                     ];
                 })->values();
         }
@@ -513,6 +492,36 @@ class CandidatesController extends Controller
             'lastSubmittedForm' => $mostRecentType === 'gs' ? $gsTable : $lastFcsTable,
             'header_title' => 'Results Summary',
         ]);
+    }
+
+    /**
+     * This examiner's marks for the year from one results table, plus their
+     * sandbox marks (saved to test_<table> for TEST-… groups, see
+     * resultsTable()). Each row carries is_test so the page can tell them apart.
+     */
+    private function examinerResultRows(string $table, $examinerId, $yearId)
+    {
+        $rows = collect();
+
+        foreach ([[$table, 0], ["test_{$table}", 1]] as [$source, $isTest]) {
+            if (!\Schema::hasTable($source)) continue;
+
+            $rows = $rows->merge(
+                DB::table($source)
+                    ->select("{$source}.*", "{$source}.id as record_id",
+                        DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_name"),
+                        'examiners_groups.group_name',
+                        DB::raw("'{$source}' as source_table"),
+                        DB::raw("{$isTest} as is_test"))
+                    ->join('candidates', "{$source}.candidate_id", '=', 'candidates.id')
+                    ->join('examiners_groups', "{$source}.group_id", '=', 'examiners_groups.id')
+                    ->where("{$source}.examiner_id", $examinerId)
+                    ->where("{$source}.exam_year", $yearId)
+                    ->get()
+            );
+        }
+
+        return $rows;
     }
 
     public function viewFcsResults($candidate_id)

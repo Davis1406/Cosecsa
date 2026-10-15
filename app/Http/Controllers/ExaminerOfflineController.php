@@ -55,7 +55,7 @@ class ExaminerOfflineController extends Controller
     /** Every examiner page that is needed to mark a candidate. */
     private function pageUrls(): array
     {
-        $paths = ['examiner/dashboard', 'examiner/examiner_form', 'examiner/general_surgery'];
+        $paths = ['examiner/dashboard', 'examiner/examiner_form', 'examiner/general_surgery', 'examiner/results'];
 
         foreach (array_keys(self::FCS_PROGRAMMES) as $type) {
             $paths[] = "examiner/{$type}";
