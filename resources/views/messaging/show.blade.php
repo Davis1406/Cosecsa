@@ -499,12 +499,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const delBtn = e.target.closest('.msg-delete-btn');
     if (delBtn) {
       e.preventDefault();
-      if (!confirm('Delete this message?')) return;
       const msgId = delBtn.closest('.message-bubble').dataset.msgId;
-      fetch(`{{ url('messages') }}/${conversationId}/messages/${msgId}/delete`, {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
-      }).then(r => r.json()).then(data => upsertMessage(data.message, false));
+      CosecsaAlert.confirm('Delete this message?').then((ok) => {
+        if (!ok) return;
+        fetch(`{{ url('messages') }}/${conversationId}/messages/${msgId}/delete`, {
+          method: 'POST',
+          headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+        }).then(r => r.json()).then(data => upsertMessage(data.message, false));
+      });
     }
   });
 

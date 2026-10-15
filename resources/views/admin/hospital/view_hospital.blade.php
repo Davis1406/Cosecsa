@@ -989,14 +989,17 @@ $('#mapSubmitBtn').on('click', function () {
 });
 
 $('.unmap-fellow-btn').on('click', function () {
-    if (!confirm('Remove this fellow mapping from the hospital?')) return;
-    var fellowId = $(this).data('fellow-id');
-    $.ajax({
-        url: '{{ url("admin/hospital/".$hospital->id."/fellows") }}/' + fellowId,
-        method: 'DELETE',
-        data: { _token: CSRF_TOKEN },
-    }).done(function () { window.location.reload(); })
-      .fail(function (xhr) { alert((xhr.responseJSON && xhr.responseJSON.message) || 'Failed to unmap fellow.'); });
+    var $btn = $(this);
+    CosecsaAlert.confirm('Remove this fellow mapping from the hospital?').then(function (ok) {
+        if (!ok) return;
+        var fellowId = $btn.data('fellow-id');
+        $.ajax({
+            url: '{{ url("admin/hospital/".$hospital->id."/fellows") }}/' + fellowId,
+            method: 'DELETE',
+            data: { _token: CSRF_TOKEN },
+        }).done(function () { window.location.reload(); })
+          .fail(function (xhr) { alert((xhr.responseJSON && xhr.responseJSON.message) || 'Failed to unmap fellow.'); });
+    });
 });
 </script>
 @endpush

@@ -7,7 +7,10 @@
     <a href="{{ url('admin/impersonate/'.$userId) }}"
        class="btn btn-sm btn-outline-dark{{ !empty($iconOnly) ? ' btn-icon' : '' }}"
        @if(!empty($iconOnly)) title="Login as User" data-toggle="tooltip" @endif
-       onclick="return confirm('Log in as this user? You can return to your admin account anytime from the banner at the top of the page.')">
+       data-confirm="Log in as this user? You can return to your admin account anytime from the banner at the top of the page."
+       data-confirm-title="Log in as this user?"
+       data-confirm-variant="warning"
+       data-confirm-ok="Log in as user">
         <i class="fas fa-user-secret{{ empty($iconOnly) ? ' mr-1' : '' }}"></i>{{ empty($iconOnly) ? ' Login as User' : '' }}
     </a>
 @endif

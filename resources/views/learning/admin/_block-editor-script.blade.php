@@ -378,8 +378,11 @@
             btn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 const index = btn.closest('.list-item-field')?.dataset.listIndex;
-                if (index === undefined || !confirm('Remove this item?')) return;
-                try { await postList('remove', index); await refreshEditor(); } catch (e) {}
+                if (index === undefined) return;
+                CosecsaAlert.confirm('Remove this item?').then(async (ok) => {
+                    if (!ok) return;
+                    try { await postList('remove', index); await refreshEditor(); } catch (e) {}
+                });
             });
         });
 

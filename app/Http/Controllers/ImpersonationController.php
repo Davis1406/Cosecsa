@@ -17,7 +17,7 @@ class ImpersonationController extends Controller
         5 => 'country-rep/dashboard',
         7 => 'fellow/dashboard',
         8 => 'member/dashboard',
-        9 => 'examiner/dashboard',
+        9 => 'examiner/learning',
     ];
 
     /**

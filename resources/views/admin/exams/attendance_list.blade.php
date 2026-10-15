@@ -214,10 +214,12 @@ $(document).ready(function() {
 });
 
 function confirmClearDate(date) {
-    if (confirm('Delete ALL attendance records for ' + date + '? This cannot be undone.')) {
-        $('#clearDateInput').val(date);
-        $('#clearDateForm').submit();
-    }
+    CosecsaAlert.confirm('Delete ALL attendance records for ' + date + '? This cannot be undone.').then(function (ok) {
+        if (ok) {
+            $('#clearDateInput').val(date);
+            $('#clearDateForm').submit();
+        }
+    });
 }
 </script>
 @endpush

@@ -1,3 +1,231 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   COSECSA ALERTS — a styled replacement for the browser's default
+   alert()/confirm(), plus a toast helper. Defined at parse time (before the
+   page's deferred scripts) so `window.alert` is already overridden when they
+   run. Markup confirmations (onsubmit/onclick="return confirm('…')") are
+   intercepted in the capture phase and routed through the same dialog, so
+   existing call sites need no rewrite.
+
+       window.alert(msg)          → styled notice modal (fire-and-forget)
+       CosecsaAlert.alert(msg, o)  → Promise
+       CosecsaAlert.confirm(msg,o) → Promise<boolean>
+       CosecsaAlert.toast(msg,type,timeout)
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+    'use strict';
+
+    var VARIANTS = {
+        danger:   { icon: 'fa-trash-alt',            title: 'Please confirm' },
+        question: { icon: 'fa-question-circle',      title: 'Please confirm' },
+        warning:  { icon: 'fa-exclamation-triangle', title: 'Please note' },
+        info:     { icon: 'fa-info-circle',          title: 'Notice' },
+        success:  { icon: 'fa-check-circle',         title: 'Success' }
+    };
+
+    var root = null, iconEl = null, titleEl = null,
+        msgEl = null, footerEl = null, okBtn = null, cancelBtn = null;
+    var activeResolve = null, lastFocused = null, inited = false;
+
+    function init() {
+        if (inited) return;
+        inited = true;
+
+        root = document.createElement('div');
+        root.className = 'cs-alert-root';
+        root.setAttribute('role', 'dialog');
+        root.setAttribute('aria-modal', 'true');
+        root.innerHTML =
+            '<div class="cs-alert-backdrop"></div>' +
+            '<div class="cs-alert-dialog">' +
+                '<div class="cs-alert-body">' +
+                    '<div class="cs-alert-icon"><i class="fas fa-info-circle"></i></div>' +
+                    '<h5 class="cs-alert-title"></h5>' +
+                    '<p class="cs-alert-msg"></p>' +
+                '</div>' +
+                '<div class="cs-alert-footer">' +
+                    '<button type="button" class="cs-alert-btn cs-alert-btn-cancel">Cancel</button>' +
+                    '<button type="button" class="cs-alert-btn cs-alert-btn-ok">OK</button>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(root);
+
+        iconEl    = root.querySelector('.cs-alert-icon');
+        titleEl   = root.querySelector('.cs-alert-title');
+        msgEl     = root.querySelector('.cs-alert-msg');
+        footerEl  = root.querySelector('.cs-alert-footer');
+        okBtn     = root.querySelector('.cs-alert-btn-ok');
+        cancelBtn = root.querySelector('.cs-alert-btn-cancel');
+
+        cancelBtn.addEventListener('click', function () { close(false); });
+        okBtn.addEventListener('click', function () { close(true); });
+        root.querySelector('.cs-alert-backdrop').addEventListener('click', function () {
+            if (cancelBtn.style.display !== 'none') close(false);
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (!root.classList.contains('cs-open')) return;
+            if (e.key === 'Escape') { e.preventDefault(); close(false); }
+            else if (e.key === 'Enter') { e.preventDefault(); close(true); }
+        }, true);
+    }
+
+    function openModal(opts) {
+        init();
+        opts = opts || {};
+        var variant = VARIANTS[opts.variant] ? opts.variant : 'info';
+        var v = VARIANTS[variant];
+
+        iconEl.className = 'cs-alert-icon cs-' + variant;
+        iconEl.querySelector('i').className = 'fas ' + v.icon;
+        titleEl.textContent = opts.title || v.title;
+        msgEl.textContent = opts.message || '';
+
+        okBtn.textContent = opts.confirmText || (opts.confirm === false ? 'OK' : 'Confirm');
+        okBtn.className = 'cs-alert-btn cs-alert-btn-ok' +
+            (variant === 'warning' ? ' cs-ok-warning' :
+             variant === 'info'    ? ' cs-ok-info' :
+             variant === 'success' ? ' cs-ok-success' : '');
+
+        if (opts.confirm === false) {
+            cancelBtn.style.display = 'none';
+            footerEl.classList.add('cs-one');
+        } else {
+            cancelBtn.style.display = '';
+            cancelBtn.textContent = opts.cancelText || 'Cancel';
+            footerEl.classList.remove('cs-one');
+        }
+
+        lastFocused = document.activeElement;
+        root.classList.add('cs-open');
+        document.documentElement.style.overflow = 'hidden';
+        setTimeout(function () { if (okBtn) okBtn.focus(); }, 30);
+
+        return new Promise(function (resolve) { activeResolve = resolve; });
+    }
+
+    function close(result) {
+        if (!root || !root.classList.contains('cs-open')) return;
+        root.classList.remove('cs-open');
+        document.documentElement.style.overflow = '';
+        if (lastFocused && lastFocused.focus) { try { lastFocused.focus(); } catch (e) {} }
+        var resolve = activeResolve;
+        activeResolve = null;
+        if (resolve) resolve(result);
+    }
+
+    function doAlert(message, opts) {
+        opts = opts || {};
+        return openModal({ variant: opts.variant || 'info', title: opts.title,
+            message: message, confirmText: opts.okText || 'OK', confirm: false });
+    }
+
+    function doConfirm(message, opts) {
+        opts = opts || {};
+        return openModal({ variant: opts.variant || 'danger', title: opts.title,
+            message: message, confirmText: opts.confirmText || 'Confirm',
+            cancelText: opts.cancelText || 'Cancel', confirm: true })
+            .then(function (v) { return v === true; });
+    }
+
+    function toast(message, type, timeout) {
+        type = type || 'info';
+        var stack = document.getElementById('cs-toast-stack');
+        if (!stack) {
+            stack = document.createElement('div');
+            stack.id = 'cs-toast-stack';
+            document.body.appendChild(stack);
+        }
+        var icons = { success: 'fa-check-circle', danger: 'fa-exclamation-circle',
+            warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+        var el = document.createElement('div');
+        el.className = 'cs-toast cs-' + type;
+        el.innerHTML = '<i class="fas ' + (icons[type] || icons.info) + '"></i><span></span>';
+        el.querySelector('span').textContent = message;
+        stack.appendChild(el);
+        requestAnimationFrame(function () { el.classList.add('cs-show'); });
+        setTimeout(function () {
+            el.classList.remove('cs-show');
+            setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 250);
+        }, timeout || 4200);
+    }
+
+    window.CosecsaAlert = { alert: doAlert, confirm: doConfirm, toast: toast, modal: openModal };
+    window.cosecsaAlert = doAlert;
+    window.cosecsaConfirm = doConfirm;
+    window.cosecsaToast = toast;
+
+    // Route every native alert() through the styled modal.
+    window.alert = function (message) { doAlert(message); };
+
+    // ── Intercept confirmations (works for static and DataTables-built markup,
+    //    which regenerates inline attributes on every draw). Either an explicit
+    //    `data-confirm="…"` or a legacy `onsubmit/onclick="return confirm('…')"`.
+    //    Optional on the element: data-confirm-title, data-confirm-variant,
+    //    data-confirm-ok, data-confirm-cancel. ─────────────────────────────────
+    function parseInline(attr) {
+        if (!attr) return null;
+        var m = attr.match(/^\s*return\s+confirm\s*\(\s*(['"`])([\s\S]*?)\1\s*\)\s*;?\s*$/);
+        if (!m) return null;
+        return m[2].replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/\\(['"`\\])/g, '$1');
+    }
+
+    function readConfirm(el) {
+        if (el.hasAttribute('data-confirm')) {
+            var dataMsg = el.getAttribute('data-confirm');
+            if (!dataMsg) return null;
+            return {
+                message: dataMsg,
+                opts: {
+                    title: el.getAttribute('data-confirm-title') || undefined,
+                    variant: el.getAttribute('data-confirm-variant') || 'danger',
+                    confirmText: el.getAttribute('data-confirm-ok') || undefined,
+                    cancelText: el.getAttribute('data-confirm-cancel') || undefined
+                }
+            };
+        }
+        var msg = parseInline(el.getAttribute('onclick') || el.getAttribute('onsubmit'));
+        return msg === null ? null : { message: msg, opts: { variant: 'danger' } };
+    }
+
+    document.addEventListener('click', function (e) {
+        var el = e.target && e.target.closest ? e.target.closest('[data-confirm],[onclick]') : null;
+        if (!el || el.__csBusy) return;
+        var hit = readConfirm(el);
+        if (!hit) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        doConfirm(hit.message, hit.opts).then(function (ok) {
+            if (!ok) return;
+            el.__csBusy = true;
+            el.removeAttribute('onclick');
+            el.removeAttribute('data-confirm');
+            try {
+                el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+            } finally {
+                el.__csBusy = false;
+            }
+        });
+    }, true);
+
+    document.addEventListener('submit', function (e) {
+        var form = e.target;
+        if (!form || form.__csBusy || !form.getAttribute) return;
+        var hit = readConfirm(form);
+        if (!hit) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        doConfirm(hit.message, hit.opts).then(function (ok) {
+            if (!ok) return;
+            form.__csBusy = true;
+            form.removeAttribute('onsubmit');
+            form.removeAttribute('data-confirm');
+            if (typeof form.requestSubmit === 'function') form.requestSubmit();
+            else form.submit();
+            setTimeout(function () { form.__csBusy = false; }, 0);
+        });
+    }, true);
+})();
+
 $(function () {
 
     // ── Loader styles (injected once into <head>) ────────────────────────────────
@@ -381,10 +609,18 @@ $(function () {
             "drawCallback": function () { dtNumberRows(this.api()); reinitDropdowns(this); }
         });
 
-        $ct.on("submit", "form.cand-part-two", function () {
-            return confirm($(this).data("promoted") === 1
+        $ct.on("submit", "form.cand-part-two", function (e) {
+            var form = this;
+            if (form.dataset.csConfirmed === "1") return;
+            e.preventDefault();
+            CosecsaAlert.confirm($(form).data("promoted") === 1
                 ? "Remove this candidate's promotion to Part II?"
-                : "Promote this candidate to Part II?");
+                : "Promote this candidate to Part II?").then(function (ok) {
+                if (!ok) return;
+                form.dataset.csConfirmed = "1";
+                if (typeof form.requestSubmit === "function") form.requestSubmit(); else form.submit();
+                delete form.dataset.csConfirmed;
+            });
         });
     }
 
@@ -712,8 +948,16 @@ $(function () {
             "drawCallback": function () { reinitDropdowns(this); }
         }).buttons().container().appendTo('#examinerconfirmationtable_wrapper .col-md-6:eq(0)');
 
-        $ec.on("submit", "form.ec-reset", function () {
-            return confirm("Reset the availability confirmation for " + $(this).data("name") + "? This will clear their submitted availability.");
+        $ec.on("submit", "form.ec-reset", function (e) {
+            var form = this;
+            if (form.dataset.csConfirmed === "1") return;
+            e.preventDefault();
+            CosecsaAlert.confirm("Reset the availability confirmation for " + $(form).data("name") + "? This will clear their submitted availability.").then(function (ok) {
+                if (!ok) return;
+                form.dataset.csConfirmed = "1";
+                if (typeof form.requestSubmit === "function") form.requestSubmit(); else form.submit();
+                delete form.dataset.csConfirmed;
+            });
         });
         $ec.on("click", "a.ec-delete", function (e) {
             e.preventDefault();

@@ -232,9 +232,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ── Share = save + email to the fellow + keep a copy on their profile ──
   form.addEventListener('submit', function (e) {
-    if (!confirm('Save this transcript, email it to the fellow and keep a copy on their profile?')) {
-      e.preventDefault();
-    }
+    if (form.dataset.csConfirmed === '1') return;
+    e.preventDefault();
+    CosecsaAlert.confirm('Save this transcript, email it to the fellow and keep a copy on their profile?').then(function (ok) {
+      if (!ok) return;
+      form.dataset.csConfirmed = '1';
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else form.submit();
+      delete form.dataset.csConfirmed;
+    });
   });
 });
 </script>

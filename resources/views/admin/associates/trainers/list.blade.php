@@ -282,8 +282,12 @@ $(document).ready(function () {
         ]
     });
 
-    $('#trtable').on('click', '.tr-delete', function () {
-        return confirm('Delete ' + $(this).data('name') + ' from the Trainers roster?');
+    $('#trtable').on('click', '.tr-delete', function (e) {
+        e.preventDefault();
+        var url = this.href;
+        CosecsaAlert.confirm('Delete ' + $(this).data('name') + ' from the Trainers roster?').then(function (ok) {
+            if (ok) window.location.href = url;
+        });
     });
 
     // Row data for the filters below: id lists for multi-valued fields.

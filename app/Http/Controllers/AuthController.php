@@ -178,7 +178,7 @@ class AuthController extends Controller
             case 5: return redirect('country-rep/dashboard');
             case 7: return redirect('fellow/dashboard');
             case 8: return redirect('member/dashboard');
-            case 9: return redirect('examiner/dashboard');
+            case 9: return redirect('examiner/learning');
             default:
                 Auth::logout();
                 return redirect('login')->with('error', 'Invalid user role');

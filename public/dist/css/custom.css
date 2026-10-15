@@ -1054,7 +1054,14 @@ a:hover, a:focus,
 .btn-link:hover, .btn-link:focus {
   transition: color .2s ease;
 }
-body:not(.dark-mode) a:hover, body:not(.dark-mode) a:focus,
+/* Anchors that are NOT buttons/links-turned-buttons get the maroon hover.
+   `.btn`, `.dropdown-item`, `.page-link` and `.nav-link` are excluded: they
+   paint their own text colour on hover, and this rule's higher specificity
+   (body + :not + element + :hover) otherwise won `color` over e.g.
+   `.btn-primary:hover` — turning an <a class="btn btn-primary"> into dark
+   maroon text on a maroon hover background (dark-on-dark). */
+body:not(.dark-mode) a:not(.btn):not(.dropdown-item):not(.page-link):not(.nav-link):hover,
+body:not(.dark-mode) a:not(.btn):not(.dropdown-item):not(.page-link):not(.nav-link):focus,
 body:not(.dark-mode) .btn-link:hover, body:not(.dark-mode) .btn-link:focus {
   color: #7f0a12;
 }
@@ -1522,3 +1529,146 @@ body.dark-mode .btn-success.disabled { background-color: #00866a; border-color: 
 body.dark-mode .btn-success:hover { background-color: #006e57; border-color: #006e57; }
 body.dark-mode .mini-stat-lbl { color: #a0aec0 !important; }
 body.dark-mode .page-item.disabled .page-link { color: #94a3b8 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUTTON CONTRAST — keep label and hover background in opposing tones.
+   Bootstrap buttons used as `<a>` were inheriting the maroon link hover
+   (fixed above); the rules here harden the wireframe for the remaining
+   "dark on dark" cases, especially in dark mode.
+   ═══════════════════════════════════════════════════════════════════════════ */
+a.btn:hover, a.btn:focus { text-decoration: none; }
+
+/* Outline "dark" (e.g. the Login-as-User/impersonate button): invisible text in
+   dark mode at rest, and a maroon-on-dark clash on hover before the fix. */
+.btn-outline-dark { color: #2d3748; border-color: #2d3748; }
+.btn-outline-dark:hover, .btn-outline-dark:focus,
+.btn-outline-dark:not(:disabled):not(.disabled).active,
+.btn-outline-dark:not(:disabled):not(.disabled):active {
+    color: #fff; background-color: #2d3748; border-color: #2d3748;
+}
+body.dark-mode .btn-outline-dark { color: #e2e8f0; border-color: #64748b; }
+body.dark-mode .btn-outline-dark:hover, body.dark-mode .btn-outline-dark:focus,
+body.dark-mode .btn-outline-dark:not(:disabled):not(.disabled).active,
+body.dark-mode .btn-outline-dark:not(:disabled):not(.disabled):active {
+    color: #141921; background-color: #e2e8f0; border-color: #e2e8f0;
+}
+
+/* Other outline buttons in dark mode: light enough to read at rest, dark
+   enough to read when filled on hover. */
+body.dark-mode .btn-outline-secondary { color: #cbd5e0; border-color: #64748b; }
+body.dark-mode .btn-outline-secondary:hover, body.dark-mode .btn-outline-secondary:focus,
+body.dark-mode .btn-outline-secondary:not(:disabled):not(.disabled).active,
+body.dark-mode .btn-outline-secondary:not(:disabled):not(.disabled):active {
+    color: #141921; background-color: #cbd5e0; border-color: #cbd5e0;
+}
+
+/* Solid "light" buttons (DataTables row menus, admin hospital toggles): keep
+   their dark label when hovered so it never lands light-on-light. */
+.btn-light:hover, .btn-light:focus,
+.btn-light:not(:disabled):not(.disabled).active,
+.btn-light:not(:disabled):not(.disabled):active { color: #212529; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COSECSA ALERTS — styled replacement for native confirm()/alert() and the
+   host for CosecsaAlert.toast(). See public/dist/js/custom.js.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+    --cs-surface: #ffffff;
+    --cs-surface-border: #e0e9f2;
+    --cs-text: #141d23;
+    --cs-text-muted: #59413f;
+    --cs-cancel-bg: #e6eff8;
+    --cs-cancel-bg-hover: #d5e3f2;
+    --cs-cancel-text: #2d3748;
+}
+body.dark-mode {
+    --cs-surface: #1e2330;
+    --cs-surface-border: #2d3748;
+    --cs-text: #e2e8f0;
+    --cs-text-muted: #94a3b8;
+    --cs-cancel-bg: #2b3040;
+    --cs-cancel-bg-hover: #374151;
+    --cs-cancel-text: #cbd5e0;
+}
+
+.cs-alert-root {
+    position: fixed; inset: 0; z-index: 20050;
+    display: none; font-family: 'Source Sans 3', 'Source Sans Pro', sans-serif;
+}
+.cs-alert-root.cs-open { display: block; }
+.cs-alert-backdrop {
+    position: absolute; inset: 0; background: rgba(20, 25, 33, .55);
+    -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+    opacity: 0; transition: opacity .18s ease;
+}
+.cs-alert-root.cs-open .cs-alert-backdrop { opacity: 1; }
+.cs-alert-dialog {
+    position: absolute; top: 50%; left: 50%;
+    width: min(440px, calc(100vw - 32px));
+    transform: translate(-50%, -46%);
+    background: var(--cs-surface); color: var(--cs-text);
+    border: 1px solid var(--cs-surface-border); border-radius: 12px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .3);
+    overflow: hidden; opacity: 0;
+    transition: opacity .18s ease, transform .18s ease;
+}
+.cs-alert-root.cs-open .cs-alert-dialog { opacity: 1; transform: translate(-50%, -50%); }
+.cs-alert-body { padding: 24px 24px 4px; text-align: center; }
+.cs-alert-icon {
+    width: 56px; height: 56px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px; font-size: 1.45rem;
+}
+.cs-alert-icon.cs-danger, .cs-alert-icon.cs-question { background: rgba(160, 38, 38, .12); color: #a02626; }
+.cs-alert-icon.cs-warning { background: rgba(254, 197, 3, .20); color: #b07d00; }
+.cs-alert-icon.cs-info    { background: rgba(0, 67, 86, .12);   color: #004356; }
+.cs-alert-icon.cs-success { background: rgba(40, 167, 69, .14); color: #1e7e34; }
+body.dark-mode .cs-alert-icon.cs-danger,
+body.dark-mode .cs-alert-icon.cs-question { background: rgba(244, 138, 138, .16); color: #f48a8a; }
+body.dark-mode .cs-alert-icon.cs-warning { background: rgba(254, 197, 3, .18); color: #FEC503; }
+body.dark-mode .cs-alert-icon.cs-info    { background: rgba(95, 179, 201, .16); color: #5fb3c9; }
+body.dark-mode .cs-alert-icon.cs-success { background: rgba(76, 208, 138, .18); color: #4cd08a; }
+.cs-alert-title { font-size: 1.05rem; font-weight: 700; margin: 0 0 6px; color: var(--cs-text); }
+.cs-alert-msg { font-size: .9rem; line-height: 1.55; color: var(--cs-text-muted); margin: 0; white-space: pre-line; }
+.cs-alert-footer { display: flex; gap: 10px; padding: 20px 24px 22px; }
+.cs-alert-footer.cs-one { justify-content: center; }
+.cs-alert-btn {
+    flex: 1; border: 0; border-radius: 8px; padding: 10px 16px;
+    font-size: .875rem; font-weight: 600; font-family: inherit;
+    cursor: pointer; transition: background .15s ease, filter .15s ease, color .15s ease;
+}
+.cs-alert-btn:focus { outline: none; box-shadow: 0 0 0 .2rem rgba(160, 38, 38, .25); }
+.cs-alert-btn-cancel { background: var(--cs-cancel-bg); color: var(--cs-cancel-text); }
+.cs-alert-btn-cancel:hover { background: var(--cs-cancel-bg-hover); }
+.cs-alert-btn-ok { background: #a02626; color: #fff; }
+.cs-alert-btn-ok:hover { background: #870f0f; }
+.cs-alert-btn-ok.cs-ok-warning { background: #e0a800; color: #1f2d3d; }
+.cs-alert-btn-ok.cs-ok-warning:hover { background: #c99700; }
+.cs-alert-btn-ok.cs-ok-info { background: #004356; color: #fff; }
+.cs-alert-btn-ok.cs-ok-info:hover { background: #0b6a83; }
+.cs-alert-btn-ok.cs-ok-success { background: #1e7e34; color: #fff; }
+.cs-alert-btn-ok.cs-ok-success:hover { background: #17692a; }
+
+/* Toasts */
+#cs-toast-stack {
+    position: fixed; top: 16px; right: 16px; z-index: 20060;
+    display: flex; flex-direction: column; gap: 10px;
+    width: min(360px, calc(100vw - 32px));
+}
+.cs-toast {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--cs-surface); color: var(--cs-text);
+    border: 1px solid var(--cs-surface-border); border-left: 4px solid #a02626;
+    border-radius: 8px; padding: 12px 14px; font-size: .875rem; line-height: 1.45;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+    opacity: 0; transform: translateX(14px);
+    transition: opacity .2s ease, transform .2s ease;
+    font-family: 'Source Sans 3', 'Source Sans Pro', sans-serif;
+}
+.cs-toast.cs-show { opacity: 1; transform: none; }
+.cs-toast > i { margin-top: 2px; }
+.cs-toast.cs-success { border-left-color: #28a745; } .cs-toast.cs-success > i { color: #28a745; }
+.cs-toast.cs-danger  { border-left-color: #a02626; } .cs-toast.cs-danger  > i { color: #a02626; }
+.cs-toast.cs-warning { border-left-color: #FEC503; } .cs-toast.cs-warning > i { color: #b07d00; }
+.cs-toast.cs-info    { border-left-color: #004356; } .cs-toast.cs-info    > i { color: #004356; }
+body.dark-mode .cs-toast.cs-info > i { color: #5fb3c9; }

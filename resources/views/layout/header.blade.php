@@ -1038,7 +1038,7 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
 
                         @if (\App\Support\LearningView::canAccess(Auth::id()))
                         <li class="nav-item">
-                            <a href="{{ url('examiner/learning') }}" class="nav-link">
+                            <a href="{{ url('examiner/learning') }}" class="nav-link @if (Request::segment(2) == 'learning') active @endif">
                                 <i class="nav-icon fas fa-graduation-cap"></i>
                                 <p>Examiner Training</p>
                             </a>

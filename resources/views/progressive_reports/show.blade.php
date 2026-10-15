@@ -423,21 +423,23 @@ document.addEventListener('DOMContentLoaded', function () {
       const delBtn = e.target.closest('.pr-delete-row');
       if (!delBtn) return;
       e.preventDefault();
-      if (!confirm('Delete this row?')) return;
       const row = delBtn.closest('tr');
       const taskId = row.dataset.taskId;
       const tbody = row.closest('tbody');
-      fetch(`{{ url('progressive-reports') }}/${periodId}/tasks/${taskId}/delete`, {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
-      }).then(r => r.json()).then(() => {
-        row.remove();
-        // The backend compacts row_no to 1..N on delete (see ProgressiveReportController::
-        // deleteTaskRow), but each remaining row's "No." cell was rendered/cached at the
-        // number it had before this delete — renumber the DOM to match instead of leaving
-        // a gap (e.g. 4, 6 after deleting 5) until the next full page reload.
-        tbody.querySelectorAll('tr[data-task-id]').forEach(function (tr, i) {
-          tr.querySelector('td').textContent = i + 1;
+      CosecsaAlert.confirm('Delete this row?').then((ok) => {
+        if (!ok) return;
+        fetch(`{{ url('progressive-reports') }}/${periodId}/tasks/${taskId}/delete`, {
+          method: 'POST',
+          headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+        }).then(r => r.json()).then(() => {
+          row.remove();
+          // The backend compacts row_no to 1..N on delete (see ProgressiveReportController::
+          // deleteTaskRow), but each remaining row's "No." cell was rendered/cached at the
+          // number it had before this delete — renumber the DOM to match instead of leaving
+          // a gap (e.g. 4, 6 after deleting 5) until the next full page reload.
+          tbody.querySelectorAll('tr[data-task-id]').forEach(function (tr, i) {
+            tr.querySelector('td').textContent = i + 1;
+          });
         });
       });
     });
@@ -521,17 +523,19 @@ document.addEventListener('DOMContentLoaded', function () {
       const delBtn = e.target.closest('.pr-tpl-delete');
       if (!delBtn) return;
       const row = delBtn.closest('tr');
-      if (!confirm('Remove this recurring task?')) return;
-      fetch(`{{ url('progressive-reports/templates') }}/${row.dataset.templateId}/delete`, {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': csrf },
-      }).then(() => {
-        row.remove();
-        const tbody = table.querySelector('.pr-tpl-tbody');
-        if (!tbody.querySelector('tr[data-template-id]')) {
-          const emptyRow = tbody.querySelector('.pr-tpl-empty-row');
-          if (emptyRow) emptyRow.style.display = '';
-        }
+      CosecsaAlert.confirm('Remove this recurring task?').then((ok) => {
+        if (!ok) return;
+        fetch(`{{ url('progressive-reports/templates') }}/${row.dataset.templateId}/delete`, {
+          method: 'POST',
+          headers: { 'X-CSRF-TOKEN': csrf },
+        }).then(() => {
+          row.remove();
+          const tbody = table.querySelector('.pr-tpl-tbody');
+          if (!tbody.querySelector('tr[data-template-id]')) {
+            const emptyRow = tbody.querySelector('.pr-tpl-empty-row');
+            if (emptyRow) emptyRow.style.display = '';
+          }
+        });
       });
     });
   });

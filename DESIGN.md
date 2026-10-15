@@ -237,6 +237,32 @@ Defined in `dist/css/wizard.css`.
 - Dark: `#f48a8a`, hover `#ffb3b3`.
 - Used on table row links and inline references.
 
+### Alerts, Confirmations & Toasts
+Native `alert()`/`confirm()` are replaced by a styled dialog defined in `public/dist/js/custom.js` (top-level IIFE) + `public/dist/css/custom.css`. Component roots: `.cs-alert-root`, `.cs-alert-dialog`, `.cs-toast`.
+
+| Token / variant | Value | Usage |
+|---|---|---|
+| Surface (light / dark) | `#ffffff` / `#1e2330` | Dialog + toast background |
+| Border (light / dark) | `#e0e9f2` / `#2d3748` | Dialog + toast border |
+| Title text | `#141d23` / `#e2e8f0` | Dialog title |
+| Message text | `#59413f` / `#94a3b8` | Dialog body |
+| OK button (danger/question) | `#a02626`, white text | Delete/confirm actions |
+| OK button (warning) | `#e0a800`, `#1f2d3d` text | Soft warnings |
+| OK button (info) | `#004356`, white text | Notices |
+| OK button (success) | `#1e7e34`, white text | Success alerts |
+| Cancel button | `--cs-cancel-bg` (`#e6eff8` / `#2b3040`) | Secondary action |
+
+Behaviour:
+- `window.alert(msg)` is globally overridden → styled single-button notice (fire-and-forget).
+- `CosecsaAlert.confirm(msg, opts)` → `Promise<boolean>`; `CosecsaAlert.alert` / `CosecsaAlert.toast`.
+- Existing markup confirmations (`onsubmit`/`onclick="return confirm('…')"`) are intercepted in the capture phase and routed through the same dialog — no per-file rewrite needed. New markup should prefer the declarative attributes `data-confirm`, `data-confirm-title`, `data-confirm-variant`, `data-confirm-ok`, `data-confirm-cancel`.
+- Dialog `z-index: 20050` (above AdminLTE/Select2 and the impersonation banner at 1051); toasts `z-index: 20060`.
+- Escape cancels, Enter confirms, backdrop click cancels (confirm variant only).
+
+### Button contrast (hover)
+Bootstrap buttons rendered as `<a class="btn …">` previously inherited the global maroon link hover `color: #7f0a12` (higher specificity than `.btn-primary:hover`), producing dark-on-dark labels. The link-hover rule now excludes `.btn`/`.dropdown-item`/`.page-link`/`.nav-link`. `.btn-outline-dark` (Login-as-User) and `.btn-outline-secondary` also get explicit light-text dark-mode rest styles so they stay legible before hover.
+
+
 ---
 
 ## 10. External Dependencies

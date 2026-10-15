@@ -337,13 +337,22 @@ $(document).ready(function () {
 
   // Confirm before submit
   $('#promotionForm').on('submit', function (e) {
+    var form = this;
     var count = $('input.chk-trainee:checked').length;
     if (count === 0) {
       e.preventDefault();
       alert('Please select at least one trainee to promote.');
-      return false;
+      return;
     }
-    return confirm('Promote ' + count + ' selected trainee(s) to {{ $examYear }} candidates?');
+    if (form.dataset.csConfirmed === '1') return;
+    e.preventDefault();
+    CosecsaAlert.confirm('Promote ' + count + ' selected trainee(s) to {{ $examYear }} candidates?').then(function (ok) {
+      if (!ok) return;
+      form.dataset.csConfirmed = '1';
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else form.submit();
+      delete form.dataset.csConfirmed;
+    });
   });
 
 });

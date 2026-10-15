@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-15) — Styled alert/confirm dialogs; examiner default page; button hover contrast
+- Native `alert()`/`confirm()` are replaced by a styled COSECSA dialog (`CosecsaAlert` in `custom.js`, `.cs-alert-*` / `.cs-toast` in `custom.css`). `window.alert` is globally overridden; inline `onsubmit/onclick="return confirm('…')"` markup is intercepted in the capture phase (works for DataTables-built rows too) and the script-block confirmations were converted. New markup can use `data-confirm` (+ `data-confirm-title/-variant/-ok/-cancel`). Documented in DESIGN.md.
+- Examiners now land on the Examiner Training course (`examiner/learning`) after login, role switch and impersonation, instead of `examiner/dashboard` (which still exists; the course falls back to it when attendance isn't confirmed).
+- Button hover: `<a class="btn …">` inherited the maroon link hover (`#7f0a12`), giving dark-on-dark labels on maroon/coloured buttons; the link-hover rule now excludes `.btn`/`.dropdown-item`/`.page-link`/`.nav-link`. `.btn-outline-dark` (Login-as-User) and `.btn-outline-secondary` are legible at rest in dark mode.
+- **Files:** `public/dist/js/custom.js`, `public/dist/css/custom.css`, `app/Http/Controllers/{AuthController,ImpersonationController}.php`, `resources/views/layout/header.blade.php`, `resources/views/admin/_impersonate_button.blade.php`, and the converted call sites under `resources/views/{admin,progressive_reports,messaging,learning}`.
+- ⚠️ **Coordinate:** cosecsa-api now defaults `internal/examiners` to the current calendar year when no `year_id` is supplied (deployed alongside this change).
+
 ### Fixed (2026-10-13) — Dark mode: unreadable text (contrast sweep)
 - **Second sweep (17 pages):** Promote Trainees final-year rows (`table-warning`) are gold-tinted instead of pale yellow under light text, and their ★ badge has dark text; gold "Viva Stations" headers (FCS results) stay gold rather than turning grey under dark text; green buttons (e.g. Examiners "Email Selected") use a darker green so the white text reads.
 - **Charts:** Chart.js text defaulted to `#666` (dark grey on dark): legends ("Total Alumni"), axes and titles now follow the theme (`Chart.defaults.color`/`borderColor` set in `layout/app.blade.php` and re-applied, with a redraw, when the theme is toggled). Charts that hardcoded `#555` value labels (Salesforce) or `#f0f0f0` grids (Fellows/Candidates analytics, College Reports) use `cosecsaChartText()` / `cosecsaChartGrid()`.

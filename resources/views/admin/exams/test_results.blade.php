@@ -129,9 +129,9 @@ $(document).ready(function () {
 });
 
 function confirmDeleteAll() {
-    if (confirm('Delete ALL test results? This clears every specialty in the Examiner App test clone and cannot be undone.')) {
-        $('#deleteAllForm').submit();
-    }
+    CosecsaAlert.confirm('Delete ALL test results? This clears every specialty in the Examiner App test clone and cannot be undone.').then(function (ok) {
+        if (ok) $('#deleteAllForm').submit();
+    });
 }
 </script>
 @endpush

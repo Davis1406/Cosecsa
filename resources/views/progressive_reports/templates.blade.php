@@ -119,17 +119,19 @@ document.addEventListener('DOMContentLoaded', function () {
       const delBtn = e.target.closest('.pr-tpl-delete');
       if (!delBtn) return;
       const row = delBtn.closest('tr');
-      if (!confirm('Remove this recurring task?')) return;
-      fetch(`{{ url('progressive-reports/templates') }}/${row.dataset.templateId}/delete`, {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': csrf },
-      }).then(() => {
-        row.remove();
-        const tbody = table.querySelector('.pr-tpl-tbody');
-        if (!tbody.querySelector('tr[data-template-id]')) {
-          const emptyRow = tbody.querySelector('.pr-tpl-empty-row');
-          if (emptyRow) emptyRow.style.display = '';
-        }
+      CosecsaAlert.confirm('Remove this recurring task?').then((ok) => {
+        if (!ok) return;
+        fetch(`{{ url('progressive-reports/templates') }}/${row.dataset.templateId}/delete`, {
+          method: 'POST',
+          headers: { 'X-CSRF-TOKEN': csrf },
+        }).then(() => {
+          row.remove();
+          const tbody = table.querySelector('.pr-tpl-tbody');
+          if (!tbody.querySelector('tr[data-template-id]')) {
+            const emptyRow = tbody.querySelector('.pr-tpl-empty-row');
+            if (emptyRow) emptyRow.style.display = '';
+          }
+        });
       });
     });
   });
