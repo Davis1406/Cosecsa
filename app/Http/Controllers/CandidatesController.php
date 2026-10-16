@@ -201,7 +201,7 @@ class CandidatesController extends Controller
         $examinerGroupIds = DB::table('exams_groups')
             ->where('exm_id', $examinerId)->where('year_id', $currentYearId)
             ->pluck('group_id')->toArray();
-        $groups = DB::table('examiners_groups')->get();
+        $groups = DB::table('examiners_groups')->where('group_name', 'not like', 'TEST-FCS-%')->get();   // the FCS sample groups belong on the FCS forms
 
         $data['header_title'] = 'MCS Form';
         $data['getRecord'] = User::getExaminerCandidates(null, $currentYearId);
@@ -217,7 +217,7 @@ class CandidatesController extends Controller
         $examinerGroupIds = DB::table('exams_groups')
             ->where('exm_id', $examinerId)->where('year_id', $currentYearId)
             ->pluck('group_id')->toArray();
-        $groups = DB::table('examiners_groups')->get();
+        $groups = DB::table('examiners_groups')->where('group_name', 'not like', 'TEST-FCS-%')->get();   // the FCS sample groups belong on the FCS forms
 
         $data['header_title'] = 'GS Form';
         $data['getRecord'] = User::getExaminerCandidates(null, $currentYearId);
@@ -264,6 +264,11 @@ class CandidatesController extends Controller
             ->where('candidates.programme_id', 2)
             ->where('candidates.exam_year', $currentYear)
             ->where('users.is_deleted', '0')
+            // A TEST- sandbox group lists only its own candidates; a real group never lists sandbox candidates
+            // (the list is otherwise not limited by group for General Surgery).
+            ->when($this->isSandboxGroup($groupId),
+                fn ($q) => $q->where('candidates.group_id', $groupId),
+                fn ($q) => $q->where(fn ($w) => $w->whereNotIn('candidates.group_id', DB::table('examiners_groups')->where('group_name', 'like', 'TEST-%')->select('id'))->orWhereNull('candidates.group_id')))
             ->select('candidates.id as candidates_id', DB::raw("COALESCE(NULLIF(candidates.candidate_id, ''), candidates.entry_number) as candidate_id"), 'users.name', 'candidates.exam_year')
             ->orderBy('candidates.id', 'asc')
             ->get();
@@ -280,6 +285,7 @@ class CandidatesController extends Controller
             return $this->submissionResponse($request, 'invalid', $error, 422);
         }
 
+        if ($sandboxGroup = $this->candidateSandboxGroup($request->candidate_id)) $request->merge(['group_id' => $sandboxGroup]);
         $table = $this->resultsTable('mcs_results', $request->group_id);
         if ($table === null) return $this->sandboxUnavailable($request);
 
@@ -323,6 +329,7 @@ class CandidatesController extends Controller
             return $this->submissionResponse($request, 'invalid', $error, 422);
         }
 
+        if ($sandboxGroup = $this->candidateSandboxGroup($request->candidate_id)) $request->merge(['group_id' => $sandboxGroup]);
         $table = $this->resultsTable('gs_results', $request->group_id);
         if ($table === null) return $this->sandboxUnavailable($request);
 
@@ -352,6 +359,25 @@ class CandidatesController extends Controller
         $evaluation->save();
 
         return $this->submissionResponse($request, 'success', 'GS Evaluation submitted successfully.', 201);
+    }
+
+    /**
+     * A candidate who belongs to a TEST- sandbox group is sandbox data whatever group the form posted
+     * (the GS candidate list used to ignore the group, so a sandbox candidate could be marked under a
+     * real group and land in the real results). Returns that sandbox group's id, or null.
+     */
+    private function isSandboxGroup($groupId): bool
+    {
+        return strncasecmp((string) DB::table('examiners_groups')->where('id', $groupId)->value('group_name'), 'TEST-', 5) === 0;
+    }
+
+    private function candidateSandboxGroup($candidateId): ?int
+    {
+        if (! $candidateId) return null;
+        $group = DB::table('candidates')->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')
+            ->where('candidates.id', $candidateId)->select('examiners_groups.id', 'examiners_groups.group_name')->first();
+
+        return ($group && strncasecmp((string) $group->group_name, 'TEST-', 5) === 0) ? (int) $group->id : null;
     }
 
     /**
@@ -874,6 +900,7 @@ class CandidatesController extends Controller
         $tableName = $tableMap[$request->exam_type] ?? null;
         if (!$tableName) return $this->submissionResponse($request, 'invalid', 'Invalid exam type.', 422);
 
+        if ($sandboxGroup = $this->candidateSandboxGroup($request->candidate_id)) $request->merge(['group_id' => $sandboxGroup]);
         $tableName = $this->resultsTable($tableName, $request->group_id);
         if ($tableName === null) return $this->sandboxUnavailable($request);
 

@@ -20,7 +20,7 @@
                                 <select name="group_id" id="group_id" class="form-control" required onchange="fetchCandidates(this.value)">
                                     <option value="">Select Group...</option>
                                     @foreach ($groups as $group)
-                                        @if ($group->id <= 11)
+                                        @if ($group->id <= 11 || str_starts_with(strtoupper($group->group_name), 'TEST-'))
                                             <option value="{{ $group->id }}">Group {{ $group->group_name }}</option>
                                         @endif
                                     @endforeach

@@ -149,6 +149,28 @@ class ExaminerOfflineTest extends TestCase
         $this->assertSame(17, (int) DB::table('test_mcs_results')->value('group_id'));
     }
 
+    public function test_a_sandbox_candidate_marked_under_a_real_group_still_lands_in_the_test_tables(): void
+    {
+        // The GS candidate list does not filter by group, so a sandbox candidate can be picked under real group A.
+        $this->postJson('examiner/general_surgery', $this->flatPayload(['candidate_id' => 15, 'group_id' => 3]))->assertStatus(201);
+        $this->postJson('examiner/examiner_form', $this->flatPayload(['candidate_id' => 15, 'group_id' => 3, 'overall' => 'pass']))->assertStatus(201);
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical', ['candidate_id' => 15, 'group_id' => 3]))->assertStatus(201);
+
+        foreach (['mcs_results', 'gs_results', 'cardiothoracic_results'] as $table) {
+            $this->assertSame(0, DB::table($table)->count(), "$table must stay untouched");
+            $this->assertSame(1, DB::table("test_$table")->count(), "test_$table should hold the mark");
+            $this->assertSame(17, (int) DB::table("test_$table")->value('group_id'), 'the mark is filed under the candidate\'s sandbox group');
+        }
+    }
+
+    public function test_a_real_candidate_under_a_real_group_still_goes_to_the_real_table(): void
+    {
+        $this->postJson('examiner/general_surgery', $this->flatPayload(['candidate_id' => 11, 'group_id' => 3]))->assertStatus(201);
+
+        $this->assertSame(1, DB::table('gs_results')->count());
+        $this->assertSame(0, DB::table('test_gs_results')->count());
+    }
+
     public function test_duplicates_in_a_test_group_are_detected_in_the_test_table(): void
     {
         $payload = $this->flatPayload(['group_id' => 17]);
@@ -384,6 +406,7 @@ class ExaminerOfflineTest extends TestCase
         sort($data);
         $this->assertSame([
             '/get-exam-candidates/cardiothoracic/3',
+            '/get-gs-candidates/17',   // the sandbox candidate's group
             '/get-gs-candidates/3',
             '/get-mcs-candidates/4',
         ], $data);
@@ -439,6 +462,7 @@ class ExaminerOfflineTest extends TestCase
             ['id' => 12, 'programme_id' => 10, 'group_id' => 4, 'exam_year' => '2026', 'entry_number' => 'PEN-3'],
             ['id' => 13, 'programme_id' => 1, 'group_id' => 4, 'exam_year' => '2025', 'entry_number' => 'PEN-4'], // other year
             ['id' => 14, 'programme_id' => 1, 'group_id' => null, 'exam_year' => '2026', 'entry_number' => 'PEN-5'], // ungrouped
+            ['id' => 15, 'programme_id' => 2, 'group_id' => 17, 'exam_year' => '2026', 'entry_number' => 'PEN-6'], // sandbox candidate
         ]);
     }
 
