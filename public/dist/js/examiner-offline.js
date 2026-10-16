@@ -549,8 +549,20 @@
       '.eo-dialog .eo-case{font-weight:700;color:#a02626;margin-top:12px}.eo-dialog .eo-row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}',
       'a.eo-btn{display:inline-block;text-decoration:none;color:#000}a.eo-btn:hover{color:#000;text-decoration:none}',
       '.eo-btn.sec{background:#e0e0e0}.eo-btn.danger{background:#c62828;color:#fff}.eo-btns{display:flex;gap:6px;flex-wrap:wrap}',
-      '.eo-ready{border-left:4px solid #FEC503;background:#fffdf3;border-radius:6px;padding:10px 14px;margin:0 0 16px;text-align:left;font-size:.88rem}',
+      '.eo-ready{border-left:4px solid #FEC503;background:#fffdf3;color:#251917;border-radius:6px;padding:10px 14px;margin:0 0 16px;text-align:left;font-size:.88rem}',
+      '.eo-ready .eo-err{color:#c62828}',
+      '.eo-table{background:#fff;color:#251917}.eo-table th,.eo-table td{border-color:#eee}',
       '.eo-ready.ok{border-left-color:#2e7d32}.eo-ready.bad{border-left-color:#c62828}',
+      // Dark mode (body.dark-mode): the light panels above would otherwise keep light text on a light background, or the reverse.
+      'body.dark-mode .eo-ready{background:#2a2616;color:#f1e7c0}',
+      'body.dark-mode .eo-ready.ok{background:#16281c;color:#cfe9d6}body.dark-mode .eo-ready.bad{background:#2d1a1a;color:#f3cccc}',
+      'body.dark-mode .eo-table{background:#1e2330;color:#e2e8f0}body.dark-mode .eo-table th,body.dark-mode .eo-table td{border-color:#2d3748;color:#e2e8f0}',
+      'body.dark-mode .eo-panel,body.dark-mode .eo-dialog{background:#1e2330;color:#e2e8f0;border-color:#2d3748}',
+      'body.dark-mode .eo-panel h4,body.dark-mode .eo-dialog h4,body.dark-mode .eo-dialog .eo-case{color:#f48a8a}',
+      'body.dark-mode .eo-item{border-color:#2d3748}body.dark-mode .eo-item small,body.dark-mode .eo-dialog .eo-sub{color:#94a3b8}',
+      'body.dark-mode .eo-dialog input,body.dark-mode .eo-dialog select,body.dark-mode .eo-dialog textarea{background:#2b3040;color:#f1f5f9;border-color:#4a5568}',
+      'body.dark-mode .eo-btn.sec{background:#374151;color:#e2e8f0}body.dark-mode .eo-btn.link{color:#f48a8a}',
+      'body.dark-mode .eo-ready .eo-err,body.dark-mode .eo-item .eo-err,body.dark-mode .eo-dialog .eo-error{color:#f48a8a}',
       // Large screens come last so they override the base rules above.
       '@media (min-width:992px){.eo-pill{left:var(--eo-center,50%);transform:translateX(-50%)}.eo-panel{left:50%;transform:translateX(-50%)}}',
     ].join('');
@@ -729,10 +741,10 @@
     var card = el('div', { class: 'eo-ready', style: 'margin-top:20px' }, [
       el('strong', { text: 'Saved on this device, not yet submitted (' + lastItems.length + ')' }),
     ]);
-    if (state.auth) card.appendChild(el('div', { class: 'eo-err', style: 'color:#c62828', text: 'Sign in again while online to submit them.' }));
+    if (state.auth) card.appendChild(el('div', { class: 'eo-err', text: 'Sign in again while online to submit them.' }));
     else if (!navigator.onLine) card.appendChild(el('div', { text: 'They will be submitted automatically when you are back online.' }));
 
-    var table = el('table', { class: 'table table-sm', style: 'margin:8px 0 0;background:#fff' }, [
+    var table = el('table', { class: 'table table-sm eo-table', style: 'margin:8px 0 0' }, [
       el('thead', {}, [el('tr', {}, ['Candidate', 'Station', 'Group', 'Exam', 'Saved', 'Status', 'Actions'].map(function (h) { return el('th', { text: h }); }))]),
     ]);
     var body = el('tbody');

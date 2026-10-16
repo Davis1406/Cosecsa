@@ -37,7 +37,7 @@
                     <div class="flex-shrink-0">
                         <img src="{{ !empty($examiner->passport_image)
                                     ? \App\Support\ApiAsset::media($examiner->passport_image)
-                                    : asset('/public/dist/img/user.png') }}"
+                                    : asset('dist/img/user.png') }}"
                              alt="{{ $examiner->examiner_name }}"
                              class="profile-photo">
                     </div>
@@ -399,7 +399,7 @@
                         <div class="mb-3">
                             <img src="{{ !empty($examiner->passport_image)
                                         ? \App\Support\ApiAsset::media($examiner->passport_image)
-                                        : asset('/public/dist/img/user.png') }}"
+                                        : asset('dist/img/user.png') }}"
                                  alt="{{ $examiner->examiner_name }}"
                                  class="rounded-circle"
                                  style="width:120px;height:120px;object-fit:cover;border:2px solid #a02626;">
