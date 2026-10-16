@@ -38,9 +38,9 @@
   var DB_VERSION = 1;
   var STORE = 'queue';
   var SYNC_INTERVAL_MS = 30000;
-  var WARM_MAX_AGE_MS = 20 * 60 * 1000;
+  var WARM_MAX_AGE_MS = 2 * 60 * 1000;
   var WARM_CONCURRENCY = 3;
-  var WARM_KEY = 'examiner-offline-warm-v5'; // bump to make every device re-download the offline pages
+  var WARM_KEY = 'examiner-offline-warm-v6'; // bump to make every device re-download the offline pages
   var FLASH_KEY = 'examiner-offline-flash';
 
   var state = { auth: false, syncing: false, warming: false, warmError: null };
@@ -371,6 +371,8 @@
         refreshStatus();
         if (result.synced || result.duplicates) {
           toast('success', plural(result.synced + result.duplicates, 'mark', 'marks') + ' synced.');
+          // New or changed results need their View / Resubmit pages saved again.
+          prepareOffline(true);
           // The results page lists what the server holds: reload it to include what just synced.
           if (document.getElementById('examiner-offline-pending')) setTimeout(function () { window.location.reload(); }, 1200);
         }
@@ -748,7 +750,7 @@
           el('button', { class: 'eo-btn danger', type: 'button', text: 'Discard', onclick: function () { discardItem(item); } }),
         ] : [
           el('button', { class: 'eo-btn sec', type: 'button', text: 'View', onclick: function () { openItemDialog(item, false); } }),
-          el('button', { class: 'eo-btn', type: 'button', text: 'Edit', onclick: function () { openItemDialog(item, true); } }),
+          editControl(item),
           el('button', { class: 'eo-btn danger', type: 'button', text: 'Discard', onclick: function () { discardItem(item); } }),
         ])]),
       ]));
@@ -757,6 +759,27 @@
     // Wide on a phone: scroll the table inside the card rather than letting it spill over the page.
     card.appendChild(el('div', { style: 'overflow-x:auto;-webkit-overflow-scrolling:touch' }, [table]));
     host.appendChild(card);
+  }
+
+  /** Resubmit page of a mark that is still waiting on the device (null if its ids are unknown). */
+  function pendingResubmitUrl(item) {
+    var field = function (name) {
+      var pair = item.fields.filter(function (p) { return p[0] === name; })[0];
+      return pair ? pair[1] : '';
+    };
+    var candidate = field('candidate_id');
+    if (!/^\d+$/.test(candidate)) return null;
+    var station = field('station_id');
+    if (/^\d+$/.test(station)) return '/examiner/resubmit/' + candidate + '/' + station;
+    var format = field('exam_format') || field('form_type');
+    return '/examiner/fcs-resubmit/' + candidate + (format === 'clinical' || format === 'viva' ? '/' + format : '');
+  }
+
+  /** Edit goes to the mark's Resubmit page; the in-page editor is only a fallback. */
+  function editControl(item) {
+    var url = pendingResubmitUrl(item);
+    if (url) return el('a', { class: 'eo-btn', href: url, text: 'Edit' });
+    return el('button', { class: 'eo-btn', type: 'button', text: 'Edit', onclick: function () { openItemDialog(item, true); } });
   }
 
   function showStoredFlash() {
@@ -1132,7 +1155,10 @@
     }).then(function () {
       return syncQueue();
     }).then(function () {
-      return prepareOffline(false);
+      // Opening the dashboard online always re-saves every page, so what is
+      // available offline matches the server (results, totals, new entries).
+      var dashboard = /^\/examiner\/dashboard\/?$/.test(window.location.pathname);
+      return prepareOffline(dashboard);
     });
 
     if (document.getElementById('examiner-offline-pending')) {

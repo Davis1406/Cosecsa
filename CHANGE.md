@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-16) — Offline: dashboard re-saves every page; Edit on a waiting mark opens its Resubmit page
+- **Pages stay in step with the server.** Opening the examiner dashboard online now always re-downloads every offline page (results, each View / Resubmit page, candidate lists); previously it was skipped if the last save was under 20 minutes old, so a result saved afterwards had no Resubmit page offline ("Not saved for offline use") and cached totals could differ from the results table. Other pages re-save when the last save is over 2 minutes old, and pages are re-saved right after queued marks sync. Cache key bumped (`examiner-offline-warm-v6`).
+- **Edit button.** On "Saved on this device, not yet submitted", Edit for a new mark now links to its Resubmit page (`resubmit/{candidate}/{station}`, or `fcs-resubmit/{candidate}/{format}`) instead of opening the in-page editor (kept as a fallback when ids are missing). Offline, that page only exists once the mark has synced.
+- **Files:** `public/dist/js/examiner-offline.js`.
+
 ### Changed (2026-10-15) — Results page offline: queued edits show in the table; card links back to Resubmit
 - **Edited marks now show their new values.** The results table lists what the server holds, so a mark edited offline (Resubmit → queued) kept showing the old marks and looked as if nothing had changed. `examiner-offline.js` now overlays each queued edit on its row until it syncs (matched through the row's Resubmit link): MCS/GS rows show the edited Question 1-5, Total and Grade, FCS rows show the edited Clinical or Viva total and the recomputed Overall, and the candidate cell is tagged "Edited offline". The overlay is applied through the DataTables API (search/sort follow) and removed again if the edit is discarded; after sync the page reloads with the server's values.
 - **Card buttons.** In "Saved on this device, not yet submitted", an entry that is an *edit of a mark the server already has* now shows a plain **Resubmit** link (to that mark's Resubmit page, or its Clinical/Viva form for FCS, which already shows the edited values) and **Discard**. Marks that are not on the server yet keep View / Edit / Discard.
