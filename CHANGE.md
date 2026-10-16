@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-16) — Examiner Training course page: module titles invisible in dark mode
+- On `examiner/learning` the module titles used a fixed light-theme colour (`#1e293b`) on the dark card, so they were unreadable; the number tiles had no dark variant either. Added dark-mode rules in `learning/examiner/cover.blade.php` (light titles, maroon-tinted number tile, green completed tile, darker hover shadow). Rendered the real page template with the real CSS in Chrome (dark): titles, numbers, badges readable. The lesson player, quiz and result pages have the same kind of fixed dark text colours and no dark-mode rules; not changed here.
+- **File:** `resources/views/learning/examiner/cover.blade.php`.
+
 ### Fixed (2026-10-16) — "Edit" in the "Saved on this device" card: contrasting colours in dark mode
 - Edit is a link (`<a class="eo-btn">`), so the app's dark-mode link rules (pink text, gold on hover) outranked the button's own black text: pink on the gold button, and gold-on-gold on hover. The text is now fixed black in every state (with a darker gold on hover). Checked at rest and on hover in Chrome with the app's link rules.
 - **File:** `public/dist/js/examiner-offline.js`.

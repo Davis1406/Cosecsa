@@ -144,6 +144,11 @@
     .lms .module-info { flex: 1; }
     .lms .module-title { font-size: 15px; font-weight: 600; color: #1e293b; }
     .lms .module-meta { font-size: 12.5px; margin-top: 3px; }
+    /* Dark mode: the module titles/numbers above use fixed light-theme colours (#1e293b on the dark card was invisible). */
+    body.dark-mode .lms .module-title { color: #f1f5f9; }
+    body.dark-mode .lms .module-num { background: rgba(244,138,138,.14); color: #f48a8a; }
+    body.dark-mode .lms .module-num.done { background: #14532d; color: #86efac; }
+    body.dark-mode .lms .module-row:hover { box-shadow: 0 4px 16px rgba(0,0,0,.4); }
     @media (max-width: 760px) {
         .lms .hero-inner { flex-direction: column-reverse; align-items: stretch; padding: 28px 20px; }
         .lms .hero-cover img { width: 100%; }
