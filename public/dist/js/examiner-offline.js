@@ -829,7 +829,7 @@
 
       var set = function (name, value) {
         var node = form.elements[name];
-        if (node && !node.length) { node.value = value; node.dispatchEvent(new Event('input', { bubbles: true })); node.dispatchEvent(new Event('change', { bubbles: true })); }
+        if (node && node.tagName) { node.value = value; node.dispatchEvent(new Event('input', { bubbles: true })); node.dispatchEvent(new Event('change', { bubbles: true })); }
       };
       set('group_id_display', item.label.group || '');
       set('candidate_id_display', item.label.candidate || '');
