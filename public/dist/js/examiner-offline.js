@@ -38,6 +38,7 @@
   var DB_VERSION = 1;
   var STORE = 'queue';
   var SYNC_INTERVAL_MS = 30000;
+  var STATUS_SHOW_MS = 10000;   // how long the status label stays on the marking forms / results page
   var WARM_MAX_AGE_MS = 2 * 60 * 1000;
   var WARM_CONCURRENCY = 3;
   var WARM_KEY = 'examiner-offline-warm-v6'; // bump to make every device re-download the offline pages
@@ -531,8 +532,9 @@
       '.eo-toast{padding:10px 14px;border-radius:6px;color:#fff;font-size:.9rem;box-shadow:0 2px 8px rgba(0,0,0,.25)}',
       '.eo-toast.success{background:#2e7d32}.eo-toast.error{background:#c62828}.eo-toast.warning{background:#8a5a00}',
       // Sits just above the page footer (its height is measured into --eo-footer): bottom-left on small screens, centred over the content on large ones.
-      '.eo-pill{position:fixed;left:16px;bottom:calc(var(--eo-footer,56px) + 12px);z-index:2000;font-family:inherit;max-width:calc(100vw - 32px)}',
+      '.eo-pill{transition:opacity .4s ease;position:fixed;left:16px;bottom:calc(var(--eo-footer,56px) + 12px);z-index:2000;font-family:inherit;max-width:calc(100vw - 32px)}',
       '.eo-pill button.eo-badge{border:0;border-radius:20px;padding:8px 16px;font-size:.85rem;font-weight:600;color:#fff;background:#37474f;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer}',
+      '.eo-pill.eo-gone{opacity:0;pointer-events:none}',
       '.eo-pill.pending button.eo-badge{background:#8a5a00}.eo-pill.error button.eo-badge{background:#c62828}',
       '.eo-panel{position:absolute;left:0;bottom:46px;width:340px;max-width:calc(100vw - 32px);max-height:60vh;overflow:auto;background:#fff;color:#251917;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.25);padding:12px;font-size:.85rem}',
       '.eo-panel h4{margin:0 0 8px;font-size:.95rem;color:#a02626}',
@@ -683,10 +685,26 @@
 
       if (ui.pill) {
         if (text) {
+          // On the marking forms and the results page the status label only shows for a few
+          // seconds each time it changes (errors stay until dealt with); elsewhere it stays.
+          var autoHide = mode !== 'error' && (document.querySelector('form[data-offline-submit]') || document.getElementById('examiner-offline-pending'));
+          if (text !== ui.lastText) {
+            ui.lastText = text;
+            ui.faded = false;
+            clearTimeout(ui.fadeTimer);
+            if (autoHide) {
+              ui.fadeTimer = setTimeout(function () {
+                if (ui.panel.hasAttribute('hidden')) { ui.faded = true; ui.pill.classList.add('eo-gone'); }
+              }, STATUS_SHOW_MS);
+            }
+          }
+          if (!autoHide) ui.faded = false;
           ui.badge.textContent = text;
-          ui.pill.className = 'eo-pill ' + mode;
+          ui.pill.className = 'eo-pill ' + mode + (ui.faded ? ' eo-gone' : '');
           ui.pill.removeAttribute('hidden');
         } else {
+          ui.lastText = '';
+          clearTimeout(ui.fadeTimer);
           ui.pill.setAttribute('hidden', 'hidden');
           ui.panel.setAttribute('hidden', 'hidden');
         }

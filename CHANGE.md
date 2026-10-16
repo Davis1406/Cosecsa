@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-16) — Offline status label fades after 10 seconds on the marking forms and Results
+- The floating label ("N marks waiting to sync", "Offline · marks are saved on this device", "Syncing…") now shows for 10 seconds each time its text changes, then fades out, on the marking/Resubmit forms and the Results page. It is not shown again until the status changes (e.g. a mark is queued, the connection drops or returns). "Needs attention" / "Sign in again" labels stay until dealt with, and other pages (dashboard etc.) are unchanged. The "Saved on this device, not yet submitted" card on Results is a list with Edit/Discard actions and stays. Tested in Chrome: visible at 1 s and 5-7 s, faded at 12-13 s on both pages.
+- **File:** `public/dist/js/examiner-offline.js`.
+
 ### Fixed (2026-10-16) — View marks pages: button and link colours in dark mode
 - The Back / Resubmit / All results controls are plain `<a>` tags, so the app's dark-mode link rules (`body.dark-mode a:not(.btn)` → pink, hover → gold) outranked the page's own classes: pink text on the gold Resubmit button and gold-on-gold on hover. Colours are now fixed per state in `examiner/_view_style.blade.php` (used by `view_results` and `view_fcs_results`): Resubmit dark text on gold (darker gold on hover); All results light text with a grey border, gold border on hover; Back link muted, maroon (light) / gold (dark) on hover. Checked at rest and on hover in Chrome with the app's link rules.
 
