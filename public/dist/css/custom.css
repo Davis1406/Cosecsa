@@ -1672,3 +1672,20 @@ body.dark-mode .cs-alert-icon.cs-success { background: rgba(76, 208, 138, .18); 
 .cs-toast.cs-warning { border-left-color: #FEC503; } .cs-toast.cs-warning > i { color: #b07d00; }
 .cs-toast.cs-info    { border-left-color: #004356; } .cs-toast.cs-info    > i { color: #004356; }
 body.dark-mode .cs-toast.cs-info > i { color: #5fb3c9; }
+
+/* ── Dark mode: legacy wizard forms (.multi_step_form #msform) ──────────────
+   wizard.css paints the form white (#fff on a #f6f9fb strip) with dark grey
+   headings, so in dark mode the labels and titles (light text) vanished.
+   Used by the examiner marking / Resubmit forms and other add/edit forms.   */
+body.dark-mode .multi_step_form { background: transparent; }
+body.dark-mode .multi_step_form #msform { background: #1e2330; color: #e2e8f0; border: 1px solid #2d3748; border-radius: 6px; }
+body.dark-mode .multi_step_form #msform .tittle h2,
+body.dark-mode .multi_step_form #msform fieldset h3 { color: #f1f5f9; }
+body.dark-mode .multi_step_form #msform .tittle p,
+body.dark-mode .multi_step_form #msform fieldset h6 { color: #94a3b8; }
+body.dark-mode .multi_step_form #msform label { color: #cbd5e0; }
+body.dark-mode .multi_step_form #msform h5[style*="a02626" i] { color: #f48a8a !important; }
+body.dark-mode .multi_step_form #msform .input-group-text { background: #374151; border-color: #4a5568; color: #e2e8f0; }
+body.dark-mode .multi_step_form #msform .alert-warning { background: #2a2616; border-color: #4a3f17; color: #f1e7c0; }
+body.dark-mode .multi_step_form #msform .previous_button { color: #94a3b8; border-color: #4a5568; }
+body.dark-mode .multi_step_form #msform .action-button:disabled { background: #4a5568; border-color: #4a5568; color: #94a3b8; cursor: not-allowed; }

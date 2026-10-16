@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-16) — Dark mode: Resubmit / marking forms (legacy wizard forms)
+- `wizard.css` paints `#msform` white (on a `#f6f9fb` strip) with dark grey headings, so in dark mode the titles and labels (light text) were unreadable on the white form (e.g. `examiner/resubmit/{candidate}/{station}`). Added dark-mode rules for `.multi_step_form #msform` in `custom.css`: dark card background, light title/labels, muted sub-text, readable maroon case headings, warning notice, input-group text and disabled Submit. Applies to every page using this wizard form; light mode is untouched. Rendered the real Resubmit form with the real CSS in Chrome (dark).
+- **File:** `public/dist/css/custom.css`.
+
 ### Changed (2026-10-16) — FCS "View marks" page uses the same design
 - `examiner/view_fcs_results/{candidate}` now matches the redesigned View marks page: candidate and group header, large overall total with Clinical and Viva sub-totals, a Clinical block and a Viva block (station, case headings, one row per question, station total, remarks, block total), Resubmit / All results actions; light and dark mode. Question labels and case headings are unchanged. The look is shared through `examiner/_view_style.blade.php` (also used by `view_results`); the per-block markup is `examiner/_fcs_records.blade.php`.
 - **Files:** `resources/views/examiner/{view_fcs_results,view_results,_view_style,_fcs_records}.blade.php`. Rendered in Chrome with sample data (dark mode checked).
