@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-10-16) — Results page: "FCS Specialty Results (waiting to sync)" box for FCS marks saved offline
+- The Results page only renders its FCS table once the server holds FCS results, so an FCS mark saved offline showed only in the "Saved on this device" card. While FCS marks (Clinical / Viva) wait to sync, `examiner-offline.js` now also builds an "FCS Specialty Results (waiting to sync)" box in the same layout (Candidate ID, Group, Clinical Total, Viva Total, Overall Total) with a "Waiting to sync" tag (or "Needs attention" for a rejected one); one row per candidate, totals summed over the saved stations as the server does. It disappears once the marks sync and the real FCS table takes over. MCS / General Surgery marks are not affected.
+- **File:** `public/dist/js/examiner-offline.js`. Checked by running the real script in a simulated page (jsdom) with two Clinical + one Viva FCS marks and an MCS mark in the queue: one FCS row with Clinical 20.5, Viva 17, Overall 37.5, MCS not included. The look in a real browser was not checked (the browser tool stopped responding).
+
 ### Fixed (2026-10-16) — FCS marking forms: sample groups now appear, each under its own specialty
 - The group dropdown on the universal FCS forms (`examiner/<specialty>/clinical|viva`) only listed groups with `id <= 10` (legacy A-J), so the new `TEST-FCS-<specialty>` groups (ids 18-25) and `TEST-PART1` (17) never showed; with nothing to select there were no candidates / PENs. The form now also lists `TEST-` sandbox groups. Because the group list is already limited to groups holding that programme's candidates, each specialty page shows only its own sample group (e.g. Urology: `TEST-FCS-URO`); `TEST-PART1`, which holds every specialty's candidates, is excluded from the FCS pages. Candidates are listed by PEN (`entry_number`) as before; the production data for `TEST-FCS-URO` returns all five PENs.
 - **Files:** `app/Http/Controllers/CandidatesController.php` (`loadExamForm`), `resources/views/examiner/universal_exam_form.blade.php`.

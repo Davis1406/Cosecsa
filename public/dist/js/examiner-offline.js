@@ -800,6 +800,8 @@
     // Wide on a phone: scroll the table inside the card rather than letting it spill over the page.
     card.appendChild(el('div', { style: 'overflow-x:auto;-webkit-overflow-scrolling:touch' }, [table]));
     host.appendChild(card);
+    var fcsBox = buildPendingFcsBox();
+    if (fcsBox) host.appendChild(fcsBox);
   }
 
   /** 'mcs' / 'gs' for a new MCS / General Surgery mark waiting on the device (their forms are rebuilt offline), else null. */
@@ -924,6 +926,51 @@
         }, function () { toast('error', 'Could not save the changes on this device.'); });
       }, true);
     });
+  }
+
+  /**
+   * FCS marks (Clinical / Viva) saved on the device: the Results page only has an FCS table once the
+   * server holds FCS results, so until they sync show them here in the same layout, per candidate.
+   */
+  function buildPendingFcsBox() {
+    var people = {};
+    var order = [];
+    lastItems.forEach(function (item) {
+      if (item.kind !== 'create' || !/\/examiner\/submit-exam\/?$/.test(new URL(item.url, window.location.href).pathname)) return;
+      var candidate = pendingField(item, 'candidate_id');
+      var format = pendingField(item, 'form_type') || pendingField(item, 'exam_format');
+      if (!candidate) return;
+      var key = candidate + '|' + pendingField(item, 'exam_type');
+      if (!people[key]) { people[key] = { name: item.label.candidate || ('Candidate ' + candidate), group: item.label.group || '-', clinical: 0, viva: 0, failed: false }; order.push(key); }
+      var total = parseFloat(pendingField(item, 'total_marks')) || 0;
+      if (format === 'viva') people[key].viva += total; else people[key].clinical += total;
+      if (item.status === 'failed') people[key].failed = true;
+    });
+    if (!order.length) return null;
+
+    var head = el('tr', {}, ['Candidate ID', 'Group', 'Clinical Total', 'Viva Total', 'Overall Total', 'Status'].map(function (h) { return el('th', { text: h }); }));
+    var body = el('tbody');
+    order.forEach(function (key) {
+      var p = people[key];
+      body.appendChild(el('tr', {}, [
+        el('td', { text: p.name }),
+        el('td', { text: p.group }),
+        el('td', {}, [el('b', { text: formatMark(p.clinical) })]),
+        el('td', {}, [el('b', { text: formatMark(p.viva) })]),
+        el('td', {}, [el('b', { text: formatMark(p.clinical + p.viva) })]),
+        el('td', {}, [el('span', { class: 'badge ' + (p.failed ? 'badge-danger' : 'badge-warning'), text: p.failed ? 'Needs attention' : 'Waiting to sync' })]),
+      ]));
+    });
+
+    return el('div', { class: 'card', style: 'margin-top:20px' }, [
+      el('div', { class: 'card-header', style: 'background-color: #FEC503; color: #a02626;' }, [
+        el('h3', { class: 'card-title', text: 'FCS Specialty Results (waiting to sync)' }),
+      ]),
+      el('div', { class: 'card-body', style: 'overflow-x:auto' }, [
+        el('table', { class: 'table table-bordered table-striped w-100' }, [el('thead', {}, [head]), body]),
+        el('div', { class: 'text-muted', style: 'font-size:.85rem', text: 'Totals are from the marks saved on this device. Use the list above to view, edit or discard a mark; once synced they join the FCS results table.' }),
+      ]),
+    ]);
   }
 
   function showStoredFlash() {
