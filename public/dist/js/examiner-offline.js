@@ -787,7 +787,7 @@
         el('td', { text: item.status === 'failed' ? 'Rejected: ' + (item.error || 'unknown reason') : 'Waiting to sync' }),
         el('td', {}, [el('div', { class: 'eo-btns' }, item.kind === 'update' ? [
           // An edit of a mark the server already has: go back to its Resubmit page (it shows the edited values).
-          el('a', { class: 'eo-btn', href: resubmitUrl(item), text: 'Resubmit' }),
+          goButton('Resubmit', function () { window.location.href = resubmitUrl(item); }),
           el('button', { class: 'eo-btn danger', type: 'button', text: 'Discard', onclick: function () { discardItem(item); } }),
         ] : [
           el('button', { class: 'eo-btn sec', type: 'button', text: 'View', onclick: function () { openItemDialog(item, false); } }),
@@ -840,17 +840,21 @@
     }).catch(function () { return false; });
   }
 
+  /** A button that goes to a page. A real <button> (not a link) so the app's dark-mode link colours cannot repaint its text. */
+  function goButton(text, onclick) {
+    return el('button', { class: 'eo-btn', type: 'button', text: text, onclick: onclick });
+  }
+
   /** Edit goes to the mark's Resubmit page; the in-page editor is the fallback when that page cannot be built. */
   function editControl(item) {
     var url = pendingResubmitUrl(item);
     if (!url) return el('button', { class: 'eo-btn', type: 'button', text: 'Edit', onclick: function () { openItemDialog(item, true); } });
-    return el('a', { class: 'eo-btn', href: url, text: 'Edit', onclick: function (event) {
-      if (navigator.onLine) return;   // online the server page is used (or the SW falls back to the device copy)
-      event.preventDefault();
+    return goButton('Edit', function () {
+      if (navigator.onLine) { window.location.href = url; return; }   // online the server page is used (or the SW falls back to the device copy)
       hasResubmitTemplate(pendingKind(item)).then(function (ok) {
         if (ok) window.location.href = url; else openItemDialog(item, true);
       });
-    } });
+    });
   }
 
   /**

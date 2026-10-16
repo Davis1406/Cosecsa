@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-16) — "Saved on this device" card: View / Edit / Discard (and Resubmit) are all real buttons
+- Edit and Resubmit were links styled as buttons, so the app's dark-mode link colours (pink text) could still repaint them, leaving Edit with pink text on gold next to View and Discard. They are now `<button>`s that navigate on click (offline check and in-page-editor fallback unchanged), so View / Edit / Discard share one set of colours: grey with light text, gold with black text, red with white text (checked in Chrome with the app's stylesheets in dark mode).
+- **File:** `public/dist/js/examiner-offline.js`.
+
 ### Fixed (2026-10-16) — Examiner Training: lesson player, quiz and result pages readable in dark mode
 - These pages used fixed light-theme colours with no dark-mode rules (white sidebar, `#0f172a`/`#1e293b`/`#334155` text), so titles, the module sidebar, quiz questions/options and result review were unreadable or bright white on the dark page. Added dark rules to the shared `learning/partials/styles.blade.php`: player sidebar (course title, progress, module list incl. active/hover/done states), module title/description/badges, Previous/Next cards, quiz title/question/option rows/footer, result score ring, review options (correct/wrong) and feedback. Anchor colours use `!important` because the app's dark-mode link rule (pink, gold on hover) otherwise wins. The certificate itself keeps its light parchment design. Checked in Chrome (dark) with the real CSS and a hand-built copy of each page's markup (not the live pages).
 - **File:** `resources/views/learning/partials/styles.blade.php` (also loaded by the admin Learning pages; the new rules only target the examiner classes).
