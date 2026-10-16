@@ -1,245 +1,51 @@
 @extends('layout.app')
 
 @section('content')
-    <div class="content-wrapper">
-        <section class="content-header">
-            <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6" style="text-align: left">
-                        <a href="{{ url('examiner/results') }}" class="btn btn-primary" style="background-color: #a02626; border-color:#a02626">
-                            <span class="fas fa-arrow-left"></span> Back to Results List
-                        </a>
+@include('examiner._view_style')
+
+<div class="content-wrapper">
+    <section class="content" style="padding-top:18px">
+        <div class="container-fluid">
+            <div class="vr">
+                <a class="vr-back" href="{{ url('examiner/results') }}"><span class="fas fa-arrow-left"></span> Back to results</a>
+
+                @if ($candidateResult)
+                    <div class="vr-card">
+                        <div class="vr-head">
+                            <div class="vr-eyebrow">Candidate</div>
+                            <div class="vr-name">{{ $candidateResult->candidate_name }}</div>
+                            <div class="vr-chips">
+                                <span class="vr-chip">Group {{ $candidateResult->group_name }}</span>
+                                <span class="vr-chip">Clinical + Viva</span>
+                            </div>
+                        </div>
+
+                        <div class="vr-score">
+                            <div>
+                                <div class="vr-eyebrow">Overall total</div>
+                                <div class="vr-total">{{ $candidateResult->overall_total }}</div>
+                            </div>
+                            <div class="vr-subs">
+                                <div><div class="vr-eyebrow">Clinical</div><div class="vr-sub">{{ $candidateResult->clinical_total }}</div></div>
+                                <div><div class="vr-eyebrow">Viva</div><div class="vr-sub">{{ $candidateResult->viva_total }}</div></div>
+                            </div>
+                        </div>
+
+                        @include('examiner._fcs_records', ['records' => $candidateResult->clinical_records, 'format' => 'clinical', 'total' => $candidateResult->clinical_total])
+                        @include('examiner._fcs_records', ['records' => $candidateResult->viva_records, 'format' => 'viva', 'total' => $candidateResult->viva_total])
+
+                        <div class="vr-actions">
+                            <a class="vr-btn primary" href="{{ url('examiner/fcs-resubmit/' . $candidateResult->candidate_id) }}">Resubmit</a>
+                            <a class="vr-btn ghost" href="{{ url('examiner/results') }}">All results</a>
+                        </div>
                     </div>
-                </div>
+                @else
+                    <div class="vr-card"><div class="vr-section"><p class="vr-empty">No result data found for this candidate.</p></div></div>
+                @endif
             </div>
-        </section>
+        </div>
+    </section>
+</div>
 
-        <section class="content">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Candidate Full Results (Clinical + Viva)</h3>
-                </div>
-                <div class="card-body">
-                    @if($candidateResult)
-                        <table class="table table-bordered mb-4">
-                            <tr>
-                                <th>Candidate ID</th>
-                                <td>{{ $candidateResult->candidate_name }}</td>
-                            </tr>
-                            <tr>
-                                <th>Group Name</th>
-                                <td>{{ $candidateResult->group_name }}</td>
-                            </tr>
-                            <tr>
-                                <th>Total Marks</th>
-                                <td>{{ $candidateResult->overall_total }}</td>
-                            </tr>
-                        </table>
-
-                        <div class="row">
-                            <!-- Clinical Marks -->
-                            <div class="col-md-6">
-                                <h5 style="color:#a02626;">Clinical Marks</h5>
-                                <table class="table table-bordered">
-                                    <thead>
-                                    <tr>
-                                        <th>Station ID</th>
-                                        <th>Question</th>
-                                        <th>Marks</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    @foreach($candidateResult->clinical_records as $rec)
-                                        @php
-                                            $marks = json_decode($rec->question_mark, true) ?? [];
-                                            $casesCount = count($marks) <= 4 ? 1 : 2; // Determine if single or multiple cases
-                                            $questionsPerCase = $casesCount == 1 ? count($marks) : (count($marks) / $casesCount);
-
-                                            $clinicalLabels = [
-                                                'Overall Professional Capacity and Patient Care',
-                                                'Knowledge and Judgement',
-                                                'Quality of Response',
-                                                'Bedside Manner'
-                                            ];
-                                        @endphp
-
-                                        @if($casesCount == 1)
-                                            <!-- Single Case Display -->
-                                            <tr>
-                                                <td rowspan="{{ count($marks) + 2 }}" style="vertical-align: middle;">
-                                                    <b>{{ $rec->station_id }}</b>
-                                                </td>
-                                            </tr>
-                                            @foreach($marks as $i => $m)
-                                                <tr>
-                                                    <td>
-                                                        @if(isset($clinicalLabels[$i]))
-                                                            {{ $clinicalLabels[$i] }}
-                                                        @else
-                                                            Question {{ $i + 1 }}
-                                                        @endif
-                                                    </td>
-                                                    <td><b>{{ $m }}</b></td>
-                                                </tr>
-                                            @endforeach
-                                        @else
-                                            <!-- Two Cases Display -->
-                                            @for($case = 1; $case <= $casesCount; $case++)
-                                                @php
-                                                    $startIndex = ($case - 1) * $questionsPerCase;
-                                                @endphp
-                                                <tr>
-                                                    <td rowspan="{{ $questionsPerCase + 1 }}" style="vertical-align: middle;">
-                                                        <b>{{ $rec->station_id }}</b><br>
-                                                        <small>Case {{ $case }}</small>
-                                                    </td>
-                                                </tr>
-                                                @for($i = 0; $i < $questionsPerCase; $i++)
-                                                    @php
-                                                        $questionIndex = $startIndex + $i;
-                                                        if ($questionIndex >= count($marks)) break;
-                                                    @endphp
-                                                    <tr>
-                                                        <td>Question {{ $i + 1 }}</td>
-                                                        <td><b>{{ $marks[$questionIndex] }}</b></td>
-                                                    </tr>
-                                                @endfor
-                                            @endfor
-                                        @endif
-
-                                        <tr style="background-color: #f8f9fa;">
-                                            <td colspan="2"><b>Total</b></td>
-                                            <td><b>{{ $rec->total }}</b></td>
-                                        </tr>
-                                        @if($rec->remarks)
-                                            <tr>
-                                                <td colspan="3">
-                                                    <b>Remarks:</b> {{ $rec->remarks }}
-                                                </td>
-                                            </tr>
-                                        @endif
-                                    @endforeach
-                                    </tbody>
-                                    <tfoot style="background-color: #a02626; color: white;">
-                                    <tr>
-                                        <th colspan="2">Clinical Total</th>
-                                        <th><b>{{ $candidateResult->clinical_total }}</b></th>
-                                    </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-
-                            <!-- Viva Marks -->
-                            <div class="col-md-6">
-                                <h5 style="color:#a02626;">Viva Marks</h5>
-                                <table class="table table-bordered">
-                                    <thead>
-                                    <tr>
-                                        <th>Station ID</th>
-                                        <th>Question</th>
-                                        <th>Marks</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    @foreach($candidateResult->viva_records as $rec)
-                                        @php
-                                            $marks = json_decode($rec->question_mark, true) ?? [];
-                                            $casesCount = count($marks) <= 4 ? 1 : 2; // Determine if single or multiple cases
-                                            $questionsPerCase = $casesCount == 1 ? count($marks) : (count($marks) / $casesCount);
-                                        @endphp
-
-                                        @if($casesCount == 1)
-                                            <!-- Single Case Display -->
-                                            <tr>
-                                                <td rowspan="{{ count($marks) + 2 }}" style="vertical-align: middle;">
-                                                    <b>{{ $rec->station_id }}</b>
-                                                </td>
-                                            </tr>
-                                            @foreach($marks as $i => $m)
-                                                <tr>
-                                                    <td>Question {{ $i + 1 }}</td>
-                                                    <td><b>{{ $m }}</b></td>
-                                                </tr>
-                                            @endforeach
-                                        @else
-                                            <!-- Two Cases Display -->
-                                            @for($case = 1; $case <= $casesCount; $case++)
-                                                @php
-                                                    $startIndex = ($case - 1) * $questionsPerCase;
-                                                $caseHeadings = [
-                                                    1 => 'Knowledge & Judgement',
-                                                    2 => 'Quality of Response'
-                                                ];
-                                                $caseHeading = $caseHeadings[$case] ?? "Case $case";
-                                                @endphp
-                                                <tr>
-                                                    <td rowspan="{{ $questionsPerCase + 1 }}" style="vertical-align: middle;">
-                                                        <b>{{ $rec->station_id }}</b><br>
-                                                        <small>{{ $caseHeading }}</small>
-                                                    </td>
-                                                </tr>
-                                                @for($i = 0; $i < $questionsPerCase; $i++)
-                                                    @php
-                                                        $questionIndex = $startIndex + $i;
-                                                        if ($questionIndex >= count($marks)) break;
-                                                    @endphp
-                                                    <tr>
-                                                        <td>Question {{ $i + 1 }}</td>
-                                                        <td><b>{{ $marks[$questionIndex] }}</b></td>
-                                                    </tr>
-                                                @endfor
-                                            @endfor
-                                        @endif
-
-                                        <tr style="background-color: #f8f9fa;">
-                                            <td colspan="2"><b>Total</b></td>
-                                            <td><b>{{ $rec->total }}</b></td>
-                                        </tr>
-                                        @if($rec->remarks)
-                                            <tr>
-                                                <td colspan="3">
-                                                    <b>Remarks:</b> {{ $rec->remarks }}
-                                                </td>
-                                            </tr>
-                                        @endif
-                                    @endforeach
-                                    </tbody>
-                                    <tfoot style="background-color: #a02626; color: white;">
-                                    <tr>
-                                        <th colspan="2">Viva Total</th>
-                                        <th><b>{{ $candidateResult->viva_total }}</b></th>
-                                    </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="text-right mt-3">
-                            <a href="{{ url('examiner/fcs-resubmit/' . $candidateResult->candidate_id) }}" class="btn btn-warning">
-                                <i class="fas fa-edit"></i> Resubmit
-                            </a>
-                        </div>
-                    @else
-                        <p>No result data found for this candidate.</p>
-                    @endif
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <style>
-        .table td, .table th {
-            vertical-align: middle;
-        }
-
-        .table-bordered td, .table-bordered th {
-            border: 1px solid #dee2e6;
-        }
-
-        small {
-            font-size: 0.8em;
-            color: #6c757d;
-        }
-    </style>
     @include('examiner._offline')
 @endsection

@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-16) — FCS "View marks" page uses the same design
+- `examiner/view_fcs_results/{candidate}` now matches the redesigned View marks page: candidate and group header, large overall total with Clinical and Viva sub-totals, a Clinical block and a Viva block (station, case headings, one row per question, station total, remarks, block total), Resubmit / All results actions; light and dark mode. Question labels and case headings are unchanged. The look is shared through `examiner/_view_style.blade.php` (also used by `view_results`); the per-block markup is `examiner/_fcs_records.blade.php`.
+- **Files:** `resources/views/examiner/{view_fcs_results,view_results,_view_style,_fcs_records}.blade.php`. Rendered in Chrome with sample data (dark mode checked).
+
 ### Changed (2026-10-16) — Examiner Results: dark-mode contrast; redesigned View marks page; avatar fallback path
 - **Dark mode.** The "Saved on this device, not yet submitted" card and its table were fixed light colours (`#fffdf3`, `#fff`) with text inherited from the page, so in dark mode the text was near-invisible. They (and the sync panel and edit dialog) now have explicit dark-mode colours; light mode text colour is explicit too. **File:** `public/dist/js/examiner-offline.js`.
 - **View marks** (`examiner/view_results/{candidate}/{station}`, MCS and General Surgery) redesigned: candidate name, group/station chips, a large total with a pass/borderline/fail chip, one row per question, remarks, and Resubmit / All results actions. Minimal, supports light and dark mode, works on phones, pure CSS (still cacheable offline). The FCS view (`view_fcs_results`) is unchanged. **File:** `resources/views/examiner/view_results.blade.php`.
