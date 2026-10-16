@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-16) — Dark mode: "+ Add Question" button invisible on the marking forms
+- `layout/header.blade.php` forces `body.dark-mode .btn-outline-secondary` to a transparent background and grey border with `!important`, which overrode the button's inline gold background; with the dark text colour it was invisible (`examiner/examiner_form`, Resubmit forms). `custom.css` now keeps any `.btn` with an inline gold background gold (hover slightly darker) with dark text in dark mode. Reproduced the transparent button with the header rule, and confirmed gold computed styles after the fix, in Chrome.
+- **File:** `public/dist/css/custom.css`.
+
 ### Fixed (2026-10-16) — Dark mode: Resubmit / marking forms (legacy wizard forms)
 - `wizard.css` paints `#msform` white (on a `#f6f9fb` strip) with dark grey headings, so in dark mode the titles and labels (light text) were unreadable on the white form (e.g. `examiner/resubmit/{candidate}/{station}`). Added dark-mode rules for `.multi_step_form #msform` in `custom.css`: dark card background, light title/labels, muted sub-text, readable maroon case headings, warning notice, input-group text and disabled Submit. Applies to every page using this wizard form; light mode is untouched. Rendered the real Resubmit form with the real CSS in Chrome (dark).
 - **File:** `public/dist/css/custom.css`.

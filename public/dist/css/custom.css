@@ -1689,3 +1689,24 @@ body.dark-mode .multi_step_form #msform .input-group-text { background: #374151;
 body.dark-mode .multi_step_form #msform .alert-warning { background: #2a2616; border-color: #4a3f17; color: #f1e7c0; }
 body.dark-mode .multi_step_form #msform .previous_button { color: #94a3b8; border-color: #4a5568; }
 body.dark-mode .multi_step_form #msform .action-button:disabled { background: #4a5568; border-color: #4a5568; color: #94a3b8; cursor: not-allowed; }
+
+/* Dark mode: a button given an inline gold background (e.g. "+ Add Question" on the
+   marking forms, class btn-outline-secondary) was repainted transparent with a grey
+   border by the header's `body.dark-mode .btn-outline-*` !important rules, leaving
+   dark text on nothing. Keep inline-gold buttons gold. */
+body.dark-mode .btn[style*="background-color: #FEC503" i],
+body.dark-mode .btn[style*="background-color:#FEC503" i],
+body.dark-mode .btn[style*="background: #FEC503" i],
+body.dark-mode .btn[style*="background:#FEC503" i] {
+    background-color: #FEC503 !important;
+    border-color: #FEC503 !important;
+    color: #3a2a00 !important;
+}
+body.dark-mode .btn[style*="background-color: #FEC503" i]:hover,
+body.dark-mode .btn[style*="background-color:#FEC503" i]:hover,
+body.dark-mode .btn[style*="background: #FEC503" i]:hover,
+body.dark-mode .btn[style*="background:#FEC503" i]:hover {
+    background-color: #e5b002 !important;
+    border-color: #e5b002 !important;
+    color: #3a2a00 !important;
+}
