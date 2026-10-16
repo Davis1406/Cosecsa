@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-16) — Offline: Resubmit works for a mark that is still only on the device
+- Edit on "Saved on this device, not yet submitted" opens `examiner/resubmit/{candidate}/{station}?eo=<id>&type=mcs|gs`. The server has no such mark yet, so the service worker (`examiner-sw.js`) answers with a saved Resubmit page of the same kind (MCS or General Surgery; any candidate), and `examiner-offline.js` (`hydrateQueuedNew`) fills it with the waiting mark (group, candidate, station, marks, total, grade, remarks). Saving there changes the waiting mark itself (no second queue entry) and returns to Results; it is submitted once, when online. If no saved page of that kind exists offline, Edit falls back to the in-page editor. FCS marks still use the in-page editor.
+- **Files:** `public/examiner-sw.js`, `public/dist/js/examiner-offline.js`. Syntax-checked only; not yet exercised in a browser.
+
 ### Changed (2026-10-16) — Offline: dashboard re-saves every page; Edit on a waiting mark opens its Resubmit page
 - **Pages stay in step with the server.** Opening the examiner dashboard online now always re-downloads every offline page (results, each View / Resubmit page, candidate lists); previously it was skipped if the last save was under 20 minutes old, so a result saved afterwards had no Resubmit page offline ("Not saved for offline use") and cached totals could differ from the results table. Other pages re-save when the last save is over 2 minutes old, and pages are re-saved right after queued marks sync. Cache key bumped (`examiner-offline-warm-v6`).
 - **Edit button.** On "Saved on this device, not yet submitted", Edit for a new mark now links to its Resubmit page (`resubmit/{candidate}/{station}`, or `fcs-resubmit/{candidate}/{format}`) instead of opening the in-page editor (kept as a fallback when ids are missing). Offline, that page only exists once the mark has synced.

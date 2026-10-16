@@ -761,25 +761,124 @@
     host.appendChild(card);
   }
 
-  /** Resubmit page of a mark that is still waiting on the device (null if its ids are unknown). */
-  function pendingResubmitUrl(item) {
-    var field = function (name) {
-      var pair = item.fields.filter(function (p) { return p[0] === name; })[0];
-      return pair ? pair[1] : '';
-    };
-    var candidate = field('candidate_id');
-    if (!/^\d+$/.test(candidate)) return null;
-    var station = field('station_id');
-    if (/^\d+$/.test(station)) return '/examiner/resubmit/' + candidate + '/' + station;
-    var format = field('exam_format') || field('form_type');
-    return '/examiner/fcs-resubmit/' + candidate + (format === 'clinical' || format === 'viva' ? '/' + format : '');
+  /** 'mcs' / 'gs' for a new MCS / General Surgery mark waiting on the device (their forms are rebuilt offline), else null. */
+  function pendingKind(item) {
+    if (item.kind !== 'create') return null;
+    var path = new URL(item.url, window.location.href).pathname;
+    if (/\/examiner\/examiner_form\/?$/.test(path)) return 'mcs';
+    if (/\/examiner\/general_surgery\/?$/.test(path)) return 'gs';
+    return null;
   }
 
-  /** Edit goes to the mark's Resubmit page; the in-page editor is only a fallback. */
+  function pendingField(item, name) {
+    var pair = item.fields.filter(function (p) { return p[0] === name; })[0];
+    return pair ? pair[1] : '';
+  }
+
+  /** Resubmit page for a mark that is still waiting on the device (null if it cannot be built). */
+  function pendingResubmitUrl(item) {
+    var kind = pendingKind(item);
+    var candidate = pendingField(item, 'candidate_id');
+    var station = pendingField(item, 'station_id');
+    if (!kind || !/^\d+$/.test(candidate) || !/^\d+$/.test(station)) return null;
+    return '/examiner/resubmit/' + candidate + '/' + station + '?eo=' + encodeURIComponent(item.id) + '&type=' + kind;
+  }
+
+  /** Is a saved Resubmit page of this kind on the device to use as the starting point? */
+  function hasResubmitTemplate(kind) {
+    if (!window.caches) return Promise.resolve(false);
+    return caches.open('examiner-pages-v1').then(function (cache) {
+      return cache.keys().then(function (requests) {
+        var pages = requests.filter(function (r) { return /\/examiner\/resubmit\/\d+\/\d+$/.test(new URL(r.url).pathname); });
+        return Promise.all(pages.map(function (r) {
+          return cache.match(r).then(function (res) { return res ? res.text() : ''; }).then(function (html) {
+            return (html.indexOf('question_marks_case') !== -1) === (kind === 'gs');
+          });
+        }));
+      }).then(function (matches) { return matches.some(Boolean); });
+    }).catch(function () { return false; });
+  }
+
+  /** Edit goes to the mark's Resubmit page; the in-page editor is the fallback when that page cannot be built. */
   function editControl(item) {
     var url = pendingResubmitUrl(item);
-    if (url) return el('a', { class: 'eo-btn', href: url, text: 'Edit' });
-    return el('button', { class: 'eo-btn', type: 'button', text: 'Edit', onclick: function () { openItemDialog(item, true); } });
+    if (!url) return el('button', { class: 'eo-btn', type: 'button', text: 'Edit', onclick: function () { openItemDialog(item, true); } });
+    return el('a', { class: 'eo-btn', href: url, text: 'Edit', onclick: function (event) {
+      if (navigator.onLine) return;   // online the server page is used (or the SW falls back to the device copy)
+      event.preventDefault();
+      hasResubmitTemplate(pendingKind(item)).then(function (ok) {
+        if (ok) window.location.href = url; else openItemDialog(item, true);
+      });
+    } });
+  }
+
+  /**
+   * The Resubmit page opened for a mark that is only on the device (?eo=<queue id>): the
+   * service worker serves a saved Resubmit page of the same kind, and this fills it with the
+   * waiting mark. Saving changes the waiting mark itself, so it is still submitted once, when online.
+   */
+  function hydrateQueuedNew() {
+    var form = document.getElementById('msform');
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get('eo');
+    if (!form || !id || form.getAttribute('data-offline-kind') !== 'update') return;
+
+    queueAll().then(function (items) {
+      var item = items.filter(function (i) { return i.id === id && i.kind === 'create'; })[0];
+      if (!item) return;
+
+      var set = function (name, value) {
+        var node = form.elements[name];
+        if (node && !node.length) { node.value = value; node.dispatchEvent(new Event('input', { bubbles: true })); node.dispatchEvent(new Event('change', { bubbles: true })); }
+      };
+      set('group_id_display', item.label.group || '');
+      set('candidate_id_display', item.label.candidate || '');
+      set('station_id_display', item.label.station || '');
+      ['group_id', 'candidate_id', 'station_id'].forEach(function (name) { set(name, pendingField(item, name)); });
+
+      var marks = item.fields.filter(function (p) { return p[0] === 'question_marks[]'; }).map(function (p) { return p[1]; });
+      var count = function () { return form.querySelectorAll('[name="question_marks[]"]').length; };
+      while (count() < marks.length && typeof window.addQuestionField === 'function') window.addQuestionField();
+      Array.prototype.forEach.call(form.querySelectorAll('[name="question_marks[]"]'), function (input, i) {
+        if (marks[i] == null) return;
+        input.value = marks[i];
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      set('total_marks', pendingField(item, 'total_marks'));
+      set('grade', pendingField(item, 'overall') || pendingField(item, 'grade'));
+      set('remarks', pendingField(item, 'remarks'));
+
+      form.insertBefore(el('div', { class: 'alert alert-warning', style: 'margin:0 10px 12px', text: 'This mark has not been submitted yet; it is saved on this device. Saving here changes it, and it is submitted when you are back online.' }), form.firstChild);
+
+      // Run before the normal submit handler: this form must change the waiting mark, not queue a second one.
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        var values = Array.prototype.map.call(form.querySelectorAll('[name="question_marks[]"]'), function (i) { return i.value; });
+        var gradeName = item.fields.some(function (p) { return p[0] === 'grade'; }) ? 'grade' : 'overall';
+        var written = false;
+        var fields = [];
+        item.fields.forEach(function (pair) {
+          if (pair[0] === 'question_marks[]') {
+            if (!written) { written = true; values.forEach(function (v) { fields.push(['question_marks[]', v]); }); }
+          } else if (pair[0] === 'total_marks') fields.push(['total_marks', form.elements.total_marks.value]);
+          else if (pair[0] === gradeName) fields.push([gradeName, form.elements.grade.value]);
+          else if (pair[0] === 'remarks') fields.push(['remarks', form.elements.remarks.value]);
+          else fields.push(pair);
+        });
+        item.fields = fields;
+        item.status = 'pending';
+        item.error = '';
+
+        queuePut(item).then(function () {
+          setFlash('success', 'Changes saved on this device.' + (navigator.onLine ? '' : ' They will be submitted when you are back online.'));
+          window.location.href = '/examiner/results';
+        }, function () { toast('error', 'Could not save the changes on this device.'); });
+      }, true);
+    });
   }
 
   function showStoredFlash() {
@@ -1125,6 +1224,7 @@
     injectStyles();
     buildPill();
     showStoredFlash();
+    hydrateQueuedNew();
 
     document.querySelectorAll('form[data-offline-submit]').forEach(function (form) {
       form.addEventListener('submit', function (event) { onSubmit(event, form); });

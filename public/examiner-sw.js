@@ -125,8 +125,17 @@ async function networkFirst(request, url, event) {
   const cache = await caches.open(PAGE_CACHE);
   const key = cacheKey(url);
 
+  // ?eo=<id>: a Resubmit page for a mark that only exists on this device (not on the server yet).
+  // The server cannot render it, so use a saved Resubmit page of the same kind; the page script
+  // fills it with the waiting mark.
+  const waitingMark = url.searchParams.has('eo') && /^\/examiner\/resubmit\//.test(url.pathname);
+
   try {
     const response = await fetchWithTimeout(request, NETWORK_TIMEOUT_MS);
+    if (waitingMark && (response.redirected || !response.ok)) {
+      const template = await resubmitTemplate(cache, url.searchParams.get('type'));
+      if (template) return template;
+    }
     // A redirect here means the session ended (we got bounced to the login
     // page): never store that as the marking page.
     if (response.ok && !response.redirected) {
@@ -137,6 +146,10 @@ async function networkFirst(request, url, event) {
     }
     return response;
   } catch (error) {
+    if (waitingMark) {
+      const template = await resubmitTemplate(cache, url.searchParams.get('type'));
+      if (template) return template;
+    }
     const cached = await cache.match(key);
     if (cached) return cached;
     if (request.mode === 'navigate') return offlinePage();
@@ -145,6 +158,20 @@ async function networkFirst(request, url, event) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
+}
+
+/** A saved MCS or General Surgery Resubmit page (any candidate) to use as the starting point. */
+async function resubmitTemplate(cache, type) {
+  const wantGs = type === 'gs';
+  for (const req of await cache.keys()) {
+    if (!/^\/examiner\/resubmit\/\d+\/\d+$/.test(new URL(req.url).pathname)) continue;
+    const saved = await cache.match(req);
+    if (!saved) continue;
+    const html = await saved.clone().text();
+    if ((html.indexOf('question_marks_case') !== -1) !== wantGs) continue;
+    return new Response(html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  }
+  return null;
 }
 
 async function staleWhileRevalidate(request) {
