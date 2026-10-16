@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-16) — Examiner Training: lesson player, quiz and result pages readable in dark mode
+- These pages used fixed light-theme colours with no dark-mode rules (white sidebar, `#0f172a`/`#1e293b`/`#334155` text), so titles, the module sidebar, quiz questions/options and result review were unreadable or bright white on the dark page. Added dark rules to the shared `learning/partials/styles.blade.php`: player sidebar (course title, progress, module list incl. active/hover/done states), module title/description/badges, Previous/Next cards, quiz title/question/option rows/footer, result score ring, review options (correct/wrong) and feedback. Anchor colours use `!important` because the app's dark-mode link rule (pink, gold on hover) otherwise wins. The certificate itself keeps its light parchment design. Checked in Chrome (dark) with the real CSS and a hand-built copy of each page's markup (not the live pages).
+- **File:** `resources/views/learning/partials/styles.blade.php` (also loaded by the admin Learning pages; the new rules only target the examiner classes).
+
 ### Fixed (2026-10-16) — Examiner Training course page: module titles invisible in dark mode
 - On `examiner/learning` the module titles used a fixed light-theme colour (`#1e293b`) on the dark card, so they were unreadable; the number tiles had no dark variant either. Added dark-mode rules in `learning/examiner/cover.blade.php` (light titles, maroon-tinted number tile, green completed tile, darker hover shadow). Rendered the real page template with the real CSS in Chrome (dark): titles, numbers, badges readable. The lesson player, quiz and result pages have the same kind of fixed dark text colours and no dark-mode rules; not changed here.
 - **File:** `resources/views/learning/examiner/cover.blade.php`.

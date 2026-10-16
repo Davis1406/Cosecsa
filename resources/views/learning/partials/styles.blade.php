@@ -532,4 +532,54 @@
     body.dark-mode .preview-frame { background: #141414; }
     body.dark-mode .preview-inner { background: #2d3748; box-shadow: none; }
     body.dark-mode .list-item-remove { color: #f87171; }
+
+    /* ── Dark mode: examiner lesson player, quiz and result pages ──
+       These pages use fixed light-theme colours (slate text on white), which left
+       titles, sidebar and quiz text unreadable on the dark page. */
+    body.dark-mode .lms a.ps-home, body.dark-mode .lms a.back-link, body.dark-mode .lms .ps-progress-pct { color: #f48a8a !important; }
+    body.dark-mode .player-sidebar { background: #1e2330; border-color: #2d3748; box-shadow: none; }
+    body.dark-mode .ps-head { border-bottom-color: #2d3748; }
+    body.dark-mode .ps-close { background: #374151; color: #cbd5e1; }
+    body.dark-mode .ps-course { color: #f1f5f9; }
+    body.dark-mode .ps-progress-label { color: #94a3b8; }
+    body.dark-mode .ps-progress .progress-track { background: #374151; }
+    body.dark-mode .ps-nav { scrollbar-color: #4a5568 transparent; }
+    body.dark-mode .ps-nav::-webkit-scrollbar-thumb { background: #4a5568; }
+    body.dark-mode .ps-nav-label { color: #94a3b8; }
+    body.dark-mode .lms .ps-item { color: #cbd5e1 !important; }
+    body.dark-mode .lms .ps-item:hover { background: #252c3b; color: #f1f5f9 !important; }
+    body.dark-mode .lms .ps-item.active { background: rgba(244,138,138,.12); color: #f48a8a !important; box-shadow: inset 3px 0 0 #f48a8a; }
+    body.dark-mode .ps-num { background: #374151; color: #cbd5e1; }
+    body.dark-mode .ps-item.active .ps-num { background: var(--brand); color: #fff; }
+    body.dark-mode .ps-num.done { background: #10b981; color: #fff; }
+    body.dark-mode .pm-modules-btn { background: #1e2330; border-color: #4a5568; color: #e2e8f0; }
+    body.dark-mode .pm-breadcrumb { color: #94a3b8; }
+    body.dark-mode .pm-badge { background: rgba(244,138,138,.14); color: #f48a8a; }
+    body.dark-mode .pm-badge-done { background: #14532d; color: #86efac; }
+    body.dark-mode .pm-title { color: #f1f5f9; }
+    body.dark-mode .pm-desc { color: #a0aec0; }
+    body.dark-mode .pm-content { box-shadow: 0 1px 3px rgba(0,0,0,.3), 0 12px 40px rgba(0,0,0,.25); }
+    body.dark-mode .pm-complete { border-top-color: #2d3748; }
+    body.dark-mode .pn-card { background: #1e2330; border-color: #4a5568; }
+    body.dark-mode .pn-card:hover { border-color: #f48a8a; box-shadow: 0 4px 12px rgba(0,0,0,.4); }
+    body.dark-mode .pn-primary { background: var(--brand); border-color: var(--brand); }
+    body.dark-mode .pn-dir { color: #94a3b8; }
+    body.dark-mode .pn-title { color: #e2e8f0; }
+    body.dark-mode .pn-primary .pn-dir { color: rgba(255,255,255,.85); }
+    body.dark-mode .pn-primary .pn-title { color: #fff; }
+
+    body.dark-mode .quiz-title, body.dark-mode .q-text { color: #f1f5f9; }
+    body.dark-mode .q-count { color: #94a3b8; }
+    body.dark-mode .q-option { background: #252c3b; border-color: #4a5568; }
+    body.dark-mode .q-option:hover, body.dark-mode .q-option:has(input:checked) { border-color: #f48a8a; background: rgba(244,138,138,.1); }
+    body.dark-mode .q-option-label { color: #e2e8f0; }
+    body.dark-mode .quiz-footer { border-top-color: #2d3748; }
+
+    body.dark-mode .result-copy h1 { color: #f1f5f9; }
+    body.dark-mode .score-ring.passed { background: rgba(16,185,129,.14); color: #86efac; }
+    body.dark-mode .score-ring.failed { background: rgba(248,113,113,.14); color: #fca5a5; }
+    body.dark-mode .review-option { background: #252c3b; border-color: #4a5568; color: #cbd5e1; }
+    body.dark-mode .review-option.correct { background: #14532d; border-color: #047857; color: #86efac; }
+    body.dark-mode .review-option.wrong { background: #7f1d1d; border-color: #b91c1c; color: #fecaca; }
+    body.dark-mode .review-feedback { background: #252c3b; color: #cbd5e1; }
 </style>
