@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-16) — "Edit" in the "Saved on this device" card: contrasting colours in dark mode
+- Edit is a link (`<a class="eo-btn">`), so the app's dark-mode link rules (pink text, gold on hover) outranked the button's own black text: pink on the gold button, and gold-on-gold on hover. The text is now fixed black in every state (with a darker gold on hover). Checked at rest and on hover in Chrome with the app's link rules.
+- **File:** `public/dist/js/examiner-offline.js`.
+
 ### Changed (2026-10-16) — Offline status label: shown for 5 seconds when the page opens or the connection changes
 - The floating label ("N marks waiting to sync", "Offline · marks are saved on this device", "Syncing…") now appears for 5 seconds when a marking/Resubmit form or the Results page is opened, and again for 5 seconds when the connection goes offline or comes back online, then fades out. Other status changes (a mark queued, a sync running, the periodic retry) do not bring it back. "Needs attention" / "Sign in again" labels stay until dealt with; other pages (dashboard etc.) are unchanged; if its panel is open the label stays. The "Saved on this device, not yet submitted" card on Results is a list with Edit/Discard and stays. Tested in Chrome against a stub server: shown on page open, faded after the delay, not back after the 30 s retry, shown again on an offline event.
 - **File:** `public/dist/js/examiner-offline.js`.

@@ -550,6 +550,9 @@
       '.eo-dialog .eo-total{font-weight:700;margin-top:10px}.eo-dialog .eo-error{color:#c62828;margin-top:8px}',
       '.eo-dialog .eo-case{font-weight:700;color:#a02626;margin-top:12px}.eo-dialog .eo-row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}',
       'a.eo-btn{display:inline-block;text-decoration:none;color:#000}a.eo-btn:hover{color:#000;text-decoration:none}',
+      // The app's dark-mode link rules (pink text, gold on hover) outrank the rule above and put pink/gold text on this gold button.
+      'body a.eo-btn,body a.eo-btn:hover,body a.eo-btn:focus,body.dark-mode a.eo-btn,body.dark-mode a.eo-btn:hover,body.dark-mode a.eo-btn:focus{color:#000 !important;text-decoration:none}',
+      'a.eo-btn:hover,a.eo-btn:focus{background:#e5b002}',
       '.eo-btn.sec{background:#e0e0e0}.eo-btn.danger{background:#c62828;color:#fff}.eo-btns{display:flex;gap:6px;flex-wrap:wrap}',
       '.eo-ready{border-left:4px solid #FEC503;background:#fffdf3;color:#251917;border-radius:6px;padding:10px 14px;margin:0 0 16px;text-align:left;font-size:.88rem}',
       '.eo-ready .eo-err{color:#c62828}',
