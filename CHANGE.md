@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-16) — View marks pages: button and link colours in dark mode
+- The Back / Resubmit / All results controls are plain `<a>` tags, so the app's dark-mode link rules (`body.dark-mode a:not(.btn)` → pink, hover → gold) outranked the page's own classes: pink text on the gold Resubmit button and gold-on-gold on hover. Colours are now fixed per state in `examiner/_view_style.blade.php` (used by `view_results` and `view_fcs_results`): Resubmit dark text on gold (darker gold on hover); All results light text with a grey border, gold border on hover; Back link muted, maroon (light) / gold (dark) on hover. Checked at rest and on hover in Chrome with the app's link rules.
+
 ### Fixed (2026-10-16) — Dark mode: "+ Add Question" button invisible on the marking forms
 - `layout/header.blade.php` forces `body.dark-mode .btn-outline-secondary` to a transparent background and grey border with `!important`, which overrode the button's inline gold background; with the dark text colour it was invisible (`examiner/examiner_form`, Resubmit forms). `custom.css` now keeps any `.btn` with an inline gold background gold (hover slightly darker) with dark text in dark mode. Reproduced the transparent button with the header rule, and confirmed gold computed styles after the fix, in Chrome.
 - **File:** `public/dist/css/custom.css`.

@@ -7,8 +7,7 @@
           --vr-pass:#7ad69a; --vr-pass-bg:rgba(122,214,154,.14); --vr-borderline:#f3c969; --vr-borderline-bg:rgba(243,201,105,.14);
           --vr-fail:#f48a8a; --vr-fail-bg:rgba(244,138,138,.14); }
     .vr { max-width:720px; margin:0 auto; padding:8px 0 32px; color:var(--vr-text); }
-    .vr-back { display:inline-flex; align-items:center; gap:6px; font-size:.9rem; color:var(--vr-muted); text-decoration:none; margin:4px 0 14px; }
-    .vr-back:hover { color:#a02626; text-decoration:none; }
+    .vr-back { display:inline-flex; align-items:center; gap:6px; font-size:.9rem; text-decoration:none; margin:4px 0 14px; }
     .vr-card { background:var(--vr-surface); border:1px solid var(--vr-border); border-radius:14px; overflow:hidden; }
     .vr-head { padding:22px 24px 18px; }
     .vr-eyebrow { font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--vr-muted); }
@@ -32,11 +31,20 @@
     .vr-remarks { margin:0; padding:2px 0 18px; line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; color:var(--vr-text); }
     .vr-empty { color:var(--vr-muted); font-style:italic; }
     .vr-actions { display:flex; gap:10px; padding:16px 24px 22px; border-top:1px solid var(--vr-border); }
+    /* Links and buttons: the app's dark-mode link rules (`body.dark-mode a:not(.btn)` pink, hover gold) outrank
+       plain class selectors, which put pink/gold text on the gold button. Colours are fixed per state here. */
+    body .vr a.vr-back { color:var(--vr-muted) !important; }
+    body .vr a.vr-back:hover, body .vr a.vr-back:focus { color:#a02626 !important; }
+    body.dark-mode .vr a.vr-back:hover, body.dark-mode .vr a.vr-back:focus { color:#FEC503 !important; }
+    body .vr a.vr-btn { transition:background-color .15s, border-color .15s, color .15s; }
+    body .vr a.vr-btn.primary { background:#FEC503; border:1px solid #FEC503; color:#2b1f00 !important; }
+    body .vr a.vr-btn.primary:hover, body .vr a.vr-btn.primary:focus { background:#e5b002; border-color:#e5b002; color:#2b1f00 !important; }
+    body .vr a.vr-btn.ghost { background:transparent; border:1px solid var(--vr-border); color:var(--vr-text) !important; }
+    body .vr a.vr-btn.ghost:hover, body .vr a.vr-btn.ghost:focus { background:var(--vr-subtle); border-color:#a02626; color:var(--vr-text) !important; }
+    body.dark-mode .vr a.vr-btn.ghost { border-color:#4a5568; }
+    body.dark-mode .vr a.vr-btn.ghost:hover, body.dark-mode .vr a.vr-btn.ghost:focus { border-color:#FEC503; }
+    body .vr a.vr-btn, body .vr a.vr-btn:hover { text-decoration:none; }
     .vr-btn { display:inline-block; padding:9px 18px; border-radius:8px; font-weight:600; font-size:.9rem; text-decoration:none; }
-    .vr-btn.primary { background:#FEC503; color:#000; }
-    .vr-btn.primary:hover { color:#000; text-decoration:none; filter:brightness(.96); }
-    .vr-btn.ghost { background:transparent; color:var(--vr-text); border:1px solid var(--vr-border); }
-    .vr-btn.ghost:hover { color:#a02626; text-decoration:none; }
     @media (max-width:575px) { .vr-head, .vr-score, .vr-section, .vr-actions { padding-left:16px; padding-right:16px; } .vr-name { font-size:1.2rem; } .vr-total { font-size:2.1rem; } }
     .vr-subs { display:flex; gap:28px; }
     .vr-subs .vr-eyebrow { margin-bottom:2px; }
