@@ -666,6 +666,23 @@
     panel.appendChild(actions);
   }
 
+  /** Show the status label for a few seconds, then fade it (marking forms and results page only). */
+  function revealStatus() {
+    if (!ui.pill) return;
+    ui.faded = false;
+    ui.revealing = true;
+    clearTimeout(ui.fadeTimer);
+    ui.pill.classList.remove('eo-gone');
+    if (!ui.autoHide) { ui.revealing = false; return; }
+    var fade = function () {
+      if (!ui.panel.hasAttribute('hidden')) { ui.fadeTimer = setTimeout(fade, 2000); return; }   // keep it while its panel is open
+      ui.revealing = false;
+      ui.faded = true;
+      ui.pill.classList.add('eo-gone');
+    };
+    ui.fadeTimer = setTimeout(fade, STATUS_SHOW_MS);
+  }
+
   /** Recount the queue and redraw the badge and the dashboard card. */
   function refreshStatus() {
     return queueAll().catch(function () { return []; }).then(function (items) {
@@ -685,25 +702,16 @@
 
       if (ui.pill) {
         if (text) {
-          // On the marking forms and the results page the status label only shows for a few
-          // seconds each time it changes (errors stay until dealt with); elsewhere it stays.
-          var autoHide = mode !== 'error' && (document.querySelector('form[data-offline-submit]') || document.getElementById('examiner-offline-pending'));
-          if (text !== ui.lastText) {
-            ui.lastText = text;
-            ui.faded = false;
-            clearTimeout(ui.fadeTimer);
-            if (autoHide) {
-              ui.fadeTimer = setTimeout(function () {
-                if (ui.panel.hasAttribute('hidden')) { ui.faded = true; ui.pill.classList.add('eo-gone'); }
-              }, STATUS_SHOW_MS);
-            }
-          }
-          if (!autoHide) ui.faded = false;
+          // On the marking forms and the results page the status label is only revealed when the page
+          // opens or the connection changes (see revealStatus); in between it stays out of the way.
+          // Errors stay until dealt with, and other pages (dashboard etc.) always show it.
+          ui.autoHide = !!(mode !== 'error' && (document.querySelector('form[data-offline-submit]') || document.getElementById('examiner-offline-pending')));
+          if (!ui.autoHide) ui.faded = false;
+          else if (!ui.revealing) ui.faded = true;   // a status change alone does not bring the label back
           ui.badge.textContent = text;
           ui.pill.className = 'eo-pill ' + mode + (ui.faded ? ' eo-gone' : '');
           ui.pill.removeAttribute('hidden');
         } else {
-          ui.lastText = '';
           clearTimeout(ui.fadeTimer);
           ui.pill.setAttribute('hidden', 'hidden');
           ui.panel.setAttribute('hidden', 'hidden');
@@ -1271,16 +1279,17 @@
 
     window.addEventListener('online', function () {
       state.auth = false;
-      refreshStatus();
+      refreshStatus().then(revealStatus);
       syncQueue().then(function () { return prepareOffline(false); });
     });
-    window.addEventListener('offline', refreshStatus);
+    window.addEventListener('offline', function () { refreshStatus().then(revealStatus); });
 
     setInterval(function () {
       if (navigator.onLine && lastItems.some(function (i) { return i.status === 'pending'; }) && !state.auth) syncQueue();
     }, SYNC_INTERVAL_MS);
 
     refreshStatus().then(function () {
+      revealStatus();   // the page was just opened
       return registerWorker();
     }).then(function () {
       return syncQueue();
