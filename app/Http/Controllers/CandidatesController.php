@@ -833,7 +833,9 @@ class CandidatesController extends Controller
         $currentYear = DB::table('years')->where('id', $currentYearId)->value('year_name');
         $programmeMap = ['cardiothoracic'=>1,'neurosurgery'=>3,'orthopaedic'=>4,'ent'=>5,'paediatric_orthopaedics'=>6,'paediatric'=>7,'plastic_surgery'=>8,'urology'=>9];
         $programmeId = $programmeMap[$examType] ?? null;
-        $groupsWithCandidates = DB::table('candidates')->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')->where('candidates.programme_id', $programmeId)->where('candidates.exam_year', $currentYear)->whereNotNull('candidates.group_id')->select('examiners_groups.id', 'examiners_groups.group_name')->distinct()->get();
+        $groupsWithCandidates = DB::table('candidates')->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')->where('candidates.programme_id', $programmeId)->where('candidates.exam_year', $currentYear)->whereNotNull('candidates.group_id')->select('examiners_groups.id', 'examiners_groups.group_name')->distinct()->get()
+            // TEST-PART1 is the Part I sandbox (it holds every specialty's candidates); each FCS specialty page only lists its own groups (e.g. TEST-FCS-URO).
+            ->reject(fn ($g) => strcasecmp($g->group_name, 'TEST-PART1') === 0)->values();
         $examNames = ['cardiothoracic'=>'Cardiothoracic Surgery','urology'=>'Urology','orthopaedic'=>'Orthopaedic','paediatric'=>'Paediatric Surgery','ent'=>'ENT Surgery','plastic_surgery'=>'Plastic Surgery','neurosurgery'=>'Neurosurgery','paediatric_orthopaedics'=>'Paediatric Orthopaedics'];
         return view('examiner.universal_exam_form', ['header_title'=>'FCS '.$examNames[$examType].' - '.ucfirst($formType),'exam_name'=>$examNames[$examType],'exam_type'=>$examType,'form_type'=>$formType,'cases_count'=>$casesCount,'programme_id'=>$programmeId,'groups'=>$groupsWithCandidates]);
     }

@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-16) — FCS marking forms: sample groups now appear, each under its own specialty
+- The group dropdown on the universal FCS forms (`examiner/<specialty>/clinical|viva`) only listed groups with `id <= 10` (legacy A-J), so the new `TEST-FCS-<specialty>` groups (ids 18-25) and `TEST-PART1` (17) never showed; with nothing to select there were no candidates / PENs. The form now also lists `TEST-` sandbox groups. Because the group list is already limited to groups holding that programme's candidates, each specialty page shows only its own sample group (e.g. Urology: `TEST-FCS-URO`); `TEST-PART1`, which holds every specialty's candidates, is excluded from the FCS pages. Candidates are listed by PEN (`entry_number`) as before; the production data for `TEST-FCS-URO` returns all five PENs.
+- **Files:** `app/Http/Controllers/CandidatesController.php` (`loadExamForm`), `resources/views/examiner/universal_exam_form.blade.php`.
+
 ### Fixed (2026-10-16) — "Saved on this device" card: View / Edit / Discard (and Resubmit) are all real buttons
 - Edit and Resubmit were links styled as buttons, so the app's dark-mode link colours (pink text) could still repaint them, leaving Edit with pink text on gold next to View and Discard. They are now `<button>`s that navigate on click (offline check and in-page-editor fallback unchanged), so View / Edit / Discard share one set of colours: grey with light text, gold with black text, red with white text (checked in Chrome with the app's stylesheets in dark mode).
 - **File:** `public/dist/js/examiner-offline.js`.
