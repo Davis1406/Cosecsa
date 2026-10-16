@@ -4,8 +4,8 @@
 
 ## [Unreleased]
 
-### Changed (2026-10-16) — Offline status label fades after 10 seconds on the marking forms and Results
-- The floating label ("N marks waiting to sync", "Offline · marks are saved on this device", "Syncing…") now shows for 10 seconds each time its text changes, then fades out, on the marking/Resubmit forms and the Results page. It is not shown again until the status changes (e.g. a mark is queued, the connection drops or returns). "Needs attention" / "Sign in again" labels stay until dealt with, and other pages (dashboard etc.) are unchanged. The "Saved on this device, not yet submitted" card on Results is a list with Edit/Discard actions and stays. Tested in Chrome: visible at 1 s and 5-7 s, faded at 12-13 s on both pages.
+### Changed (2026-10-16) — Offline status label fades after 5 seconds on the marking forms and Results
+- The floating label ("N marks waiting to sync", "Offline · marks are saved on this device", "Syncing…") now shows for 5 seconds each time its text changes, then fades out, on the marking/Resubmit forms and the Results page. It is not shown again until the status changes (e.g. a mark is queued, the connection drops or returns). "Needs attention" / "Sign in again" labels stay until dealt with, and other pages (dashboard etc.) are unchanged. The "Saved on this device, not yet submitted" card on Results is a list with Edit/Discard actions and stays. Tested in Chrome (at 10 s; now 5 s): visible early, faded after the delay on both pages.
 - **File:** `public/dist/js/examiner-offline.js`.
 
 ### Fixed (2026-10-16) — View marks pages: button and link colours in dark mode

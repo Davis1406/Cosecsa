@@ -38,7 +38,7 @@
   var DB_VERSION = 1;
   var STORE = 'queue';
   var SYNC_INTERVAL_MS = 30000;
-  var STATUS_SHOW_MS = 10000;   // how long the status label stays on the marking forms / results page
+  var STATUS_SHOW_MS = 5000;    // how long the status label stays on the marking forms / results page
   var WARM_MAX_AGE_MS = 2 * 60 * 1000;
   var WARM_CONCURRENCY = 3;
   var WARM_KEY = 'examiner-offline-warm-v6'; // bump to make every device re-download the offline pages
