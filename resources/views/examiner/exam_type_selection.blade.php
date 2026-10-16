@@ -75,6 +75,16 @@
             width: 100%;
         }
 
+        /* Dark mode: the fieldset was a fixed white card (light text vanished on it) with maroon-on-dark title */
+        body.dark-mode .exam-fieldset { background: #1e2330; border-color: #f48a8a; }
+        body.dark-mode .exam-fieldset legend { color: #f48a8a; }
+        body.dark-mode .exam-fieldset h3 { color: #f1f5f9; }
+        body.dark-mode .exam-fieldset .text-muted { color: #a0aec0 !important; }
+        /* Hover states stay legible in dark mode: maroon text on gold, gold text on maroon */
+        body.dark-mode .clinical-btn:hover { background-color: #FEC503; color: #5c1010 !important; }
+        body.dark-mode .viva-btn { background-color: #FEC503; color: #5c1010 !important; }
+        body.dark-mode .viva-btn:hover { background-color: #a02626; color: #FEC503 !important; }
+
         /* Exam type button styling */
         .exam-type-btn {
             padding: 30px 15px;
