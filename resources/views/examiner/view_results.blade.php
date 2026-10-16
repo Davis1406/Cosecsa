@@ -20,10 +20,7 @@
                         <div class="vr-head">
                             <div class="vr-eyebrow">Candidate</div>
                             <div class="vr-name">{{ $candidateResult->candidate_name }}</div>
-                            <div class="vr-chips">
-                                <span class="vr-chip">Group {{ $candidateResult->group_name }}</span>
-                                <span class="vr-chip">Station {{ $candidateResult->station_id }}</span>
-                            </div>
+                            <div class="vr-meta">Group {{ $candidateResult->group_name }} &middot; Station {{ $candidateResult->station_id }}</div>
                         </div>
 
                         <div class="vr-score">
