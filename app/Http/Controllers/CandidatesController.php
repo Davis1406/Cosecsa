@@ -770,11 +770,11 @@ class CandidatesController extends Controller
 
         if (!$existingRecord) return redirect()->back()->with('error', 'No existing evaluation found for this exam format.');
 
+        // Must match what the marking forms (loadExamForm callers above) save, or the Resubmit page cannot lay the saved
+        // marks out: Clinical is two cases for neurosurgery, plastic surgery and urology (one case for the rest), Viva is two cases.
         $casesCount = 2;
         if ($exam_format === 'clinical') {
-            $casesCount = in_array($exam_type, ['plastic_surgery', 'neurosurgery']) ? 2 : 1;
-        } elseif ($exam_type === 'cardiothoracic' && $exam_format === 'viva') {
-            $casesCount = 4;
+            $casesCount = in_array($exam_type, ['plastic_surgery', 'neurosurgery', 'urology']) ? 2 : 1;
         }
 
         $candidateData = (object)[

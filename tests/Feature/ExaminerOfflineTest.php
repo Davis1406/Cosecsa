@@ -255,6 +255,22 @@ class ExaminerOfflineTest extends TestCase
         $this->assertStringNotContainsString('fcs-resubmit/10"', $html);   // not the generic choose-a-format page
     }
 
+    public function test_urology_clinical_resubmit_page_lays_out_the_two_saved_cases(): void
+    {
+        // Urology Clinical is a two-case form (3 marks per case); the Resubmit page used to assume one case and crashed.
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical', [
+            'exam_type' => 'urology', 'candidate_id' => 20, 'question_marks_case1' => [4, 4, 4], 'question_marks_case2' => [2, 4, 4], 'total_marks' => 22,
+        ]))->assertStatus(201);
+
+        \Illuminate\Support\Facades\View::getFinder()->prependLocation(base_path('tests/Fixtures/views'));
+        $response = $this->get('examiner/fcs-resubmit/20/clinical')->assertOk();
+        $html = $response->getContent();
+
+        $this->assertSame(6, substr_count($html, 'class="form-group question-block"'));   // the six saved marks, two cases of three
+        $this->assertStringContainsString('Case 1', $html);
+        $this->assertStringContainsString('Case 2', $html);
+    }
+
     // ── Editing (resubmitting) saved marks ──────────────────────────────
 
     public function test_editing_an_mcs_mark_updates_it_and_replies_json(): void
@@ -426,6 +442,7 @@ class ExaminerOfflineTest extends TestCase
         sort($data);
         $this->assertSame([
             '/get-exam-candidates/cardiothoracic/3',
+            '/get-exam-candidates/urology/3',
             '/get-gs-candidates/17',   // the sandbox candidate's group
             '/get-gs-candidates/3',
             '/get-mcs-candidates/4',
@@ -473,7 +490,7 @@ class ExaminerOfflineTest extends TestCase
         DB::table('users')->insert(['id' => 1, 'name' => 'Dr Examiner', 'email' => 'e@example.org', 'password' => 'x']);
         DB::table('examiners')->insert(['id' => $this->examinerId, 'user_id' => 1]);
         DB::table('years')->insert(['id' => 2, 'year_name' => '2026']);
-        DB::table('programmes')->insert(['id' => 1, 'name' => 'Cardiothoracic', 'programme_name' => 'Cardiothoracic']);
+        DB::table('programmes')->insert([['id' => 1, 'name' => 'Cardiothoracic', 'programme_name' => 'Cardiothoracic'], ['id' => 9, 'name' => 'Urologic', 'programme_name' => 'Urologic']]);
         DB::table('examiners_groups')->insert([['id' => 3, 'group_name' => 'A'], ['id' => 4, 'group_name' => 'B'], ['id' => 17, 'group_name' => 'TEST-PART1']]);
 
         DB::table('candidates')->insert([
@@ -483,6 +500,7 @@ class ExaminerOfflineTest extends TestCase
             ['id' => 13, 'programme_id' => 1, 'group_id' => 4, 'exam_year' => '2025', 'entry_number' => 'PEN-4'], // other year
             ['id' => 14, 'programme_id' => 1, 'group_id' => null, 'exam_year' => '2026', 'entry_number' => 'PEN-5'], // ungrouped
             ['id' => 15, 'programme_id' => 2, 'group_id' => 17, 'exam_year' => '2026', 'entry_number' => 'PEN-6'], // sandbox candidate
+            ['id' => 20, 'programme_id' => 9, 'group_id' => 3, 'exam_year' => '2026', 'entry_number' => 'PEN-7'], // urology
         ]);
     }
 
@@ -513,6 +531,12 @@ class ExaminerOfflineTest extends TestCase
             $t->string('name')->nullable();
             $t->string('programme_name')->nullable();
         });
+        Schema::create('exams_groups', function ($t) {
+            $t->increments('id');
+            $t->integer('exm_id')->nullable();
+            $t->integer('group_id')->nullable();
+            $t->integer('year_id')->nullable();
+        });
         Schema::create('candidates', function ($t) {
             $t->increments('id');
             $t->integer('programme_id')->nullable();
@@ -520,9 +544,10 @@ class ExaminerOfflineTest extends TestCase
             $t->string('exam_year')->nullable();
             $t->string('candidate_id')->nullable();
             $t->string('entry_number')->nullable();
+            $t->integer('user_id')->nullable();
         });
 
-        $resultTables = ['mcs_results', 'gs_results', 'cardiothoracic_results'];
+        $resultTables = ['mcs_results', 'gs_results', 'cardiothoracic_results', 'urology_results'];
         foreach (array_merge($resultTables, array_map(fn ($t) => "test_$t", $resultTables)) as $table) {
             Schema::create($table, function ($t) use ($table) {
                 $t->increments('id');
@@ -535,7 +560,7 @@ class ExaminerOfflineTest extends TestCase
                 $t->string('remarks')->nullable();
                 $t->integer('exam_year');
                 if (str_ends_with($table, 'mcs_results')) $t->string('overall')->nullable();
-                if (str_ends_with($table, 'cardiothoracic_results')) $t->string('exam_format')->nullable();
+                if (str_ends_with($table, 'cardiothoracic_results') || str_ends_with($table, 'urology_results')) $t->string('exam_format')->nullable();
                 $t->timestamps();
             });
         }

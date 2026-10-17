@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-17) — 500 on the Urology Clinical Resubmit page (`examiner/fcs-resubmit/{candidate}/clinical`)
+- **Cause:** the Urology Clinical marking form is a two-case form (3 marks per case, 6 marks saved), but `showFcsResubmitForm` treated every Clinical form as one case except neurosurgery and plastic surgery. The Resubmit page then tried to lay six marks out under the four single-case labels and failed with `Undefined array key 4` (laravel.log, 2026-10-17 12:07 and 12:09 for userId 8497). It would fail for any urology Clinical Resubmit (116 saved urology Clinical marks have six marks).
+- **Fix:** Clinical is two cases for urology as well (neurosurgery, plastic surgery, urology); everything else is unchanged. The Cardiothoracic Viva special case (four cases) is removed so it matches the marking form (two cases); no Cardiothoracic marks exist in the database.
+- **Test:** `test_urology_clinical_resubmit_page_lays_out_the_two_saved_cases` posts a urology Clinical mark and opens its Resubmit page: it returned 500 with the old rule and renders six marks in two cases now; all 32 tests pass (the test database gained `exams_groups`, `candidates.user_id` and a urology results table).
+- **Files:** `app/Http/Controllers/CandidatesController.php`, `tests/Feature/ExaminerOfflineTest.php`.
+
 ### Changed (2026-10-17) — Results: FCS Resubmit goes straight to the Clinical or Viva form
 - In the FCS Specialty Results table the single **Resubmit** button led to a "choose Clinical or Viva" page first. The Actions column now has **Resubmit Clinical** and **Resubmit Viva** (each shown only when that mark was saved), linking directly to `examiner/fcs-resubmit/{candidate}/clinical|viva`. The choose-a-format page still exists for old links. The offline result-page prefetch now also follows these links (`examiner-offline.js` `RESULT_PAGE`). New test renders the Results page: a clinical-only candidate gets no Viva button, a candidate with both gets both links and none to the generic page (`tests/Feature/ExaminerOfflineTest.php`, plus a minimal `tests/Fixtures/views/layout/app.blade.php` so a page can be rendered without the sidebar's queries); all 31 tests pass.
 - **Files:** `resources/views/examiner/results.blade.php`, `public/dist/js/examiner-offline.js`, `tests/Feature/ExaminerOfflineTest.php`, `tests/Fixtures/views/layout/app.blade.php`.
