@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-17) — No status label on the marking forms either
+- The floating status label is also removed from the pages where a result is recorded: `examiner/examiner_form` (MCS), `examiner/general_surgery`, and the FCS `examiner/<specialty>/clinical|viva` forms (urology, cardiothoracic, ent, orthopaedic, neurosurgery, paediatric, paediatric_orthopaedics, plastic_surgery), in addition to the View / Resubmit pages. It still shows for 3 seconds on the dashboard, Results, the specialty selection pages and other examiner pages. After an offline save the "saved on this device" toast still appears. Tested in Chrome: no label on `examiner_form` with a mark waiting; path rule checked for all the pages above.
+- **File:** `public/dist/js/examiner-offline.js`.
+
 ### Changed (2026-10-17) — No status label on the View / Resubmit pages of a single result
 - The floating status label is no longer shown on `examiner/resubmit/{candidate}/{station}`, `examiner/view_results/{candidate}/{station}`, `examiner/view_fcs_results/{candidate}` and `examiner/fcs-resubmit/{candidate}[/clinical|viva]`. It still shows (for 3 seconds) on the dashboard, Results, the marking forms and other examiner pages; toasts (e.g. "N marks synced") and the "Saved on this device" card on Results are unchanged. Tested in Chrome: a page with a mark waiting shows no label on `resubmit/1/1`.
 - **File:** `public/dist/js/examiner-offline.js`.

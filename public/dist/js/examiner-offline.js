@@ -43,8 +43,9 @@
   var WARM_CONCURRENCY = 3;
   var WARM_KEY = 'examiner-offline-warm-v6'; // bump to make every device re-download the offline pages
   var FLASH_KEY = 'examiner-offline-flash';
-  // The View / Resubmit pages of one specific result: no floating status label there.
-  var NO_STATUS_PAGE = /^\/examiner\/(?:(?:resubmit|view_results)\/\d+\/\d+|(?:fcs-resubmit|view_fcs_results)\/\d+(?:\/(?:clinical|viva))?)\/?$/;
+  // No floating status label on the pages where a result is recorded or looked at: the marking forms
+  // (MCS, General Surgery, FCS Clinical / Viva) and the View / Resubmit pages of one specific result.
+  var NO_STATUS_PAGE = /^\/examiner\/(?:examiner_form|general_surgery|(?:cardiothoracic|neurosurgery|orthopaedic|ent|paediatric_orthopaedics|paediatric|plastic_surgery|urology)\/(?:clinical|viva)|(?:resubmit|view_results)\/\d+\/\d+|(?:fcs-resubmit|view_fcs_results)\/\d+(?:\/(?:clinical|viva))?)\/?$/;
 
   var state = { auth: false, syncing: false, warming: false, warmError: null };
   var ui = {};
