@@ -4,8 +4,8 @@
 
 ## [Unreleased]
 
-### Fixed (2026-10-17) — Examiner menu: FCS specialty pages highlight "Dashboard"
-- `examiner/<specialty>` (format selection) and its `/clinical` and `/viva` forms (cardiothoracic, neurosurgery, orthopaedic, ent, paediatric_orthopaedics, paediatric, plastic_surgery, urology) had no active item in the examiner sidebar. They are reached from the dashboard, so the Dashboard entry is now active there (alongside `dashboard`, `examiner_form`, `general_surgery`). Checked the rule for each specialty segment, `results` and `learning` (those keep their own entries).
+### Fixed (2026-10-17) — Examiner menu: every marking page keeps "Dashboard" highlighted
+- Some examiner pages had no active item in the sidebar (the FCS specialty pages and their Clinical / Viva forms, and any other page without its own menu entry). Dashboard is now active on every `examiner/…` page except those that have their own entry (Results and its View / Resubmit pages, Examiner Training, Profile), so the MCS, General Surgery and FCS marking pages are all covered. Checked the rule for dashboard, examiner_form, general_surgery, cardiothoracic, urology, badge (active) and results, view_results, resubmit, fcs-resubmit, learning, profile_settings, edit_info, messages (not).
 - **File:** `resources/views/layout/header.blade.php`.
 
 ### Fixed (2026-10-17) — FCS "Select Examination Format": Viva button text invisible in dark mode

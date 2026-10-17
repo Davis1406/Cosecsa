@@ -1016,9 +1016,11 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                     @elseif (Auth::user()->getActiveRole() == 9)
                         <li class="nav-item">
                             <a href="{{ url('examiner/dashboard') }}"
-                                class="nav-link @if (in_array(Request::segment(2), ['dashboard', 'examiner_form', 'general_surgery',
-                                        // the FCS specialty pages (format selection + Clinical / Viva forms) are reached from the dashboard
-                                        'cardiothoracic', 'neurosurgery', 'orthopaedic', 'ent', 'paediatric_orthopaedics', 'paediatric', 'plastic_surgery', 'urology'], true)) active @endif">
+                                class="nav-link @if (Request::segment(1) == 'examiner' && ! in_array(Request::segment(2), [
+                                        // pages with their own menu entry; every other examiner page (the MCS / GS / FCS marking pages,
+                                        // format selection, badge ...) is reached from the dashboard, so Dashboard stays highlighted
+                                        'results', 'view_results', 'resubmit', 'view_fcs_results', 'fcs-resubmit',
+                                        'learning', 'profile_settings', 'edit_info'], true)) active @endif">
                                 <i class="nav-icon fas fa-tachometer-alt"></i>
                                 <p>
                                     Dashboard
