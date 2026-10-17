@@ -793,7 +793,7 @@
           goButton('Resubmit', function () { window.location.href = resubmitUrl(item); }),
           el('button', { class: 'eo-btn danger', type: 'button', text: 'Discard', onclick: function () { discardItem(item); } }),
         ] : [
-          el('button', { class: 'eo-btn sec', type: 'button', text: 'View', onclick: function () { openItemDialog(item, false); } }),
+          viewControl(item),
           editControl(item),
           el('button', { class: 'eo-btn danger', type: 'button', text: 'Discard', onclick: function () { discardItem(item); } }),
         ])]),
@@ -876,6 +876,152 @@
       hasResubmitTemplate(pendingKind(item), item).then(function (ok) {
         if (ok) window.location.href = url; else openItemDialog(item, true);
       });
+    });
+  }
+
+  // ── View page for a mark that is still only on the device ───────────────
+
+  var VIEW_PAGE = /^\/examiner\/(?:view_results\/\d+\/\d+|view_fcs_results\/\d+)\/?$/;
+
+  /** The View marks page of a waiting mark (null if it cannot be built). */
+  function pendingViewUrl(item) {
+    var kind = pendingKind(item);
+    var candidate = pendingField(item, 'candidate_id');
+    if (!kind || !/^\d+$/.test(candidate)) return null;
+    if (kind === 'fcs') return '/examiner/view_fcs_results/' + candidate + '?eo=' + encodeURIComponent(item.id) + '&type=fcs';
+    var station = pendingField(item, 'station_id');
+    if (!/^\d+$/.test(station)) return null;
+    return '/examiner/view_results/' + candidate + '/' + station + '?eo=' + encodeURIComponent(item.id) + '&type=' + kind;
+  }
+
+  /** Is a saved View page of this kind on the device to use as the starting point? */
+  function hasViewTemplate(kind) {
+    if (!window.caches) return Promise.resolve(false);
+    var pagePath = kind === 'fcs' ? /\/examiner\/view_fcs_results\/\d+$/ : /\/examiner\/view_results\/\d+\/\d+$/;
+    return caches.open('examiner-pages-v1').then(function (cache) {
+      return cache.keys();
+    }).then(function (requests) {
+      return requests.some(function (r) { return pagePath.test(new URL(r.url).pathname); });
+    }).catch(function () { return false; });
+  }
+
+  /** View goes to the mark's View page; the in-page viewer is the fallback when that page cannot be built. */
+  function viewControl(item) {
+    var url = pendingViewUrl(item);
+    if (!url) return el('button', { class: 'eo-btn sec', type: 'button', text: 'View', onclick: function () { openItemDialog(item, false); } });
+    return el('button', { class: 'eo-btn sec', type: 'button', text: 'View', onclick: function () {
+      if (navigator.onLine) { window.location.href = url; return; }
+      hasViewTemplate(pendingKind(item)).then(function (ok) {
+        if (ok) window.location.href = url; else openItemDialog(item, false);
+      });
+    } });
+  }
+
+  function viewRow(label, value) {
+    return el('div', { class: 'vr-row' }, [el('span', { text: label }), el('span', { text: String(value) })]);
+  }
+
+  function viewShell(name, meta, scoreChildren, sections, actions) {
+    return el('div', { class: 'vr-card' }, [
+      el('div', { class: 'vr-head' }, [el('div', { class: 'vr-eyebrow', text: 'Candidate' }), el('div', { class: 'vr-name', text: name }), el('div', { class: 'vr-meta', text: meta })]),
+      el('div', { class: 'vr-score' }, scoreChildren),
+    ].concat(sections, [
+      el('div', { class: 'vr-section' }, [el('p', { class: 'vr-empty', text: 'Saved on this device, not yet submitted. It is sent when you are back online.' })]),
+      el('div', { class: 'vr-actions' }, actions),
+    ]));
+  }
+
+  function viewLink(text, cls, href) { return el('a', { class: 'vr-btn ' + cls, href: href, text: text }); }
+
+  /** MCS / General Surgery View page content for a waiting mark. */
+  function buildMarksViewCard(item) {
+    var marks = item.fields.filter(function (p) { return p[0] === 'question_marks[]'; }).map(function (p) { return p[1]; });
+    var grade = pendingKind(item) === 'mcs' ? String(pendingField(item, 'overall')).toLowerCase() : '';
+    var scoreChildren = [el('div', {}, [el('div', { class: 'vr-eyebrow', text: 'Total marks' }), el('div', { class: 'vr-total', text: pendingField(item, 'total_marks') || '0' })])];
+    if (['pass', 'borderline', 'fail'].indexOf(grade) !== -1) scoreChildren.push(el('span', { class: 'vr-grade ' + grade, text: grade }));
+
+    var remarks = pendingField(item, 'remarks');
+    var sections = [
+      el('div', { class: 'vr-section' }, [el('h4', { text: 'Marks per question' })].concat(marks.length ? marks.map(function (m, i) { return viewRow('Question ' + (i + 1), m); }) : [el('p', { class: 'vr-empty', text: 'No question marks available.' })])),
+      el('div', { class: 'vr-section' }, [el('h4', { text: 'Remarks' }), remarks.trim() ? el('p', { class: 'vr-remarks', text: remarks }) : el('p', { class: 'vr-empty', text: 'No remarks.' })]),
+    ];
+    var resubmit = pendingResubmitUrl(item);
+    return viewShell(item.label.candidate || '-', (item.label.group || '') + ' \u00b7 ' + (item.label.station || ''), scoreChildren, sections,
+      [resubmit ? viewLink('Edit', 'primary', resubmit) : null, viewLink('All results', 'ghost', '/examiner/results')].filter(Boolean));
+  }
+
+  /** FCS View page content: every waiting Clinical / Viva mark of this candidate and specialty. */
+  function buildFcsViewCard(item, items) {
+    var CLINICAL = ['Overall Professional Capacity and Patient Care', 'Knowledge and Judgement', 'Quality of Response', 'Bedside Manner'];
+    var VIVA_CASE = { 1: 'Knowledge & Judgement', 2: 'Quality of Response' };
+    var candidate = pendingField(item, 'candidate_id');
+    var exam = pendingField(item, 'exam_type');
+    var mine = items.filter(function (i) {
+      return pendingKind(i) === 'fcs' && pendingField(i, 'candidate_id') === candidate && pendingField(i, 'exam_type') === exam;
+    }).sort(function (a, b) { return a.createdAt - b.createdAt; });
+
+    var totals = { clinical: 0, viva: 0 };
+    var firstOf = {};
+    var sections = ['clinical', 'viva'].map(function (format) {
+      var rows = mine.filter(function (i) { return (pendingField(i, 'form_type') || pendingField(i, 'exam_format')) === format; });
+      var children = [el('h4', { text: format === 'clinical' ? 'Clinical' : 'Viva' })];
+      if (!rows.length) children.push(el('p', { class: 'vr-empty', text: 'No ' + format + ' marks recorded.' }));
+      rows.forEach(function (row) {
+        firstOf[format] = firstOf[format] || row;
+        var total = parseFloat(pendingField(row, 'total_marks')) || 0;
+        totals[format] += total;
+        var cases = {};
+        var order = [];
+        row.fields.forEach(function (pair) {
+          var m = /^question_marks_case(\d+)\[\]$/.exec(pair[0]);
+          if (!m) return;
+          if (!cases[m[1]]) { cases[m[1]] = []; order.push(m[1]); }
+          cases[m[1]].push(pair[1]);
+        });
+        children.push(el('div', { class: 'vr-station' }, [el('span', { text: 'Station ' + pendingField(row, 'station_id') }), el('small', { text: 'Total ' + formatMark(total) })]));
+        if (order.length <= 1) {
+          (cases[order[0]] || []).forEach(function (m, i) { children.push(viewRow(format === 'clinical' && CLINICAL[i] ? CLINICAL[i] : 'Question ' + (i + 1), m)); });
+        } else {
+          order.forEach(function (n) {
+            children.push(el('div', { class: 'vr-case', text: format === 'viva' ? (VIVA_CASE[n] || 'Case ' + n) : 'Case ' + n }));
+            cases[n].forEach(function (m, i) { children.push(viewRow('Question ' + (i + 1), m)); });
+          });
+        }
+        var remarks = pendingField(row, 'remarks');
+        if (remarks.trim()) children.push(el('p', { class: 'vr-note', text: 'Remarks: ' + remarks }));
+      });
+      var section = el('div', { class: 'vr-section' }, children);
+      section.appendChild(el('div', { class: 'vr-section-total' }, [el('span', { text: (format === 'clinical' ? 'Clinical' : 'Viva') + ' total' }), el('span', { text: formatMark(totals[format]) })]));
+      return section;
+    });
+
+    var scoreChildren = [
+      el('div', {}, [el('div', { class: 'vr-eyebrow', text: 'Overall total' }), el('div', { class: 'vr-total', text: formatMark(totals.clinical + totals.viva) })]),
+      el('div', { class: 'vr-subs' }, [
+        el('div', {}, [el('div', { class: 'vr-eyebrow', text: 'Clinical' }), el('div', { class: 'vr-sub', text: formatMark(totals.clinical) })]),
+        el('div', {}, [el('div', { class: 'vr-eyebrow', text: 'Viva' }), el('div', { class: 'vr-sub', text: formatMark(totals.viva) })]),
+      ]),
+    ];
+    var actions = [];
+    ['clinical', 'viva'].forEach(function (format) {
+      var url = firstOf[format] ? pendingResubmitUrl(firstOf[format]) : null;
+      if (url) actions.push(viewLink('Edit ' + (format === 'clinical' ? 'Clinical' : 'Viva'), 'primary', url));
+    });
+    actions.push(viewLink('All results', 'ghost', '/examiner/results'));
+    return viewShell(item.label.candidate || '-', item.label.group || '', scoreChildren, sections, actions);
+  }
+
+  /** The View page opened for a mark that is only on the device (?eo=<queue id>): rebuild its card from the waiting mark. */
+  function hydrateQueuedView() {
+    if (!VIEW_PAGE.test(window.location.pathname)) return;
+    var id = new URLSearchParams(window.location.search).get('eo');
+    var card = document.querySelector('.vr .vr-card');
+    if (!id || !card) return;
+
+    queueAll().then(function (items) {
+      var item = items.filter(function (i) { return i.id === id && i.kind === 'create'; })[0];
+      if (!item || !pendingKind(item)) return;
+      card.parentNode.replaceChild(pendingKind(item) === 'fcs' ? buildFcsViewCard(item, items) : buildMarksViewCard(item), card);
     });
   }
 
@@ -1417,6 +1563,7 @@
     buildPill();
     showStoredFlash();
     hydrateQueuedNew();
+    hydrateQueuedView();
 
     document.querySelectorAll('form[data-offline-submit]').forEach(function (form) {
       form.addEventListener('submit', function (event) { onSubmit(event, form); });

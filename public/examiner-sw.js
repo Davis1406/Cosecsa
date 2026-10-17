@@ -128,7 +128,7 @@ async function networkFirst(request, url, event) {
   // ?eo=<id>: a Resubmit page for a mark that only exists on this device (not on the server yet).
   // The server cannot render it, so use a saved Resubmit page of the same kind; the page script
   // fills it with the waiting mark.
-  const waitingMark = url.searchParams.has('eo') && /^\/examiner\/(?:resubmit\/\d+\/\d+|fcs-resubmit\/\d+\/(?:clinical|viva))\/?$/.test(url.pathname);
+  const waitingMark = url.searchParams.has('eo') && /^\/examiner\/(?:resubmit\/\d+\/\d+|fcs-resubmit\/\d+\/(?:clinical|viva)|view_results\/\d+\/\d+|view_fcs_results\/\d+)\/?$/.test(url.pathname);
 
   try {
     const response = await fetchWithTimeout(request, NETWORK_TIMEOUT_MS);
@@ -170,14 +170,19 @@ async function resubmitTemplate(cache, url) {
   const wantGs = type === 'gs';
   const exam = url.searchParams.get('exam');
   const format = url.searchParams.get('format');
-  const pagePath = fcs ? /^\/examiner\/fcs-resubmit\/\d+\/(?:clinical|viva)$/ : /^\/examiner\/resubmit\/\d+\/\d+$/;
+  const viewFcs = /^\/examiner\/view_fcs_results\//.test(url.pathname);
+  const view = viewFcs || /^\/examiner\/view_results\//.test(url.pathname);
+  const pagePath = view ? (viewFcs ? /^\/examiner\/view_fcs_results\/\d+$/ : /^\/examiner\/view_results\/\d+\/\d+$/)
+    : fcs ? /^\/examiner\/fcs-resubmit\/\d+\/(?:clinical|viva)$/ : /^\/examiner\/resubmit\/\d+\/\d+$/;
 
   for (const req of await cache.keys()) {
     if (!pagePath.test(new URL(req.url).pathname)) continue;
     const saved = await cache.match(req);
     if (!saved) continue;
     const html = await saved.clone().text();
-    if (fcs) {
+    if (view) {
+      // the page script rebuilds the card from the waiting mark; any saved View page of this kind will do
+    } else if (fcs) {
       if (html.indexOf('name="exam_type" value="' + exam + '"') === -1 || html.indexOf('name="form_type" value="' + format + '"') === -1) continue;
     } else if ((html.indexOf('question_marks_case') !== -1) !== wantGs) {
       continue;
