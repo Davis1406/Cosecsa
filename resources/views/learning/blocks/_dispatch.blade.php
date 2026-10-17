@@ -15,6 +15,8 @@
         @include('learning.blocks.list', ['block' => $block, 'payload' => $payload])
     @elseif($type === 'multimedia')
         @include('learning.blocks.multimedia', ['block' => $block, 'payload' => $payload])
+    @elseif($type === 'table')
+        @include('learning.blocks.table', ['block' => $block, 'payload' => $payload])
     @elseif($type === 'divider')
         @include('learning.blocks.divider', ['block' => $block, 'payload' => $payload])
     @elseif($type === 'interactive' && $family === 'flashcard')

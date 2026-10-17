@@ -139,7 +139,7 @@
                                         $typeIcons = [
                                             'paragraph' => '¶', 'heading' => 'H', 'heading_paragraph' => 'H¶', 'quote' => '❝', 'impact' => '!',
                                             'list_bullets' => '•', 'list_numbered' => '№', 'checklist' => '✓',
-                                            'image' => '▨', 'image_text' => '▣', 'video' => '▶', 'divider' => '─',
+                                            'image' => '▨', 'image_text' => '▣', 'video' => '▶', 'divider' => '─', 'table' => '▦',
                                             'flashcard' => '⇄', 'labeledgraphic' => '◉', 'process' => '➤',
                                         ];
                                     @endphp

@@ -95,6 +95,18 @@
     .block-image-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .block-image-grid2 figcaption { font-size: 12px; color: #64748b; text-align: center; margin-top: 6px; }
 
+    /* ── Table block (scrolls sideways inside its own box on narrow screens) ── */
+    .block-table .table-title { font-size: 15px; font-weight: 700; color: var(--brand); margin-bottom: 8px; }
+    .block-table .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e0e9f2; border-radius: 8px; }
+    .block-table .table-scroll:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+    .lms-table { width: 100%; min-width: 480px; border-collapse: collapse; font-size: 14px; }
+    .lms-table th, .lms-table td { padding: 10px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid #e0e9f2; }
+    .lms-table thead th { background: #f8fafc; color: #475569; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+    .lms-table tbody tr:last-child th, .lms-table tbody tr:last-child td { border-bottom: 0; }
+    .lms-table.has-row-headers tbody th { font-weight: 700; color: #1e293b; background: #fbfcfe; width: 28%; }
+    .lms-table p { margin: 0 0 6px; }
+    .lms-table p:last-child { margin-bottom: 0; }
+
     /* ── Lists (improved bullets) ─────────────────────────────────────────── */
     .list-bullet, .list-num, .list-check { list-style: none; padding-left: 0; }
     .list-bullet li, .list-num li, .list-check li {
@@ -446,6 +458,11 @@
     /* block content */
     body.dark-mode .block-heading, body.dark-mode .block-heading2 { color: #f1f5f9; }
     body.dark-mode .block-subheading { color: #f48a8a; }
+    body.dark-mode .block-table .table-title { color: #f48a8a; }
+    body.dark-mode .block-table .table-scroll { border-color: #4a5568; }
+    body.dark-mode .lms-table th, body.dark-mode .lms-table td { border-bottom-color: #4a5568; color: #d1d5db; }
+    body.dark-mode .lms-table thead th { background: #252c3b; color: #cbd5e0; }
+    body.dark-mode .lms-table.has-row-headers tbody th { background: #1e2330; color: #f1f5f9; }
     body.dark-mode .block-paragraph, body.dark-mode .block-paragraph li { color: #d1d5db; }
     body.dark-mode :where(.block-paragraph, .block-impact, .step-desc, .lg-desc, .process-desc, .review-feedback) h2,
     body.dark-mode :where(.block-paragraph, .block-impact, .step-desc, .lg-desc, .process-desc, .review-feedback) h3 { color: #f1f5f9; }
