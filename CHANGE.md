@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-17) — Examiner menu: FCS specialty pages highlight "Dashboard"
+- `examiner/<specialty>` (format selection) and its `/clinical` and `/viva` forms (cardiothoracic, neurosurgery, orthopaedic, ent, paediatric_orthopaedics, paediatric, plastic_surgery, urology) had no active item in the examiner sidebar. They are reached from the dashboard, so the Dashboard entry is now active there (alongside `dashboard`, `examiner_form`, `general_surgery`). Checked the rule for each specialty segment, `results` and `learning` (those keep their own entries).
+- **File:** `resources/views/layout/header.blade.php`.
+
 ### Fixed (2026-10-17) — FCS "Select Examination Format": Viva button text invisible in dark mode
 - The Viva button is gold with dark-maroon text, but its title and caption are `<h4>` / `<p>`, which the global dark-mode rules (`body.dark-mode h4 { color:#e0e0e0 }`, `body.dark-mode p { color:#d1d5db }`) recoloured light grey, so they vanished on the gold. In `exam_type_selection.blade.php` the button's `h4`, `p` and icon now follow the button's own colour in dark mode. Checked in Chrome with the app's stylesheets and the global rules, at rest and on hover with a real pointer: Clinical white on maroon, hovered dark-maroon on gold; Viva dark-maroon on gold, hovered gold on maroon.
 - **File:** `resources/views/examiner/exam_type_selection.blade.php`.
