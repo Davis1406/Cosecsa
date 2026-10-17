@@ -471,7 +471,7 @@
 
   // ── Results page: keep every linked View / Resubmit page ────────────────
 
-  var RESULT_PAGE = /^\/examiner\/(?:(?:resubmit|view_results)\/\d+\/\d+|(?:fcs-resubmit|view_fcs_results)\/\d+)\/?$/;
+  var RESULT_PAGE = /^\/examiner\/(?:(?:resubmit|view_results)\/\d+\/\d+|(?:fcs-resubmit|view_fcs_results)\/\d+(?:\/(?:clinical|viva))?)\/?$/;
   var FCS_SELECTION = /^\/examiner\/fcs-resubmit\/\d+\/?$/;
   var FCS_FORM_LINK = /\/examiner\/fcs-resubmit\/\d+\/(?:clinical|viva)/g;
 

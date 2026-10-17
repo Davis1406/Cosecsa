@@ -235,6 +235,26 @@ class ExaminerOfflineTest extends TestCase
         $this->assertSame('cardiothoracic_results', $real->source_table);
     }
 
+    public function test_fcs_results_rows_link_straight_to_the_clinical_and_viva_resubmit_forms(): void
+    {
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical', ['group_id' => 3]))->assertStatus(201);
+
+        $row = app(\App\Http\Controllers\CandidatesController::class)->results()->getData()['fcsResults']->first();
+        $this->assertTrue($row->formats->has('clinical'));
+        $this->assertFalse($row->formats->has('viva'));      // no Viva mark saved: no Viva button
+
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('viva', ['group_id' => 3]))->assertStatus(201);
+        \Illuminate\Support\Facades\View::getFinder()->prependLocation(base_path('tests/Fixtures/views'));   // layout.app without the sidebar queries
+        $html = view('examiner.results', [
+            'mcsResults' => collect(), 'gsResults' => collect(), 'showMcs' => false, 'showGs' => false, 'showFcs' => true,
+            'fcsResults' => app(\App\Http\Controllers\CandidatesController::class)->results()->getData()['fcsResults'],
+        ])->render();
+
+        $this->assertStringContainsString('examiner/fcs-resubmit/10/clinical', $html);
+        $this->assertStringContainsString('examiner/fcs-resubmit/10/viva', $html);
+        $this->assertStringNotContainsString('fcs-resubmit/10"', $html);   // not the generic choose-a-format page
+    }
+
     // ── Editing (resubmitting) saved marks ──────────────────────────────
 
     public function test_editing_an_mcs_mark_updates_it_and_replies_json(): void

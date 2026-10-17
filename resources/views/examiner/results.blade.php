@@ -179,10 +179,19 @@
                                                                href="{{ url('examiner/view_fcs_results/' . $value->candidate_id) }}">
                                                                 View
                                                             </a>
-                                                            <a class="btn btn-warning btn-sm"
-                                                               href="{{ url('examiner/fcs-resubmit/' . $value->candidate_id) }}">
-                                                                Resubmit
-                                                            </a>
+                                                            {{-- straight to the Clinical / Viva form of the marks this examiner saved --}}
+                                                            @if($value->formats->has('clinical'))
+                                                                <a class="btn btn-warning btn-sm"
+                                                                   href="{{ url('examiner/fcs-resubmit/' . $value->candidate_id . '/clinical') }}">
+                                                                    Resubmit Clinical
+                                                                </a>
+                                                            @endif
+                                                            @if($value->formats->has('viva'))
+                                                                <a class="btn btn-warning btn-sm"
+                                                                   href="{{ url('examiner/fcs-resubmit/' . $value->candidate_id . '/viva') }}">
+                                                                    Resubmit Viva
+                                                                </a>
+                                                            @endif
                                                         </div>
                                                     </td>
                                                 </tr>

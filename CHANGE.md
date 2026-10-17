@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-17) — Results: FCS Resubmit goes straight to the Clinical or Viva form
+- In the FCS Specialty Results table the single **Resubmit** button led to a "choose Clinical or Viva" page first. The Actions column now has **Resubmit Clinical** and **Resubmit Viva** (each shown only when that mark was saved), linking directly to `examiner/fcs-resubmit/{candidate}/clinical|viva`. The choose-a-format page still exists for old links. The offline result-page prefetch now also follows these links (`examiner-offline.js` `RESULT_PAGE`). New test renders the Results page: a clinical-only candidate gets no Viva button, a candidate with both gets both links and none to the generic page (`tests/Feature/ExaminerOfflineTest.php`, plus a minimal `tests/Fixtures/views/layout/app.blade.php` so a page can be rendered without the sidebar's queries); all 31 tests pass.
+- **Files:** `resources/views/examiner/results.blade.php`, `public/dist/js/examiner-offline.js`, `tests/Feature/ExaminerOfflineTest.php`, `tests/Fixtures/views/layout/app.blade.php`.
+
 ### Changed (2026-10-17) — Examiner profile (`examiner/profile_settings`): real dark mode instead of forced white cards
 - The page forced a light theme (`.card { background:#fff !important }`, dark text, `color-scheme: light`) even in dark mode, so it showed bright white cards on the dark page. The forced-light rules now apply only in light mode (unchanged there), and dark mode has its own: dark cards, light-maroon section headers, light table text and muted text, and fixes for the participation-by-year table (styled inline with light-theme greys: dark `#333` text and near-white row borders) and the history modal's light card headers. The maroon hero banner and the white ID-badge card are unchanged. Checked in Chrome with a hand-built copy of the page's cards/tables and its real stylesheet, in dark and light (not the live page, which needs a login and data).
 - **File:** `resources/views/examiner/profile_settings.blade.php`.
