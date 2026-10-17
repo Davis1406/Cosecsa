@@ -38,7 +38,7 @@
   var DB_VERSION = 1;
   var STORE = 'queue';
   var SYNC_INTERVAL_MS = 30000;
-  var STATUS_SHOW_MS = 5000;    // how long the status label stays on the marking forms / results page
+  var STATUS_SHOW_MS = 3000;    // how long the status label stays after a page opens / the connection changes
   var WARM_MAX_AGE_MS = 2 * 60 * 1000;
   var WARM_CONCURRENCY = 3;
   var WARM_KEY = 'examiner-offline-warm-v6'; // bump to make every device re-download the offline pages
@@ -678,6 +678,7 @@
     ui.pill.classList.remove('eo-gone');
     if (!ui.autoHide) { ui.revealing = false; return; }
     var fade = function () {
+      if (!ui.autoHide) { ui.revealing = false; return; }   // an error label (set meanwhile) stays
       if (!ui.panel.hasAttribute('hidden')) { ui.fadeTimer = setTimeout(fade, 2000); return; }   // keep it while its panel is open
       ui.revealing = false;
       ui.faded = true;
@@ -705,10 +706,9 @@
 
       if (ui.pill) {
         if (text) {
-          // On the marking forms and the results page the status label is only revealed when the page
-          // opens or the connection changes (see revealStatus); in between it stays out of the way.
-          // Errors stay until dealt with, and other pages (dashboard etc.) always show it.
-          ui.autoHide = !!(mode !== 'error' && (document.querySelector('form[data-offline-submit]') || document.getElementById('examiner-offline-pending')));
+          // On every examiner page the status label is only revealed when the page opens or the
+          // connection changes (see revealStatus), and fades after a few seconds; errors stay until dealt with.
+          ui.autoHide = mode !== 'error';
           if (!ui.autoHide) ui.faded = false;
           else if (!ui.revealing) ui.faded = true;   // a status change alone does not bring the label back
           ui.badge.textContent = text;

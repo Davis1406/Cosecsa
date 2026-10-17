@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-17) — Offline status label: 3 seconds, on every examiner page
+- The floating status label ("N marks waiting to sync", "Offline · marks are saved on this device", "Syncing…") now fades after 3 seconds (was 5) and does so on every examiner page including the dashboard (it previously stayed on the dashboard and other pages). It is shown when a page opens and when the connection goes offline or comes back, then fades; "needs attention" / "sign in again" labels still stay until dealt with, and the label stays while its panel is open. The dashboard's "Ready for offline marking" card is not a label and is unchanged. Also fixed: a label that turned into an error while its fade timer ran could be hidden by the timer. Tested in Chrome on the dashboard (visible 0.8 s after an offline event, gone by 3.8 s).
+- **File:** `public/dist/js/examiner-offline.js`.
+
 ### Fixed (2026-10-17) — Examiner menu: every marking page keeps "Dashboard" highlighted
 - Some examiner pages had no active item in the sidebar (the FCS specialty pages and their Clinical / Viva forms, and any other page without its own menu entry). Dashboard is now active on every `examiner/…` page except those that have their own entry (Results and its View / Resubmit pages, Examiner Training, Profile), so the MCS, General Surgery and FCS marking pages are all covered. Checked the rule for dashboard, examiner_form, general_surgery, cardiothoracic, urology, badge (active) and results, view_results, resubmit, fcs-resubmit, learning, profile_settings, edit_info, messages (not).
 - **File:** `resources/views/layout/header.blade.php`.
