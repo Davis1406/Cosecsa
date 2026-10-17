@@ -43,6 +43,8 @@
   var WARM_CONCURRENCY = 3;
   var WARM_KEY = 'examiner-offline-warm-v6'; // bump to make every device re-download the offline pages
   var FLASH_KEY = 'examiner-offline-flash';
+  // The View / Resubmit pages of one specific result: no floating status label there.
+  var NO_STATUS_PAGE = /^\/examiner\/(?:(?:resubmit|view_results)\/\d+\/\d+|(?:fcs-resubmit|view_fcs_results)\/\d+(?:\/(?:clinical|viva))?)\/?$/;
 
   var state = { auth: false, syncing: false, warming: false, warmError: null };
   var ui = {};
@@ -705,7 +707,7 @@
       else if (!online) { text = 'Offline · marks are saved on this device'; mode = ''; }
 
       if (ui.pill) {
-        if (text) {
+        if (text && !NO_STATUS_PAGE.test(window.location.pathname)) {
           // On every examiner page the status label is only revealed when the page opens or the
           // connection changes (see revealStatus), and fades after a few seconds; errors stay until dealt with.
           ui.autoHide = mode !== 'error';

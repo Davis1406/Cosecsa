@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-17) — No status label on the View / Resubmit pages of a single result
+- The floating status label is no longer shown on `examiner/resubmit/{candidate}/{station}`, `examiner/view_results/{candidate}/{station}`, `examiner/view_fcs_results/{candidate}` and `examiner/fcs-resubmit/{candidate}[/clinical|viva]`. It still shows (for 3 seconds) on the dashboard, Results, the marking forms and other examiner pages; toasts (e.g. "N marks synced") and the "Saved on this device" card on Results are unchanged. Tested in Chrome: a page with a mark waiting shows no label on `resubmit/1/1`.
+- **File:** `public/dist/js/examiner-offline.js`.
+
 ### Changed (2026-10-17) — Offline status label: 3 seconds, on every examiner page
 - The floating status label ("N marks waiting to sync", "Offline · marks are saved on this device", "Syncing…") now fades after 3 seconds (was 5) and does so on every examiner page including the dashboard (it previously stayed on the dashboard and other pages). It is shown when a page opens and when the connection goes offline or comes back, then fades; "needs attention" / "sign in again" labels still stay until dealt with, and the label stays while its panel is open. The dashboard's "Ready for offline marking" card is not a label and is unchanged. Also fixed: a label that turned into an error while its fade timer ran could be hidden by the timer. Tested in Chrome on the dashboard (visible 0.8 s after an offline event, gone by 3.8 s).
 - **File:** `public/dist/js/examiner-offline.js`.
