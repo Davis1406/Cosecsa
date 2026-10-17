@@ -1710,3 +1710,10 @@ body.dark-mode .btn[style*="background:#FEC503" i]:hover {
     border-color: #e5b002 !important;
     color: #3a2a00 !important;
 }
+
+/* Dark mode: a card header written with an inline gold background (the FCS Specialty Results boxes on the
+   examiner Results page) is repainted dark by `body.dark-mode .card-header`, while the "gold background gets
+   dark text" rules still force its title to #3a2a00: dark on dark. The title follows the other card headers. */
+body.dark-mode .card-header[style*="#FEC503" i] .card-title,
+body.dark-mode .card-header[style*="#FEC503" i] h3,
+body.dark-mode .card-header[style*="#FEC503" i] h4 { color: #e2e8f0 !important; }

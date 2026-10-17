@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-17) — Results: FCS Specialty Results box header was dark on dark in dark mode
+- The FCS boxes (the real "FCS Specialty Results" table and the "(waiting to sync)" box) have a header with an inline gold background. In dark mode `body.dark-mode .card-header` repaints it dark grey while the "gold gets dark text" rules still forced the title to `#3a2a00`, so the title was dark on dark. Added a dark-mode rule in `custom.css` so those titles use the same light colour as the other card headers (General Surgery / MCS). Light mode is unchanged. Checked the computed colours in Chrome: both headers light text (#e2e8f0) on dark grey (#252c3b).
+- **File:** `public/dist/css/custom.css`.
+
 ### Changed (2026-10-17) — No status label on the marking forms either
 - The floating status label is also removed from the pages where a result is recorded: `examiner/examiner_form` (MCS), `examiner/general_surgery`, and the FCS `examiner/<specialty>/clinical|viva` forms (urology, cardiothoracic, ent, orthopaedic, neurosurgery, paediatric, paediatric_orthopaedics, plastic_surgery), in addition to the View / Resubmit pages. It still shows for 3 seconds on the dashboard, Results, the specialty selection pages and other examiner pages. After an offline save the "saved on this device" toast still appears. Tested in Chrome: no label on `examiner_form` with a mark waiting; path rule checked for all the pages above.
 - **File:** `public/dist/js/examiner-offline.js`.
