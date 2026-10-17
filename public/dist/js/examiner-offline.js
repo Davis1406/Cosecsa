@@ -807,12 +807,13 @@
     if (fcsBox) host.appendChild(fcsBox);
   }
 
-  /** 'mcs' / 'gs' for a new MCS / General Surgery mark waiting on the device (their forms are rebuilt offline), else null. */
+  /** 'mcs' / 'gs' / 'fcs' for a new mark waiting on the device (its Resubmit form is rebuilt offline), else null. */
   function pendingKind(item) {
     if (item.kind !== 'create') return null;
     var path = new URL(item.url, window.location.href).pathname;
     if (/\/examiner\/examiner_form\/?$/.test(path)) return 'mcs';
     if (/\/examiner\/general_surgery\/?$/.test(path)) return 'gs';
+    if (/\/examiner\/submit-exam\/?$/.test(path)) return 'fcs';
     return null;
   }
 
@@ -825,19 +826,35 @@
   function pendingResubmitUrl(item) {
     var kind = pendingKind(item);
     var candidate = pendingField(item, 'candidate_id');
+    if (!kind || !/^\d+$/.test(candidate)) return null;
+
+    if (kind === 'fcs') {
+      var format = pendingField(item, 'form_type') || pendingField(item, 'exam_format');
+      var exam = pendingField(item, 'exam_type');
+      if (format !== 'clinical' && format !== 'viva') return null;
+      return '/examiner/fcs-resubmit/' + candidate + '/' + format + '?eo=' + encodeURIComponent(item.id) + '&type=fcs&exam=' + encodeURIComponent(exam) + '&format=' + format;
+    }
+
     var station = pendingField(item, 'station_id');
-    if (!kind || !/^\d+$/.test(candidate) || !/^\d+$/.test(station)) return null;
+    if (!/^\d+$/.test(station)) return null;
     return '/examiner/resubmit/' + candidate + '/' + station + '?eo=' + encodeURIComponent(item.id) + '&type=' + kind;
   }
 
   /** Is a saved Resubmit page of this kind on the device to use as the starting point? */
-  function hasResubmitTemplate(kind) {
+  function hasResubmitTemplate(kind, item) {
     if (!window.caches) return Promise.resolve(false);
+    var fcs = kind === 'fcs';
+    var pagePath = fcs ? /\/examiner\/fcs-resubmit\/\d+\/(?:clinical|viva)$/ : /\/examiner\/resubmit\/\d+\/\d+$/;
     return caches.open('examiner-pages-v1').then(function (cache) {
       return cache.keys().then(function (requests) {
-        var pages = requests.filter(function (r) { return /\/examiner\/resubmit\/\d+\/\d+$/.test(new URL(r.url).pathname); });
+        var pages = requests.filter(function (r) { return pagePath.test(new URL(r.url).pathname); });
         return Promise.all(pages.map(function (r) {
           return cache.match(r).then(function (res) { return res ? res.text() : ''; }).then(function (html) {
+            if (fcs) {
+              // same specialty and format: the marks are laid out in the same cases
+              return html.indexOf('name="exam_type" value="' + pendingField(item, 'exam_type') + '"') !== -1 &&
+                     html.indexOf('name="form_type" value="' + (pendingField(item, 'form_type') || pendingField(item, 'exam_format')) + '"') !== -1;
+            }
             return (html.indexOf('question_marks_case') !== -1) === (kind === 'gs');
           });
         }));
@@ -856,7 +873,7 @@
     if (!url) return el('button', { class: 'eo-btn', type: 'button', text: 'Edit', onclick: function () { openItemDialog(item, true); } });
     return goButton('Edit', function () {
       if (navigator.onLine) { window.location.href = url; return; }   // online the server page is used (or the SW falls back to the device copy)
-      hasResubmitTemplate(pendingKind(item)).then(function (ok) {
+      hasResubmitTemplate(pendingKind(item), item).then(function (ok) {
         if (ok) window.location.href = url; else openItemDialog(item, true);
       });
     });
@@ -876,6 +893,7 @@
     queueAll().then(function (items) {
       var item = items.filter(function (i) { return i.id === id && i.kind === 'create'; })[0];
       if (!item) return;
+      if (pendingKind(item) === 'fcs') { hydrateFcs(form, item); return; }
 
       var set = function (name, value) {
         var node = form.elements[name];
@@ -929,6 +947,85 @@
         }, function () { toast('error', 'Could not save the changes on this device.'); });
       }, true);
     });
+  }
+
+  /** The same for an FCS Clinical / Viva mark: fill the saved Resubmit form of that specialty and format. */
+  function hydrateFcs(form, item) {
+    var change = function (node) {
+      node.dispatchEvent(new Event('input', { bubbles: true }));
+      node.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    // group / candidate / station are read-only text boxes (no name) followed by hidden ids
+    var shown = [item.label.group, item.label.candidate, item.label.station];
+    Array.prototype.forEach.call(form.querySelectorAll('.form-row input[type="text"][readonly]'), function (node, i) {
+      if (i < 3) node.value = shown[i] || '';
+    });
+    ['group_id', 'candidate_id', 'station_id'].forEach(function (name) {
+      var node = form.elements[name];
+      if (node && node.tagName) node.value = pendingField(item, name);
+    });
+
+    // the saved marks, case by case (the create form posts question_marks_case1[], question_marks_case2[] ...)
+    var perCase = {};
+    var cases = [];
+    item.fields.forEach(function (pair) {
+      var m = /^question_marks_case(\d+)\[\]$/.exec(pair[0]);
+      if (!m) return;
+      if (!perCase[m[1]]) { perCase[m[1]] = []; cases.push(m[1]); }
+      perCase[m[1]].push(pair[1]);
+    });
+    cases.forEach(function (n) {
+      var box = document.getElementById('case-container-' + n);
+      if (!box) return;
+      var values = perCase[n];
+      var blocks = function () { return box.querySelectorAll('.question-block'); };
+      while (blocks().length < values.length && typeof window.addCaseQuestion === 'function') {
+        var before = blocks().length;
+        window.addCaseQuestion(parseInt(n, 10));
+        if (blocks().length === before) break;
+      }
+      while (blocks().length > values.length) blocks()[blocks().length - 1].remove();
+      Array.prototype.forEach.call(blocks(), function (block, i) {
+        var select = block.querySelector('select');
+        if (select) { select.value = values[i]; change(select); }
+      });
+    });
+    if (form.elements.total_marks) form.elements.total_marks.value = pendingField(item, 'total_marks');
+    if (form.elements.remarks) form.elements.remarks.value = pendingField(item, 'remarks');
+    if (typeof window.updateTotalMarks === 'function') window.updateTotalMarks();
+
+    form.insertBefore(el('div', { class: 'alert alert-warning', style: 'margin:0 10px 12px', text: 'This mark has not been submitted yet; it is saved on this device. Saving here changes it, and it is submitted when you are back online.' }), form.firstChild);
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+
+      var written = {};
+      var fields = [];
+      item.fields.forEach(function (pair) {
+        var m = /^question_marks_case(\d+)\[\]$/.exec(pair[0]);
+        if (m) {
+          if (written[m[1]]) return;
+          written[m[1]] = true;
+          var box = document.getElementById('case-container-' + m[1]);
+          Array.prototype.forEach.call(box ? box.querySelectorAll('.question-block select') : [], function (select) {
+            fields.push([pair[0], select.value]);
+          });
+        } else if (pair[0] === 'total_marks') fields.push(['total_marks', form.elements.total_marks.value]);
+        else if (pair[0] === 'remarks') fields.push(['remarks', form.elements.remarks.value]);
+        else fields.push(pair);
+      });
+      item.fields = fields;
+      item.status = 'pending';
+      item.error = '';
+
+      queuePut(item).then(function () {
+        setFlash('success', 'Changes saved on this device.' + (navigator.onLine ? '' : ' They will be submitted when you are back online.'));
+        window.location.href = '/examiner/results';
+      }, function () { toast('error', 'Could not save the changes on this device.'); });
+    }, true);
   }
 
   /**

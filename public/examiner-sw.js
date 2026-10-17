@@ -128,12 +128,12 @@ async function networkFirst(request, url, event) {
   // ?eo=<id>: a Resubmit page for a mark that only exists on this device (not on the server yet).
   // The server cannot render it, so use a saved Resubmit page of the same kind; the page script
   // fills it with the waiting mark.
-  const waitingMark = url.searchParams.has('eo') && /^\/examiner\/resubmit\//.test(url.pathname);
+  const waitingMark = url.searchParams.has('eo') && /^\/examiner\/(?:resubmit\/\d+\/\d+|fcs-resubmit\/\d+\/(?:clinical|viva))\/?$/.test(url.pathname);
 
   try {
     const response = await fetchWithTimeout(request, NETWORK_TIMEOUT_MS);
     if (waitingMark && (response.redirected || !response.ok)) {
-      const template = await resubmitTemplate(cache, url.searchParams.get('type'));
+      const template = await resubmitTemplate(cache, url);
       if (template) return template;
     }
     // A redirect here means the session ended (we got bounced to the login
@@ -147,7 +147,7 @@ async function networkFirst(request, url, event) {
     return response;
   } catch (error) {
     if (waitingMark) {
-      const template = await resubmitTemplate(cache, url.searchParams.get('type'));
+      const template = await resubmitTemplate(cache, url);
       if (template) return template;
     }
     const cached = await cache.match(key);
@@ -160,15 +160,28 @@ async function networkFirst(request, url, event) {
   }
 }
 
-/** A saved MCS or General Surgery Resubmit page (any candidate) to use as the starting point. */
-async function resubmitTemplate(cache, type) {
+/**
+ * A saved Resubmit page to use as the starting point for a mark that only exists on this device:
+ * MCS / General Surgery (any candidate, matching the form's shape) or FCS (same specialty and format).
+ */
+async function resubmitTemplate(cache, url) {
+  const type = url.searchParams.get('type');
+  const fcs = type === 'fcs';
   const wantGs = type === 'gs';
+  const exam = url.searchParams.get('exam');
+  const format = url.searchParams.get('format');
+  const pagePath = fcs ? /^\/examiner\/fcs-resubmit\/\d+\/(?:clinical|viva)$/ : /^\/examiner\/resubmit\/\d+\/\d+$/;
+
   for (const req of await cache.keys()) {
-    if (!/^\/examiner\/resubmit\/\d+\/\d+$/.test(new URL(req.url).pathname)) continue;
+    if (!pagePath.test(new URL(req.url).pathname)) continue;
     const saved = await cache.match(req);
     if (!saved) continue;
     const html = await saved.clone().text();
-    if ((html.indexOf('question_marks_case') !== -1) !== wantGs) continue;
+    if (fcs) {
+      if (html.indexOf('name="exam_type" value="' + exam + '"') === -1 || html.indexOf('name="form_type" value="' + format + '"') === -1) continue;
+    } else if ((html.indexOf('question_marks_case') !== -1) !== wantGs) {
+      continue;
+    }
     return new Response(html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
   return null;

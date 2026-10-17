@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-17) — Offline: Edit on a waiting FCS mark opens its Resubmit page too
+- In the Results page card "Saved on this device", Edit went to the Resubmit page only for MCS and General Surgery marks; FCS (Clinical / Viva) marks fell back to the in-page editor. Edit now opens `examiner/fcs-resubmit/{candidate}/{clinical|viva}?eo=<id>&type=fcs&exam=<specialty>&format=<format>`. The server has no such mark yet, so the service worker serves a saved Resubmit page of the same specialty and format (any candidate; the `exam_type` / `form_type` fields identify it), and `examiner-offline.js` (`hydrateFcs`) fills it with the waiting mark: group, candidate, station, the marks case by case (adding or removing question rows to match), total and remarks. Saving changes the waiting mark itself (its `question_marks_caseN[]`, `total_marks`, `remarks`) and returns to Results; it is still submitted once, when online. If no saved Resubmit page of that specialty and format exists on the device, Edit falls back to the in-page editor.
+- Tested in Chrome against a stub server with the real script and service worker: with the server down, Edit opened the Urology Clinical resubmit page with the six marks in two cases, 22 total, "Better", read-only group/candidate/station filled; changing one mark and saving left one queued mark with the new mark, total 28 and new remarks.
+- **Files:** `public/dist/js/examiner-offline.js`, `public/examiner-sw.js`.
+
 ### Fixed (2026-10-17) — 500 on the Urology Clinical Resubmit page (`examiner/fcs-resubmit/{candidate}/clinical`)
 - **Cause:** the Urology Clinical marking form is a two-case form (3 marks per case, 6 marks saved), but `showFcsResubmitForm` treated every Clinical form as one case except neurosurgery and plastic surgery. The Resubmit page then tried to lay six marks out under the four single-case labels and failed with `Undefined array key 4` (laravel.log, 2026-10-17 12:07 and 12:09 for userId 8497). It would fail for any urology Clinical Resubmit (116 saved urology Clinical marks have six marks).
 - **Fix:** Clinical is two cases for urology as well (neurosurgery, plastic surgery, urology); everything else is unchanged. The Cardiothoracic Viva special case (four cases) is removed so it matches the marking form (two cases); no Cardiothoracic marks exist in the database.
