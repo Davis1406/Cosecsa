@@ -844,6 +844,12 @@
   function hasResubmitTemplate(kind, item) {
     if (!window.caches) return Promise.resolve(false);
     var fcs = kind === 'fcs';
+    // FCS: the form is rebuilt from the waiting mark when no saved page of that specialty exists, on top of the saved Results page
+    if (fcs) {
+      return caches.open('examiner-pages-v1').then(function (cache) {
+        return cache.match(window.location.origin + '/examiner/results');
+      }).then(function (hit) { return !!hit; }).catch(function () { return false; });
+    }
     var pagePath = fcs ? /\/examiner\/fcs-resubmit\/\d+\/(?:clinical|viva)$/ : /\/examiner\/resubmit\/\d+\/\d+$/;
     return caches.open('examiner-pages-v1').then(function (cache) {
       return cache.keys().then(function (requests) {
@@ -1034,7 +1040,20 @@
     var form = document.getElementById('msform');
     var params = new URLSearchParams(window.location.search);
     var id = params.get('eo');
-    if (!form || !id || form.getAttribute('data-offline-kind') !== 'update') return;
+    if (!id) return;
+
+    // FCS Resubmit page of a specialty / format with no saved page on this device: it arrives on top of the saved
+    // Results page, and the whole form is built from the waiting mark.
+    if ((!form || !document.getElementById('case-container-1')) && FCS_RESUBMIT_PAGE.test(window.location.pathname)) {
+      queueAll().then(function (items) {
+        var waiting = items.filter(function (i) { return i.id === id && i.kind === 'create' && pendingKind(i) === 'fcs'; })[0];
+        var built = waiting && buildFcsFormPage(waiting);
+        if (built) hydrateFcs(built, waiting);
+      });
+      return;
+    }
+
+    if (!form || form.getAttribute('data-offline-kind') !== 'update') return;
 
     queueAll().then(function (items) {
       var item = items.filter(function (i) { return i.id === id && i.kind === 'create'; })[0];
@@ -1093,6 +1112,118 @@
         }, function () { toast('error', 'Could not save the changes on this device.'); });
       }, true);
     });
+  }
+
+  var FCS_RESUBMIT_PAGE = /^\/examiner\/fcs-resubmit\/\d+\/(?:clinical|viva)\/?$/;
+
+  /**
+   * The whole FCS Clinical / Viva Resubmit form for a waiting mark, laid out like the server's page
+   * (resubmit_form_universal): used when no saved page of that specialty and format is on the device.
+   * It replaces the page content of the Results page that was served instead.
+   */
+  function buildFcsFormPage(item) {
+    var host = document.querySelector('.content-wrapper .content') || document.querySelector('.content-wrapper') || document.querySelector('.content');
+    if (!host) return null;   // not a layout page: nothing to put the form into
+
+    var format = pendingField(item, 'form_type') || pendingField(item, 'exam_format');
+    var exam = pendingField(item, 'exam_type');
+    var isClinical = format === 'clinical';
+    var CLINICAL = ['Overall Professional Capacity and Patient Care:', 'Knowledge and Judgement:', 'Quality of Response:', 'Bedside Manner:'];
+    var VIVA_CASE = { 1: 'Knowledge & Judgement', 2: 'Quality of Response' };
+
+    var perCase = {};
+    var order = [];
+    item.fields.forEach(function (pair) {
+      var m = /^question_marks_case(\d+)\[\]$/.exec(pair[0]);
+      if (!m) return;
+      if (!perCase[m[1]]) { perCase[m[1]] = []; order.push(m[1]); }
+      perCase[m[1]].push(pair[1]);
+    });
+    if (!order.length) return null;
+
+    var optionValues = (exam === 'urology' && format === 'viva' ? ['0'] : []).concat(['2', '4', '6', '8', '10']);
+    var label = function (caseNo, i) {
+      if (!isClinical) return 'Question ' + (i + 1) + ':';
+      var base = CLINICAL[i] || ('Question ' + (i + 1) + ':');
+      return order.length === 1 ? base : base.replace(':', '') + ':' + caseNo;
+    };
+    var select = function () {
+      var node = el('select', { name: 'question_marks[]', class: 'form-control question-mark', required: 'required' },
+        [el('option', { value: '', text: 'Select Mark' })].concat(optionValues.map(function (v) { return el('option', { value: v, text: v }); })));
+      node.addEventListener('change', function () { window.updateTotalMarks(); });
+      return node;
+    };
+    var block = function (caseNo, i, removable) {
+      var kids = [select()];
+      if (removable) {
+        kids.push(el('div', { class: 'input-group-append' }, [el('button', { type: 'button', class: 'btn btn-danger', text: 'X', onclick: function (event) {
+          event.target.closest('.question-block').remove();
+          window.updateTotalMarks();
+        } })]));
+      }
+      return el('div', { class: 'form-group question-block' }, [el('label', { text: label(caseNo, i) }), el('div', { class: 'input-group' }, kids)]);
+    };
+
+    window.updateTotalMarks = function () {
+      var total = 0;
+      document.querySelectorAll('.question-mark').forEach(function (node) { total += parseInt(node.value, 10) || 0; });
+      var out = document.getElementById('total_marks');
+      if (out) out.value = total;
+    };
+    window.addCaseQuestion = function (caseNo) {
+      var box = document.getElementById('case-container-' + caseNo);
+      if (!box) return;
+      var count = box.querySelectorAll('.question-block').length;
+      if (isClinical && count >= 4) return;
+      box.appendChild(block(caseNo, count, true));
+      window.updateTotalMarks();
+    };
+
+    var readonlyBox = function (title, hiddenName) {
+      return el('div', { class: 'form-group col-md-4 col-sm-12' }, [
+        el('label', { text: title }),
+        el('input', { type: 'text', class: 'form-control', readonly: 'readonly' }),
+        el('input', { type: 'hidden', name: hiddenName }),
+      ]);
+    };
+    var colClass = order.length === 2 ? 'col-md-6' : (order.length === 4 ? 'col-md-3' : 'col-md-12');
+    var caseColumns = order.map(function (n, idx) {
+      var count = perCase[n].length;
+      var blocks = [];
+      for (var i = 0; i < count; i++) blocks.push(block(n, i, i >= 3));
+      var heading = !isClinical && order.length === 2 ? (VIVA_CASE[n] || 'Case ' + n) : 'Case ' + (order.length === 1 ? pendingField(item, 'station_id') : n);
+      return el('div', { class: colClass, style: 'padding:' + (order.length > 2 ? '10px' : '0 20px') + ';' }, [
+        el('h5', { style: 'text-align:center;color:#a02626;', text: heading }),
+        el('div', { id: 'case-container-' + n }, blocks),
+        el('button', { type: 'button', class: 'btn btn-outline-secondary btn-sm mb-3 add-question-btn', style: 'color:black; background-color: #FEC503; border-color: #FEC503;', text: '+ Add Question', onclick: function () { window.addCaseQuestion(n); } }),
+      ]);
+    });
+
+    var form = el('form', { id: 'msform', method: 'POST' }, [
+      el('input', { type: 'hidden', name: 'exam_type', value: exam }),
+      el('input', { type: 'hidden', name: 'form_type', value: format }),
+      el('input', { type: 'hidden', name: 'exam_format', value: format }),
+      el('div', { class: 'tittle' }, [el('h2', { text: 'Resubmit ' + String(item.label.exam || 'FCS').replace(/\s*-\s*(?:Clinical|Viva)\s*Evaluation Form\s*$/i, '') + ' - ' + (isClinical ? 'Clinical' : 'Viva') + ' Evaluation' })]),
+      el('div', { class: 'form-row' }, [readonlyBox('Group', 'group_id'), readonlyBox('Candidate', 'candidate_id'), readonlyBox('Station', 'station_id')]),
+      el('div', { class: 'form-row', style: 'border: 1px solid #a02626; padding: 15px; border-radius: 5px; position: relative;' }, caseColumns),
+      el('div', { class: 'form-row justify-content-center' }, [el('div', { class: 'form-group col-md-9 col-sm-12' }, [
+        el('label', { text: 'Overall Marks' }),
+        el('input', { type: 'number', name: 'total_marks', id: 'total_marks', class: 'form-control', readonly: 'readonly' }),
+      ])]),
+      el('div', { class: 'form-row justify-content-center' }, [el('div', { class: 'form-group col-md-9 col-sm-12' }, [
+        el('label', { text: 'Examiner Remarks' }),
+        el('textarea', { name: 'remarks', class: 'form-control', rows: '3', placeholder: 'Enter remarks' }),
+      ])]),
+      el('div', { class: 'text-center' }, [
+        el('a', { href: '/examiner/results', class: 'btn btn-secondary mr-2', text: 'Cancel' }),
+        el('button', { type: 'submit', class: 'action-button', text: 'Update Evaluation' }),
+      ]),
+    ]);
+    form.querySelectorAll('.form-row').forEach(function (row) { row.style.setProperty('margin', '0 10px 10px 10px', 'important'); });
+
+    while (host.firstChild) host.removeChild(host.firstChild);
+    host.appendChild(el('section', { class: 'multi_step_form' }, [form]));
+    return form;
   }
 
   /** The same for an FCS Clinical / Viva mark: fill the saved Resubmit form of that specialty and format. */

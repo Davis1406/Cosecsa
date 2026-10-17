@@ -189,6 +189,11 @@ async function resubmitTemplate(cache, url) {
     }
     return new Response(html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
+  if (fcs) {
+    // No saved Resubmit page of this specialty / format: serve the saved Results page; the page script builds the form.
+    const shell = await cache.match(self.location.origin + '/examiner/results');
+    if (shell) return new Response(await shell.clone().text(), { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  }
   return null;
 }
 
