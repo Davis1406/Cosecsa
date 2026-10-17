@@ -213,8 +213,8 @@
     .block-divider hr { border: 0; border-top: 1px solid #e6e9ef; margin: 10px 0; }
 
     /* flashcards */
-    .flashcards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; }
-    .flip-card { perspective: 1000px; height: 190px; cursor: pointer; }
+    .flashcards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+    .flip-card { perspective: 1000px; height: 220px; cursor: pointer; }
     .flip-card:focus-visible { outline: none; }
     .flip-card:focus-visible .flip-face { box-shadow: 0 0 0 3px rgba(153,6,10,.3); }
     .flip-inner { position: relative; width: 100%; height: 100%; transition: transform .6s cubic-bezier(.22,1,.36,1); transform-style: preserve-3d; }
@@ -232,7 +232,10 @@
     .flip-front .flip-label { font-size: 15px; font-weight: 700; }
     .flip-hint { font-size: 11px; opacity: .85; margin-top: 6px; }
     .flip-back { background: #fff; border: 1px solid #e6e9ef; transform: rotateY(180deg); }
-    .flip-back .flip-label { font-size: 13px; color: #334155; position: relative; z-index: 1; background: rgba(255,255,255,.85); padding: 6px 10px; border-radius: 6px; }
+    /* Card text pasted from the old course carries inline 18px / justified styles that overflow the card and stretch the word gaps */
+    .flip-face .flip-label { max-width: 100%; max-height: 100%; overflow-y: auto; text-align: center; hyphens: auto; }
+    .flip-face .flip-label * { font-size: inherit !important; text-align: center !important; margin: 0; }
+    .flip-back .flip-label { font-size: 14px; line-height: 1.45; color: #334155; position: relative; z-index: 1; background: rgba(255,255,255,.85); padding: 6px 10px; border-radius: 6px; }
 
     /* process stepper */
     .process-view { border: 1px solid #e6e9ef; border-radius: 12px; overflow: hidden; }

@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-17) — Examiner Training: flashcards overflowed and had stretched word gaps (Module 5 OSCE cards)
+- Card text carried inline 18px / justified styles from the old course, so the back text overflowed the 190px card and justified words spread apart; the grid also left the fourth card alone on a second row. Card text is now centred at 14px, the card is 220px tall (long text scrolls inside it), and the grid uses columns of at least 280px (2 × 2 on medium widths, 4 across on wide ones). Checked in Chrome: all four backs fit inside their cards.
+- **File:** `resources/views/learning/partials/styles.blade.php`.
+
 ### Added (2026-10-17) — Examiner Training: Table block, image alt text (for the Module 2, 5 and 6 rebuild)
 - New `table` block (`resources/views/learning/blocks/table.blade.php`, dispatched from `_dispatch`): header row, optional row headers, scrolls sideways inside its own box on phones (keyboard-focusable), light and dark styles in `learning/partials/styles.blade.php`; "Table" icon in the add-block menu. Images now render `payload…image.alt` (empty as before when unset).
 - Content is applied by `php artisan lms:update-examiner-modules` in `cosecsa-api` (see its CHANGES.md); deploy this repo first. Checked in Chrome from the real Blade partials: tables render and scroll; all three modules render with no errors.
