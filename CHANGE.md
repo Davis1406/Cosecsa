@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-17) — FCS "Select Examination Format": Viva button text invisible in dark mode
+- The Viva button is gold with dark-maroon text, but its title and caption are `<h4>` / `<p>`, which the global dark-mode rules (`body.dark-mode h4 { color:#e0e0e0 }`, `body.dark-mode p { color:#d1d5db }`) recoloured light grey, so they vanished on the gold. In `exam_type_selection.blade.php` the button's `h4`, `p` and icon now follow the button's own colour in dark mode. Checked in Chrome with the app's stylesheets and the global rules, at rest and on hover with a real pointer: Clinical white on maroon, hovered dark-maroon on gold; Viva dark-maroon on gold, hovered gold on maroon.
+- **File:** `resources/views/examiner/exam_type_selection.blade.php`.
+
 ### Fixed (2026-10-16) — FCS "Select Examination Format" pages (`examiner/<specialty>`) in dark mode
 - The page's box was a fixed white card (`.exam-fieldset { background:#fff }`), so the light heading/sub-text of dark mode vanished on it, and the maroon title and the Clinical/Viva hover states (maroon/gold swaps) were low-contrast on the dark page. Added dark-mode rules in `exam_type_selection.blade.php`: dark card with a light-maroon border, light title and heading, readable sub-text, and Clinical/Viva buttons with dark-maroon text on gold (and gold on maroon when hovered). Light mode is unchanged.
 - **File:** `resources/views/examiner/exam_type_selection.blade.php`. Not viewed in a browser (the browser tool stopped responding); only the card's computed dark background was confirmed.

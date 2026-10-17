@@ -85,6 +85,12 @@
         body.dark-mode .viva-btn { background-color: #FEC503; color: #5c1010 !important; }
         body.dark-mode .viva-btn:hover { background-color: #a02626; color: #FEC503 !important; }
 
+        /* The global dark-mode heading / paragraph colours (light grey) otherwise recolour the Clinical / Viva
+           button's own title and caption (light text on the gold Viva button): they follow the button's colour. */
+        body.dark-mode .exam-type-btn h4,
+        body.dark-mode .exam-type-btn p,
+        body.dark-mode .exam-type-btn i { color: inherit !important; }
+
         /* Exam type button styling */
         .exam-type-btn {
             padding: 30px 15px;
