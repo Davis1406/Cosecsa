@@ -139,6 +139,22 @@
             opacity: 0.9;
         }
 
+        /* Hovering Clinical turns it gold: its text must turn dark with it (it was white on gold). */
+        .clinical-btn:hover { color: #a02626; }
+
+        /* Dark mode: maroon title/border are low-contrast on the dark page, and the global dark-mode heading /
+           paragraph colours (light grey) recolour the button titles, which vanishes on the gold Viva button. */
+        body.dark-mode .exam-fieldset { border-color: #f48a8a; }
+        body.dark-mode .exam-fieldset legend { color: #f48a8a; }
+        body.dark-mode .exam-fieldset h3 { color: #f1f5f9; }
+        body.dark-mode .exam-fieldset .text-muted { color: #a0aec0 !important; }
+        body.dark-mode .exam-type-btn h4,
+        body.dark-mode .exam-type-btn p,
+        body.dark-mode .exam-type-btn i { color: inherit !important; }
+        body.dark-mode .clinical-btn:hover { background-color: #FEC503; color: #5c1010; }
+        body.dark-mode .viva-btn { background-color: #FEC503; color: #5c1010; }
+        body.dark-mode .viva-btn:hover { background-color: #a02626; color: #FEC503; }
+
         @media (max-width: 575.98px) {
             .exam-fieldset { padding: 8px 16px 20px; }
             .exam-fieldset legend { font-size: 1.15rem; }
