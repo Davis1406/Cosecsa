@@ -591,24 +591,44 @@
 
 @push('styles')
 <style>
-/* ── Force light mode ─────────────────────────────────────────────────────── */
-.content-wrapper,
-.content-wrapper *:not(.profile-hero-banner):not(.profile-hero-banner *) {
+/* ── Light theme: white cards with dark text (kept exactly as before) ─────── */
+body:not(.dark-mode) .content-wrapper,
+body:not(.dark-mode) .content-wrapper *:not(.profile-hero-banner):not(.profile-hero-banner *) {
     color-scheme: light;
 }
-.card       { background-color:#fff !important; color:#212529 !important; }
-.card-body  { background-color:#fff !important; color:#212529 !important; }
-.section-header {
+body:not(.dark-mode) .card       { background-color:#fff !important; color:#212529 !important; }
+body:not(.dark-mode) .card-body  { background-color:#fff !important; color:#212529 !important; }
+.section-header { font-weight:600; font-size:.875rem; }
+body:not(.dark-mode) .section-header {
     background:#f8f0f0 !important; color:#a02626 !important;
     border-bottom-color:#f0dada !important;
-    font-weight:600; font-size:.875rem;
 }
-.info-table th { background:#fafafa !important; color:#555 !important; font-weight:600; width:38%; }
-.info-table td { background:#fff !important; color:#333 !important; }
-.table th, .table td { color:#212529 !important; border-color:#dee2e6 !important; }
-.text-muted { color:#6c757d !important; }
-.text-primary { color:#a02626 !important; }
+.info-table th { font-weight:600; width:38%; }
+body:not(.dark-mode) .info-table th { background:#fafafa !important; color:#555 !important; }
+body:not(.dark-mode) .info-table td { background:#fff !important; color:#333 !important; }
+body:not(.dark-mode) .table th, body:not(.dark-mode) .table td { color:#212529 !important; border-color:#dee2e6 !important; }
+body:not(.dark-mode) .text-muted { color:#6c757d !important; }
+body:not(.dark-mode) .text-primary { color:#a02626 !important; }
 .badge-primary { background-color:#a02626 !important; }
+
+/* ── Dark theme (the page used to force white cards in dark mode) ─────────── */
+body.dark-mode .card, body.dark-mode .card-body { background-color:#1e2330 !important; color:#e2e8f0 !important; }
+body.dark-mode .section-header {
+    background:#252c3b !important; color:#f48a8a !important;
+    border-bottom-color:#2d3748 !important;
+}
+body.dark-mode .info-table th { background:#252c3b !important; color:#cbd5e0 !important; }
+body.dark-mode .info-table td { background:#1e2330 !important; color:#e2e8f0 !important; }
+body.dark-mode .table th, body.dark-mode .table td { color:#e2e8f0 !important; border-color:#2d3748 !important; }
+body.dark-mode .text-muted { color:#94a3b8 !important; }
+body.dark-mode .text-primary { color:#f48a8a !important; }
+/* the participation-by-year table is styled inline with light-theme greys */
+body.dark-mode .card-body table th[style*="#6c757d"] { color:#94a3b8 !important; }
+body.dark-mode .card-body table td[style*="color:#333"] { color:#e2e8f0 !important; }
+body.dark-mode .card-body table tr[style*="border-bottom"] { border-bottom-color:#2d3748 !important; }
+body.dark-mode .card-body table td[style*="border-right"] { border-right-color:#2d3748 !important; }
+body.dark-mode .modal .card-header.bg-light { background-color:#252c3b !important; color:#e2e8f0 !important; }
+body.dark-mode .modal .card-header.bg-light h6 { color:#e2e8f0 !important; }
 
 /* ── Profile Hero ─────────────────────────────────────────────────────────── */
 .profile-hero-banner {

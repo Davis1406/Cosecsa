@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-17) — Examiner profile (`examiner/profile_settings`): real dark mode instead of forced white cards
+- The page forced a light theme (`.card { background:#fff !important }`, dark text, `color-scheme: light`) even in dark mode, so it showed bright white cards on the dark page. The forced-light rules now apply only in light mode (unchanged there), and dark mode has its own: dark cards, light-maroon section headers, light table text and muted text, and fixes for the participation-by-year table (styled inline with light-theme greys: dark `#333` text and near-white row borders) and the history modal's light card headers. The maroon hero banner and the white ID-badge card are unchanged. Checked in Chrome with a hand-built copy of the page's cards/tables and its real stylesheet, in dark and light (not the live page, which needs a login and data).
+- **File:** `resources/views/examiner/profile_settings.blade.php`.
+
 ### Fixed (2026-10-17) — FCS Resubmit "choose Clinical or Viva" page (`examiner/fcs-resubmit/{candidate}`): dark-mode colours
 - Same problems as the specialty selection page: in dark mode the global heading / paragraph colours (light grey) recoloured the Viva button's title and caption, which vanished on the gold button; the maroon title and border were low-contrast on the dark page. Added the matching dark-mode rules (light-maroon title and border, light heading, readable sub-text, button text that follows the button colour: dark maroon on gold, white on maroon, and the hover swaps). Also in light mode: hovering Clinical turned the button gold with white text; the text is now maroon on the gold hover. Checked in Chrome with the app's stylesheets and global rules: rest and hover (real pointer) in dark mode, and the Clinical hover in light mode.
 - **File:** `resources/views/examiner/fcs_resubmit_selection.blade.php`.
