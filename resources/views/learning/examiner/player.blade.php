@@ -79,9 +79,9 @@
                     </div>
 
                     <div class="pm-content card card-pad">
-                        @php $layout = \App\Support\LearningView::topics($blocks); @endphp
-                        @if($layout)
-                            @include('learning.partials.topics', ['layout' => $layout])
+                        @php $topicLayout = \App\Support\LearningView::topics($blocks); @endphp
+                        @if($topicLayout)
+                            @include('learning.partials.topics', ['topicLayout' => $topicLayout])
                         @else
                             @foreach(\App\Support\LearningView::segments($blocks) as $segment)
                                 @include('learning.partials.segment', ['segment' => $segment])

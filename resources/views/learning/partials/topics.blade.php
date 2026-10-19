@@ -1,10 +1,10 @@
 @php
-    $count = count($layout['topics']);
+    $count = count($topicLayout['topics']);
     $number = preg_match('/^Module\s+(\d+)/i', $module['title'], $m) ? 'Module '.$m[1] : 'this module';
     $storeKey = ($preview ?? false) ? null : 'lms-topics:'.auth()->id().':'.$module['slug'];
 @endphp
 
-@foreach($layout['intro'] as $segment)
+@foreach($topicLayout['intro'] as $segment)
     @include('learning.partials.segment', ['segment' => $segment])
 @endforeach
 
@@ -14,7 +14,7 @@
         <div class="tp-track" role="progressbar" aria-label="Topics read" aria-valuemin="0" aria-valuemax="{{ $count }}" aria-valuenow="0" data-topics-track><div class="tp-fill" data-topics-fill></div></div>
     </div>
 
-    @foreach($layout['topics'] as $i => $topic)
+    @foreach($topicLayout['topics'] as $i => $topic)
         <div class="topic" data-topic="{{ $i }}">
             <button type="button" class="topic-head" aria-expanded="false" aria-controls="topic-body-{{ $i }}">
                 <span class="topic-n" aria-hidden="true"><span>{{ $i + 1 }}</span></span>
@@ -35,7 +35,7 @@
 
     <div class="topics-done" data-topics-done hidden>
         <div class="td-msg" role="status">You have read all {{ $count }} topics of {{ $number }}. Use the course menu to move to the next module or the quiz module.</div>
-        @foreach($layout['outro'] as $segment)
+        @foreach($topicLayout['outro'] as $segment)
             @include('learning.partials.segment', ['segment' => $segment])
         @endforeach
     </div>
