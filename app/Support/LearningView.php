@@ -98,6 +98,48 @@ class LearningView
     }
 
     /**
+     * Topic layout (Modules 3 and 4): a divider block carrying `payload.topic` {title, subtitle}
+     * starts a collapsed topic card; a divider carrying `payload.topic_end` closes the topic list.
+     * Blocks before the first marker are the intro, blocks after the end marker are the
+     * completion area (shown once every topic has been read). Returns null for a module with no
+     * topic markers, which keeps the ordinary long-page layout.
+     */
+    public static function topics(array $blocks): ?array
+    {
+        $isMarker = fn ($b) => $b->type === 'divider' && ! empty($b->payload['topic']);
+        $isEnd = fn ($b) => $b->type === 'divider' && ! empty($b->payload['topic_end']);
+
+        if (! array_filter($blocks, $isMarker)) {
+            return null;
+        }
+
+        $intro = $outro = $topics = [];
+        $current = null;
+        $ended = false;
+
+        foreach ($blocks as $block) {
+            if ($ended) {
+                $outro[] = $block;
+            } elseif ($isEnd($block)) {
+                $ended = true;
+            } elseif ($isMarker($block)) {
+                $topics[] = ['title' => $block->payload['topic']['title'] ?? '', 'subtitle' => $block->payload['topic']['subtitle'] ?? '', 'blocks' => []];
+                $current = array_key_last($topics);
+            } elseif ($current === null) {
+                $intro[] = $block;
+            } else {
+                $topics[$current]['blocks'][] = $block;
+            }
+        }
+
+        foreach ($topics as &$topic) {
+            $topic['segments'] = static::segments($topic['blocks']);
+        }
+
+        return ['intro' => static::segments($intro), 'topics' => $topics, 'outro' => static::segments($outro)];
+    }
+
+    /**
      * Groups a module's blocks for the player: back-to-back videos become one
      * two-column grid of square tiles. A video "unit" is the video plus the
      * paragraph right after it (its explanation) and the subheading right before

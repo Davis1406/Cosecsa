@@ -23,6 +23,12 @@
         @include('learning.blocks.flashcard', ['block' => $block, 'payload' => $payload])
     @elseif($type === 'interactive' && $variant === 'labeledgraphic')
         @include('learning.blocks.labeledgraphic', ['block' => $block, 'payload' => $payload])
+    @elseif($type === 'interactive' && $variant === 'details')
+        @include('learning.blocks.details', ['block' => $block, 'payload' => $payload])
+    @elseif($type === 'interactive' && $variant === 'tiles')
+        @include('learning.blocks.tiles', ['block' => $block, 'payload' => $payload])
+    @elseif($type === 'interactive' && $variant === 'dodont')
+        @include('learning.blocks.dodont', ['block' => $block, 'payload' => $payload])
     @elseif($type === 'interactive' && $variant === 'process')
         @include('learning.blocks.process', ['block' => $block, 'payload' => $payload])
     @endif

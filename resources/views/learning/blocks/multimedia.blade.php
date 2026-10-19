@@ -4,13 +4,14 @@
     $video   = $first['media']['video'] ?? null;
     $caption = $first['caption'] ?? null;
     $localUrl  = $video['video_url'] ?? null;
+    $poster    = $video['poster']['image']['resolved_url'] ?? null;
     $label     = $video['display_label'] ?? $video['originalUrl'] ?? 'Video';
 @endphp
 
 <div class="block block-video">
     @if($localUrl)
         <div class="video-frame">
-            <video controls preload="metadata" src="{{ $localUrl }}"></video>
+            <video controls preload="metadata" src="{{ $localUrl }}"@if($poster) poster="{{ $poster }}"@endif></video>
         </div>
     @else
         <div class="video-placeholder">

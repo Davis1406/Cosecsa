@@ -79,13 +79,14 @@
                     </div>
 
                     <div class="pm-content card card-pad">
-                        @foreach(\App\Support\LearningView::segments($blocks) as $segment)
-                            @isset($segment['units'])
-                                @include('learning.blocks.video-grid', $segment)
-                            @else
-                                @include('learning.blocks._dispatch', ['block' => $segment['block']])
-                            @endisset
-                        @endforeach
+                        @php $layout = \App\Support\LearningView::topics($blocks); @endphp
+                        @if($layout)
+                            @include('learning.partials.topics', ['layout' => $layout])
+                        @else
+                            @foreach(\App\Support\LearningView::segments($blocks) as $segment)
+                                @include('learning.partials.segment', ['segment' => $segment])
+                            @endforeach
+                        @endif
 
                         @if($module['type'] === 'quiz')
                             <div class="pm-complete">

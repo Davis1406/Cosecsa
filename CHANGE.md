@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added (2026-10-19) — Examiner Training: topic-card layout for Modules 3 and 4
+- A module whose blocks contain topic markers (a divider block with `payload.topic` {title, subtitle}; `payload.topic_end` closes the list) now shows collapsed numbered topic cards, one open at a time, a "N of M topics read" bar, a green tick on each opened topic, and a completion message plus closing card after the last topic. Topics open in any order. Progress is kept per examiner in the browser (not in the admin preview). Modules without markers keep the long-page layout; the existing Previous/Next module links are unchanged.
+- New block renderers: `details` (collapsed list), `tiles` (tiles, pills or side-by-side cards) and `dodont` (green tick / red cross panels, plain lists). Images can carry a still frame shown instead of an animated GIF when the visitor prefers reduced motion; videos can carry a poster. Light and dark styles in `learning/partials/styles.blade.php`.
+- Content is applied by `php artisan lms:update-examiner-modules-3-4` in `cosecsa-api` (see its CHANGES.md); deploy this repo first. Tested by rendering the real partials from a SQLite copy of the generated blocks in Chrome (topics open/close, tick, panels). Video captions are not included (no caption files supplied).
+- **Files:** `app/Support/LearningView.php`, `resources/views/learning/partials/{topics,segment,styles}.blade.php`, `resources/views/learning/blocks/{details,tiles,dodont,_dispatch,_img,multimedia}.blade.php`, `resources/views/learning/examiner/player.blade.php`.
+
 ### Fixed (2026-10-17) — Examiner Training: flashcards overflowed and had stretched word gaps (Module 5 OSCE cards)
 - Card text carried inline 18px / justified styles from the old course, so the back text overflowed the 190px card and justified words spread apart; the grid also left the fourth card alone on a second row. Card text is now centred at 14px, the card is 220px tall (long text scrolls inside it), and the grid uses columns of at least 280px (2 × 2 on medium widths, 4 across on wide ones). Checked in Chrome: all four backs fit inside their cards.
 - **File:** `resources/views/learning/partials/styles.blade.php`.
