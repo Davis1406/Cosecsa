@@ -34,6 +34,8 @@ return [
     'cosecsa_api' => [
         'url'   => env('COSECSA_API_URL', 'http://api.cosecsamis.org'),
         'token' => env('COSECSA_API_TOKEN'),
+        // Optional Host header, for COSECSA_API_URL=http://127.0.0.1:8081 (see ApiClient).
+        'host'  => env('COSECSA_API_HOST'),
     ],
 
     // The CEO's user_id — kept separate from config/progress_report_sections.php

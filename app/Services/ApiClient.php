@@ -14,11 +14,13 @@ class ApiClient
 {
     private string $baseUrl;
     private ?string $token;
+    private ?string $host;
 
     public function __construct()
     {
         $this->baseUrl = rtrim(config('services.cosecsa_api.url'), '/');
         $this->token   = config('services.cosecsa_api.token');
+        $this->host    = config('services.cosecsa_api.host');
     }
 
     public function get(string $path, array $query = []): Response
@@ -35,7 +37,7 @@ class ApiClient
      */
     public function getMany(string $path, array $queries): array
     {
-        $headers = Auth::check() ? ['X-Actor-Id' => Auth::id(), 'X-Actor-Name' => Auth::user()->name] : [];
+        $headers = $this->actorHeaders() + $this->hostHeader();
 
         $responses = Http::pool(fn (Pool $pool) => collect($queries)->map(
             fn ($query, $key) => $pool->as((string) $key)
@@ -54,7 +56,7 @@ class ApiClient
      */
     public function getAll(array $requests): array
     {
-        $headers = Auth::check() ? ['X-Actor-Id' => Auth::id(), 'X-Actor-Name' => Auth::user()->name] : [];
+        $headers = $this->actorHeaders() + $this->hostHeader();
 
         $responses = Http::pool(fn (Pool $pool) => collect($requests)->map(
             fn ($req, $key) => $pool->as((string) $key)
@@ -160,13 +162,13 @@ class ApiClient
     // Like get() but bypasses the internal token — for public API endpoints.
     public function getPublic(string $path, array $query = []): Response
     {
-        return Http::timeout(30)->get($this->publicUrl($path), $query);
+        return Http::withHeaders($this->hostHeader())->timeout(30)->get($this->publicUrl($path), $query);
     }
 
     // Like post() but bypasses the internal token — for public API endpoints.
     public function postPublic(string $path, array $data = []): Response
     {
-        return Http::timeout(30)->post($this->publicUrl($path), $data);
+        return Http::withHeaders($this->hostHeader())->timeout(30)->post($this->publicUrl($path), $data);
     }
 
     // Recursively attach a (possibly nested) array as multipart fields.
@@ -194,16 +196,23 @@ class ApiClient
     // its cosecsa-api counterpart on the other).
     private function pending()
     {
-        $request = Http::withToken($this->token);
+        return Http::withToken($this->token)
+            ->withHeaders($this->actorHeaders() + $this->hostHeader());
+    }
 
-        if (Auth::check()) {
-            $request = $request->withHeaders([
-                'X-Actor-Id'   => Auth::id(),
-                'X-Actor-Name' => Auth::user()->name,
-            ]);
-        }
+    private function actorHeaders(): array
+    {
+        return Auth::check()
+            ? ['X-Actor-Id' => Auth::id(), 'X-Actor-Name' => Auth::user()->name]
+            : [];
+    }
 
-        return $request;
+    // When COSECSA_API_URL points at the loopback vhost (http://127.0.0.1:8081,
+    // same server, no TLS handshake per call) the API still has to see its own
+    // hostname.
+    private function hostHeader(): array
+    {
+        return $this->host ? ['Host' => $this->host] : [];
     }
 
     private function publicUrl(string $path): string
