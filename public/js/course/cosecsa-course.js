@@ -19,7 +19,7 @@ topics.forEach(function(t){var b=t.querySelector('.th');b.addEventListener('clic
   if(!lite){seen[t.dataset.i]=1;save(t.dataset.i)}
   setTimeout(function(){t.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'})},30)}
  paint()})});
-if($('theme'))$('theme').addEventListener('click',function(){var dark=root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;root.dataset.theme=dark?'light':'dark'});
+/* Light mode only: the wrapper carries data-theme="light" (course/layout.blade.php), which switches off every dark rule. */
 paint();
 window.CSCourse={img:root.getAttribute('data-img')||'/images/course/',root:root,$:$,topics:topics,seen:seen,paint:paint,key:KEY};
 })();

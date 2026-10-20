@@ -4,7 +4,7 @@
 
 @section('course-body')
 <div class="app">
-<div class="bar0"><span class="brand"><img class="crest" alt="COSECSA crest" src="{{ asset('images/course/cosecsa-crest.png') }}">COSECSA · Examiner course</span><button id="theme" type="button">Light / dark</button></div>
+<div class="bar0"><span class="brand"><img class="crest" alt="COSECSA crest" src="{{ asset('images/course/cosecsa-crest.png') }}">COSECSA · Examiner course</span></div>
 <div class="hero">
 <svg class="lens" viewBox="0 0 200 200" aria-hidden="true" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"><path d="M30 170V120M70 170V90M110 170V60M150 170V30M20 170h170"/></svg>
 <div class="k">Module 7 · Fellowship marking</div>

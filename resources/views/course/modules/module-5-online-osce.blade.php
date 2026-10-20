@@ -4,7 +4,7 @@
 
 @section('course-body')
 <div class="app">
-<div class="bar0"><span class="brand"><img class="crest" alt="COSECSA crest" src="{{ asset('images/course/cosecsa-crest.png') }}">COSECSA · Examiner course</span><button id="theme" type="button">Light / dark</button></div>
+<div class="bar0"><span class="brand"><img class="crest" alt="COSECSA crest" src="{{ asset('images/course/cosecsa-crest.png') }}">COSECSA · Examiner course</span></div>
 <div class="hero"><svg class="lens" viewBox="0 0 200 200" aria-hidden="true" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><circle cx="100" cy="100" r="70"/><path d="M60 100h80M100 60v80"/><circle cx="100" cy="100" r="12" fill="#fff"/></svg><div class="k">Module 5 · Membership examination</div><h1>The online OSCE</h1><p class="l">How the MCS Part II online OSCE is built, run and marked, and how to examine fairly and to the approved standard.</p>
 <div class="prog"><span id="pc">0 of 7 topics read</span><span>Saved on this device</span></div><div class="bar"><i id="fill"></i></div></div>
 <div class="topics" id="topics">

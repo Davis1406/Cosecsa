@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-21) — Examiner Training: light mode only
+- The Light/dark button is removed from every course page and the course always uses the light colours (the wrapper carries `data-theme="light"`, which switches off the device-based dark rules).
+- **Files:** `resources/views/course/layout.blade.php`, `resources/views/course/modules/*.blade.php`, `public/js/course/cosecsa-course.js`.
+
 ### Changed (2026-10-20) — Examiner Training: the nine pages of the final design pack
 - Modules 1–7, the Quiz and the Acknowledgements are now the coded pages of the final pack (Merriweather/Raleway, COSECSA green/crimson/gold, collapsed topic cards, Module 5 Zoom walk-through, Module 6 marking sheets, **new Module 7 Marking Fellowship Exams** with the descriptors). They render inside the existing player (module sidebar and drawer kept). Which page a module shows is `settings.view` in cosecsa-api; a module without one still shows its blocks (the Completion/certificate page does).
 - Topic progress is saved per learner (the page posts to `examiner/learning/{slug}/topics`); a module completes when every topic card has been read. The quiz is driven by the server: each answer is checked on the server (instant feedback and explanation), the score is saved when all 20 are answered, pass mark 90% (18 of 20) unlocks the course; "Start again" retakes it.

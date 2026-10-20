@@ -12,7 +12,7 @@
 @endpush
 
 @section(config('course.content_section', 'content'))
-<div class="cs-course mod-{{ $mod }}" data-progress-key="{{ $key ?? '' }}" data-img="{{ asset('images/course') }}/" @if(!empty($lite)) data-lite @endif
+<div class="cs-course mod-{{ $mod }}" data-theme="light" data-progress-key="{{ $key ?? '' }}" data-img="{{ asset('images/course') }}/" @if(!empty($lite)) data-lite @endif
      @if(!empty($saveUrl)) data-save-url="{{ $saveUrl }}" data-seen="{{ json_encode(array_values($topics_read ?? [])) }}" data-csrf="{{ csrf_token() }}" @endif>
   @include('course.partials.icons')
   @yield('course-body')

@@ -4,7 +4,7 @@
 
 @section('course-body')
 <div class="app">
-<div class="bar0"><span class="brand"><img class="crest" alt="COSECSA crest" src="{{ asset('images/course/cosecsa-crest.png') }}">COSECSA · Examiner course</span><button id="theme" type="button">Light / dark</button></div>
+<div class="bar0"><span class="brand"><img class="crest" alt="COSECSA crest" src="{{ asset('images/course/cosecsa-crest.png') }}">COSECSA · Examiner course</span></div>
 <div class="hero"><svg class="lens" viewBox="0 0 200 200" aria-hidden="true" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M30 160V90M70 160V60M110 160V110M150 160V40M20 160h160"/></svg><div class="k">Module 6 · Fellowship examination</div><h1>The Fellowship examination</h1><p class="l">COSECSA's clinical and oral Fellowship examinations: who the candidates are, how each station type is run, and how to mark fairly.</p>
 <div class="prog"><span id="pc">0 of 7 topics read</span><span>Saved on this device</span></div><div class="bar"><i id="fill"></i></div></div>
 <div class="topics" id="topics">

@@ -28,7 +28,7 @@
 
 @section('course-body')
 <div class="app">
-<div class="bar0"><span class="brand"><img class="crest" alt="COSECSA crest" src="{{ asset('images/course/cosecsa-crest.png') }}">COSECSA · Examiner course</span><button id="theme" type="button">Light / dark</button></div>
+<div class="bar0"><span class="brand"><img class="crest" alt="COSECSA crest" src="{{ asset('images/course/cosecsa-crest.png') }}">COSECSA · Examiner course</span></div>
 <div class="hero"><svg class="lens" viewBox="0 0 200 200" aria-hidden="true" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M60 70c0-22 80-22 80 0 0 22-40 20-40 44M100 150h.01" stroke-width="12"/></svg><div class="k">Quiz · {{ $total }} questions</div><h1>Examiner quiz</h1><p class="l">{{ $total }} questions across {{ count($sections) }} sections. Tap an answer to see if you are right and why. The pass mark is {{ $passMark }}% ({{ $needed }} of {{ $total }}). You can answer in any order.@if($last_attempt) Your last attempt: {{ round($last_attempt['score']) }}%.@endif</p>
 <div class="prog"><span id="pc">0 of {{ $total }} answered</span><span>Saved to your account</span></div><div class="bar"><i id="fill"></i></div></div>
 <div class="topics" id="topics">
