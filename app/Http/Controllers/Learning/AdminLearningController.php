@@ -65,7 +65,7 @@ class AdminLearningController extends Controller
         // Coded pages of the final design pack: the wording is edited here (text editor), the quiz keeps its question editor.
         $view = $this->codedPageView($data['module']);
         if ($view && $data['module']['type'] !== 'quiz') {
-            return $this->wordingEditor($id, $data['module'], $view, $data['course']);
+            return $this->designEditor($id, $data['module'], $view, $data['course']);
         }
 
         $types = $this->api->get('learning/admin/block-types');
@@ -87,60 +87,113 @@ class AdminLearningController extends Controller
         return $view && view()->exists("course.modules.{$view}") ? $view : null;
     }
 
-    /** The wording editor: every piece of wording on the coded page, grouped by topic card. */
-    private function wordingEditor(int $id, array $module, string $view, array $course)
+    /**
+     * The page editor (blocks on the left, live preview on the right). The page is held as data; the first time a
+     * page is opened its own coded design is read into that data (and saved), so nothing changes for examiners.
+     */
+    private function designEditor(int $id, array $module, string $view, array $course)
     {
         $slug = $module['slug'];
-        $page = $this->api->get("learning/modules/{$slug}", ['user_id' => Auth::id(), 'preview' => 1])->json();
-        $html = view("course.modules.{$view}", $page + ['preview' => true, 'layout' => 'learning.examiner._standalone'])
-            ->renderSections()['course-body'] ?? '';
-        $overrides = $this->api->get("learning/admin/modules/{$id}/texts")->json('overrides') ?? [];
+        $meta = CoursePage::META[$view] ?? null;
+        abort_unless($meta, 404);
 
-        $groups = [];
-        $seenKeys = [];
-        foreach (CourseText::fields($html) as $f) {
-            $o = $overrides[$f['key']] ?? null;
-            $seenKeys[$f['key']] = true;
-            $groups[$f['topic']]['fields'][] = $f + [
-                'kind' => CourseText::kind($f),
-                'current' => $o['html'] ?? $f['html'],
-                'overridden' => $o !== null,
-                'by' => $o['updated_by'] ?? null,
-                'when' => $o['updated_at'] ?? null,
-            ];
-        }
-        foreach ($groups as $t => &$g) {
-            // topic title = the first "Title" field of the group (the card header), else Banner
-            $title = collect($g['fields'])->first(fn ($f) => $f['kind'] === 'Title' || $f['kind'] === 'Page title');
-            $g['title'] = $t < 0 ? 'Banner' : ($title['text'] ?? 'Topic '.($t + 1));
-            $g['edited'] = collect($g['fields'])->where('overridden', true)->count();
-        }
-        unset($g);
-        ksort($groups);
+        $state = $this->api->get("learning/admin/modules/{$id}/page")->json();
+        $model = $state['model'] ?? null;
+        $seeded = false;
 
-        // Edits whose original wording no longer exists on the page (the page itself was changed by a developer).
-        $stale = collect($overrides)->reject(fn ($o, $k) => isset($seenKeys[$k]))->map(fn ($o, $k) => $o + ['key' => $k])->values();
+        if (! $model) {
+            $page = $this->api->get("learning/modules/{$slug}", ['user_id' => Auth::id(), 'preview' => 1])->json();
+            $body = view("course.modules.{$view}", $page + ['preview' => true, 'layout' => 'learning.examiner._standalone', 'texts' => []])
+                ->renderSections()['course-body'] ?? '';
+            $model = CoursePage::parse($body);
+            $r = $this->api->post("learning/admin/modules/{$id}/page", ['model' => $model, 'by' => 'original design', 'seed' => 1]);
+            abort_unless($r->successful(), 502);
+            $state = $this->api->get("learning/admin/modules/{$id}/page")->json();
+            $model = $state['model'] ?? $model;
+            $seeded = true;
+        }
+
+        $icons = [];
+        if (preg_match_all('/<symbol id="([a-z0-9]+)"/', (string) @file_get_contents(resource_path('views/course/partials/icons.blade.php')), $im)) {
+            $icons = array_values(array_filter($im[1], fn ($i) => $i !== 'i2b'));
+        }
 
         return view('learning.admin.coded-module', [
-            'module' => $module, 'course' => $course, 'groups' => $groups, 'stale' => $stale,
-            'totalFields' => array_sum(array_map(fn ($g) => count($g['fields']), $groups)),
-            'totalEdited' => collect($groups)->sum('edited'),
+            'module' => $module, 'course' => $course, 'model' => $model, 'icons' => $icons, 'seeded' => $seeded,
+            'defaults' => CoursePage::defaultColors($meta),
+            'updatedBy' => $state['updated_by'] ?? null, 'updatedAt' => $state['updated_at'] ?? null,
         ]);
     }
 
-    // GET admin/exams/learning/modules/{id}/frame — the coded page on its own (saved wording), for the editor's live preview
-    public function moduleFrame(int $id)
+    // POST admin/exams/learning/modules/{id}/preview  {model} — the page as it would look with the editor's unsaved model
+    // (a whole HTML document for the editor's preview frame; nothing is saved and no progress recorded)
+    public function pagePreview(Request $request, int $id)
     {
         $admin = $this->api->get("learning/admin/modules/{$id}");
         abort_unless($admin->successful(), 404);
-        $slug = $admin->json('module.slug');
+        $view = $this->codedPageView($admin->json('module'));
+        abort_unless($view && isset(CoursePage::META[$view]), 404);
 
-        $page = $this->api->get("learning/modules/{$slug}", ['user_id' => Auth::id(), 'preview' => 1]);
-        abort_unless($page->successful(), 404);
-        $view = $page->json('module.view');
-        abort_unless($view && view()->exists("course.modules.{$view}") && $page->json('module.type') !== 'quiz', 404);
+        $model = (array) $request->input('model', []);
+        $model = $this->cleanModel($model);
+        $page = $this->api->get("learning/modules/{$admin->json('module.slug')}", ['user_id' => Auth::id(), 'preview' => 1])->json();
 
-        return view("course.modules.{$view}", $page->json() + ['preview' => true, 'courseShell' => 'learning.examiner.coded-frame', 'cwMark' => true]);
+        return view('course.modules._page', $page + [
+            'page' => $model, 'preview' => true, 'courseShell' => 'learning.examiner.coded-frame', 'cwMark' => true,
+            'pageMeta' => CoursePage::META[$view], 'texts' => [],
+        ]);
+    }
+
+    /** The editor's model, with the same markup clean-up the API applies. */
+    private function cleanModel(array $m): array
+    {
+        $san = fn ($v) => CoursePage::sanitize($v);
+        foreach (['lens', 'k', 'title', 'lead'] as $k) {
+            $m['hero'][$k] = $san($m['hero'][$k] ?? '');
+        }
+        foreach (['title', 'text', 'extra'] as $k) {
+            $m['done'][$k] = $san($m['done'][$k] ?? '');
+        }
+        foreach ($m['topics'] ?? [] as $i => $t) {
+            $m['topics'][$i]['title'] = $san($t['title'] ?? '');
+            $m['topics'][$i]['subtitle'] = $san($t['subtitle'] ?? '');
+            foreach ($t['blocks'] ?? [] as $j => $b) {
+                $m['topics'][$i]['blocks'][$j]['html'] = $san($b['html'] ?? '');
+            }
+        }
+
+        return $m;
+    }
+
+    // POST admin/exams/learning/modules/{id}/page  {model}
+    public function savePage(Request $request, int $id)
+    {
+        $response = $this->api->post("learning/admin/modules/{$id}/page", ['model' => $request->input('model'), 'by' => Auth::user()->name ?? null]);
+
+        return response()->json($response->json() ?? [], $response->status());
+    }
+
+    // POST admin/exams/learning/modules/{id}/page/reset
+    public function resetPage(int $id)
+    {
+        $response = $this->api->post("learning/admin/modules/{$id}/page/reset", []);
+
+        return response()->json($response->json() ?? [], $response->status());
+    }
+
+    // POST admin/exams/learning/modules/{id}/image — upload a picture for a page (returns the {{img}} path)
+    public function uploadPageImage(Request $request, int $id)
+    {
+        $request->validate(['image' => 'required|file|mimes:jpg,jpeg,png,gif,webp|max:4096']);
+        $file = $request->file('image');
+        $name = substr(sha1_file($file->getRealPath()), 0, 12).'.'.strtolower($file->getClientOriginalExtension());
+        $dir = public_path('images/course/uploads');
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+        $file->move($dir, $name);
+
+        return response()->json(['src' => '{{img}}/uploads/'.$name, 'url' => asset('images/course/uploads/'.$name)]);
     }
 
     // POST admin/exams/learning/modules/{id}/texts  {key, original, html}
@@ -324,7 +377,7 @@ class AdminLearningController extends Controller
         // Coded pages of the final design pack (progress is never recorded in the preview: no save URL).
         $view = $data['module']['view'] ?? null;
         if ($view && $data['module']['type'] !== 'quiz' && view()->exists("course.modules.{$view}")) {
-            return view("course.modules.{$view}", $data + ['preview' => true, 'layout' => 'learning.examiner._standalone']);
+            return CoursePage::view($data, ['preview' => true, 'layout' => 'learning.examiner._standalone']);
         }
 
         $data['blocks'] = LearningView::blocks($data['blocks']);

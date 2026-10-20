@@ -1,6 +1,6 @@
 {{--
   Body-only shell of a coded course page, for the admin's live preview (an iframe next to the wording editor).
-  The page's pieces of wording carry data-cwkey; the editor sends the text being typed and this frame shows it at once.
+  Blocks and topic cards carry data-bid / data-tid; the editor reloads this frame as the page changes and focuses/highlights the block being edited.
 --}}
 <!DOCTYPE html>
 <html lang="en">
@@ -10,9 +10,10 @@
     <title>Page preview</title>
     <style>
         html, body { margin: 0; background: #f6f5ef; }
-        [data-cwkey] { transition: background .3s; }
-        [data-cwkey].cw-flash { background: #fff3b0 !important; outline: 2px solid #f59e0b; outline-offset: 2px; border-radius: 3px; }
-        body.cw-frame [data-cwkey] { cursor: pointer; }
+        [data-bid], [data-tid] { transition: background .3s, outline-color .3s; }
+        [data-bid].cw-flash, [data-tid].cw-flash { outline: 3px solid #f59e0b; outline-offset: 3px; border-radius: 4px; }
+        body.cw-frame [data-bid] { cursor: pointer; }
+        body.cw-frame [data-bid]:hover { outline: 2px dashed rgba(245,158,11,.6); outline-offset: 2px; }
     </style>
     @stack('styles')
 </head>
@@ -22,24 +23,27 @@
     <script>
     (function () {
         var timer;
-        function el(key) { return document.querySelector('[data-cwkey="' + key + '"]'); }
+        function find(d) {
+            if (d.bid) return document.querySelector('[data-bid="' + d.bid + '"]');
+            if (d.tid) return document.querySelector('[data-tid="' + d.tid + '"]');
+            return null;
+        }
         window.addEventListener('message', function (e) {
             if (e.origin !== location.origin) return;
-            var d = e.data || {}, t = d.key ? el(d.key) : null;
-            if (!t) return;
-            if (d.type === 'cw-set') { t.innerHTML = d.html; }
-            if (d.type === 'cw-focus') {
-                var card = t.closest('.topic');
-                if (card && !card.classList.contains('open')) { var h = card.querySelector('.th'); if (h) h.click(); }
-                setTimeout(function () { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 60);
-                document.querySelectorAll('.cw-flash').forEach(function (x) { x.classList.remove('cw-flash'); });
-                t.classList.add('cw-flash'); clearTimeout(timer); timer = setTimeout(function () { t.classList.remove('cw-flash'); }, 2500);
-            }
+            var d = e.data || {};
+            if (d.type !== 'cw-focus') return;
+            var t = find(d); if (!t) return;
+            var card = t.closest('.topic');
+            if (card && !card.classList.contains('open')) { var h = card.querySelector('.th'); if (h) h.click(); }
+            setTimeout(function () { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 80);
+            document.querySelectorAll('.cw-flash').forEach(function (x) { x.classList.remove('cw-flash'); });
+            t.classList.add('cw-flash'); clearTimeout(timer); timer = setTimeout(function () { t.classList.remove('cw-flash'); }, 2200);
         });
-        // clicking wording in the preview jumps to its field in the editor
+        // clicking a block (or a topic header) in the preview selects it in the editor
         document.addEventListener('click', function (e) {
-            var t = e.target.closest('[data-cwkey]');
-            if (t && window.parent !== window) window.parent.postMessage({ type: 'cw-click', key: t.getAttribute('data-cwkey') }, location.origin);
+            if (window.parent === window) return;
+            var b = e.target.closest('[data-bid]'), t = e.target.closest('[data-tid]');
+            if (b || t) window.parent.postMessage({ type: 'cw-click', bid: b ? b.getAttribute('data-bid') : null, tid: t ? t.getAttribute('data-tid') : null }, location.origin);
         });
     })();
     </script>

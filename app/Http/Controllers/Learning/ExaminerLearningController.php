@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Learning;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApiClient;
+use App\Support\CoursePage;
 use App\Support\LearningView;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
@@ -84,7 +85,7 @@ class ExaminerLearningController extends Controller
                 return redirect()->route('examiner.learning.quiz', $slug);
             }
 
-            return view("course.modules.{$view}", $data + ['saveUrl' => route('examiner.learning.topics', $slug)]);
+            return CoursePage::view($data, ['saveUrl' => route('examiner.learning.topics', $slug)]);
         }
 
         $data['blocks'] = LearningView::blocks($data['blocks']);
