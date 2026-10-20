@@ -1,0 +1,104 @@
+/* COSECSA examiner course: shared tokens. Load before the module file. All rules are scoped to .cs-course */
+.cs-course {
+  --bg:#f6f5ef;
+  --surface:#ffffff;
+  --ink:#15241c;
+  --muted:#56655c;
+  --line:#dcdcd0;
+  --maroon:#87201f;
+  --maroon-soft:#f7e4e2;
+  --maroon-ink:#5c1514;
+  --good:#1d7a4a;
+  --good-soft:#e1f2e8;
+  --bad:#b3261e;
+  --bad-soft:#fbe5e3;
+  --warn:#8a5a00;
+  --warn-soft:#fbf0d6;
+  --entrust:#1f6f8b;
+  --entrust-soft:#e1f0f5;
+  --zoom:#5b4bb0;
+  --zoom-soft:#ebe8f8;
+  --gold:#e9b11c;
+  --herotext:#fff;
+  --c1:#1d6b48;
+  --c2:#87201f;
+  --c3:#8a6100;
+  --c4:#1f6f8b;
+  --c5:#5a4a9a;
+  --c6:#b3541e;
+  --c7:#2d4f9e;
+  --display:'Merriweather',Georgia,serif;
+  --body:'Raleway',system-ui,sans-serif;
+  --mono:'Raleway',system-ui,sans-serif;
+  --herotext:#fff;
+  --hero1:#7a1220;
+  --hero2:#c2384c;
+}
+
+@media (prefers-color-scheme: dark) {
+  .cs-course:not([data-theme=light]) {
+    --bg:#0e1511;
+    --surface:#16201b;
+    --ink:#ebf1ed;
+    --muted:#9db0a5;
+    --line:#27362e;
+    --maroon:#ec8a85;
+    --maroon-soft:#3a1c1b;
+    --maroon-ink:#f5c3c0;
+    --good:#62c58f;
+    --good-soft:#14301f;
+    --bad:#f08a82;
+    --bad-soft:#3a1c1a;
+    --warn:#e9b83e;
+    --warn-soft:#352a10;
+    --entrust:#6cc0dc;
+    --entrust-soft:#15303a;
+    --zoom:#a99cf0;
+    --zoom-soft:#25213f;
+    --gold:#e9b11c;
+    --herotext:#fff;
+    --c1:#62c58f;
+    --c2:#ec8a85;
+    --c3:#e9b83e;
+    --c4:#6cc0dc;
+    --c5:#b0a2ec;
+    --c6:#f0a074;
+    --c7:#8aa8f0;
+    color-scheme: dark;
+  }
+}
+.cs-course[data-theme=dark] {
+  --bg:#0e1511;
+  --surface:#16201b;
+  --ink:#ebf1ed;
+  --muted:#9db0a5;
+  --line:#27362e;
+  --maroon:#ec8a85;
+  --maroon-soft:#3a1c1b;
+  --maroon-ink:#f5c3c0;
+  --good:#62c58f;
+  --good-soft:#14301f;
+  --bad:#f08a82;
+  --bad-soft:#3a1c1a;
+  --warn:#e9b83e;
+  --warn-soft:#352a10;
+  --entrust:#6cc0dc;
+  --entrust-soft:#15303a;
+  --zoom:#a99cf0;
+  --zoom-soft:#25213f;
+  --gold:#e9b11c;
+  --herotext:#fff;
+  --c1:#62c58f;
+  --c2:#ec8a85;
+  --c3:#e9b83e;
+  --c4:#6cc0dc;
+  --c5:#b0a2ec;
+  --c6:#f0a074;
+  --c7:#8aa8f0;
+  color-scheme: dark;
+}
+
+.cs-course,.cs-course *{box-sizing:border-box}
+/* Guard against global/Bootstrap heading styles in the MIS */
+.cs-course h1,.cs-course h2,.cs-course h3,.cs-course h4{font-weight:700;color:inherit;letter-spacing:normal;text-transform:none}
+.cs-course ul,.cs-course ol{margin-bottom:0}

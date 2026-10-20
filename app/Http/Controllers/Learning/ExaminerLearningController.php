@@ -77,6 +77,16 @@ class ExaminerLearningController extends Controller
         }
 
         $data = $response->json();
+
+        // Modules of the final design pack are coded pages (resources/views/course/modules); the quiz has its own page.
+        if ($view = $this->codedView($data['module'])) {
+            if ($data['module']['type'] === 'quiz') {
+                return redirect()->route('examiner.learning.quiz', $slug);
+            }
+
+            return view("course.modules.{$view}", $data + ['saveUrl' => route('examiner.learning.topics', $slug)]);
+        }
+
         $data['blocks'] = LearningView::blocks($data['blocks']);
 
         return view('learning.examiner.player', $data);
@@ -135,7 +145,12 @@ class ExaminerLearningController extends Controller
             return redirect()->route('examiner.learning.result', $slug);
         }
 
-        return view('learning.examiner.quiz', $response->json());
+        $data = $response->json();
+        if ($this->codedView($data['module'])) {
+            return view('course.modules.quiz', $data + ['nextUrl' => ($data['next'] ?? null) ? route('examiner.learning.module', $data['next']['slug']) : null, 'nextTitle' => $data['next']['title'] ?? null]);
+        }
+
+        return view('learning.examiner.quiz', $data);
     }
 
     // POST examiner/learning/{slug}/quiz
@@ -175,6 +190,14 @@ class ExaminerLearningController extends Controller
         }
 
         return view('learning.examiner.result', $response->json());
+    }
+
+    /** The coded page of a module (settings.view in cosecsa-api), when this MIS has it. */
+    private function codedView(array $module): ?string
+    {
+        $view = $module['view'] ?? null;
+
+        return $view && view()->exists("course.modules.{$view}") ? $view : null;
     }
 
     private function failed(Response $response, string $fallback = 'examiner/learning')

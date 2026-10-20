@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-20) — Examiner Training: the nine pages of the final design pack
+- Modules 1–7, the Quiz and the Acknowledgements are now the coded pages of the final pack (Merriweather/Raleway, COSECSA green/crimson/gold, collapsed topic cards, Module 5 Zoom walk-through, Module 6 marking sheets, **new Module 7 Marking Fellowship Exams** with the descriptors). They render inside the existing player (module sidebar and drawer kept). Which page a module shows is `settings.view` in cosecsa-api; a module without one still shows its blocks (the Completion/certificate page does).
+- Topic progress is saved per learner (the page posts to `examiner/learning/{slug}/topics`); a module completes when every topic card has been read. The quiz is driven by the server: each answer is checked on the server (instant feedback and explanation), the score is saved when all 20 are answered, pass mark 90% (18 of 20) unlocks the course; "Start again" retakes it.
+- Admin preview shows the same pages (nothing is recorded there). The player sidebar and styles were moved into partials (`learning/examiner/_sidebar`, `_shell-styles`) so the coded pages share them.
+- **Files:** `resources/views/course/**`, `public/{css,js,images}/course/**`, `config/course.php`, `resources/views/learning/examiner/{coded-shell,_sidebar,_shell-styles,player}.blade.php`, `app/Http/Controllers/Learning/{Examiner,Admin}LearningController.php`. Kit deviations: `cosecsa-course.js` (server-side progress), `quiz.js` and `quiz.blade.php` (server-checked quiz), `course/layout.blade.php` (save URL attributes).
+
 ### Changed (2026-10-20) — Intake Reports: this year's intake counts admitted trainees
 - New default "Year of joining" option: for the current year, a trainee counts when admission year is this year, status is Active and Fee Paid is Yes (the admission list's "Complete" + "Fee Paid = Yes"), dated by the admission year even when the PEN carries an older year. Earlier years still use the PEN year. The other two options are unchanged. See cosecsa-api CHANGES.md.
 - **Files:** `resources/views/admin/associates/intake-reports/index.blade.php`.

@@ -224,6 +224,13 @@ class AdminLearningController extends Controller
         }
 
         $data = $response->json();
+
+        // Coded pages of the final design pack (progress is never recorded in the preview: no save URL).
+        $view = $data['module']['view'] ?? null;
+        if ($view && $data['module']['type'] !== 'quiz' && view()->exists("course.modules.{$view}")) {
+            return view("course.modules.{$view}", $data + ['preview' => true, 'layout' => 'learning.examiner._standalone']);
+        }
+
         $data['blocks'] = LearningView::blocks($data['blocks']);
 
         return view('learning.examiner.player', $data + ['preview' => true, 'layout' => 'learning.examiner._standalone']);
