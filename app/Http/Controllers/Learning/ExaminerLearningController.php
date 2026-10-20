@@ -102,6 +102,27 @@ class ExaminerLearningController extends Controller
         };
     }
 
+    // POST examiner/learning/{slug}/topics — remembers which topic cards the learner has opened
+    public function topicsRead(Request $request, string $slug)
+    {
+        $topics = array_values(array_filter((array) $request->input('topics', []), 'is_numeric'));
+        $response = $this->api->post("learning/modules/{$slug}/topics-read", ['user_id' => Auth::id(), 'topics' => $topics]);
+
+        return response()->json(['ok' => $response->successful()], $response->successful() ? 200 : 502);
+    }
+
+    // POST examiner/learning/{slug}/quiz/check — instant feedback for one answer (JSON)
+    public function check(Request $request, string $slug)
+    {
+        $response = $this->api->post("learning/quiz/{$slug}/check", [
+            'user_id' => Auth::id(),
+            'question_id' => (int) $request->input('question_id'),
+            'answer_id' => (string) $request->input('answer_id'),
+        ]);
+
+        return response()->json($response->json() ?? [], $response->status());
+    }
+
     // GET examiner/learning/{slug}/quiz
     public function quiz(string $slug)
     {
@@ -120,12 +141,21 @@ class ExaminerLearningController extends Controller
     // POST examiner/learning/{slug}/quiz
     public function submit(Request $request, string $slug)
     {
-        $answers = collect($request->input())
-            ->filter(fn ($v, $k) => str_starts_with($k, 'question_') && is_string($v))
-            ->mapWithKeys(fn ($v, $k) => [(int) substr($k, 9) => $v])
-            ->all();
+        // The sectioned quiz sends {answers: {question_id: answer_id}} as JSON; the old form sends question_<id> fields.
+        $answers = is_array($request->input('answers'))
+            ? collect($request->input('answers'))->filter(fn ($v) => is_string($v))->all()
+            : collect($request->input())
+                ->filter(fn ($v, $k) => str_starts_with($k, 'question_') && is_string($v))
+                ->mapWithKeys(fn ($v, $k) => [(int) substr($k, 9) => $v])
+                ->all();
 
         $response = $this->api->post("learning/quiz/{$slug}/submit", ['user_id' => Auth::id(), 'answers' => $answers]);
+
+        if ($request->expectsJson()) {
+            return response()->json(($response->json() ?? []) + [
+                'result_url' => route('examiner.learning.result', $slug),
+            ], $response->status());
+        }
         if ($fail = $this->failed($response)) {
             return $fail;
         }

@@ -246,6 +246,19 @@ class AdminLearningController extends Controller
         return view('learning.examiner.quiz', $response->json() + ['preview' => true, 'layout' => 'learning.examiner._standalone']);
     }
 
+    // POST admin/exams/learning/preview/{slug}/quiz/check — instant feedback in the preview (nothing is recorded)
+    public function previewQuizCheck(Request $request, string $slug)
+    {
+        $response = $this->api->post("learning/quiz/{$slug}/check", [
+            'user_id' => Auth::id(),
+            'preview' => 1,
+            'question_id' => (int) $request->input('question_id'),
+            'answer_id' => (string) $request->input('answer_id'),
+        ]);
+
+        return response()->json($response->json() ?? [], $response->status());
+    }
+
     // GET admin/exams/learning/certificate — edit the certificate wording with a live preview
     public function certificate()
     {

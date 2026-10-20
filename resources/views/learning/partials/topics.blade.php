@@ -8,7 +8,9 @@
     @include('learning.partials.segment', ['segment' => $segment])
 @endforeach
 
-<div class="topics" data-topics data-total="{{ $count }}" @if($storeKey) data-store="{{ $storeKey }}" @endif>
+<div class="topics" data-topics data-total="{{ $count }}" @if($storeKey) data-store="{{ $storeKey }}" @endif
+     @if(!empty($saveUrl)) data-save-url="{{ $saveUrl }}" data-csrf="{{ csrf_token() }}" @endif
+     data-server-read="{{ json_encode(array_values($topicsRead ?? [])) }}">
     <div class="topics-progress">
         <div class="tp-count" data-topics-count aria-live="polite">0 of {{ $count }} topics read</div>
         <div class="tp-track" role="progressbar" aria-label="Topics read" aria-valuemin="0" aria-valuemax="{{ $count }}" aria-valuenow="0" data-topics-track><div class="tp-fill" data-topics-fill></div></div>
@@ -50,7 +52,19 @@
     const key = root.dataset.store || null;
     const read = new Set();
 
+    const saveUrl = root.dataset.saveUrl || null;
     try { if (key) JSON.parse(localStorage.getItem(key) || '[]').forEach(i => read.add(i)); } catch (e) {}
+    // What the learner has read on another device comes from the learner progress (server).
+    try { JSON.parse(root.dataset.serverRead || '[]').forEach(i => read.add(i)); } catch (e) {}
+
+    function save() {
+        if (!saveUrl) return;
+        fetch(saveUrl, {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': root.dataset.csrf || '', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ topics: [...read] }),
+        }).catch(() => {});   // the browser copy still counts if the network is down
+    }
 
     function paint() {
         topics.forEach((t, i) => {
@@ -78,6 +92,7 @@
             if (open) {
                 read.add(i);
                 try { if (key) localStorage.setItem(key, JSON.stringify([...read])); } catch (e) {}
+                save();
                 paint();
                 topic.scrollIntoView({ block: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
             }

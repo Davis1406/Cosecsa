@@ -55,7 +55,7 @@
                     <h3 class="block-heading2">{!! \App\Support\LearningView::html($heading) !!}</h3>
                 @endif
                 @if($paragraph)
-                    <div class="block-paragraph">{!! \App\Support\LearningView::html($paragraph) !!}</div>
+                    <div class="block-paragraph{{ !empty($payload['lead']) ? ' lead' : '' }}">{!! \App\Support\LearningView::html($paragraph) !!}</div>
                 @endif
             </div>
         @endif

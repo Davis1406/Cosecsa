@@ -8,7 +8,7 @@
 @endphp
 <div class="content-wrapper">
     <section class="content pt-3">
-        <div class="container-fluid lms" style="--brand: {{ $course['color'] }}">
+        <div class="container-fluid lms" style="--brand: {{ $module['hero']['c1'] ?? $course['color'] }}">
             @include('learning.partials.flash')
             @includeWhen($preview, 'learning.partials.preview-bar')
             <div class="reading-progress" aria-hidden="true"><span id="reading-progress-fill"></span></div>
@@ -72,16 +72,19 @@
                                 </span>
                             @endif
                         </div>
-                        <h1 class="pm-title">{{ $module['title'] }}</h1>
-                        @if($module['description'])
-                            <div class="pm-desc">{!! \App\Support\LearningView::html($module['description']) !!}</div>
+                        @if(empty($module['hero']))
+                            <h1 class="pm-title">{{ $module['title'] }}</h1>
+                            @if($module['description'])
+                                <div class="pm-desc">{!! \App\Support\LearningView::html($module['description']) !!}</div>
+                            @endif
                         @endif
                     </div>
+                    @include('learning.partials.hero')
 
                     <div class="pm-content card card-pad">
                         @php $topicLayout = \App\Support\LearningView::topics($blocks); @endphp
                         @if($topicLayout)
-                            @include('learning.partials.topics', ['topicLayout' => $topicLayout])
+                            @include('learning.partials.topics', ['topicLayout' => $topicLayout, 'topicsRead' => $topics_read ?? [], 'saveUrl' => $preview ? null : route($lr.'.topics', $module['slug'])])
                         @else
                             @foreach(\App\Support\LearningView::segments($blocks) as $segment)
                                 @include('learning.partials.segment', ['segment' => $segment])
@@ -154,6 +157,7 @@
 
 @push('styles')
 @include('learning.partials.styles')
+@include('learning.partials.course-ui')
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link href="{{ asset('dist/css/lms-certificate.css') }}" rel="stylesheet">
 <style>

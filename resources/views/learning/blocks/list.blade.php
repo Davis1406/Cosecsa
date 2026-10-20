@@ -23,6 +23,12 @@
                 <span data-checklist-count>0 of {{ count($items) }} checked</span>
             </div>
         </div>
+    @elseif($variant === 'ticks' || $variant === 'crosses')
+        <ul class="list-marks list-{{ $variant }}" role="list">
+            @foreach($items as $item)
+                <li><span class="mark" aria-hidden="true">{{ $variant === 'ticks' ? '✓' : '✕' }}</span><span>{!! \App\Support\LearningView::html($item['paragraph'] ?? null) !!}</span></li>
+            @endforeach
+        </ul>
     @else
         <{{ $tag }} class="{{ $cls }}">
             @foreach($items as $item)

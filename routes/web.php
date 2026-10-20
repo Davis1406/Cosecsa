@@ -462,6 +462,7 @@ Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(
     Route::get('preview', 'previewCover')->name('.preview');
     Route::get('preview/{slug}', 'previewModule')->name('.preview.module');
     Route::get('preview/{slug}/quiz', 'previewQuiz')->name('.preview.quiz');
+    Route::post('preview/{slug}/quiz/check', 'previewQuizCheck')->name('.preview.quiz.check');
     Route::get('videos', 'videos')->name('.videos');
     Route::post('videos', 'uploadVideo')->name('.videos.upload');
     Route::post('videos/new', 'addVideo')->name('.videos.add');
@@ -596,8 +597,10 @@ Route::group(['middleware' => 'examiner'], function(){
         Route::get('certificate/modal', 'certificateModal')->name('.certificate.modal');
         Route::get('{slug}', 'module')->name('.module');
         Route::post('{slug}/next', 'advance')->name('.advance');
+        Route::post('{slug}/topics', 'topicsRead')->name('.topics');
         Route::get('{slug}/quiz', 'quiz')->name('.quiz');
         Route::post('{slug}/quiz', 'submit')->name('.submit');
+        Route::post('{slug}/quiz/check', 'check')->name('.check');
         Route::get('{slug}/quiz/result', 'result')->name('.result');
     });
 
