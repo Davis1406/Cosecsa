@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added (2026-10-21) — Examiner course: admins edit the wording of the coded pages
+- **Admin > Examiner Training > Course content > a module** now opens a wording editor for Modules 1–7 and the Acknowledgements (the pages of the final design pack): every heading, topic title, subtitle, paragraph, list item, highlighted note and table cell is a line you click, change and Save (bold, italic and links supported). Examiners see the new wording straight away; "Reset to original" restores the page's own wording; search finds wording on the page; edits show who made them. Topic cards, pictures, table layout and animations are part of the page design and are not editable here. The Quiz keeps its question editor.
+- How it works: `App\Support\CourseText` finds every piece of wording in a page (stable key from the original wording), the admin saves overrides in cosecsa-api, and `course/layout.blade.php` applies them when the page is shown (examiners, and the admin preview). If a developer later changes the page's own wording, the matching edit goes "stale" and is listed at the bottom of the editor.
+- **Files:** `app/Support/CourseText.php`, `app/Http/Controllers/Learning/AdminLearningController.php`, `routes/web.php`, `resources/views/learning/admin/coded-module.blade.php`, `resources/views/course/layout.blade.php`, `tests/Unit/CourseTextTest.php`.
+
 ### Changed (2026-10-21) — Examiner course fonts: Raleway headings, Merriweather text
 - Headings, topic titles, labels and table headings are Raleway; body text, lead paragraphs, lists and callouts are Merriweather (swapped in the `--display` / `--body` tokens of `public/css/course/cosecsa-course.css`; the 12–13px caps labels stay Raleway). The course CSS/JS links now carry a file-time version so browsers pick up changes straight away.
 - **Files:** `public/css/course/cosecsa-course.css`, `public/css/course/modules/*.css`, `resources/views/course/layout.blade.php`.

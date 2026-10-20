@@ -15,7 +15,7 @@
 <div class="cs-course mod-{{ $mod }}" data-theme="light" data-progress-key="{{ $key ?? '' }}" data-img="{{ asset('images/course') }}/" @if(!empty($lite)) data-lite @endif
      @if(!empty($saveUrl)) data-save-url="{{ $saveUrl }}" data-seen="{{ json_encode(array_values($topics_read ?? [])) }}" data-csrf="{{ csrf_token() }}" @endif>
   @include('course.partials.icons')
-  @yield('course-body')
+  {!! \App\Support\CourseText::apply($__env->yieldContent('course-body'), (array) ($texts ?? [])) !!}
 </div>
 @endsection
 

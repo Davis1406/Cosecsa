@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Learning;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApiClient;
+use App\Support\CourseText;
 use App\Support\LearningView;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
@@ -60,10 +61,90 @@ class AdminLearningController extends Controller
         }
 
         $data = $response->json();
+
+        // Coded pages of the final design pack: the wording is edited here (text editor), the quiz keeps its question editor.
+        $view = $this->codedPageView($data['module']);
+        if ($view && $data['module']['type'] !== 'quiz') {
+            return $this->wordingEditor($id, $data['module'], $view, $data['course']);
+        }
+
         $types = $this->api->get('learning/admin/block-types');
         $data['blockTypes'] = $types->successful() ? $types->json('types') : [];
 
         return view('learning.admin.module', $data);
+    }
+
+    /** The coded MIS page of a module (settings.view in cosecsa-api), when this MIS has it. */
+    private function codedPageView(array $module): ?string
+    {
+        $slug = $module['slug'] ?? null;
+        if (! $slug) {
+            return null;
+        }
+        $r = $this->api->get("learning/modules/{$slug}", ['user_id' => Auth::id(), 'preview' => 1]);
+        $view = $r->successful() ? ($r->json('module.view') ?: null) : null;
+
+        return $view && view()->exists("course.modules.{$view}") ? $view : null;
+    }
+
+    /** The wording editor: every piece of wording on the coded page, grouped by topic card. */
+    private function wordingEditor(int $id, array $module, string $view, array $course)
+    {
+        $slug = $module['slug'];
+        $page = $this->api->get("learning/modules/{$slug}", ['user_id' => Auth::id(), 'preview' => 1])->json();
+        $html = view("course.modules.{$view}", $page + ['preview' => true, 'layout' => 'learning.examiner._standalone'])
+            ->renderSections()['course-body'] ?? '';
+        $overrides = $this->api->get("learning/admin/modules/{$id}/texts")->json('overrides') ?? [];
+
+        $groups = [];
+        $seenKeys = [];
+        foreach (CourseText::fields($html) as $f) {
+            $o = $overrides[$f['key']] ?? null;
+            $seenKeys[$f['key']] = true;
+            $groups[$f['topic']]['fields'][] = $f + [
+                'kind' => CourseText::kind($f),
+                'current' => $o['html'] ?? $f['html'],
+                'overridden' => $o !== null,
+                'by' => $o['updated_by'] ?? null,
+                'when' => $o['updated_at'] ?? null,
+            ];
+        }
+        foreach ($groups as $t => &$g) {
+            // topic title = the first "Title" field of the group (the card header), else Banner
+            $title = collect($g['fields'])->first(fn ($f) => $f['kind'] === 'Title' || $f['kind'] === 'Page title');
+            $g['title'] = $t < 0 ? 'Banner' : ($title['text'] ?? 'Topic '.($t + 1));
+            $g['edited'] = collect($g['fields'])->where('overridden', true)->count();
+        }
+        unset($g);
+        ksort($groups);
+
+        // Edits whose original wording no longer exists on the page (the page itself was changed by a developer).
+        $stale = collect($overrides)->reject(fn ($o, $k) => isset($seenKeys[$k]))->map(fn ($o, $k) => $o + ['key' => $k])->values();
+
+        return view('learning.admin.coded-module', [
+            'module' => $module, 'course' => $course, 'groups' => $groups, 'stale' => $stale,
+            'totalFields' => array_sum(array_map(fn ($g) => count($g['fields']), $groups)),
+            'totalEdited' => collect($groups)->sum('edited'),
+        ]);
+    }
+
+    // POST admin/exams/learning/modules/{id}/texts  {key, original, html}
+    public function saveText(Request $request, int $id)
+    {
+        $response = $this->api->post("learning/admin/modules/{$id}/texts", [
+            'key' => $request->input('key'), 'original' => $request->input('original'), 'html' => $request->input('html'),
+            'by' => Auth::user()->name ?? null,
+        ]);
+
+        return response()->json($response->json() ?? [], $response->status());
+    }
+
+    // POST admin/exams/learning/modules/{id}/texts/reset  {key}
+    public function resetText(Request $request, int $id)
+    {
+        $response = $this->api->post("learning/admin/modules/{$id}/texts/reset", ['key' => $request->input('key')]);
+
+        return response()->json($response->json() ?? [], $response->status());
     }
 
     // POST admin/exams/learning/blocks  {module_id, type, after_block_id?}
