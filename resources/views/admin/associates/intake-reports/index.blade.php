@@ -78,8 +78,8 @@
                 <div class="form-group col-6 col-md-1"><label class="small mb-1">Gender</label>
                     <select name="gender" class="form-control form-control-sm"><option value="">Any</option><option>Male</option><option>Female</option></select></div>
                 <div class="form-group col-12 col-md-2"><label class="small mb-1">Year of joining</label>
-                    <select name="year_basis" class="form-control form-control-sm" title="Who moves on to a later programme keeps their PEN, so the PEN year is the year they first joined.">
-                        <option value="smart">PEN year, later programmes by admission year</option><option value="pen">PEN year only</option></select></div>
+                    <select name="year_basis" class="form-control form-control-sm" title="Who moves on to a later programme keeps their PEN, so the PEN year is the year they first joined. The first option counts this year's intake from the admission list: trainees admitted this year whose status is Active and whose fee is paid.">
+                        <option value="admitted">This year: admitted trainees (Active, fee paid); earlier years by PEN</option><option value="smart">PEN year, later programmes by admission year</option><option value="pen">PEN year only</option></select></div>
             </form>
         </div>
 

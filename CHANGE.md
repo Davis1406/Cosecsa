@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-20) — Intake Reports: this year's intake counts admitted trainees
+- New default "Year of joining" option: for the current year, a trainee counts when admission year is this year, status is Active and Fee Paid is Yes (the admission list's "Complete" + "Fee Paid = Yes"), dated by the admission year even when the PEN carries an older year. Earlier years still use the PEN year. The other two options are unchanged. See cosecsa-api CHANGES.md.
+- **Files:** `resources/views/admin/associates/intake-reports/index.blade.php`.
+
 ### Added (2026-10-20) — Tags filter on Trainees, Candidates and Fellows lists
 - New "Tags" drop-down (searchable, tick several; a person shows if they have any ticked tag) in the filter bar of Associates > Trainees, Candidates and Fellows. The tags are the Capsule tags (e.g. "2019 Intake", "Passed MCS 2021") that cosecsa-api links to each person (`php artisan capsule:import-excel`). People without a linked Capsule contact have no tags.
 - **Files:** `app/Http/Controllers/{Trainee,Candidates,Fellows}Controller.php`, `resources/views/admin/associates/{trainees/trainees,candidates/list,fellows/list}.blade.php`.
