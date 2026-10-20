@@ -21,9 +21,19 @@ class ApiAsset
             return null;
         }
 
-        $base = rtrim(config('services.cosecsa_api.url'), '/');
+        return self::publicBase() . '/storage/' . ltrim($path, '/');
+    }
 
-        return $base . '/storage/' . ltrim($path, '/');
+    // Browsers need the API's public address. COSECSA_API_URL may be the
+    // loopback vhost (http://127.0.0.1:8081, see ApiClient) which only this
+    // server can reach; COSECSA_API_HOST then holds the public hostname.
+    private static function publicBase(): string
+    {
+        $host = config('services.cosecsa_api.host');
+
+        return $host
+            ? 'https://' . $host
+            : rtrim(config('services.cosecsa_api.url'), '/');
     }
 
     // A stored photo/document path → its public URL, whichever server has it.
