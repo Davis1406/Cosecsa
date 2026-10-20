@@ -516,7 +516,7 @@
   font-size: 12px;
 }
 .cs-course {
-  /* ===== COSECSA brand layer: Merriweather (headings) + Raleway (text), green / crimson / gold ===== */
+  /* ===== COSECSA brand layer: Raleway (headings) + Merriweather (text), green / crimson / gold ===== */
 }
 .cs-course {
   font-family: var(--body);
@@ -524,7 +524,7 @@
   font-weight: 500;
 }
 .cs-course .bar0 {
-  font: 700 12px var(--body);
+  font: 700 12px var(--mono);
   letter-spacing: 0.1em;
 }
 .cs-course .bar0 .brand {
@@ -544,7 +544,7 @@
 }
 .cs-course .bar0 button {
   white-space: nowrap;
-  font: 600 12px var(--body);
+  font: 600 12px var(--mono);
   letter-spacing: 0.04em;
   text-transform: none;
 }
@@ -552,7 +552,7 @@
   border-bottom: 4px solid var(--gold);
 }
 .cs-course .hero .k {
-  font: 700 12px var(--body);
+  font: 700 12px var(--mono);
   letter-spacing: 0.12em;
   color: #f3e3a6;
   opacity: 1;
@@ -565,7 +565,7 @@
   font: 500 17px/1.6 var(--body);
 }
 .cs-course .hero .prog {
-  font: 600 13px var(--body);
+  font: 600 13px var(--mono);
 }
 .cs-course .th b {
   font: 700 17px/1.3 var(--display);
@@ -595,7 +595,7 @@
   font-weight: 700;
 }
 .cs-course .label {
-  font: 700 12px var(--body);
+  font: 700 12px var(--mono);
   letter-spacing: 0.1em;
 }
 .cs-course .callout {

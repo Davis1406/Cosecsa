@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-21) — Examiner course fonts: Raleway headings, Merriweather text
+- Headings, topic titles, labels and table headings are Raleway; body text, lead paragraphs, lists and callouts are Merriweather (swapped in the `--display` / `--body` tokens of `public/css/course/cosecsa-course.css`; the 12–13px caps labels stay Raleway). The course CSS/JS links now carry a file-time version so browsers pick up changes straight away.
+- **Files:** `public/css/course/cosecsa-course.css`, `public/css/course/modules/*.css`, `resources/views/course/layout.blade.php`.
+
 ### Fixed (2026-10-21) — Adding a workplace on a fellow no longer adds a hospital to the accredited list
 - The "New" button next to the workplace on Add/Edit Fellow created a real hospital record every time it was saved (nine on 6 Oct 2026, one name three times), so the accredited hospitals list grew past 162 with places that are not accredited. It now only sets the fellow's workplace (the free-text `organization` already stored on the fellow) and creates nothing.
 - **Files:** `app/Http/Controllers/FellowsController.php`, `resources/views/admin/associates/fellows/_add_hospital_modal.blade.php`.

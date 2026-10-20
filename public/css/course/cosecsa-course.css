@@ -27,8 +27,9 @@
   --c5:#5a4a9a;
   --c6:#b3541e;
   --c7:#2d4f9e;
-  --display:'Merriweather',Georgia,serif;
-  --body:'Raleway',system-ui,sans-serif;
+  /* Headings Raleway, body text Merriweather (labels and captions stay Raleway). */
+  --display:'Raleway',system-ui,sans-serif;
+  --body:'Merriweather',Georgia,serif;
   --mono:'Raleway',system-ui,sans-serif;
   --herotext:#fff;
   --hero1:#7a1220;

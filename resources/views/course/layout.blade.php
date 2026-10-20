@@ -7,8 +7,8 @@
 
 @push(config('course.styles_stack', 'styles'))
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Raleway:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="{{ asset('css/course/cosecsa-course.css') }}">
-<link rel="stylesheet" href="{{ asset('css/course/modules/'.$slug.'.css') }}">
+<link rel="stylesheet" href="{{ asset('css/course/cosecsa-course.css') }}?v={{ filemtime(public_path('css/course/cosecsa-course.css')) }}">
+<link rel="stylesheet" href="{{ asset('css/course/modules/'.$slug.'.css') }}?v={{ filemtime(public_path('css/course/modules/'.$slug.'.css')) }}">
 @endpush
 
 @section(config('course.content_section', 'content'))
@@ -20,6 +20,6 @@
 @endsection
 
 @push(config('course.scripts_stack', 'scripts'))
-<script src="{{ asset('js/course/cosecsa-course.js') }}"></script>
-@if(!empty($moduleJs))<script src="{{ asset('js/course/modules/'.$slug.'.js') }}"></script>@endif
+<script src="{{ asset('js/course/cosecsa-course.js') }}?v={{ filemtime(public_path('js/course/cosecsa-course.js')) }}"></script>
+@if(!empty($moduleJs))<script src="{{ asset('js/course/modules/'.$slug.'.js') }}?v={{ filemtime(public_path('js/course/modules/'.$slug.'.js')) }}"></script>@endif
 @endpush
