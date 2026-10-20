@@ -120,6 +120,26 @@ body:not(.dark-mode) .nav-treeview .nav-link {
     font-size: .845rem !important;
 }
 
+/* Submenu indent.
+   The rule above gives every sidebar link 18px of side padding, which overrode the submenu indent
+   (header.blade.php: .nav-treeview .nav-link { padding-left: 2.4rem }) in light mode, so submenus
+   (Associates, ...) sat flush with their parent while dark mode showed them indented. Same indent here. */
+body:not(.dark-mode) .nav-sidebar .nav-treeview > .nav-item > .nav-link {
+    padding-left: 2.4rem !important;
+}
+
+/* Third level (e.g. Associates > Associate Promotions > Trainees → Candidates), both modes: a little less
+   side padding and icon gap so a long label like "Trainees → Candidates" stays on one line in the
+   light-mode font (Source Sans 3 is wider than the dark-mode Source Sans Pro). */
+.nav-sidebar .nav-treeview .nav-treeview > .nav-item > .nav-link {
+    padding-left: 2.9rem !important;
+    padding-right: 10px !important;
+}
+
+.nav-sidebar .nav-treeview .nav-treeview > .nav-item > .nav-link .nav-icon {
+    margin-right: 6px !important;
+}
+
 /* Angle chevron */
 body:not(.dark-mode) .nav-sidebar .nav-link .right,
 body:not(.dark-mode) .nav-sidebar .nav-link > .fa-angle-left {

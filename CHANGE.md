@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-20) — Sidebar: submenus indented in light mode, "Trainees → Candidates" on one line
+- In light mode `custom.css` gave every sidebar link `padding: 9px 18px !important`, which overrode the submenu indent the header sets (`.nav-treeview .nav-link { padding-left: 2.4rem }`), so Associates (and every other submenu) sat flush with its parent while dark mode showed them indented. Light mode now uses the same 2.4rem indent. The third level (Associates > Associate Promotions) gets 2.9rem left, 10px right padding and a 6px icon gap in both modes, so the long "Trainees → Candidates" label fits on one line in light mode too (light mode uses Source Sans 3, wider than the dark mode's Source Sans Pro). Measured on a page built from the real AdminLTE, `custom.css` and header CSS: light mode wrapped to 2 lines before and 1 after; dark mode stays on 1 line.
+- **Files:** `public/dist/css/custom.css`.
+
 ### Added (2026-10-20) — Associates > Intake Reports
 - New page `admin/associates/intake-reports` (menu: Associates > Intake Reports; shown with `trainees.view`, `candidates.view` or `fellows.view`). KPIs (entries, different people, MCS, FCS, people in several intakes), a year by programme matrix (click a number or a year to list the people), an MCS/FCS-by-year chart, a detail table with Excel/CSV export (with the person's other intakes as a "Journey"), filters (years, level, programme, country, status, gender) and a "Year of joining" switch (PEN year with later programmes dated by admission year, or PEN year only), and a Data checks panel (what was merged, left out or needs a decision). Numbers come from cosecsa-api `internal/intake-report/*`; see its CHANGES.md for the counting rules.
 - Tested by rendering the real page with data produced by the real API code (synthetic associates) in Chrome: KPIs, matrix, chart, checks, click-through to the detail table, export buttons; no console errors. Not yet seen on production data or a phone-sized window.
