@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-10-20) — Tags filter on Trainees, Candidates and Fellows lists
+- New "Tags" drop-down (searchable, tick several; a person shows if they have any ticked tag) in the filter bar of Associates > Trainees, Candidates and Fellows. The tags are the Capsule tags (e.g. "2019 Intake", "Passed MCS 2021") that cosecsa-api links to each person (`php artisan capsule:import-excel`). People without a linked Capsule contact have no tags.
+- **Files:** `app/Http/Controllers/{Trainee,Candidates,Fellows}Controller.php`, `resources/views/admin/associates/{trainees/trainees,candidates/list,fellows/list}.blade.php`.
+
 ### Fixed (2026-10-20) — Salesforce (and other pages) failing after the loopback API change
 - `ApiClient` called paths with a trailing slash (`salesforce/`, `fees/`, `letters/`, `capsule/`, and POSTs to `members/`, `trainees/`, `candidates/`, ...). Laravel answers those with a 301 to the public `http://api.cosecsamis.org/...`; with the API URL now `http://127.0.0.1:8081` the redirect left the loopback and lost the token, so the page got an error. `ApiClient::url()` now trims the trailing slash.
 - **Files:** `app/Services/ApiClient.php`.

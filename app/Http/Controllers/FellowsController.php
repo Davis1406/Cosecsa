@@ -41,6 +41,7 @@ class FellowsController extends Controller
             'filterTypes'       => collect($data->filterTypes ?? []),
             'filterProgrammes'  => collect($data->filterProgrammes ?? []),
             'filterYears'       => collect($data->filterYears ?? []),
+            'filterTags'        => collect($data->filterTags ?? []),
             'uniqueAlumniCount' => $data->uniqueAlumniCount ?? 0,
             'allAlumniCount'    => $data->allAlumniCount ?? 0,
         ]);
@@ -67,6 +68,7 @@ class FellowsController extends Controller
             'hospital'  => $f->trained_hospital ?: $f->organization,
             'gender'    => $f->gender,
             'alumni'    => (int) ($f->is_alumni ?? 0),
+            'tags'      => $f->tags ?? [],
             'specs'     => 1 + (! empty($f->second_fcs_specialty) ? 1 : 0) + (! empty($f->third_fcs_specialty) ? 1 : 0),
         ])->values();
 

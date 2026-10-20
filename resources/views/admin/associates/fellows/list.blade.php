@@ -47,6 +47,7 @@
                             ['id'=>'filterType',      'label'=>'Fellowship Type', 'options'=>$filterTypes,              'default'=>[], 'optLabels'=>[]],
                             ['id'=>'filterYear',      'label'=>'Year',            'options'=>$filterYears,              'default'=>[], 'optLabels'=>[]],
                             ['id'=>'filterGender',    'label'=>'Gender',          'options'=>collect(['Male','Female']), 'default'=>[], 'optLabels'=>[]],
+                            ['id'=>'filterTags',      'label'=>'Tags',            'options'=>$filterTags,               'default'=>[], 'optLabels'=>[]],
                             ['id'=>'filterAlumni',    'label'=>'Alumni',          'options'=>collect(['unique','all','0']), 'default'=>[], 'optLabels'=>[
                                 'unique' => 'Unique Alumni (' . number_format($uniqueAlumniCount ?? 0) . ')',
                                 'all'    => 'All Alumni (' . number_format($allAlumniCount ?? 0) . ')',
@@ -294,6 +295,11 @@ $(document).ready(function () {
         if (chkType.length      && chkType.indexOf(String(row.ftype          || '')) === -1) return false;
         if (chkYear.length      && chkYear.indexOf(String(row.year           || '')) === -1) return false;
         if (chkGender.length    && chkGender.indexOf(String(row.gender       || '')) === -1) return false;
+        var chkTags = getChecked('filterTags');
+        if (chkTags.length) {
+            var rowTags = row.tags || [];
+            if (!chkTags.some(function (t) { return rowTags.indexOf(t) !== -1; })) return false;
+        }
         if (chkAlumni.length) {
             var wantsYes = chkAlumni.indexOf('unique') !== -1 || chkAlumni.indexOf('all') !== -1;
             var wantsNo  = chkAlumni.indexOf('0') !== -1;

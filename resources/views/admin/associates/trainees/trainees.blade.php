@@ -50,6 +50,7 @@
                                     ['id'=>'filterAdmissionYear', 'label'=>'Admission Year',  'options'=>$filterAdmissionYears],
                                     ['id'=>'filterGender',        'label'=>'Gender',          'options'=>collect(['Male','Female'])],
                                     ['id'=>'filterHospital',      'label'=>'Hospital',        'options'=>$filterHospitals],
+                                    ['id'=>'filterTags',          'label'=>'Tags',            'options'=>$filterTags],
                                 ];
                                 @endphp
 
@@ -197,6 +198,12 @@ $(document).ready(function () {
         for (var i = 0; i < filters.length; i++) {
             var checked = getChecked(filters[i].id);
             if (checked.length && checked.indexOf(filters[i].val) === -1) return false;
+        }
+
+        var chkTags = getChecked('filterTags');
+        if (chkTags.length) {
+            var rowTags = row.tags || [];
+            if (!chkTags.some(function (t) { return rowTags.indexOf(t) !== -1; })) return false;
         }
 
         // Admission Year matches the original intake OR the resume/cohort year,

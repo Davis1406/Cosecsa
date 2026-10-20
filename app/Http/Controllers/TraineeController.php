@@ -30,6 +30,7 @@ class TraineeController extends Controller
             'filterAdmissionYears'=> collect($data->filterAdmissionYears ?? []),
             'filterStatuses'      => collect($data->filterStatuses ?? []),
             'filterHospitals'     => collect($data->filterHospitals ?? []),
+            'filterTags'          => collect($data->filterTags ?? []),
         ]);
     }
 
@@ -41,7 +42,7 @@ class TraineeController extends Controller
                  'status', 'user_email', 'user_password', 'admission_letter_status', 'invitation_letter_status',
                  'admission_year', 'programme_year', 'exam_year', 'resume_year', 'programme_period',
                  'invoice_number', 'invoice_date', 'invoice_status', 'sponsor', 'mode_of_payment',
-                 'amount_paid', 'payment_date'];
+                 'amount_paid', 'payment_date', 'tags'];
 
         $rows = collect($this->api->get('trainees/list-data')->object()->trainees ?? [])
             ->map(fn ($t) => array_intersect_key((array) $t, array_flip($keys)))

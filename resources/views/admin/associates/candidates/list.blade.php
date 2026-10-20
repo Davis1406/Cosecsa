@@ -49,6 +49,7 @@
                             ['id'=>'filterFeePaid',   'label'=>'Fee Paid',  'options'=>collect(['Yes','No']),     'default'=>[], 'optLabels'=>['Yes'=>'Paid','No'=>'Not Paid']],
                             ['id'=>'filterPartOne',   'label'=>'Part I',    'options'=>collect(['Pass','Fail','None']), 'default'=>[], 'optLabels'=>['None'=>'No result yet']],
                             ['id'=>'filterPartTwo',   'label'=>'Part II',   'options'=>collect(['Yes','No']),     'default'=>[], 'optLabels'=>['Yes'=>'Promoted','No'=>'Not promoted']],
+                            ['id'=>'filterTags',      'label'=>'Tags',      'options'=>$filterTags,              'default'=>[], 'optLabels'=>[]],
                         ];
                         @endphp
                         <div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
@@ -242,6 +243,11 @@ $(document).ready(function () {
         if (chkYear.length      && chkYear.indexOf(String(row.exam_year           || '')) === -1) return false;
         if (chkGender.length    && chkGender.indexOf(String(row.gender            || '')) === -1) return false;
         if (chkFeePaid.length   && chkFeePaid.indexOf(String(row.fee_paid || 'No'))      === -1) return false;
+        var chkTags = getChecked('filterTags');
+        if (chkTags.length) {
+            var rowTags = row.tags || [];
+            if (!chkTags.some(function (t) { return rowTags.indexOf(t) !== -1; })) return false;
+        }
         var chkPartOne = getChecked('filterPartOne'), chkPartTwo = getChecked('filterPartTwo');
         if (chkPartOne.length   && chkPartOne.indexOf(row.part1_result || 'None')       === -1) return false;
         if (chkPartTwo.length   && chkPartTwo.indexOf(row.part_two_promoted_at ? 'Yes' : 'No') === -1) return false;
