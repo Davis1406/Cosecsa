@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-21) — Adding a workplace on a fellow no longer adds a hospital to the accredited list
+- The "New" button next to the workplace on Add/Edit Fellow created a real hospital record every time it was saved (nine on 6 Oct 2026, one name three times), so the accredited hospitals list grew past 162 with places that are not accredited. It now only sets the fellow's workplace (the free-text `organization` already stored on the fellow) and creates nothing.
+- **Files:** `app/Http/Controllers/FellowsController.php`, `resources/views/admin/associates/fellows/_add_hospital_modal.blade.php`.
+
 ### Changed (2026-10-21) — Examiner Training: light mode only
 - The Light/dark button is removed from every course page and the course always uses the light colours (the wrapper carries `data-theme="light"`, which switches off the device-based dark rules).
 - **Files:** `resources/views/course/layout.blade.php`, `resources/views/course/modules/*.blade.php`, `public/js/course/cosecsa-course.js`.

@@ -441,6 +441,11 @@ class FellowsController extends Controller
     // hospital through cosecsa-api and returns it so the dropdown can select
     // it. Kept under the fellows route, so fellows.manage is enough (the
     // internal API call isn't re-checked against the lookups module).
+    // The "New" workplace button on the fellow forms. The hospital list is the list of COSECSA-accredited
+    // hospitals, so this must NOT create a hospital: the fellow's workplace is the free-text
+    // `organization` on the fellow record (the dropdown already takes typed values). Nothing is saved
+    // here; the name goes back to the form and is stored with the fellow when the form is saved.
+    // (It used to create a real hospital, one for every click, which swelled the accredited list.)
     public function quickAddHospital(Request $request)
     {
         $request->validate([
@@ -448,25 +453,7 @@ class FellowsController extends Controller
             'country_id' => 'required|integer',
         ]);
 
-        $response = $this->api->post('admin/hospitals', $request->only(['name', 'country_id']));
-
-        if ($response->failed()) {
-            return response()->json(
-                ['message' => $response->json('message') ?? 'Failed to create hospital.'],
-                $response->status() ?: 500
-            );
-        }
-
-        // The hospital dropdown is populated from the cached lookup list.
-        Cache::forget('lookup:hospitals');
-
-        $data     = $response->object();
-        $hospital = is_object($data) ? ($data->hospital ?? null) : null;
-
-        return response()->json([
-            'id'   => $hospital->id ?? null,
-            'name' => $hospital->name ?? $request->name,
-        ]);
+        return response()->json(['id' => null, 'name' => trim($request->name)]);
     }
 
     public function storeSubscription(Request $request, $id)

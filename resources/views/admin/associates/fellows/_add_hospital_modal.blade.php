@@ -1,20 +1,19 @@
 {{--
-    Inline "add a hospital" modal shared by the fellow add/edit pages. Creates
-    a real hospital through cosecsa-api (POST admin/hospitals, via
-    FellowsController::quickAddHospital()), then adds it to the
-    select[name="organization"] dropdown and selects it.
+    Inline "add a workplace" modal shared by the fellow add/edit pages. It does NOT create a hospital
+    (the hospital list is the accredited hospitals): it only puts the typed name into the
+    select[name="organization"] dropdown and selects it, and the name is stored with the fellow.
 --}}
 <div class="modal fade" id="addHospitalModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <form id="addHospitalForm" class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-hospital mr-1"></i> Add Hospital</h5>
+                <h5 class="modal-title"><i class="fas fa-hospital mr-1"></i> Add workplace</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <div id="addHospitalAlert" class="alert alert-danger d-none" role="alert"></div>
                 <div class="form-group">
-                    <label>Hospital Name <span class="text-danger">*</span></label>
+                    <label>Workplace / hospital name <span class="text-danger">*</span></label>
                     <input type="text" id="addHospitalName" class="form-control" placeholder="e.g. Queen Elizabeth Central Hospital" required>
                 </div>
                 <div class="form-group mb-0">
@@ -27,14 +26,14 @@
                     </select>
                 </div>
                 <p class="small text-muted mt-2 mb-0">
-                    <i class="fas fa-info-circle mr-1"></i>This creates a real hospital record in the system.
+                    <i class="fas fa-info-circle mr-1"></i>This is saved with this fellow only. It does not add a hospital to the accredited hospitals list.
                 </p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-danger" id="addHospitalSubmit"
                         style="background:#a02626; border-color:#a02626;">
-                    <i class="fas fa-save mr-1"></i>Save Hospital
+                    <i class="fas fa-check mr-1"></i>Use this workplace
                 </button>
             </div>
         </form>
@@ -88,7 +87,7 @@ $(function () {
             var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to create hospital.';
             $alert.removeClass('d-none').text(msg);
         }).always(function () {
-            $btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i>Save Hospital');
+            $btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i>Use this workplace');
         });
     });
 
