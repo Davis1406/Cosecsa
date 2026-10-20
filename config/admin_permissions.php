@@ -139,6 +139,8 @@ return [
         'admin/hospital'                => 'lookups',
         'admin/programmes'              => 'lookups',
         'admin/hospitalprogrammes'      => 'lookups',
+        // Intake reports read trainees, candidates and fellows: any one of them is enough.
+        'admin/associates/intake-reports' => ['trainees', 'candidates', 'fellows'],
         'admin/associates/trainees'     => 'trainees',
         'admin/associates/candidates'   => 'candidates',
         'admin/associates/programme-directors' => 'programme_directors',

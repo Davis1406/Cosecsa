@@ -477,6 +477,15 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                                     </a>
                                 </li>
                                 @endif
+                                @if (Auth::user()->hasPermission('trainees.view') || Auth::user()->hasPermission('candidates.view') || Auth::user()->hasPermission('fellows.view'))
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/associates/intake-reports') }}"
+                                        class="nav-link @if (Request::segment(3) == 'intake-reports') active @endif">
+                                        <i class="fas fa-calendar-check nav-icon"></i>
+                                        <p>Intake Reports</p>
+                                    </a>
+                                </li>
+                                @endif
                                 @if (Auth::user()->hasPermission('candidates.view'))
                                 <li class="nav-item">
                                     <a href="{{ url('admin/associates/candidates/list') }}"

@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added (2026-10-20) — Associates > Intake Reports
+- New page `admin/associates/intake-reports` (menu: Associates > Intake Reports; shown with `trainees.view`, `candidates.view` or `fellows.view`). KPIs (entries, different people, MCS, FCS, people in several intakes), a year by programme matrix (click a number or a year to list the people), an MCS/FCS-by-year chart, a detail table with Excel/CSV export (with the person's other intakes as a "Journey"), filters (years, level, programme, country, status, gender) and a "Year of joining" switch (PEN year with later programmes dated by admission year, or PEN year only), and a Data checks panel (what was merged, left out or needs a decision). Numbers come from cosecsa-api `internal/intake-report/*`; see its CHANGES.md for the counting rules.
+- Tested by rendering the real page with data produced by the real API code (synthetic associates) in Chrome: KPIs, matrix, chart, checks, click-through to the detail table, export buttons; no console errors. Not yet seen on production data or a phone-sized window.
+- **Files:** `app/Http/Controllers/IntakeReportController.php`, `resources/views/admin/associates/intake-reports/index.blade.php`, `resources/views/layout/header.blade.php`, `routes/web.php`, `config/admin_permissions.php`.
+
 ### Added (2026-10-20) — Examiner Training, part 2: hero banners, new typography, tick lists, sectioned quiz, topic progress saved to the account
 - **Hero banner** (`learning/partials/hero.blade.php`) from `module.hero` (eyebrow, heading, text, `--hero1`/`--hero2` gradient); the module's accent colour (progress bar, accent bars) follows the hero. **Typography** per the brief (Literata / Public Sans / IBM Plex Mono, 16.5 px body, 18.5 px lead, 20 px sub-headings with a 30 px accent bar) in `learning/partials/course-ui.blade.php`, light and dark. A text block with `payload.lead` renders as the lead paragraph. New list variants `ticks` and `crosses` (plain lists with a mark, no tick boxes).
 - **Topics read are saved to the learner progress** (`POST examiner/learning/{slug}/topics` → API `topics-read`), merged with the browser copy so they follow the examiner across devices; nothing is saved in the admin preview.

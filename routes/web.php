@@ -264,6 +264,11 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
   Route::post('profile/signature', [UserController::class, 'updateSignature'])->name('profile.signature.update');
   Route::post('profile/update', [UserController::class, 'updateProfile'])->name('profile.update');
 
+  // Associates > Intake Reports (one entry per person, programme and PEN year)
+  Route::get('admin/associates/intake-reports',         [\App\Http\Controllers\IntakeReportController::class,'index'])->name('intake.reports');
+  Route::get('admin/associates/intake-reports/data',    [\App\Http\Controllers\IntakeReportController::class,'data'])->name('intake.reports.data');
+  Route::get('admin/associates/intake-reports/entries', [\App\Http\Controllers\IntakeReportController::class,'entries'])->name('intake.reports.entries');
+
   //Trainees Route
   Route::get('admin/associates/trainees/trainees',      [TraineeController::class,'list']);
   Route::get('admin/associates/trainees/list-rows',     [TraineeController::class,'listRows']);
