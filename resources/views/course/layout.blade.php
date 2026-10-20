@@ -3,7 +3,7 @@
   Extends your existing MIS layout. In config/course.php set 'parent_layout', 'content_section',
   'styles_stack' and 'scripts_stack' to match your layout (see README-IMPLEMENT.md).
 --}}
-@extends(config('course.parent_layout', 'layouts.app'))
+@extends($courseShell ?? config('course.parent_layout', 'layouts.app'))
 
 @push(config('course.styles_stack', 'styles'))
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Raleway:wght@400;500;600;700;800&display=swap">
@@ -15,7 +15,7 @@
 <div class="cs-course mod-{{ $mod }}" data-theme="light" data-progress-key="{{ $key ?? '' }}" data-img="{{ asset('images/course') }}/" @if(!empty($lite)) data-lite @endif
      @if(!empty($saveUrl)) data-save-url="{{ $saveUrl }}" data-seen="{{ json_encode(array_values($topics_read ?? [])) }}" data-csrf="{{ csrf_token() }}" @endif>
   @include('course.partials.icons')
-  {!! \App\Support\CourseText::apply($__env->yieldContent('course-body'), (array) ($texts ?? [])) !!}
+  {!! \App\Support\CourseText::apply($__env->yieldContent('course-body'), (array) ($texts ?? []), ! empty($cwMark)) !!}
 </div>
 @endsection
 

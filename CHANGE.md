@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-21) — Examiner course: split wording editor, previous/next links, sidebar type
+- **Admin wording editor** is now two columns: the blocks of wording on the left, a **live preview** of the page on the right. Typing updates the preview at once; clicking a block opens and highlights that spot in the preview; clicking wording in the preview jumps to its block. The preview never records progress. (`learning/admin/coded-module.blade.php`, `learning/examiner/coded-frame.blade.php`, `AdminLearningController::moduleFrame`, route `admin/exams/learning/modules/{id}/frame`; `CourseText::apply` can tag each piece of wording with `data-cwkey`.)
+- **Previous / Next module** links under every coded course page (and the quiz page), as on the Completion page. They are plain links: a module still completes by reading its topics or passing the quiz. (`learning/examiner/coded-shell.blade.php`)
+- **Module menu type:** the sidebar's module names are Merriweather (the course's text font) and its labels Raleway, matching the course. (`learning/examiner/_shell-styles.blade.php`)
+
 ### Added (2026-10-21) — Examiner course: admins edit the wording of the coded pages
 - **Admin > Examiner Training > Course content > a module** now opens a wording editor for Modules 1–7 and the Acknowledgements (the pages of the final design pack): every heading, topic title, subtitle, paragraph, list item, highlighted note and table cell is a line you click, change and Save (bold, italic and links supported). Examiners see the new wording straight away; "Reset to original" restores the page's own wording; search finds wording on the page; edits show who made them. Topic cards, pictures, table layout and animations are part of the page design and are not editable here. The Quiz keeps its question editor.
 - How it works: `App\Support\CourseText` finds every piece of wording in a page (stable key from the original wording), the admin saves overrides in cosecsa-api, and `course/layout.blade.php` applies them when the page is shown (examiners, and the admin preview). If a developer later changes the page's own wording, the matching edit goes "stale" and is listed at the bottom of the editor.

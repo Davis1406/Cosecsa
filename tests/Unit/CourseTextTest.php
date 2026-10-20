@@ -60,6 +60,21 @@ HTML;
         $this->assertSame(self::PAGE, CourseText::apply(self::PAGE, $over));
     }
 
+    public function test_marking_tags_every_field_with_its_key_and_still_applies_overrides(): void
+    {
+        $fields = CourseText::fields(self::PAGE);
+        $h1 = collect($fields)->firstWhere('tag', 'h1');
+        $out = CourseText::apply(self::PAGE, [$h1['key'] => 'Hello'], true);
+
+        $this->assertStringContainsString('<h1 data-cwkey="'.$h1['key'].'">Hello</h1>', $out);
+        $this->assertSame(count($fields), substr_count($out, 'data-cwkey="'));
+        // every key on the marked page is a key of the unmarked page (the preview and the editor agree)
+        preg_match_all('/data-cwkey="([^"]+)"/', $out, $m);
+        $this->assertSame(array_column($fields, 'key'), $m[1]);
+        // attributes already on the tag are kept
+        $this->assertStringContainsString('<p class="l" data-cwkey="', $out);
+    }
+
     public function test_inline_markup_in_a_field_is_part_of_that_field(): void
     {
         $f = collect(CourseText::fields(self::PAGE))->firstWhere('text', 'First bold paragraph.');

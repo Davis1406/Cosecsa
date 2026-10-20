@@ -39,6 +39,26 @@
                     </div>
 
                     @yield('course-shell')
+
+                    {{-- Previous / next module (plain links: a module completes by reading its topics, or by passing the quiz) --}}
+                    @if(($prev ?? null) || ($next ?? null))
+                        <div class="pm-prevnext" style="margin-top: 18px;">
+                            @if($prev ?? null)
+                                <a href="{{ route($lr.'.module', $prev['slug']) }}" class="pn-card pn-prev">
+                                    <span class="pn-dir">← Previous</span>
+                                    <span class="pn-title">{{ $prev['title'] }}</span>
+                                </a>
+                            @else
+                                <span></span>
+                            @endif
+                            @if($next ?? null)
+                                <a href="{{ route($lr.'.module', $next['slug']) }}" class="pn-card pn-next pn-primary">
+                                    <span class="pn-dir">Next</span>
+                                    <span class="pn-title">{{ $next['title'] }} →</span>
+                                </a>
+                            @endif
+                        </div>
+                    @endif
                 </main>
             </div>
         </div>

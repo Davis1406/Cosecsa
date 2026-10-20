@@ -98,6 +98,7 @@ class CourseText
                 'topic' => $topic,
                 'start' => $innerStart,
                 'end' => $fullPos,
+                'open' => $innerStart - 1,   // offset of the ">" that closes the opening tag
                 'html' => trim($inner),
                 'text' => $text,
                 'inline' => in_array($otag, self::INLINE, true),
@@ -127,17 +128,23 @@ class CourseText
         return $out;
     }
 
-    /** The page's HTML with the overrides (key => html) swapped in. Unknown keys are ignored. */
-    public static function apply(string $html, array $overrides): string
+    /**
+     * The page's HTML with the overrides (key => html) swapped in. Unknown keys are ignored.
+     * With $mark every piece of wording also gets a data-cwkey attribute (the admin's live preview finds elements by it).
+     */
+    public static function apply(string $html, array $overrides, bool $mark = false): string
     {
-        if (! $overrides) {
+        if (! $overrides && ! $mark) {
             return $html;
         }
 
-        $fields = array_reverse(self::fields($html));
-        foreach ($fields as $f) {
+        // Back to front, so earlier offsets stay valid.
+        foreach (array_reverse(self::fields($html)) as $f) {
             if (isset($overrides[$f['key']]) && is_string($overrides[$f['key']])) {
                 $html = substr($html, 0, $f['start']).$overrides[$f['key']].substr($html, $f['end']);
+            }
+            if ($mark) {
+                $html = substr($html, 0, $f['open']).' data-cwkey="'.$f['key'].'"'.substr($html, $f['open']);
             }
         }
 

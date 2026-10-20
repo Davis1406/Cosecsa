@@ -166,3 +166,21 @@
         body.is-leaving .pm-content, body.is-leaving .pm-top { transform: none; }
     }
 </style>
+{{-- The module menu uses the course's own type: Merriweather for the text, Raleway for headings and labels. --}}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Raleway:wght@500;600;700;800&display=swap">
+<style>
+    .lms .player-sidebar, .lms .pm-prevnext { font-family: 'Merriweather', Georgia, serif; }
+    .lms .player-sidebar .ps-title,
+    .lms .player-sidebar .ps-course { font-family: 'Merriweather', Georgia, serif; font-weight: 700; line-height: 1.45; }
+    .lms .player-sidebar .ps-item .ps-title { font-weight: 400; font-size: 13.5px; }
+    .lms .player-sidebar .ps-item.active .ps-title { font-weight: 700; }
+    .lms .player-sidebar .ps-nav-label,
+    .lms .player-sidebar .ps-progress-label,
+    .lms .player-sidebar .ps-progress-pct,
+    .lms .player-sidebar .ps-home,
+    .lms .player-sidebar .ps-num,
+    .lms .pm-prevnext .pn-dir,
+    .lms .pm-breadcrumb,
+    .lms .pm-modules-btn { font-family: 'Raleway', system-ui, sans-serif; }
+    .lms .pm-prevnext .pn-title { font-family: 'Raleway', system-ui, sans-serif; font-weight: 700; }
+</style>

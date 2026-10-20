@@ -453,6 +453,7 @@ Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(
     Route::post('certificate/signature', 'uploadSignature')->name('.certificate.signature');
     Route::post('certificate/signature/remove', 'removeSignature')->name('.certificate.signature.remove');
     Route::get('modules/{id}', 'module')->whereNumber('id')->name('.module');
+    Route::get('modules/{id}/frame', 'moduleFrame')->whereNumber('id')->name('.module.frame');
     Route::post('modules/{id}/texts', 'saveText')->whereNumber('id')->name('.text.save');
     Route::post('modules/{id}/texts/reset', 'resetText')->whereNumber('id')->name('.text.reset');
     Route::get('blocks/{id}/edit', 'editBlock')->whereNumber('id')->name('.block');

@@ -128,6 +128,21 @@ class AdminLearningController extends Controller
         ]);
     }
 
+    // GET admin/exams/learning/modules/{id}/frame — the coded page on its own (saved wording), for the editor's live preview
+    public function moduleFrame(int $id)
+    {
+        $admin = $this->api->get("learning/admin/modules/{$id}");
+        abort_unless($admin->successful(), 404);
+        $slug = $admin->json('module.slug');
+
+        $page = $this->api->get("learning/modules/{$slug}", ['user_id' => Auth::id(), 'preview' => 1]);
+        abort_unless($page->successful(), 404);
+        $view = $page->json('module.view');
+        abort_unless($view && view()->exists("course.modules.{$view}") && $page->json('module.type') !== 'quiz', 404);
+
+        return view("course.modules.{$view}", $page->json() + ['preview' => true, 'courseShell' => 'learning.examiner.coded-frame', 'cwMark' => true]);
+    }
+
     // POST admin/exams/learning/modules/{id}/texts  {key, original, html}
     public function saveText(Request $request, int $id)
     {

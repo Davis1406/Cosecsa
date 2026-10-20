@@ -18,11 +18,12 @@
                 <a href="{{ route('admin.exams.learning.preview.module', $module['slug']) }}" class="btn btn-light btn-sm" data-lms-preview>Preview as examiner</a>
             </div>
 
-            <div class="alert alert-info mb-3" style="font-size:13.5px;">
-                <strong>Edit the wording of this module.</strong> Click any text below, change it, then press <strong>Save</strong> on that line.
-                Examiners see the new wording straight away. <strong>Reset to original</strong> puts the page's own wording back.
-                Bold, italic and links are supported. Topic cards, pictures, tables' layout and the animations are part of the page design
-                and cannot be changed here; ask the developer for those.
+            <div class="cw-split">
+            <div class="cw-left">
+            <div class="alert alert-info mb-2" style="font-size:13px;">
+                <strong>Edit the wording.</strong> Click a block, change the text and press <strong>Save</strong> on it: the page on the right
+                updates as you type, and examiners see it once saved. <strong>Reset to original</strong> brings back the page's own wording.
+                Topic cards, pictures and animations are part of the design and are not edited here.
             </div>
 
             <div class="cw-bar">
@@ -80,6 +81,16 @@
                     </div>
                 </details>
             @endif
+            </div>{{-- /cw-left --}}
+
+            <div class="cw-right">
+                <div class="cw-pv-head">
+                    <span>Live preview</span>
+                    <span class="muted">Click wording in the preview to edit it</span>
+                </div>
+                <iframe id="cwFrame" class="cw-frame" src="{{ route('admin.exams.learning.module.frame', $module['id']) }}" title="Live preview of the page"></iframe>
+            </div>
+            </div>{{-- /cw-split --}}
         </div>
     </section>
 </div>
@@ -89,20 +100,28 @@
 @include('learning.partials.styles')
 @include('learning.admin._styles')
 <style>
-    .cw-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 20; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; }
-    .cw-bar input { max-width: 320px; }
+    .cw-split { display: flex; gap: 16px; align-items: flex-start; }
+    .cw-left { flex: 0 0 46%; max-width: 46%; min-width: 0; height: calc(100vh - 230px); min-height: 480px; overflow-y: auto; padding-right: 6px; }
+    .cw-right { flex: 1; min-width: 0; position: sticky; top: 8px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; overflow: hidden; }
+    .cw-pv-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; font-size: 13px; font-weight: 700; border-bottom: 1px solid #eef0f3; background: #f8fafc; }
+    .cw-pv-head .muted { font-weight: 400; font-size: 12px; }
+    .cw-frame { display: block; width: 100%; height: calc(100vh - 275px); min-height: 440px; border: 0; background: #f6f5ef; }
+    @media (max-width: 1100px) { .cw-split { flex-direction: column; } .cw-left { flex: none; max-width: none; width: 100%; height: auto; overflow: visible; } .cw-right { position: static; width: 100%; } .cw-frame { height: 70vh; } }
+    .cw-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; position: sticky; top: 0; z-index: 20; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 8px 10px; margin-bottom: 10px; }
+    .cw-bar input { max-width: 200px; }
     .cw-tools { display: flex; gap: 4px; }
-    .cw-group { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; margin-bottom: 10px; max-width: 1000px; }
+    .cw-group { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; margin-bottom: 10px; }
     .cw-group > summary { cursor: pointer; padding: 11px 14px; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14.5px; list-style: none; }
     .cw-group > summary::-webkit-details-marker { display: none; }
     .cw-group > summary::before { content: '▸'; color: #94a3b8; transition: transform .15s; }
     .cw-group[open] > summary::before { transform: rotate(90deg); }
     .cw-gt { flex: 1; }
     .cw-fields { border-top: 1px solid #eef0f3; }
-    .cw-row { display: flex; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #f3f4f6; }
+    .cw-row { display: flex; flex-direction: column; gap: 4px; padding: 10px 14px; border-bottom: 1px solid #f3f4f6; }
+    .cw-row.active { background: #fffdf5; box-shadow: inset 3px 0 0 var(--brand, #99060A); }
     .cw-row:last-child { border-bottom: 0; }
     .cw-row[hidden] { display: none; }
-    .cw-kind { flex: 0 0 120px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; padding-top: 7px; }
+    .cw-kind { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; }
     .cw-main { flex: 1; min-width: 0; }
     .cw-field { border: 1px solid #dbe1e8; border-radius: 8px; padding: 7px 10px; font-size: 14.5px; line-height: 1.5; background: #fff; min-height: 34px; outline: none; }
     .cw-field:focus { border-color: var(--brand, #99060A); box-shadow: 0 0 0 3px rgba(153,6,10,.1); }
@@ -112,7 +131,6 @@
     .cw-status { font-size: 12px; }
     .cw-status.ok { color: #15803d; }
     .cw-status.err { color: #b91c1c; }
-    @media (max-width: 700px) { .cw-row { flex-direction: column; gap: 4px; } .cw-kind { flex-basis: auto; padding-top: 0; } }
 </style>
 @endpush
 
@@ -142,6 +160,24 @@
         if (b) { b.textContent = n + ' edited'; b.hidden = n === 0; }
     }
 
+    // ----- live preview: the page on the right shows what is being typed -----
+    var frame = $('#cwFrame');
+    function toFrame(msg) { try { frame.contentWindow.postMessage(msg, location.origin); } catch (e) {} }
+    var activeRow = null;
+    function setActive(row) { if (activeRow) activeRow.classList.remove('active'); activeRow = row; if (row) row.classList.add('active'); }
+    document.addEventListener('focusin', function (e) {
+        var f = e.target; if (!f.classList || !f.classList.contains('cw-field')) return;
+        var row = f.closest('.cw-row'); setActive(row); toFrame({ type: 'cw-focus', key: row.dataset.key });
+    });
+    // clicking wording in the preview jumps to its field
+    window.addEventListener('message', function (e) {
+        if (e.origin !== location.origin || !e.data || e.data.type !== 'cw-click') return;
+        var row = document.querySelector('.cw-row[data-key="' + e.data.key + '"]'); if (!row) return;
+        var g = row.closest('.cw-group'); if (g) { g.hidden = false; g.open = true; }
+        row.hidden = false; row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        var f = $('.cw-field', row); if (f) f.focus();
+    });
+
     // typing: Enter is a line break only with Shift; paste is plain text
     document.addEventListener('keydown', function (e) {
         if (e.target.classList && e.target.classList.contains('cw-field') && e.key === 'Enter') {
@@ -155,6 +191,7 @@
     });
     document.addEventListener('input', function (e) {
         var f = e.target; if (!f.classList || !f.classList.contains('cw-field')) return;
+        toFrame({ type: 'cw-set', key: f.closest('.cw-row').dataset.key, html: f.innerHTML });
         var dirty = norm(f.innerHTML) !== norm(canon(unesc(f.dataset.saved)));
         f.classList.toggle('dirty', dirty);
         var row = f.closest('.cw-row'); $('.cw-save', row).disabled = !dirty;
@@ -193,6 +230,7 @@
             post(resetUrl, { key: row.dataset.key }).then(function (r) {
                 if (!r.ok) { st.className = 'cw-status err'; st.textContent = 'Could not reset.'; return; }
                 f.innerHTML = unesc(row.dataset.original); f.dataset.saved = row.dataset.original; f.classList.remove('dirty');
+                toFrame({ type: 'cw-set', key: row.dataset.key, html: f.innerHTML });
                 $('.cw-save', row).disabled = true; e.target.hidden = true; edited--; st.dataset.was = ''; st.className = 'cw-status ok'; st.textContent = 'Back to the original wording.';
                 groupBadge(row); count();
             });
