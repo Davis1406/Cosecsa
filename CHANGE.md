@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-20) — Salesforce (and other pages) failing after the loopback API change
+- `ApiClient` called paths with a trailing slash (`salesforce/`, `fees/`, `letters/`, `capsule/`, and POSTs to `members/`, `trainees/`, `candidates/`, ...). Laravel answers those with a 301 to the public `http://api.cosecsamis.org/...`; with the API URL now `http://127.0.0.1:8081` the redirect left the loopback and lost the token, so the page got an error. `ApiClient::url()` now trims the trailing slash.
+- **Files:** `app/Services/ApiClient.php`.
+
 ### Fixed (2026-10-20) — Sidebar: submenus indented in light mode, "Trainees → Candidates" on one line
 - In light mode `custom.css` gave every sidebar link `padding: 9px 18px !important`, which overrode the submenu indent the header sets (`.nav-treeview .nav-link { padding-left: 2.4rem }`), so Associates (and every other submenu) sat flush with its parent while dark mode showed them indented. Light mode now uses the same 2.4rem indent. The third level (Associates > Associate Promotions) gets 2.9rem left, 10px right padding and a 6px icon gap in both modes, so the long "Trainees → Candidates" label fits on one line in light mode too (light mode uses Source Sans 3, wider than the dark mode's Source Sans Pro). Measured on a page built from the real AdminLTE, `custom.css` and header CSS: light mode wrapped to 2 lines before and 1 after; dark mode stays on 1 line.
 - **Files:** `public/dist/css/custom.css`.

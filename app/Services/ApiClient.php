@@ -222,6 +222,8 @@ class ApiClient
 
     private function url(string $path): string
     {
-        return $this->baseUrl . '/api/internal/' . ltrim($path, '/');
+        // No trailing slash: Apache answers 'x/' with a 301 to the public
+        // http:// host, which would leave the loopback and drop the token.
+        return $this->baseUrl . '/api/internal/' . trim($path, '/');
     }
 }
