@@ -75,8 +75,13 @@
 var AssocDrawer = (function () {
     var root = document.getElementById('adRoot'), panel = root.querySelector('.ad-drawer'), body = document.getElementById('adBody'), foot = document.getElementById('adFoot'), title = document.getElementById('adTitle');
     var BASE = @json(url('admin/associates'));
-    var SEGMENT = { trainee: 'trainees', candidate: 'candidates', fellow: 'fellows', member: 'members', programme_director: 'programme-directors', country_rep: 'reps' };
-    var LABEL = { trainee: 'Trainee', candidate: 'Candidate', fellow: 'Fellow', member: 'Member', programme_director: 'Programme director', country_rep: 'Country representative' };
+    var SEGMENT = { trainee: 'trainees', candidate: 'candidates', fellow: 'fellows', member: 'members', programme_director: 'programme-directors', country_rep: 'reps', examiner: 'examiners' };
+    var LABEL = { trainee: 'Trainee', candidate: 'Candidate', fellow: 'Fellow', member: 'Member', programme_director: 'Programme director', country_rep: 'Country representative', examiner: 'Examiner' };
+    // where each type's summary and full page live (examiners are under Examinations, the rest under Associates)
+    var PREVIEW = { examiner: @json(url('admin/exams/examiners/preview')) };
+    var FULL = { examiner: @json(url('admin/exams/view_examiner')) };
+    function previewUrl(type, id) { return (PREVIEW[type] || (BASE + '/' + SEGMENT[type] + '/preview')) + '/' + encodeURIComponent(id); }
+    function fullUrl(type, id) { return (FULL[type] || (BASE + '/' + SEGMENT[type] + '/view')) + '/' + id; }
     var current = null;
 
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -118,13 +123,13 @@ var AssocDrawer = (function () {
         root.classList.add('ad-open'); panel.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
         panel.querySelector('.ad-x').focus();
         var key = current;
-        fetch(BASE + '/' + SEGMENT[type] + '/preview/' + encodeURIComponent(id), { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+        fetch(previewUrl(type, id), { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
             .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
             .then(function (d) { if (current === key) render(d); })
             .catch(function () {
                 if (current !== key) return;
                 body.innerHTML = '<div class="ad-empty"><i class="fas fa-exclamation-triangle d-block mb-2" style="font-size:1.4rem;color:var(--ad-bad-fg);"></i>Couldn\'t load the summary. <a href="#" onclick="AssocDrawer.open(\'' + type + '\',' + Number(id) + ');return false;">Try again</a></div>';
-                foot.innerHTML = '<a href="' + esc(BASE + '/' + SEGMENT[type] + '/view/' + id) + '" class="btn btn-sm btn-ad">Open full page</a>';
+                foot.innerHTML = '<a href="' + esc(fullUrl(type, id)) + '" class="btn btn-sm btn-ad">Open full page</a>';
             });
         return true;
     }
@@ -136,10 +141,13 @@ var AssocDrawer = (function () {
     // A person's name link in a list table opens the drawer; everything else keeps working as before.
     var TYPE_OF = { trainees: 'trainee', candidates: 'candidate', fellows: 'fellow', members: 'member', 'programme-directors': 'programme_director', reps: 'country_rep' };
     var LINK = /\/admin\/associates\/(trainees|candidates|fellows|members|programme-directors|reps)\/view\/(\d+)\/?$/;
+    var EXAMINER_LINK = /\/admin\/exams\/view_examiner\/(\d+)\/?$/;
     document.addEventListener('click', function (e) {
         if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
         var a = e.target.closest('a[href]');
         if (!a || a.target === '_blank' || a.hasAttribute('data-no-peek') || !a.closest('table') || a.closest('.dropdown-menu') || a.closest('thead')) return;
+        var ex = EXAMINER_LINK.exec(a.pathname);
+        if (ex) { e.preventDefault(); open('examiner', ex[1]); return; }
         var m = LINK.exec(a.pathname);
         if (!m || !TYPE_OF[m[1]]) return;
         e.preventDefault();

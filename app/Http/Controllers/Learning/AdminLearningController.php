@@ -528,6 +528,27 @@ class AdminLearningController extends Controller
         return view('learning.admin.videos', $response->json());
     }
 
+    // GET admin/exams/learning/video-library — every video on the course, for the page editor's "choose a video" list
+    public function videoLibrary()
+    {
+        $r = $this->api->get('learning/admin/video-library');
+
+        return response()->json($r->json() ?? [], $r->status());
+    }
+
+    // POST admin/exams/learning/video-library — a video uploaded from the page editor
+    public function uploadLibraryVideo(Request $request)
+    {
+        $request->validate([
+            'video' => ['required', 'file', 'mimes:mp4,mov,webm,m4v', 'max:153600'],
+            'video_label' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $r = $this->api->postStream('learning/admin/video-library', ['video_label' => $request->input('video_label')], 'video', $request->file('video'));
+
+        return response()->json($r->json() ?? ['message' => 'The video could not be uploaded.'], $r->status() ?: 502);
+    }
+
     // POST admin/exams/learning/videos
     public function uploadVideo(Request $request)
     {

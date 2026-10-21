@@ -39,6 +39,28 @@
     </section>
 </div>
 
+{{-- video picker: the videos already on the course, or a new upload --}}
+<div class="modal fade" id="cwVideoModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Add a video</h5><button type="button" class="close" data-dismiss="modal"><span>&times;</span></button></div>
+            <div class="modal-body">
+                <div class="cw-tabs"><button type="button" class="on" data-vtab="list">Choose from the video list</button><button type="button" data-vtab="upload">Upload a new video</button></div>
+                <div id="cwVList"><div class="muted p-3">Loading the videos…</div></div>
+                <div id="cwVUp" style="display:none">
+                    <div class="cw-lab">Video file (MP4, MOV, WebM or M4V, up to 150 MB)</div>
+                    <input type="file" id="cwVFile" accept="video/mp4,video/quicktime,video/webm,video/x-m4v,.mp4,.mov,.webm,.m4v" class="form-control-file">
+                    <div class="cw-lab">Name (shown under the video)</div>
+                    <input type="text" id="cwVLabel" class="form-control form-control-sm" maxlength="255" placeholder="e.g. Example: a nervous candidate">
+                    <div class="progress mt-3" style="height:10px;display:none" id="cwVProg"><div class="progress-bar" style="width:0"></div></div>
+                    <div class="cw-note mt-2" id="cwVMsg"></div>
+                    <button type="button" class="btn btn-primary btn-sm mt-3" id="cwVGo">Upload and use this video</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- icon picker --}}
 <div class="modal fade" id="cwIconModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -103,6 +125,16 @@
     .cw-li .cw-ce { flex: 1; }
     .cw-thumb { max-width: 220px; max-height: 140px; border-radius: 8px; border: 1px solid #e2e8f0; display: block; margin-bottom: 6px; }
     .cw-note { font-size: 12px; color: #64748b; }
+    .cw-vprev { width: 100%; max-width: 360px; border-radius: 8px; background: #000; display: block; margin-bottom: 6px; }
+    .cw-tabs { display: flex; gap: 6px; margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; }
+    .cw-tabs button { border: 0; background: none; padding: 8px 12px; font-weight: 600; font-size: 13px; color: #64748b; border-bottom: 2px solid transparent; cursor: pointer; }
+    .cw-tabs button.on { color: var(--brand, #99060A); border-bottom-color: var(--brand, #99060A); }
+    .cw-vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; max-height: 56vh; overflow-y: auto; padding: 2px; }
+    .cw-vcard { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: #fff; display: flex; flex-direction: column; }
+    .cw-vcard video { width: 100%; aspect-ratio: 16/9; background: #000; display: block; }
+    .cw-vcard .t { padding: 8px 10px 4px; font-weight: 700; font-size: 13px; line-height: 1.3; }
+    .cw-vcard .m { padding: 0 10px 8px; font-size: 11.5px; color: #64748b; }
+    .cw-vcard button { margin: auto 10px 10px; }
     .cw-dirty { color: #b45309; font-weight: 700; }
 </style>
 @endpush
@@ -119,10 +151,12 @@
         save: @json(route('admin.exams.learning.page.save', $module['id'])),
         reset: @json(route('admin.exams.learning.page.reset', $module['id'])),
         preview: @json(route('admin.exams.learning.module.preview', $module['id'])),
-        image: @json(route('admin.exams.learning.page.image', $module['id']))
+        image: @json(route('admin.exams.learning.page.image', $module['id'])),
+        videos: @json(route('admin.exams.learning.video-library')),
+        videoUpload: @json(route('admin.exams.learning.video-library.upload'))
     };
     var CSRF = @json(csrf_token());
-    var S = { model: @json($model), saved: null, dirty: false, openT: {}, openB: {}, focus: null, timer: null, iconFor: 0 };
+    var S = { model: @json($model), saved: null, dirty: false, openT: {}, openB: {}, focus: null, timer: null, iconFor: 0, videoFor: null, videoCache: null };
     var panel = document.getElementById('cwPanel'), frame = document.getElementById('cwFrame');
     var $ = function (s, r) { return (r || document).querySelector(s); };
     var all = function (s, r) { return [].slice.call((r || document).querySelectorAll(s)); };
@@ -229,6 +263,75 @@
         });
     }
 
+    // ---------- videos ----------
+    function videoSrc(r) { var v = r && r.querySelector ? r.querySelector('video') : null; return v ? (v.getAttribute('src') || '') : ''; }
+    function hasVideo(r) { return !!videoSrc(r); }
+    function videoHtml(url, caption) {
+        return '<figure class="cs-video"><video controls preload="metadata" playsinline src="' + attr(url) + '"></video><figcaption>' + (caption || '') + '</figcaption></figure>';
+    }
+    function fmtSize(n) { return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
+    function openVideos(target) {
+        S.videoFor = target; showVTab('list'); $('#cwVMsg').textContent = ''; $('#cwVFile').value = ''; $('#cwVLabel').value = '';
+        loadVideos(true);
+        if (window.jQuery) window.jQuery('#cwVideoModal').modal('show');
+    }
+    function showVTab(t) {
+        all('#cwVideoModal [data-vtab]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-vtab') === t); });
+        $('#cwVList').style.display = t === 'list' ? '' : 'none'; $('#cwVUp').style.display = t === 'upload' ? '' : 'none';
+    }
+    function loadVideos(force) {
+        var box = $('#cwVList');
+        if (S.videoCache && !force) { drawVideos(); return; }
+        box.innerHTML = '<div class="muted p-3">Loading the videos…</div>';
+        fetch(URLS.videos, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } }).then(function (r) { return r.json(); })
+            .then(function (j) { S.videoCache = j.videos || []; drawVideos(); })
+            .catch(function () { box.innerHTML = '<div class="muted p-3">The video list could not be loaded.</div>'; });
+    }
+    function drawVideos() {
+        var box = $('#cwVList'), v = S.videoCache || [];
+        if (!v.length) { box.innerHTML = '<div class="muted p-3">There are no videos yet. Use the "Upload a new video" tab.</div>'; return; }
+        box.innerHTML = '<div class="cw-vgrid">' + v.map(function (x, i) {
+            return '<div class="cw-vcard"><video preload="metadata" muted src="' + attr(x.url) + '#t=0.5" controls></video><div class="t">' + esc(x.label) + '</div>' +
+                '<div class="m">' + esc((x.module ? x.module + ' · ' : '') + fmtSize(x.size || 0)) + '</div><button type="button" class="btn btn-primary btn-sm" data-vuse="' + i + '">Use this video</button></div>';
+        }).join('') + '</div>';
+    }
+    function useVideo(item) {
+        var t = S.videoFor; if (!t) return;
+        if (t.bid) {
+            var f = find(t.bid); if (!f) return;
+            var r = root(f.b.html), cap = r ? ((r.querySelector('figcaption') || r.querySelector('small') || {}).innerHTML || '') : '';
+            f.b.html = videoHtml(item.url, cap || esc(item.label)); f.b.type = 'video';
+            S.openB[f.b.id] = true;
+        } else {
+            var nb = { id: nextId(), type: 'video', html: videoHtml(item.url, esc(item.label)) };
+            S.model.topics[t.ti].blocks.push(nb); S.openT[S.model.topics[t.ti].id] = true; S.openB[nb.id] = true; S.focus = { type: 'cw-focus', bid: nb.id };
+        }
+        if (window.jQuery) window.jQuery('#cwVideoModal').modal('hide');
+        changed(); renderAll();
+    }
+    function find(bid) { var r = null; S.model.topics.forEach(function (t, ti) { t.blocks.forEach(function (b, bi) { if (b.id === bid) r = { t: t, ti: ti, b: b, bi: bi }; }); }); return r; }
+    $('#cwVideoModal').addEventListener('click', function (e) {
+        var tab = e.target.closest('[data-vtab]'); if (tab) { showVTab(tab.getAttribute('data-vtab')); return; }
+        var use = e.target.closest('[data-vuse]'); if (use) { useVideo(S.videoCache[+use.getAttribute('data-vuse')]); return; }
+        if (e.target.id === 'cwVGo') uploadVideo();
+    });
+    function uploadVideo() {
+        var file = $('#cwVFile').files[0], msg = $('#cwVMsg'), bar = $('#cwVProg'), go = $('#cwVGo');
+        if (!file) { msg.textContent = 'Choose a video file first.'; return; }
+        if (file.size > 150 * 1048576) { msg.textContent = 'That video is ' + fmtSize(file.size) + '. The limit is 150 MB.'; return; }
+        var fd = new FormData(); fd.append('video', file); fd.append('video_label', $('#cwVLabel').value || file.name.replace(/\.[^.]+$/, ''));
+        var xhr = new XMLHttpRequest(); xhr.open('POST', URLS.videoUpload); xhr.setRequestHeader('X-CSRF-TOKEN', CSRF); xhr.setRequestHeader('Accept', 'application/json'); xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        go.disabled = true; bar.style.display = ''; msg.textContent = 'Uploading…';
+        xhr.upload.onprogress = function (e) { if (e.lengthComputable) { bar.firstElementChild.style.width = Math.round(e.loaded / e.total * 100) + '%'; msg.textContent = 'Uploading… ' + Math.round(e.loaded / e.total * 100) + '%'; } };
+        xhr.onload = function () {
+            go.disabled = false; var j = {}; try { j = JSON.parse(xhr.responseText); } catch (e) {}
+            if (xhr.status >= 200 && xhr.status < 300 && j.video) { bar.style.display = 'none'; bar.firstElementChild.style.width = '0'; S.videoCache = null; useVideo(j.video); }
+            else { msg.textContent = (j && j.message) || ('The upload failed (' + xhr.status + '). Check the file type and size, then try again.'); }
+        };
+        xhr.onerror = function () { go.disabled = false; msg.textContent = 'The upload failed. Check your connection and try again.'; };
+        xhr.send(fd);
+    }
+
     // ---------- rendering the editor ----------
     function toolButtons(kind, ti, bi) {
         var d = ' data-ti="' + ti + '" data-bi="' + (bi == null ? '' : bi) + '"';
@@ -278,6 +381,12 @@
                 (cap ? '<div class="cw-lab">Caption</div><div class="cw-ce" contenteditable="true" data-blk="caption" ' + key + '>' + cap.innerHTML + '</div>' : '') +
                 '<div class="cw-row2" style="margin-top:8px"><label class="btn btn-light cw-mini" style="margin:0">Replace picture<input type="file" accept="image/*" hidden data-act="img-up" ' + key + '></label><span class="cw-note">JPG, PNG, GIF or WebP, up to 4 MB.</span></div>';
         }
+        if (b.type === 'video') {
+            var vr = root(b.html), vsrc = videoSrc(vr), vcap = vr ? ((vr.querySelector('figcaption') || vr.querySelector('small') || {}).innerHTML || '') : '';
+            return (vsrc ? '<video class="cw-vprev" controls preload="metadata" src="' + attr(vsrc) + '"></video>' : '<div class="cw-note" style="margin:6px 0">No video attached yet: this is a placeholder with a play button. Choose a video below.</div>') +
+                '<div class="cw-lab">Caption</div><div class="cw-ce" contenteditable="true" data-blk="vcap" ' + key + '>' + vcap + '</div>' +
+                '<div class="cw-row2" style="margin-top:8px"><button type="button" class="btn btn-light cw-mini" data-act="vid-pick" ' + key + '>' + (vsrc ? 'Change video' : 'Choose or upload a video') + '</button></div>';
+        }
         var sr = root(b.html), ls = sr ? lines(sr) : [];
         return '<div class="cw-note" style="margin:6px 0">A designed block (cards, tabs, video, animation...). Its look stays as designed; you can reword it, move it, copy it or remove it.</div>' +
             (ls.length ? ls.map(function (e, li) { return '<div class="cw-ce" style="margin-bottom:5px" contenteditable="true" data-blk="line" ' + key + ' data-li="' + li + '">' + e.innerHTML + '</div>'; }).join('') : '<div class="muted">No wording in this block.</div>') +
@@ -285,11 +394,12 @@
     }
     function summary(b) {
         if (b.type === 'image') return 'Picture';
+        if (b.type === 'video') { var vr = root(b.html), vc = vr ? (vr.querySelector('figcaption,small') || {}).textContent : ''; return (hasVideo(vr) ? 'Video · ' : 'Video placeholder · ') + (vc || ''); }
         if (b.type === 'table') { var t = tableOf(b.html).t; return 'Table · ' + (t ? t.querySelectorAll('tr').length : 0) + ' rows'; }
         if (b.type === 'list') { var l = root(b.html); return LIST_KINDS[listKind(l)][2] + ' · ' + l.children.length + ' items'; }
         var s = plain(b.html); return s.length > 90 ? s.slice(0, 90) + '…' : (s || '(empty)');
     }
-    var TYPE_LABEL = { heading: 'Heading', paragraph: 'Text', lead: 'Lead', note: 'Note', callout: 'Callout', list: 'List', table: 'Table', image: 'Picture', special: 'Designed' };
+    var TYPE_LABEL = { heading: 'Heading', paragraph: 'Text', lead: 'Lead', note: 'Note', callout: 'Callout', list: 'List', table: 'Table', image: 'Picture', video: 'Video', special: 'Designed' };
 
     function renderAll() {
         var keepY = panel.scrollTop, m = S.model, h = '';
@@ -313,7 +423,7 @@
                     (o ? '<div class="cw-bb">' + renderBlockBody(b, ti, bi) + '</div>' : '') + '</div>';
             });
             h += '<div class="cw-add"><select class="form-control form-control-sm" style="width:auto;display:inline-block" data-act="blk-add" data-ti="' + ti + '"><option value="">+ Add a block…</option>' +
-                '<option value="paragraph">Text</option><option value="lead">Lead text</option><option value="heading">Heading</option><option value="list">List</option><option value="callout">Highlighted note</option><option value="note">Small note</option><option value="table">Table</option><option value="image">Picture</option></select></div></div></details>';
+                '<option value="paragraph">Text</option><option value="lead">Lead text</option><option value="heading">Heading</option><option value="list">List</option><option value="callout">Highlighted note</option><option value="note">Small note</option><option value="table">Table</option><option value="image">Picture</option><option value="video">Video</option></select></div></div></details>';
         });
         h += '<div style="margin:6px 0 12px"><button type="button" class="btn btn-light btn-sm" data-act="topic-add">+ Add a topic card</button></div>';
         h += '<details class="cw-card"><summary><span class="cw-tt">"You have read all topics" card</span></summary><div class="cw-card-b">' +
@@ -346,6 +456,7 @@
         else if (k === 'line') { var ls = lines(r); ls[+t.getAttribute('data-li')].innerHTML = t.innerHTML; s.b.html = r.outerHTML; }
         else if (k === 'alt') { var img = r.tagName === 'IMG' ? r : r.querySelector('img'); img.setAttribute('alt', t.value); s.b.html = r.outerHTML; }
         else if (k === 'caption') { r.querySelector('figcaption').innerHTML = t.innerHTML; s.b.html = r.outerHTML; }
+        else if (k === 'vcap') { var cn = r.querySelector('figcaption') || r.querySelector('small'); if (cn) { cn.innerHTML = t.innerHTML; s.b.html = r.outerHTML; } }
         var sm = $('[data-bid="' + s.b.id + '"] .cw-bs', panel); if (sm) sm.textContent = summary(s.b);
         changed();
     });
@@ -354,6 +465,7 @@
         if (k === 'raw') { s = sel(t); s.b.html = t.value; changed(); renderAll(); return; }
         if (a === 'blk-type') { s = sel(t); r = root(s.b.html); s.b.html = newText(t.value, r ? r.innerHTML : ''); s.b.type = t.value; changed(); renderAll(); }
         if (a === 'list-kind') { s = sel(t); var l = root(s.b.html); s.b.html = buildList(t.value, [].slice.call(l.children).map(function (li) { return li.innerHTML; })); changed(); renderAll(); }
+        if (a === 'blk-add' && t.value === 'video') { s = sel(t); t.value = ''; openVideos({ ti: s.ti, bid: null }); return; }
         if (a === 'blk-add' && t.value) { s = sel(t); var nb = newBlock(t.value); s.t.blocks.push(nb); S.openT[s.t.id] = true; S.openB[nb.id] = true; changed(); renderAll(); focusPreview({ bid: nb.id }); }
         if (a === 'img-up' && t.files[0]) {
             s = sel(t); var fd = new FormData(); fd.append('image', t.files[0]);
@@ -368,6 +480,7 @@
         var a = t.getAttribute('data-act'), s;
         if (a === 'blk-toggle') { if (e.target.closest('.cw-tools')) return; var id = t.getAttribute('data-bid'); S.openB[id] = !S.openB[id]; renderAll(); if (S.openB[id]) focusPreview({ bid: id }); return; }
         if (a === 'icon') { e.preventDefault(); e.stopPropagation(); S.iconFor = +t.getAttribute('data-ti'); openIcons(); return; }
+        if (a === 'vid-pick') { s = sel(t); openVideos({ ti: s.ti, bid: s.b.id }); return; }
         if (a === 'color-auto') { setPath(S.model, t.getAttribute('data-path'), null); changed(); renderAll(); return; }
         if (a === 'topic-add') { var nt = { id: 't' + (S.model.topics.length + 1), icon: 'i1', color: null, title: 'New topic', subtitle: 'Short description', blocks: [newBlock('paragraph')] }; S.model.topics.push(nt); S.openT[nt.id] = true; changed(); renderAll(); return; }
         if (a.indexOf('topic-') === 0) {

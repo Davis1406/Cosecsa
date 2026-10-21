@@ -144,6 +144,14 @@ class CoursePage
         if ($tag === 'img' && self::hasClass($b, 'pic')) {
             return 'image';
         }
+        // A video: a real one (figure.cs-video holding a <video>) or the designed placeholder (a play button and a caption).
+        if ($tag === 'figure' && self::classOf($b) === 'cs-video' && self::findDesc($b, 'video')) {
+            return 'video';
+        }
+        if ($tag === 'div' && self::classOf($b) === 'video' && count($b['children']) === 2
+            && self::child($b, 'div', 'play') && self::childTag($b, 'small')) {
+            return 'video';
+        }
         if ($tag === 'figure' && ($img = self::findDesc($b, 'img')) && count($b['children']) <= 2) {
             return 'image';
         }

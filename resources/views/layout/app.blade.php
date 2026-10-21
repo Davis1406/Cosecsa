@@ -175,7 +175,8 @@
     <script src="{{ asset('plugins/datatables-buttons/js/buttons.colVis.min.js') }}"></script>
 
     {{-- Side drawer with a short summary of an associate, on the Associates list pages --}}
-    @if(request()->is('admin/associates/*') && ! request()->is('admin/associates/*/view/*', 'admin/associates/*/edit/*', 'admin/associates/*/add*', 'admin/associates/*/import*', 'admin/associates/*/notes*'))
+    @if((request()->is('admin/associates/*') && ! request()->is('admin/associates/*/view/*', 'admin/associates/*/edit/*', 'admin/associates/*/add*', 'admin/associates/*/import*', 'admin/associates/*/notes*'))
+        || (request()->is('admin/exams/*') && ! request()->is('admin/exams/view_examiner/*', 'admin/exams/edit_examiner/*', 'admin/exams/add_examiner*', 'admin/exams/learning*', 'admin/exams/import*')))
         @include('partials.associate_drawer')
     @endif
 

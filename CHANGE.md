@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added (2026-10-21) — Videos in the course page editor; summary drawer on Examiners pages
+- A **Video** block in the page editor: choose from the video list (everything already uploaded under Videos) or upload a new file (mp4, mov, webm, m4v, up to 150 MB). The existing "video placeholder" blocks now show as Video blocks with a **Choose or upload a video** button; learners see a real player once a video is attached.
+- The summary drawer now also opens from the **Examiners** lists (name click), with availability for this year, participation and Open full page / Edit.
+- **Files:** `app/Support/CoursePage.php`, `resources/views/learning/admin/coded-module.blade.php`, `app/Http/Controllers/Learning/AdminLearningController.php`, `app/Http/Controllers/AssociatePreviewController.php`, `resources/views/partials/associate_drawer.blade.php`, `resources/views/layout/app.blade.php`, `routes/web.php`, `public/css/course/cosecsa-course.css`.
+
 ### Added (2026-10-21) — 83 more icons for the course page editor
 - The icon picker now offers **103 icons** (it was 20): medical (stethoscope, syringe, pill, bone, microscope, thermometer, heart pulse, blood drop, scissors, medical cross), people and roles, documents and folders, calendar, clock and timer, communication (chat, megaphone, phone, microphone, video), security, charts, maps, money, arrows and status marks. Each has a name: hover for it, or type in the new search box. The icons are added to the course sprite (`course/partials/icons.blade.php`), so they show on the learner pages exactly as the originals.
 - **Files:** `resources/views/course/partials/icons.blade.php`, `resources/views/learning/admin/coded-module.blade.php`, `app/Http/Controllers/Learning/AdminLearningController.php`.

@@ -103,3 +103,8 @@
 /* Guard against global/Bootstrap heading styles in the MIS */
 .cs-course h1,.cs-course h2,.cs-course h3,.cs-course h4{font-weight:700;color:inherit;letter-spacing:normal;text-transform:none}
 .cs-course ul,.cs-course ol{margin-bottom:0}
+
+/* A video added in the page editor (figure.cs-video): a player with its caption underneath */
+.cs-course .cs-video { margin: 14px 0; border-radius: 14px; overflow: hidden; background: #0e151a; box-shadow: 0 1px 3px rgba(0,0,0,.14); }
+.cs-course .cs-video video { display: block; width: 100%; aspect-ratio: 16/9; background: #000; }
+.cs-course .cs-video figcaption { padding: 10px 14px; font: 500 13px var(--mono); color: #e8eef2; background: #16222a; }

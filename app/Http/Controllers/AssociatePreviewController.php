@@ -13,7 +13,7 @@ class AssociatePreviewController extends Controller
     /** type => the permission module that allows editing it */
     private const MANAGE = [
         'trainee' => 'trainees', 'candidate' => 'candidates', 'fellow' => 'fellows', 'member' => 'members',
-        'programme_director' => 'programme_directors', 'country_rep' => 'country_reps',
+        'programme_director' => 'programme_directors', 'country_rep' => 'country_reps', 'examiner' => 'examiners',
     ];
 
     public function __construct(private ApiClient $api) {}

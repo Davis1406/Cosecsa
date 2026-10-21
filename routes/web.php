@@ -450,6 +450,7 @@ Route::get('admin/associates/members/delete/{id}', [MembersController::class,'de
 
 //Examiners's Route
 Route::get('admin/exams/examiners', [ExamsController::class,'list']);
+Route::get('admin/exams/examiners/preview/{id}', [AssociatePreviewController::class,'show'])->whereNumber('id')->name('examiners.preview')->defaults('type', 'examiner');
 // Examiner Training (learning) — content and progress live in cosecsa-api (internal/learning/*)
 Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(\App\Http\Controllers\Learning\AdminLearningController::class)->group(function () {
     Route::get('/', 'index');
@@ -465,6 +466,8 @@ Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(
     Route::post('modules/{id}/page', 'savePage')->whereNumber('id')->name('.page.save');
     Route::post('modules/{id}/page/reset', 'resetPage')->whereNumber('id')->name('.page.reset');
     Route::post('modules/{id}/image', 'uploadPageImage')->whereNumber('id')->name('.page.image');
+    Route::get('video-library', 'videoLibrary')->name('.video-library');
+    Route::post('video-library', 'uploadLibraryVideo')->name('.video-library.upload');
     Route::post('modules/{id}/texts', 'saveText')->whereNumber('id')->name('.text.save');
     Route::post('modules/{id}/texts/reset', 'resetText')->whereNumber('id')->name('.text.reset');
     Route::get('blocks/{id}/edit', 'editBlock')->whereNumber('id')->name('.block');
