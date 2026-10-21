@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-10-21) — "Completed" trainee status; promoted fellows listed as trainees for their intake year
+- Trainees who went on to become fellows are now on the Trainees list for the year they were admitted, with status **Completed** (new option on the trainee edit/view screens, shown grey on the reports). 26 missing 2025/2024/2022 records were created from their fellow records, and the Trainees page no longer hides trainees who match a fellow in the same programme.
+- **Files:** `resources/views/admin/associates/trainees/{edit_trainee,view,reports}.blade.php`.
+
 ### Added (2026-10-21) — Videos in the course page editor; summary drawer on Examiners pages
 - A **Video** block in the page editor: choose from the video list (everything already uploaded under Videos) or upload a new file (mp4, mov, webm, m4v, up to 150 MB). The existing "video placeholder" blocks now show as Video blocks with a **Choose or upload a video** button; learners see a real player once a video is attached.
 - The summary drawer now also opens from the **Examiners** lists (name click), with availability for this year, participation and Open full page / Edit.

@@ -271,7 +271,7 @@
                                   data-field="status"
                                   data-value="{{ $trainee->status }}"
                                   data-type="select"
-                                  data-options='{"Active":"Active","Inactive":"Inactive","Deferred":"Deferred"}'
+                                  data-options='{"Active":"Active","Completed":"Completed","Inactive":"Inactive","Deferred":"Deferred"}'
                                   title="Click to edit status">
                                 <i class="fas fa-edit tag-edit-icon"></i>
                                 <span class="tag-label">{{ $trainee->status ?: 'Unknown' }}</span>

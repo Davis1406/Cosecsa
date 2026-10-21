@@ -244,7 +244,7 @@ $(document).ready(function () {
                         '<td>' + (r.entry_number || '—') + '</td>' +
                         '<td>' + (r.programme_name || '—') + '</td>' +
                         '<td>' + (r.country_name || '—') + '</td>' +
-                        '<td><span class="badge" style="background:' + (r.status==='Active'?'#d4edda':r.status==='Inactive'?'#e2e3e5':'#fff3cd') + ';color:#333;">' + (r.status || '—') + '</span></td>' +
+                        '<td><span class="badge" style="background:' + (r.status==='Active'?'#d4edda':(r.status==='Inactive'||r.status==='Completed')?'#e2e3e5':'#fff3cd') + ';color:#333;">' + (r.status || '—') + '</span></td>' +
                         '<td>' + (r.gender || '—') + '</td>' +
                         '<td>' + (r.admission_year || '—') + '</td>' +
                         '<td>' + (r.exam_year || '—') + '</td>' +

@@ -226,6 +226,7 @@
                                 <option value="Approved"  {{ $trainee->status == 'Approved'  ? 'selected' : '' }}>Approved</option>
                                 <option value="Graduated" {{ $trainee->status == 'Graduated' ? 'selected' : '' }}>Graduated</option>
                                 <option value="Deferred"  {{ in_array($trainee->status, ['Deferred', 'Deffered']) ? 'selected' : '' }}>Deferred</option>
+                                <option value="Completed" {{ $trainee->status == 'Completed' ? 'selected' : '' }}>Completed</option>
                                 <option value="Inactive"  {{ $trainee->status == 'Inactive'  ? 'selected' : '' }}>Inactive</option>
                             </select>
                         </div>
