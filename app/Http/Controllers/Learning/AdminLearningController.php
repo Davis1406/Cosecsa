@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Learning;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApiClient;
+use App\Support\CoursePage;
 use App\Support\CourseText;
 use App\Support\LearningView;
 use Illuminate\Http\Client\Response;
