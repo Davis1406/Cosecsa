@@ -114,9 +114,14 @@ class AdminLearningController extends Controller
             $seeded = true;
         }
 
+        // every icon of the course sprite, with its name (the picker shows them all and can search by name)
         $icons = [];
-        if (preg_match_all('/<symbol id="([a-z0-9]+)"/', (string) @file_get_contents(resource_path('views/course/partials/icons.blade.php')), $im)) {
-            $icons = array_values(array_filter($im[1], fn ($i) => $i !== 'i2b'));
+        if (preg_match_all('/<symbol id="([a-z0-9]+)"(?:\s+data-name="([^"]*)")?/', (string) @file_get_contents(resource_path('views/course/partials/icons.blade.php')), $im, PREG_SET_ORDER)) {
+            foreach ($im as $m) {
+                if ($m[1] !== 'i2b') {
+                    $icons[] = ['id' => $m[1], 'name' => $m[2] ?? $m[1]];
+                }
+            }
         }
 
         return view('learning.admin.coded-module', [

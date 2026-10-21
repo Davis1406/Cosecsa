@@ -43,8 +43,12 @@
 <div class="modal fade" id="cwIconModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <div class="modal-header"><h5 class="modal-title">Choose an icon</h5><button type="button" class="close" data-dismiss="modal"><span>&times;</span></button></div>
-            <div class="modal-body"><div class="cw-icons" id="cwIcons"></div></div>
+            <div class="modal-header"><h5 class="modal-title">Choose an icon <small class="text-muted" id="cwIconCount"></small></h5><button type="button" class="close" data-dismiss="modal"><span>&times;</span></button></div>
+            <div class="modal-body">
+                <input type="search" id="cwIconSearch" class="form-control form-control-sm mb-2" placeholder="Search icons (heart, document, clock, medical...)" autocomplete="off">
+                <div class="cw-icons" id="cwIcons"></div>
+                <div class="cw-note" id="cwIconNone" style="display:none;padding:12px 0">No icon has that name.</div>
+            </div>
         </div>
     </div>
 </div>
@@ -79,7 +83,7 @@
     .cw-row2 { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .cw-icbtn { width: 44px; height: 44px; border-radius: 10px; border: 1px solid #dbe1e8; background: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; padding: 0; }
     .cw-icbtn svg, .cw-icons svg { width: 24px; height: 24px; fill: none; stroke: #334155; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-    .cw-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 8px; }
+    .cw-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 8px; max-height: 56vh; overflow-y: auto; padding: 2px; }
     .cw-icons button { height: 54px; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; }
     .cw-icons button:hover, .cw-icons button.on { border-color: var(--brand, #99060A); background: #fff5f5; }
     input[type=color].cw-col { width: 38px; height: 32px; padding: 0; border: 1px solid #dbe1e8; border-radius: 8px; background: #fff; cursor: pointer; }
@@ -415,11 +419,18 @@
     panel.addEventListener('paste', function (e) { if (e.target.classList.contains('cw-ce')) { e.preventDefault(); document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text/plain')); } });
 
     // ---------- icon picker ----------
-    function openIcons() {
-        var cur = S.model.topics[S.iconFor].icon;
-        $('#cwIcons').innerHTML = ICONS.map(function (i) { return '<button type="button" data-ic="' + i + '" class="' + (i === cur ? 'on' : '') + '" title="' + i + '"><svg viewBox="0 0 24 24"><use href="#' + i + '"/></svg></button>'; }).join('');
-        if (window.jQuery) window.jQuery('#cwIconModal').modal('show');
+    function drawIcons(q) {
+        var cur = S.model.topics[S.iconFor].icon, f = (q || '').trim().toLowerCase();
+        var list = ICONS.filter(function (i) { return !f || i.name.toLowerCase().indexOf(f) > -1; });
+        $('#cwIcons').innerHTML = list.map(function (i) { return '<button type="button" data-ic="' + i.id + '" class="' + (i.id === cur ? 'on' : '') + '" title="' + attr(i.name) + '" aria-label="' + attr(i.name) + '"><svg viewBox="0 0 24 24"><use href="#' + i.id + '"/></svg></button>'; }).join('');
+        $('#cwIconNone').style.display = list.length ? 'none' : 'block';
+        $('#cwIconCount').textContent = '(' + list.length + (f ? ' found' : ' available') + ')';
     }
+    function openIcons() {
+        $('#cwIconSearch').value = ''; drawIcons('');
+        if (window.jQuery) { window.jQuery('#cwIconModal').modal('show'); window.jQuery('#cwIconModal').one('shown.bs.modal', function () { $('#cwIconSearch').focus(); }); }
+    }
+    $('#cwIconSearch').addEventListener('input', function () { drawIcons(this.value); });
     $('#cwIcons').addEventListener('click', function (e) {
         var b = e.target.closest('[data-ic]'); if (!b) return;
         S.model.topics[S.iconFor].icon = b.getAttribute('data-ic');

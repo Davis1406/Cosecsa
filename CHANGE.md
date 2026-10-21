@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-10-21) — 83 more icons for the course page editor
+- The icon picker now offers **103 icons** (it was 20): medical (stethoscope, syringe, pill, bone, microscope, thermometer, heart pulse, blood drop, scissors, medical cross), people and roles, documents and folders, calendar, clock and timer, communication (chat, megaphone, phone, microphone, video), security, charts, maps, money, arrows and status marks. Each has a name: hover for it, or type in the new search box. The icons are added to the course sprite (`course/partials/icons.blade.php`), so they show on the learner pages exactly as the originals.
+- **Files:** `resources/views/course/partials/icons.blade.php`, `resources/views/learning/admin/coded-module.blade.php`, `app/Http/Controllers/Learning/AdminLearningController.php`.
+
 ### Added (2026-10-21) — Quick summary drawer on the Associates lists
 - Clicking a person's name on the **Trainees, Candidates, Fellows, Alumni, Members, Programme Directors and Country Reps** lists now opens a side drawer (the same look as the fees subscription drawer) with a short summary: name and photo, three headline figures, contact, key facts and **Open full page** / **Edit** buttons. The action menu's "View" item, ctrl/cmd/shift-click and middle-click still open the full page. Nothing changes on other pages.
 - Summary comes from cosecsa-api (`internal/associate-preview/{type}/{id}`) through `admin/associates/{segment}/preview/{id}` (permission by the same URL prefix as each list; the Edit button only shows to people who can manage that module).
