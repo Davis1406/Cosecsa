@@ -359,6 +359,27 @@
 <script>
 $(function () {
 
+    /* ── Resumed after deferral: the exam year is counted from the year they continue ──
+       exam year = resume year + years left - 1, years left = programme years - (study year they resume in - 1).
+       The server applies the same rule when the form is saved. */
+    (function () {
+        var $resume = $('select[name="resume_year"]'), $exam = $('select[name="exam_year"]');
+        var words = { one: 1, two: 2, three: 3, four: 4, five: 5 };
+        function recount() {
+            var resume = parseInt($resume.val(), 10), period = parseInt($('select[name="programme_period"]').val(), 10);
+            if (!resume || !period) return;
+            var name = $('#training_year option:selected').text(), m = /year\s+(one|two|three|four|five|\d)/i.exec(name), yr = 1;
+            if (m) yr = words[m[1].toLowerCase()] || parseInt(m[1], 10) || 1;
+            var year = resume + Math.max(1, period - (yr - 1)) - 1;
+            if ($exam.find('option[value="' + year + '"]').length) {
+                $exam.val(String(year));
+                $exam.closest('.ms2-col').find('.ms2-label').html('Exam Year <small class="text-success">(counted from the resume year)</small>');
+            }
+        }
+        $resume.on('change', recount);
+        $('#training_year, select[name="programme_period"]').on('change', function () { if ($resume.val()) recount(); });
+    })();
+
     /* ── Stepper navigation ─────────────────────────────────────── */
     function goToStep(n) {
         $('.ms2-fieldset').removeClass('active');

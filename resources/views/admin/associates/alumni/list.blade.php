@@ -46,7 +46,7 @@
                                         @foreach($alumni as $a)
                                         <tr>
                                             <td class="row-num"></td>
-                                            <td>{{ $a->fellow_name ?? '-' }}</td>
+                                            <td><a href="{{ url('admin/associates/fellows/view/' . ($a->fellow_id ?? 0)) }}" class="ad-peek" style="color:inherit;font-weight:600;text-decoration:none;" title="Quick summary">{{ $a->fellow_name ?? '-' }}</a></td>
                                             <td>{{ $a->personal_email ?? '-' }}</td>
                                             <td>{{ $a->country_name ?? '-' }}</td>
                                             <td>{{ $a->current_specialty ?: ($a->programme_name ? preg_replace('/^FCS\s+/i','', $a->programme_name) : '-') }}</td>

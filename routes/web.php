@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AssociateNoteController;
+use App\Http\Controllers\AssociatePreviewController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\HospitalController;
@@ -363,6 +364,13 @@ Route::get('admin/associates/fellows/import_fellows', [FellowsController::class,
 Route::get('admin/associates/fellows/import/template', [FellowsController::class,'downloadTemplate'])->name('fellows.import.template');
 Route::post('admin/associates/fellows/import', [FellowsController::class, 'importFellows'])->name('fellows.import.data');
 Route::get('admin/associates/fellows/view/{id}',  [FellowsController::class,'view'])->name('fellows.view');
+// Side-drawer summary of an associate, opened from the Associates lists (permission by URL prefix, like notes)
+Route::get('admin/associates/trainees/preview/{id}', [AssociatePreviewController::class,'show'])->whereNumber('id')->name('trainees.preview')->defaults('type', 'trainee');
+Route::get('admin/associates/candidates/preview/{id}', [AssociatePreviewController::class,'show'])->whereNumber('id')->name('candidates.preview')->defaults('type', 'candidate');
+Route::get('admin/associates/fellows/preview/{id}', [AssociatePreviewController::class,'show'])->whereNumber('id')->name('fellows.preview')->defaults('type', 'fellow');
+Route::get('admin/associates/members/preview/{id}', [AssociatePreviewController::class,'show'])->whereNumber('id')->name('members.preview')->defaults('type', 'member');
+Route::get('admin/associates/programme-directors/preview/{id}', [AssociatePreviewController::class,'show'])->whereNumber('id')->name('programme-directors.preview')->defaults('type', 'programme_director');
+Route::get('admin/associates/reps/preview/{id}', [AssociatePreviewController::class,'show'])->whereNumber('id')->name('reps.preview')->defaults('type', 'country_rep');
 Route::post('admin/associates/fellows/{id}/notes', [AssociateNoteController::class,'store'])->name('fellow.notes.store')->defaults('type', 'fellow');
 Route::post('admin/associates/fellows/notes/{noteId}/delete', [AssociateNoteController::class,'destroy'])->name('fellow.notes.destroy')->defaults('type', 'fellow');
 Route::get('admin/associates/fellows/edit/{id}', [FellowsController::class,'edit']);

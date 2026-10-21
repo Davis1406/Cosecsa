@@ -139,7 +139,7 @@
                                         @php $pos = $value->position ?? 'Country Representative'; $repStatus = $value->status ?? 'active'; @endphp
                                         <tr class="user-row" data-country="{{ $value->country_name ?? '' }}" data-position="{{ $value->position ?? 'Country Representative' }}" data-status="{{ $repStatus }}">
                                             <td>{{$value->id}}</td>
-                                            <td>{{$value->name}}</td>
+                                            <td><a href="{{ url('admin/associates/reps/view/' . $value->reps_id) }}" class="ad-peek" style="color:inherit;font-weight:600;text-decoration:none;" title="Quick summary">{{$value->name}}</a></td>
                                             <td>
                                                 <span class="badge cr-position-badge" data-pos="{{ $pos }}">{{ $pos }}</span>
                                             </td>

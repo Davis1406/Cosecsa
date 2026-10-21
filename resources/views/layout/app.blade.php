@@ -174,6 +174,11 @@
     <script src="{{ asset('plugins/datatables-buttons/js/buttons.print.min.js') }}"></script>
     <script src="{{ asset('plugins/datatables-buttons/js/buttons.colVis.min.js') }}"></script>
 
+    {{-- Side drawer with a short summary of an associate, on the Associates list pages --}}
+    @if(request()->is('admin/associates/*') && ! request()->is('admin/associates/*/view/*', 'admin/associates/*/edit/*', 'admin/associates/*/add*', 'admin/associates/*/import*', 'admin/associates/*/notes*'))
+        @include('partials.associate_drawer')
+    @endif
+
     <!-- Custom scripts from individual pages -->
     @stack('scripts')
 

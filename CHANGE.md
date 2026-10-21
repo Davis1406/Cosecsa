@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+### Added (2026-10-21) — Quick summary drawer on the Associates lists
+- Clicking a person's name on the **Trainees, Candidates, Fellows, Alumni, Members, Programme Directors and Country Reps** lists now opens a side drawer (the same look as the fees subscription drawer) with a short summary: name and photo, three headline figures, contact, key facts and **Open full page** / **Edit** buttons. The action menu's "View" item, ctrl/cmd/shift-click and middle-click still open the full page. Nothing changes on other pages.
+- Summary comes from cosecsa-api (`internal/associate-preview/{type}/{id}`) through `admin/associates/{segment}/preview/{id}` (permission by the same URL prefix as each list; the Edit button only shows to people who can manage that module).
+- Name cells on the Members, Programme Directors, Country Reps and Alumni lists are now links (they were plain text).
+- **Files:** `resources/views/partials/associate_drawer.blade.php`, `resources/views/layout/app.blade.php`, `app/Http/Controllers/AssociatePreviewController.php`, `routes/web.php`, `resources/views/admin/associates/{members,programme-directors,reps,alumni}/list.blade.php`.
+
+### Changed (2026-10-21) — Trainees who deferred and resumed: exam year counted from the resume year
+- Choosing a **Resume Year** on the trainee edit form (or editing it inline) now recounts the **Exam Year** from the year they continue (resume year + years left - 1; years left uses the Study Year they resume in). The form updates the exam year as you choose and the server applies the same rule on save. See cosecsa-api CHANGES.md.
+- **Files:** `resources/views/admin/associates/trainees/edit_trainee.blade.php`.
+
 ### Changed (2026-10-21) — Examiner course: a full page editor (icons, colours, tables, blocks), not only wording
 - **Admin > Examiner Training > Course content > a module** is now a page editor: blocks on the left, live preview of the page on the right. Per page: banner label, title, intro and **banner colours**; per topic card: **icon** (picker), **accent colour**, title, subtitle, move up/down, duplicate, delete, add a topic card; per block: change style (text, lead, heading, note, callout), **lists** (ticks, crosses, bullets, numbered, steps; add/remove/reorder items), **tables** (edit cells, add/remove rows and columns), **pictures** (replace, description, caption), move/duplicate/delete, add new blocks; designed blocks (card grids, tabs, video, animation...) can be reworded, moved, copied or removed (and their HTML edited by an expert). "Save page" publishes; "Discard changes" and "Back to original design" undo. The preview updates as you work and clicking anything in it selects its block.
 - The first time a page is opened its own coded design is read into this editable form (`App\Support\CoursePage::parse`) and saved; examiners then see the page rendered from that data (`course/modules/_page.blade.php`), identical to before until something is changed. Image sources are stored host-independent (`{{img}}`). Uploaded pictures go to `public/images/course/uploads/`.
