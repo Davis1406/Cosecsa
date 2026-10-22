@@ -13,6 +13,7 @@
     .kpi-purple { background: linear-gradient(135deg,#6b2d8b,#4a1a6b); }
     .ir-card { background:#fff; border-radius:8px; box-shadow:0 1px 8px rgba(0,0,0,.08); padding:16px; margin-bottom:18px; }
     .ir-card h6 { font-weight:700; font-size:.82rem; text-transform:uppercase; letter-spacing:.5px; color:#555; margin-bottom:12px; border-bottom:2px solid #a02626; padding-bottom:6px; }
+    .ir-chart-btn { font-size:.7rem; padding:1px 8px; text-transform:none; letter-spacing:0; margin-top:-2px; }
     .ir-note { font-size: .82rem; color: #6b7280; }
     .ir-matrix-wrap { max-height: 560px; overflow: auto; }
     .ir-matrix { border-collapse: separate; border-spacing: 0; font-size: .84rem; width: 100%; }
@@ -81,6 +82,9 @@
                     <select name="year_basis" class="form-control form-control-sm" title="Who moves on to a later programme keeps their PEN, so the PEN year is the year they first joined. The first option counts this year's intake from the admission list: trainees admitted this year whose status is Active and whose fee is paid.">
                         <option value="admitted">This year: admitted trainees (Active, fee paid); earlier years by PEN</option><option value="smart">PEN year, later programmes by admission year</option><option value="pen">PEN year only</option></select></div>
             </form>
+            <div class="text-right">
+                <button type="button" id="filters-refresh" class="btn btn-outline-secondary" style="font-size:.75rem;padding:2px 10px;"><i class="fas fa-sync-alt mr-1"></i>Refresh</button>
+            </div>
         </div>
 
         <div class="row mb-3" id="kpi-row">
@@ -101,11 +105,23 @@
             </div>
             <div class="col-lg-5">
                 <div class="ir-card">
-                    <h6>MCS and FCS intake by year</h6>
+                    <h6>MCS and FCS intake by year
+                        <button type="button" id="download-year-chart" class="btn btn-xs btn-outline-secondary float-right ir-chart-btn"><i class="fas fa-download mr-1"></i>Image</button>
+                    </h6>
                     <div class="ir-note mb-2">The numbers on the bars are the entries for the filters above.</div>
                     <div style="height:340px;position:relative">
                         <canvas id="chartYear"></canvas>
                         <div id="chart-empty" class="ir-note text-center" style="display:none;position:absolute;top:0;right:0;bottom:0;left:0;align-items:center;justify-content:center;">No entries match this selection.</div>
+                    </div>
+                </div>
+                <div class="ir-card">
+                    <h6>Intake by gender
+                        <button type="button" id="download-gender-chart" class="btn btn-xs btn-outline-secondary float-right ir-chart-btn"><i class="fas fa-download mr-1"></i>Image</button>
+                    </h6>
+                    <div class="ir-note mb-2">Entries by gender for the filters above; a missing gender is shown as "Not recorded".</div>
+                    <div style="height:300px;position:relative">
+                        <canvas id="chartGender"></canvas>
+                        <div id="gender-empty" class="ir-note text-center" style="display:none;position:absolute;top:0;right:0;bottom:0;left:0;align-items:center;justify-content:center;">No entries match this selection.</div>
                     </div>
                 </div>
             </div>
@@ -139,7 +155,7 @@
 $(function () {
     var URLS = { data: @json(route('intake.reports.data')), entries: @json(route('intake.reports.entries')) };
     var form = document.getElementById('filters');
-    var chart = null, dt = null, entries = [], pick = { year: null, programme: null }, seq = 0;
+    var chart = null, chartGender = null, dt = null, entries = [], pick = { year: null, programme: null }, seq = 0;
 
     function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
     function query() {
@@ -148,7 +164,10 @@ $(function () {
         return p.toString();
     }
     function getJson(url) {
-        return fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } }).then(function (r) {
+        // No browser cache: "All countries" reuses the same URL as the first load,
+        // so a cached response would leave the previous selection on screen.
+        var bust = (url.indexOf('?') === -1 ? '?' : '&') + '_=' + Date.now();
+        return fetch(url + bust, { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json' } }).then(function (r) {
             if (!r.ok) throw new Error('HTTP ' + r.status);
             return r.json();
         });
@@ -161,7 +180,7 @@ $(function () {
             if (mine !== seq) return;
             entries = res[1].entries || [];
             pick = { year: null, programme: null };
-            renderKpis(res[0]); renderMatrix(res[0]); renderChart(res[0]); renderChecks(res[0].checks); renderDetail();
+            renderKpis(res[0]); renderMatrix(res[0]); renderChart(res[0]); renderGender(entries); renderChecks(res[0].checks); renderDetail();
         }).catch(function (err) {
             document.getElementById('error-banner').style.display = 'block';
             document.getElementById('error-msg').textContent = 'The intake report could not be loaded: ' + err.message;
@@ -237,6 +256,55 @@ $(function () {
         });
     }
 
+    function renderGender(rows) {
+        var counts = { Male: 0, Female: 0, 'Not recorded': 0 };
+        (rows || []).forEach(function (e) {
+            counts[e.gender === 'Male' || e.gender === 'Female' ? e.gender : 'Not recorded']++;
+        });
+        var labels = ['Male', 'Female', 'Not recorded'].filter(function (k) { return counts[k] > 0; });
+        var values = labels.map(function (k) { return counts[k]; });
+        var colours = labels.map(function (k) { return k === 'Male' ? '#1a6fa0' : (k === 'Female' ? '#a02626' : '#8a94a6'); });
+        var empty = !values.length;
+        document.getElementById('gender-empty').style.display = empty ? 'flex' : 'none';
+        if (chartGender) { chartGender.destroy(); chartGender = null; }
+        if (empty) return;
+
+        chartGender = new Chart(document.getElementById('chartGender'), {
+            type: 'pie',
+            data: { labels: labels, datasets: [{ data: values, backgroundColor: colours, borderColor: '#fff', borderWidth: 2 }] },
+            plugins: window.ChartDataLabels ? [ChartDataLabels] : [],
+            options: { responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
+                    tooltip: { callbacks: { label: function (ctx) {
+                        var total = ctx.dataset.data.reduce(function (a, b) { return a + b; }, 0);
+                        var pct = total ? Math.round(ctx.parsed * 100 / total) : 0;
+                        return ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+                    } } },
+                    datalabels: {
+                        display: function (ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+                        color: '#fff', font: { size: 11, weight: 'bold' },
+                        formatter: function (v) { return v; }
+                    }
+                } }
+        });
+    }
+
+    // Save a chart as a PNG on a white background (the canvas itself is transparent,
+    // which turns black in some viewers).
+    function downloadChart(c, filename) {
+        if (!c) return;
+        var src = c.canvas, out = document.createElement('canvas');
+        out.width = src.width; out.height = src.height;
+        var ctx = out.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, out.width, out.height);
+        ctx.drawImage(src, 0, 0);
+        var a = document.createElement('a');
+        a.download = filename + '.png';
+        a.href = out.toDataURL('image/png');
+        document.body.appendChild(a); a.click(); a.remove();
+    }
+
     function renderChecks(checks) {
         var html = '';
         Object.keys(checks || {}).forEach(function (k) {
@@ -284,7 +352,17 @@ $(function () {
     }
 
     document.getElementById('detail-clear').addEventListener('click', function () { pick = { year: null, programme: null }; renderDetail(); });
-    form.addEventListener('change', load);
+    document.getElementById('download-year-chart').addEventListener('click', function () { downloadChart(chart, 'intake-by-year'); });
+    document.getElementById('download-gender-chart').addEventListener('click', function () { downloadChart(chartGender, 'intake-by-gender'); });
+    document.getElementById('filters-refresh').addEventListener('click', load);
+
+    // Both events: a <select> fires "change" in every browser, "input" covers
+    // keyboard/assistive selection. Debounced so changing one filter is one request.
+    var filterTimer = null;
+    function scheduleLoad() { clearTimeout(filterTimer); filterTimer = setTimeout(load, 120); }
+    form.addEventListener('change', scheduleLoad);
+    form.addEventListener('input', scheduleLoad);
+
     load();
 });
 </script>

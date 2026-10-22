@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added (2026-10-22) — Intake Reports: gender pie chart and image downloads for both charts
+- New **Intake by gender** pie chart beside the year chart (Male / Female / Not recorded), built from the same filtered entries, so it follows every filter. Counts show on the slices; the tooltip adds each slice's percentage.
+- Each chart has an **Image** button that downloads a PNG (on a white background) named `intake-by-year.png` / `intake-by-gender.png`.
+- **Filter refresh fixed:** changing a filter back to "All countries" now reloads the report. Filter reads are sent with `cache: no-store` plus a cache-busting parameter, and both `change` and `input` are listened to (debounced), with a **Refresh** button as a manual fallback.
+- **Files:** `resources/views/admin/associates/intake-reports/index.blade.php`.
+
 ### Changed (2026-10-22) — Intake Reports: numbers on the chart, Data checks moved below the table
 - The **MCS and FCS intake by year** chart now shows each year's MCS and FCS counts on the bars (zero segments stay blank), and redraws for every filter change; a "No entries match this selection" message replaces the empty axes when a filter returns nothing. The chart's tooltip shows both series together.
 - **Data checks** moved from beside the chart to the end of the page, below the Associates detail table.
