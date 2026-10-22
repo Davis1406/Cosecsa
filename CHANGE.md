@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-22) — Trainees page opens on Active + Inactive
+- The Trainees list hides **Completed** and **Deferred** trainees until you tick them in the Status filter. The two spellings of Deferred ("Deffered"/"Deferred") are now one.
+- **Files:** `resources/views/admin/associates/trainees/trainees.blade.php`.
+
 ### Added (2026-10-22) — Intake Reports: gender pie chart and image downloads for both charts
 - New **Intake by gender** pie chart beside the year chart (Male / Female / Not recorded), built from the same filtered entries, so it follows every filter. Counts show on the slices; the tooltip adds each slice's percentage.
 - Each chart has an **Image** button that downloads a PNG (on a white background) named `intake-by-year.png` / `intake-by-gender.png`.

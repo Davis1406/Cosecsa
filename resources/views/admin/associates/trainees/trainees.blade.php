@@ -200,6 +200,10 @@ $(document).ready(function () {
             if (checked.length && checked.indexOf(filters[i].val) === -1) return false;
         }
 
+        // Default view: Active + Inactive only. Completed and Deferred trainees show
+        // once they are ticked in the Status filter.
+        if (!getChecked('filterStatus').length && (row.status === 'Completed' || row.status === 'Deferred')) return false;
+
         var chkTags = getChecked('filterTags');
         if (chkTags.length) {
             var rowTags = row.tags || [];
