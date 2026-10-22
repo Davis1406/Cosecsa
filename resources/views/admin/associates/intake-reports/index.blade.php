@@ -102,12 +102,11 @@
             <div class="col-lg-5">
                 <div class="ir-card">
                     <h6>MCS and FCS intake by year</h6>
-                    <div style="height:340px"><canvas id="chartYear"></canvas></div>
-                </div>
-                <div class="ir-card">
-                    <h6>Data checks</h6>
-                    <div class="ir-note mb-2">What was merged, left out or needs a person's decision. Nothing is merged on a guess.</div>
-                    <div id="checks"></div>
+                    <div class="ir-note mb-2">The numbers on the bars are the entries for the filters above.</div>
+                    <div style="height:340px;position:relative">
+                        <canvas id="chartYear"></canvas>
+                        <div id="chart-empty" class="ir-note text-center" style="display:none;position:absolute;top:0;right:0;bottom:0;left:0;align-items:center;justify-content:center;">No entries match this selection.</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -122,6 +121,12 @@
                 <thead><tr><th>Year</th><th>Programme</th><th>PEN</th><th>Name</th><th>Gender</th><th>Country</th><th>Hospital</th><th>Status</th><th>Records</th><th>Journey (other intakes)</th></tr></thead>
                 <tbody></tbody>
             </table>
+        </div>
+
+        <div class="ir-card">
+            <h6>Data checks</h6>
+            <div class="ir-note mb-2">What was merged, left out or needs a person's decision. Nothing is merged on a guess.</div>
+            <div id="checks"></div>
         </div>
         @endif
     </section>
@@ -201,6 +206,12 @@ $(function () {
 
     function renderChart(d) {
         var rows = (d.matrix || []).slice().reverse();
+        var empty = !rows.length;
+        var emptyBox = document.getElementById('chart-empty');
+        emptyBox.style.display = empty ? 'flex' : 'none';
+        if (chart) { chart.destroy(); chart = null; }
+        if (empty) return;
+
         var data = {
             labels: rows.map(function (r) { return r.year; }),
             datasets: [
@@ -208,12 +219,21 @@ $(function () {
                 { label: 'FCS', data: rows.map(function (r) { return r.fellowship; }), backgroundColor: '#a02626' }
             ]
         };
-        if (chart) chart.destroy();
         chart = new Chart(document.getElementById('chartYear'), {
             type: 'bar', data: data,
+            plugins: window.ChartDataLabels ? [ChartDataLabels] : [],
             options: { responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } }, datalabels: { display: false } },
-                scales: { x: { stacked: true, ticks: { font: { size: 10 }, maxRotation: 60 } }, y: { stacked: true, beginAtZero: true, ticks: { font: { size: 10 } } } } }
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
+                    tooltip: { mode: 'index', intersect: false },
+                    datalabels: {
+                        display: function (ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+                        anchor: 'center', align: 'center', clamp: true,
+                        color: '#fff', font: { size: 10, weight: 'bold' },
+                        formatter: function (v) { return v; }
+                    }
+                },
+                scales: { x: { stacked: true, ticks: { font: { size: 10 }, maxRotation: 60 } }, y: { stacked: true, beginAtZero: true, ticks: { font: { size: 10 }, precision: 0 } } } }
         });
     }
 

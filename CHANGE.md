@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-22) — Intake Reports: numbers on the chart, Data checks moved below the table
+- The **MCS and FCS intake by year** chart now shows each year's MCS and FCS counts on the bars (zero segments stay blank), and redraws for every filter change; a "No entries match this selection" message replaces the empty axes when a filter returns nothing. The chart's tooltip shows both series together.
+- **Data checks** moved from beside the chart to the end of the page, below the Associates detail table.
+- **Files:** `resources/views/admin/associates/intake-reports/index.blade.php`.
+
 ### Added (2026-10-21) — "Completed" trainee status; promoted fellows listed as trainees for their intake year
 - Trainees who went on to become fellows are now on the Trainees list for the year they were admitted, with status **Completed** (new option on the trainee edit/view screens, shown grey on the reports). 26 missing 2025/2024/2022 records were created from their fellow records, and the Trainees page no longer hides trainees who match a fellow in the same programme.
 - **Files:** `resources/views/admin/associates/trainees/{edit_trainee,view,reports}.blade.php`.
