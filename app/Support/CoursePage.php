@@ -34,6 +34,7 @@ class CoursePage
         'module-5-online-osce' => ['mod' => '5', 'slug' => 'module-5-online-osce', 'key' => 'm5-seen', 'lite' => false, 'moduleJs' => true],
         'module-6-fellowship' => ['mod' => '6', 'slug' => 'module-6-fellowship', 'key' => 'm6-seen', 'lite' => false, 'moduleJs' => true],
         'module-7-marking' => ['mod' => '7', 'slug' => 'module-7-marking', 'key' => 'm7-seen', 'lite' => false, 'moduleJs' => true],
+        'module-8-portal' => ['mod' => '8', 'slug' => 'module-8-portal', 'key' => 'm8-seen', 'lite' => false, 'moduleJs' => true],
         'acknowledgements' => ['mod' => 'ack', 'slug' => 'acknowledgements', 'key' => 'ack-seen', 'lite' => false, 'moduleJs' => false],
     ];
 

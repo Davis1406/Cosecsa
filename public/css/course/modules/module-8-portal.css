@@ -1,0 +1,959 @@
+/* Module 8. Scoped to .cs-course.mod-8 */
+.cs-course.mod-8{--hero1:#5a1414;--hero2:#a02626}
+@media (prefers-color-scheme:dark){.cs-course.mod-8:not([data-theme="light"]){--hero1:#2c0a0b;--hero2:#6e1c1b}}
+.cs-course.mod-8[data-theme="dark"]{--hero1:#2c0a0b;--hero2:#6e1c1b}
+@charset "UTF-8";
+.cs-course * {
+  box-sizing: border-box;
+}
+.cs-course {
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 var(--body);
+  padding: 16px 16px 40px;
+}
+.cs-course .app {
+  max-width: 680px;
+  margin: 0 auto;
+}
+.cs-course h1, .cs-course h2, .cs-course h3 {
+  font-family: var(--display);
+  text-wrap: balance;
+  line-height: 1.2;
+  margin: 0;
+}
+.cs-course p {
+  margin: 0;
+}
+.cs-course .bar0 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0 8px;
+  font: 500 12px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--maroon);
+}
+.cs-course .bar0 button {
+  font: 500 12px var(--mono);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  color: var(--muted);
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.cs-course .hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  padding: 26px 20px 20px;
+  color: var(--herotext);
+  background: linear-gradient(135deg, var(--hero1), var(--hero2));
+}
+.cs-course .hero svg.lens {
+  position: absolute;
+  right: -60px;
+  top: -50px;
+  width: 210px;
+  height: 210px;
+  opacity: 0.13;
+}
+.cs-course .hero .k {
+  font: 500 12px var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+.cs-course .hero h1 {
+  font-size: 30px;
+  margin: 8px 0 10px;
+  position: relative;
+  max-width: 14em;
+}
+.cs-course .hero p.l {
+  opacity: 0.92;
+  max-width: 34em;
+  position: relative;
+}
+.cs-course .hero .prog {
+  margin-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  font: 500 12px var(--mono);
+  opacity: 0.95;
+}
+.cs-course .bar {
+  height: 7px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 99px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.cs-course .bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #fff;
+  border-radius: 99px;
+  transition: width 0.3s;
+}
+.cs-course .topics {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+.cs-course .topic {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  scroll-margin-top: 12px;
+  --a:var(--c1);
+}
+.cs-course .topic:nth-child(2) {
+  --a:var(--c2);
+}
+.cs-course .topic:nth-child(3) {
+  --a:var(--c3);
+}
+.cs-course .topic:nth-child(4) {
+  --a:var(--c4);
+}
+.cs-course .topic:nth-child(5) {
+  --a:var(--c5);
+}
+.cs-course .topic:nth-child(6) {
+  --a:var(--c6);
+}
+.cs-course .topic:nth-child(7) {
+  --a:var(--c7);
+}
+.cs-course .topic.open {
+  border-color: var(--a);
+  box-shadow: 0 6px 22px -12px var(--a);
+}
+.cs-course .th {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 20px;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  cursor: pointer;
+}
+.cs-course .th:focus-visible {
+  outline: 2px solid var(--a);
+  outline-offset: -2px;
+  border-radius: 16px;
+}
+.cs-course .ic {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--a) 16%, var(--surface));
+  color: var(--a);
+}
+.cs-course .ic svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cs-course .topic.seen .ic {
+  background: var(--a);
+  color: var(--surface);
+}
+.cs-course .th b {
+  display: block;
+  font: 700 17px/1.25 var(--display);
+}
+.cs-course .th small {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 2px;
+}
+.cs-course .th .ch {
+  font: 500 20px var(--mono);
+  color: var(--a);
+  text-align: center;
+}
+.cs-course .topic.open .ch::before {
+  content: "–";
+}
+.cs-course .topic:not(.open) .ch::before {
+  content: "+";
+}
+.cs-course .pn {
+  display: none;
+  padding: 16px;
+  flex-direction: column;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+}
+.cs-course .topic.open .pn {
+  display: flex;
+}
+.cs-course .cs-lead {
+  font-size: 17px;
+}
+.cs-course .pic {
+  width: 100%;
+  border-radius: 14px;
+  display: block;
+  border: 1px solid var(--line);
+}
+.cs-course .pic.cover {
+  max-width: 240px;
+  margin-inline: auto;
+}
+.cs-course .video.poster {
+  background-size: cover;
+  background-position: center;
+}
+.cs-course .video.poster::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 14, 22, 0.35);
+}
+.cs-course .video.poster .play {
+  position: relative;
+  z-index: 1;
+}
+.cs-course .video.poster small {
+  z-index: 1;
+}
+.cs-course .quote {
+  border-radius: 14px;
+  padding: 18px 18px 14px;
+  background: color-mix(in srgb, var(--a) 12%, var(--surface));
+  position: relative;
+}
+.cs-course .quote::before {
+  content: "“";
+  position: absolute;
+  top: -6px;
+  left: 12px;
+  font: 700 64px/1 var(--display);
+  color: var(--a);
+  opacity: 0.5;
+}
+.cs-course .quote p {
+  font: 500 20px/1.4 var(--display);
+  padding-top: 16px;
+}
+.cs-course .quote cite {
+  display: block;
+  margin-top: 8px;
+  font: 500 12px var(--mono);
+  color: var(--muted);
+  font-style: normal;
+}
+.cs-course .callout {
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--a) 12%, var(--surface));
+  font-weight: 500;
+}
+.cs-course .chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+.cs-course .chip {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  border-top: 4px solid var(--a);
+}
+.cs-course .chip:nth-child(2) {
+  border-top-color: var(--c4);
+}
+.cs-course .chip:nth-child(3) {
+  border-top-color: var(--c3);
+}
+.cs-course .chip:nth-child(4) {
+  border-top-color: var(--c2);
+}
+.cs-course .chip b {
+  display: block;
+  font-size: 15px;
+}
+.cs-course .chip span {
+  font-size: 14px;
+  color: var(--muted);
+}
+.cs-course .pts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.cs-course .pts li {
+  padding-left: 24px;
+  position: relative;
+}
+.cs-course .pts li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0.55em;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--a);
+}
+.cs-course .label {
+  font: 500 12px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--a);
+}
+.cs-course .video {
+  aspect-ratio: 16/9;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #1b2230, #2b3342);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+}
+.cs-course .video .play {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--a);
+  display: grid;
+  place-items: center;
+}
+.cs-course .video .play::after {
+  content: "";
+  border-left: 17px solid #fff;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  margin-left: 5px;
+}
+.cs-course .video small {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  font: 500 12px var(--mono);
+  opacity: 0.85;
+}
+.cs-course details {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.cs-course summary {
+  cursor: pointer;
+  padding: 12px 14px;
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  gap: 10px;
+}
+.cs-course summary::-webkit-details-marker {
+  display: none;
+}
+.cs-course summary::after {
+  content: "+";
+  margin-left: auto;
+  font: 500 20px var(--mono);
+  color: var(--a);
+}
+.cs-course details[open] summary::after {
+  content: "–";
+}
+.cs-course details > div {
+  padding: 0 14px 14px;
+}
+.cs-course .tired {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cs-course .tired span {
+  padding: 7px 12px;
+  border-radius: 99px;
+  background: var(--bad-soft);
+  color: var(--bad);
+  font-weight: 500;
+  font-size: 14px;
+}
+.cs-course .dd {
+  display: grid;
+  gap: 12px;
+}
+.cs-course .dd .cs-col {
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+}
+.cs-course .dd .do {
+  background: var(--good-soft);
+}
+.cs-course .dd .dont {
+  background: var(--bad-soft);
+}
+.cs-course .dd h3 {
+  font: 700 16.5px var(--display);
+  margin-bottom: 8px;
+}
+.cs-course .dd .do h3 {
+  color: var(--good);
+}
+.cs-course .dd .dont h3 {
+  color: var(--bad);
+}
+.cs-course .dd .it {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 10px;
+  padding: 9px 0;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  font-size: 15px;
+}
+.cs-course .dd h3 + .it {
+  border-top: 0;
+}
+.cs-course .dd .it::before {
+  font: 700 15px/1.5 var(--body);
+}
+.cs-course .dd .do .it::before {
+  content: "✓";
+  color: var(--good);
+}
+.cs-course .dd .dont .it::before {
+  content: "✕";
+  color: var(--bad);
+}
+.cs-course .done {
+  display: none;
+  margin-top: 14px;
+  border-radius: 16px;
+  padding: 18px;
+  background: var(--good-soft);
+  flex-direction: column;
+  gap: 10px;
+}
+.cs-course .done.on {
+  display: flex;
+}
+.cs-course .done h2 {
+  font-size: 20px;
+  color: var(--good);
+}
+.cs-course .done ol {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cs-course .bar i {
+    transition: none;
+  }
+}
+.cs-course .pic, .cs-course .dd, .cs-course .tired, .cs-course .quote, .cs-course .chips {
+  display: none;
+}
+.cs-course .ladder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cs-course .rw {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 12px 10px 10px;
+  background: var(--bg);
+  --s:var(--muted);
+}
+.cs-course .rw .sc {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--s);
+  color: var(--surface);
+  display: grid;
+  place-items: center;
+  font: 700 20px var(--display);
+}
+.cs-course .rw .rt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--s);
+}
+.cs-course .rw p {
+  font-size: 15px;
+  margin-top: 3px;
+}
+.cs-course .rw.s0 {
+  --s:var(--muted);
+}
+.cs-course .rw.s2 {
+  --s:var(--bad);
+}
+.cs-course .rw.s4 {
+  --s:var(--c3);
+}
+.cs-course .rw.s6 {
+  --s:var(--good);
+  border-color: var(--good);
+  background: var(--good-soft);
+}
+.cs-course .rw.s8 {
+  --s:var(--c2);
+}
+.cs-course .rw.s10 {
+  --s:var(--c4);
+}
+.cs-course .pill {
+  font: 500 12px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--good);
+  color: var(--surface);
+}
+.cs-course .scale {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.cs-course .scale div {
+  text-align: center;
+  border-radius: 10px;
+  padding: 8px 2px 6px;
+  background: var(--s);
+  color: var(--surface);
+  --s:var(--muted);
+}
+.cs-course .scale b {
+  display: block;
+  font: 700 20px var(--display);
+}
+.cs-course .scale span {
+  display: block;
+  font-size: 12px;
+  line-height: 1.2;
+  margin-top: 2px;
+  font-weight: 500;
+}
+.cs-course .scale .s2 {
+  --s:var(--bad);
+}
+.cs-course .scale .s4 {
+  --s:var(--c3);
+}
+.cs-course .scale .s6 {
+  --s:var(--good);
+  outline: 3px solid color-mix(in srgb, var(--good) 40%, transparent);
+}
+.cs-course .scale .s8 {
+  --s:var(--c2);
+}
+.cs-course .scale .s10 {
+  --s:var(--c4);
+}
+.cs-course .doms {
+  display: grid;
+  gap: 8px;
+}
+.cs-course .dom {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border-left: 5px solid var(--a);
+}
+.cs-course .dom b {
+  display: block;
+  font: 700 16.5px var(--display);
+}
+.cs-course .dom span {
+  font-size: 14px;
+  color: var(--muted);
+}
+.cs-course .dom.off {
+  border-left-color: var(--line);
+  opacity: 0.85;
+}
+.cs-course .tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.cs-course .tabs button {
+  font: 600 14px var(--body);
+  padding: 10px 6px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  cursor: pointer;
+}
+.cs-course .tabs button[aria-selected=true] {
+  background: var(--a);
+  border-color: var(--a);
+  color: var(--surface);
+}
+.cs-course .tabs button:focus-visible {
+  outline: 2px solid var(--a);
+  outline-offset: 2px;
+}
+.cs-course .tp {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+}
+.cs-course .tp.on {
+  display: flex;
+}
+.cs-course .scn {
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--a) 12%, var(--surface));
+}
+.cs-course .bars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.cs-course .bar2 .t {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 15px;
+}
+.cs-course .bar2 .t em {
+  font: 700 15px var(--mono);
+  font-style: normal;
+  color: var(--s);
+}
+.cs-course .bar2 .tr {
+  height: 12px;
+  border-radius: 99px;
+  background: var(--line);
+  margin: 6px 0;
+  overflow: hidden;
+  position: relative;
+}
+.cs-course .bar2 .tr i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--s);
+}
+.cs-course .bar2 .tr::after {
+  content: "";
+  position: absolute;
+  left: 60%;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--ink);
+  opacity: 0.6;
+}
+.cs-course .bar2 p {
+  font-size: 14px;
+  color: var(--muted);
+}
+.cs-course .key {
+  font: 500 12px var(--mono);
+  color: var(--muted);
+}
+.cs-course .todo {
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.cs-course .todo b {
+  color: var(--ink);
+}
+.cs-course {
+  /* typography: body, lead, sub-heading and label styles are clearly different */
+}
+.cs-course .pn p, .cs-course .pn li {
+  font-size: 16.5px;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--ink) 88%, var(--bg));
+}
+.cs-course .pn .cs-lead, .cs-course .pn p.lead {
+  font-size: 20px;
+  line-height: 1.55;
+  font-weight: 500;
+  color: var(--ink);
+}
+.cs-course .pn > h3 {
+  font: 700 20px/1.3 var(--display);
+  color: var(--ink);
+  margin-top: 10px;
+}
+.cs-course .pn > h3::before {
+  content: "";
+  display: block;
+  width: 30px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--a);
+  margin-bottom: 8px;
+}
+.cs-course .pn b {
+  color: var(--ink);
+}
+.cs-course .th b {
+  font-size: 20px;
+}
+.cs-course .th small {
+  font-size: 14px;
+}
+.cs-course .label {
+  font-size: 12px;
+}
+.cs-course .tabs.four {
+  grid-template-columns: repeat(2, 1fr);
+}
+.cs-course .dn {
+  display: block;
+  font: 700 17px/1.3 var(--display);
+}
+.cs-course .dsub {
+  color: var(--muted);
+  font-size: 14px;
+}
+.cs-course .dl {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.cs-course p.note {
+  font-size: 14px;
+  color: var(--muted);
+}
+.cs-course {
+  /* ===== COSECSA brand layer: Raleway (headings) + Merriweather (text), green / crimson / gold ===== */
+}
+.cs-course {
+  font-family: var(--body);
+  font-feature-settings: "lnum" 1;
+  font-weight: 500;
+}
+.cs-course .bar0 {
+  font: 700 12px var(--mono);
+  letter-spacing: 0.1em;
+}
+.cs-course .bar0 .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+}
+.cs-course .bar0 .crest {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: block;
+  flex: none;
+}
+.cs-course .bar0 button {
+  white-space: nowrap;
+  font: 600 12px var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+.cs-course .hero {
+  border-bottom: 4px solid var(--gold);
+}
+.cs-course .hero .k {
+  font: 700 12px var(--mono);
+  letter-spacing: 0.12em;
+  color: #f3e3a6;
+  opacity: 1;
+}
+.cs-course .hero h1 {
+  font: 700 26px/1.3 var(--display);
+  max-width: none;
+}
+.cs-course .hero p.l {
+  font: 500 17px/1.6 var(--body);
+}
+.cs-course .hero .prog {
+  font: 600 13px var(--mono);
+}
+.cs-course .th b {
+  font: 700 17px/1.3 var(--display);
+}
+.cs-course .th small {
+  font: 500 14px/1.4 var(--body);
+}
+.cs-course .th .ch {
+  font: 600 22px var(--body);
+}
+.cs-course .pn p, .cs-course .pn li {
+  font-family: var(--body);
+  font-weight: 500;
+}
+.cs-course .pn .cs-lead, .cs-course .pn p.lead {
+  font-weight: 600;
+}
+.cs-course .pn b, .cs-course .pn strong {
+  font-weight: 700;
+}
+.cs-course .pn > h3 {
+  font-family: var(--display);
+  font-weight: 700;
+}
+.cs-course .pn .cs-card h3, .cs-course .pn .callout h3 {
+  font-family: var(--display);
+  font-weight: 700;
+}
+.cs-course .label {
+  font: 700 12px var(--mono);
+  letter-spacing: 0.1em;
+}
+.cs-course .callout {
+  font-weight: 600;
+}
+.cs-course .pn th {
+  font-weight: 700;
+}
+.cs-course .done h2, .cs-course .score h2 {
+  font-family: var(--display);
+  font-weight: 700;
+}
+.cs-course .stats b, .cs-course .rw .sc, .cs-course .bands li b {
+  font-family: var(--body);
+}
+
+/* ---- replica of the portal screens (always light) ---- */
+.cs-course .wt-mock{position:absolute;left:0;top:0;width:1000px;height:620px;transform-origin:0 0;color:#212529;font-size:16px;line-height:1.5;overflow:hidden;background:#fff}
+.cs-course .wt-mock *{box-sizing:border-box}
+.cs-course .wt-mock .m-app{position:absolute;inset:0;background:#f4f6f9}
+.cs-course .wt-mock .m-side{position:absolute;left:0;top:0;bottom:0;width:220px;background:#fff;border-right:1px solid #e0e9f2}
+.cs-course .wt-mock .m-brand{height:52px;display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid #e0e9f2;font-weight:700;font-size:14.5px;color:#a02626}
+.cs-course .wt-mock .m-logo{width:28px;height:28px;object-fit:contain;display:inline-block}
+.cs-course .wt-mock .m-user{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #e0e9f2;font-weight:600;font-size:13.5px;color:#141d23}
+.cs-course .wt-mock .m-av{width:32px;height:32px;border-radius:50%;background:#9aa7b6;border:2px solid rgba(160,38,38,.25)}
+.cs-course .wt-mock .m-nl{font-size:9.5px;font-weight:700;letter-spacing:1.4px;color:#6b7280;padding:14px 18px 4px;text-transform:uppercase}
+.cs-course .wt-mock .m-nav{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:14px;font-weight:500;color:#2d3748;border-left:3px solid transparent}
+.cs-course .wt-mock .m-nav svg{width:15px;height:15px;stroke:#6b7280;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cs-course .wt-mock .m-nav.on{background:rgba(160,38,38,.07);border-left-color:#a02626;color:#a02626;font-weight:700}.m-nav.on svg{stroke:#a02626}
+.cs-course .wt-mock .m-top{position:absolute;left:220px;right:0;top:0;height:52px;background:#fff;border-bottom:1px solid #dee2e6;display:flex;align-items:center;justify-content:space-between;padding:0 18px}
+.cs-course .wt-mock .m-top svg{width:17px;height:17px;stroke:#6b7280;fill:none;stroke-width:2;margin-left:20px}
+.cs-course .wt-mock .m-page{position:absolute;left:220px;right:0;top:52px;bottom:0;overflow:hidden;background:#f6f9fb}
+.cs-course .wt-mock .m-pad{padding:20px 10px 60px}
+.cs-course .wt-mock .m-panel{width:560px;margin:20px auto;background:#fff;padding:44px 0 40px;text-align:center}
+.cs-course .wt-mock .m-h2{font:500 24px/35px 'Source Sans 3';color:#3f4553;padding-bottom:40px}
+.cs-course .wt-mock .m-row{display:flex;margin:0 10px 10px}
+.cs-course .wt-mock .m-col{flex:1;padding:0 5px}
+.cs-course .wt-mock .m-lab{display:block;font-weight:700;margin-bottom:6px;text-align:center}
+.cs-course .wt-mock .m-sel,.cs-course .wt-mock .m-inp{height:38px;border:1px solid #ced4da;border-radius:4px;background:#fff;padding:6px 12px;color:#495057;text-align:left;font-size:16px;position:relative;line-height:24px}
+.cs-course .wt-mock .m-sel::after{content:"";position:absolute;right:13px;top:15px;width:6px;height:6px;border-right:2px solid #334155;border-bottom:2px solid #334155;transform:rotate(45deg)}
+.cs-course .wt-mock .ph{color:#6c757d}
+.cs-course .wt-mock .m-ro{background:#e9ecef}
+.cs-course .wt-mock .m-fg{margin-bottom:16px}
+.cs-course .wt-mock .m-case{margin:0 10px 10px;border:1px solid #a02626;border-radius:5px;padding:15px 20px}
+.cs-course .wt-mock .m-case h5{color:#a02626;font-weight:700;font-size:20px;margin:0 0 15px}
+.cs-course .wt-mock .m-add{display:inline-block;background:#fec503;color:#000;border-radius:4px;padding:3px 10px;font-size:14px;margin-bottom:16px}
+.cs-course .wt-mock .m-ta{height:86px;border:1px solid #ced4da;border-radius:4px;background:#fff;padding:6px 12px;text-align:left}
+.cs-course .wt-mock .m-sub{display:inline-block;background:#a02626;color:#fff;border-radius:5px;min-width:130px;height:42px;line-height:42px;font-weight:700;font-size:14px;text-transform:uppercase;margin:0 5px;vertical-align:top}
+.cs-course .wt-mock .m-btn{display:inline-block;border-radius:4px;padding:6px 14px;font-size:16px;color:#fff;background:#6c757d}
+.cs-course .wt-mock .m-fs{position:relative;border:2.5px solid #a02626;border-radius:10px;padding:34px 20px 20px;margin:40px auto 16px;max-width:560px;background:#fff;text-align:center}
+.cs-course .wt-mock .m-fs legend{position:absolute;top:-22px;left:14px;right:14px;height:40px;background:#fff;display:block;font-weight:700;color:#a02626;font-size:24px;line-height:40px;margin:0;text-align:left;padding:0 6px}
+.cs-course .wt-mock .m-fs .cut{position:absolute;left:12px;right:12px;top:-4px;height:7px;background:#f6f9fb}
+.cs-course .wt-mock .eo{border-left:4px solid #fec503;background:#fffdf3;border-radius:6px;padding:10px 14px;margin:0 0 16px;text-align:left;font-size:14px;color:#251917}
+.cs-course .wt-mock .eo.ok{border-left-color:#2e7d32}.eo a{color:#a02626;text-decoration:underline}
+.cs-course .wt-mock .fmt{display:flex;gap:30px;justify-content:center;margin:40px 0 16px}
+.cs-course .wt-mock .fmt div{width:240px;height:176px;border-radius:10px;box-shadow:0 4px 6px rgba(0,0,0,.1);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.cs-course .wt-mock .fmt b{font-size:19px}.fmt span{font-size:13.6px}
+.cs-course .wt-mock .fmt svg{width:38px;height:38px;margin-bottom:10px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cs-course .wt-mock .m-auth{position:absolute;inset:0;background:#e9ecef;display:grid;place-items:center}
+.cs-course .wt-mock .m-card{width:400px;background:#fff;border-top:3px solid #fec503;box-shadow:0 0 20px rgba(0,0,0,.1);border-radius:3px}
+.cs-course .wt-mock .m-ch{text-align:center;padding:12px 20px;border-bottom:1px solid rgba(0,0,0,.125)}
+.cs-course .wt-mock .m-ch .m-logo{width:76px;height:76px;display:block;margin:0 auto}
+.cs-course .wt-mock .m-ch h1{font-size:36px;color:#a02626;margin:4px 0 0;font-weight:700;line-height:1.2}
+.cs-course .wt-mock .m-cb{padding:20px}
+.cs-course .wt-mock .m-msg{text-align:center;font-size:17.6px;margin:0 0 4px}
+.cs-course .wt-mock .m-a{color:#a02626;font-size:13.6px;text-align:center;margin-bottom:14px}
+.cs-course .wt-mock .m-in{height:44px;border:1px solid #ced4da;border-radius:4px;padding:9px 12px;margin-bottom:16px;color:#6c757d;position:relative;background:#fff}
+.cs-course .wt-mock .m-b2{display:flex;gap:12px;margin-top:22px}
+.cs-course .wt-mock .m-b2 div{flex:1;height:44px;line-height:44px;text-align:center;border-radius:4px;color:#fff;font-size:16px}
+.cs-course .wt-mock .m-card2{background:#fff;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.12);margin:20px 15px}
+.cs-course .wt-mock .m-card2 .hd{padding:12px 20px;font-size:17.6px}
+.cs-course .wt-mock .m-card2 .bd{padding:20px}
+.cs-course .wt-mock .m-tb{width:100%;border-collapse:collapse;font-size:14px;text-align:left}
+.cs-course .wt-mock .m-tb th,.cs-course .wt-mock .m-tb td{border:1px solid #dee2e6;padding:10px 8px;vertical-align:middle}
+.cs-course .wt-mock .m-tb tbody tr:nth-child(odd){background:#f2f2f2}
+.cs-course .wt-mock .m-v{background:#004356;color:#fff;border-radius:3px 0 0 3px;padding:4px 9px;font-size:13px;display:inline-block}
+.cs-course .wt-mock .m-r{background:#ffc107;color:#1f2d3d;padding:4px 9px;font-size:13px;display:inline-block}
+.cs-course .wt-mock .m-r:last-child{border-radius:0 3px 3px 0}
+.cs-course .wt-mock .m-dt{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:15px}
+.cs-course .wt-mock .m-pg{display:inline-flex}.m-pg span{border:1px solid #dee2e6;padding:5px 11px;font-size:14px;color:#adb5bd;margin-left:-1px}.m-pg .a{background:#a02626;border-color:#a02626;color:#fff}
+.cs-course .wt-mock .m-hero{background:linear-gradient(135deg,#99060a,#6d0407);color:#fff;border-radius:18px;padding:30px 36px;margin:20px 15px 16px}
+.cs-course .wt-mock .m-hero p{font-size:18px;font-weight:500;margin:0 0 14px;max-width:560px;line-height:1.5}
+.cs-course .wt-mock .pills{display:flex;gap:8px;margin-bottom:18px}.pills span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);border-radius:99px;padding:4px 12px;font-size:12.5px;font-weight:600}
+.cs-course .wt-mock .go{display:inline-block;background:#fff;color:#99060a;font-weight:700;border-radius:10px;padding:10px 28px}
+.cs-course .wt-mock .lcard{background:#fff;border:1px solid #e6e9ef;border-radius:14px;margin:0 15px 12px;padding:16px 20px;display:flex;align-items:center;gap:16px}
+.cs-course .wt-mock .mn{width:40px;height:40px;border-radius:10px;background:#f1f5f9;color:#64748b;display:grid;place-items:center;font-weight:700;font-size:13px}.mn.d{background:#d1fae5;color:#065f46}
+.cs-course .wt-mock .bdg{margin-left:auto;font-size:12.5px;font-weight:700;border-radius:99px;padding:3px 12px;background:#f1f5f9;color:#475569}.bdg.g{background:#d1fae5;color:#065f46}
+.cs-course .wt-mock .qopt{border:1.5px solid #cbd5e1;border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;font-size:15px}
+.cs-course .wt-mock .qopt i{width:28px;height:28px;border-radius:50%;background:#eef2f7;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:14px;color:#334155}
+.cs-course .wt-mock .qopt.r{border-color:#16a34a;background:#f0fdf4;color:#14532d}.qopt.r i{background:#16a34a;color:#fff}
+.cs-course .wt-mock .qopt.w{border-color:#dc2626;background:#fef2f2;color:#7f1d1d}.qopt.w i{background:#dc2626;color:#fff}
+.cs-course .wt-mock .cert{margin:14px auto 0;width:640px;height:360px;background:linear-gradient(180deg,#fbf8f2,#f3ecdb);border:7px solid #500e19;box-shadow:inset 0 0 0 2px rgba(201,152,52,.6);text-align:center;padding-top:20px;font-family:Georgia,serif}
+.cs-course .wt-mock .toast{position:absolute;right:16px;top:62px;max-width:340px;padding:10px 14px;border-radius:6px;color:#fff;font-size:14.4px;box-shadow:0 2px 8px rgba(0,0,0,.25);z-index:6}
+.cs-course .wt-mock .pill{position:absolute;left:50%;transform:translateX(-50%);bottom:18px;border-radius:20px;padding:8px 16px;font-size:13.6px;font-weight:600;color:#fff;z-index:6;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.cs-course .wt-mock .panel{position:absolute;left:50%;transform:translateX(-50%);bottom:62px;width:330px;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;box-shadow:0 4px 20px rgba(0,0,0,.18);z-index:6;font-size:14px}
+.cs-course .wt-mock .gb{display:inline-block;background:#fec503;color:#000;font-weight:600;border-radius:4px;padding:5px 12px;margin-top:8px}
+.cs-course .wt-mock .spot{position:absolute;pointer-events:none;border-radius:8px;box-shadow:0 0 0 9999px rgba(17,24,39,.42);outline:3px solid #fec503;z-index:20}
+.cs-course .wt-mock .spot::after{content:"";position:absolute;inset:-6px;border-radius:12px;border:2px solid rgba(254,197,3,.7);animation:wtPulse 1.6s infinite}
+@keyframes wtPulse{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.06)}}
+
+/* Module 8: wider page so the portal replica stays readable */
+.cs-course.mod-8 .app{max-width:980px}
+.cs-course.mod-8 .wt{position:relative;margin:4px 0 14px;border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.cs-course.mod-8 .wt-bar{display:flex;align-items:center;gap:6px;padding:8px 12px;background:#e9ecf0;border-bottom:1px solid var(--line)}
+.cs-course.mod-8 .wt-bar i{width:10px;height:10px;border-radius:50%;background:#ef6a5e}
+.cs-course.mod-8 .wt-bar i:nth-child(2){background:#f5be4f}.cs-course.mod-8 .wt-bar i:nth-child(3){background:#61c554}
+.cs-course.mod-8 .wt-bar span{flex:1;margin-left:8px;background:#fff;border-radius:99px;padding:2px 12px;font:500 12px var(--mono);color:#56655c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-course.mod-8 .wt-fit{position:relative;overflow:hidden;width:100%}
+.cs-course.mod-8 .wt-mock{font-family:'Source Sans 3','Source Sans Pro',system-ui,sans-serif}
+.cs-course.mod-8 .wt-mock *{font-family:inherit}
+.cs-course.mod-8 .wt-mock h1,.cs-course.mod-8 .wt-mock h3,.cs-course.mod-8 .wt-mock h5{font-family:inherit;color:inherit}
+.cs-course.mod-8 .wt-mock p{margin:0}
+.cs-course.mod-8 .wt-mock b{font-weight:700}
+.cs-course.mod-8 .wt-mock table{margin:0}
+.cs-course.mod-8 .wt-mock ul{padding:0}
+.cs-course.mod-8 .wt-mock .m-fs legend{margin:0;border:0}

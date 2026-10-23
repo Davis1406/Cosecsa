@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Added (2026-10-23) — Examiner Training: Module 8 "Using the Marking Portal" (step-by-step portal walkthrough)
+- New coded course page with **14 topic cards**: role page, sign in, choose MCS/FCS, MCS marking / results / resubmit, FCS Clinical-Viva / marks / total & submit / results / resubmit, and offline marking (get ready, submit with no connection, sync). Each card shows a replica of the portal screen (sample data, relevant field highlighted) above the explanation. Course fonts (Raleway / Merriweather) and the course look are used for everything except the replica itself, which keeps the portal's own font.
+- It is a normal topics page, so the existing **Admin > Examiner Training > Course content** editor works on it (wording of every paragraph, list and callout, topic titles, hero, "done" card, Reset to original). The replica screens are `special` blocks and stay as designed.
+- Needs the course order in cosecsa-api: `lms:restructure-examiner-course` now adds position 8 (`module-8-using-the-marking-portal`) and moves the quiz, acknowledgements and completion down by one. Run it with `--dry-run` first.
+- **Heads-up:** examiners who had already finished the course will have one new unread module (14 topics) until they read it; the certificate follows the course's completion.
+- **Files (MIS):** `resources/views/course/modules/module-8-portal.blade.php`, `public/css/course/modules/module-8-portal.css`, `public/js/course/modules/module-8-portal.js`, `app/Support/CoursePage.php` (META entry). **Files (cosecsa-api):** `app/Console/Commands/LmsRestructureExaminerCourse.php`.
+
 ### Data correction (2026-10-23) — 2026 examiner roster: 5 confirmed examiners added, groups/shifts loaded, two primary emails changed
 - **Added/restored to the 2026 Examiner Confirmation list (and course access):** Dr Hetal Gohil, Dr Kutlo Motlhobogwa, Dr Chipaila Jackson, Dr Celestine Mbangtang, Dr Geoff Anderson. The four existing records had a `examiners_history` row with no `availability_year_id`; it is now claimed for 2026 with `["MCS","FCS"]`. Hetal had no examiner profile — created **EXA737** (#1006) on her existing login (user 13567, the fellow account) and gave it the active Examiner role. `internal/learning/access` returns `allowed: true` for all five.
 - **Groups and shifts for 2026** set for the **141 examiners marked `YES` for 2026** in the roster sheet: 115 groups (A–P) and 141 shifts (`Morn` → 1, `Morn & Aft` → 2, `Aft` → 3). The 26 with `q`/`Spare`/lowercase groups are left without a group, as in the sheet. Only the confirmed (`YES`) roster was touched; `NO`/blank rows were not given 2026 groups.
