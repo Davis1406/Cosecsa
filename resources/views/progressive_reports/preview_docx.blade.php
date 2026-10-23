@@ -78,7 +78,7 @@
           @else
             @foreach($participant->tasks as $task)
               <tr>
-                <td class="col-no">{{ $task->row_no }}</td>
+                <td class="col-no">{{ $loop->iteration }}</td>
                 <td class="col-activity">{{ $task->activity_description }}</td>
                 <td class="col-planned">
                   @if($task->planned_activities)

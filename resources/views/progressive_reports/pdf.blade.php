@@ -39,7 +39,7 @@
         </tr>
         @forelse($participant->tasks as $task)
           <tr>
-            <td>{{ $task->row_no }}</td>
+            <td>{{ $loop->iteration }}</td>
             <td>{{ $task->activity_description }}</td>
             <td style="white-space:pre-line;">{{ $task->planned_activities }}</td>
             <td style="white-space:pre-line;">{{ $task->current_status }}</td>

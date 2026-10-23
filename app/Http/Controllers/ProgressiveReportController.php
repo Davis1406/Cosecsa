@@ -254,6 +254,9 @@ class ProgressiveReportController extends Controller
             'updated_by'     => Auth::id(),
         ]);
 
+        $this->renumberTasks($participant->id);
+        $task->refresh();
+
         if ($request->wantsJson()) {
             return response()->json(['ok' => true, 'task' => $task]);
         }
@@ -266,7 +269,12 @@ class ProgressiveReportController extends Controller
         $task = ProgressReportTask::with('participant')->where('period_id', $periodId)->findOrFail($taskId);
         $this->authorizeTaskEdit($task);
 
-        $task->delete();
+        $participantId = $task->participant_id;
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($task, $participantId) {
+            $task->delete();
+            $this->renumberTasks($participantId);
+        });
 
         if ($request->wantsJson()) {
             return response()->json(['ok' => true]);
@@ -413,21 +421,51 @@ class ProgressiveReportController extends Controller
 
         $existingMax = ProgressReportTask::where('participant_id', $participant->id)->max('row_no') ?? 0;
 
-        foreach ($previousParticipant->tasks as $i => $prevTask) {
-            ProgressReportTask::create([
-                'period_id'             => $periodId,
-                'participant_id'        => $participant->id,
-                'template_id'           => $prevTask->template_id,
-                'row_no'                => $existingMax + $i + 1,
-                'activity_description'  => $prevTask->activity_description,
-                'planned_activities'    => $prevTask->planned_activities,
-                // Current Status / Next Steps intentionally left blank —
-                // those are this month's update, not last month's.
-                'updated_by'            => Auth::id(),
-            ]);
-        }
+        \Illuminate\Support\Facades\DB::transaction(function () use ($periodId, $participant, $previousParticipant, $existingMax) {
+            foreach ($previousParticipant->tasks as $i => $prevTask) {
+                ProgressReportTask::create([
+                    'period_id'             => $periodId,
+                    'participant_id'        => $participant->id,
+                    'template_id'           => $prevTask->template_id,
+                    'row_no'                => $existingMax + $i + 1,
+                    'activity_description'  => $prevTask->activity_description,
+                    'planned_activities'    => $prevTask->planned_activities,
+                    // Current Status / Next Steps intentionally left blank —
+                    // those are this month's update, not last month's.
+                    'updated_by'            => Auth::id(),
+                ]);
+            }
+
+            // Compact the stored "No." values to 1..N. If the section had a gap
+            // before copying (e.g. a row was deleted), appending from
+            // max(row_no) would keep that gap forever — see renumberTasks().
+            $this->renumberTasks($participant->id);
+        });
 
         return back()->with('success', "Copied " . $previousParticipant->tasks->count() . ' task(s) from last month.');
+    }
+
+    // Keep the stored, displayed "No." column a clean 1..N sequence for one
+    // section. Before this, deleteTaskRow() left a permanent gap in the
+    // database: show.blade.php's delete handler renumbered the DOM only, and
+    // the next reload (or a copy-forward/add-row that numbers from
+    // max(row_no)) brought the gap straight back (1, 2, 4, 5 ...). Every
+    // path that changes the set of rows now calls this, and the one-off
+    // `php artisan progress-reports:renumber` command repairs existing data.
+    protected function renumberTasks(int $participantId): void
+    {
+        $tasks = ProgressReportTask::where('participant_id', $participantId)
+            ->orderBy('row_no')
+            ->orderBy('id')
+            ->get(['id', 'row_no']);
+
+        $position = 0;
+        foreach ($tasks as $task) {
+            $position++;
+            if ((int) $task->row_no !== $position) {
+                ProgressReportTask::whereKey($task->id)->update(['row_no' => $position]);
+            }
+        }
     }
 
     public function consolidate(Request $request, $periodId)
@@ -632,9 +670,9 @@ class ProgressiveReportController extends Controller
                     $table->addCell($colFullWidth, $noTasksCellStyle)->addText('No tasks recorded.', $rowStyle);
                 }
             } else {
-                foreach ($participant->tasks as $task) {
+                foreach ($participant->tasks as $index => $task) {
                     $table->addRow();
-                    $table->addCell($colNo, $rowStyle)->addText($task->row_no ? (string) $task->row_no : '');
+                    $table->addCell($colNo, $rowStyle)->addText((string) ($index + 1));
                     $table->addCell($colActivity, $rowStyle)->addText($task->activity_description ?: '');
                     $this->addBulletedCellText($table->addCell($colPlanned, $rowStyle), $task->planned_activities, $rowStyle);
                     $this->addBulletedCellText($table->addCell($colStatus, $rowStyle), $task->current_status, $rowStyle);

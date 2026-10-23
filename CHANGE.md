@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-23) — Progressive Report "No." column skips numbers (1, 2, 4, 5) after a delete or a copy
+- The stored `progress_report_tasks.row_no` was never compacted. Deleting a row left a permanent gap; the page's delete handler only renumbered the rows on screen, so the next reload brought the gap back. "Add Row" and "Copy Last Month" then continued from `max(row_no)`, so the gap stayed forever (1, 2, 4, 5, 6 …) — reported on `progressive-reports/my` after copying the previous month.
+- Delete, Add Row and Copy Last Month now renumber that section's tasks to 1..N server-side, inside the same request. The page, PDF, DOCX preview and generated Word document also number rows by position (`1..N`) rather than the stored value, so already-gapped months read correctly the moment this is deployed. A one-off command repairs the stored data: `php artisan progress-reports:renumber` (add `--dry-run` to preview).
+- **Files:** `app/Http/Controllers/ProgressiveReportController.php`, `app/Console/Commands/RenumberProgressReportTasks.php`, `resources/views/progressive_reports/{show,pdf,preview_docx}.blade.php`.
+- **Deploy:** after syncing, run `php artisan progress-reports:renumber` once on production so already-gapped months are fixed in the database too.
+
 ### Changed (2026-10-22) — Trainees page opens on Active + Inactive
 - The Trainees list hides **Completed** and **Deferred** trainees until you tick them in the Status filter. The two spellings of Deferred ("Deffered"/"Deferred") are now one.
 - **Files:** `resources/views/admin/associates/trainees/trainees.blade.php`.

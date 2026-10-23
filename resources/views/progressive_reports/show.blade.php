@@ -266,7 +266,7 @@
                   <tbody data-participant-id="{{ $participant->id }}">
                     @forelse($participant->tasks as $task)
                       <tr data-task-id="{{ $task->id }}">
-                        <td>{{ $task->row_no }}</td>
+                        <td>{{ $loop->iteration }}</td>
                         @if($canEditNow)
                           <td>
                             @if(! empty($templatesByUser[$participant->user_id]))
