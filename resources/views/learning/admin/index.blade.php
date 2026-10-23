@@ -34,7 +34,7 @@
                                 <th>Modules done</th>
                                 <th>Progress</th>
                                 <th>Quiz score</th>
-                                <th></th>
+                                <th class="text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -49,7 +49,19 @@
                                     <td data-order="{{ $row['quiz_score'] ?? -1 }}">
                                         @if($row['quiz_score'] !== null) {{ round($row['quiz_score']) }}% @else <span class="muted">—</span> @endif
                                     </td>
-                                    <td><a href="{{ route('admin.exams.learning.user', $row['id']) }}" class="btn btn-light btn-sm">View</a></td>
+                                    <td class="text-center">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-light border" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Actions for {{ $row['name'] }}"><i class="fas fa-bars"></i></button>
+                                            <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                                <a class="dropdown-item" href="{{ route('admin.exams.learning.user', $row['id']) }}"><i class="fas fa-eye text-info mr-2"></i> View</a>
+                                                <form method="POST" action="{{ route('admin.exams.learning.user.reset', $row['id']) }}"
+                                                      onsubmit="return confirm('Reset ALL course progress for {{ e(addslashes($row['name'])) }}? Completed modules, quiz score and attempts are cleared and they start again from Module 1. This cannot be undone.')">
+                                                    @csrf
+                                                    <button type="submit" class="dropdown-item text-danger"><i class="fas fa-undo mr-2"></i> Reset course</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -64,6 +76,10 @@
 @push('styles')
 @include('learning.partials.styles')
 @include('learning.admin._styles')
+<style>
+    /* let the action menu open past the bottom of the table instead of being clipped by the scroll box */
+    @media (min-width: 768px) { .lms .table-responsive { overflow: visible; } }
+</style>
 @endpush
 
 @push('scripts')
