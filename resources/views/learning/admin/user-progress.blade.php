@@ -12,12 +12,17 @@
                 <h5 style="font-size:16px; font-weight:700;">{{ $user['name'] }} — {{ $user['email'] }}</h5>
                 <p class="muted" style="font-size:13px; margin-bottom:0;">Progress through "{{ $course['title'] }}"</p>
                 <div class="progress-track mt-2"><div class="progress-fill" style="width: {{ $percent }}%;"></div></div>
+                <form method="POST" action="{{ route('admin.exams.learning.user.reset', $user['id']) }}" class="mt-3"
+                      onsubmit="return confirm('Reset ALL course progress for {{ e(addslashes($user['name'])) }}? Completed modules, quiz score and attempts are cleared and they start again from Module 1. This cannot be undone.')">
+                    @csrf
+                    <button type="submit" class="btn btn-light btn-sm">Reset course completion</button>
+                </form>
             </div>
 
             <div class="card card-pad">
                 <table class="tbl">
                     <thead>
-                        <tr><th>Module</th><th>Type</th><th>Status</th><th>Score</th><th>Completed</th></tr>
+                        <tr><th>Module</th><th>Type</th><th>Status</th><th>Score</th><th>Completed</th><th></th></tr>
                     </thead>
                     <tbody>
                         @foreach($modules as $module)
@@ -45,6 +50,16 @@
                                         {{ \Illuminate\Support\Carbon::parse($module['completed_at'])->timezone(config('app.timezone'))->format('M j, Y H:i') }}
                                     @else
                                         <span class="muted">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($module['completed'] || $module['score'] !== null || $module['attempts'])
+                                        <form method="POST" action="{{ route('admin.exams.learning.user.reset', $user['id']) }}"
+                                              onsubmit="return confirm('Reset this module for {{ e(addslashes($user['name'])) }}? It will show as Pending again.')">
+                                            @csrf
+                                            <input type="hidden" name="module_id" value="{{ $module['id'] }}">
+                                            <button type="submit" class="btn btn-light btn-sm">Reset</button>
+                                        </form>
                                     @endif
                                 </td>
                             </tr>

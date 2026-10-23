@@ -42,6 +42,17 @@ class AdminLearningController extends Controller
         return view('learning.admin.user-progress', $response->json());
     }
 
+    // POST admin/exams/learning/users/{id}/reset  {module_id?} — clear a learner's progress
+    public function resetUserProgress(Request $request, int $id)
+    {
+        $response = $this->api->post("learning/admin/users/{$id}/progress/reset", array_filter([
+            'module_id' => $request->input('module_id'),
+        ]));
+
+        return back()->with($response->successful() ? 'success' : 'error',
+            $response->successful() ? $response->json('message') : ($response->json('message') ?: 'The progress could not be reset. Please try again.'));
+    }
+
     // GET admin/exams/learning/course
     public function course()
     {

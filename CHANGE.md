@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-10-23) — Examiner Training: admin can reset a learner's course completion
+- On **Admin > Examiner Training > (learner) View** there is now **Reset course completion** (clears every module for that examiner, so they restart at Module 1) and a **Reset** button on each module row (clears just that module, e.g. to allow a quiz retake). Both ask for confirmation. Resetting deletes the learner's `lms_progress` rows: completion, quiz score/attempts/answers and topics read, so the certificate is unavailable until the course is completed again.
+- **Files (MIS):** `routes/web.php`, `AdminLearningController::resetUserProgress`, `resources/views/learning/admin/user-progress.blade.php`. **Files (cosecsa-api):** `POST internal/learning/admin/users/{id}/progress/reset` in `routes/api.php` / `LearningAdminController`.
+
 ### Added (2026-10-23) — Examiner Training: Module 8 "Using the Marking Portal" (step-by-step portal walkthrough)
 - New coded course page with **14 topic cards**: role page, sign in, choose MCS/FCS, MCS marking / results / resubmit, FCS Clinical-Viva / marks / total & submit / results / resubmit, and offline marking (get ready, submit with no connection, sync).
 - Examiners see it as a **step-by-step player** (task board with ticks, MCS / FCS switch, replica portal screen with the relevant field highlighted and a smooth transition between steps and sections, details under the screen, gated first step, responsive down to phones). `module-8-portal.js` builds the player from the topic cards; the replica screens are drawn by the script (sample data). Course fonts (Raleway / Merriweather) and course colours are used for the player; the replica keeps the portal's own font.

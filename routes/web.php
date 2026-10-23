@@ -455,6 +455,7 @@ Route::get('admin/exams/examiners/preview/{id}', [AssociatePreviewController::cl
 Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(\App\Http\Controllers\Learning\AdminLearningController::class)->group(function () {
     Route::get('/', 'index');
     Route::get('users/{id}', 'userProgress')->whereNumber('id')->name('.user');
+    Route::post('users/{id}/reset', 'resetUserProgress')->whereNumber('id')->name('.user.reset');
     Route::get('course', 'course')->name('.course');
     Route::get('certificate', 'certificate')->name('.certificate');
     Route::get('certificate/modal', 'certificateModal')->name('.certificate.modal');
