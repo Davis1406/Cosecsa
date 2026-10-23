@@ -2,7 +2,8 @@
    Each .wt block shows a replica of one portal screen (sample data) with the relevant part highlighted. */
 (function(){
 var root=document.querySelector('.cs-course.mod-8');
-if(!root||root.querySelector('[data-tid]'))return; /* the page editor's preview keeps the plain topic cards */
+if(!root)return;
+var EDIT=!!root.querySelector('[data-tid]'); /* the page editor's preview: same player, free to step through, nothing recorded, blocks stay clickable */
 var topicEls=[].slice.call(root.querySelectorAll('.topic'));
 if(!topicEls.length||!window.CSCourse)return;
 const LOGO=((window.CSCourse&&CSCourse.img)||'/images/course/')+'cosecsa-crest.png';
@@ -70,7 +71,7 @@ var RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches
 var STEPS=topicEls.map(function(t,k){
   var wt=t.querySelector('.wt'),d=wt?wt.dataset:{},left=[],right=[];
   [].slice.call(t.querySelectorAll('.pn > *')).forEach(function(n){if(n===wt)return;(n.tagName==='P'?left:right).push(n.outerHTML)});
-  return {k:k,deck:d.deck||'all',sec:d.sec||'',kick:d.kick||'',screen:d.screen,hl:d.hl,opt:d.opt||'',url:d.url||'cosecsamis.org',gate:d.gate==='1',choose:d.choose==='1',
+  return {k:k,tid:t.getAttribute('data-tid')||'',wtBid:wt?(wt.getAttribute('data-bid')||''):'',deck:d.deck||'all',sec:d.sec||'',kick:d.kick||'',screen:d.screen,hl:d.hl,opt:d.opt||'',url:d.url||'cosecsamis.org',gate:d.gate==='1',choose:d.choose==='1',
     title:t.querySelector('.th b').innerHTML,sub:t.querySelector('.th small').innerHTML,left:left,right:right};
 }).filter(function(s){return SCREENS[s.screen]});
 
@@ -83,7 +84,7 @@ root.classList.add('wp-on');
 var $=function(s){return wp.querySelector(s)};
 var elList=$('.wp-list'),elCard=$('.wp-card'),elFit=$('.wp-fit'),elMock=$('.wt-mock'),elUrl=$('.wp-chrome span'),elTabs=$('.wp-tabs'),elBar=$('.wp-bar i'),elCount=$('.wp-prog output');
 
-var deck='mcs',cur=0,prevKey=null,prevSec=null,tk=0,spotR=null,raf=0,shownKey=null,pending=false,gateOK=false,fitScale=1;
+var deck='mcs',cur=0,prevKey=null,prevSec=null,tk=0,spotR=null,raf=0,shownKey=null,pending=false,gateOK=EDIT,fitScale=1;
 var ticks={};try{ticks=JSON.parse(localStorage.getItem('m8-ticks')||'{}')||{}}catch(e){}
 function saveTicks(){try{localStorage.setItem('m8-ticks',JSON.stringify(ticks))}catch(e){}}
 function steps(){return STEPS.filter(function(s){return s.deck==='all'||s.deck===deck})}
@@ -92,14 +93,14 @@ function setDone(s,v){ticks[deck+':'+s.k]=v;saveTicks()}
 function gatePending(){var s=steps()[cur];return !!(s&&s.gate&&!gateOK)}
 
 /* reading a step also marks its course topic as read (what completes the module) */
-function markRead(s){var t=topicEls[s.k];if(t&&!CSCourse.seen[t.dataset.i]){var b=t.querySelector('.th');if(b&&!t.classList.contains('open'))b.click()}}
-function markAllRead(){topicEls.forEach(function(t){if(!CSCourse.seen[t.dataset.i]){var b=t.querySelector('.th');if(b&&!t.classList.contains('open'))b.click()}})}
+function markRead(s){if(EDIT)return;var t=topicEls[s.k];if(t&&!CSCourse.seen[t.dataset.i]){var b=t.querySelector('.th');if(b&&!t.classList.contains('open'))b.click()}}
+function markAllRead(){if(EDIT)return;topicEls.forEach(function(t){if(!CSCourse.seen[t.dataset.i]){var b=t.querySelector('.th');if(b&&!t.classList.contains('open'))b.click()}})}
 
 function renderList(){
   var st=steps(),html='',last='';
   st.forEach(function(s,i){
     if(s.sec!==last){html+=(last?'</div>':'')+'<div class="wp-sec"><h3>'+s.sec+'</h3>';last=s.sec}
-    html+='<div class="wp-item'+(i===cur?' cur':'')+(isDone(s)?' done':'')+'" data-i="'+i+'" role="button" tabindex="0"><button class="wp-tick" type="button" aria-label="Mark step '+(i+1)+' done" data-tick="'+i+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></button><span class="wp-t">'+s.title+'<span class="wp-s">'+s.sub+'</span></span></div>';
+    html+='<div class="wp-item'+(i===cur?' cur':'')+(isDone(s)?' done':'')+'" data-i="'+i+'"'+(EDIT?' data-tid="'+s.tid+'"':'')+' role="button" tabindex="0"><button class="wp-tick" type="button" aria-label="Mark step '+(i+1)+' done" data-tick="'+i+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></button><span class="wp-t">'+s.title+'<span class="wp-s">'+s.sub+'</span></span></div>';
   });
   elList.innerHTML=html+'</div>';
   var n=st.filter(isDone).length;elCount.textContent=n+' of '+st.length+' done';elBar.style.width=(100*n/st.length)+'%';
@@ -109,6 +110,7 @@ function renderCard(){
   elCard.innerHTML='<div class="wp-c1"><div class="wp-kick">Step '+(cur+1)+' of '+n+' · '+s.kick+'</div><h2>'+s.title+'</h2>'+s.left.join('')+
    '<div class="wp-nav"><button class="wp-btn" id="wp-prev"'+(cur===0?' disabled':'')+'>← Back</button><button class="wp-btn pri" id="wp-next"'+(s.gate&&!gateOK?' disabled':'')+'>'+(s.gate&&!gateOK?'Click the highlighted area to continue':cur===n-1?'Finish':s.choose?'Continue with '+(deck==='mcs'?'MCS':'FCS')+' →':'Done, next step →')+'</button></div></div>'+
    '<div class="wp-c2">'+s.right.join('')+(s.choose?'<div class="wp-picks"><button type="button" class="wp-pick'+(deck==='mcs'?' on':'')+'" data-pick="mcs"><b>MCS</b></button><button type="button" class="wp-pick'+(deck==='fcs'?' on':'')+'" data-pick="fcs"><b>FCS specialties</b></button></div>':'')+'</div>';
+  if(EDIT){[].forEach.call(elCard.querySelectorAll('.wp-c1,.wp-c2'),function(c){c.setAttribute('data-tid',s.tid)});if(s.wtBid)elFit.setAttribute('data-bid',s.wtBid);else elFit.removeAttribute('data-bid')}
   elCard.classList.remove('swap');void elCard.offsetWidth;elCard.classList.add('swap');
   elTabs.classList.toggle('glow',!!s.choose);
   $('#wp-prev').onclick=function(){go(cur-1)};
@@ -185,5 +187,10 @@ elList.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&
 $('.wp-reset').onclick=function(){steps().forEach(function(s){delete ticks[deck+':'+s.k]});saveTicks();renderList()};
 if('ResizeObserver' in window)new ResizeObserver(function(){layout();var s=steps()[cur],t=s&&targetOf(s);if(t){var R=rectOf(t);drawSpot(R);spotR=R}}).observe(wp.querySelector('.wp-shot'));
 else window.addEventListener('resize',layout);
+/* the editor's preview asks for the step that holds a block (cw-reveal, sent by the preview frame) */
+if(EDIT)document.addEventListener('cw-reveal',function(e){
+  var s=STEPS.filter(function(x){return x.k===+e.detail.k})[0];if(!s)return;
+  if(s.deck!=='all'&&s.deck!==deck){deck=s.deck;setDeck(s.deck,steps().indexOf(s))}else go(steps().indexOf(s));
+});
 setDeck('mcs');
 })();
