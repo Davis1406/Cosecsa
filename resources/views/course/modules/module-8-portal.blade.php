@@ -3,43 +3,43 @@
 @section('title', 'Module 8 Using the Marking Portal')
 
 @php
-// Each topic: [icon, title, subtitle, screen, highlighted field, screen option, url shown in the browser bar, blocks (html)]
+// Each topic: [icon, title, subtitle, screen, highlighted field, screen option, url shown in the browser bar, exam (all|mcs|fcs), board section, heading above the step, flag (gate|choose), blocks (html)]
 $steps = [
- ['i1', 'Choose your role', 'Everyone · the role page', 'role', 'role', '', 'cosecsamis.org',
+ ['i1', 'Choose your role', 'Everyone · the role page', 'role', 'role', '', 'cosecsamis.org', 'all', 'Log in', 'Log in', 'gate',
   ['<p>Open cosecsamis.org and choose <b>Examiner</b> under Select Role, then click <b>Continue</b>.</p>',
    '<ul class="pts"><li>Wrong role? <b>Reset Role</b> takes you back to start again.</li></ul>']],
- ['i4', 'Sign in', 'Everyone · email or username', 'login', 'user', '', 'cosecsamis.org/login',
+ ['i4', 'Sign in', 'Everyone · email or username', 'login', 'user', '', 'cosecsamis.org/login', 'all', 'Log in', 'Log in', '',
   ['<p>Type the email or username COSECSA registered for you, then your password. The eye icon shows or hides what you typed. Click <b>Login</b> to open your Examiner Portal.</p>',
    '<ul class="pts"><li>Forgot your password? Use <b>Forget Password</b> to reset it.</li><li><b>Remember Me</b> keeps you signed in on this device.</li></ul>']],
- ['i5', 'Choose MCS or FCS', 'Everyone · the dashboard', 'dash', 'exam', 'mcs', 'cosecsamis.org/examiner/dashboard',
+ ['i5', 'Choose MCS or FCS', 'Everyone · the dashboard', 'dash', 'exam', 'mcs', 'cosecsamis.org/examiner/dashboard', 'all', 'Choose the exam', 'Dashboard', 'choose',
   ['<p>After you sign in, the Examiner Portal asks which exam you are marking. Open <b>Select Exam Type</b> and pick <b>MCS</b> or your <b>FCS</b> specialty, then click <b>Proceed</b>.</p>',
    '<div class="callout">MCS is marked online. FCS specialties have a Clinical and a Viva form, and can be marked offline.</div>']],
- ['i6', 'MCS: enter marks and grade', 'MCS only · the marking form', 'mcsForm', 'marks', '', 'cosecsamis.org/examiner/examiner_form',
+ ['i6', 'MCS: enter marks and grade', 'MCS only · the marking form', 'mcsForm', 'marks', '', 'cosecsamis.org/examiner/examiner_form', 'mcs', 'Mark', 'Candidate Evaluation Form', '',
   ['<p>Choose the group first so its candidates load, then the candidate and the station. Type the mark for each question and use <b>+ Add Question</b> for more.</p>',
    '<ul class="pts"><li>The total for a station cannot exceed 20. Half marks such as 3.5 are allowed.</li><li><b>Overall Marks</b> is calculated for you.</li><li>Choose <b>Pass</b>, <b>Borderline</b> or <b>Fail</b> in Grade, add remarks if needed, then press <b>SUBMIT</b>.</li></ul>']],
- ['i7', 'MCS: check your results', 'MCS only · the results page', 'results', 'tbl', 'mcs', 'cosecsamis.org/examiner/results',
+ ['i7', 'MCS: check your results', 'MCS only · the results page', 'results', 'tbl', 'mcs', 'cosecsamis.org/examiner/results', 'mcs', 'Review', 'Results', '',
   ['<p>Every MCS submission is listed in <b>MCS Results</b> with its question marks, Total Marks and Overall Grade. <b>View</b> opens the saved marks.</p>']],
- ['i8', 'MCS: resubmit a mark', 'MCS only · correcting a mark', 'mcsForm', 'marks', 'resubmit', 'cosecsamis.org/examiner/resubmit/…',
+ ['i8', 'MCS: resubmit a mark', 'MCS only · correcting a mark', 'mcsForm', 'marks', 'resubmit', 'cosecsamis.org/examiner/resubmit/…', 'mcs', 'Review', 'Resubmit', '',
   ['<p>From Results click <b>Resubmit</b>. Group, candidate and station are read-only. Change the mark that is wrong, check the Grade, then press <b>Submit</b>.</p>',
    '<div class="callout">Resubmit updates the existing record. It does not create a duplicate.</div>']],
- ['i1', 'FCS: choose Clinical or Viva', 'FCS only · the examination format', 'fmt', 'clin', '', 'cosecsamis.org/examiner/urology',
+ ['i1', 'FCS: choose Clinical or Viva', 'FCS only · the examination format', 'fmt', 'clin', '', 'cosecsamis.org/examiner/urology', 'fcs', 'Choose the exam', 'FCS Urology', '',
   ['<p><b>Clinical</b> (red) is for evaluating clinical cases at your station. <b>Viva</b> (gold) is for the oral examination. <b>Back to Dashboard</b> returns you to the exam list.</p>']],
- ['i4', 'FCS: select the candidate and enter marks', 'FCS only · the evaluation form', 'fcsForm', 'marks', '', 'cosecsamis.org/examiner/urology/clinical',
+ ['i4', 'FCS: select the candidate and enter marks', 'FCS only · the evaluation form', 'fcsForm', 'marks', '', 'cosecsamis.org/examiner/urology/clinical', 'fcs', 'Mark', 'FCS Urology · Clinical', '',
   ['<p>Choose the group first so its candidates load, then the candidate and the station (1 to 8). Choose <b>2, 4, 6, 8 or 10</b> for every question. Some Viva forms also offer 0.</p>',
    '<ul class="pts"><li><b>+ Add Question</b> adds the next question where the form allows it.</li><li>The case heading follows the station you pick.</li></ul>']],
- ['i5', 'FCS: check the total and submit', 'FCS only · remarks and SUBMIT', 'fcsForm', 'total', '', 'cosecsamis.org/examiner/urology/clinical',
+ ['i5', 'FCS: check the total and submit', 'FCS only · remarks and SUBMIT', 'fcsForm', 'total', '', 'cosecsamis.org/examiner/urology/clinical', 'fcs', 'Mark', 'FCS Urology · Clinical', '',
   ['<p><b>Overall Marks</b> is calculated from your marks and cannot be typed. Add <b>Examiner Remarks</b> if needed, then press <b>SUBMIT</b>. A green success message confirms it.</p>']],
- ['i6', 'FCS: check your results', 'FCS only · the results page', 'results', 'tbl', 'fcs', 'cosecsamis.org/examiner/results',
+ ['i6', 'FCS: check your results', 'FCS only · the results page', 'results', 'tbl', 'fcs', 'cosecsamis.org/examiner/results', 'fcs', 'Review', 'Results', '',
   ['<p>Each submission shows its Clinical, Viva and Overall totals in <b>FCS Specialty Results</b>. <b>View</b> opens the saved marks.</p>',
    '<ul class="pts"><li>A <b>Resubmit Viva</b> button appears only for marks you submitted.</li></ul>']],
- ['i7', 'FCS: resubmit a mark', 'FCS only · Update Evaluation', 'fcsForm', 'marks', 'resubmit', 'cosecsamis.org/examiner/fcs-resubmit/…/clinical',
+ ['i7', 'FCS: resubmit a mark', 'FCS only · Update Evaluation', 'fcsForm', 'marks', 'resubmit', 'cosecsamis.org/examiner/fcs-resubmit/…/clinical', 'fcs', 'Review', 'Resubmit', '',
   ['<p>From Results click <b>Resubmit Clinical</b> or <b>Resubmit Viva</b>. Group, candidate and station are read-only. Pick the correct value, check Overall Marks, then press <b>Update Evaluation</b> (or Cancel).</p>']],
- ['i8', 'Get ready to mark offline', 'FCS · before the exam', 'offReady', 'e3', '', 'cosecsamis.org/examiner/dashboard',
+ ['i8', 'Get ready to mark offline', 'FCS · before the exam', 'offReady', 'e3', '', 'cosecsamis.org/examiner/dashboard', 'fcs', 'Offline marking', 'Offline marking', '',
   ['<p>Open the dashboard while you have internet. The card under the welcome text shows <b>Not prepared</b>, then <b>Preparing</b>, then <b>Ready</b>. Green means you can keep marking if the connection drops.</p>',
    '<div class="callout">Use the same browser and device for marking.</div>']],
- ['i1', 'Submit with no connection', 'FCS · marking offline', 'offSaved', 'toast', '', 'cosecsamis.org/examiner/urology/clinical',
+ ['i1', 'Submit with no connection', 'FCS · marking offline', 'offSaved', 'toast', '', 'cosecsamis.org/examiner/urology/clinical', 'fcs', 'Offline marking', 'Offline marking', '',
   ['<p>Fill in the form and press <b>SUBMIT</b> even with no internet. A green message says the mark is saved on this device and the form clears for the next candidate. The pill shows how many marks are waiting.</p>']],
- ['i4', 'Back online: sync your marks', 'FCS · after marking offline', 'offSync', 'sync', '', 'cosecsamis.org/examiner/results',
+ ['i4', 'Back online: sync your marks', 'FCS · after marking offline', 'offSync', 'sync', '', 'cosecsamis.org/examiner/results', 'fcs', 'Offline marking', 'Offline marking', '',
   ['<p>When you have a connection the marks submit by themselves. You can also open the pill and press <b>Sync now</b>. <b>1 mark synced.</b> confirms it reached the server.</p>',
    '<ul class="pts"><li>Do not clear browser data or switch device until the list is empty.</li><li>If your session ended, sign in again while online.</li></ul>']],
 ];
@@ -57,10 +57,10 @@ $steps = [
 <div class="bar"><i id="fill"></i></div>
 </div>
 <div class="topics" id="topics">
-@foreach($steps as $i => [$icon, $title, $sub, $screen, $hl, $opt, $url, $blocks])
+@foreach($steps as $i => [$icon, $title, $sub, $screen, $hl, $opt, $url, $deck, $sec, $kick, $flag, $blocks])
 
 <div class="topic" data-i="{{ $i }}"><button class="th" type="button" aria-expanded="false"><span class="ic"><svg><use href="#{{ $icon }}"/></svg></span><span><b>{{ $title }}</b><small>{{ $sub }}</small></span><span class="ch"></span></button><div class="pn">
-<div class="wt" data-screen="{{ $screen }}" data-hl="{{ $hl }}" data-opt="{{ $opt }}" data-url="{{ $url }}" role="img" aria-label="Replica of the marking portal screen with the relevant part highlighted"></div>
+<div class="wt" data-screen="{{ $screen }}" data-hl="{{ $hl }}" data-opt="{{ $opt }}" data-url="{{ $url }}" data-deck="{{ $deck }}" data-sec="{{ $sec }}" data-kick="{{ $kick }}"@if($flag === 'gate') data-gate="1"@endif @if($flag === 'choose') data-choose="1"@endif role="img" aria-label="Replica of the marking portal screen with the relevant part highlighted"></div>
 @foreach($blocks as $b)
 {!! $b !!}
 @endforeach

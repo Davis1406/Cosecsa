@@ -1,8 +1,10 @@
 /* Module 8: step screens. Needs cosecsa-course.js loaded first.
    Each .wt block shows a replica of one portal screen (sample data) with the relevant part highlighted. */
 (function(){
-var cards=[].slice.call(document.querySelectorAll('.cs-course .wt[data-screen]'));
-if(!cards.length)return;
+var root=document.querySelector('.cs-course.mod-8');
+if(!root||root.querySelector('[data-tid]'))return; /* the page editor's preview keeps the plain topic cards */
+var topicEls=[].slice.call(root.querySelectorAll('.topic'));
+if(!topicEls.length||!window.CSCourse)return;
 const LOGO=((window.CSCourse&&CSCourse.img)||'/images/course/')+'cosecsa-crest.png';
 const I={
  dash:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>',
@@ -59,31 +61,129 @@ const SCREENS={
 };
 
 
+
 var TOKENS={dash:function(o){return o==='mcs'},results:function(o){return o==='mcs'},mcsForm:function(o){return o==='resubmit'},fcsForm:function(o){return o==='resubmit'}};
 function arg(screen,opt){var f=TOKENS[screen];return f?f(opt||''):undefined}
-function build(el){
-  var screen=el.getAttribute('data-screen'),hl=el.getAttribute('data-hl'),opt=el.getAttribute('data-opt')||'',url=el.getAttribute('data-url')||'cosecsamis.org';
-  var make=SCREENS[screen];if(!make)return;
-  el.innerHTML='<div class="wt-bar"><i></i><i></i><i></i><span></span></div><div class="wt-fit"><div class="wt-mock">'+make(arg(screen,opt))+'<div class="spot"></div></div></div>';
-  el.querySelector('.wt-bar span').textContent=url;
-  el._wt={mock:el.querySelector('.wt-mock'),fit:el.querySelector('.wt-fit'),hl:hl,screen:screen};
+var RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---- the steps are the course topic cards (the page editor edits those) ---- */
+var STEPS=topicEls.map(function(t,k){
+  var wt=t.querySelector('.wt'),d=wt?wt.dataset:{},left=[],right=[];
+  [].slice.call(t.querySelectorAll('.pn > *')).forEach(function(n){if(n===wt)return;(n.tagName==='P'?left:right).push(n.outerHTML)});
+  return {k:k,deck:d.deck||'all',sec:d.sec||'',kick:d.kick||'',screen:d.screen,hl:d.hl,opt:d.opt||'',url:d.url||'cosecsamis.org',gate:d.gate==='1',choose:d.choose==='1',
+    title:t.querySelector('.th b').innerHTML,sub:t.querySelector('.th small').innerHTML,left:left,right:right};
+}).filter(function(s){return SCREENS[s.screen]});
+
+var wp=document.createElement('div');wp.className='wp';
+wp.innerHTML='<div class="wp-top"><div class="wp-tabs" role="tablist" aria-label="Exam type"><button type="button" role="tab" data-deck="mcs" aria-selected="true">MCS (online)</button><button type="button" role="tab" data-deck="fcs" aria-selected="false">FCS specialties</button></div></div>'+
+ '<div class="wp-grid"><aside class="wp-board" aria-label="Steps"><div class="wp-prog"><div class="wp-bar"><i></i></div><output></output></div><div class="wp-list"></div><button class="wp-reset" type="button">Clear my ticks</button></aside>'+
+ '<div class="wp-stage"><div class="wp-shot"><div class="wp-chrome"><i></i><i></i><i></i><span></span></div><div class="wp-fit"><div class="wt-mock"></div></div><section class="wp-card" aria-live="polite"></section></div></div></div>';
+root.querySelector('.topics').before(wp);
+root.classList.add('wp-on');
+var $=function(s){return wp.querySelector(s)};
+var elList=$('.wp-list'),elCard=$('.wp-card'),elFit=$('.wp-fit'),elMock=$('.wt-mock'),elUrl=$('.wp-chrome span'),elTabs=$('.wp-tabs'),elBar=$('.wp-bar i'),elCount=$('.wp-prog output');
+
+var deck='mcs',cur=0,prevKey=null,prevSec=null,tk=0,spotR=null,raf=0,shownKey=null,pending=false,gateOK=false,fitScale=1;
+var ticks={};try{ticks=JSON.parse(localStorage.getItem('m8-ticks')||'{}')||{}}catch(e){}
+function saveTicks(){try{localStorage.setItem('m8-ticks',JSON.stringify(ticks))}catch(e){}}
+function steps(){return STEPS.filter(function(s){return s.deck==='all'||s.deck===deck})}
+var isDone=function(s){return !!ticks[deck+':'+s.k]};
+function setDone(s,v){ticks[deck+':'+s.k]=v;saveTicks()}
+function gatePending(){var s=steps()[cur];return !!(s&&s.gate&&!gateOK)}
+
+/* reading a step also marks its course topic as read (what completes the module) */
+function markRead(s){var t=topicEls[s.k];if(t&&!CSCourse.seen[t.dataset.i]){var b=t.querySelector('.th');if(b&&!t.classList.contains('open'))b.click()}}
+function markAllRead(){topicEls.forEach(function(t){if(!CSCourse.seen[t.dataset.i]){var b=t.querySelector('.th');if(b&&!t.classList.contains('open'))b.click()}})}
+
+function renderList(){
+  var st=steps(),html='',last='';
+  st.forEach(function(s,i){
+    if(s.sec!==last){html+=(last?'</div>':'')+'<div class="wp-sec"><h3>'+s.sec+'</h3>';last=s.sec}
+    html+='<div class="wp-item'+(i===cur?' cur':'')+(isDone(s)?' done':'')+'" data-i="'+i+'" role="button" tabindex="0"><button class="wp-tick" type="button" aria-label="Mark step '+(i+1)+' done" data-tick="'+i+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></button><span class="wp-t">'+s.title+'<span class="wp-s">'+s.sub+'</span></span></div>';
+  });
+  elList.innerHTML=html+'</div>';
+  var n=st.filter(isDone).length;elCount.textContent=n+' of '+st.length+' done';elBar.style.width=(100*n/st.length)+'%';
 }
-function place(el){
-  var w=el._wt;if(!w)return;var width=w.fit.clientWidth;if(!width)return;
-  var sc=width/1000;w.mock.style.transform='scale('+sc+')';w.fit.style.height=(620*sc)+'px';
-  if(!w.scrolled){w.scrolled=true;var page=w.mock.querySelector('.m-page');
-    var scrollKeys={mcsForm:{marks:'marks'},fcsForm:{marks:'marks',total:'total'}};
-    var sk=(scrollKeys[w.screen]||{})[w.hl];
-    if(page&&sk){var st=w.mock.querySelector('[data-t="'+sk+'"]');if(st){page.scrollTop=Math.max(0,st.offsetTop-(page.clientHeight-st.offsetHeight)/3)}}}
-  var t=w.mock.querySelector('[data-t="'+w.hl+'"]'),sp=w.mock.querySelector('.spot');if(!t||!sp)return;
-  var m=w.mock.getBoundingClientRect(),r=t.getBoundingClientRect(),p=6;
-  sp.style.left=((r.left-m.left)/sc-p)+'px';sp.style.top=((r.top-m.top)/sc-p)+'px';
-  sp.style.width=(r.width/sc+p*2)+'px';sp.style.height=(r.height/sc+p*2)+'px';
+function renderCard(){
+  var st=steps(),s=st[cur],n=st.length;
+  elCard.innerHTML='<div class="wp-c1"><div class="wp-kick">Step '+(cur+1)+' of '+n+' · '+s.kick+'</div><h2>'+s.title+'</h2>'+s.left.join('')+
+   '<div class="wp-nav"><button class="wp-btn" id="wp-prev"'+(cur===0?' disabled':'')+'>← Back</button><button class="wp-btn pri" id="wp-next"'+(s.gate&&!gateOK?' disabled':'')+'>'+(s.gate&&!gateOK?'Click the highlighted area to continue':cur===n-1?'Finish':s.choose?'Continue with '+(deck==='mcs'?'MCS':'FCS')+' →':'Done, next step →')+'</button></div></div>'+
+   '<div class="wp-c2">'+s.right.join('')+(s.choose?'<div class="wp-picks"><button type="button" class="wp-pick'+(deck==='mcs'?' on':'')+'" data-pick="mcs"><b>MCS</b></button><button type="button" class="wp-pick'+(deck==='fcs'?' on':'')+'" data-pick="fcs"><b>FCS specialties</b></button></div>':'')+'</div>';
+  elCard.classList.remove('swap');void elCard.offsetWidth;elCard.classList.add('swap');
+  elTabs.classList.toggle('glow',!!s.choose);
+  $('#wp-prev').onclick=function(){go(cur-1)};
+  $('#wp-next').onclick=function(){if(gatePending()){nudge();return}advance()};
+  [].forEach.call(elCard.querySelectorAll('[data-pick]'),function(b){b.onclick=function(){if(b.dataset.pick!==deck)setDeck(b.dataset.pick,steps().indexOf(s));[].forEach.call(elCard.querySelectorAll('[data-pick]'),function(x){x.classList.toggle('on',x.dataset.pick===deck)})}});
 }
-cards.forEach(function(el){
-  build(el);
-  if('ResizeObserver' in window){new ResizeObserver(function(){place(el)}).observe(el)}
-  else{window.addEventListener('resize',function(){place(el)})}
-  place(el);
-});
+function nudge(){var c=$('.wp-coach');if(c){c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake')}}
+function advance(){var st=steps(),s=st[cur];if(s.gate)gateOK=true;setDone(s,true);markRead(s);if(cur<st.length-1)go(cur+1);else{markAllRead();renderList()}}
+
+function layout(){
+  var tight=window.innerWidth>=900,box=elFit.parentElement,availW=box.clientWidth-24;
+  var sc=availW/1000;
+  if(tight){var availH=window.innerHeight-300;sc=Math.min(sc,Math.max(.5,availH/620))}
+  fitScale=sc;elFit.style.width=(1000*sc)+'px';elFit.style.height=(620*sc)+'px';elMock.style.transform='scale('+sc+')';
+}
+var targetOf=function(s){return elMock.querySelector('[data-t="'+s.hl+'"]')};
+function rectOf(t){var m=elMock.getBoundingClientRect(),r=t.getBoundingClientRect(),p=6;return{x:(r.left-m.left)/fitScale-p,y:(r.top-m.top)/fitScale-p,w:r.width/fitScale+p*2,h:r.height/fitScale+p*2}}
+function drawSpot(R){var sp=elMock.querySelector('.spot');if(!sp)return;sp.style.left=R.x+'px';sp.style.top=R.y+'px';sp.style.width=R.w+'px';sp.style.height=R.h+'px'}
+function placeCoach(R){
+  var c=elMock.querySelector('.wp-coach');if(!c)return;var w=290,h=c.offsetHeight||90,left=Math.max(12,Math.min(1000-w-12,R.x+R.w/2-w/2));
+  var top=R.y-h-18,dir='up';if(top<64){top=R.y+R.h+18;dir='down'}
+  c.style.left=left+'px';c.style.top=top+'px';c.className='wp-coach '+dir+(c.classList.contains('shake')?' shake':'');c.style.setProperty('--ax',(R.x+R.w/2-left)+'px');
+}
+function follow(t,from,ms){
+  cancelAnimationFrame(raf);var sp=elMock.querySelector('.spot');if(!sp||!t)return;
+  sp.style.opacity=1;sp.style.pointerEvents='auto';sp.style.cursor='pointer';sp.onclick=function(){advance()};
+  var c=from||rectOf(t),t0=performance.now();
+  (function step(now){var tg=rectOf(t),k=RM?1:.2;c={x:c.x+(tg.x-c.x)*k,y:c.y+(tg.y-c.y)*k,w:c.w+(tg.w-c.w)*k,h:c.h+(tg.h-c.h)*k};drawSpot(c);spotR=c;placeCoach(c);
+    if(now-t0<ms)raf=requestAnimationFrame(step);else{drawSpot(tg);spotR=tg;placeCoach(tg)}})(t0);
+}
+var SCROLL={mcsForm:{marks:'marks'},fcsForm:{marks:'marks',total:'total'}};
+function scrollTop(s){var page=elMock.querySelector('.m-page'),k=(SCROLL[s.screen]||{})[s.hl];if(!page||!k)return 0;var t=elMock.querySelector('[data-t="'+k+'"]');return t?Math.max(0,t.offsetTop-(page.clientHeight-t.offsetHeight)/3):0}
+function chapter(name){
+  var old=elFit.querySelector('.wp-chap');if(old)old.remove();
+  var c=document.createElement('div');c.className='wp-chap';c.innerHTML='<small>Next section</small><b>'+name+'</b>';elFit.appendChild(c);setTimeout(function(){c.remove()},1700);
+}
+function screenArg(s){return s.screen==='dash'?deck==='mcs':arg(s.screen,s.opt)}
+function newScreen(s,dir,secChanged,first){
+  var my=++tk,old=elMock.querySelector('.wp-scr');cancelAnimationFrame(raf);var sp0=elMock.querySelector('.spot');if(sp0)sp0.style.opacity=0;
+  if(secChanged&&!RM)chapter(s.sec);
+  var wait=RM||first?0:(secChanged?450:240);pending=true;
+  if(old&&!RM)old.classList.add(dir>0?'out-f':'out-b');
+  setTimeout(function(){
+    if(my!==tk)return;pending=false;shownKey=s.screen+':'+s.opt+':'+deck;
+    elMock.innerHTML='<div class="wp-scr '+(RM||first?'':(dir>0?'in-f':'in-b'))+'">'+SCREENS[s.screen](screenArg(s))+'</div><div class="spot"></div>'+(s.gate&&!gateOK?'<div class="wp-coach"><b>Your turn</b>Click the highlighted section to move forward.</div>':'');
+    elUrl.textContent=s.url;
+    var page=elMock.querySelector('.m-page'),t=targetOf(s);spotR=null;
+    setTimeout(function(){if(my!==tk||!t)return;var top=scrollTop(s);if(page&&top>0)page.scrollTo({top:top,behavior:RM?'auto':'smooth'});follow(t,null,page&&top>0?1100:300)},RM?0:(first?200:520));
+  },wait);
+}
+function sameScreen(s){
+  tk++;var t=targetOf(s);if(!t)return;var page=elMock.querySelector('.m-page'),top=scrollTop(s);
+  if(page)page.scrollTo({top:top,behavior:RM?'auto':'smooth'});follow(t,spotR,1100);
+}
+function go(i){
+  if(i>cur&&gatePending()){nudge();return}
+  var st=steps(),ni=Math.max(0,Math.min(st.length-1,i)),dir=ni>=cur?1:-1;cur=ni;
+  renderList();renderCard();layout();
+  var s=st[cur],key=s.screen+':'+s.opt+':'+deck,secChanged=prevSec!==null&&s.sec!==prevSec;
+  if(prevKey===null)newScreen(s,dir,false,true);
+  else if(!pending&&key===shownKey&&!secChanged)sameScreen(s);
+  else newScreen(s,dir,secChanged,false);
+  prevKey=key;prevSec=s.sec;
+  try{sessionStorage.setItem('m8-pos-'+deck,cur)}catch(e){}
+}
+function setDeck(d,keep){
+  deck=d;[].forEach.call(elTabs.querySelectorAll('button'),function(b){b.setAttribute('aria-selected',b.dataset.deck===d)});
+  var c=0;try{c=+sessionStorage.getItem('m8-pos-'+d)||0}catch(e){}
+  if(keep!==undefined)c=keep;else if(cur<=2&&c>2)c=cur;cur=Math.min(c,steps().length-1);prevKey=null;prevSec=null;layout();go(cur);
+}
+[].forEach.call(elTabs.querySelectorAll('button'),function(b){b.onclick=function(){setDeck(b.dataset.deck)}});
+elList.addEventListener('click',function(e){var t=e.target.closest('[data-tick]');if(t){var s=steps()[+t.dataset.tick];setDone(s,!isDone(s));renderList();return}var it=e.target.closest('.wp-item');if(it)go(+it.dataset.i)});
+elList.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('wp-item')){e.preventDefault();go(+e.target.dataset.i)}});
+$('.wp-reset').onclick=function(){steps().forEach(function(s){delete ticks[deck+':'+s.k]});saveTicks();renderList()};
+if('ResizeObserver' in window)new ResizeObserver(function(){layout();var s=steps()[cur],t=s&&targetOf(s);if(t){var R=rectOf(t);drawSpot(R);spotR=R}}).observe(wp.querySelector('.wp-shot'));
+else window.addEventListener('resize',layout);
+setDeck('mcs');
 })();

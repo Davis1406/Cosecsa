@@ -957,3 +957,83 @@
 .cs-course.mod-8 .wt-mock table{margin:0}
 .cs-course.mod-8 .wt-mock ul{padding:0}
 .cs-course.mod-8 .wt-mock .m-fs legend{margin:0;border:0}
+
+/* ---- Module 8 step-by-step player (built by module-8-portal.js from the topic cards) ---- */
+.cs-course.mod-8.wp-on .app{max-width:1180px}
+.cs-course.mod-8.wp-on .topics{display:none}
+.cs-course.mod-8 .wp{margin:18px 0 22px}
+.cs-course.mod-8 .wp-top{display:flex;justify-content:flex-end;margin-bottom:12px}
+.cs-course.mod-8 .wp-tabs{display:inline-flex;background:var(--maroon-soft);border-radius:10px;padding:4px;gap:4px;transition:box-shadow .3s}
+.cs-course.mod-8 .wp-tabs button{font:700 14px var(--display);border:0;background:transparent;color:var(--maroon-ink);padding:8px 18px;border-radius:8px;cursor:pointer}
+.cs-course.mod-8 .wp-tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.cs-course.mod-8 .wp-tabs.glow{box-shadow:0 0 0 3px var(--gold),0 0 0 10px rgba(233,177,28,.3);animation:wpGlow 1.6s infinite}
+@keyframes wpGlow{0%,100%{box-shadow:0 0 0 3px var(--gold),0 0 0 6px rgba(233,177,28,.35)}50%{box-shadow:0 0 0 3px var(--gold),0 0 0 12px rgba(233,177,28,.12)}}
+.cs-course.mod-8 .wp button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.cs-course.mod-8 .wp-grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}
+.cs-course.mod-8 .wp-board{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.cs-course.mod-8 .wp-prog{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.cs-course.mod-8 .wp-bar{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.cs-course.mod-8 .wp-bar i{display:block;height:100%;width:0;background:var(--maroon);transition:width .35s}
+.cs-course.mod-8 .wp-prog output{font:700 12px var(--display);color:var(--muted);white-space:nowrap}
+.cs-course.mod-8 .wp-sec{margin-top:12px}
+.cs-course.mod-8 .wp-sec h3{font:700 11px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.cs-course.mod-8 .wp-item{display:flex;gap:10px;align-items:flex-start;padding:8px;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:background .25s,border-color .25s}
+.cs-course.mod-8 .wp-item:hover{background:var(--maroon-soft)}
+.cs-course.mod-8 .wp-item.cur{background:var(--maroon-soft);border-color:var(--maroon)}
+.cs-course.mod-8 .wp-tick{flex:none;width:22px;height:22px;border-radius:6px;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;margin-top:1px;cursor:pointer;padding:0;color:transparent;transition:background .2s,border-color .2s}
+.cs-course.mod-8 .wp-tick svg{width:14px;height:14px}
+.cs-course.mod-8 .wp-item.done .wp-tick{background:var(--good);border-color:var(--good);color:#fff;animation:wpPop .35s ease}
+@keyframes wpPop{0%{transform:scale(.7)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+.cs-course.mod-8 .wp-t{font:700 14px/1.3 var(--display);min-width:0}
+.cs-course.mod-8 .wp-s{display:block;font:400 12px/1.4 var(--body);color:var(--muted)}
+.cs-course.mod-8 .wp-item.done .wp-t{color:var(--muted)}
+.cs-course.mod-8 .wp-reset{margin-top:14px;font:600 12px var(--display);background:none;border:0;color:var(--muted);cursor:pointer;text-decoration:underline;padding:0}
+.cs-course.mod-8 .wp-stage{min-width:0}
+.cs-course.mod-8 .wp-shot{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 12px 14px;box-shadow:0 6px 24px rgba(0,0,0,.08)}
+.cs-course.mod-8 .wp-chrome{display:flex;align-items:center;gap:6px;padding:2px 4px 8px}
+.cs-course.mod-8 .wp-chrome i{width:10px;height:10px;border-radius:50%;background:#ef6a5e}
+.cs-course.mod-8 .wp-chrome i:nth-child(2){background:#f5be4f}.cs-course.mod-8 .wp-chrome i:nth-child(3){background:#61c554}
+.cs-course.mod-8 .wp-chrome span{flex:1;margin-left:8px;background:var(--bg);border-radius:99px;padding:2px 12px;font:500 12px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-course.mod-8 .wp-fit{position:relative;overflow:hidden;margin:0 auto;border-radius:8px;background:#fff}
+.cs-course.mod-8 .wp-scr{position:absolute;inset:0;transition:opacity .26s ease,transform .26s ease}
+.cs-course.mod-8 .wp-scr.out-f{opacity:0;transform:translateX(-36px) scale(.985)}
+.cs-course.mod-8 .wp-scr.out-b{opacity:0;transform:translateX(36px) scale(.985)}
+.cs-course.mod-8 .wp-scr.in-f{animation:wpInF .55s cubic-bezier(.2,.8,.2,1) both}
+.cs-course.mod-8 .wp-scr.in-b{animation:wpInB .55s cubic-bezier(.2,.8,.2,1) both}
+@keyframes wpInF{from{opacity:0;transform:translateX(48px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes wpInB{from{opacity:0;transform:translateX(-48px) scale(.985)}to{opacity:1;transform:none}}
+.cs-course.mod-8 .wp-chap{position:absolute;inset:0;z-index:40;background:linear-gradient(135deg,var(--hero2),var(--hero1));color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;animation:wpChapIn .42s cubic-bezier(.7,0,.2,1) both,wpChapOut .6s .95s cubic-bezier(.7,0,.2,1) both}
+.cs-course.mod-8 .wp-chap small{font:700 14px var(--display);letter-spacing:.22em;text-transform:uppercase;color:var(--gold);opacity:0;animation:wpChapTxt .5s .3s ease both}
+.cs-course.mod-8 .wp-chap b{font:800 clamp(24px,4vw,46px)/1.1 var(--display);opacity:0;animation:wpChapTxt .55s .42s ease both;text-align:center;padding:0 24px}
+@keyframes wpChapIn{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes wpChapOut{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(0 0 0 100%)}}
+@keyframes wpChapTxt{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.cs-course.mod-8 .wp-coach{position:absolute;z-index:30;width:290px;background:#17202b;color:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);font:400 15px/1.4 var(--body);animation:wpCoachIn .5s .5s cubic-bezier(.2,.8,.2,1) both}
+.cs-course.mod-8 .wp-coach b{display:block;font:800 14px var(--display);color:var(--gold);letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px}
+.cs-course.mod-8 .wp-coach::after{content:"";position:absolute;left:var(--ax,50%);width:14px;height:14px;background:#17202b;transform:translateX(-50%) rotate(45deg)}
+.cs-course.mod-8 .wp-coach.up::after{bottom:-7px}.cs-course.mod-8 .wp-coach.down::after{top:-7px}
+.cs-course.mod-8 .wp-coach.shake{animation:wpShake .45s}
+@keyframes wpCoachIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes wpShake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.cs-course.mod-8 .wp-card{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);column-gap:32px;row-gap:8px;align-items:start;border-top:1px solid var(--line);margin-top:14px;padding:16px 8px 2px}
+.cs-course.mod-8 .wp-c1,.cs-course.mod-8 .wp-c2{display:grid;gap:10px;min-width:0;align-content:start}
+.cs-course.mod-8 .wp-kick{font:700 11px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--maroon)}
+.cs-course.mod-8 .wp-card h2{font:800 21px/1.25 var(--display);margin:0}
+.cs-course.mod-8 .wp-card p{font:400 15px/1.6 var(--body)}
+.cs-course.mod-8 .wp-card.swap>*{animation:wpRise .5s cubic-bezier(.2,.8,.2,1) both}
+.cs-course.mod-8 .wp-card.swap>*:nth-child(2){animation-delay:.08s}
+@keyframes wpRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.cs-course.mod-8 .wp-nav{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.cs-course.mod-8 .wp-btn{font:700 14px var(--display);border-radius:10px;padding:9px 16px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.cs-course.mod-8 .wp-btn.pri{background:var(--maroon);border-color:var(--maroon);color:#fff}
+.cs-course.mod-8 .wp-btn[disabled]{opacity:.45;cursor:default}
+.cs-course.mod-8 .wp-picks{display:flex;gap:8px}
+.cs-course.mod-8 .wp-pick{flex:1 1 0;text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 12px;cursor:pointer;color:var(--ink)}
+.cs-course.mod-8 .wp-pick b{font:700 15px var(--display)}
+.cs-course.mod-8 .wp-pick:hover{border-color:var(--maroon)}
+.cs-course.mod-8 .wp-pick.on{border-color:var(--maroon);background:var(--maroon-soft)}
+@media (max-width:1000px){.cs-course.mod-8 .wp-grid{grid-template-columns:minmax(0,1fr)}.cs-course.mod-8 .wp-card{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){.cs-course.mod-8 .wp *{transition:none!important;animation:none!important}}
+.cs-course.mod-8 .wt-mock .spot{opacity:0;transition:opacity .3s ease}
+.cs-course.mod-8 .wt:empty{padding:14px 16px;border:1px dashed var(--line);border-radius:12px;background:var(--bg);color:var(--muted);font:600 13px var(--display)}
+.cs-course.mod-8 .wt:empty::before{content:"Portal screen (" attr(data-screen) "). Shown as a step-by-step player to examiners."}
