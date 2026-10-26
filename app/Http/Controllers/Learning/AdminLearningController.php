@@ -296,15 +296,6 @@ class AdminLearningController extends Controller
             $response->successful() ? $response->json('message') : ($response->json('message') ?: 'The question could not be saved. Please try again.'));
     }
 
-    // POST admin/exams/learning/modules/{id}/quiz/reset — clear every learner's attempt at the quiz
-    public function resetQuiz(int $id)
-    {
-        $response = $this->api->post("learning/admin/modules/{$id}/quiz/reset");
-
-        return back()->with($response->successful() ? 'success' : 'error',
-            $response->successful() ? $response->json('message') : ($response->json('message') ?: 'The quiz could not be reset. Please try again.'));
-    }
-
     // POST admin/exams/learning/blocks/{id}/move  {direction: up|down}
     public function moveBlock(Request $request, int $id)
     {

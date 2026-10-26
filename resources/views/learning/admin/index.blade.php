@@ -7,6 +7,7 @@
         <div class="container-fluid lms">
             @include('learning.partials.flash')
             @include('learning.admin._tabs')
+            @php $quizModule = collect($modules)->firstWhere('type', 'quiz'); @endphp
 
             <div class="row mb-3">
                 <div class="col-md-6">
@@ -54,6 +55,14 @@
                                             <button class="btn btn-sm btn-light border" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Actions for {{ $row['name'] }}"><i class="fas fa-bars"></i></button>
                                             <div class="dropdown-menu dropdown-menu-right shadow-sm">
                                                 <a class="dropdown-item" href="{{ route('admin.exams.learning.user', $row['id']) }}"><i class="fas fa-eye text-info mr-2"></i> View</a>
+                                                @if($quizModule)
+                                                    <form method="POST" action="{{ route('admin.exams.learning.user.reset', $row['id']) }}"
+                                                          onsubmit="return confirm('Reset the quiz for {{ e(addslashes($row['name'])) }}? Their quiz score, answers and attempts are cleared and they retake it. Other modules are not affected.')">
+                                                        @csrf
+                                                        <input type="hidden" name="module_id" value="{{ $quizModule['id'] }}">
+                                                        <button type="submit" class="dropdown-item text-danger"><i class="fas fa-redo mr-2"></i> Reset quiz</button>
+                                                    </form>
+                                                @endif
                                                 <form method="POST" action="{{ route('admin.exams.learning.user.reset', $row['id']) }}"
                                                       onsubmit="return confirm('Reset ALL course progress for {{ e(addslashes($row['name'])) }}? Completed modules, quiz score and attempts are cleared and they start again from Module 1. This cannot be undone.')">
                                                     @csrf

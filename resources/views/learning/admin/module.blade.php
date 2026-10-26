@@ -14,14 +14,7 @@
             </div>
 
             @if($module['type'] === 'quiz')
-                <div class="alert alert-info mb-3 d-flex align-items-center justify-content-between" style="gap:12px;">
-                    <span>Quiz questions came in with the course import. Click <strong>Edit question</strong> to change the wording, options or correct answer, or <strong>Delete</strong> to remove a question. Saving or deleting resets learner attempts so everyone retakes the quiz.</span>
-                    <form method="POST" action="{{ route('admin.exams.learning.quiz.reset', $module['id']) }}" style="flex:none;"
-                          onsubmit="return confirm('Reset the quiz? Every learner\'s score and answers are cleared and they must retake it. The questions are not changed.')">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Reset quiz</button>
-                    </form>
-                </div>
+                <div class="alert alert-info mb-3">Quiz questions came in with the course import. Click <strong>Edit question</strong> to change the wording, options or correct answer, or <strong>Delete</strong> to remove a question. Saving or deleting resets learner attempts so everyone retakes the quiz. To reset one learner's quiz, use <strong>Reset quiz</strong> in their Action menu on the progress list.</div>
             @endif
 
             <div class="flex-between mb-3">
