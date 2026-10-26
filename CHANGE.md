@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-10-26) — Examiner Training: delete a quiz question and reset the quiz
+- On **Admin > Examiner Training > Course content > Quiz**, each question has a **Delete** button, and the page has a **Reset quiz** button. Deleting a question (the last remaining one is refused) and resetting the quiz both clear every learner's quiz progress (score, answers, completion) so the quiz is retaken. Reset leaves the questions unchanged. Section dividers still cannot be deleted.
+- **Files (MIS):** `routes/web.php`, `AdminLearningController::resetQuiz` / `deleteBlock`, `resources/views/learning/admin/module.blade.php`. **Files (cosecsa-api):** `POST internal/learning/admin/modules/{id}/quiz/reset` in `routes/api.php`, `LearningAdminController::resetQuiz` / `destroy`.
+
 ### Added (2026-10-23) — Examiner Training: admin can reset a learner's course completion
 - On **Admin > Examiner Training > (learner) View** there is now **Reset course completion** (clears every module for that examiner, so they restart at Module 1) and a **Reset** button on each module row (clears just that module, e.g. to allow a quiz retake). Both ask for confirmation. Resetting deletes the learner's `lms_progress` rows: completion, quiz score/attempts/answers and topics read, so the certificate is unavailable until the course is completed again.
 - **Files (MIS):** `routes/web.php`, `AdminLearningController::resetUserProgress`, `resources/views/learning/admin/user-progress.blade.php`. **Files (cosecsa-api):** `POST internal/learning/admin/users/{id}/progress/reset` in `routes/api.php` / `LearningAdminController`.

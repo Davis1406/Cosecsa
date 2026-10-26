@@ -481,6 +481,7 @@ Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(
     Route::post('blocks/{id}/delete', 'deleteBlock')->whereNumber('id')->name('.block.delete');
     Route::post('blocks/{id}/move', 'moveBlock')->whereNumber('id')->name('.block.move');
     Route::post('blocks/{id}/quiz', 'updateQuiz')->whereNumber('id')->name('.block.quiz');
+    Route::post('modules/{id}/quiz/reset', 'resetQuiz')->whereNumber('id')->name('.quiz.reset');
     Route::post('blocks/{id}', 'updateBlock')->whereNumber('id')->name('.block.update');
     Route::get('preview', 'previewCover')->name('.preview');
     Route::get('preview/{slug}', 'previewModule')->name('.preview.module');

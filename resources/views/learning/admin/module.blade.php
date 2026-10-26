@@ -14,7 +14,14 @@
             </div>
 
             @if($module['type'] === 'quiz')
-                <div class="alert alert-info mb-3">Quiz questions came in with the course import. Click <strong>Edit question</strong> to change the wording, options or correct answer — saving resets that question's learner attempts so everyone retakes it.</div>
+                <div class="alert alert-info mb-3 d-flex align-items-center justify-content-between" style="gap:12px;">
+                    <span>Quiz questions came in with the course import. Click <strong>Edit question</strong> to change the wording, options or correct answer, or <strong>Delete</strong> to remove a question. Saving or deleting resets learner attempts so everyone retakes the quiz.</span>
+                    <form method="POST" action="{{ route('admin.exams.learning.quiz.reset', $module['id']) }}" style="flex:none;"
+                          onsubmit="return confirm('Reset the quiz? Every learner\'s score and answers are cleared and they must retake it. The questions are not changed.')">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Reset quiz</button>
+                    </form>
+                </div>
             @endif
 
             <div class="flex-between mb-3">
@@ -53,6 +60,13 @@
                             @if($block['variant'])<span class="badge-gray">{{ $block['variant'] }}</span>@endif
                             <span class="flex-spacer"></span>
                             @if($module['type'] === 'quiz')
+                                @if($block['type'] === 'MULTIPLE_CHOICE')
+                                    <form method="POST" action="{{ route('admin.exams.learning.block.delete', $block['id']) }}" style="display:inline;"
+                                          onsubmit="return confirm('Delete this question? Every learner\'s attempt at this quiz is reset so it is retaken. This cannot be undone.')">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete this question">Delete</button>
+                                    </form>
+                                @endif
                                 <button type="button" class="btn btn-light btn-sm lms-block-edit">Edit question</button>
                             @else
                                 <button type="button" class="btn btn-light btn-sm lms-block-move" data-move="up"
