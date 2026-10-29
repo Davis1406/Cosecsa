@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added (2026-10-29) — Intake Reports: click a tile, total, column or chart to see that list in a modal
+- Every figure on **Associates > Intake Reports** now opens that list in a modal (no page change), with **Excel** and **CSV** export buttons, search and paging: the five tiles (all entries, different people, MCS entries, FCS entries, people in several intakes), a programme heading or its "All years" total, a year's Entries / People figures, the year × programme cells and year labels, a bar segment of the year chart (that year and MCS or FCS), and a slice of the gender pie. The modal title names the selection and the export file is named after it. The modal is styled to the design system: 8px radius, 24px padding, maroon top accent, pill count badge, soft shadow, spaced and rounded table with hover, light and dark mode, and a narrow-screen layout. The "Show 25 entries" control has room around its dropdown (the number no longer touches the arrow) and lines up with the search box.
+- The "Associates in the intake" table at the bottom of the page now always shows every entry (it is no longer filtered by clicks; its "Show all" button is gone). Page-only change: the lists are filtered in the browser from the entries already loaded, no API change.
+- **Files (MIS):** `resources/views/admin/associates/intake-reports/index.blade.php`. Not yet clicked through in a browser.
+
 ### Changed (2026-10-29) — Intake Reports count trainees by admission year
 - The default **Year of joining** is now **Admission year**. Trainees use their recorded admission year, plus the year they resume after a deferral; candidates and fellows keep using the year in their PEN. Completed records and deferred trainees from past years are left out; Active and Inactive are kept, and current deferrals count.
 - 2026 intake is now **509** (was 502). The all-source totals are 2024=422, 2025=402, 2026=509; the trainee-only portions are 261, 375 and 509, matching the Trainees list. Candidate/fellow-only entries remain in the totals.

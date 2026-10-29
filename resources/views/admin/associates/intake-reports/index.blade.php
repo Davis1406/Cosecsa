@@ -27,6 +27,43 @@
     .ir-matrix td.ir-cell:hover, .ir-matrix td.ir-year:hover { outline: 2px solid #a02626; outline-offset: -2px; }
     .ir-matrix td.ir-zero { color: #c3c8d0; cursor: default; }
     .ir-matrix td.ir-year { cursor: pointer; }
+    .ir-matrix th[data-programme], .ir-matrix tfoot td[data-programme], .ir-matrix td.ir-total, .ir-matrix tfoot td.ir-all { cursor: pointer; }
+    .ir-matrix th[data-programme]:hover, .ir-matrix tfoot td[data-programme]:hover, .ir-matrix td.ir-total:hover, .ir-matrix tfoot td.ir-all:hover { outline: 2px solid #a02626; outline-offset: -2px; }
+    .kpi-box.ir-link { cursor: pointer; transition: transform .12s, box-shadow .12s; }
+    .kpi-box.ir-link:hover, .kpi-box.ir-link:focus { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.2); outline: none; }
+    .ir-hint { font-size: .72rem; color: #8a94a6; }
+
+    /* List modal (opened from tiles, totals, headings and charts) */
+    #ir-modal .modal-dialog { margin: 1.75rem auto; max-width: min(1180px, calc(100% - 3rem)); }
+    #ir-modal .modal-content { border: 0; border-radius: 8px; overflow: hidden; background: #fff; color: #141d23; box-shadow: 0 16px 48px rgba(20,29,35,.30); }
+    #ir-modal .modal-header { align-items: center; padding: 18px 24px; border-top: 3px solid #a02626; border-bottom: 1px solid #e0e9f2; }
+    #ir-modal .modal-title { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; color: #141d23; }
+    #ir-modal #ir-modal-count { background: #a02626; color: #fff; font-size: .72rem; font-weight: 600; padding: 4px 10px; border-radius: 9999px; }
+    #ir-modal .close { margin: 0 0 0 auto; padding: 4px 8px; border-radius: 6px; opacity: .55; text-shadow: none; }
+    #ir-modal .close:hover { opacity: 1; background: #ecf5fe; }
+    #ir-modal .modal-body { padding: 20px 24px 24px; }
+    #ir-modal .dataTables_wrapper > .row:first-child { margin-bottom: 14px; align-items: center; }
+    #ir-modal .dataTables_wrapper > .row:last-child { margin-top: 14px; align-items: center; }
+    #ir-modal .dataTables_length label { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-weight: 500; }
+    #ir-modal .dataTables_length select { display: inline-block; width: auto; min-width: 76px; height: 34px; margin: 0; padding: 4px 30px 4px 12px; border-radius: 6px; border: 1px solid #d5dee8; }
+    #ir-modal .dataTables_filter label { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-weight: 500; }
+    #ir-modal .dataTables_filter input { height: 34px; margin: 0; padding: 4px 12px; border-radius: 6px; border: 1px solid #d5dee8; }
+    #ir-modal .dt-buttons .btn { border-radius: 6px; margin-left: 6px; }
+    #ir-modal table.dataTable { border-collapse: separate; border-spacing: 0; border: 1px solid #e0e9f2; border-radius: 6px; overflow: hidden; }
+    #ir-modal table.dataTable thead th { background: #f8f9fb; border-bottom: 1px solid #e0e9f2; font-size: .72rem; text-transform: uppercase; letter-spacing: .3px; color: #59413f; padding: 10px 12px; }
+    #ir-modal table.dataTable tbody td { padding: 8px 12px; border-top: 1px solid #eef0f3; vertical-align: middle; }
+    #ir-modal table.dataTable tbody tr:hover td { background: #fbf3f3; }
+    body.dark-mode #ir-modal .modal-content { background: #1e2330; color: #e2e8f0; box-shadow: 0 16px 48px rgba(0,0,0,.55); }
+    body.dark-mode #ir-modal .modal-header { border-bottom-color: #2d3748; }
+    body.dark-mode #ir-modal .modal-title { color: #f1f5f9; }
+    body.dark-mode #ir-modal .close { color: #e2e8f0; }
+    body.dark-mode #ir-modal .close:hover { background: #2b3040; }
+    body.dark-mode #ir-modal .dataTables_filter input, body.dark-mode #ir-modal .dataTables_length select { background: #2b3040; border-color: #4a5568; color: #e2e8f0; }
+    body.dark-mode #ir-modal table.dataTable { border-color: #2d3748; }
+    body.dark-mode #ir-modal table.dataTable thead th { background: #252c3b; border-bottom-color: #2d3748; color: #cbd5e0; }
+    body.dark-mode #ir-modal table.dataTable tbody td { border-top-color: #2d3748; }
+    body.dark-mode #ir-modal table.dataTable tbody tr:hover td { background: #3a2a3a; }
+    @media (max-width: 575.98px) { #ir-modal .modal-dialog { margin: .75rem; max-width: none; } #ir-modal .modal-body { padding: 14px; } #ir-modal .modal-header { padding: 14px 16px; } }
     .ir-chip { display:inline-block; font-size:.72rem; padding:1px 7px; border-radius:10px; background:#eef2f7; color:#445; margin:1px 2px 1px 0; }
     .ir-chip.Trainee { background:#e3f0fb; color:#124f72; } .ir-chip.Candidate { background:#fdf0d5; color:#7a5a08; } .ir-chip.Fellow { background:#e0f3e5; color:#1d5629; }
     .ir-check { border:1px solid #e5e7eb; border-radius:8px; margin-bottom:8px; }
@@ -88,11 +125,11 @@
         </div>
 
         <div class="row mb-3" id="kpi-row">
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-red"><i class="fas fa-id-card kpi-icon"></i><div><div class="kpi-val" id="kpi-entries">–</div><div class="kpi-lbl">Intake entries</div></div></div></div>
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-slate" style="background:linear-gradient(135deg,#4a5568,#2d3748)"><i class="fas fa-users kpi-icon"></i><div><div class="kpi-val" id="kpi-people">–</div><div class="kpi-lbl">Different people</div></div></div></div>
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-blue"><i class="fas fa-user-graduate kpi-icon"></i><div><div class="kpi-val" id="kpi-mcs">–</div><div class="kpi-lbl">MCS entries</div></div></div></div>
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-green"><i class="fas fa-user-md kpi-icon"></i><div><div class="kpi-val" id="kpi-fcs">–</div><div class="kpi-lbl">FCS entries</div></div></div></div>
-            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-purple"><i class="fas fa-route kpi-icon"></i><div><div class="kpi-val" id="kpi-multi">–</div><div class="kpi-lbl">People in several intakes</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-red ir-link" role="button" tabindex="0" data-pick='{}' title="Show these entries below"><i class="fas fa-id-card kpi-icon"></i><div><div class="kpi-val" id="kpi-entries">–</div><div class="kpi-lbl">Intake entries</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-slate ir-link" role="button" tabindex="0" data-pick='{}' title="Show these entries below" style="background:linear-gradient(135deg,#4a5568,#2d3748)"><i class="fas fa-users kpi-icon"></i><div><div class="kpi-val" id="kpi-people">–</div><div class="kpi-lbl">Different people</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-blue ir-link" role="button" tabindex="0" data-pick='{"level":"MCS"}' title="Show these entries below"><i class="fas fa-user-graduate kpi-icon"></i><div><div class="kpi-val" id="kpi-mcs">–</div><div class="kpi-lbl">MCS entries</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-green ir-link" role="button" tabindex="0" data-pick='{"level":"FCS"}' title="Show these entries below"><i class="fas fa-user-md kpi-icon"></i><div><div class="kpi-val" id="kpi-fcs">–</div><div class="kpi-lbl">FCS entries</div></div></div></div>
+            <div class="col-6 col-md mb-2"><div class="kpi-box kpi-purple ir-link" role="button" tabindex="0" data-pick='{"multi":true}' title="Show these entries below"><i class="fas fa-route kpi-icon"></i><div><div class="kpi-val" id="kpi-multi">–</div><div class="kpi-lbl">People in several intakes</div></div></div></div>
         </div>
 
         <div class="row">
@@ -129,9 +166,8 @@
 
         <div class="ir-card" id="detail-card">
             <div class="d-flex align-items-center flex-wrap mb-2">
-                <h6 class="mb-0" id="detail-title" style="border:none;padding:0;margin:0;">Associates in the intake</h6>
+                <h6 class="mb-0" style="border:none;padding:0;margin:0;">Associates in the intake</h6>
                 <span class="ml-2 badge badge-secondary" id="detail-count"></span>
-                <button id="detail-clear" class="btn btn-xs btn-outline-secondary ml-2" style="display:none;font-size:.75rem;"><i class="fas fa-times mr-1"></i>Show all</button>
             </div>
             <table class="table table-sm table-striped" id="detail-table" style="width:100%">
                 <thead><tr><th>Year</th><th>Programme</th><th>PEN</th><th>Name</th><th>Gender</th><th>Country</th><th>Hospital</th><th>Status</th><th>Records</th><th>Journey (other intakes)</th></tr></thead>
@@ -147,6 +183,24 @@
         @endif
     </section>
 </div>
+{{-- Opened by clicking a tile, total, heading, chart bar or slice --}}
+<div class="modal fade" id="ir-modal" tabindex="-1" role="dialog" aria-labelledby="ir-modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ir-modal-title">Intake entries</h5>
+                <span class="ml-2 badge badge-secondary align-self-center" id="ir-modal-count"></span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-sm table-striped" id="modal-table" style="width:100%">
+                    <thead><tr><th>Year</th><th>Programme</th><th>PEN</th><th>Name</th><th>Gender</th><th>Country</th><th>Hospital</th><th>Status</th><th>Records</th><th>Journey (other intakes)</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -155,7 +209,62 @@
 $(function () {
     var URLS = { data: @json(route('intake.reports.data')), entries: @json(route('intake.reports.entries')) };
     var form = document.getElementById('filters');
-    var chart = null, chartGender = null, dt = null, entries = [], pick = { year: null, programme: null }, seq = 0;
+    var chart = null, chartGender = null, dt = null, entries = [], progType = {}, mdt = null, seq = 0;
+    function noPick() { return { year: null, programme: null, level: null, gender: null, multi: false }; }
+    function genderOf(e) { return e.gender === 'Male' || e.gender === 'Female' ? e.gender : 'Not recorded'; }
+    function levelOf(e) { return progType[e.programme_id] === 'Membership' ? 'MCS' : 'FCS'; }
+    function plain(d) { return String(d).replace(/<[^>]+>/g, ''); }
+    function filterEntries(p) {
+        return entries.filter(function (e) {
+            return (p.year == null || e.year === p.year)
+                && (p.programme == null || e.programme_id === p.programme)
+                && (p.level == null || levelOf(e) === p.level)
+                && (p.gender == null || genderOf(e) === p.gender)
+                && (!p.multi || (e.other_intakes || []).length > 0);
+        });
+    }
+    function selectionParts(p) {
+        var parts = [];
+        if (p.year != null) parts.push(p.year);
+        if (p.programme != null) { var f = entries.find(function (e) { return e.programme_id === p.programme; }); if (f) parts.push(f.programme); }
+        if (p.level != null) parts.push(p.level);
+        if (p.gender != null) parts.push(p.gender);
+        if (p.multi) parts.push('in several intakes');
+        return parts;
+    }
+    function rowsFor(list) {
+        return list.map(function (e) {
+            var basis = e.year_basis && e.year_basis !== 'PEN' ? ' <i class="fas fa-info-circle text-muted" title="PEN year ' + esc(e.pen_year) + '. ' + esc(e.year_basis) + '"></i>' : '';
+            return [e.year + basis, esc(e.programme), esc(e.pens.join(', ')), esc(e.name), esc(e.gender || ''), esc(e.country || ''), esc(e.hospital || ''), esc(e.status || ''),
+                e.sources.map(function (s) { return '<span class="ir-chip ' + s + '">' + s + '</span>'; }).join(''),
+                esc((e.other_intakes || []).join(', '))];
+        });
+    }
+    // One DataTable config for the page list and the modal: same columns, Excel + CSV export.
+    function tableOptions(list, fileTitle) {
+        var fname = 'intake-report' + (fileTitle ? '-' + fileTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '');
+        var exp = { exportOptions: { format: { body: plain } } };
+        return {
+            data: rowsFor(list), deferRender: true, pageLength: 25, order: [],
+            columnDefs: [{ targets: 0, type: 'html-num' }],
+            dom: '<"row"<"col-md-6"l><"col-md-6 text-right"fB>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
+            buttons: [
+                $.extend({ extend: 'excelHtml5', text: '<i class="fas fa-file-excel mr-1"></i> Excel', className: 'btn btn-success btn-sm', title: fileTitle || 'Intake report', filename: fname }, exp),
+                $.extend({ extend: 'csvHtml5', text: '<i class="fas fa-file-csv mr-1"></i> CSV', className: 'btn btn-secondary btn-sm', filename: fname }, exp)
+            ]
+        };
+    }
+    // Click a tile, total, heading, bar or slice: show that list in a modal (export from there).
+    function openList(p) {
+        p = Object.assign(noPick(), p || {});
+        var list = filterEntries(p), parts = selectionParts(p), title = parts.length ? 'Associates: ' + parts.join(', ') : 'All intake entries';
+        document.getElementById('ir-modal-title').textContent = title;
+        document.getElementById('ir-modal-count').textContent = list.length + ' entries';
+        if (mdt) { mdt.destroy(); $('#modal-table tbody').empty(); }
+        mdt = $('#modal-table').DataTable(tableOptions(list, parts.length ? parts.join(' ') : 'All entries'));
+        $('#ir-modal').modal('show');
+    }
+    $('#ir-modal').appendTo('body').on('shown.bs.modal', function () { if (mdt) mdt.columns.adjust(); });
 
     function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
     function query() {
@@ -179,7 +288,8 @@ $(function () {
         Promise.all([getJson(URLS.data + '?' + q), getJson(URLS.entries + '?' + q)]).then(function (res) {
             if (mine !== seq) return;
             entries = res[1].entries || [];
-            pick = { year: null, programme: null };
+            progType = {};
+            (res[1].programmes || []).forEach(function (pr) { progType[pr.id] = pr.type; });
             renderKpis(res[0]); renderMatrix(res[0]); renderChart(res[0]); renderGender(entries); renderChecks(res[0].checks); renderDetail();
         }).catch(function (err) {
             document.getElementById('error-banner').style.display = 'block';
@@ -198,7 +308,7 @@ $(function () {
 
     function renderMatrix(d) {
         var cols = d.columns || [], head = '<tr><th>Year</th>';
-        cols.forEach(function (c) { head += '<th title="' + esc(c.name) + '">' + esc(c.short) + '</th>'; });
+        cols.forEach(function (c) { head += '<th data-programme="' + c.id + '" title="' + esc(c.name) + ' (click to list)">' + esc(c.short) + '</th>'; });
         head += '<th>Entries</th><th>People</th></tr>';
         var body = '';
         (d.matrix || []).forEach(function (r) {
@@ -207,18 +317,16 @@ $(function () {
                 var n = r.cells[c.id] || 0;
                 body += n ? '<td class="ir-cell" data-year="' + r.year + '" data-programme="' + c.id + '">' + n + '</td>' : '<td class="ir-zero">·</td>';
             });
-            body += '<td><strong>' + r.entries + '</strong></td><td>' + r.people + '</td></tr>';
+            body += '<td class="ir-total" data-year="' + r.year + '"><strong>' + r.entries + '</strong></td><td class="ir-total" data-year="' + r.year + '">' + r.people + '</td></tr>';
         });
-        var foot = '<tr><td>All years</td>';
-        cols.forEach(function (c) { foot += '<td>' + (d.column_totals[c.id] || 0) + '</td>'; });
-        foot += '<td>' + d.totals.entries + '</td><td>' + d.totals.people + '</td></tr>';
+        var foot = '<tr><td class="ir-all" title="List every entry">All years</td>';
+        cols.forEach(function (c) { foot += '<td data-programme="' + c.id + '">' + (d.column_totals[c.id] || 0) + '</td>'; });
+        foot += '<td class="ir-all">' + d.totals.entries + '</td><td class="ir-all">' + d.totals.people + '</td></tr>';
         var m = document.getElementById('matrix');
         m.querySelector('thead').innerHTML = head; m.querySelector('tbody').innerHTML = body; m.querySelector('tfoot').innerHTML = foot;
-        m.querySelectorAll('td.ir-cell, td.ir-year').forEach(function (td) {
+        m.querySelectorAll('td.ir-cell, td.ir-year, td.ir-total, td.ir-all, th[data-programme], tfoot td[data-programme]').forEach(function (td) {
             td.addEventListener('click', function () {
-                pick = { year: +td.dataset.year, programme: td.dataset.programme ? +td.dataset.programme : null };
-                renderDetail();
-                document.getElementById('detail-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                openList({ year: td.dataset.year ? +td.dataset.year : null, programme: td.dataset.programme ? +td.dataset.programme : null });
             });
         });
     }
@@ -242,6 +350,11 @@ $(function () {
             type: 'bar', data: data,
             plugins: window.ChartDataLabels ? [ChartDataLabels] : [],
             options: { responsive: true, maintainAspectRatio: false,
+                onClick: function (evt, els) {
+                    var hit = els && els[0]; if (!hit) return;
+                    openList({ year: rows[hit.index].year, level: hit.datasetIndex === 0 ? 'MCS' : 'FCS' });
+                },
+                onHover: function (evt, els) { evt.native.target.style.cursor = els && els.length ? 'pointer' : 'default'; },
                 plugins: {
                     legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
                     tooltip: { mode: 'index', intersect: false },
@@ -274,6 +387,8 @@ $(function () {
             data: { labels: labels, datasets: [{ data: values, backgroundColor: colours, borderColor: '#fff', borderWidth: 2 }] },
             plugins: window.ChartDataLabels ? [ChartDataLabels] : [],
             options: { responsive: true, maintainAspectRatio: false,
+                onClick: function (evt, els) { var hit = els && els[0]; if (hit) openList({ gender: labels[hit.index] }); },
+                onHover: function (evt, els) { evt.native.target.style.cursor = els && els.length ? 'pointer' : 'default'; },
                 plugins: {
                     legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
                     tooltip: { callbacks: { label: function (ctx) {
@@ -326,32 +441,16 @@ $(function () {
     }
 
     function renderDetail() {
-        var shown = entries.filter(function (e) { return (pick.year == null || e.year === pick.year) && (pick.programme == null || e.programme_id === pick.programme); });
-        var rows = shown.map(function (e) {
-            var basis = e.year_basis && e.year_basis !== 'PEN' ? ' <i class="fas fa-info-circle text-muted" title="PEN year ' + esc(e.pen_year) + '. ' + esc(e.year_basis) + '"></i>' : '';
-            return [e.year + basis, esc(e.programme), esc(e.pens.join(', ')), esc(e.name), esc(e.gender || ''), esc(e.country || ''), esc(e.hospital || ''), esc(e.status || ''),
-                e.sources.map(function (s) { return '<span class="ir-chip ' + s + '">' + s + '</span>'; }).join(''),
-                esc((e.other_intakes || []).join(', '))];
-        });
         if (dt) { dt.destroy(); $('#detail-table tbody').empty(); }
-        dt = $('#detail-table').DataTable({
-            data: rows, deferRender: true, pageLength: 25, order: [],
-            columnDefs: [{ targets: 0, type: 'html-num' }],
-            dom: '<"row"<"col-md-6"l><"col-md-6 text-right"fB>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
-            buttons: [
-                { extend: 'excelHtml5', text: '<i class="fas fa-file-excel mr-1"></i> Excel', className: 'btn btn-success btn-sm', title: 'Intake report', exportOptions: { format: { body: function (d) { return String(d).replace(/<[^>]+>/g, ''); } } } },
-                { extend: 'csvHtml5', text: '<i class="fas fa-file-csv mr-1"></i> CSV', className: 'btn btn-secondary btn-sm', exportOptions: { format: { body: function (d) { return String(d).replace(/<[^>]+>/g, ''); } } } }
-            ]
-        });
-        var parts = [];
-        if (pick.year != null) parts.push(pick.year);
-        if (pick.programme != null) { var f = entries.find(function (e) { return e.programme_id === pick.programme; }); if (f) parts.push(f.programme); }
-        document.getElementById('detail-title').textContent = parts.length ? 'Associates who joined: ' + parts.join(', ') : 'Associates in the intake';
-        document.getElementById('detail-count').textContent = shown.length + ' entries';
-        document.getElementById('detail-clear').style.display = parts.length ? 'inline-block' : 'none';
+        dt = $('#detail-table').DataTable(tableOptions(entries, ''));
+        document.getElementById('detail-count').textContent = entries.length + ' entries';
     }
 
-    document.getElementById('detail-clear').addEventListener('click', function () { pick = { year: null, programme: null }; renderDetail(); });
+    document.querySelectorAll('#kpi-row .ir-link').forEach(function (box) {
+        var go = function () { var p = {}; try { p = JSON.parse(box.getAttribute('data-pick') || '{}'); } catch (e) {} openList(p); };
+        box.addEventListener('click', go);
+        box.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } });
+    });
     document.getElementById('download-year-chart').addEventListener('click', function () { downloadChart(chart, 'intake-by-year'); });
     document.getElementById('download-gender-chart').addEventListener('click', function () { downloadChart(chartGender, 'intake-by-gender'); });
     document.getElementById('filters-refresh').addEventListener('click', load);
