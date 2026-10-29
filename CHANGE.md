@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-29) — Intake Reports count trainees by admission year
+- The default **Year of joining** is now **Admission year**. Trainees use their recorded admission year, plus the year they resume after a deferral; candidates and fellows keep using the year in their PEN. Completed records and deferred trainees from past years are left out; Active and Inactive are kept, and current deferrals count.
+- 2026 intake is now **509** (was 502). The all-source totals are 2024=422, 2025=402, 2026=509; the trainee-only portions are 261, 375 and 509, matching the Trainees list. Candidate/fellow-only entries remain in the totals.
+- **Files (MIS):** `resources/views/admin/associates/intake-reports/index.blade.php`. **Files (cosecsa-api):** `IntakeEntries`, `IntakeReportController`, `IntakeReportApiTest`.
+
 ### Added (2026-10-26) — Examiner Training: delete a quiz question, reset a learner's quiz
 - On **Admin > Examiner Training > Course content > Quiz**, each question has a **Delete** button. Deleting a question (the last remaining one is refused) clears every learner's quiz progress (score, answers, completion) so the quiz is retaken. Section dividers still cannot be deleted.
 - On the **Examiner Training** progress list, each learner's Action menu has **Reset quiz** beside **Reset course**: it clears that learner's quiz only (uses the existing per-module progress reset), leaving other modules and the questions unchanged.

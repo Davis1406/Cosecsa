@@ -51,7 +51,7 @@
             <div class="row mb-2">
                 <div class="col-sm-8">
                     <h4 style="color:#a02626; font-weight:700;"><i class="fas fa-calendar-check mr-2"></i>Intake Reports</h4>
-                    <div class="ir-note">An associate's intake is the year in the middle of their programme entry number (PEN). Each person is counted once per programme and year, even when they appear as a trainee, a candidate and a fellow.</div>
+                    <div class="ir-note">Trainees are counted by their admission year (deferred trainees are counted again in the year they resume). Candidates and fellows are counted by the year in their programme entry number (PEN). Each person is counted once per programme and year, even when they appear as a trainee, a candidate and a fellow.</div>
                 </div>
             </div>
         </div>
@@ -79,8 +79,8 @@
                 <div class="form-group col-6 col-md-1"><label class="small mb-1">Gender</label>
                     <select name="gender" class="form-control form-control-sm"><option value="">Any</option><option>Male</option><option>Female</option></select></div>
                 <div class="form-group col-12 col-md-2"><label class="small mb-1">Year of joining</label>
-                    <select name="year_basis" class="form-control form-control-sm" title="Who moves on to a later programme keeps their PEN, so the PEN year is the year they first joined. The first option counts this year's intake from the admission list: trainees admitted this year whose status is Active and whose fee is paid.">
-                        <option value="admitted">This year: admitted trainees (Active, fee paid); earlier years by PEN</option><option value="smart">PEN year, later programmes by admission year</option><option value="pen">PEN year only</option></select></div>
+                    <select name="year_basis" class="form-control form-control-sm" title="Trainees use the admission year on their trainee record, plus the year they resume if they deferred. Candidates and fellows use the year in their PEN. Completed records and deferred trainees from past years are left out; Active and Inactive are kept.">
+                        <option value="admission">Admission year (Active + Inactive; current deferrals)</option><option value="smart">PEN year, later programmes by admission year</option><option value="pen">PEN year only</option></select></div>
             </form>
             <div class="text-right">
                 <button type="button" id="filters-refresh" class="btn btn-outline-secondary" style="font-size:.75rem;padding:2px 10px;"><i class="fas fa-sync-alt mr-1"></i>Refresh</button>
