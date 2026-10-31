@@ -46,6 +46,8 @@
         </div>
     </div>
 </div>
+<script src="{{ asset('plugins/jquery/jquery.min.js') }}"></script>
+<script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script>
     var toggle = document.getElementById('togglePassword');
     if (toggle) toggle.addEventListener('click', function () {

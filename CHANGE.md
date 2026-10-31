@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-31) — The × on the login, forgot-password and reset-password messages did nothing
+- Those three pages never loaded jQuery or Bootstrap's JavaScript, so the message's close button had nothing to run it. They now load `plugins/jquery/jquery.min.js` and `plugins/bootstrap/js/bootstrap.bundle.min.js`.
+
 ### Added (2026-10-31) — Forget password works: reset link emailed from communications@cosecsa.org
 - The **Forget Password** button on the login page led to a 500: the routes existed (`forget-password`, `reset/{token}`) but the controller methods were never written. They are now `AuthController::forgetpassword / PostForgetPassword / ResetPassword / PostReset`, backed by `App\Services\PasswordReset`.
 - **How it works:** type an email; if it is the login email or a personal email on file (trainee, fellow, candidate or member record, or the user row), a link is emailed. The link is **single use and valid for 60 minutes**, is retired if the password changes another way first, and the page answers the same whether or not the email has an account. Most logins are placeholder `name@rcsi.com` addresses, so the link goes to the person's personal email on file; one mailbox that belongs to several accounts gets one email with a link per account. A new password (8+ characters, typed twice) replaces the old one, clears "must change password", and signs the account out of "remember me" and the mobile apps. Limits: 5 requests a minute per IP, 3 reset emails an hour per address.
