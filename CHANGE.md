@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+### Added (2026-10-31) — Dashboards for Candidate, Programme Director, Country Representative and Member
+- Logging in with any of these four roles ended on a 404: `AuthController::redirectToDashboard()` sent them to `candidate/dashboard`, `programme-director/dashboard`, `country-rep/dashboard` and `member/dashboard`, but those pages never existed (about 960 active accounts: 720 candidates, 138 programme directors, 73 members, 31 country reps). They now exist.
+- **Candidate:** exam year, entry number and exam-fee status, their details, and every exam entry they have registered for. Exam results are not shown.
+- **Member:** status, member since, member ID, category, country and the contact details on file.
+- **Programme Director:** for the hospital they direct, the accredited programmes (with expiry and how many trainees each has), the trainees currently in training (searchable), and the count who completed.
+- **Country Representative:** for the country they represent, trainees in training / completed, candidates this year, active fellows, members and accredited hospitals, a trainees-by-programme table (with how many are female), a searchable list of the country's trainees in training (name, programme, hospital, entry number, admission year) and a hospitals table with each hospital's programme director and trainee count.
+- Lists carry names and training details only, no other person's email or phone. Everything is scoped to the signed-in user's own record, hospital or country.
+- Code: `PortalController`, `App\Services\PortalData` (the queries), `PortalMiddleware` (`portal:<role>`, alias in `Kernel`; only someone currently working as that role gets in, a retired rep with an inactive role does not), views in `resources/views/portal/`, four routes in `routes/web.php`, and a Dashboard / Messages menu for these roles in `layout/header.blade.php`. People with more than one role get a "Switch role" strip on the page.
+- Tests: `tests/Feature/PortalDashboardTest.php`.
+
 ### Fixed (2026-10-31) — The × on the login, forgot-password and reset-password messages did nothing
 - Those three pages never loaded jQuery or Bootstrap's JavaScript, so the message's close button had nothing to run it. They now load `plugins/jquery/jquery.min.js` and `plugins/bootstrap/js/bootstrap.bundle.min.js`.
 

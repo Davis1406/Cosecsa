@@ -676,6 +676,20 @@ Route::group(['middleware' => 'examiner'], function(){
 Route::get('examiner/confirm-attendance/{examiner_id}', [ExamsController::class, 'showExaminerAttendanceConfirmation'])->name('examiner.confirm.attendance');
 Route::post('examiner/confirm-attendance-registration/{examiner_id}', [ExamsController::class, 'confirmExaminerAttendanceRegistration'])->name('examiner.register.attendance');
 
+// Candidate / Programme Director / Country Representative / Member dashboards
+Route::group(['middleware' => 'portal:3'], function () {
+    Route::get('candidate/dashboard', [\App\Http\Controllers\PortalController::class, 'candidate'])->name('candidate.dashboard');
+});
+Route::group(['middleware' => 'portal:4'], function () {
+    Route::get('programme-director/dashboard', [\App\Http\Controllers\PortalController::class, 'programmeDirector'])->name('programme-director.dashboard');
+});
+Route::group(['middleware' => 'portal:5'], function () {
+    Route::get('country-rep/dashboard', [\App\Http\Controllers\PortalController::class, 'countryRep'])->name('country-rep.dashboard');
+});
+Route::group(['middleware' => 'portal:8'], function () {
+    Route::get('member/dashboard', [\App\Http\Controllers\PortalController::class, 'member'])->name('member.dashboard');
+});
+
 // Fellow Routes
 Route::group(['middleware' => 'fellow'], function () {
     Route::get('fellow/dashboard', [DashboardController::class, 'dashboard'])->name('fellow.dashboard');

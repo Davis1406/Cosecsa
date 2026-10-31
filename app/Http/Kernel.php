@@ -73,6 +73,7 @@ class Kernel extends HttpKernel
         'trainee' => \App\Http\Middleware\TraineeMiddleWare::class,
         'examiner' => \App\Http\Middleware\ExaminerMiddleware::class,
         'fellow' => \App\Http\Middleware\FellowMiddleware::class,
+        'portal' => \App\Http\Middleware\PortalMiddleware::class,
 
 
     ];

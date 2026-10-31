@@ -962,6 +962,22 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                             </ul>
                         </li>
                         @endif
+                    @elseif (in_array(Auth::user()->getActiveRole(), [3, 4, 5, 8]))
+                        {{-- ── Candidate / Programme Director / Country Rep / Member (PortalController) ── --}}
+                        @php($portalHome = [3 => 'candidate/dashboard', 4 => 'programme-director/dashboard', 5 => 'country-rep/dashboard', 8 => 'member/dashboard'][Auth::user()->getActiveRole()])
+                        <li class="nav-item">
+                            <a href="{{ url($portalHome) }}" class="nav-link @if (Request::path() == $portalHome) active @endif">
+                                <i class="nav-icon fas fa-tachometer-alt"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url('messages') }}"
+                                class="nav-link @if (Request::segment(1) == 'messages') active @endif">
+                                <i class="nav-icon fas fa-comments"></i>
+                                <p>Messages <span class="badge badge-danger right sidebar-msg-badge" style="{{ $sidebarMsgBadgeTotal > 0 ? '' : 'display:none;' }}">{{ $sidebarMsgBadgeTotal }}</span></p>
+                            </a>
+                        </li>
                     @elseif (Auth::user()->user_type == 2)
                         <li class="nav-item">
                             <a href="{{ url('trainee/dashboard') }}"
