@@ -143,6 +143,10 @@
                 default        => 'tag-grey',
             };
 
+            // All intakes of this person (first to latest): their admission years and exam years side by side.
+            $intakeYears     = $intakes->pluck('year')->filter()->unique()->values();
+            $intakeExamYears = $intakes->pluck('exam_year')->filter()->unique()->values();
+
             $sponsor = ($trainee->sponsor && $trainee->sponsor !== 'null') ? $trainee->sponsor : null;
             $amountFormatted = is_numeric($trainee->amount_paid) && $trainee->amount_paid > 0
                 ? '$' . number_format((float)$trainee->amount_paid, 2) : null;
@@ -389,14 +393,14 @@
                         <div class="stat-chip">
                             <div class="chip-icon"><i class="fas fa-calendar-alt"></i></div>
                             <div><div class="chip-label">Admission Year</div>
-                                <strong class="chip-val">{{ $trainee->admission_year ?? '—' }}</strong></div>
+                                <strong class="chip-val">{{ $intakeYears->count() > 1 ? $intakeYears->implode(' → ') : ($trainee->admission_year ?? '—') }}</strong></div>
                         </div>
                     </div>
                     <div class="col-6 col-md-3 mb-2">
                         <div class="stat-chip">
                             <div class="chip-icon"><i class="fas fa-graduation-cap"></i></div>
                             <div><div class="chip-label">Exam Year</div>
-                                <strong class="chip-val">{{ ($trainee->exam_year && $trainee->exam_year > 0) ? $trainee->exam_year : '—' }}</strong></div>
+                                <strong class="chip-val">{{ $intakeExamYears->count() > 1 ? $intakeExamYears->implode(' → ') : (($trainee->exam_year && $trainee->exam_year > 0) ? $trainee->exam_year : '—') }}</strong></div>
                         </div>
                     </div>
                     <div class="col-6 col-md-3 mb-2">
@@ -551,6 +555,27 @@
                         </div>
 
                         <p class="sect-div">Academic Timeline</p>
+                        @if($intakes->count() > 1)
+                            {{-- Every intake of this person, first to latest, with the exam year of each --}}
+                            <table class="table table-sm mb-2" style="font-size:.85rem;">
+                                <thead>
+                                    <tr class="text-muted">
+                                        <th>Programme</th><th class="text-center">Admission Year</th><th class="text-center">Exam Year</th><th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($intakes as $i => $in)
+                                        <tr @if($in->current) style="font-weight:600;background:#f4f7fb;" @endif>
+                                            <td>{{ $in->programme }} <small class="text-muted">{{ $i === 0 ? '(first intake)' : '(intake '.($i + 1).')' }}</small></td>
+                                            <td class="text-center">{{ $in->year }}</td>
+                                            <td class="text-center">{{ $in->exam_year ?: '—' }}</td>
+                                            <td>{{ $in->status ?: '—' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                            <small class="text-muted d-block mb-2">The bold row is this record; the fields below edit it.</small>
+                        @endif
                         <div class="field-row"><span class="field-lbl">Admission Year</span>
                             <span class="field-val ie-field" data-ie="admission_year" data-ie-type="number"
                                   data-ie-value="{{ $trainee->admission_year ?? '' }}"

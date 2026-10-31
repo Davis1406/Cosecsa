@@ -4,6 +4,38 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-30) — Trainee profile shows every intake
+- The **Admission Year** and **Exam Year** chips list all of the person's intakes (e.g. `2023 → 2026` and `2024 → 2029`), and the Academic Timeline gets an aligned table of programme, admission year, exam year and status per intake, with this record in bold. The data comes from the API's new `intakes` field; a trainee with one intake looks as before.
+
+### Added (2026-10-29) — Intake Reports: entries by country chart
+- New card **Entries by country**: a ranked horizontal bar chart (leader highlighted, the rest grey, the count at the end of each bar) with a headline built from the data ("Eight countries hold most COSECSA entries, led by Kenya" - the smallest group of top countries holding at least 80%) and a summary line ("N in M countries; the top eight hold X (p%)"). It has a **Year** selector (latest year by default, or All years), follows the page filters, and has **Excel** and **Image** buttons like the other charts. Clicking a bar lists that country (and year) in the modal. Page-only change.
+- **Files (MIS):** `resources/views/admin/associates/intake-reports/index.blade.php`.
+
+### Changed (2026-10-29) — Intake Reports: sharper chart images
+- The **Image** download of both charts is now a high-resolution PNG: the chart is redrawn at four times the screen's pixel density for the copy (white background kept), then restored on screen. Page-only change.
+- **Files (MIS):** `resources/views/admin/associates/intake-reports/index.blade.php`.
+
+### Changed (2026-10-29) — Intake Reports: people who passed from MCS to a specialty are in both intakes
+- Completed trainees are counted in the year they were admitted. A candidate's or fellow's PEN year is now counted as their **MCS intake** when they later passed to a specialty (the PEN belongs to the first programme), and the specialty is counted in the year on their trainee record, so these people appear in both intakes, as the Capsule tags show. The Year-of-joining help text says so.
+- **Coordinate with cosecsa-api:** the counting rule is in the API (`IntakeEntries`); deploy the API first. The 71 FCS 2022 trainee records for fellows are a separate one-off script, see the cosecsa-api CHANGES.md.
+- **Files (MIS):** `resources/views/admin/associates/intake-reports/index.blade.php`.
+
+### Added (2026-10-29) — Intake Reports: Excel download beside Image on both charts
+- The year chart and the gender chart each have an **Excel** button beside **Image**. It downloads what the chart currently shows: MCS / FCS / Total per year (or Total per year), and the gender pie's counts and shares or the gender bar's women / men (/ not recorded) / total per year, following the filters and the view chosen. Page-only change.
+- **Files (MIS):** `resources/views/admin/associates/intake-reports/index.blade.php`.
+
+### Changed (2026-10-29) — Intake Reports: later years hidden until chosen
+- The page opens with **To year** set to the current year, so entries dated after it (for example 2027, trainees who defer and resume next year) are left out of the tiles, matrix, charts and lists. Pick that year in **To year**, or **Any**, to include them. Page-only change.
+- **Files (MIS):** `resources/views/admin/associates/intake-reports/index.blade.php`.
+
+### Added (2026-10-29) — Intake Reports: gender chart can be a pie or a bar chart by year
+- The gender chart has a **Pie | Bar** switch. The bar view is one stacked bar per year (women in blue at the bottom, men in grey above, "Not recorded" lighter, hidden until you click it in the legend), the total above every bar, a minimal axis (no gridlines or value axis), and a headline with a one-line summary ("Annual intake grew from A in Y1 to B in Y2 … Women were W of T (p%) in Y2"; the current year is marked provisional). Clicking a bar lists that year and gender in the modal; the Image download is named after the view. Page-only change.
+- **Files (MIS):** `resources/views/admin/associates/intake-reports/index.blade.php`.
+
+### Added (2026-10-29) — Intake Reports: year chart can show the total per year
+- The year chart has a **MCS / FCS | Total per year** switch. "Total per year" draws one bar per year with all entries (MCS and FCS together, the same figure as the matrix's Entries column); clicking a bar lists that year's entries. The Image download is named after the view. Page-only change.
+- **Files (MIS):** `resources/views/admin/associates/intake-reports/index.blade.php`.
+
 ### Added (2026-10-29) — Intake Reports: click a tile, total, column or chart to see that list in a modal
 - Every figure on **Associates > Intake Reports** now opens that list in a modal (no page change), with **Excel** and **CSV** export buttons, search and paging: the five tiles (all entries, different people, MCS entries, FCS entries, people in several intakes), a programme heading or its "All years" total, a year's Entries / People figures, the year × programme cells and year labels, a bar segment of the year chart (that year and MCS or FCS), and a slice of the gender pie. The modal title names the selection and the export file is named after it. The modal is styled to the design system: 8px radius, 24px padding, maroon top accent, pill count badge, soft shadow, spaced and rounded table with hover, light and dark mode, and a narrow-screen layout. The "Show 25 entries" control has room around its dropdown (the number no longer touches the arrow) and lines up with the search box.
 - The "Associates in the intake" table at the bottom of the page now always shows every entry (it is no longer filtered by clicks; its "Show all" button is gone). Page-only change: the lists are filtered in the browser from the entries already loaded, no API change.

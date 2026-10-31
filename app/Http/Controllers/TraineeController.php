@@ -71,6 +71,7 @@ class TraineeController extends Controller
             'hospitals'          => HospitalModel::getHospital(),
             'examYears'          => collect($data->examYears ?? []),
             'firstAdmissionYear' => $data->firstAdmissionYear ?? null,
+            'intakes'            => collect($data->intakes ?? []),
             'notes'              => $this->associateNotes('trainee', $id),
         ]);
     }

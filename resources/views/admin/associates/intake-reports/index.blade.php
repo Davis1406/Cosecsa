@@ -48,7 +48,9 @@
     #ir-modal .dataTables_length select { display: inline-block; width: auto; min-width: 76px; height: 34px; margin: 0; padding: 4px 30px 4px 12px; border-radius: 6px; border: 1px solid #d5dee8; }
     #ir-modal .dataTables_filter label { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-weight: 500; }
     #ir-modal .dataTables_filter input { height: 34px; margin: 0; padding: 4px 12px; border-radius: 6px; border: 1px solid #d5dee8; }
-    #ir-modal .dt-buttons .btn { border-radius: 6px; margin-left: 6px; }
+    #ir-modal .dataTables_filter { display: inline-block; vertical-align: middle; margin: 0 16px 0 0; }
+    #ir-modal .dt-buttons { display: inline-flex; gap: 8px; vertical-align: middle; }
+    #ir-modal .dt-buttons .btn { border-radius: 6px; margin: 0; }
     #ir-modal table.dataTable { border-collapse: separate; border-spacing: 0; border: 1px solid #e0e9f2; border-radius: 6px; overflow: hidden; }
     #ir-modal table.dataTable thead th { background: #f8f9fb; border-bottom: 1px solid #e0e9f2; font-size: .72rem; text-transform: uppercase; letter-spacing: .3px; color: #59413f; padding: 10px 12px; }
     #ir-modal table.dataTable tbody td { padding: 8px 12px; border-top: 1px solid #eef0f3; vertical-align: middle; }
@@ -116,7 +118,7 @@
                 <div class="form-group col-6 col-md-1"><label class="small mb-1">Gender</label>
                     <select name="gender" class="form-control form-control-sm"><option value="">Any</option><option>Male</option><option>Female</option></select></div>
                 <div class="form-group col-12 col-md-2"><label class="small mb-1">Year of joining</label>
-                    <select name="year_basis" class="form-control form-control-sm" title="Trainees use the admission year on their trainee record, plus the year they resume if they deferred. Candidates and fellows use the year in their PEN. Completed records and deferred trainees from past years are left out; Active and Inactive are kept.">
+                    <select name="year_basis" class="form-control form-control-sm" title="Trainees use the admission year on their trainee record, plus the year they resume if they deferred. Candidates and fellows use the year in their PEN. Completed trainees are counted in the year they were admitted; deferred trainees from past years are left out. People who passed from MCS to a specialty are in both intakes: their PEN year is their MCS intake and the specialty is counted in the year on their trainee record.">
                         <option value="admission">Admission year (Active + Inactive; current deferrals)</option><option value="smart">PEN year, later programmes by admission year</option><option value="pen">PEN year only</option></select></div>
             </form>
             <div class="text-right">
@@ -142,10 +144,14 @@
             </div>
             <div class="col-lg-5">
                 <div class="ir-card">
-                    <h6>MCS and FCS intake by year
-                        <button type="button" id="download-year-chart" class="btn btn-xs btn-outline-secondary float-right ir-chart-btn"><i class="fas fa-download mr-1"></i>Image</button>
+                    <h6><span id="chart-title">MCS and FCS intake by year</span>
+                        <span class="float-right"><button type="button" id="excel-year-chart" class="btn btn-xs btn-outline-success ir-chart-btn mr-1"><i class="fas fa-file-excel mr-1"></i>Excel</button><button type="button" id="download-year-chart" class="btn btn-xs btn-outline-secondary ir-chart-btn"><i class="fas fa-download mr-1"></i>Image</button></span>
                     </h6>
-                    <div class="ir-note mb-2">The numbers on the bars are the entries for the filters above.</div>
+                    <div class="btn-group btn-group-sm mb-2" id="chart-mode" role="group" aria-label="Chart view">
+                        <button type="button" class="btn btn-outline-secondary active" data-mode="split">MCS / FCS</button>
+                        <button type="button" class="btn btn-outline-secondary" data-mode="total">Total per year</button>
+                    </div>
+                    <div class="ir-note mb-2" id="chart-note">The numbers on the bars are the entries for the filters above. Click a bar to list them.</div>
                     <div style="height:340px;position:relative">
                         <canvas id="chartYear"></canvas>
                         <div id="chart-empty" class="ir-note text-center" style="display:none;position:absolute;top:0;right:0;bottom:0;left:0;align-items:center;justify-content:center;">No entries match this selection.</div>
@@ -153,14 +159,33 @@
                 </div>
                 <div class="ir-card">
                     <h6>Intake by gender
-                        <button type="button" id="download-gender-chart" class="btn btn-xs btn-outline-secondary float-right ir-chart-btn"><i class="fas fa-download mr-1"></i>Image</button>
+                        <span class="float-right"><button type="button" id="excel-gender-chart" class="btn btn-xs btn-outline-success ir-chart-btn mr-1"><i class="fas fa-file-excel mr-1"></i>Excel</button><button type="button" id="download-gender-chart" class="btn btn-xs btn-outline-secondary ir-chart-btn"><i class="fas fa-download mr-1"></i>Image</button></span>
                     </h6>
-                    <div class="ir-note mb-2">Entries by gender for the filters above; a missing gender is shown as "Not recorded".</div>
+                    <div class="btn-group btn-group-sm mb-2" id="gender-mode" role="group" aria-label="Gender chart type">
+                        <button type="button" class="btn btn-outline-secondary active" data-mode="pie"><i class="fas fa-chart-pie mr-1"></i>Pie</button>
+                        <button type="button" class="btn btn-outline-secondary" data-mode="bar"><i class="fas fa-chart-bar mr-1"></i>Bar</button>
+                    </div>
+                    <div class="ir-note mb-2" id="gender-note">Entries by gender for the filters above; a missing gender is shown as "Not recorded".</div>
                     <div style="height:300px;position:relative">
                         <canvas id="chartGender"></canvas>
                         <div id="gender-empty" class="ir-note text-center" style="display:none;position:absolute;top:0;right:0;bottom:0;left:0;align-items:center;justify-content:center;">No entries match this selection.</div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="ir-card" id="country-card">
+            <h6><span id="country-title">Entries by country</span>
+                <span class="float-right"><button type="button" id="excel-country-chart" class="btn btn-xs btn-outline-success ir-chart-btn mr-1"><i class="fas fa-file-excel mr-1"></i>Excel</button><button type="button" id="download-country-chart" class="btn btn-xs btn-outline-secondary ir-chart-btn"><i class="fas fa-download mr-1"></i>Image</button></span>
+            </h6>
+            <div class="d-flex align-items-center flex-wrap mb-2">
+                <label class="small mb-0 mr-2" for="country-year">Year</label>
+                <select id="country-year" class="form-control form-control-sm" style="width:auto;min-width:110px;"></select>
+            </div>
+            <div class="ir-note mb-2" id="country-note"></div>
+            <div id="country-wrap" style="position:relative;height:300px">
+                <canvas id="chartCountry"></canvas>
+                <div id="country-empty" class="ir-note text-center" style="display:none;position:absolute;top:0;right:0;bottom:0;left:0;align-items:center;justify-content:center;">No entries match this selection.</div>
             </div>
         </div>
 
@@ -209,17 +234,32 @@
 $(function () {
     var URLS = { data: @json(route('intake.reports.data')), entries: @json(route('intake.reports.entries')) };
     var form = document.getElementById('filters');
-    var chart = null, chartGender = null, dt = null, entries = [], progType = {}, mdt = null, seq = 0;
-    function noPick() { return { year: null, programme: null, level: null, gender: null, multi: false }; }
+    var chart = null, chartGender = null, dt = null, entries = [], progType = {}, mdt = null, seq = 0, lastData = null, chartMode = 'split', genderMode = 'pie', exportYear = null, exportGender = null, chartCountry = null, exportCountry = null, countryYear = null;
+    function noPick() { return { year: null, programme: null, level: null, gender: null, country: null, multi: false }; }
     function genderOf(e) { return e.gender === 'Male' || e.gender === 'Female' ? e.gender : 'Not recorded'; }
     function levelOf(e) { return progType[e.programme_id] === 'Membership' ? 'MCS' : 'FCS'; }
     function plain(d) { return String(d).replace(/<[^>]+>/g, ''); }
+    // Download exactly what a chart shows as an Excel file (a throw-away DataTable drives the same Excel export as the lists).
+    function exportExcel(spec, filename) {
+        if (!spec) return;
+        var holder = document.createElement('table');
+        holder.style.display = 'none';
+        document.body.appendChild(holder);
+        var t = $(holder).DataTable({
+            data: spec.rows, columns: spec.headers.map(function (h) { return { title: h }; }),
+            paging: false, searching: false, info: false, ordering: false, dom: 'B',
+            buttons: [{ extend: 'excelHtml5', title: spec.title, filename: filename }]
+        });
+        t.button(0).trigger();
+        setTimeout(function () { t.destroy(); document.body.removeChild(holder); }, 600);
+    }
     function filterEntries(p) {
         return entries.filter(function (e) {
             return (p.year == null || e.year === p.year)
                 && (p.programme == null || e.programme_id === p.programme)
                 && (p.level == null || levelOf(e) === p.level)
                 && (p.gender == null || genderOf(e) === p.gender)
+                && (p.country == null || (e.country || 'Not recorded') === p.country)
                 && (!p.multi || (e.other_intakes || []).length > 0);
         });
     }
@@ -229,6 +269,7 @@ $(function () {
         if (p.programme != null) { var f = entries.find(function (e) { return e.programme_id === p.programme; }); if (f) parts.push(f.programme); }
         if (p.level != null) parts.push(p.level);
         if (p.gender != null) parts.push(p.gender);
+        if (p.country != null) parts.push(p.country);
         if (p.multi) parts.push('in several intakes');
         return parts;
     }
@@ -290,7 +331,7 @@ $(function () {
             entries = res[1].entries || [];
             progType = {};
             (res[1].programmes || []).forEach(function (pr) { progType[pr.id] = pr.type; });
-            renderKpis(res[0]); renderMatrix(res[0]); renderChart(res[0]); renderGender(entries); renderChecks(res[0].checks); renderDetail();
+            lastData = res[0]; renderKpis(res[0]); renderMatrix(res[0]); renderChart(res[0]); renderGender(entries); renderCountries(); renderChecks(res[0].checks); renderDetail();
         }).catch(function (err) {
             document.getElementById('error-banner').style.display = 'block';
             document.getElementById('error-msg').textContent = 'The intake report could not be loaded: ' + err.message;
@@ -337,14 +378,25 @@ $(function () {
         var emptyBox = document.getElementById('chart-empty');
         emptyBox.style.display = empty ? 'flex' : 'none';
         if (chart) { chart.destroy(); chart = null; }
-        if (empty) return;
+        if (empty) { exportYear = null; return; }
 
+        var total = chartMode === 'total';
+        document.getElementById('chart-title').textContent = total ? 'Total intake by year' : 'MCS and FCS intake by year';
+        document.getElementById('chart-note').textContent = total
+            ? 'Each bar is all entries (MCS and FCS together) for that year, for the filters above. Click a bar to list them.'
+            : 'The numbers on the bars are the entries for the filters above. Click a bar to list them.';
+        [].forEach.call(document.querySelectorAll('#chart-mode button'), function (b) { b.classList.toggle('active', b.dataset.mode === chartMode); });
+        exportYear = total
+            ? { title: 'Total intake by year', headers: ['Year', 'Total entries'], rows: rows.map(function (r) { return [r.year, r.entries]; }) }
+            : { title: 'MCS and FCS intake by year', headers: ['Year', 'MCS', 'FCS', 'Total entries'], rows: rows.map(function (r) { return [r.year, r.membership, r.fellowship, r.entries]; }) };
         var data = {
             labels: rows.map(function (r) { return r.year; }),
-            datasets: [
-                { label: 'MCS', data: rows.map(function (r) { return r.membership; }), backgroundColor: '#1a6fa0' },
-                { label: 'FCS', data: rows.map(function (r) { return r.fellowship; }), backgroundColor: '#a02626' }
-            ]
+            datasets: total
+                ? [{ label: 'Total entries', data: rows.map(function (r) { return r.entries; }), backgroundColor: '#004356' }]
+                : [
+                    { label: 'MCS', data: rows.map(function (r) { return r.membership; }), backgroundColor: '#1a6fa0' },
+                    { label: 'FCS', data: rows.map(function (r) { return r.fellowship; }), backgroundColor: '#a02626' }
+                ]
         };
         chart = new Chart(document.getElementById('chartYear'), {
             type: 'bar', data: data,
@@ -352,11 +404,11 @@ $(function () {
             options: { responsive: true, maintainAspectRatio: false,
                 onClick: function (evt, els) {
                     var hit = els && els[0]; if (!hit) return;
-                    openList({ year: rows[hit.index].year, level: hit.datasetIndex === 0 ? 'MCS' : 'FCS' });
+                    openList(total ? { year: rows[hit.index].year } : { year: rows[hit.index].year, level: hit.datasetIndex === 0 ? 'MCS' : 'FCS' });
                 },
                 onHover: function (evt, els) { evt.native.target.style.cursor = els && els.length ? 'pointer' : 'default'; },
                 plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
+                    legend: { display: !total, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
                     tooltip: { mode: 'index', intersect: false },
                     datalabels: {
                         display: function (ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
@@ -369,19 +421,27 @@ $(function () {
         });
     }
 
+    var GENDER_COLOURS = { Male: '#1a6fa0', Female: '#a02626', 'Not recorded': '#8a94a6' };
+    var PIE_NOTE = 'Entries by gender for the filters above; a missing gender is shown as "Not recorded". Click a slice to list them.';
+
     function renderGender(rows) {
+        [].forEach.call(document.querySelectorAll('#gender-mode button'), function (b) { b.classList.toggle('active', b.dataset.mode === genderMode); });
+        if (chartGender) { chartGender.destroy(); chartGender = null; }
+        var noteBox = document.getElementById('gender-note');
         var counts = { Male: 0, Female: 0, 'Not recorded': 0 };
-        (rows || []).forEach(function (e) {
-            counts[e.gender === 'Male' || e.gender === 'Female' ? e.gender : 'Not recorded']++;
-        });
+        (rows || []).forEach(function (e) { counts[genderOf(e)]++; });
+        var empty = !(rows || []).length;
+        document.getElementById('gender-empty').style.display = empty ? 'flex' : 'none';
+        if (empty) { exportGender = null; noteBox.textContent = PIE_NOTE; return; }
+        if (genderMode === 'bar') renderGenderBars(rows, noteBox); else { noteBox.textContent = PIE_NOTE; renderGenderPie(counts); }
+    }
+
+    function renderGenderPie(counts) {
         var labels = ['Male', 'Female', 'Not recorded'].filter(function (k) { return counts[k] > 0; });
         var values = labels.map(function (k) { return counts[k]; });
-        var colours = labels.map(function (k) { return k === 'Male' ? '#1a6fa0' : (k === 'Female' ? '#a02626' : '#8a94a6'); });
-        var empty = !values.length;
-        document.getElementById('gender-empty').style.display = empty ? 'flex' : 'none';
-        if (chartGender) { chartGender.destroy(); chartGender = null; }
-        if (empty) return;
-
+        var colours = labels.map(function (k) { return GENDER_COLOURS[k]; });
+        var sumAll = values.reduce(function (a, b) { return a + b; }, 0);
+        exportGender = { title: 'Intake by gender', headers: ['Gender', 'Entries', 'Share (%)'], rows: labels.map(function (k, i) { return [k, values[i], sumAll ? Math.round(values[i] * 1000 / sumAll) / 10 : 0]; }) };
         chartGender = new Chart(document.getElementById('chartGender'), {
             type: 'pie',
             data: { labels: labels, datasets: [{ data: values, backgroundColor: colours, borderColor: '#fff', borderWidth: 2 }] },
@@ -393,27 +453,159 @@ $(function () {
                     legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
                     tooltip: { callbacks: { label: function (ctx) {
                         var total = ctx.dataset.data.reduce(function (a, b) { return a + b; }, 0);
-                        var pct = total ? Math.round(ctx.parsed * 100 / total) : 0;
-                        return ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+                        return ctx.label + ': ' + ctx.parsed + ' (' + (total ? Math.round(ctx.parsed * 100 / total) : 0) + '%)';
                     } } },
-                    datalabels: {
-                        display: function (ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
-                        color: '#fff', font: { size: 11, weight: 'bold' },
-                        formatter: function (v) { return v; }
-                    }
+                    datalabels: { display: function (ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; }, color: '#fff', font: { size: 11, weight: 'bold' }, formatter: function (v) { return v; } }
                 } }
         });
     }
 
-    // Save a chart as a PNG on a white background (the canvas itself is transparent,
-    // which turns black in some viewers).
+    // Bar view: one stacked bar per year (women at the bottom) with the total above every bar, a
+    // headline and minimal axes. "Not recorded" is left out until it is switched on in the legend.
+    var showUnrecorded = false;
+    function renderGenderBars(rows, noteBox) {
+        var byYear = {}, unrecorded = 0;
+        rows.forEach(function (e) {
+            var g = genderOf(e), y = byYear[e.year] || (byYear[e.year] = { Male: 0, Female: 0, 'Not recorded': 0 });
+            y[g]++; if (g === 'Not recorded') unrecorded++;
+        });
+        var years = Object.keys(byYear).map(Number).sort(function (a, b) { return a - b; });
+        var order = ['Female', 'Male'].concat(unrecorded ? ['Not recorded'] : []);
+        var visible = order.filter(function (g) { return g !== 'Not recorded' || showUnrecorded; });
+        var totals = years.map(function (y) { return visible.reduce(function (n, g) { return n + byYear[y][g]; }, 0); });
+        var lastVisible = order.indexOf(visible[visible.length - 1]);
+        var genderName = { Female: 'Women', Male: 'Men', 'Not recorded': 'Not recorded' };
+        exportGender = {
+            title: 'Intake by gender and year',
+            headers: ['Year'].concat(visible.map(function (g) { return genderName[g]; }), ['Total']),
+            rows: years.map(function (y, i) { return [y].concat(visible.map(function (g) { return byYear[y][g]; }), [totals[i]]); })
+        };
+
+        var barColours = { Female: '#3b6fd4', Male: '#c9cbbf', 'Not recorded': '#e3e5dc' };
+        var datasets = order.map(function (g, di) {
+            return {
+                label: g === 'Female' ? 'Women' : (g === 'Male' ? 'Men' : 'Not recorded'), gender: g,
+                data: years.map(function (y) { return byYear[y][g]; }), backgroundColor: barColours[g], borderWidth: 0, borderSkipped: false,
+                hidden: g === 'Not recorded' && !showUnrecorded,
+                datalabels: {
+                    display: function (ctx) { return di === lastVisible; },
+                    anchor: 'end', align: 'end', offset: 2, color: '#141d23', font: { size: 10, weight: 'bold' },
+                    formatter: function (v, ctx) { return totals[ctx.dataIndex]; }
+                }
+            };
+        });
+
+        // Headline + one-line summary, built from the years shown (so it follows every filter).
+        var first = years[0], last = years[years.length - 1], tf = totals[0], tl = totals[totals.length - 1];
+        var sum = totals.reduce(function (a, b) { return a + b; }, 0), wl = byYear[last].Female, lastYearOpen = last === new Date().getFullYear();
+        var head = years.length < 2 ? 'Intake in ' + first + ': ' + tf + ' entries'
+            : 'Annual intake ' + (tl > tf ? 'grew' : (tl < tf ? 'fell' : 'held at ' + tf)) + (tl === tf ? ' from ' + first + ' to ' + last : ' from ' + tf + ' in ' + first + ' to ' + tl + ' in ' + last);
+        noteBox.innerHTML = '<strong style="color:inherit;font-size:.95rem">' + esc(head) + '</strong><br>' + sum + ' entries since ' + first + '. Women were ' + wl + ' of ' + tl + ' (' + (tl ? Math.round(wl * 100 / tl) : 0) + '%) in ' + last + (lastYearOpen ? '; ' + last + ' is provisional' : '') + '. Click a bar to list them.'
+            + (unrecorded && !showUnrecorded ? '<br><span class="ir-hint">' + unrecorded + ' entries have no gender recorded and are not shown. Click &ldquo;Not recorded&rdquo; in the legend to include them.</span>' : '');
+
+        chartGender = new Chart(document.getElementById('chartGender'), {
+            type: 'bar',
+            data: { labels: years, datasets: datasets },
+            plugins: window.ChartDataLabels ? [ChartDataLabels] : [],
+            options: { responsive: true, maintainAspectRatio: false, categoryPercentage: 0.9, barPercentage: 0.88,
+                layout: { padding: { top: 22 } },
+                onClick: function (evt, els) {
+                    var hit = els && els[0]; if (!hit) return;
+                    openList({ year: years[hit.index], gender: datasets[hit.datasetIndex].gender });
+                },
+                onHover: function (evt, els) { evt.native.target.style.cursor = els && els.length ? 'pointer' : 'default'; },
+                plugins: {
+                    legend: {
+                        position: 'top', align: 'start',
+                        labels: { usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 9, boxHeight: 9, font: { size: 11 } },
+                        // Only "Not recorded" can be switched; Women and Men always stay.
+                        onClick: function (e, item) { if (datasets[item.datasetIndex].gender === 'Not recorded') { showUnrecorded = !showUnrecorded; renderGender(entries); } },
+                        onHover: function (e, item) { e.native.target.style.cursor = datasets[item.datasetIndex].gender === 'Not recorded' ? 'pointer' : 'default'; },
+                        onLeave: function (e) { e.native.target.style.cursor = 'default'; }
+                    },
+                    tooltip: { mode: 'index', intersect: false, callbacks: { footer: function (items) { return 'Total: ' + totals[items[0].dataIndex]; } } }
+                },
+                scales: {
+                    x: { stacked: true, grid: { display: false }, border: { color: '#9aa1ad' }, ticks: { font: { size: 10 }, maxRotation: 0, autoSkip: false } },
+                    y: { stacked: true, display: false, beginAtZero: true, grace: '4%' }
+                } }
+        });
+    }
+
+    // Entries by country for one year: a ranked horizontal bar chart, the leader highlighted,
+    // with a headline and summary built from the numbers.
+    var NUM_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty'];
+    function renderCountries() {
+        var sel = document.getElementById('country-year'), years = {};
+        entries.forEach(function (e) { years[e.year] = true; });
+        var list = Object.keys(years).map(Number).sort(function (a, b) { return b - a; });
+        if (countryYear !== 'all' && list.indexOf(countryYear) === -1) countryYear = list.length ? list[0] : 'all';
+        sel.innerHTML = '<option value="all">All years</option>' + list.map(function (y) { return '<option value="' + y + '">' + y + '</option>'; }).join('');
+        sel.value = String(countryYear);
+
+        if (chartCountry) { chartCountry.destroy(); chartCountry = null; }
+        var rows = entries.filter(function (e) { return countryYear === 'all' || e.year === countryYear; });
+        var empty = !rows.length, noteBox = document.getElementById('country-note');
+        document.getElementById('country-empty').style.display = empty ? 'flex' : 'none';
+        var label = countryYear === 'all' ? 'all years' : String(countryYear);
+        if (empty) { exportCountry = null; document.getElementById('country-title').textContent = 'Entries by country'; noteBox.textContent = ''; return; }
+
+        var counts = {};
+        rows.forEach(function (e) { var c = e.country || 'Not recorded'; counts[c] = (counts[c] || 0) + 1; });
+        var names = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b); });
+        var values = names.map(function (n) { return counts[n]; });
+        var total = values.reduce(function (a, b) { return a + b; }, 0);
+
+        // "Most" = the smallest group of top countries holding at least 80% of the entries.
+        var k = 0, run = 0;
+        while (k < values.length && run < total * 0.8) { run += values[k]; k++; }
+        var topShare = Math.round(run * 100 / total);
+        var title = k <= 1 ? names[0] + ' holds most COSECSA entries'
+            : (NUM_WORDS[k] || k) + ' countries hold most COSECSA entries, led by ' + names[0];
+        document.getElementById('country-title').textContent = title;
+        noteBox.textContent = 'Entries by country, ' + label + ': ' + total.toLocaleString() + ' in ' + names.length + ' ' + (names.length === 1 ? 'country' : 'countries')
+            + (k > 1 ? '; the top ' + (NUM_WORDS[k] || k).toLowerCase() + ' hold ' + run.toLocaleString() + ' (' + topShare + '%)' : '') + '. Click a bar to list them.';
+        exportCountry = { title: 'Entries by country, ' + label, headers: ['Rank', 'Country', 'Entries', 'Share (%)'],
+            rows: names.map(function (n, i) { return [i + 1, n, values[i], Math.round(values[i] * 1000 / total) / 10]; }) };
+
+        document.getElementById('country-wrap').style.height = Math.max(160, names.length * 24 + 24) + 'px';
+        chartCountry = new Chart(document.getElementById('chartCountry'), {
+            type: 'bar',
+            data: { labels: names, datasets: [{ data: values, backgroundColor: names.map(function (n, i) { return i === 0 ? '#3b6fd4' : '#c9cbbf'; }), borderWidth: 0, barPercentage: 0.78, categoryPercentage: 1 }] },
+            plugins: window.ChartDataLabels ? [ChartDataLabels] : [],
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                layout: { padding: { right: 34 } },
+                onClick: function (evt, els) { var hit = els && els[0]; if (hit) openList({ country: names[hit.index], year: countryYear === 'all' ? null : countryYear }); },
+                onHover: function (evt, els) { evt.native.target.style.cursor = els && els.length ? 'pointer' : 'default'; },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: function (ctx) { return ctx.parsed.x + ' entries (' + Math.round(ctx.parsed.x * 100 / total) + '%)'; } } },
+                    datalabels: { anchor: 'end', align: 'end', color: '#141d23', font: { size: 11 }, formatter: function (v) { return v; } }
+                },
+                scales: {
+                    x: { display: false, beginAtZero: true, grace: '4%' },
+                    y: { grid: { display: false }, border: { display: false }, ticks: { autoSkip: false, font: function (ctx) { return { size: 11, weight: ctx.index === 0 ? 'bold' : 'normal' }; } } }
+                } }
+        });
+    }
+    document.getElementById('country-year').addEventListener('change', function () { countryYear = this.value === 'all' ? 'all' : +this.value; renderCountries(); });
+
+    // Save a chart as a high-resolution PNG on a white background (the canvas itself is transparent,
+    // which turns black in some viewers). The chart is redrawn at IMAGE_SCALE x the screen's pixel
+    // density for the copy, then put back, so text and bars stay sharp when printed or zoomed.
+    var IMAGE_SCALE = 4;
     function downloadChart(c, filename) {
         if (!c) return;
+        var oldRatio = c.options.devicePixelRatio;
+        c.options.devicePixelRatio = Math.max(window.devicePixelRatio || 1, 1) * IMAGE_SCALE;
+        c.resize();
         var src = c.canvas, out = document.createElement('canvas');
         out.width = src.width; out.height = src.height;
         var ctx = out.getContext('2d');
         ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, out.width, out.height);
         ctx.drawImage(src, 0, 0);
+        c.options.devicePixelRatio = oldRatio;
+        c.resize();
         var a = document.createElement('a');
         a.download = filename + '.png';
         a.href = out.toDataURL('image/png');
@@ -451,8 +643,18 @@ $(function () {
         box.addEventListener('click', go);
         box.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } });
     });
-    document.getElementById('download-year-chart').addEventListener('click', function () { downloadChart(chart, 'intake-by-year'); });
-    document.getElementById('download-gender-chart').addEventListener('click', function () { downloadChart(chartGender, 'intake-by-gender'); });
+    document.getElementById('excel-country-chart').addEventListener('click', function () { exportExcel(exportCountry, 'intake-by-country'); });
+    document.getElementById('download-country-chart').addEventListener('click', function () { downloadChart(chartCountry, 'intake-by-country'); });
+    document.getElementById('excel-year-chart').addEventListener('click', function () { exportExcel(exportYear, chartMode === 'total' ? 'intake-total-by-year' : 'intake-by-year'); });
+    document.getElementById('excel-gender-chart').addEventListener('click', function () { exportExcel(exportGender, genderMode === 'bar' ? 'intake-by-gender-and-year' : 'intake-by-gender'); });
+    document.getElementById('download-year-chart').addEventListener('click', function () { downloadChart(chart, chartMode === 'total' ? 'intake-total-by-year' : 'intake-by-year'); });
+    [].forEach.call(document.querySelectorAll('#chart-mode button'), function (b) {
+        b.addEventListener('click', function () { chartMode = b.dataset.mode; if (lastData) renderChart(lastData); });
+    });
+    document.getElementById('download-gender-chart').addEventListener('click', function () { downloadChart(chartGender, genderMode === 'bar' ? 'intake-by-gender-bar' : 'intake-by-gender'); });
+    [].forEach.call(document.querySelectorAll('#gender-mode button'), function (b) {
+        b.addEventListener('click', function () { genderMode = b.dataset.mode; renderGender(entries); });
+    });
     document.getElementById('filters-refresh').addEventListener('click', load);
 
     // Both events: a <select> fires "change" in every browser, "input" covers
@@ -461,6 +663,13 @@ $(function () {
     function scheduleLoad() { clearTimeout(filterTimer); filterTimer = setTimeout(load, 120); }
     form.addEventListener('change', scheduleLoad);
     form.addEventListener('input', scheduleLoad);
+
+    // Years after the current one (e.g. deferred trainees resuming next year) stay hidden until someone
+    // picks them: "To year" starts on the current year; choose a later year or "Any" to include them.
+    (function () {
+        var to = form.elements.to_year, thisYear = String(new Date().getFullYear());
+        if (to && to.options.length > 1 && +to.options[1].value > +thisYear && to.querySelector('option[value="' + thisYear + '"]')) to.value = thisYear;
+    })();
 
     load();
 });
