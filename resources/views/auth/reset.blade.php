@@ -1,71 +1,60 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>COSECSA | Forgot Password </title>
-
-  <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="{{asset('plugins/fontawesome-free/css/all.min.css')}}">
-  <!-- icheck bootstrap -->
-  <link rel="stylesheet" href="{{asset('plugins/icheck-bootstrap/icheck-bootstrap.min.css')}}">
-  <!-- Theme style -->
-  <link rel="stylesheet" href="{{asset('dist/css/adminlte.min.css')}}">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Reset password | COSECSA MIS</title>
+    <link rel="stylesheet" href="{{ asset('plugins/fontawesome-free/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('dist/css/adminlte.min.css') }}">
+    <link rel="icon" href="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}">
+    @include('auth._style')
 </head>
 <body class="hold-transition login-page">
 <div class="login-box">
-  <!-- /.login-logo -->
-  <div class="card card-outline card-primary">
-    <div class="card-header text-center">
-      <a href="" class="h1"><b>Reset Password</b></a>
-    </div>
-    <div class="card-body">
-
-      @include('_message')
-      
-      <form action="" method="post">
-        {{ csrf_field() }}
-        <div class="input-group mb-3">
-          <input type="password" class="form-control" required name="password" placeholder="New Password">
-          <div class="input-group-append">
-            <div class="input-group-text">
-              <span class="fas fa-envelope"></span>
-            </div>
-          </div>
+    <div class="card card-outline card-primary">
+        <div class="card-header text-center">
+            <img src="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}" alt="COSECSA Logo">
+            <br>
+            <a href="#" class="h1" style="color: #a02626;"><b>COSECSA-MIS</b></a>
         </div>
+        <div class="card-body">
+            @include('_message')
 
-        <div class="input-group mb-3">
-            <input type="password" class="form-control" required name="cpassword" placeholder="Retype Password">
-            <div class="input-group-append">
-              <div class="input-group-text">
-                <span class="fas fa-envelope"></span>
-              </div>
-            </div>
-          </div>
-        <div class="row"> 
-          <!-- /.col -->
-          <div class="col-4">
-            <button type="submit" class="btn btn-primary btn-block">Reset</button>
-          </div>
-          <!-- /.col -->
+            @if(! $account)
+                <p class="login-box-msg mb-2">This link is no longer valid</p>
+                <p class="auth-help mb-3">Reset links work once and expire after an hour. Enter your email to get a new one.</p>
+                <a href="{{ url('forget-password') }}" class="btn btn-login btn-block d-flex align-items-center justify-content-center">Get a new link</a>
+            @else
+                <p class="login-box-msg mb-1">Choose a new password</p>
+                <p class="auth-help mb-3">For <strong>{{ $account->email ?: $account->name }}</strong>. At least 8 characters.</p>
+
+                <form method="POST" action="{{ url('reset/'.request()->route('token')) }}">
+                    @csrf
+                    <div class="mb-3 password-wrapper">
+                        <input type="password" class="form-control @error('password') is-invalid @enderror" name="password" id="passwordInput" placeholder="New password" minlength="8" required autofocus>
+                        <button type="button" class="btn-password-toggle" id="togglePassword" title="Show / hide password"><i class="fas fa-eye" id="toggleIcon"></i></button>
+                    </div>
+                    @error('password')<span class="invalid-feedback d-block mb-2">{{ $message }}</span>@enderror
+                    <div class="mb-3">
+                        <input type="password" class="form-control" name="password_confirmation" id="confirmInput" placeholder="Retype new password" minlength="8" required>
+                    </div>
+                    <button type="submit" class="btn btn-login btn-block">Change password</button>
+                </form>
+            @endif
+
+            <p class="text-center mt-4 mb-0 auth-back"><a href="{{ url('/') }}"><i class="fas fa-arrow-left mr-1"></i>Back to login</a></p>
         </div>
-      </form>
     </div>
-    <!-- /.card-body -->
-  </div>
-  <!-- /.card -->
 </div>
-<!-- /.login-box -->
-
-<!-- jQuery -->
-<script src="{{ asset('plugins/jquery/jquery.min.js') }}"></script>
-<!-- Bootstrap 4 -->
-<script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
-<!-- AdminLTE App -->
-<script type="{{asset('dist/js/adminlte.min.js')}}"></script>
+<script>
+    var toggle = document.getElementById('togglePassword');
+    if (toggle) toggle.addEventListener('click', function () {
+        var show = document.getElementById('passwordInput').type === 'password';
+        document.getElementById('passwordInput').type = show ? 'text' : 'password';
+        document.getElementById('confirmInput').type = show ? 'text' : 'password';
+        document.getElementById('toggleIcon').classList.toggle('fa-eye', ! show);
+        document.getElementById('toggleIcon').classList.toggle('fa-eye-slash', show);
+    });
+</script>
 </body>
 </html>
- 

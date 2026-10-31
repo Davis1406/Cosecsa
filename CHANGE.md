@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+### Added (2026-10-31) — Forget password works: reset link emailed from communications@cosecsa.org
+- The **Forget Password** button on the login page led to a 500: the routes existed (`forget-password`, `reset/{token}`) but the controller methods were never written. They are now `AuthController::forgetpassword / PostForgetPassword / ResetPassword / PostReset`, backed by `App\Services\PasswordReset`.
+- **How it works:** type an email; if it is the login email or a personal email on file (trainee, fellow, candidate or member record, or the user row), a link is emailed. The link is **single use and valid for 60 minutes**, is retired if the password changes another way first, and the page answers the same whether or not the email has an account. Most logins are placeholder `name@rcsi.com` addresses, so the link goes to the person's personal email on file; one mailbox that belongs to several accounts gets one email with a link per account. A new password (8+ characters, typed twice) replaces the old one, clears "must change password", and signs the account out of "remember me" and the mobile apps. Limits: 5 requests a minute per IP, 3 reset emails an hour per address.
+- **Sender:** `ForgetPasswordMail` is always sent **from `communications@cosecsa.org`** (name COSECSA), whatever `MAIL_FROM_ADDRESS` is; `config/mail.php` now defaults to that address too. Production already logs in to SMTP as that mailbox. The email uses the shared COSECSA header and signature.
+- The password is written with a plain query, not `User::setPasswordAttribute()`, which hashes admins only and would hash an admin's password twice.
+- **Pages:** `auth/forget.blade.php` and `auth/reset.blade.php` redone in the login page's style (shared `auth/_style.blade.php`); the old "Login" link on the forgot page pointed back at itself.
+- **Not covered:** logins that are an `@rcsi.com` placeholder with no personal email anywhere (38 on the local copy) cannot receive a link and still need an admin to set the password; the Fellow-ID login (a number) has no email to look up, so use the email.
+- **Tests:** `tests/Feature/PasswordResetTest.php` (17 tests: sender, recipient rules, one link per account, single use, expiry, password rules, rate limit).
+- **Files (MIS):** `app/Services/PasswordReset.php`, `app/Mail/ForgetPasswordMail.php`, `app/Http/Controllers/AuthController.php`, `routes/web.php`, `config/mail.php`, `resources/views/auth/{forget,reset,_style}.blade.php`, `resources/views/emails/forget.blade.php`, `tests/Feature/PasswordResetTest.php`.
+
 ### Changed (2026-10-30) — Trainee profile shows every intake
 - The **Admission Year** and **Exam Year** chips list all of the person's intakes (e.g. `2023 → 2026` and `2024 → 2029`), and the Academic Timeline gets an aligned table of programme, admission year, exam year and status per intake, with this record in bold. The data comes from the API's new `intakes` field; a trainee with one intake looks as before.
 

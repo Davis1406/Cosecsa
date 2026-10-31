@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Models\User;
 use App\Mail\ForgetPasswordMail;
+use App\Services\PasswordReset;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -164,6 +165,40 @@ class AuthController extends Controller
         Auth::logout();
         session()->flush();
         return redirect()->route('login');
+    }
+
+    // GET forget-password
+    public function forgetpassword()
+    {
+        return view('auth.forget');
+    }
+
+    // POST forget-password: the same answer whether or not the email belongs to an account.
+    public function PostForgetPassword(Request $request, PasswordReset $reset)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $reset->request($request->email);
+
+        return redirect('forget-password')->with('success', 'If that email address belongs to a COSECSA MIS account, we have sent a password reset link to it from '.ForgetPasswordMail::FROM_ADDRESS.'. The link works once and for '.PasswordReset::TTL_MINUTES.' minutes. If it does not arrive, check your spam folder.');
+    }
+
+    // GET reset/{token}
+    public function ResetPassword(string $token, PasswordReset $reset)
+    {
+        return view('auth.reset', ['account' => $reset->accountFor($token)]);
+    }
+
+    // POST reset/{token}
+    public function PostReset(Request $request, string $token, PasswordReset $reset)
+    {
+        $request->validate(['password' => 'required|string|min:8|confirmed']);
+
+        if (! $reset->reset($token, $request->password)) {
+            return redirect('forget-password')->with('error', 'This reset link is no longer valid. Enter your email to get a new one.');
+        }
+
+        return redirect()->route('select.role')->with('success', 'Your password has been changed. Choose your role and log in with the new password.');
     }
 
     private function redirectToDashboard()

@@ -35,9 +35,9 @@ Route::get('/', [AuthController::class,'login'])->name('login');
 Route::post('login', [AuthController::class,'AuthLogin']);
 Route::get('logout', [AuthController::class,'logout']);
 Route::get('forget-password', [AuthController::class,'forgetpassword']);
-Route::post('forget-password', [AuthController::class,'PostForgetPassword']);
+Route::post('forget-password', [AuthController::class,'PostForgetPassword'])->middleware('throttle:5,1');
 Route::get('reset/{token}', [AuthController::class,'ResetPassword']);
-Route::post('reset/{token}', [AuthController::class,'PostReset']);
+Route::post('reset/{token}', [AuthController::class,'PostReset'])->middleware('throttle:10,1');
 
 // ADD THESE NEW ROUTES:
 // Route::get('select-role', [AuthController::class, 'showRoleSelection'])->middleware('auth')->name('select.role');

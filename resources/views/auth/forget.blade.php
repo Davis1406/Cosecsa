@@ -1,65 +1,40 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>COSECSA | Forgot Password </title>
-
-  <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="{{asset('plugins/fontawesome-free/css/all.min.css')}}">
-  <!-- icheck bootstrap -->
-  <link rel="stylesheet" href="{{asset('plugins/icheck-bootstrap/icheck-bootstrap.min.css')}}">
-  <!-- Theme style -->
-  <link rel="stylesheet" href="{{asset('dist/css/adminlte.min.css')}}">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Forgot password | COSECSA MIS</title>
+    <link rel="stylesheet" href="{{ asset('plugins/fontawesome-free/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('dist/css/adminlte.min.css') }}">
+    <link rel="icon" href="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}">
+    @include('auth._style')
 </head>
 <body class="hold-transition login-page">
 <div class="login-box">
-  <!-- /.login-logo -->
-  <div class="card card-outline card-primary">
-    <div class="card-header text-center">
-      <a href="" class="h1"><b>Forget Password</b></a>
-    </div>
-    <div class="card-body">
+    <div class="card card-outline card-primary">
+        <div class="card-header text-center">
+            <img src="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}" alt="COSECSA Logo">
+            <br>
+            <a href="#" class="h1" style="color: #a02626;"><b>COSECSA-MIS</b></a>
+        </div>
+        <div class="card-body">
+            @include('_message')
 
-      @include('_message')
-      
-      <form action="" method="post">
-        {{ csrf_field() }}
-        <div class="input-group mb-3">
-          <input type="email" class="form-control" required name="email" placeholder="Email">
-          <div class="input-group-append">
-            <div class="input-group-text">
-              <span class="fas fa-envelope"></span>
-            </div>
-          </div>
+            <p class="login-box-msg mb-1">Forgot your password?</p>
+            <p class="auth-help mb-3">Enter your email address and we will send you a link to choose a new one. Use the email you gave COSECSA (your login email or your personal email).</p>
+
+            <form method="POST" action="{{ url('forget-password') }}">
+                @csrf
+                <div class="mb-3">
+                    <input type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" placeholder="Email address" required autofocus>
+                    @error('email')<span class="invalid-feedback d-block">{{ $message }}</span>@enderror
+                </div>
+                <button type="submit" class="btn btn-login btn-block"><i class="fas fa-paper-plane mr-1"></i> Send reset link</button>
+            </form>
+
+            <p class="text-center mt-4 mb-0 auth-back"><a href="{{ url('/') }}"><i class="fas fa-arrow-left mr-1"></i>Back to login</a></p>
         </div>
-        <div class="row"> 
-          <!-- /.col -->
-          <div class="col-4">
-            <button type="submit" class="btn btn-primary btn-block">Forget</button>
-          </div>
-          <!-- /.col -->
-        </div>
-      </form>
-    </br>
-      <p class="mb-1">
-        <a href="{{url('forget-password')}}">Login</a>
     </div>
-    <!-- /.card-body -->
-  </div>
-  <!-- /.card -->
 </div>
-<!-- /.login-box -->
-
-<!-- jQuery -->
-<script src="{{ asset('plugins/jquery/jquery.min.js') }}"></script>
-<!-- Bootstrap 4 -->
-<script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
-<!-- AdminLTE App -->
-<script type="{{asset('dist/js/adminlte.min.js')}}"></script>
 </body>
 </html>
- 
