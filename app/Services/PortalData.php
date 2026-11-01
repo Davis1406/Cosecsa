@@ -116,8 +116,17 @@ class PortalData
     {
         $countryIds = DB::table('country_reps')->where('user_id', $userId)->whereNotNull('country_id')->pluck('country_id')->unique()->values();
 
-        $countries = DB::table('countries')->whereIn('id', $countryIds)->orderBy('country_name')->get()->map(function ($c) {
+        // Their Council service is kept on their fellow record (committee, years; council_to empty = still serving).
+        $fellow = DB::table('fellows')->where('user_id', $userId)->first();
+        $service = $fellow && ($fellow->council_committee ?? $fellow->council_from ?? null) ? (object) [
+            'committee' => $fellow->council_committee ?? null,
+            'from' => $fellow->council_from ?? null,
+            'to' => $fellow->council_to ?? null,
+        ] : null;
+
+        $countries = DB::table('countries')->whereIn('id', $countryIds)->orderBy('country_name')->get()->map(function ($c) use ($service) {
             $id = $c->id;
+            $c->service = $service;
             $c->counts = [
                 'trainees_active' => DB::table('trainees')->where('country_id', $id)->whereIn('status', self::CURRENT)->count(),
                 'trainees_completed' => DB::table('trainees')->where('country_id', $id)->where('status', 'Completed')->count(),

@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Added (2026-11-01) — Fellows: COSECSA Council service (committee, years served)
+- Source: `COSECSA COUNCIL - YEARS SERVED SI Edits.xlsx` (61 Council members, all of whom are Fellows). Each fellow now has **Council committee** (ECC / ESRC / FGPC) and **On Council from / to** (to empty = ongoing). How they joined the Council is the fellow's own Fellowship Type, so it is not stored twice.
+- **Fellow profile** (`admin/associates/fellows/view`, Fellowship tab): a new "COSECSA Council" block, each field editable in place (pencil icon).
+- **Country Rep dashboard:** a "My Council service" card, read from the rep's fellow record.
+- The columns are added by the API migration `2026_11_01_090000_add_council_service_to_fellows`, so the API must be deployed before this MIS release.
+- Data: all 61 Council members were matched to their fellow record (by email, then name) and filled in. Three have a Fellowship Type that differs from the sheet and were left alone: Sylvain Niyonkuru (none set), Robert Lane and Sherry Wren (Overseas Fellow, the sheet says Fellow by Election).
+- Tests: `tests/Feature/PortalDashboardTest.php` (MIS) and `tests/Feature/FellowCouncilServiceTest.php` (API).
+
 ### Added (2026-10-31) — Dashboards for Candidate, Programme Director, Country Representative and Member
 - Logging in with any of these four roles ended on a 404: `AuthController::redirectToDashboard()` sent them to `candidate/dashboard`, `programme-director/dashboard`, `country-rep/dashboard` and `member/dashboard`, but those pages never existed (about 960 active accounts: 720 candidates, 138 programme directors, 73 members, 31 country reps). They now exist.
 - **Candidate:** exam year, entry number and exam-fee status, their details, and every exam entry they have registered for. Exam results are not shown.

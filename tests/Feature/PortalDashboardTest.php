@@ -104,6 +104,16 @@ class PortalDashboardTest extends TestCase
         $this->assertNull($countries->first()->hospitals->firstWhere('name', 'Kenyatta'));
     }
 
+    public function test_country_rep_sees_their_council_service_from_their_fellow_record(): void
+    {
+        $this->assertNull((new PortalData)->countryRep(11)['countries']->first()->service);
+
+        DB::table('fellows')->insert(['user_id' => 11, 'country_id' => 1, 'status' => 'Active', 'council_committee' => 'ESRC', 'council_from' => 2022, 'council_to' => null]);
+        $service = (new PortalData)->countryRep(11)['countries']->first()->service;
+
+        $this->assertSame(['ESRC', 2022, null], [$service->committee, (int) $service->from, $service->to]);
+    }
+
     public function test_candidate_sees_their_own_entries_newest_first_with_fee_status(): void
     {
         DB::table('candidates')->insert([
@@ -184,7 +194,10 @@ class PortalDashboardTest extends TestCase
             $t->integer('programme_id')->nullable(); $t->integer('hospital_id')->nullable(); $t->integer('country_id')->nullable(); $t->integer('exam_year')->nullable(); $t->integer('admission_year')->nullable();
             $t->string('invoice_status')->nullable(); $t->string('fee_paid')->nullable();
         });
-        Schema::create('fellows', function ($t) { $t->increments('id'); $t->integer('user_id')->nullable(); $t->integer('country_id')->nullable(); $t->string('status')->nullable(); });
+        Schema::create('fellows', function ($t) {
+            $t->increments('id'); $t->integer('user_id')->nullable(); $t->integer('country_id')->nullable(); $t->string('status')->nullable();
+            $t->string('council_committee')->nullable(); $t->integer('council_from')->nullable(); $t->integer('council_to')->nullable();
+        });
         Schema::create('members', function ($t) {
             $t->increments('id'); $t->integer('user_id')->nullable(); $t->integer('category_id')->nullable(); $t->integer('country_id')->nullable(); $t->string('member_id_number')->nullable();
             $t->string('firstname')->nullable(); $t->string('middlename')->nullable(); $t->string('lastname')->nullable(); $t->string('personal_email')->nullable(); $t->string('phone_number')->nullable();

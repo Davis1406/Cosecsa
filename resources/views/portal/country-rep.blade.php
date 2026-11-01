@@ -15,6 +15,21 @@
       @foreach($countries as $c)
         <h4 class="mb-3" style="color:#2d2d2d;"><i class="fas fa-globe-africa mr-2" style="color:#a02626;"></i>{{ $c->country_name }}</h4>
 
+        @if($c->service)
+          <div class="portal-card">
+            <div class="portal-card-head"><i class="fas fa-landmark"></i> My Council service</div>
+            <div class="portal-card-body">
+              <dl class="portal-kv">
+                @if($c->service->committee)<dt>Committee</dt><dd>{{ $c->service->committee }}</dd>@endif
+                @if($c->service->from)
+                  <dt>Years on Council</dt>
+                  <dd>{{ $c->service->from }} – {{ $c->service->to ?: 'ongoing' }}@if($c->service->to && $c->service->to >= (int) date('Y')) <span class="portal-pill ok">until {{ $c->service->to }}</span>@elseif($c->service->to) <span class="portal-pill">ended</span>@endif</dd>
+                @endif
+              </dl>
+            </div>
+          </div>
+        @endif
+
         <div class="row">
           @foreach([
             ['Trainees in training', $c->counts['trainees_active'], 'fa-user-graduate'],

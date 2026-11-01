@@ -787,6 +787,37 @@ body.dark-mode .admin-action-bar span[style*="a02626"] { color:#f48a8a !importan
                             </span>
                         </div>
 
+                        <p class="sect-div">COSECSA Council</p>
+                        <small class="text-muted d-block mb-2">Only for Fellows who have served on the Council. Leave "To" blank while they are still serving.</small>
+                        <div class="field-row"><span class="field-lbl">Committee</span>
+                            <span class="field-val ie-field" data-ie="council_committee" data-ie-type="select"
+                                  data-ie-value="{{ $fellow->council_committee ?? '' }}"
+                                  data-ie-options='{"":"— none —","ECC":"ECC","ESRC":"ESRC","FGPC":"FGPC"}'
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->council_committee ?: '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit committee"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">On Council From</span>
+                            <span class="field-val ie-field" data-ie="council_from" data-ie-type="number"
+                                  data-ie-value="{{ $fellow->council_from ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->council_from ?: '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit on council from"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <div class="field-row"><span class="field-lbl">On Council To</span>
+                            <span class="field-val ie-field" data-ie="council_to" data-ie-type="number"
+                                  data-ie-value="{{ $fellow->council_to ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $fellow->council_to ?: (($fellow->council_from ?? null) ? 'Ongoing' : '—') }}</span>
+                                <button class="ie-pencil" type="button" title="Edit on council to"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+
                         <p class="sect-div">Academic Timeline</p>
                         <div class="field-row"><span class="field-lbl">Intake / Admission Year</span>
                             <span class="field-val ie-field" data-ie="admission_year" data-ie-type="number"
