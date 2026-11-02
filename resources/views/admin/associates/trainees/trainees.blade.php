@@ -217,6 +217,14 @@ $(document).ready(function () {
             var adm = String(row.admission_year || '');
             var res = String(row.resume_year    || '');
             if (checkedAdm.indexOf(adm) === -1 && checkedAdm.indexOf(res) === -1) return false;
+        } else {
+            // Default view: intakes after the current year (e.g. 2027 while it is still 2026) are not counted
+            // until the year turns, as on Intake Reports. Ticking that year in Admission Year shows them.
+            var thisYear = new Date().getFullYear();
+            var intakeYears = [row.admission_year, row.resume_year]
+                .map(function (y) { return parseInt(y, 10); })
+                .filter(function (y) { return !isNaN(y); });
+            if (intakeYears.length && Math.min.apply(null, intakeYears) > thisYear) return false;
         }
         return true;
     });
