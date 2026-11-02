@@ -7,6 +7,7 @@
 ### Changed (2026-11-02) — Trainees list: next year's intake is not counted until the year turns
 - `admin/associates/trainees/trainees` now hides trainees whose intake year (admission year, or resume year if that is earlier) is after the current year, as Intake Reports already does. Example: the 2027 intake stays out of the list and its counts until 2027.
 - Tick the year (e.g. 2027) in the **Admission Year** filter to see them. "Clear All" returns to the default view. No API change.
+- A note beside the count says how many are held back ("25 trainees with a 2027+ intake not counted until the year turns") with an **include** link, so the totals reconcile (e.g. all statuses = 2,147 once included).
 
 ### Added (2026-11-01) — Fellows: COSECSA Council service (committee, years served)
 - Source: `COSECSA COUNCIL - YEARS SERVED SI Edits.xlsx` (61 Council members, all of whom are Fellows). Each fellow now has **Council committee** (ECC / ESRC / FGPC) and **On Council from / to** (to empty = ongoing). How they joined the Council is the fellow's own Fellowship Type, so it is not stored twice.

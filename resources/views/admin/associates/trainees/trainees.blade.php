@@ -90,7 +90,7 @@
                                 <button id="btnClearFilters" class="btn btn-sm btn-outline-secondary">
                                     <i class="fas fa-times mr-1"></i>Clear All
                                 </button>
-                                <small class="text-muted ml-auto" id="filteredCount"></small>
+                                <small class="text-muted ml-auto"><span id="futureNote" class="mr-3"></span><span id="filteredCount"></span></small>
                             </div>
                         </div>
                     </div>
@@ -158,16 +158,28 @@ $(document).ready(function () {
 
     // ── Checkbox filter state: { filterId: Set of checked values } ────────────
     var filterState = {};
+    var showFuture = false;   // true = include intakes after the current year
+    var hiddenFuture = {};    // dataIndex => true, rows hidden only by the future-intake rule (re-set on every filter run)
 
     function getChecked(filterId) {
         return $('.chk-option[data-filter="' + filterId + '"]:checked')
                .map(function () { return this.value; }).get();
     }
 
+    // Counted while DataTables filters, so it covers the same rows the table is showing.
+    $(document).on('draw.dt', '#traineestable', function () {
+        var nHidden = Object.keys(hiddenFuture).length;
+        $('#futureNote').html(showFuture
+            ? 'Including intakes after ' + new Date().getFullYear() + ' &middot; <a href="#" id="toggleFuture">hide them</a>'
+            : (nHidden ? nHidden + ' trainee' + (nHidden > 1 ? 's' : '') + ' with a ' + (new Date().getFullYear() + 1)
+                + '+ intake not counted until the year turns &middot; <a href="#" id="toggleFuture">include</a>' : ''));
+    });
+
     function redraw() {
         var dt = $('#traineestable').DataTable();
         dt.draw();
         var info = dt.page.info();
+
         $('#filteredCount').text(
             info.recordsDisplay < info.recordsTotal
                 ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal : ''
@@ -187,6 +199,7 @@ $(document).ready(function () {
     // ── DataTable custom search ───────────────────────────────────────────────
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, row) {
         if (settings.nTable.id !== 'traineestable') return true;
+        delete hiddenFuture[dataIndex];
         var filters  = [
             { id: 'filterCountry',       val: String(row.country_name   || '') },
             { id: 'filterProgramme',     val: String(row.programme_name || '') },
@@ -217,14 +230,14 @@ $(document).ready(function () {
             var adm = String(row.admission_year || '');
             var res = String(row.resume_year    || '');
             if (checkedAdm.indexOf(adm) === -1 && checkedAdm.indexOf(res) === -1) return false;
-        } else {
+        } else if (!showFuture) {
             // Default view: intakes after the current year (e.g. 2027 while it is still 2026) are not counted
             // until the year turns, as on Intake Reports. Ticking that year in Admission Year shows them.
             var thisYear = new Date().getFullYear();
             var intakeYears = [row.admission_year, row.resume_year]
                 .map(function (y) { return parseInt(y, 10); })
                 .filter(function (y) { return !isNaN(y); });
-            if (intakeYears.length && Math.min.apply(null, intakeYears) > thisYear) return false;
+            if (intakeYears.length && Math.min.apply(null, intakeYears) > thisYear) { hiddenFuture[dataIndex] = true; return false; }
         }
         return true;
     });
@@ -280,10 +293,17 @@ $(document).ready(function () {
         redraw();
     });
 
+    $(document).on('click', '#toggleFuture', function (e) {
+        e.preventDefault();
+        showFuture = !showFuture;
+        redraw();
+    });
+
     // ── Clear All ─────────────────────────────────────────────────────────────
     $('#btnClearFilters').on('click', function () {
         $('.chk-option').prop('checked', false);
         $('.chk-badge').hide();
+        showFuture = false;
         redraw();
         $('#filteredCount').text('');
     });
