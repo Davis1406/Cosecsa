@@ -224,6 +224,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::get('admin/draft-emails/edit/{id}', [DraftEmailsController::class,'edit']);
     Route::post('admin/draft-emails/edit/{id}', [DraftEmailsController::class,'update']);
     Route::get('admin/draft-emails/delete/{id}', [DraftEmailsController::class,'delete']);
+    Route::get('admin/draft-emails/{id}/review', [DraftEmailsController::class,'review']);
     Route::post('admin/draft-emails/{id}/send-now', [DraftEmailsController::class,'sendNow']);
     Route::post('admin/hospital/{id}/programmes', [HospitalController::class,'addProgramme']);
     Route::post('admin/hospital/{id}/quick-type', [HospitalController::class,'quickUpdateType']);

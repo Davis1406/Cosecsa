@@ -94,6 +94,18 @@ class DraftEmailsController extends Controller
 
     // Manual "Send Now" — sends immediately to whatever recipient_group is
     // configured, no automation condition checked.
+    // Review & Send panel: who would receive the draft and how far a send has
+    // got (read-only; JSON for the modal on the edit page).
+    public function review($id)
+    {
+        $response = $this->api->get("admin/draft-emails/{$id}/review");
+
+        return response()->json(
+            $response->json() ?? ['message' => 'Could not load the recipients.'],
+            $response->status() ?: 502
+        );
+    }
+
     public function sendNow($id)
     {
         $response = $this->api->post("admin/draft-emails/{$id}/send-now");

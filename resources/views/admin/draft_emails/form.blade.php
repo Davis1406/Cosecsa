@@ -179,16 +179,16 @@
                             </form>
 
                             @if($draftEmail)
-                            <form method="POST" action="{{ url('admin/draft-emails/'.$draftEmail->id.'/send-now') }}"
-                                  onsubmit="return confirm('Send this draft to every recipient in the selected group right now?');" class="mt-3 pt-3 border-top">
-                                @csrf
-                                <button type="submit" class="btn btn-outline-danger btn-sm" {{ $recipientGroup === '' ? 'disabled' : '' }}>
-                                    <i class="fas fa-paper-plane mr-1"></i> Send Now to {{ $recipientGroup === 'country_reps' ? 'all Country Representatives' : 'recipient group' }}
+                            <div class="mt-3 pt-3 border-top">
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="reviewBtn" {{ $recipientGroup === '' ? 'disabled' : '' }}>
+                                    <i class="fas fa-users mr-1"></i> Review &amp; Send&hellip;
                                 </button>
                                 @if($recipientGroup === '')
                                 <small class="text-muted d-block mt-1">Select a recipient group above and save first.</small>
+                                @else
+                                <small class="text-muted d-block mt-1">Shows exactly who would receive it, then sends.</small>
                                 @endif
-                            </form>
+                            </div>
                             @endif
                         </div>
                     </div>
@@ -222,6 +222,62 @@
         </div>
     </section>
 </div>
+
+@if($draftEmail)
+<div class="modal fade" id="reviewModal" tabindex="-1" role="dialog" aria-labelledby="reviewModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content" style="border-radius:12px;">
+            <div class="modal-header" style="border-bottom:3px solid #FEC503;">
+                <h5 class="modal-title" id="reviewModalTitle"><i class="fas fa-users mr-2 text-danger"></i>Review before sending</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div id="rvLoading" class="text-center text-muted py-5"><i class="fas fa-spinner fa-spin mr-2"></i>Loading recipients&hellip;</div>
+                <div id="rvError" class="alert alert-danger d-none"></div>
+                <div id="rvContent" class="d-none">
+                    <div class="small text-muted mb-2">Reviews the last <strong>saved</strong> version of this draft. Save any edits first.</div>
+
+                    <div class="alert alert-info d-none" id="rvRunning"></div>
+
+                    <div class="row text-center mb-3" id="rvCards"></div>
+
+                    <div class="alert alert-warning d-none" id="rvCredWarn">
+                        <i class="fas fa-key mr-1"></i>
+                        <strong>This sets a new password for each person below.</strong> It replaces their current one
+                        (it also changes their Fellow login), and it cannot be undone in bulk. They receive it in this email.
+                    </div>
+
+                    <div class="small mb-2" id="rvLeftOut"></div>
+
+                    <input type="search" id="rvSearch" class="form-control form-control-sm mb-2" placeholder="Search name, email, country or username&hellip;">
+                    <div class="table-responsive border rounded" style="max-height:340px; overflow:auto;">
+                        <table class="table table-sm table-hover mb-0" id="rvTable">
+                            <thead class="thead-light" style="position:sticky; top:0;">
+                                <tr><th style="width:44px;">#</th><th>Name</th><th>Email</th><th>Country</th><th class="rv-cred d-none">Username</th><th style="width:110px;">Status</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="small text-muted mt-1" id="rvShown"></div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <div>
+                    <button type="button" class="btn btn-light border btn-sm" id="rvRefresh"><i class="fas fa-sync-alt mr-1"></i>Refresh</button>
+                </div>
+                <div class="d-flex align-items-center">
+                    <button type="button" class="btn btn-light border mr-2" data-dismiss="modal">Close</button>
+                    <form method="POST" action="{{ url('admin/draft-emails/'.$draftEmail->id.'/send-now') }}" id="rvSendForm" class="m-0">
+                        @csrf
+                        <button type="submit" class="btn btn-danger" id="rvSendBtn" disabled><i class="fas fa-paper-plane mr-1"></i><span>Send</span></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 @endsection
 
 @push('styles')
@@ -457,6 +513,121 @@ $(function () {
     }
 
     updatePreview(); // Initial render
+
+    // ── Review & Send ────────────────────────────────────────────────────────
+    @if($draftEmail)
+    (function () {
+        var url = @json(url('admin/draft-emails/'.$draftEmail->id.'/review'));
+        var timer = null, last = null;
+
+        function num(n) { return Number(n || 0).toLocaleString(); }
+        function card(value, label, tone) {
+            return '<div class="col-6 col-md-3 mb-2"><div class="border rounded py-2" style="background:#fafafa;">'
+                 + '<div style="font-size:1.6rem; font-weight:700; line-height:1.1; color:' + (tone || '#222') + ';">' + value + '</div>'
+                 + '<div class="small text-muted">' + label + '</div></div></div>';
+        }
+
+        function render(d) {
+            last = d;
+            var cards = card(num(d.will_send), 'will receive it', '#a02626')
+                      + card(num(d.total), 'in the ' + esc(d.group_label) + ' group');
+            if (d.credentials) {
+                cards += card(num(d.sent_last_24h), 'already sent (last 24 h)', d.sent_last_24h ? '#198754' : '#222');
+                cards += card('~' + d.estimated_minutes + ' min', 'to send');
+            } else {
+                cards += card(num(d.sent_last_24h), 'sent in the last 24 h');
+            }
+            $('#rvCards').html(cards);
+
+            $('#rvCredWarn').toggleClass('d-none', !d.credentials);
+            $('.rv-cred').toggleClass('d-none', !d.credentials);
+
+            var left = [];
+            if (d.username_types) {
+                left.push('<strong>Usernames:</strong> ' + Object.keys(d.username_types).map(function (k) {
+                    return num(d.username_types[k]) + ' &times; ' + esc(k);
+                }).join(' &middot; '));
+            }
+            if (d.left_out) {
+                left.push('<strong>Not included:</strong> ' + num(d.left_out.not_confirmed) + ' active examiners not confirmed for '
+                    + esc(d.left_out.year || '') + ' &middot; ' + num(d.left_out.not_active) + ' inactive/deceased'
+                    + (d.left_out.confirmed_no_email ? ' &middot; ' + num(d.left_out.confirmed_no_email) + ' confirmed without an email' : ''));
+            }
+            $('#rvLeftOut').html(left.join('<br>'));
+
+            if (d.running) {
+                $('#rvRunning').removeClass('d-none').html('<i class="fas fa-spinner fa-spin mr-1"></i><strong>Sending in progress</strong> (started ' + esc(d.running_since || '') + '): '
+                    + num(d.sent_last_24h) + ' of ' + num(d.total) + ' sent. This page refreshes itself.');
+            } else {
+                $('#rvRunning').addClass('d-none');
+            }
+
+            var rows = d.recipients.map(function (r, i) {
+                var status = r.sent
+                    ? '<span class="badge badge-success">Sent</span>'
+                    : (d.credentials ? '<span class="badge badge-light border">Will send</span>' : '<span class="badge badge-light border">Will send</span>');
+                if (r.sent && !d.credentials) { status = '<span class="badge badge-secondary">Sent before</span>'; }
+                var user = d.credentials
+                    ? '<td><code>' + esc(r.username) + '</code> <span class="text-muted small">' + esc(r.username_label) + '</span></td>' : '';
+                return '<tr data-s="' + esc((r.name + ' ' + r.email + ' ' + (r.country || '') + ' ' + (r.username || '')).toLowerCase()) + '">'
+                     + '<td class="text-muted">' + (i + 1) + '</td><td>' + esc(r.name) + '</td><td>' + esc(r.email) + '</td><td>' + esc(r.country || '') + '</td>'
+                     + user + '<td>' + status + '</td></tr>';
+            });
+            $('#rvTable tbody').html(rows.join(''));
+            filter();
+
+            var canSend = !d.running && d.will_send > 0;
+            $('#rvSendBtn').prop('disabled', !canSend).find('span').text(
+                d.running ? 'Sending\u2026' : (d.will_send > 0 ? 'Send to ' + num(d.will_send) + ' ' + (d.will_send === 1 ? 'person' : 'people') : 'Nothing to send')
+            );
+
+            $('#rvLoading').addClass('d-none');
+            $('#rvError').addClass('d-none');
+            $('#rvContent').removeClass('d-none');
+
+            clearTimeout(timer);
+            if (d.running && $('#reviewModal').hasClass('show')) { timer = setTimeout(load, 5000); }
+        }
+
+        function filter() {
+            var q = ($('#rvSearch').val() || '').trim().toLowerCase(), shown = 0, total = 0;
+            $('#rvTable tbody tr').each(function () {
+                total++;
+                var ok = !q || $(this).data('s').toString().indexOf(q) !== -1;
+                $(this).toggle(ok);
+                if (ok) shown++;
+            });
+            $('#rvShown').text(q ? ('Showing ' + shown + ' of ' + total) : (total + ' recipients'));
+        }
+
+        function load() {
+            $.getJSON(url).done(render).fail(function (xhr) {
+                $('#rvLoading').addClass('d-none');
+                $('#rvContent').addClass('d-none');
+                $('#rvError').removeClass('d-none').text((xhr.responseJSON && xhr.responseJSON.message) || 'Could not load the recipients. Please try again.');
+            });
+        }
+
+        $('#reviewBtn').on('click', function () {
+            $('#rvLoading').removeClass('d-none');
+            $('#rvContent, #rvError').addClass('d-none');
+            $('#reviewModal').modal('show');
+            load();
+        });
+        $('#rvRefresh').on('click', load);
+        $('#rvSearch').on('input', filter);
+        $('#reviewModal').on('hidden.bs.modal', function () { clearTimeout(timer); });
+
+        $('#rvSendForm').on('submit', function () {
+            if (!last) { return false; }
+            var msg = last.credentials
+                ? 'Send to ' + num(last.will_send) + ' people now?\n\nThis sets a NEW password for each of them and emails it. It cannot be undone in bulk.'
+                : 'Send this draft to ' + num(last.will_send) + ' people now?';
+            return confirm(msg);
+        });
+    })();
+    @endif
+
 });
 </script>
 @endpush

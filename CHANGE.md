@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added (2026-11-03) — Draft Emails: Review & Send panel
+- On `admin/draft-emails/edit/{id}` the **Send Now** button is now **Review & Send…**, which opens a panel (`GET admin/draft-emails/{id}/review`, JSON from the API) showing, before anything is sent: how many people will receive it, how many are in the group and already sent in the last 24 h, the estimated time, the username breakdown (Fellowship No / Examiner ID / Email) for credential drafts, who is left out and why (Examiners: not confirmed for the year, inactive/deceased, confirmed without an email), and a searchable table of every recipient with their username and Sent / Will send status.
+- For a credential draft the panel warns that sending sets a new password for each person; the **Send to N people** button sits in the panel (disabled while a send is running or when nobody is left) and asks for a final confirmation. While a send is running the panel shows "X of N sent" and refreshes itself every 5 seconds.
+- Files: `app/Http/Controllers/DraftEmailsController.php`, `routes/web.php`, `resources/views/admin/draft_emails/form.blade.php`. Deploy the API first.
+
 ### Changed (2026-11-03) — Draft Emails: `{{username_label}}` names the username
 - The Live Preview fills `{{username_label}}` with the sample "Fellowship No". Sending fills it per examiner (see the API `CHANGES.md`): Fellowship No, Examiner ID or Email, whichever the username is.
 
