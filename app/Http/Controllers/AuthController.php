@@ -60,10 +60,16 @@ class AuthController extends Controller
 
             Auth::login($user, $remember);
         } elseif ($role == 9) {
-            // Examiner login — by email or name
-            $user = User::where(function ($query) use ($inputValue) {
+            // Examiner login — by email, name, or Examiner ID (as in the mobile
+            // app). An Examiner ID held by more than one examiner is ignored, so
+            // nobody can land in someone else's account.
+            $examinerIdUsers = DB::table('examiners')->where('examiner_id', $inputValue)->pluck('user_id')->unique();
+            $user = User::where(function ($query) use ($inputValue, $examinerIdUsers) {
                     $query->where('email', $inputValue)
                           ->orWhere('name', $inputValue);
+                    if ($examinerIdUsers->count() === 1) {
+                        $query->orWhere('id', $examinerIdUsers->first());
+                    }
                 })
                 ->whereHas('roles', function ($query) {
                     $query->where('role_type', 9);

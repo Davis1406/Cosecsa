@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-03) — Examiner login accepts the Examiner ID
+- The web login (role **Examiner**) now also accepts the **Examiner ID** (e.g. EXA271) as the username, as the Examiner mobile app does, next to email, name and Fellow ID (`AuthController@AuthLogin`). An Examiner ID held by more than one examiner is ignored, so nobody can sign in as someone else. Needed for the "Examiner Portal Access" Draft Email, which gives each confirmed examiner their login name and a new password.
+
 ### Changed (2026-11-02) — Trainees list: next year's intake is not counted until the year turns
 - `admin/associates/trainees/trainees` now hides trainees whose intake year (admission year, or resume year if that is earlier) is after the current year, as Intake Reports already does. Example: the 2027 intake stays out of the list and its counts until 2027.
 - Tick the year (e.g. 2027) in the **Admission Year** filter to see them. "Clear All" returns to the default view. No API change.
