@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-03) — Draft Emails: the preview shows sample credentials
+- In `admin/draft-emails/edit/{id}` the Live Preview now fills `{{username}}` and `{{password}}` with the samples "0735" and "Kx7mP3", as it already does for `[Name]` and `{{number}}`, so an examiner credentials email can be checked before sending. Nothing is sent and no password is touched by the preview. The helper text explains the two placeholders.
+
 ### Changed (2026-11-03) — Examiner login accepts the Examiner ID
 - The web login (role **Examiner**) now also accepts the **Examiner ID** (e.g. EXA271) as the username, as the Examiner mobile app does, next to email, name and Fellow ID (`AuthController@AuthLogin`). An Examiner ID held by more than one examiner is ignored, so nobody can sign in as someone else. Needed for the "Examiner Portal Access" Draft Email, which gives each confirmed examiner their login name and a new password.
 

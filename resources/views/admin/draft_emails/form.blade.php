@@ -15,7 +15,7 @@
                             <i class="fas {{ $draftEmail ? 'fa-edit' : 'fa-paper-plane' }} mr-2"></i>
                             {{ $draftEmail ? 'Edit Draft Email' : 'New Draft Email' }}
                         </h4>
-                        <div class="meta">Use <code>[Name]</code> to personalise (preview shows "Dr. Example") and <code>@{{number}}</code> for the pending-application count (preview shows "25"). Emails are sent from your account, so replies come back to you.</div>
+                        <div class="meta">Use <code>[Name]</code> to personalise (preview shows "Dr. Example") and <code>@{{number}}</code> for the pending-application count (preview shows "25"). On an Examiners draft, <code>@{{username}}</code> and <code>@{{password}}</code> put in the examiner login name and a new password (preview shows "0735" and "Kx7mP3"; Send Now then sets a real new password for every recipient). Emails are sent from your account, so replies come back to you.</div>
                     </div>
                     <a href="{{ url('admin/draft-emails') }}" class="btn btn-new">
                         <i class="fas fa-arrow-left mr-1"></i> Back to Draft Emails
@@ -416,7 +416,9 @@ $(function () {
         var subject = ($('#subjectInput').val() || '(no subject)').replace(/\[Name\]/g, 'Dr. Example');
         var body = $('#bodyEditor').summernote('code')
                         .replace(/\[Name\]/g, '<strong>Dr. Example</strong>')
-                        .replace(/\{\{number\}\}/g, '<strong>25</strong>');
+                        .replace(/\{\{number\}\}/g, '<strong>25</strong>')
+                        .replace(/\{\{username\}\}/g, '0735')
+                        .replace(/\{\{password\}\}/g, 'Kx7mP3');
 
         var mailHead = `
           <div style="max-width:580px; margin:0 auto; background:#fff; border:1px solid #e6e6e6;
