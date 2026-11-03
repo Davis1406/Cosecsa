@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-03) — Draft Emails: `{{username_label}}` names the username
+- The Live Preview fills `{{username_label}}` with the sample "Fellowship No". Sending fills it per examiner (see the API `CHANGES.md`): Fellowship No, Examiner ID or Email, whichever the username is.
+
 ### Changed (2026-11-03) — Draft Emails: the preview shows sample credentials
 - In `admin/draft-emails/edit/{id}` the Live Preview now fills `{{username}}` and `{{password}}` with the samples "0735" and "Kx7mP3", as it already does for `[Name]` and `{{number}}`, so an examiner credentials email can be checked before sending. Nothing is sent and no password is touched by the preview. The helper text explains the two placeholders.
 
