@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-04) — Salesforce Applications list: Entry Number instead of PEN
+- `admin/salesforce` (e.g. `?tile=Complete`): the **PEN** column is now **Entry Number** and shows the entry number of the linked trainee (e.g. `KE/2027/05`) rather than Salesforce's own PEN (e.g. `KE/2026/3658` for the same person). Applications with no trainee record yet still show Salesforce's number, greyed with a tooltip saying so. The search box also finds the trainee entry number and the PEN. The application detail page is unchanged (it already shows the trainee's Entry Number). Deploy the API first.
+
 ### Added (2026-11-03) — Draft Emails: Review & Send panel
 - On `admin/draft-emails/edit/{id}` the **Send Now** button is now **Review & Send…**, which opens a panel (`GET admin/draft-emails/{id}/review`, JSON from the API) showing, before anything is sent: how many people will receive it, how many are in the group and already sent in the last 24 h, the estimated time, the username breakdown (Fellowship No / Examiner ID / Email) for credential drafts, who is left out and why (Examiners: not confirmed for the year, inactive/deceased, confirmed without an email), and a searchable table of every recipient with their username and Sent / Will send status.
 - For a credential draft the panel warns that sending sets a new password for each person; the **Send to N people** button sits in the panel (disabled while a send is running or when nobody is left) and asks for a final confirmation. While a send is running the panel shows "X of N sent" and refreshes itself every 5 seconds.

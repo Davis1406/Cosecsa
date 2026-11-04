@@ -99,7 +99,7 @@
                         @if(!empty($group))<input type="hidden" name="group" value="{{ $group }}">@endif
                         <div style="flex:1;min-width:200px;">
                             <label class="d-block mb-1 small font-weight-bold text-muted">Search</label>
-                            <input type="text" name="q" value="{{ $search }}" placeholder="Name, email, PEN..."
+                            <input type="text" name="q" value="{{ $search }}" placeholder="Name, email, entry number..."
                                    class="form-control form-control-sm" onchange="this.form.submit()">
                         </div>
                         <div>
@@ -292,7 +292,7 @@
                                     <th>Programme</th>
                                     <th>Level</th>
                                     <th>Country</th>
-                                    <th>PEN</th>
+                                    <th>Entry Number</th>
                                     <th>Date Applied</th>
                                     <th>Stage</th>
                                     <th class="no-export">View</th>
@@ -320,7 +320,18 @@
                                     <td>{{ $app->programme_name ?: '—' }}</td>
                                     <td>{{ $app->application_level ?: '—' }}</td>
                                     <td>{{ $app->country ?: '—' }}</td>
-                                    <td>{{ $stageLower === 'complete' ? ($app->pen ?: $app->entry_number ?: '—') : '—' }}</td>
+                                    <td>
+                                        @if($stageLower !== 'complete')
+                                            —
+                                        @elseif(!empty($app->trainee_entry_number))
+                                            {{ $app->trainee_entry_number }}
+                                        @elseif($app->pen ?: $app->entry_number)
+                                            {{-- No trainee record yet: Salesforce's own number, which can differ from the entry number the MIS issues --}}
+                                            <span class="text-muted" title="Salesforce PEN. No trainee record yet, so the MIS entry number has not been issued.">{{ $app->pen ?: $app->entry_number }}</span>
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
                                     <td data-order="{{ $app->date_of_application }}">
                                         {{ $app->date_of_application ? \Carbon\Carbon::parse($app->date_of_application)->format('d M Y') : '—' }}
                                     </td>
