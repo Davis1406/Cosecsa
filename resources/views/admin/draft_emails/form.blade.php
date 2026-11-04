@@ -625,9 +625,10 @@ $(function () {
                 }).join(' &middot; '));
             }
             if (d.left_out) {
-                left.push('<strong>Not included:</strong> ' + num(d.left_out.not_confirmed) + ' active examiners not confirmed for '
-                    + esc(d.left_out.year || '') + ' &middot; ' + num(d.left_out.not_active) + ' inactive/deceased'
-                    + (d.left_out.confirmed_no_email ? ' &middot; ' + num(d.left_out.confirmed_no_email) + ' confirmed without an email' : ''));
+                left.push('<strong>Not included:</strong> ' + num(d.left_out.not_available) + ' answered Not Available for '
+                    + esc(d.left_out.year || '') + ' &middot; ' + num(d.left_out.not_confirmed) + ' active examiners with no availability given'
+                    + ' &middot; ' + num(d.left_out.not_active) + ' inactive/deceased'
+                    + (d.left_out.confirmed_no_email ? ' &middot; ' + num(d.left_out.confirmed_no_email) + ' available but without an email' : ''));
             }
             $('#rvLeftOut').html(left.join('<br>'));
 
