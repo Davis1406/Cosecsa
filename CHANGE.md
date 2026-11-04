@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed (2026-11-04) — Draft Emails: "Server Error" when sending a credentials email
+- Send in Review & Send failed with "Server Error" because the API could not start its background send (see the API `CHANGES.md`). Send now queues the send and the server starts it within a minute; the panel shows **Queued**, then "x of N sent". Deploy the API first.
+
 ### Changed (2026-11-04) — Draft Emails: examiners who answered "Not Available" are not sent a login
 - The Examiners credentials draft now goes only to examiners who are available for the year: availability given (MCS, FCS, tentative or both) and not "Not Available". The Review & Send panel's "Not included" line now shows how many answered Not Available, separately from those with no availability given. Deploy the API first.
 

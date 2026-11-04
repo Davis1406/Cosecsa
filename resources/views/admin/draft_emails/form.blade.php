@@ -633,7 +633,9 @@ $(function () {
             $('#rvLeftOut').html(left.join('<br>'));
 
             if (d.running) {
-                $('#rvRunning').removeClass('d-none').html('<i class="fas fa-spinner fa-spin mr-1"></i><strong>Sending in progress</strong> (started ' + esc(d.running_since || '') + '): '
+                $('#rvRunning').removeClass('d-none').html(d.queued && !d.sent_last_24h
+                    ? '<i class="fas fa-hourglass-half mr-1"></i><strong>Queued</strong> (since ' + esc(d.running_since || '') + '): sending starts within a minute. This page refreshes itself.'
+                    : '<i class="fas fa-spinner fa-spin mr-1"></i><strong>Sending in progress</strong> (started ' + esc(d.running_since || '') + '): '
                     + num(d.sent_last_24h) + ' of ' + num(d.total) + ' sent. This page refreshes itself.');
             } else {
                 $('#rvRunning').addClass('d-none');
