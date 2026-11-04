@@ -243,17 +243,35 @@
 
                     <div class="alert alert-warning d-none" id="rvCredWarn">
                         <i class="fas fa-key mr-1"></i>
-                        <strong>This sets a new password for each person below.</strong> It replaces their current one
+                        <strong>Sending sets a password for each person below.</strong> It replaces their current one
                         (it also changes their Fellow login), and it cannot be undone in bulk. They receive it in this email.
                     </div>
 
                     <div class="small mb-2" id="rvLeftOut"></div>
 
+                    <div class="alert alert-secondary d-none py-2" id="rvPwBox">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between">
+                            <div class="mr-3 mb-1">
+                                <i class="fas fa-lock mr-1"></i><strong>Passwords</strong> <span class="small text-muted">(Super Admin only)</span>
+                                <div class="small" id="rvPwState"></div>
+                            </div>
+                            <div class="mb-1">
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="rvPrepare"><i class="fas fa-key mr-1"></i><span>Prepare passwords</span></button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="rvRegen" title="Replace every unsent prepared password with a new one"><i class="fas fa-redo mr-1"></i>Regenerate all</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="rvPwToggle" aria-pressed="false"><i class="fas fa-eye mr-1"></i><span>Show passwords</span></button>
+                            </div>
+                        </div>
+                        <div class="small text-muted mt-1">
+                            Preparing only makes and stores the passwords (encrypted): nothing is emailed and no account changes until you send, and the send uses exactly these.
+                            Showing them is logged. A password an examiner has since changed no longer applies.
+                        </div>
+                    </div>
+
                     <input type="search" id="rvSearch" class="form-control form-control-sm mb-2" placeholder="Search name, email, country or username&hellip;">
                     <div class="table-responsive border rounded" style="max-height:340px; overflow:auto;">
                         <table class="table table-sm table-hover mb-0" id="rvTable">
                             <thead class="thead-light" style="position:sticky; top:0;">
-                                <tr><th style="width:44px;">#</th><th>Name</th><th>Email</th><th>Country</th><th class="rv-cred d-none">Username</th><th style="width:110px;">Status</th></tr>
+                                <tr><th style="width:44px;">#</th><th>Name</th><th>Email</th><th>Country</th><th class="rv-cred d-none">Username</th><th class="rv-pw d-none">Password</th><th style="width:110px;">Status</th></tr>
                             </thead>
                             <tbody></tbody>
                         </table>
@@ -518,7 +536,7 @@ $(function () {
     @if($draftEmail)
     (function () {
         var url = @json(url('admin/draft-emails/'.$draftEmail->id.'/review'));
-        var timer = null, last = null;
+        var timer = null, last = null, pw = null; // pw: email -> {username, password} while passwords are shown
 
         function num(n) { return Number(n || 0).toLocaleString(); }
         function card(value, label, tone) {
@@ -541,6 +559,18 @@ $(function () {
 
             $('#rvCredWarn').toggleClass('d-none', !d.credentials);
             $('.rv-cred').toggleClass('d-none', !d.credentials);
+            $('.rv-pw, #rvPwBox').toggleClass('d-none', !d.can_see_passwords);
+            if (d.can_see_passwords) {
+                var todo = d.will_send;
+                $('#rvPwState').html(d.prepared >= todo && todo > 0
+                    ? '<span class="text-success"><i class="fas fa-check mr-1"></i>' + num(d.prepared) + ' of ' + num(todo) + ' prepared</span> &middot; ready to send'
+                    : (d.prepared > 0 ? num(d.prepared) + ' of ' + num(todo) + ' prepared &middot; the rest get a new one when sent'
+                                      : 'None prepared yet &middot; each gets a new one when sent'));
+                $('#rvPrepare, #rvRegen').prop('disabled', !!d.running);
+                $('#rvPrepare').toggleClass('d-none', d.prepared >= todo && todo > 0).find('span').text(d.prepared > 0 ? 'Prepare the rest' : 'Prepare passwords');
+                $('#rvRegen').toggleClass('d-none', !(d.prepared > 0));
+                $('#rvPwToggle').toggleClass('d-none', !(d.prepared > 0 || d.sent_last_24h > 0));
+            }
 
             var left = [];
             if (d.username_types) {
@@ -569,9 +599,15 @@ $(function () {
                 if (r.sent && !d.credentials) { status = '<span class="badge badge-secondary">Sent before</span>'; }
                 var user = d.credentials
                     ? '<td><code>' + esc(r.username) + '</code> <span class="text-muted small">' + esc(r.username_label) + '</span></td>' : '';
+                var pass = '';
+                if (d.can_see_passwords) {
+                    var shown = pw && pw[r.email] && pw[r.email].password;
+                    pass = '<td>' + (!r.has_password ? '<span class="text-muted small">' + (r.sent ? 'not kept' : 'not prepared') + '</span>'
+                        : (shown ? '<code class="rv-pwval">' + esc(shown) + '</code>' : '<span class="text-muted" style="letter-spacing:2px;">&bull;&bull;&bull;&bull;&bull;&bull;</span>')) + '</td>';
+                }
                 return '<tr data-s="' + esc((r.name + ' ' + r.email + ' ' + (r.country || '') + ' ' + (r.username || '')).toLowerCase()) + '">'
                      + '<td class="text-muted">' + (i + 1) + '</td><td>' + esc(r.name) + '</td><td>' + esc(r.email) + '</td><td>' + esc(r.country || '') + '</td>'
-                     + user + '<td>' + status + '</td></tr>';
+                     + user + pass + '<td>' + status + '</td></tr>';
             });
             $('#rvTable tbody').html(rows.join(''));
             filter();
@@ -613,6 +649,41 @@ $(function () {
             $('#rvContent, #rvError').addClass('d-none');
             $('#reviewModal').modal('show');
             load();
+        });
+        // Show/Hide passwords: they are fetched only when shown and dropped from the page when hidden.
+        function setPwButton(on) {
+            $('#rvPwToggle').attr('aria-pressed', on ? 'true' : 'false').find('span').text(on ? 'Hide passwords' : 'Show passwords')
+                .end().find('i').attr('class', on ? 'fas fa-eye-slash mr-1' : 'fas fa-eye mr-1');
+        }
+        $('#rvPwToggle').on('click', function () {
+            if (pw) { pw = null; setPwButton(false); if (last) render(last); return; }
+            var btn = $(this).prop('disabled', true);
+            $.getJSON(@json(url('admin/draft-emails/'.$draftEmail->id.'/credentials'))).done(function (res) {
+                pw = res.logins || {};
+                setPwButton(true);
+                if (last) render(last);
+            }).fail(function (xhr) {
+                alert((xhr.responseJSON && xhr.responseJSON.message) || 'Could not load the passwords.');
+            }).always(function () { btn.prop('disabled', false); });
+        });
+        $('#reviewModal').on('hidden.bs.modal', function () { pw = null; setPwButton(false); });
+
+        // Prepare: make and store a password for everyone (nothing is emailed), then show the list.
+        function prepare(regenerate) {
+            var btns = $('#rvPrepare, #rvRegen').prop('disabled', true);
+            $.ajax({ method: 'POST', url: @json(url('admin/draft-emails/'.$draftEmail->id.'/prepare-logins')), dataType: 'json',
+                     headers: { 'X-CSRF-TOKEN': @json(csrf_token()) }, data: { regenerate: regenerate ? 1 : 0 } })
+            .done(function (res) {
+                $.getJSON(@json(url('admin/draft-emails/'.$draftEmail->id.'/credentials'))).done(function (c) {
+                    pw = c.logins || {}; setPwButton(true); load();
+                }).fail(function () { load(); });
+            }).fail(function (xhr) {
+                alert((xhr.responseJSON && xhr.responseJSON.message) || 'Could not prepare the passwords.');
+            }).always(function () { btns.prop('disabled', false); });
+        }
+        $('#rvPrepare').on('click', function () { prepare(false); });
+        $('#rvRegen').on('click', function () {
+            if (confirm('Replace every prepared password that has not been sent with a new one?\n\nUse this only if the list you looked at should not be used.')) { prepare(true); }
         });
         $('#rvRefresh').on('click', load);
         $('#rvSearch').on('input', filter);

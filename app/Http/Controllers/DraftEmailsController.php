@@ -106,6 +106,38 @@ class DraftEmailsController extends Controller
         );
     }
 
+    // The emailed logins (username + password) for the Review panel's Password
+    // column. Super Admin only, checked here and again by the API.
+    public function credentials($id)
+    {
+        if (! Auth::user()?->isSuperAdmin()) {
+            return response()->json(['message' => 'Only a Super Admin can see the emailed passwords.'], 403);
+        }
+
+        $response = $this->api->get("admin/draft-emails/{$id}/credentials");
+
+        return response()->json(
+            $response->json() ?? ['message' => 'Could not load the passwords.'],
+            $response->status() ?: 502
+        );
+    }
+
+    // Prepares a password for every recipient before the send (nothing is emailed
+    // or changed). Super Admin only, checked here and again by the API.
+    public function prepareLogins(Request $request, $id)
+    {
+        if (! Auth::user()?->isSuperAdmin()) {
+            return response()->json(['message' => 'Only a Super Admin can prepare the passwords.'], 403);
+        }
+
+        $response = $this->api->post("admin/draft-emails/{$id}/prepare-logins", ['regenerate' => $request->boolean('regenerate')]);
+
+        return response()->json(
+            $response->json() ?? ['message' => 'Could not prepare the passwords.'],
+            $response->status() ?: 502
+        );
+    }
+
     public function sendNow($id)
     {
         $response = $this->api->post("admin/draft-emails/{$id}/send-now");

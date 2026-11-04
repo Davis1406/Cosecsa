@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added (2026-11-04) — Draft Emails: Super Admin prepares and checks the passwords before sending
+- In **Review & Send** for a credential draft (Examiners with `{{password}}`), a Super Admin gets a **Passwords** box: **Prepare passwords** makes a password for everyone (nothing is emailed, no account changes), then **Show passwords / Hide passwords** reveals the **Password** column next to the Username column so the whole list can be checked before sending. The send then uses exactly those passwords. **Prepare the rest** covers recipients added since; **Regenerate all** replaces the unsent ones (asks first).
+- Passwords are hidden by default, fetched only when shown (`GET admin/draft-emails/{id}/credentials`, logged by the API) and dropped from the page on Hide or closing the panel. Other admins see no box and no column. The Send confirmation says how many get a prepared password. After sending, the same list shows what was emailed.
+- Files: `app/Http/Controllers/DraftEmailsController.php` (`credentials`, `prepareLogins`), `routes/web.php`, `resources/views/admin/draft_emails/form.blade.php`. Deploy the API first (it has a migration).
+
 ### Changed (2026-11-04) — Salesforce Applications list: Entry Number instead of PEN
 - `admin/salesforce` (e.g. `?tile=Complete`): the **PEN** column is now **Entry Number** and shows the entry number of the linked trainee (e.g. `KE/2027/05`) rather than Salesforce's own PEN (e.g. `KE/2026/3658` for the same person). Applications with no trainee record yet still show Salesforce's number, greyed with a tooltip saying so. The search box also finds the trainee entry number and the PEN. The application detail page is unchanged (it already shows the trainee's Entry Number). Deploy the API first.
 
