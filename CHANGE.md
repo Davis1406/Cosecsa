@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Added (2026-11-04) — Draft Emails: Super Admin prepares and checks the passwords before sending
+- The Passwords box is a white card with a red edge: a status pill (None prepared / x of N prepared / Ready to send), a solid red **Prepare passwords** button, an outlined **Show/Hide passwords** and a quiet **Regenerate all**; light and dark mode.
 - In **Review & Send** for a credential draft (Examiners with `{{password}}`), a Super Admin gets a **Passwords** box: **Prepare passwords** makes a password for everyone (nothing is emailed, no account changes), then **Show passwords / Hide passwords** reveals the **Password** column next to the Username column so the whole list can be checked before sending. The send then uses exactly those passwords. **Prepare the rest** covers recipients added since; **Regenerate all** replaces the unsent ones (asks first).
 - Passwords are hidden by default, fetched only when shown (`GET admin/draft-emails/{id}/credentials`, logged by the API) and dropped from the page on Hide or closing the panel. Other admins see no box and no column. The Send confirmation says how many get a prepared password. After sending, the same list shows what was emailed.
 - Files: `app/Http/Controllers/DraftEmailsController.php` (`credentials`, `prepareLogins`), `routes/web.php`, `resources/views/admin/draft_emails/form.blade.php`. Deploy the API first (it has a migration).

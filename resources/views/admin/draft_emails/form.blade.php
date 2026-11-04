@@ -249,20 +249,23 @@
 
                     <div class="small mb-2" id="rvLeftOut"></div>
 
-                    <div class="alert alert-secondary d-none py-2" id="rvPwBox">
-                        <div class="d-flex flex-wrap align-items-center justify-content-between">
-                            <div class="mr-3 mb-1">
-                                <i class="fas fa-lock mr-1"></i><strong>Passwords</strong> <span class="small text-muted">(Super Admin only)</span>
-                                <div class="small" id="rvPwState"></div>
+                    <div class="rv-pwbox d-none" id="rvPwBox">
+                        <div class="rv-pwbox-top">
+                            <div class="rv-pwbox-head">
+                                <span class="rv-pwbox-icon"><i class="fas fa-key"></i></span>
+                                <div>
+                                    <div class="rv-pwbox-title">Login passwords <span class="rv-pwbox-tag">Super Admin only</span></div>
+                                    <div id="rvPwState"></div>
+                                </div>
                             </div>
-                            <div class="mb-1">
-                                <button type="button" class="btn btn-outline-danger btn-sm" id="rvPrepare"><i class="fas fa-key mr-1"></i><span>Prepare passwords</span></button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="rvRegen" title="Replace every unsent prepared password with a new one"><i class="fas fa-redo mr-1"></i>Regenerate all</button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="rvPwToggle" aria-pressed="false"><i class="fas fa-eye mr-1"></i><span>Show passwords</span></button>
+                            <div class="rv-pwbox-actions">
+                                <button type="button" class="rv-btn rv-btn-primary" id="rvPrepare"><i class="fas fa-key"></i><span>Prepare passwords</span></button>
+                                <button type="button" class="rv-btn rv-btn-ghost d-none" id="rvPwToggle" aria-pressed="false"><i class="fas fa-eye"></i><span>Show passwords</span></button>
+                                <button type="button" class="rv-btn rv-btn-quiet d-none" id="rvRegen" title="Replace every unsent prepared password with a new one"><i class="fas fa-redo"></i>Regenerate all</button>
                             </div>
                         </div>
-                        <div class="small text-muted mt-1">
-                            Preparing only makes and stores the passwords (encrypted): nothing is emailed and no account changes until you send, and the send uses exactly these.
+                        <div class="rv-pwbox-help">
+                            Preparing only makes and stores the passwords (encrypted). Nothing is emailed and no account changes until you send, and the send uses exactly these.
                             Showing them is logged. A password an examiner has since changed no longer applies.
                         </div>
                     </div>
@@ -337,6 +340,48 @@
     .de-preview-frame-wrap { background:#eef0f2; border-radius:0 0 12px 12px; padding:18px; display:flex; justify-content:center; }
     #previewFrame { width:580px; height:600px; max-width:100%; background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,.08); transition:width .2s; }
 
+    /* Review & Send: Passwords box (Super Admin) */
+    .rv-pwbox { background:#fff; border:1px solid #eadfdf; border-left:4px solid #a02626; border-radius:10px; padding:12px 14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+    .rv-pwbox-top { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 16px; }
+    .rv-pwbox-head { display:flex; align-items:center; gap:12px; min-width:0; flex:1 1 280px; }
+    .rv-pwbox-icon { flex:none; width:36px; height:36px; border-radius:50%; background:#fbeaea; color:#a02626; display:flex; align-items:center; justify-content:center; }
+    .rv-pwbox-title { font-weight:700; color:#231f1f; line-height:1.2; }
+    .rv-pwbox-tag { margin-left:6px; font-size:.68rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:#8a7f7f; }
+    .rv-pwbox-sub { margin-left:8px; font-size:.8rem; color:#6d6666; }
+    .rv-pwbox-help { margin-top:10px; padding-top:9px; border-top:1px solid #f0e8e8; font-size:.78rem; color:#6d6666; line-height:1.45; }
+    .rv-pwbox-actions { display:flex; flex-wrap:wrap; gap:8px; flex:none; }
+    .rv-pill { display:inline-flex; align-items:center; gap:5px; margin-top:3px; padding:2px 10px; border-radius:999px; font-size:.78rem; font-weight:600; }
+    .rv-pill-ok { background:#e3f4ea; color:#1d6b43; }
+    .rv-pill-warn { background:#fff1d6; color:#8a5a00; }
+    .rv-pill-none { background:#eeeaea; color:#5c5555; }
+    .rv-btn { display:inline-flex; align-items:center; gap:7px; padding:7px 14px; border-radius:8px; font-size:.84rem; font-weight:600; line-height:1.2; cursor:pointer; border:1px solid transparent; transition:background .15s, border-color .15s, box-shadow .15s; }
+    .rv-btn:focus { outline:none; box-shadow:0 0 0 .18rem rgba(160,38,38,.25); }
+    .rv-btn:disabled { opacity:.55; cursor:not-allowed; }
+    .rv-btn-primary { background:#a02626; border-color:#a02626; color:#fff; }
+    .rv-btn-primary:hover:not(:disabled) { background:#852020; border-color:#852020; }
+    .rv-btn-ghost { background:#fff; border-color:#d9cccc; color:#a02626; }
+    .rv-btn-ghost:hover:not(:disabled) { background:#fbeaea; border-color:#a02626; }
+    .rv-btn-ghost[aria-pressed="true"] { background:#fbeaea; border-color:#a02626; }
+    .rv-btn-quiet { background:transparent; color:#6d6666; padding-left:8px; padding-right:8px; }
+    .rv-btn-quiet:hover:not(:disabled) { background:#f4eeee; color:#231f1f; }
+    .rv-pwdots { letter-spacing:2px; color:#9a9090; }
+    #rvTable code.rv-pwval { color:#a02626; font-weight:700; font-size:.9rem; background:#fbeaea; padding:1px 7px; border-radius:5px; user-select:all; }
+
+    body.dark-mode .rv-pwbox { background:#1f2937; border-color:#374151; border-left-color:#f87171; }
+    body.dark-mode .rv-pwbox-icon { background:#3a1f1f; color:#f87171; }
+    body.dark-mode .rv-pwbox-title { color:#f3f4f6; }
+    body.dark-mode .rv-pwbox-sub, body.dark-mode .rv-pwbox-help, body.dark-mode .rv-pwbox-tag { color:#9ca3af; }
+    body.dark-mode .rv-pwbox-help { border-top-color:#374151; }
+    body.dark-mode .rv-pill-ok { background:#12372a; color:#6ee7b7; }
+    body.dark-mode .rv-pill-warn { background:#3b2f10; color:#fcd34d; }
+    body.dark-mode .rv-pill-none { background:#374151; color:#d1d5db; }
+    body.dark-mode .rv-btn-primary { background:#dc2626; border-color:#dc2626; }
+    body.dark-mode .rv-btn-primary:hover:not(:disabled) { background:#b91c1c; border-color:#b91c1c; }
+    body.dark-mode .rv-btn-ghost { background:#111827; border-color:#4b5563; color:#f87171; }
+    body.dark-mode .rv-btn-ghost:hover:not(:disabled), body.dark-mode .rv-btn-ghost[aria-pressed="true"] { background:#3a1f1f; border-color:#f87171; }
+    body.dark-mode .rv-btn-quiet { color:#9ca3af; }
+    body.dark-mode .rv-btn-quiet:hover:not(:disabled) { background:#374151; color:#f3f4f6; }
+    body.dark-mode #rvTable code.rv-pwval { background:#3a1f1f; color:#fca5a5; }
     body.dark-mode .de-card-panel { background:#1f2937; }
     body.dark-mode .de-input { background:#111827; border-color:#374151; color:#e5e7eb; }
     body.dark-mode .de-preview-header { color:#e5e7eb; border-color:#374151; }
@@ -563,9 +608,10 @@ $(function () {
             if (d.can_see_passwords) {
                 var todo = d.will_send;
                 $('#rvPwState').html(d.prepared >= todo && todo > 0
-                    ? '<span class="text-success"><i class="fas fa-check mr-1"></i>' + num(d.prepared) + ' of ' + num(todo) + ' prepared</span> &middot; ready to send'
-                    : (d.prepared > 0 ? num(d.prepared) + ' of ' + num(todo) + ' prepared &middot; the rest get a new one when sent'
-                                      : 'None prepared yet &middot; each gets a new one when sent'));
+                    ? '<span class="rv-pill rv-pill-ok"><i class="fas fa-check"></i>' + num(d.prepared) + ' of ' + num(todo) + ' prepared</span><span class="rv-pwbox-sub">Ready to send</span>'
+                    : (d.prepared > 0
+                        ? '<span class="rv-pill rv-pill-warn">' + num(d.prepared) + ' of ' + num(todo) + ' prepared</span><span class="rv-pwbox-sub">The rest get a new one when sent</span>'
+                        : '<span class="rv-pill rv-pill-none">None prepared yet</span><span class="rv-pwbox-sub">Each gets a new one when sent</span>'));
                 $('#rvPrepare, #rvRegen').prop('disabled', !!d.running);
                 $('#rvPrepare').toggleClass('d-none', d.prepared >= todo && todo > 0).find('span').text(d.prepared > 0 ? 'Prepare the rest' : 'Prepare passwords');
                 $('#rvRegen').toggleClass('d-none', !(d.prepared > 0));
@@ -603,7 +649,7 @@ $(function () {
                 if (d.can_see_passwords) {
                     var shown = pw && pw[r.email] && pw[r.email].password;
                     pass = '<td>' + (!r.has_password ? '<span class="text-muted small">' + (r.sent ? 'not kept' : 'not prepared') + '</span>'
-                        : (shown ? '<code class="rv-pwval">' + esc(shown) + '</code>' : '<span class="text-muted" style="letter-spacing:2px;">&bull;&bull;&bull;&bull;&bull;&bull;</span>')) + '</td>';
+                        : (shown ? '<code class="rv-pwval">' + esc(shown) + '</code>' : '<span class="rv-pwdots">&bull;&bull;&bull;&bull;&bull;&bull;</span>')) + '</td>';
                 }
                 return '<tr data-s="' + esc((r.name + ' ' + r.email + ' ' + (r.country || '') + ' ' + (r.username || '')).toLowerCase()) + '">'
                      + '<td class="text-muted">' + (i + 1) + '</td><td>' + esc(r.name) + '</td><td>' + esc(r.email) + '</td><td>' + esc(r.country || '') + '</td>'
@@ -653,7 +699,7 @@ $(function () {
         // Show/Hide passwords: they are fetched only when shown and dropped from the page when hidden.
         function setPwButton(on) {
             $('#rvPwToggle').attr('aria-pressed', on ? 'true' : 'false').find('span').text(on ? 'Hide passwords' : 'Show passwords')
-                .end().find('i').attr('class', on ? 'fas fa-eye-slash mr-1' : 'fas fa-eye mr-1');
+                .end().find('i').attr('class', on ? 'fas fa-eye-slash' : 'fas fa-eye');
         }
         $('#rvPwToggle').on('click', function () {
             if (pw) { pw = null; setPwButton(false); if (last) render(last); return; }
