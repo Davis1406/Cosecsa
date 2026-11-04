@@ -138,6 +138,18 @@ class DraftEmailsController extends Controller
         );
     }
 
+    // "Send" on one row of the Review & Send panel: the credential email to that one
+    // recipient only (JSON; the API checks they are a recipient and not sent in 24 h).
+    public function sendTo(Request $request, $id)
+    {
+        $response = $this->api->post("admin/draft-emails/{$id}/send-to", ['email' => $request->input('email')]);
+
+        return response()->json(
+            $response->json() ?? ['message' => 'Could not send.'],
+            $response->status() ?: 502
+        );
+    }
+
     public function sendNow($id)
     {
         $response = $this->api->post("admin/draft-emails/{$id}/send-now");

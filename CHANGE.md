@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added (2026-11-04) — Draft Emails: Send to one person from Review & Send
+- Each row of the Review & Send table (credential drafts) has a **Send** button that emails that one examiner their login and sets their prepared password, after a confirmation, so the whole path can be tested on one person before sending to everyone. It disappears once they have been sent, and while a full send is queued or running. Preparing passwords alone does not change anyone's account: a prepared password only works after that person (or everyone) has been sent. Deploy the API first.
+
 ### Fixed (2026-11-04) — Draft Emails: "Server Error" when sending a credentials email
 - Send in Review & Send failed with "Server Error" because the API could not start its background send (see the API `CHANGES.md`). Send now queues the send and the server starts it within a minute; the panel shows **Queued**, then "x of N sent". Deploy the API first.
 

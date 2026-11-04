@@ -274,7 +274,7 @@
                     <div class="table-responsive border rounded" style="max-height:340px; overflow:auto;">
                         <table class="table table-sm table-hover mb-0" id="rvTable">
                             <thead class="thead-light" style="position:sticky; top:0;">
-                                <tr><th style="width:44px;">#</th><th>Name</th><th>Email</th><th>Country</th><th class="rv-cred d-none">Username</th><th class="rv-pw d-none">Password</th><th style="width:110px;">Status</th></tr>
+                                <tr><th style="width:44px;">#</th><th>Name</th><th>Email</th><th>Country</th><th class="rv-cred d-none">Username</th><th class="rv-pw d-none">Password</th><th style="width:110px;">Status</th><th class="rv-act d-none" style="width:80px;"></th></tr>
                             </thead>
                             <tbody></tbody>
                         </table>
@@ -364,6 +364,7 @@
     .rv-btn-ghost[aria-pressed="true"] { background:#fbeaea; border-color:#a02626; }
     .rv-btn-quiet { background:transparent; color:#6d6666; padding-left:8px; padding-right:8px; }
     .rv-btn-quiet:hover:not(:disabled) { background:#f4eeee; color:#231f1f; }
+    .rv-btn-sm { padding:3px 10px; font-size:.76rem; gap:5px; border-radius:6px; }
     .rv-pwdots { letter-spacing:2px; color:#9a9090; }
     #rvTable code.rv-pwval { color:#a02626; font-weight:700; font-size:.9rem; background:#fbeaea; padding:1px 7px; border-radius:5px; user-select:all; }
 
@@ -605,6 +606,7 @@ $(function () {
             $('#rvCredWarn').toggleClass('d-none', !d.credentials);
             $('.rv-cred').toggleClass('d-none', !d.credentials);
             $('.rv-pw, #rvPwBox').toggleClass('d-none', !d.can_see_passwords);
+            $('.rv-act').toggleClass('d-none', !d.credentials);
             if (d.can_see_passwords) {
                 var todo = d.will_send;
                 $('#rvPwState').html(d.prepared >= todo && todo > 0
@@ -656,7 +658,10 @@ $(function () {
                 }
                 return '<tr data-s="' + esc((r.name + ' ' + r.email + ' ' + (r.country || '') + ' ' + (r.username || '')).toLowerCase()) + '">'
                      + '<td class="text-muted">' + (i + 1) + '</td><td>' + esc(r.name) + '</td><td>' + esc(r.email) + '</td><td>' + esc(r.country || '') + '</td>'
-                     + user + pass + '<td>' + status + '</td></tr>';
+                     + user + pass + '<td>' + status + '</td>'
+                     + (d.credentials ? '<td class="text-right">' + (r.sent || d.running ? ''
+                         : '<button type="button" class="rv-btn rv-btn-ghost rv-btn-sm rv-send-one" data-email="' + esc(r.email) + '" data-name="' + esc(r.name) + '"><i class="fas fa-paper-plane"></i>Send</button>') + '</td>' : '')
+                     + '</tr>';
             });
             $('#rvTable tbody').html(rows.join(''));
             filter();
@@ -730,6 +735,19 @@ $(function () {
                 alert((xhr.responseJSON && xhr.responseJSON.message) || 'Could not prepare the passwords.');
             }).always(function () { btns.prop('disabled', false); });
         }
+        // Send to one person only: a test of the whole path (email, username, password) before the rest.
+        $('#rvTable').on('click', '.rv-send-one', function () {
+            var btn = $(this), name = btn.data('name'), email = btn.data('email');
+            if (!confirm('Send the login email to ' + name + ' (' + email + ') now?\n\nIt sets their ' + (pw || last && last.prepared ? 'prepared ' : '') + 'password and emails it to them only.')) { return; }
+            btn.prop('disabled', true);
+            $.ajax({ method: 'POST', url: @json(url('admin/draft-emails/'.$draftEmail->id.'/send-to')), dataType: 'json',
+                     headers: { 'X-CSRF-TOKEN': @json(csrf_token()) }, data: { email: email } })
+            .done(function (res) { alert(res.message || 'Sent.'); })
+            .fail(function (xhr) { alert((xhr.responseJSON && xhr.responseJSON.message) || 'Could not send.'); })
+            .always(function () {
+                if (pw) { $.getJSON(@json(url('admin/draft-emails/'.$draftEmail->id.'/credentials'))).done(function (c) { pw = c.logins || {}; }).always(load); } else { load(); }
+            });
+        });
         $('#rvPrepare').on('click', function () { prepare(false); });
         $('#rvRegen').on('click', function () {
             if (confirm('Replace every prepared password that has not been sent with a new one?\n\nUse this only if the list you looked at should not be used.')) { prepare(true); }
