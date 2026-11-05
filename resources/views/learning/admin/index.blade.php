@@ -216,6 +216,9 @@
     .status-tabs .count { display: inline-block; min-width: 22px; margin-left: 6px; padding: 0 7px; border-radius: 999px; font-size: 11.5px; line-height: 20px; text-align: center;
         background: rgba(20,29,35,.08); color: #141d23; }
     .status-tabs .nav-link.active .count { background: rgba(255,255,255,.22); color: #fff; }
+    /* Light mode paints the active tab a pale maroon tint (custom.css, !important), so a white count vanished on it */
+    body:not(.dark-mode) .status-tabs .nav-link.active .count { background: rgba(160,38,38,.14); color: #a02626; }
+    body:not(.dark-mode) .status-tabs .nav-link:not(.active):hover .count { background: rgba(127,10,18,.12); color: #7f0a12; }
     .pane-hint { font-size: 13px; margin: 0 0 14px; }
     .lms .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
 
