@@ -31,6 +31,39 @@ class AdminLearningController extends Controller
         return view('learning.admin.index', $response->json());
     }
 
+    // POST admin/exams/learning/reminders/settings  {enabled, after_days, max_reminders} — JSON, no page reload
+    public function saveReminderSettings(Request $request)
+    {
+        $data = $request->validate([
+            'enabled' => 'required|boolean',
+            'after_days' => 'required|integer|min:1|max:30',
+            'max_reminders' => 'required|integer|min:1|max:10',
+        ]);
+
+        $response = $this->api->post('learning/admin/reminders/settings', $data);
+
+        return $this->asJson($response, 'The reminder settings could not be saved. Please try again.');
+    }
+
+    // POST admin/exams/learning/reminders/send  {user_ids?: int[]} — remind pending examiners now (all of them without user_ids)
+    public function sendReminders(Request $request)
+    {
+        $data = $request->validate(['user_ids' => 'sometimes|array', 'user_ids.*' => 'integer']);
+
+        $response = $this->api->post('learning/admin/reminders/send', $data + ['by' => Auth::user()->name ?? null]);
+
+        return $this->asJson($response, 'The reminders could not be sent. Please try again.');
+    }
+
+    /** The API's JSON answer passed through, with a plain message when it failed. */
+    private function asJson(Response $response, string $fallback)
+    {
+        return response()->json(
+            $response->successful() ? $response->json() : ['message' => $response->json('message') ?: $fallback],
+            $response->successful() ? 200 : ($response->status() === 422 ? 422 : 502)
+        );
+    }
+
     // GET admin/exams/learning/users/{id}
     public function userProgress(int $id)
     {

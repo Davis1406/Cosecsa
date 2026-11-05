@@ -1737,3 +1737,63 @@ body.dark-mode .btn[style*="background:#FEC503" i]:hover {
 body.dark-mode .card-header[style*="#FEC503" i] .card-title,
 body.dark-mode .card-header[style*="#FEC503" i] h3,
 body.dark-mode .card-header[style*="#FEC503" i] h4 { color: #e2e8f0 !important; }
+
+/* ── Clicked / selected states: COSECSA maroon instead of Bootstrap blue (#007bff) ──
+   Clicking an entry in an action menu (View / Reset / Edit…) painted it Bootstrap blue in
+   both modes, and ticked switches and checkboxes were blue too. The `body` prefix outranks
+   AdminLTE's `.dropdown-item:active` and `.dark-mode .…` versions. `.text-danger` entries
+   (Reset quiz / Delete) carry `color: … !important`, so their text is forced to white here
+   or it would be red on maroon. */
+body .dropdown-item.active, body .dropdown-item:active,
+body.dark-mode .dropdown-item.active, body.dark-mode .dropdown-item:active { background-color: #a02626; color: #fff; }
+body .dropdown-item.text-danger:active, body .dropdown-item.text-danger.active { color: #fff !important; }
+body .dropdown-item.text-danger:active i, body .dropdown-item.text-danger.active i { color: #fff !important; }
+body .list-group-item.active, body.dark-mode .list-group-item.active { background-color: #a02626; border-color: #a02626; color: #fff; }
+body .custom-control-input:checked ~ .custom-control-label::before,
+body.dark-mode .custom-control-input:checked ~ .custom-control-label::before { background-color: #a02626; border-color: #a02626; }
+body .custom-control-input:focus ~ .custom-control-label::before { box-shadow: 0 0 0 .2rem rgba(160, 38, 38, .25); }
+body .custom-control-input:focus:not(:checked) ~ .custom-control-label::before { border-color: #a02626; }
+body .custom-control-input:not(:disabled):active ~ .custom-control-label::before { background-color: #f8d0d0; border-color: #a02626; }
+/* mobile tap flash on links and buttons */
+a, button { -webkit-tap-highlight-color: rgba(160, 38, 38, .18); }
+
+/* ── Focus ring after a click: maroon / teal, not Bootstrap blue rgba(0,123,255,.25) ──
+   Clicking a pagination link (DataTables Previous / Next / page numbers) left a blue ring in both
+   modes, and the info (teal) button's ring was light blue in dark mode. */
+body .page-link:focus, body.dark-mode .page-link:focus { outline: 0; box-shadow: 0 0 0 .2rem rgba(160, 38, 38, .25); }
+body .btn-info:focus, body .btn-info.focus, body.dark-mode .btn-info:focus,
+body .btn-info:not(:disabled):not(.disabled):active:focus, body.dark-mode .btn-info:not(:disabled):not(.disabled):active:focus { box-shadow: 0 0 0 .2rem rgba(11, 106, 131, .45); }
+body .btn-outline-info:focus, body.dark-mode .btn-outline-info:focus { box-shadow: 0 0 0 .2rem rgba(11, 106, 131, .45); }
+body .btn-secondary:focus, body .btn-outline-secondary:focus, body .btn-light:focus { box-shadow: 0 0 0 .2rem rgba(160, 38, 38, .2); }
+
+/* Disabled primary / outline-primary / info buttons stayed Bootstrap blue (#007bff): e.g. the Remind
+   button on an examiner with no login email yet. Same colour, dimmed, in both modes. */
+body .btn-primary.disabled, body .btn-primary:disabled,
+body.dark-mode .btn-primary.disabled, body.dark-mode .btn-primary:disabled { color: #fff; background-color: #a02626; border-color: #a02626; }
+body .btn-outline-primary.disabled, body .btn-outline-primary:disabled { color: #a02626; background-color: transparent; border-color: #a02626; }
+body.dark-mode .btn-outline-primary.disabled, body.dark-mode .btn-outline-primary:disabled { color: #f48a8a; background-color: transparent; border-color: #f48a8a; }
+body .btn-info.disabled, body .btn-info:disabled, body.dark-mode .btn-info.disabled, body.dark-mode .btn-info:disabled { color: #fff; background-color: #004356; border-color: #004356; }
+body .btn-outline-info.disabled, body .btn-outline-info:disabled { color: #0b6a83; background-color: transparent; border-color: #0b6a83; }
+body.dark-mode .btn-outline-info.disabled, body.dark-mode .btn-outline-info:disabled { color: #5fb3c9; background-color: transparent; border-color: #5fb3c9; }
+
+/* Dark mode: AdminLTE rings a clicked primary / outline-primary button in blue-grey (#5c7ea2 / #3f6791),
+   through selectors with :active:focus that outrank the plain :focus rule above. Maroon, like light mode. */
+body.dark-mode .btn-primary:focus, body.dark-mode .btn-primary.focus,
+body.dark-mode .btn-primary:not(:disabled):not(.disabled):active:focus,
+body.dark-mode .btn-primary:not(:disabled):not(.disabled).active:focus,
+body.dark-mode .show > .btn-primary.dropdown-toggle:focus,
+body.dark-mode .btn-outline-primary:focus, body.dark-mode .btn-outline-primary.focus,
+body.dark-mode .btn-outline-primary:not(:disabled):not(.disabled):active:focus,
+body.dark-mode .btn-outline-primary:not(:disabled):not(.disabled).active:focus { box-shadow: 0 0 0 .2rem rgba(160, 38, 38, .45); }
+body .btn-outline-primary:not(:disabled):not(.disabled):active:focus,
+body .btn-primary:not(:disabled):not(.disabled):active:focus { box-shadow: 0 0 0 .2rem rgba(160, 38, 38, .3); }
+
+/* Clicked page-size dropdown ("Show 25 entries") and other selects: maroon focus, not Bootstrap's blue #80bdff */
+body:not(.dark-mode) .custom-select:focus, body:not(.dark-mode) select.form-control:focus { border-color: #a02626; box-shadow: 0 0 0 .2rem rgba(160, 38, 38, .2); outline: 0; }
+
+/* Dark mode pill tabs (Learner progress / Course content / Certificate / Videos / Preview course, and the
+   Completed / Ongoing / Pending switcher): AdminLTE's `.nav-pills .nav-link:not(.active):hover` is Bootstrap
+   blue #007bff and the dark-mode rule only set the resting colour. Gold on hover, like the other dark links. */
+body.dark-mode .nav-pills .nav-link:not(.active):hover,
+body.dark-mode .nav-pills .nav-link:not(.active):focus { color: #FEC503; background-color: rgba(254, 197, 3, .08); }
+body.dark-mode .nav-pills .nav-link:not(.active):active { color: #FEC503; }

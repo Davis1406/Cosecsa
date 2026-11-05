@@ -24,61 +24,144 @@
                 </div>
             </div>
 
+            @php
+                $by = collect($learners)->groupBy('status');
+                $completedRows = $by->get('completed', collect());
+                $ongoingRows   = $by->get('ongoing', collect());
+                $pendingRows   = $by->get('pending', collect());
+                $fmt = fn ($iso) => $iso ? \Illuminate\Support\Carbon::parse($iso)->format('d M Y') : null;
+                $canRemind = $pendingRows->filter(fn ($r) => $r['login_sent_at'])->count();
+            @endphp
+
             <div class="card card-pad">
-                <h5 style="font-size:16px; font-weight:700; margin-bottom:16px;">Learner progress</h5>
-                <div class="table-responsive">
-                    <table class="tbl" id="learners-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Modules done</th>
-                                <th>Progress</th>
-                                <th>Quiz score</th>
-                                <th class="text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($learners as $row)
-                                <tr>
-                                    <td>{{ $row['name'] }}</td>
-                                    <td class="muted">{{ $row['email'] }}</td>
-                                    <td data-order="{{ $row['completed'] }}">{{ $row['completed'] }} / {{ $row['total'] }}</td>
-                                    <td style="width:200px;" data-order="{{ $row['percent'] }}">
-                                        <div class="progress-track"><div class="progress-fill" style="width: {{ $row['percent'] }}%;"></div></div>
-                                    </td>
-                                    <td data-order="{{ $row['quiz_score'] ?? -1 }}">
-                                        @if($row['quiz_score'] !== null) {{ round($row['quiz_score']) }}% @else <span class="muted">—</span> @endif
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="dropdown">
-                                            <button class="btn btn-sm btn-light border" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Actions for {{ $row['name'] }}"><i class="fas fa-bars"></i></button>
-                                            <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                                                <a class="dropdown-item" href="{{ route('admin.exams.learning.user', $row['id']) }}"><i class="fas fa-eye text-info mr-2"></i> View</a>
-                                                @if($quizModule)
-                                                    <form method="POST" action="{{ route('admin.exams.learning.user.reset', $row['id']) }}"
-                                                          data-confirm-title="Reset quiz?" data-confirm-name="{{ $row['name'] }}"
-                                                          data-confirm-text="Their quiz score, answers and attempts are cleared and they retake the quiz. Other modules are not affected."
-                                                          data-confirm-button="Reset quiz">
-                                                        @csrf
-                                                        <input type="hidden" name="module_id" value="{{ $quizModule['id'] }}">
-                                                        <button type="submit" class="dropdown-item text-danger"><i class="fas fa-redo mr-2"></i> Reset quiz</button>
-                                                    </form>
-                                                @endif
-                                                <form method="POST" action="{{ route('admin.exams.learning.user.reset', $row['id']) }}"
-                                                      data-confirm-title="Reset course?" data-confirm-name="{{ $row['name'] }}"
-                                                      data-confirm-text="All completed modules, the quiz score and attempts are cleared and they start again from Module 1. This cannot be undone."
-                                                      data-confirm-button="Reset course">
-                                                    @csrf
-                                                    <button type="submit" class="dropdown-item text-danger"><i class="fas fa-undo mr-2"></i> Reset course</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="gap:10px;">
+                    <h5 class="mb-0" style="font-size:16px; font-weight:700;">Learner progress</h5>
+                    {{-- Switches panes in the browser: all three lists are already on the page, so nothing reloads. --}}
+                    <ul class="nav nav-pills status-tabs" id="statusTabs" role="tablist">
+                        <li class="nav-item"><button type="button" class="nav-link" data-pane="completed" data-toggle="pill" data-target="#pane-completed" role="tab" aria-controls="pane-completed">Completed <span class="count" id="count-completed">{{ $completedRows->count() }}</span></button></li>
+                        <li class="nav-item"><button type="button" class="nav-link" data-pane="ongoing" data-toggle="pill" data-target="#pane-ongoing" role="tab" aria-controls="pane-ongoing">Ongoing <span class="count" id="count-ongoing">{{ $ongoingRows->count() }}</span></button></li>
+                        <li class="nav-item"><button type="button" class="nav-link" data-pane="pending" data-toggle="pill" data-target="#pane-pending" role="tab" aria-controls="pane-pending">Pending <span class="count" id="count-pending">{{ $pendingRows->count() }}</span></button></li>
+                    </ul>
+                </div>
+
+                <div class="tab-content">
+                    {{-- COMPLETED --}}
+                    <div class="tab-pane" id="pane-completed" role="tabpanel">
+                        <p class="muted pane-hint">Finished every module of the course.</p>
+                        <div class="table-responsive">
+                            <table class="tbl" id="table-completed">
+                                <thead><tr>
+                                    <th>Name</th><th>Email</th><th>Completed on</th><th>Quiz score</th><th class="text-center">Action</th>
+                                </tr></thead>
+                                <tbody>
+                                @foreach($completedRows as $row)
+                                    <tr>
+                                        <td>{{ $row['name'] }}</td>
+                                        <td class="muted">{{ $row['email'] }}</td>
+                                        <td data-order="{{ $row['completed_at'] ? strtotime($row['completed_at']) : 0 }}">{{ $fmt($row['completed_at']) ?? '—' }}</td>
+                                        <td data-order="{{ $row['quiz_score'] ?? -1 }}">@if($row['quiz_score'] !== null) {{ round($row['quiz_score']) }}% @else <span class="muted">—</span> @endif</td>
+                                        <td class="text-center">@include('learning.admin._learner-actions', ['row' => $row, 'quizModule' => $quizModule])</td>
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {{-- ONGOING --}}
+                    <div class="tab-pane" id="pane-ongoing" role="tabpanel">
+                        <p class="muted pane-hint">Started the course but have not finished it.</p>
+                        <div class="table-responsive">
+                            <table class="tbl" id="table-ongoing">
+                                <thead><tr>
+                                    <th>Name</th><th>Email</th><th>Started</th><th>Modules done</th><th>Progress</th><th>Quiz score</th><th class="text-center">Action</th>
+                                </tr></thead>
+                                <tbody>
+                                @foreach($ongoingRows as $row)
+                                    <tr>
+                                        <td>{{ $row['name'] }}</td>
+                                        <td class="muted">{{ $row['email'] }}</td>
+                                        <td data-order="{{ $row['started_at'] ? strtotime($row['started_at']) : 0 }}">{{ $fmt($row['started_at']) ?? '—' }}</td>
+                                        <td data-order="{{ $row['completed'] }}">{{ $row['completed'] }} / {{ $row['total'] }}</td>
+                                        <td style="width:200px;" data-order="{{ $row['percent'] }}">
+                                            <div class="progress-track"><div class="progress-fill" style="width: {{ $row['percent'] }}%;"></div></div>
+                                        </td>
+                                        <td data-order="{{ $row['quiz_score'] ?? -1 }}">@if($row['quiz_score'] !== null) {{ round($row['quiz_score']) }}% @else <span class="muted">—</span> @endif</td>
+                                        <td class="text-center">@include('learning.admin._learner-actions', ['row' => $row, 'quizModule' => $quizModule])</td>
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {{-- PENDING --}}
+                    <div class="tab-pane" id="pane-pending" role="tabpanel">
+                        <p class="muted pane-hint">Have not opened any part of the course yet.</p>
+
+                        <div class="reminder-box" id="reminderBox">
+                            <div class="reminder-head">
+                                <div>
+                                    <div class="reminder-title"><i class="fas fa-bell mr-2"></i>Automatic reminders</div>
+                                    <div class="muted" style="font-size:12.5px;">Emails examiners who were sent their login but have not started. The email never contains a password.</div>
+                                </div>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="remEnabled" {{ $reminders['enabled'] ? 'checked' : '' }}>
+                                    <label class="custom-control-label" for="remEnabled"><span id="remEnabledLabel">{{ $reminders['enabled'] ? 'On' : 'Off' }}</span></label>
+                                </div>
+                            </div>
+                            <div class="reminder-fields">
+                                <label>Remind
+                                    <input type="number" id="remAfter" class="form-control form-control-sm" min="1" max="30" value="{{ $reminders['after_days'] }}">
+                                    days after the login email was sent</label>
+                                <label>Send up to
+                                    <input type="number" id="remMax" class="form-control form-control-sm" min="1" max="10" value="{{ $reminders['max_reminders'] }}">
+                                    reminder(s) per examiner, that many days apart</label>
+                                <button type="button" class="btn btn-sm btn-primary" id="remSave">Save</button>
+                                <span class="muted" id="remSaved" style="font-size:12.5px;"></span>
+                            </div>
+                            <div class="reminder-foot">
+                                <span class="muted" id="remDue" style="font-size:12.5px;">
+                                    {{ $reminders['enabled'] ? $reminders['due_now'].' due at the next automatic run (daily, 08:30 UTC).' : 'Switched off — nothing is sent automatically.' }}
+                                </span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="remAll" @disabled($canRemind === 0)>
+                                    <i class="fas fa-paper-plane mr-1"></i> Remind all pending now (<span id="remAllCount">{{ $canRemind }}</span>)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="tbl" id="table-pending">
+                                <thead><tr>
+                                    <th>Name</th><th>Email</th><th>Login emailed</th><th>Reminders</th><th class="text-center">Action</th>
+                                </tr></thead>
+                                <tbody>
+                                @foreach($pendingRows as $row)
+                                    <tr data-user="{{ $row['id'] }}" data-name="{{ $row['name'] }}" data-login="{{ $row['login_sent_at'] ? 1 : 0 }}">
+                                        <td>{{ $row['name'] }}</td>
+                                        <td class="muted">{{ $row['email'] }}</td>
+                                        <td data-order="{{ $row['login_sent_at'] ? strtotime($row['login_sent_at']) : 0 }}">
+                                            @if($row['login_sent_at']) {{ $fmt($row['login_sent_at']) }} @else <span class="badge-gray pill">Not sent yet</span> @endif
+                                        </td>
+                                        <td class="rem-cell" data-order="{{ $row['last_reminded_at'] ? strtotime($row['last_reminded_at']) : 0 }}">
+                                            @if($row['reminders_sent'])
+                                                {{ $row['reminders_sent'] }} sent · last {{ $fmt($row['last_reminded_at']) }}
+                                            @else <span class="muted">None</span> @endif
+                                        </td>
+                                        <td class="text-center text-nowrap">
+                                            <button type="button" class="btn btn-sm btn-outline-primary rem-one"
+                                                @disabled(! $row['login_sent_at'])
+                                                title="{{ $row['login_sent_at'] ? 'Email a reminder now' : 'No login email has been sent to this examiner yet' }}">
+                                                <i class="fas fa-bell"></i> Remind
+                                            </button>
+                                            @include('learning.admin._learner-actions', ['row' => $row, 'quizModule' => $quizModule])
+                                        </td>
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -126,13 +209,114 @@
     .dark-mode .confirm-reset-name { background: #2d3748; color: #fff; }
     .dark-mode .confirm-reset-text { color: #cbd5e0; }
     .dark-mode .confirm-reset-icon { background: rgba(254,197,3,.14); color: #FEC503; }
+
+    /* Completed / Ongoing / Pending switcher */
+    .status-tabs .nav-link { font-weight: 600; color: #475569; border-radius: 8px; padding: 6px 14px; }
+    .status-tabs .nav-link.active { background: #a02626; color: #fff; }
+    .status-tabs .count { display: inline-block; min-width: 22px; margin-left: 6px; padding: 0 7px; border-radius: 999px; font-size: 11.5px; line-height: 20px; text-align: center;
+        background: rgba(20,29,35,.08); color: #141d23; }
+    .status-tabs .nav-link.active .count { background: rgba(255,255,255,.22); color: #fff; }
+    .pane-hint { font-size: 13px; margin: 0 0 14px; }
+    .lms .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+
+    /* automatic reminders box on the Pending tab */
+    .reminder-box { border: 1px solid #e0e9f2; border-left: 4px solid #a02626; border-radius: 8px; padding: 16px 18px; margin-bottom: 18px; background: #fff; }
+    .reminder-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 12px; }
+    .reminder-title { font-weight: 700; font-size: 14.5px; color: #141d23; }
+    .reminder-fields { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; }
+    .reminder-fields label { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13.5px; font-weight: 500; }
+    .reminder-fields input[type=number] { width: 68px; }
+    .reminder-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #eef1f5; }
+    .dark-mode .status-tabs .nav-link { color: #cbd5e1; }
+    .dark-mode .status-tabs .nav-link.active { background: #a02626; color: #fff; }
+    .dark-mode .status-tabs .count { background: rgba(255,255,255,.12); color: #e2e8f0; }
+    .dark-mode .reminder-box { background: #1e2330; border-color: #2d3748; border-left-color: #a02626; }
+    .dark-mode .reminder-title { color: #f1f5f9; }
+    .dark-mode .reminder-foot { border-top-color: #2d3748; }
 </style>
 @endpush
 
 @push('scripts')
 <script>
     $(function () {
-        $('#learners-table').DataTable({ pageLength: 25, order: [[3, 'desc']], columnDefs: [{ orderable: false, targets: 5 }] });
+        // ── Completed / Ongoing / Pending: switching is done in the browser, no reload ──
+        var TABLES = {
+            completed: { order: [[2, 'desc']], actionCol: 4 },
+            ongoing:   { order: [[3, 'desc']], actionCol: 6 },
+            pending:   { order: [[2, 'asc']],  actionCol: 4 }
+        };
+        var tables = {};
+        function table(pane) {
+            if (!tables[pane]) {   // built the first time the tab is shown, so a hidden tab never measures itself at zero width
+                tables[pane] = $('#table-' + pane).DataTable({ pageLength: 25, order: TABLES[pane].order, columnDefs: [{ orderable: false, targets: TABLES[pane].actionCol }] });
+            }
+            return tables[pane];
+        }
+        var KEY = 'lmsLearnerTab', first = 'completed';
+        try { var saved = localStorage.getItem(KEY); if (TABLES[saved]) first = saved; } catch (e) {}
+        $('#statusTabs [data-pane="' + first + '"]').tab('show');
+        $('#statusTabs [data-toggle="pill"]').on('shown.bs.tab', function () {
+            var pane = $(this).data('pane');
+            table(pane).columns.adjust();
+            try { localStorage.setItem(KEY, pane); } catch (e) {}
+        });
+        table(first);
+
+        // ── Reminders (Pending tab) ──
+        var TOKEN = @json(csrf_token());
+        var URLS = { settings: @json(route('admin.exams.learning.reminders.settings')), send: @json(route('admin.exams.learning.reminders.send')) };
+        function post(url, data) {
+            return $.ajax({ url: url, method: 'POST', data: $.extend({ _token: TOKEN }, data), dataType: 'json' });
+        }
+        function say(msg, type) { if (window.CosecsaAlert) CosecsaAlert.toast(msg, type || 'success'); else alert(msg); }
+        function fail(xhr) { say((xhr.responseJSON && xhr.responseJSON.message) || 'Something went wrong. Please try again.', 'error'); }
+        function fmtDate(iso) { return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
+        function ask(message, title, ok) {
+            return window.CosecsaAlert ? CosecsaAlert.confirm(message, { title: title, confirmText: ok, variant: 'question' }) : Promise.resolve(confirm(message));
+        }
+
+        function showDue(r) {
+            $('#remDue').text(r.enabled ? r.due_now + ' due at the next automatic run (daily, 08:30 UTC).' : 'Switched off — nothing is sent automatically.');
+        }
+        $('#remEnabled').on('change', function () { $('#remEnabledLabel').text(this.checked ? 'On' : 'Off'); });
+        $('#remSave').on('click', function () {
+            var $b = $(this).prop('disabled', true);
+            post(URLS.settings, { enabled: $('#remEnabled').is(':checked') ? 1 : 0, after_days: $('#remAfter').val(), max_reminders: $('#remMax').val() })
+                .done(function (res) { showDue(res.reminders); $('#remSaved').text('Saved'); setTimeout(function () { $('#remSaved').text(''); }, 2500); })
+                .fail(fail).always(function () { $b.prop('disabled', false); });
+        });
+
+        // Marks the rows that were just reminded, without reloading.
+        function applySent(res) {
+            var dt = table('pending');
+            (res.learners || []).forEach(function (l) {
+                var tr = $('#table-pending tr[data-user="' + l.id + '"]');
+                tr.find('.rem-cell').html(l.reminders_sent + ' sent · last ' + fmtDate(l.last_reminded_at)).attr('data-order', Date.parse(l.last_reminded_at) / 1000);
+                if (dt.row(tr).length) dt.row(tr).invalidate('dom');
+            });
+            dt.draw(false);
+            showDue(res.reminders);
+        }
+
+        $('#table-pending').on('click', '.rem-one', function () {
+            var $tr = $(this).closest('tr'), $b = $(this), name = $tr.data('name'), id = $tr.data('user');
+            ask('Email ' + name + ' a reminder to start the course?', 'Send reminder?', 'Send reminder').then(function (yes) {
+                if (!yes) return;
+                $b.prop('disabled', true);
+                post(URLS.send, { user_ids: [id] }).done(function (res) { say(res.message, res.sent ? 'success' : 'warning'); applySent(res); })
+                    .fail(fail).always(function () { $b.prop('disabled', $tr.data('login') != 1); });
+            });
+        });
+        $('#remAll').on('click', function () {
+            var $b = $(this), n = $('#remAllCount').text();
+            ask('Email a reminder to all ' + n + ' pending examiner(s) whose login was sent? This sends right away, whatever the days above say.', 'Remind all pending?', 'Send ' + n + ' reminder(s)').then(function (yes) {
+                if (!yes) return;
+                $b.prop('disabled', true);
+                post(URLS.send, {}).done(function (res) { say(res.message, res.sent ? 'success' : 'warning'); applySent(res); })
+                    .fail(fail).always(function () { $b.prop('disabled', false); });
+            });
+        });
+
 
         // Reset actions confirm in a modal instead of the browser's confirm() box.
         var pending = null;

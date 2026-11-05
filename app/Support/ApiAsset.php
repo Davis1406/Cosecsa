@@ -27,8 +27,14 @@ class ApiAsset
     // Browsers need the API's public address. COSECSA_API_URL may be the
     // loopback vhost (http://127.0.0.1:8081, see ApiClient) which only this
     // server can reach; COSECSA_API_HOST then holds the public hostname.
+    // COSECSA_API_PUBLIC_URL overrides both (local Docker).
     private static function publicBase(): string
     {
+        // Local Docker: the API URL is the internal service name, so browsers need its own public address.
+        if ($public = config('services.cosecsa_api.public_url')) {
+            return rtrim($public, '/');
+        }
+
         $host = config('services.cosecsa_api.host');
 
         return $host

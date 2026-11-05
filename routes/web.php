@@ -458,6 +458,8 @@ Route::get('admin/exams/examiners/preview/{id}', [AssociatePreviewController::cl
 // Examiner Training (learning) — content and progress live in cosecsa-api (internal/learning/*)
 Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(\App\Http\Controllers\Learning\AdminLearningController::class)->group(function () {
     Route::get('/', 'index');
+    Route::post('reminders/settings', 'saveReminderSettings')->name('.reminders.settings');
+    Route::post('reminders/send', 'sendReminders')->name('.reminders.send');
     Route::get('users/{id}', 'userProgress')->whereNumber('id')->name('.user');
     Route::post('users/{id}/reset', 'resetUserProgress')->whereNumber('id')->name('.user.reset');
     Route::get('course', 'course')->name('.course');
