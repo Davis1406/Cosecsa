@@ -7,7 +7,7 @@
     <section class="content-header">
         <div class="container-fluid">
             <div class="row mb-2 align-items-center">
-                <div class="col-sm-6 d-flex align-items-center flex-wrap" style="gap:.5rem;">
+                <div class="col-lg-4 d-flex align-items-center flex-wrap mb-2 mb-lg-0" style="gap:.5rem;">
                     <h4 class="mb-0">Examiners</h4>
                     {{-- Year filter (server-side page reload) --}}
                     <form method="GET" action="{{ url('admin/exams/examiners') }}" class="d-flex align-items-center" style="gap:.3rem;">
@@ -22,19 +22,23 @@
                         </select>
                     </form>
                 </div>
-                <div class="col-sm-6 text-right">
-                    <a href="{{ url('admin/exams/visual_report') }}{{ $noYearSelected ? '' : '?year_id='.$selectedYearId }}" class="btn btn-sm btn-secondary mr-1">
+                <div class="col-lg-8 d-flex flex-wrap justify-content-lg-end" style="gap:.4rem;">
+                    <a href="{{ url('admin/exams/visual_report') }}{{ $noYearSelected ? '' : '?year_id='.$selectedYearId }}" class="btn btn-sm btn-secondary">
                         <i class="fas fa-chart-pie mr-1"></i> Visual Report
                     </a>
-                    <a href="{{ url('admin/exams/import') }}" class="btn btn-sm btn-warning mr-1">
+                    <a href="{{ url('admin/exams/import') }}" class="btn btn-sm btn-warning">
                         <i class="fas fa-upload mr-1"></i> Upload
                     </a>
-                    <a href="{{ route('exams.upload.confirmation') }}" class="btn btn-sm btn-info mr-1">
+                    <a href="{{ route('exams.upload.confirmation') }}" class="btn btn-sm btn-info">
                         <i class="fas fa-clipboard-check mr-1"></i> Upload Confirmation
                     </a>
-                    <a href="{{ route('examiners.bulk.upload.docs') }}" class="btn btn-sm btn-outline-danger mr-1">
+                    <a href="{{ route('examiners.bulk.upload.docs') }}" class="btn btn-sm btn-outline-danger">
                         <i class="fas fa-upload mr-1"></i> Bulk CV/Photo
                     </a>
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            data-toggle="modal" data-target="#addExaminerFromAssociateModal">
+                        <i class="fas fa-user-friends mr-1"></i> Add Examiner from Associate
+                    </button>
                     <a href="{{ url('admin/exams/add_examiner') }}" class="btn btn-sm btn-danger">
                         <i class="fas fa-plus mr-1"></i> Add Examiner
                     </a>
@@ -217,6 +221,113 @@
                 </div>
             </form>
         </div>
+    </div>
+</div>
+{{-- Add Examiner from Associate: someone who already has a login (Fellow, Country Rep,
+     Member, ...) gets an examiners record on that login instead of a duplicate account.
+     Afterwards they can be confirmed for this year (a specialty, or tentative) and sent the
+     online-course login, or just left on the list. Mirrors "Add Fellow from Associate". --}}
+<div class="modal fade" id="addExaminerFromAssociateModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form id="addExaminerFromAssociateForm" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-friends mr-1"></i> Add Examiner from Associate</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div id="aeaAlert" class="alert d-none" role="alert"></div>
+
+                <div class="form-group">
+                    <label>Search In</label>
+                    <select class="form-control" id="aea_type" name="source_type">
+                        <option value="fellow">Fellows</option>
+                        <option value="country_rep">Country Representatives</option>
+                        <option value="member">Members</option>
+                        <option value="programme_director">Programme Directors</option>
+                        <option value="trainee">Trainees</option>
+                        <option value="candidate">Candidates</option>
+                        <option value="trainer">Trainers (ToT)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Search Name / Email <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="aea_search" placeholder="Type a name or email...">
+                    <div class="list-group mt-1 d-none" id="aea_results" style="max-height:180px; overflow-y:auto;"></div>
+                    <div class="d-none mt-2" id="aea_selected"></div>
+                    <input type="hidden" id="aea_source_id" name="source_id">
+                </div>
+
+                <div class="d-none" id="aea_fields">
+                    <hr>
+                    <p class="small text-muted mb-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        The Examiner ID is assigned automatically &mdash; the next number after the last examiner
+                        (<strong id="aea_next_id">…</strong>). They keep the login they already have.
+                    </p>
+
+                    <div class="form-group">
+                        <label>Specialty</label>
+                        <select class="form-control" name="specialty" id="aea_specialty">
+                            <option value="">Select…</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label class="d-block">Confirm for {{ date('Y') }}?</label>
+                        <div class="custom-control custom-radio">
+                            <input type="radio" class="custom-control-input" id="aea_confirm_none" name="confirm_as" value="" checked>
+                            <label class="custom-control-label" for="aea_confirm_none">No &mdash; just add to the examiners list</label>
+                        </div>
+                        <div class="custom-control custom-radio">
+                            <input type="radio" class="custom-control-input" id="aea_confirm_specialty" name="confirm_as" value="specialty">
+                            <label class="custom-control-label" for="aea_confirm_specialty">Yes &mdash; confirmed with a specialty</label>
+                        </div>
+                        <div class="custom-control custom-radio">
+                            <input type="radio" class="custom-control-input" id="aea_confirm_tentative" name="confirm_as" value="tentative">
+                            <label class="custom-control-label" for="aea_confirm_tentative">Yes &mdash; tentative</label>
+                        </div>
+                    </div>
+
+                    <div class="d-none form-group" id="aea_availability">
+                        <label class="d-block">Available for <span class="text-danger">*</span></label>
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            <input type="checkbox" class="custom-control-input" id="aea_mcs" name="exam_availability[]" value="MCS">
+                            <label class="custom-control-label" for="aea_mcs">MCS</label>
+                        </div>
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            <input type="checkbox" class="custom-control-input" id="aea_fcs" name="exam_availability[]" value="FCS">
+                            <label class="custom-control-label" for="aea_fcs">FCS</label>
+                        </div>
+                    </div>
+
+                    <div class="d-none" id="aea_share">
+                        <hr>
+                        <label class="d-block">Share the online course login by email?</label>
+                        <div class="custom-control custom-radio">
+                            <input type="radio" class="custom-control-input" id="aea_share_no" name="aea_share" value="no" checked>
+                            <label class="custom-control-label" for="aea_share_no">No &mdash; leave them on the list only</label>
+                        </div>
+                        <div class="custom-control custom-radio">
+                            <input type="radio" class="custom-control-input" id="aea_share_yes" name="aea_share" value="yes">
+                            <label class="custom-control-label" for="aea_share_yes">Yes &mdash; email them their login</label>
+                        </div>
+                        <div class="d-none mt-2" id="aea_share_fields">
+                            <select class="form-control form-control-sm" id="aea_draft"></select>
+                            <p class="small text-muted mt-1 mb-0">
+                                A new random password is generated and set on their login, then emailed (same as the other examiners).
+                                If they are also a fellow, this is the password they use there too.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger" id="aeaSubmit" disabled>Add as Examiner</button>
+            </div>
+        </form>
     </div>
 </div>
 @endsection
@@ -484,6 +595,142 @@ $(function () {
         $('#recipient-pills').html(pills || '<em class="text-muted">No recipients selected.</em>');
         $('#hidden-ids').html(hidden);
         $('#send-count').text(Object.keys(selectedIds).length);
+    });
+});
+</script>
+@endpush
+
+@push('scripts')
+<script>
+$(function () {
+    // ── Add Examiner from Associate ─────────────────────────────────────────
+    var aeaTimer = null, aeaLoaded = false;
+
+    function aeaSync() {
+        var confirm = $('input[name="confirm_as"]:checked').val();
+        $('#aea_availability').toggleClass('d-none', confirm !== 'specialty');
+        $('#aea_share').toggleClass('d-none', !confirm);
+        if (!confirm) { $('#aea_share_no').prop('checked', true); }
+        $('#aea_share_fields').toggleClass('d-none', !confirm || $('input[name="aea_share"]:checked').val() !== 'yes');
+    }
+
+    function aeaResetSelection() {
+        $('#aea_source_id').val('');
+        $('#aea_selected').addClass('d-none').empty();
+        $('#aea_fields').addClass('d-none');
+        $('#aeaSubmit').prop('disabled', true);
+    }
+
+    function aeaLoadOptions() {
+        if (aeaLoaded) return;
+        $.get('{{ route("examiners.associate-options") }}').done(function (res) {
+            aeaLoaded = true;
+            $('#aea_next_id').text(res.next_examiner_id || '');
+            var $spec = $('#aea_specialty');
+            (res.specialty_options || []).forEach(function (n) { $spec.append($('<option>').val(n).text(n)); });
+            var $draft = $('#aea_draft').empty();
+            var drafts = res.credential_drafts || [];
+            if (!drafts.length) {
+                $draft.append('<option value="">No credential email set up (Draft Emails)</option>');
+                $('#aea_share_yes').prop('disabled', true);
+            }
+            drafts.forEach(function (d) { $draft.append($('<option>').val(d.id).text(d.name)); });
+        });
+    }
+
+    $('#addExaminerFromAssociateModal').on('show.bs.modal', aeaLoadOptions);
+    $('#addExaminerFromAssociateModal').on('hidden.bs.modal', function () {
+        $('#aea_search').val('');
+        $('#aea_results').addClass('d-none').empty();
+        $('#aeaAlert').addClass('d-none');
+        $('#aea_confirm_none, #aea_share_no').prop('checked', true);
+        $('#aea_specialty').val('');
+        $('#aea_mcs, #aea_fcs').prop('checked', false);
+        aeaResetSelection();
+        aeaSync();
+        // The next ID moves on once someone is added, so fetch it again next time.
+        aeaLoaded = false; $('#aea_specialty').find('option:gt(0)').remove();
+    });
+
+    $('#aea_type').on('change', aeaResetSelection);
+    $('input[name="confirm_as"], input[name="aea_share"]').on('change', aeaSync);
+
+    $('#aea_search').on('input', function () {
+        var q = $(this).val().trim();
+        aeaResetSelection();
+        clearTimeout(aeaTimer);
+
+        if (q.length < 2) { $('#aea_results').addClass('d-none').empty(); return; }
+
+        aeaTimer = setTimeout(function () {
+            $.get('{{ route("examiners.search-associates") }}', { type: $('#aea_type').val(), q: q })
+                .done(function (res) {
+                    var results = res.results || [];
+                    var $list = $('#aea_results').empty();
+                    if (!results.length) {
+                        $list.append('<div class="list-group-item small text-muted">No matches (or already an examiner).</div>');
+                    } else {
+                        results.forEach(function (r) {
+                            var name = r.name || '';
+                            $list.append($('<button type="button" class="list-group-item list-group-item-action"></button>')
+                                .text(name + (r.email ? ' — ' + r.email : '') + (r.country ? ' (' + r.country + ')' : ''))
+                                .data('id', r.id).data('label', name));
+                        });
+                    }
+                    $list.removeClass('d-none');
+                });
+        }, 300);
+    });
+
+    $(document).on('click', '#aea_results .list-group-item-action', function () {
+        $('#aea_source_id').val($(this).data('id'));
+        $('#aea_selected').removeClass('d-none')
+            .html('<span class="badge badge-secondary p-2"><i class="fas fa-check mr-1"></i>' +
+                  $('<div>').text($(this).data('label')).html() + '</span>');
+        $('#aea_results').addClass('d-none').empty();
+        $('#aea_fields').removeClass('d-none');
+        $('#aeaSubmit').prop('disabled', false);
+    });
+
+    $('#addExaminerFromAssociateForm').on('submit', function (e) {
+        e.preventDefault();
+        if (!$('#aea_source_id').val()) return;
+
+        var confirm = $('input[name="confirm_as"]:checked').val();
+        var share = confirm && $('input[name="aea_share"]:checked').val() === 'yes';
+        var $alert = $('#aeaAlert').addClass('d-none');
+
+        if (confirm === 'specialty' && (!$('#aea_specialty').val() || !$('#aea_mcs').is(':checked') && !$('#aea_fcs').is(':checked'))) {
+            $alert.removeClass('d-none alert-success').addClass('alert-danger')
+                .text('To confirm with a specialty, choose the specialty and at least one of MCS / FCS.');
+            return;
+        }
+        if (share && !$('#aea_draft').val()) {
+            $alert.removeClass('d-none alert-success').addClass('alert-danger').text('Choose the email to share, or select No.');
+            return;
+        }
+
+        var data = $(this).serializeArray().filter(function (f) { return f.name !== 'aea_share'; });
+        if (share) data.push({ name: 'draft_email_id', value: $('#aea_draft').val() });
+
+        var $btn = $('#aeaSubmit').prop('disabled', true).text('Adding...');
+
+        $.ajax({ url: '{{ route("examiners.from-associate") }}', method: 'POST', data: $.param(data) })
+            .done(function (res) {
+                var msg = res.message || 'Examiner added.';
+                var failed = res.email && !res.email.sent;
+                if (res.email) msg += ' ' + (res.email.message || '');
+                $alert.removeClass('d-none alert-danger alert-warning alert-success')
+                    .addClass(failed ? 'alert-warning' : 'alert-success').text(msg);
+                setTimeout(function () {
+                    window.location.href = '{{ url("admin/exams/view_examiner") }}/' + res.examiner_id;
+                }, failed ? 3500 : 1200);
+            })
+            .fail(function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to add examiner.';
+                $alert.removeClass('d-none alert-success').addClass('alert-danger').text(msg);
+                $btn.prop('disabled', false).text('Add as Examiner');
+            });
     });
 });
 </script>

@@ -454,6 +454,10 @@ Route::get('admin/associates/members/delete/{id}', [MembersController::class,'de
 
 //Examiners's Route
 Route::get('admin/exams/examiners', [ExamsController::class,'list']);
+// Add an examiner from an existing associate (Fellow/Country Rep/Member/...), reusing their login.
+Route::get('admin/exams/examiners/associate-options', [ExamsController::class,'associateOptions'])->name('examiners.associate-options');
+Route::get('admin/exams/examiners/search-associates', [ExamsController::class,'searchAssociates'])->name('examiners.search-associates');
+Route::post('admin/exams/examiners/from-associate', [ExamsController::class,'addFromAssociate'])->name('examiners.from-associate');
 Route::get('admin/exams/examiners/preview/{id}', [AssociatePreviewController::class,'show'])->whereNumber('id')->name('examiners.preview')->defaults('type', 'examiner');
 // Examiner Training (learning) — content and progress live in cosecsa-api (internal/learning/*)
 Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(\App\Http\Controllers\Learning\AdminLearningController::class)->group(function () {
@@ -463,6 +467,7 @@ Route::prefix('admin/exams/learning')->name('admin.exams.learning')->controller(
     Route::get('users/{id}', 'userProgress')->whereNumber('id')->name('.user');
     Route::post('users/{id}/reset', 'resetUserProgress')->whereNumber('id')->name('.user.reset');
     Route::get('course', 'course')->name('.course');
+    Route::get('print', 'printCourse')->name('.print');
     Route::get('certificate', 'certificate')->name('.certificate');
     Route::get('certificate/modal', 'certificateModal')->name('.certificate.modal');
     Route::post('certificate', 'saveCertificate')->name('.certificate.save');

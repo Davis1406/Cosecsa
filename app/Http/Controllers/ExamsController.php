@@ -144,6 +144,36 @@ class ExamsController extends Controller
 
 
 
+    // ── Add Examiner from an existing associate (Fellow/Country Rep/Member/...) ──
+
+    // Next Examiner ID, specialties and shareable credential emails for the modal.
+    public function associateOptions()
+    {
+        $response = $this->api->get('examiners/associate-options');
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    // Typeahead used by the "Add Examiner from Associate" modal.
+    public function searchAssociates(Request $request)
+    {
+        $response = $this->api->get('examiners/search-associates', $request->only(['type', 'q']));
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    // Creates an examiners record on someone's existing login; optionally confirms
+    // them for the year and emails the online-course login (see the API method).
+    public function addFromAssociate(Request $request)
+    {
+        $response = $this->api->post('examiners/from-associate', $request->only([
+            'source_type', 'source_id', 'confirm_as', 'specialty', 'subspecialty',
+            'exam_availability', 'draft_email_id',
+        ]));
+
+        return response()->json($response->json(), $response->status());
+    }
+
     public function edit($id, Request $request)
     {
         $response = $this->api->get("examiners/{$id}/edit");

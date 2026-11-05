@@ -414,6 +414,62 @@ class AdminLearningController extends Controller
         return view('learning.examiner.cover', $response->json() + ['preview' => true, 'layout' => 'learning.examiner._standalone']);
     }
 
+    // GET admin/exams/learning/print — the whole course as one print-ready document (every topic open,
+    // module designs kept, COSECSA watermark on every page). The browser's "Save as PDF" makes the file:
+    // the designs are modern HTML/CSS that a server-side PDF library cannot draw faithfully, and the web
+    // server's PHP cannot start a headless browser. Quizzes are left out (questions are not course material).
+    public function printCourse()
+    {
+        $list = $this->api->get('learning/admin/modules');
+        if ($fail = $this->failed($list)) {
+            return $fail;
+        }
+
+        $sections = [];
+        $skipped = [];
+        $css = '';
+        $cssDone = [];
+
+        foreach ((array) $list->json('modules') as $m) {
+            if (($m['type'] ?? '') === 'quiz') {
+                $skipped[] = $m['title'] . ' (quiz)';
+                continue;
+            }
+
+            $response = $this->api->get("learning/modules/{$m['slug']}", ['user_id' => Auth::id(), 'preview' => 1]);
+            $data = $response->successful() ? $response->json() : null;
+            $view = $data['module']['view'] ?? null;
+
+            // Only the coded pages of the final design pack are printed; a plain block page has no such design.
+            if (! $data || ! $view || ! view()->exists("course.modules.{$view}")) {
+                $skipped[] = $m['title'];
+                continue;
+            }
+
+            $html = CoursePage::view($data, ['preview' => true, 'courseShell' => 'learning.print._shell'])->render();
+            // Scripts would grab the first .cs-course of the document; closed <details> do not print.
+            $html = preg_replace('#<script\b.*?</script>#is', '', $html);
+            $html = preg_replace('#<details\b(?![^>]*\bopen\b)#i', '<details open', $html);
+
+            $mod = CoursePage::META[$view]['mod'] ?? $view;
+            if (! isset($cssDone[$view]) && is_file($file = public_path("css/course/modules/{$view}.css"))) {
+                $cssDone[$view] = true;
+                // Every module stylesheet is written for one page; scoping it to its own module keeps their rules apart in one document.
+                $css .= preg_replace('/\.cs-course(?!\.mod-)/', ".cs-course.mod-{$mod}", file_get_contents($file)) . "\n";
+            }
+
+            $sections[] = ['title' => $m['title'], 'mod' => $mod, 'html' => $html];
+        }
+
+        return view('learning.print.course', [
+            'course'   => $list->json('course'),
+            'sections' => $sections,
+            'skipped'  => $skipped,
+            'baseCss'  => is_file($f = public_path('css/course/cosecsa-course.css')) ? file_get_contents($f) : '',
+            'css'      => $css,
+        ]);
+    }
+
     // GET admin/exams/learning/preview/{slug}
     public function previewModule(string $slug)
     {
