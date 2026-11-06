@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added (2026-11-06) — Programme Directors: Retired status
+- Replaced Programme Directors are kept as **Retired** (history) and now show with a grey *Retired* badge, after the active ones, on the Country page (Programme Directors tab), the Hospital page, the Programme Directors list and the PD profile. Retired PDs are left out of letter recipients and the PD portal. Needs the API migration `add_status_to_programme_directors`.
+
 ### Added (2026-11-05) — Add Examiner from Associate; Download course PDF
 - **Examiners page:** new **Add Examiner from Associate** button and modal (search Fellows, Country Reps, Members, Programme Directors, Trainees, Candidates, Trainers; same pattern as Add Fellow from Associate). The Examiner ID is assigned automatically (next after the last examiner). Optionally confirm for the year (specialty + MCS/FCS, or tentative) and email the online-course login (random password, same send as Draft Emails). Routes `admin/exams/examiners/{associate-options,search-associates,from-associate}`.
 - **Examiners page header:** the six header buttons (Bulk CV/Photo, Add Examiner, ...) overlapped the title and year filter on narrower screens; they now wrap in a flex row.

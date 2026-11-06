@@ -68,7 +68,7 @@ class PortalData
      */
     public function programmeDirector(int $userId): array
     {
-        $hospitalIds = DB::table('programme_directors')->where('user_id', $userId)->whereNotNull('hospital_id')->pluck('hospital_id')->unique()->values();
+        $hospitalIds = DB::table('programme_directors')->where('user_id', $userId)->where('status', 'active')->whereNotNull('hospital_id')->pluck('hospital_id')->unique()->values();
 
         $hospitals = DB::table('hospitals')
             ->leftJoin('countries', 'countries.id', '=', 'hospitals.country_id')
@@ -160,6 +160,7 @@ class PortalData
             $directors = DB::table('programme_directors')
                 ->join('users', 'users.id', '=', 'programme_directors.user_id')
                 ->whereNotNull('programme_directors.hospital_id')
+                ->where('programme_directors.status', 'active')
                 ->orderBy('users.name')
                 ->get(['programme_directors.hospital_id', 'users.name'])
                 ->groupBy('hospital_id')->map(fn ($rows) => $rows->pluck('name')->unique()->implode(', '));

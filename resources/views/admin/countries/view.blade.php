@@ -201,9 +201,10 @@
                                 <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Hospital</th><th>Action</th></tr></thead>
                                 <tbody>
                                     @foreach($programmeDirectors as $i => $t)
-                                    <tr>
+                                    @php $pdRetired = ($t->status ?? 'active') === 'retired'; @endphp
+                                    <tr @if($pdRetired) class="text-muted" @endif>
                                         <td>{{ $i+1 }}</td>
-                                        <td><a href="{{ url('admin/associates/programme-directors/view/'.$t->programme_director_id) }}" class="entity-link">{{ $t->name }}</a></td>
+                                        <td><a href="{{ url('admin/associates/programme-directors/view/'.$t->programme_director_id) }}" class="entity-link">{{ $t->name }}</a>@if($pdRetired) <span class="badge badge-secondary ml-1" title="Replaced or stepped down{{ !empty($t->retired_at) ? ' on '.\Illuminate\Support\Carbon::parse($t->retired_at)->format('j M Y') : '' }}">Retired</span>@endif</td>
                                         <td>{{ $t->email ?: '—' }}</td>
                                         <td><a href="{{ url('admin/hospital/view_hospital/'.$t->hospital_id) }}" class="entity-link">{{ $t->hospital_name }}</a></td>
                                         <td><a href="{{ url('admin/associates/programme-directors/view/'.$t->programme_director_id) }}" class="btn btn-xs btn-light border"><i class="fas fa-eye text-info"></i></a></td>

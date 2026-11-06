@@ -37,6 +37,9 @@
                         <div class="text-center">
                             <img src="{{ \App\Support\ApiAsset::url($pd->profile_image) }}" alt="Profile Image" class="img-fluid img-thumbnail">
                             <h5 class="mt-2">{{ $pd->name }}</h5>
+                            @if(($pd->status ?? 'active') === 'retired')
+                                <span class="badge badge-pill px-3 py-1 badge-secondary" style="font-size:.75rem;">Retired{{ !empty($pd->retired_at) ? ' · '.\Illuminate\Support\Carbon::parse($pd->retired_at)->format('j M Y') : '' }}</span>
+                            @endif
                         </div>
                     </div>
                     <div class="col-md-9">

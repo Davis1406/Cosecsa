@@ -204,6 +204,7 @@ class LetterRecipientResolver
             ->join('users as u', 'u.id', '=', 'tr.user_id')
             ->leftJoin('hospitals as h', 'h.id', '=', 'tr.hospital_id')
             ->leftJoin('countries as co', 'co.id', '=', 'h.country_id')
+            ->where('tr.status', 'active')
             ->select('tr.*', 'u.name as user_name', 'u.email as user_email', 'h.name as hospital_name', 'co.country_name');
 
         $this->applyIn($q, 'co.id', $filters['country_id'] ?? null);

@@ -343,12 +343,14 @@
                                     </thead>
                                     <tbody>
                                         @foreach($programmeDirectors as $i => $t)
-                                        <tr>
+                                        @php $pdRetired = ($t->status ?? 'active') === 'retired'; @endphp
+                                        <tr @if($pdRetired) class="text-muted" @endif>
                                             <td>{{ $i+1 }}</td>
                                             <td>
                                                 <a href="{{ url('admin/associates/programme-directors/view/'.$t->programme_director_id) }}" class="entity-link">
                                                     {{ $t->name }}
                                                 </a>
+                                                @if($pdRetired)<span class="badge badge-secondary ml-1" title="Replaced or stepped down{{ !empty($t->retired_at) ? ' on '.\Illuminate\Support\Carbon::parse($t->retired_at)->format('j M Y') : '' }}">Retired</span>@endif
                                             </td>
                                             <td>{{ $t->email ?: '-' }}</td>
                                             <td>
