@@ -109,12 +109,12 @@
                                             data-hospital="{{ $value->hospital_name ?? '' }}">
                                             <td>{{$value->id}}</td>
                                             <td><a href="{{ url('admin/associates/programme-directors/view/' . $value->programme_director_id) }}" class="ad-peek" style="color:inherit;font-weight:600;text-decoration:none;" title="Quick summary">{{$value->name}}</a>@if(($value->status ?? 'active') === 'retired') <span class="badge badge-secondary ml-1">Retired</span>@endif</td>
-                                            <td>{{$value->user_email}}</td>
+                                            <td>{!! \App\Support\Emails::lines($value->user_email) !!}</td>
                                             <td>@if(!empty($value->hospital_id))<a href="{{ url('admin/hospital/view_hospital/'.$value->hospital_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{$value->hospital_name}}</a>@else{{$value->hospital_name}}@endif</td>
                                             <td>@if(!empty($value->country_id))<a href="{{ url('admin/countries/view/'.$value->country_id) }}" style="color:#a02626;font-weight:500;text-decoration:none;">{{$value->country_name}}</a>@else{{$value->country_name}}@endif</td>
                                             <td>{{$value->phone_number}}</td>
                                             <td>{{$value->assistant_pd}}</td>
-                                            <td>{{$value->assistant_email}}</td>
+                                            <td>{!! \App\Support\Emails::lines($value->assistant_email) !!}</td>
                                             <td>{{$value->mobile_no}}</td>
                                             <td class="text-center" style="white-space:nowrap;">
                                                 <div class="dropdown">

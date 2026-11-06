@@ -50,7 +50,7 @@
                             </tr>
                             <tr>
                                 <th>Email</th>
-                                <td>{{ $pd->user_email }}</td>
+                                <td>{!! \App\Support\Emails::lines($pd->user_email) !!}</td>
                             </tr>
 
                             <tr>
@@ -110,7 +110,7 @@
                                           data-ie-value="{{ $pd->assistant_email ?? '' }}"
                                           data-ie-url="{{ url('admin/associates/programme-directors/'.$pd->programme_director_id.'/quick-update') }}"
                                           data-ie-csrf="{{ csrf_token() }}">
-                                        <span class="ie-value">{{ $pd->assistant_email ?? '—' }}</span>
+                                        <span class="ie-value">{!! \App\Support\Emails::lines($pd->assistant_email, '—') !!}</span>
                                         <button class="ie-pencil" type="button" title="Edit assistant PD email"><i class="fas fa-pen"></i></button>
                                     </span>
                                 </td>

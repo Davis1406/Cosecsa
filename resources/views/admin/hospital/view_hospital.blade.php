@@ -352,7 +352,7 @@
                                                 </a>
                                                 @if($pdRetired)<span class="badge badge-secondary ml-1" title="Replaced or stepped down{{ !empty($t->retired_at) ? ' on '.\Illuminate\Support\Carbon::parse($t->retired_at)->format('j M Y') : '' }}">Retired</span>@endif
                                             </td>
-                                            <td>{{ $t->email ?: '-' }}</td>
+                                            <td>{!! \App\Support\Emails::lines($t->email, '-') !!}</td>
                                             <td>
                                                 <span class="ie-field" data-ie="phone_number" data-ie-type="text"
                                                       data-ie-value="{{ $t->phone_number ?? '' }}"

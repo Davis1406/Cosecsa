@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-06) — Two emails in one cell are shown on two lines
+- Programme Directors list and profile (Email, Asst PD Email), and the Hospital and Country PD tabs: when a cell holds more than one address (separated by `/`, `,`, `;` or a space), the second goes on its own line under the first. Display only; the stored value is unchanged. Helper `App\Support\Emails::lines()`.
+
 ### Changed (2026-11-06) — Programme Directors list shows current PDs
 - `admin/associates/programme-directors/list` now lists only the current (active) Programme Directors. A **Show retired** checkbox (`?retired=1`) adds the retired ones, with their Retired badge. The Hospital page's PD tab and the Country page's PD tab still list retired PDs after the current ones, as history.
 
