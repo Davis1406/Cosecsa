@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed (2026-11-06) — Header search finds names by words
+- The header search (`admin/global-search`) matched a name only as an exact phrase, so `Joseph Okello` missed `Joseph Damoi OKELLO` once a middle name sat between the two. It now matches when every word typed is in the name, in any order (fellows, trainees, candidates, examiners, members, country reps, programme directors, trainers).
+
 ### Changed (2026-11-06) — Two emails in one cell are shown on two lines
 - Programme Directors list and profile (Email, Asst PD Email), and the Hospital and Country PD tabs: when a cell holds more than one address (separated by `/`, `,`, `;` or a space), the second goes on its own line under the first. Display only; the stored value is unchanged. Helper `App\Support\Emails::lines()`.
 

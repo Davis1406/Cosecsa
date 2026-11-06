@@ -169,6 +169,19 @@ public function dashboard()
     }
 
     /**
+     * Name search by words: "Joseph Okello" finds "Joseph Damoi OKELLO" and "Dr Joseph OKELLO DAMOI" (every word
+     * has to appear in the name, in any order and with other names in between), not only the exact phrase.
+     */
+    private function allWords($query, string $column, string $q)
+    {
+        foreach (preg_split('/\s+/', trim($q), -1, PREG_SPLIT_NO_EMPTY) as $word) {
+            $query->where($column, 'like', '%' . $word . '%');
+        }
+
+        return $query;
+    }
+
+    /**
      * GET admin/global-search?q=...
      * Returns JSON: { trainees, candidates, examiners, fellows, programme_directors, trainers, members, country_reps, hospitals }
      */
@@ -236,8 +249,8 @@ public function dashboard()
                     ->whereNotNull('t.entry_number')
                     ->where('t.entry_number', '!=', '');
             })
-            ->where(function ($w) use ($like) {
-                $w->where('u.name', 'like', $like)
+            ->where(function ($w) use ($like, $q) {
+                $w->where(fn ($n) => $this->allWords($n, 'u.name', $q))
                   ->orWhere('t.entry_number', 'like', $like)
                   ->orWhere('t.personal_email', 'like', $like);
             })
@@ -262,8 +275,8 @@ public function dashboard()
             ->leftJoin('programmes as p', 'p.id', '=', 'c.programme_id')
             ->where('u.is_deleted', 0)
             ->where('c.exam_year', date('Y'))
-            ->where(function ($w) use ($like) {
-                $w->where('u.name', 'like', $like)
+            ->where(function ($w) use ($like, $q) {
+                $w->where(fn ($n) => $this->allWords($n, 'u.name', $q))
                   ->orWhere('c.entry_number', 'like', $like)
                   ->orWhere('c.candidate_id', 'like', $like)
                   ->orWhere('c.personal_email', 'like', $like);
@@ -281,8 +294,8 @@ public function dashboard()
             ->join('users as u', 'u.id', '=', 'e.user_id')
             ->leftJoin('countries as co', 'co.id', '=', 'e.country_id')
             ->where('u.is_deleted', 0)
-            ->where(function ($w) use ($like) {
-                $w->where('u.name', 'like', $like)
+            ->where(function ($w) use ($like, $q) {
+                $w->where(fn ($n) => $this->allWords($n, 'u.name', $q))
                   ->orWhere('e.examiner_id', 'like', $like)
                   ->orWhere('u.email', 'like', $like)
                   ->orWhere('e.specialty', 'like', $like);
@@ -300,8 +313,8 @@ public function dashboard()
             ->join('users as u', 'u.id', '=', 'f.user_id')
             ->leftJoin('countries as co', 'co.id', '=', 'f.country_id')
             ->where('u.is_deleted', 0)
-            ->where(function ($w) use ($like) {
-                $w->where('u.name', 'like', $like)
+            ->where(function ($w) use ($like, $q) {
+                $w->where(fn ($n) => $this->allWords($n, 'u.name', $q))
                   ->orWhere('f.candidate_number', 'like', $like)
                   ->orWhere('f.personal_email', 'like', $like);
             })
@@ -320,8 +333,8 @@ public function dashboard()
             ->leftJoin('hospitals as h', 'h.id', '=', 'tr.hospital_id')
             ->leftJoin('programmes as p', 'p.id', '=', 'tr.programme_id')
             ->where('u.is_deleted', 0)
-            ->where(function ($w) use ($like) {
-                $w->where('u.name', 'like', $like)
+            ->where(function ($w) use ($like, $q) {
+                $w->where(fn ($n) => $this->allWords($n, 'u.name', $q))
                   ->orWhere('u.email', 'like', $like)
                   ->orWhere('tr.phone_number', 'like', $like)
                   ->orWhere('tr.mobile_no', 'like', $like);
@@ -343,8 +356,8 @@ public function dashboard()
         // on t.country_id 500s this whole endpoint (column doesn't exist).
         $trainers = DB::table('trainers as t')
             ->leftJoin('programmes as p', 'p.id', '=', 't.programme_id')
-            ->where(function ($w) use ($like) {
-                $w->where('t.name', 'like', $like)
+            ->where(function ($w) use ($like, $q) {
+                $w->where(fn ($n) => $this->allWords($n, 't.name', $q))
                   ->orWhere('t.email', 'like', $like)
                   ->orWhere('t.organisation', 'like', $like);
             })
@@ -369,8 +382,8 @@ public function dashboard()
             // every row. Must compare against the string '0'.
             ->where('m.is_deleted', '0')
             ->where('u.is_deleted', 0)
-            ->where(function ($w) use ($like) {
-                $w->where('u.name', 'like', $like)
+            ->where(function ($w) use ($like, $q) {
+                $w->where(fn ($n) => $this->allWords($n, 'u.name', $q))
                   ->orWhere('m.member_id_number', 'like', $like)
                   ->orWhere('m.personal_email', 'like', $like);
             })
@@ -387,8 +400,8 @@ public function dashboard()
             ->join('users as u', 'u.id', '=', 'cr.user_id')
             ->leftJoin('countries as co', 'co.id', '=', 'cr.country_id')
             ->where('u.is_deleted', 0)
-            ->where(function ($w) use ($like) {
-                $w->where('u.name', 'like', $like)
+            ->where(function ($w) use ($like, $q) {
+                $w->where(fn ($n) => $this->allWords($n, 'u.name', $q))
                   ->orWhere('cr.cosecsa_email', 'like', $like)
                   ->orWhere('cr.position', 'like', $like);
             })
