@@ -66,6 +66,11 @@
                                 </div>
                             </div>
                             @endforeach
+                            <label class="mb-0 ml-1 small" style="cursor:pointer;" title="Programme Directors who were replaced are kept as history">
+                                <input type="checkbox" id="pdShowRetired" {{ ($showRetired ?? false) ? 'checked' : '' }}
+                                       onchange="location.href='{{ url('admin/associates/programme-directors/list') }}' + (this.checked ? '?retired=1' : '')">
+                                Show retired @if(($retiredCount ?? 0) > 0)<span class="text-muted">({{ $retiredCount }})</span>@endif
+                            </label>
                             <button id="pdBtnClear" class="btn btn-sm btn-outline-secondary">
                                 <i class="fas fa-times mr-1"></i>Clear All
                             </button>

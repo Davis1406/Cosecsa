@@ -17,13 +17,19 @@ class ProgrammeDirectorController extends Controller
 
     public function __construct(private ApiClient $api) {}
 
-    public function list()
+    public function list(Request $request)
     {
         $response = $this->api->get('programme-directors/list-data');
         $data = $response->object();
 
+        // The list shows the current Programme Directors; retired ones (kept as history) only when asked for.
+        $showRetired = $request->boolean('retired');
+        $all = collect($data->programme_directors ?? []);
+
         return view('admin.associates.programme-directors.list', [
-            'getRecord'    => collect($data->programme_directors ?? []),
+            'getRecord'    => $showRetired ? $all : $all->filter(fn ($p) => ($p->status ?? 'active') !== 'retired')->values(),
+            'showRetired'  => $showRetired,
+            'retiredCount' => $all->filter(fn ($p) => ($p->status ?? 'active') === 'retired')->count(),
             'header_title' => 'Programme Directors List',
         ]);
     }

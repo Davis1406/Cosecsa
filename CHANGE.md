@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-06) — Programme Directors list shows current PDs
+- `admin/associates/programme-directors/list` now lists only the current (active) Programme Directors. A **Show retired** checkbox (`?retired=1`) adds the retired ones, with their Retired badge. The Hospital page's PD tab and the Country page's PD tab still list retired PDs after the current ones, as history.
+
 ### Added (2026-11-06) — Programme Directors: Retired status
 - Replaced Programme Directors are kept as **Retired** (history) and now show with a grey *Retired* badge, after the active ones, on the Country page (Programme Directors tab), the Hospital page, the Programme Directors list and the PD profile. Retired PDs are left out of letter recipients and the PD portal. Needs the API migration `add_status_to_programme_directors`.
 
