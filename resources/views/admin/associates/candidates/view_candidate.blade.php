@@ -216,7 +216,7 @@
                                 <span class="tag-pill tag-blue">Also a Trainee</span>
                             @endif
                             @if($candidate->group_name)
-                                <span class="tag-pill tag-grey">{{ $candidate->group_name }}</span>
+                                <span class="tag-pill tag-grey">{{ $candidate->group_name }}{{ !empty($candidate->exam_session) ? ' · '.$candidate->exam_session : '' }}</span>
                             @endif
                         </div>
 
@@ -433,6 +433,7 @@
                             </span>
                         </div>
                         <div class="field-row"><span class="field-lbl">Exam Group</span><span class="field-val">{{ $candidate->group_name ?? '—' }}</span></div>
+                        <div class="field-row"><span class="field-lbl">Session</span><span class="field-val">{{ $candidate->exam_session ?? '—' }}</span></div>
 
                         <p class="sect-div">Exam Status</p>
                         <div class="field-row"><span class="field-lbl">Repeat Paper 1</span>

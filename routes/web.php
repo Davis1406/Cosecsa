@@ -301,6 +301,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
   Route::post('admin/associates/candidates/add', [CandidatesController::class,'insert'])->name('admin.associates.candidates.add');
   Route::get('admin/associates/candidates/import',  [CandidatesController::class,'import']);
   Route::post('admin/associates/candidates/import', [CandidatesController::class, 'importData'])->name('candidates.import.data');
+  Route::post('admin/associates/candidates/import/part-two-groups', [CandidatesController::class, 'importGroupSheet'])->name('candidates.import.part-two-groups');
   // Part I results upload (preview → confirm) and Part II promotion
   Route::get('admin/associates/candidates/part-one',          [\App\Http\Controllers\PartOneResultsController::class, 'upload']);
   Route::post('admin/associates/candidates/part-one/preview', [\App\Http\Controllers\PartOneResultsController::class, 'preview']);

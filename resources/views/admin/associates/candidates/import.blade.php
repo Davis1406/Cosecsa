@@ -54,7 +54,7 @@
                   </style>
                   <i class="fas fa-info-circle mr-1"></i>
                   <strong>File requirements:</strong>
-                  Accepted formats: <code>.csv</code>, <code>.xls</code>, <code>.xlsx</code>. Max size: 2 MB.
+                  Accepted formats: <code>.csv</code>, <code>.xls</code>, <code>.xlsx</code>. Max size: 10 MB.
                   Upload the examination officer's candidates template with these columns:
                   <code>First Name</code>, <code>Middle Name</code>, <code>Last Name</code>, <code>Email</code>,
                   <code>PEN</code>, <code>Organisation</code>, <code>Exam Type</code>, <code>Gender</code>,
@@ -66,6 +66,14 @@
                   and will not create duplicates. <code>Exam Type</code> must match a programme name exactly
                   (e.g. "MCS", "FCS General Surgery"); <code>Country</code> and <code>Organisation</code>
                   are matched against existing records, and any row that can't be matched is reported after import.
+                </div>
+
+                <div class="alert alert-light border mb-3" style="border-left:4px solid #FEC503 !important;font-size:.88rem;">
+                  <i class="fas fa-users mr-1"></i>
+                  <strong>MCS Part II groups sheet:</strong> a sheet with the columns <code>PEN</code>, <code>group</code>,
+                  <code>candidate_id</code> and <code>Session</code> (Morning / Afternoon) is recognised automatically.
+                  You will see a <strong>preview of exactly what will change</strong> (group, candidate number and session of each
+                  candidate) and confirm it before anything is saved.
                 </div>
 
                 @if(session('importErrors') && count(session('importErrors')))
@@ -88,7 +96,7 @@
                              accept=".csv,.xls,.xlsx" required>
                       <label class="custom-file-label" for="importFile">No file chosen</label>
                     </div>
-                    <small class="text-muted">.csv, .xls, .xlsx — max 2 MB</small>
+                    <small class="text-muted">.csv, .xls, .xlsx — max 10 MB</small>
                   </div>
 
                   <div class="mt-3">

@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-11-08) — Import Candidates: MCS Part II groups, candidate numbers and sessions, with a preview
+- **Candidates → Import** (`admin/associates/candidates/import`): a sheet with the columns `PEN`, `group`, `candidate_id` and `Session` (the examination officer's "MCS Part II" sheet) is recognised on **Upload & Import** and shown on a **review page first**: summary tiles (will update / up to date / need attention / new groups), the groups after the import with Morning and Afternoon counts, and every row with old → new for group, candidate number and session, the matched candidate and any problem. Click a tile to filter. Nothing is saved until **Import N updates** is confirmed (optionally also marking the sheet's candidates as Part II). Any other file is imported exactly as before. Route `admin/associates/candidates/import/part-two-groups`; max file size now 10 MB.
+- The candidate profile shows the **Session** next to the exam group. Needs the API migration `add_exam_session_to_candidates`.
+
 ### Fixed (2026-11-06) — Header search finds names by words
 - The header search (`admin/global-search`) matched a name only as an exact phrase, so `Joseph Okello` missed `Joseph Damoi OKELLO` once a middle name sat between the two. It now matches when every word typed is in the name, in any order (fellows, trainees, candidates, examiners, members, country reps, programme directors, trainers).
 

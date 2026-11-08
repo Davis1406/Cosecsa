@@ -13,6 +13,9 @@ use App\Models\HospitalModel;
 use App\Models\Programme;
 use App\Models\Country;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -119,15 +122,67 @@ class CandidatesController extends Controller
         ]);
     }
 
+    private const GROUP_DIR = 'candidate-group-uploads';
+
     public function importData(Request $request)
     {
         set_time_limit(300);
 
-        $request->validate(['file' => 'required|mimes:csv,xlsx,xls|max:2048']);
+        $request->validate(['file' => 'required|mimes:csv,xlsx,xls|max:10240']);
+        $file = $request->file('file');
 
-        $this->api->postWithFile('candidates/import', [], ['file' => $request->file('file')]);
+        // The examination officer's "MCS Part II" sheet (PEN, group, candidate_id, Session) gets a
+        // preview of what will change before anything is saved. Any other file is imported as before.
+        if (in_array(strtolower($file->getClientOriginalExtension()), ['xlsx', 'xls'], true)) {
+            $probe = $this->api->postWithFile('candidates/part-two-groups/preview', [], ['file' => $file]);
+            if ($probe->successful() && $probe->json('format') === 'part_two_groups') {
+                $token = Str::random(32);
+                Storage::disk('local')->putFileAs(self::GROUP_DIR, $file, "{$token}.xlsx");
+                session(["part_two_groups_upload.{$token}" => $file->getClientOriginalName()]);
+
+                return view('admin.associates.candidates.part_two_groups_preview', [
+                    'header_title' => 'Review MCS Part II groups',
+                    'token'        => $token,
+                    'fileName'     => $file->getClientOriginalName(),
+                    'sheet'        => $probe->json('sheet'),
+                    'year'         => $probe->json('year'),
+                    'rows'         => $probe->json('rows'),
+                    'summary'      => $probe->json('summary'),
+                    'groups'       => $probe->json('groups'),
+                ]);
+            }
+        }
+
+        $this->api->postWithFile('candidates/import', [], ['file' => $file]);
 
         return redirect('admin/associates/candidates/list')->with('success', 'Candidates imported successfully');
+    }
+
+    public function importGroupSheet(Request $request)
+    {
+        $request->validate(['token' => 'required|alpha_num|size:32', 'exam_year' => 'nullable|integer']);
+        $token = $request->input('token');
+        $name  = session("part_two_groups_upload.{$token}");
+        $path  = Storage::disk('local')->path(self::GROUP_DIR . "/{$token}.xlsx");
+
+        if (! $name || ! is_file($path)) {
+            return redirect('admin/associates/candidates/import')
+                ->with('error', 'That upload has expired. Please upload the spreadsheet again.');
+        }
+
+        $response = $this->api->postWithFile('candidates/part-two-groups/import',
+            ['exam_year' => $request->input('exam_year'), 'promote' => $request->boolean('promote') ? '1' : null],
+            ['file' => new UploadedFile($path, $name, null, null, true)]
+        );
+        @unlink($path);
+        session()->forget("part_two_groups_upload.{$token}");
+
+        if ($response->failed()) {
+            return redirect('admin/associates/candidates/import')
+                ->with('error', $response->json('message') ?? 'The import failed. Nothing was saved.');
+        }
+
+        return redirect('admin/associates/candidates/list')->with('success', $response->json('message'));
     }
 
     public function insert(Request $request)
