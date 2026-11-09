@@ -511,7 +511,7 @@ Route::match(['GET', 'POST'], 'admin/exams/view_examiner/{id}', [ExamsController
 Route::get('admin/exams/edit_examiner/{id}', [ExamsController::class,'edit']);
 Route::post('admin/exams/edit_examiner/{id}', [ExamsController::class,'update'])->name('examiner.update');
 // Exam groups (candidates + examiners) and stations of each exam type
-Route::prefix('admin/exams/setup')->name('admin.exams.setup')->controller(\App\Http\Controllers\ExamSetupController::class)->group(function () {
+Route::prefix('admin/exams/setup')->controller(\App\Http\Controllers\ExamSetupController::class)->group(function () {
     Route::get('/', 'index');
     Route::get('overview', 'overview');
     Route::get('groups/{id}', 'group')->whereNumber('id');
