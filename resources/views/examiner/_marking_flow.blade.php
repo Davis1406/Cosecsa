@@ -189,7 +189,7 @@
     function candById(id) { return S.list.filter(function (c) { return String(c.candidates_id) === String(id); })[0]; }
     function marksOf(c) { return (c && S.marks[c.candidates_id]) || { all: [], mine: [] }; }
 
-    function setStep(step) {
+    function setStep(step, quiet) {
         S.step = step;
         $('mfPGroup').hidden = step !== 'group';
         $('mfPCand').hidden = step !== 'candidate';
@@ -198,7 +198,8 @@
         gate(step !== 'mark');
         $('mfWarn').textContent = '';
         render();
-        if (step !== 'mark') mount.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Only bring the flow back into view if the examiner has scrolled past it; never on page load.
+        if (!quiet && step !== 'mark' && mount.getBoundingClientRect().top < 0) mount.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     // The browser's Back (and the phone swipe) walks back through the steps instead of leaving the page:
@@ -435,11 +436,11 @@
         if (saved && groupOptions().some(function (g) { return g.id === saved; })) {
             groupSel.value = saved; S.loading = true;
             stamp('group', 'replace'); stamp('candidate', 'push');   // Back from here goes to the group choice
-            setStep('candidate');
+            setStep('candidate', true);
             groupSel.dispatchEvent(new Event('change', { bubbles: true }));   // the form's own handler fetches the candidates
         } else {
             stamp('group', 'replace');
-            setStep('group');
+            setStep('group', true);
         }
     } catch (err) {
         if (window.console && console.error) console.error('Marking flow could not start; showing the classic form.', err);
