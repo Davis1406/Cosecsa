@@ -598,6 +598,15 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
 
                                 @if (Auth::user()->hasPermission('examiners.view'))
                                 <li class="nav-item">
+                                    <a href="{{ url('admin/exams/setup') }}" class="nav-link @if (Request::segment(3) == 'setup') active @endif">
+                                        <i class="fas fa-layer-group nav-icon"></i>
+                                        <p>Exam Groups &amp; Stations</p>
+                                    </a>
+                                </li>
+                                @endif
+
+                                @if (Auth::user()->hasPermission('examiners.view'))
+                                <li class="nav-item">
                                     <a href="{{ url('admin/exams/learning') }}" class="nav-link">
                                         <i class="fas fa-graduation-cap nav-icon"></i>
                                         <p>Examiner Training</p>

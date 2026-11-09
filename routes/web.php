@@ -510,6 +510,22 @@ Route::get('admin/exams/import', [ExamsController::class, 'import']);
 Route::match(['GET', 'POST'], 'admin/exams/view_examiner/{id}', [ExamsController::class, 'view'])->name('examiner.view');
 Route::get('admin/exams/edit_examiner/{id}', [ExamsController::class,'edit']);
 Route::post('admin/exams/edit_examiner/{id}', [ExamsController::class,'update'])->name('examiner.update');
+// Exam groups (candidates + examiners) and stations of each exam type
+Route::prefix('admin/exams/setup')->name('admin.exams.setup')->controller(\App\Http\Controllers\ExamSetupController::class)->group(function () {
+    Route::get('/', 'index');
+    Route::get('overview', 'overview');
+    Route::get('groups/{id}', 'group')->whereNumber('id');
+    Route::post('groups', 'groupStore');
+    Route::post('groups/{id}', 'groupUpdate')->whereNumber('id');
+    Route::post('groups/{id}/delete', 'groupDestroy')->whereNumber('id');
+    Route::post('groups/{id}/examiners', 'examinersAdd')->whereNumber('id');
+    Route::post('groups/{id}/examiners/{examinerId}/remove', 'examinerRemove')->whereNumber(['id', 'examinerId']);
+    Route::post('groups/{id}/move-candidates', 'candidatesMove')->whereNumber('id');
+    Route::get('stations', 'stations');
+    Route::post('stations', 'stationStore');
+    Route::post('stations/{id}', 'stationUpdate')->whereNumber('id');
+    Route::post('stations/{id}/delete', 'stationDestroy')->whereNumber('id');
+});
 Route::get('admin/exams/examiner-confirmation', [ExamsController::class, 'ExaminerconfirmationView'])->name('examiner.examiner_confirmation');
 Route::post('admin/exams/send-bulk-email', [ExamsController::class, 'sendBulkEmail'])->name('examiners.bulk.email');
 Route::post('admin/exams/examiner/{id}/send-confirmation', [ExamsController::class, 'sendConfirmationEmail'])->name('examiner.send.confirmation');
@@ -620,6 +636,7 @@ Route::group(['middleware' => 'examiner'], function(){
     Route::post('examiner/password/update', [ExamsController::class, 'examinerChangePassword'])->name('examiner.password.update');
     Route::get('/get-candidates', [CandidatesController::class, 'getGsCandidatesByGroup']);
     Route::get('/get-mcs-candidates/{groupId}', [CandidatesController::class, 'getMcsCandidatesByGroup']);
+    Route::get('/examiner/examined/{kind}', [CandidatesController::class, 'examinedMarks'])->name('examiner.examined');
     Route::get('/get-gs-candidates/{groupId}', [CandidatesController::class, 'getGsCandidatesByGroup']);
     Route::get('examiner/edit_info/{id}', [ExamsController::class, 'examinerEdit'])->name('examiner.edit');
     Route::post('examiner/edit_info/{id}', [ExamsController::class, 'examinerUpdate'])->name('examiner.selfUpdate');

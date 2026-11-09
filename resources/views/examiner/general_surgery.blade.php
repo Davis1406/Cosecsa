@@ -29,7 +29,7 @@
 
                             <div class="form-group col-md-4 col-sm-12">
                                 <label>Select Candidate</label>
-                                <select name="candidate_id" id="candidate_id" class="form-control select2" required>
+                                <select name="candidate_id" id="candidate_id" class="form-control select2">
                                     <option value="">Choose a Candidate...</option>
                                 </select>
                             </div>
@@ -38,9 +38,9 @@
                                 <label>Select Station</label>
                                 <select name="station_id" class="form-control" required>
                                     <option value="">Choose a Station...</option>
-                                    @for ($i = 1; $i <= 8; $i++)
-                                        <option value="{{ $i }}">Station {{ $i }}</option>
-                                    @endfor
+                                    @foreach ($stations as $station)
+                                        <option value="{{ $station->number }}">{{ $station->name }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
@@ -192,22 +192,9 @@
             fetch(`{{ url('/get-gs-candidates') }}/${groupId}`)
                 .then(response => response.json())
                 .then(data => {
-                    let candidateSelect = document.getElementById('candidate_id');
-                    candidateSelect.innerHTML = '<option value="">Choose a Candidate...</option>';
-                    if (data.length === 0) {
-                        candidateSelect.innerHTML += '<option value="">No candidates found</option>';
-                        return;
-                    }
-
-                    data.forEach(candidate => {
-                        candidateSelect.innerHTML +=
-                            `<option value="${candidate.candidates_id}">${candidate.candidate_id || candidate.name}</option>`;
-                    });
-
-                    $('#candidate_id').select2({
-                        placeholder: "Choose a Candidate...",
-                        allowClear: true
-                    });
+                    // The candidate picker (tiles / list, highlights who is already examined) fills the select.
+                    CandidatePicker.load(data);
+                    if (data.length === 0) alert('No candidates found in this group.');
                 })
                 .catch(error => {
                     console.error('Error fetching candidates:', error);
@@ -215,5 +202,6 @@
                 });
         }
     </script>
+    @include('examiner._marking_flow', ['kind' => 'gs', 'format' => null, 'assignedGroups' => $examinerGroupIds ?? []])
     @include('examiner._offline')
 @endsection

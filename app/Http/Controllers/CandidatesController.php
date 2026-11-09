@@ -260,6 +260,7 @@ class CandidatesController extends Controller
         $groups = DB::table('examiners_groups')->where('group_name', 'not like', 'TEST-FCS-%')->get();   // the FCS sample groups belong on the FCS forms
 
         $data['header_title'] = 'MCS Form';
+        $data['stations'] = $this->stationsFor('mcs');
         $data['getRecord'] = User::getExaminerCandidates(null, $currentYearId);
         $data['groups'] = $groups;
         $data['examinerGroupIds'] = $examinerGroupIds;
@@ -276,6 +277,7 @@ class CandidatesController extends Controller
         $groups = DB::table('examiners_groups')->where('group_name', 'not like', 'TEST-FCS-%')->get();   // the FCS sample groups belong on the FCS forms
 
         $data['header_title'] = 'GS Form';
+        $data['stations'] = $this->stationsFor('gs');
         $data['getRecord'] = User::getExaminerCandidates(null, $currentYearId);
         $data['groups'] = $groups;
         $data['examinerGroupIds'] = $examinerGroupIds;
@@ -422,6 +424,61 @@ class CandidatesController extends Controller
      * (the GS candidate list used to ignore the group, so a sandbox candidate could be marked under a
      * real group and land in the real results). Returns that sandbox group's id, or null.
      */
+    /**
+     * The stations the examiner forms offer for an exam type (Exam Groups & Stations, in the admin).
+     * Falls back to Station 1-8 when none are configured, which is what the forms always offered.
+     */
+    private function stationsFor(string $examType)
+    {
+        $rows = \Illuminate\Support\Facades\Schema::hasTable('exam_stations')
+            ? DB::table('exam_stations')->where('exam_type', $examType)->where('is_active', 1)->orderBy('station_number')->get(['station_number as number', 'name', 'max_total'])
+            : collect();
+        if ($rows->isNotEmpty()) {
+            return $rows;
+        }
+
+        return collect(range(1, 8))->map(fn ($i) => (object) ['number' => $i, 'name' => "Station $i", 'max_total' => $examType === 'mcs' ? 20 : null]);
+    }
+
+    /**
+     * Who has already been examined, for the candidate picker on the marking forms. For the candidates
+     * the page has loaded (?ids=1,2,3) it returns the stations each one has marks for, from any
+     * examiner ("all") and from this examiner ("mine"), for this exam year. Sandbox (TEST-) groups read
+     * their own test_ table, like the marks are saved to. FCS forms pass ?format=clinical|viva.
+     */
+    public function examinedMarks(Request $request, $kind)
+    {
+        $tables = ['mcs' => 'mcs_results', 'gs' => 'gs_results', 'cardiothoracic' => 'cardiothoracic_results', 'neurosurgery' => 'neurosurgery_results',
+            'orthopaedic' => 'orthopaedic_results', 'ent' => 'ent_results', 'paediatric_orthopaedics' => 'paediatric_orthopaedics_results',
+            'paediatric' => 'paediatric_results', 'plastic_surgery' => 'plastic_surgery_results', 'urology' => 'urology_results'];
+        abort_unless(isset($tables[$kind]), 404);
+
+        $examinerId = DB::table('examiners')->where('user_id', Auth::id())->value('id');
+        $ids = collect(explode(',', (string) $request->query('ids')))->map(fn ($v) => (int) $v)->filter()->unique()->take(400)->values();
+        if (! $examinerId || $ids->isEmpty()) {
+            return response()->json(['marks' => (object) []]);
+        }
+
+        $table = $this->resultsTable($tables[$kind], $request->query('group_id'));
+        if ($table === null || ! \Illuminate\Support\Facades\Schema::hasTable($table)) {
+            return response()->json(['marks' => (object) []]);
+        }
+
+        $rows = DB::table($table)->whereIn('candidate_id', $ids)->where('exam_year', User::getCurrentYearId())
+            ->when($kind !== 'mcs' && $kind !== 'gs' && in_array($request->query('format'), ['clinical', 'viva'], true), fn ($q) => $q->where('exam_format', $request->query('format')))
+            ->get(['candidate_id', 'station_id', 'examiner_id']);
+
+        $marks = [];
+        foreach ($rows->groupBy('candidate_id') as $candidateId => $list) {
+            $marks[$candidateId] = [
+                'all'  => $list->pluck('station_id')->map(fn ($s) => (int) $s)->unique()->sort()->values()->all(),
+                'mine' => $list->where('examiner_id', $examinerId)->pluck('station_id')->map(fn ($s) => (int) $s)->unique()->sort()->values()->all(),
+            ];
+        }
+
+        return response()->json(['marks' => (object) $marks]);
+    }
+
     private function isSandboxGroup($groupId): bool
     {
         return strncasecmp((string) DB::table('examiners_groups')->where('id', $groupId)->value('group_name'), 'TEST-', 5) === 0;
@@ -484,7 +541,12 @@ class CandidatesController extends Controller
         $rules = [
             'candidate_id' => 'required|integer|exists:candidates,id',
             'group_id'     => 'required|integer|exists:examiners_groups,id',
-            'station_id'   => 'required|integer|between:1,8',
+            // Stations 1-8 as always, plus any station an admin added under Exam Groups & Stations.
+            'station_id'   => ['required', 'integer', function ($attribute, $value, $fail) {
+                if (! ($value >= 1 && $value <= 8) && ! DB::table('exam_stations')->where('station_number', (int) $value)->where('is_active', 1)->exists()) {
+                    $fail('That station is not available.');
+                }
+            }],
             'total_marks'  => 'required|numeric|min:0',
         ];
         if ($flat) {
@@ -919,7 +981,7 @@ class CandidatesController extends Controller
             // TEST-PART1 is the Part I sandbox (it holds every specialty's candidates); each FCS specialty page only lists its own groups (e.g. TEST-FCS-URO).
             ->reject(fn ($g) => strcasecmp($g->group_name, 'TEST-PART1') === 0)->values();
         $examNames = ['cardiothoracic'=>'Cardiothoracic Surgery','urology'=>'Urology','orthopaedic'=>'Orthopaedic','paediatric'=>'Paediatric Surgery','ent'=>'ENT Surgery','plastic_surgery'=>'Plastic Surgery','neurosurgery'=>'Neurosurgery','paediatric_orthopaedics'=>'Paediatric Orthopaedics'];
-        return view('examiner.universal_exam_form', ['header_title'=>'FCS '.$examNames[$examType].' - '.ucfirst($formType),'exam_name'=>$examNames[$examType],'exam_type'=>$examType,'form_type'=>$formType,'cases_count'=>$casesCount,'programme_id'=>$programmeId,'groups'=>$groupsWithCandidates]);
+        return view('examiner.universal_exam_form', ['header_title'=>'FCS '.$examNames[$examType].' - '.ucfirst($formType),'exam_name'=>$examNames[$examType],'exam_type'=>$examType,'form_type'=>$formType,'cases_count'=>$casesCount,'programme_id'=>$programmeId,'groups'=>$groupsWithCandidates,'stations'=>$this->stationsFor($examType)]);
     }
 
     public function getExamCandidatesByGroup($examType, $groupId)
