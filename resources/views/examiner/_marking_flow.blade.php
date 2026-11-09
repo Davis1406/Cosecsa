@@ -156,7 +156,7 @@
 
     var CFG = {
         kind: @json($kind), format: @json($format ?? null), assigned: @json(array_map('strval', $assignedGroups ?? [])),
-        examinedUrl: @json(url('examiner/examined')), reviewUrl: @json(url($kind === 'mcs' || $kind === 'gs' ? 'examiner/view_results' : 'examiner/view_fcs_results')),
+        examinedUrl: @json(url('examiner/examined')), reviewUrl: @json(url($kind === 'mcs' || $kind === 'gs' ? 'examiner/resubmit' : 'examiner/fcs-resubmit')),
         reviewNeedsStation: @json($kind === 'mcs' || $kind === 'gs'), storeKey: 'cosecsa.candidatePicker.view'
     };
     var GROUP_KEY = 'cosecsa.flow.group.' + CFG.kind + (CFG.format || '');
@@ -260,7 +260,9 @@
         return { k: 'marked', text: text, review: m.mine[0] };
     }
     function reviewHref(c, station) {
-        return CFG.reviewUrl + '/' + encodeURIComponent(c.candidates_id) + (CFG.reviewNeedsStation ? '/' + encodeURIComponent(station) : '');
+        // Review opens the editable form of the examiner's saved marks (Resubmit): MCS and General Surgery
+        // by station, the FCS forms by Clinical / Viva.
+        return CFG.reviewUrl + '/' + encodeURIComponent(c.candidates_id) + (CFG.reviewNeedsStation ? '/' + encodeURIComponent(station) : (CFG.format ? '/' + encodeURIComponent(CFG.format) : ''));
     }
     function visibleCands() {
         var q = S.q.toLowerCase();
