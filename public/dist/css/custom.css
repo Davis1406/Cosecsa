@@ -1798,7 +1798,5 @@ body.dark-mode .nav-pills .nav-link:not(.active):hover,
 body.dark-mode .nav-pills .nav-link:not(.active):focus { color: #FEC503; background-color: rgba(254, 197, 3, .08); }
 body.dark-mode .nav-pills .nav-link:not(.active):active { color: #FEC503; }
 
-/* Examiner marking and resubmit forms: breathing space under the Submit / Update button,
-   so it does not sit on the bottom edge of the form card or of the screen. */
-.multi_step_form #msform { padding-bottom: 3rem; }
-.multi_step_form #msform .action-button { margin-bottom: 1.5rem; }
+/* Examiner marking and resubmit forms: a small space under the Submit / Update button. */
+.multi_step_form #msform .action-button { margin-bottom: 4px; }
