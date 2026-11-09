@@ -6,6 +6,9 @@
     them in, so the submit, the offline queue and the results pages work as before. A form calls
     CandidatePicker.load(candidates) after it has fetched the candidates of the chosen group.
 
+    An examiner usually works one station at a time: after they mark their first candidate the station
+    step offers only that station for the next candidate, with a "Show all stations" link.
+
     @param string      $kind            mcs | gs | an FCS exam type (cardiothoracic, urology, ...)
     @param string|null $format          clinical | viva for the FCS forms
     @param array       $assignedGroups  group ids assigned to this examiner (shown first)
@@ -39,13 +42,14 @@
             </div>
             <button type="button" class="mf-icon" id="mfRefresh" title="Refresh who has been examined" aria-label="Refresh"><i class="fas fa-sync-alt"></i></button>
         </div>
-        <p class="mf-legend"><span class="mf-dot none"></span>Not marked yet <span class="mf-dot full"></span>Already marked (greyed out, tap <em>Review</em> to see your marks)</p>
+        <p class="mf-legend"><span class="mf-dot none"></span>Not marked yet <span class="mf-dot full"></span>Already marked (in green — tap <em>Review</em> to see your marks)</p>
         <div class="mf-cands mf-tiles" id="mfCandGrid" role="listbox" aria-label="Candidates"></div>
     </section>
 
     <section class="mf-panel" id="mfPStation" hidden>
         <h3 class="mf-h">Choose the station <span class="mf-sub" id="mfStationFor"></span></h3>
         <div class="mf-tiles mf-stations" id="mfStationTiles"></div>
+        <button type="button" class="mf-link" id="mfAllStations" hidden>Show all stations</button>
     </section>
 
     <section class="mf-ready" id="mfReady" hidden>
@@ -73,25 +77,27 @@
     .mf-h { font-size: 1.3rem; font-weight: 800; text-align: center; margin: 0 0 .75rem; color: #111827; }
     .mf-sub { display: block; font-size: .9rem; font-weight: 500; color: #6b7280; margin-top: .15rem; }
     .mf-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: .55rem; }
-    .mf-tile { display: block; text-align: center; background: #fff; border: 2px solid #d1d5db; border-radius: 10px; padding: .55rem .45rem; min-height: 0; cursor: pointer; color: #111827; font: inherit; transition: border-color .12s, box-shadow .12s, transform .12s; position: relative; }
+    .mf-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #fff; border: 2px solid #d1d5db; border-radius: 10px; padding: .55rem .45rem; min-height: 0; cursor: pointer; color: #111827; font: inherit; transition: border-color .12s, box-shadow .12s, transform .12s; position: relative; }
     .mf-tile:hover { border-color: #a02626; box-shadow: 0 4px 12px rgba(0,0,0,.12); transform: translateY(-1px); }
     .mf-tile:focus { outline: 3px solid #a02626; outline-offset: 2px; }
-    .mf-tile .mf-t1 { display: block; font-weight: 800; font-size: 1.15rem; color: #a02626; }
-    .mf-tile .mf-t2 { display: block; font-size: .8rem; margin-top: .15rem; color: #4b5563; }
+    .mf-tile .mf-t1 { display: block; width: 100%; font-weight: 800; font-size: 1.15rem; color: #a02626; }
+    .mf-tile .mf-t2 { display: block; width: 100%; font-size: .8rem; margin-top: .15rem; color: #4b5563; }
     .mf-tile .mf-t2 .mf-dot { margin-right: .35rem; }
     .mf-tile .mf-tag { display: inline-block; margin-top: .2rem; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; background: #fef3c7; color: #92400e; border-radius: 999px; padding: .1rem .55rem; }
-    .mf-tile.marked { background: #f3f4f6; border-color: #d1d5db; }
-    .mf-tile.marked .mf-t1 { color: #6b7280; }
-    .mf-tile.marked:hover { border-color: #9ca3af; box-shadow: none; transform: none; }
+    /* a candidate already examined is shown in green, not greyed out */
+    .mf-tile.marked { background: #f0fdf4; border-color: #86efac; }
+    .mf-tile.marked .mf-t1 { color: #166534; }
+    .mf-tile.marked .mf-t2 { color: #166534; }
+    .mf-tile.marked:hover { border-color: #16a34a; box-shadow: 0 4px 12px rgba(22,163,74,.18); transform: translateY(-1px); }
     .mf-review { display: inline-block; margin-top: .2rem; font-weight: 700; font-size: .85rem; color: #a02626; text-decoration: underline; }
-    .mf-list .mf-review { margin: 0 0 0 1rem; }
+    .mf-list .mf-review { margin: 0; }
     .mf-tile.is-picked { border-color: #a02626; box-shadow: 0 0 0 3px rgba(160,38,38,.2); }
     .mf-tile[disabled] { cursor: not-allowed; opacity: .55; transform: none; box-shadow: none; border-color: #d1d5db; background: #f3f4f6; }
     .mf-tile.s-other { border-color: #93c5fd; background: #eff6ff; }
     .mf-tile.s-mine .mf-t1, .mf-tile.s-mine .mf-t2 { color: #166534; }
     .mf-stations { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
     .mf-dot { display: inline-block; width: .65rem; height: .65rem; border-radius: 50%; background: #d1d5db; vertical-align: -1px; }
-    .mf-dot.marked { background: #9ca3af; } .mf-dot.full { background: #9ca3af; }
+    .mf-dot.marked, .mf-dot.full { background: #16a34a; }
     /* candidate toolbar */
     .mf-bar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: center; margin-bottom: .4rem; }
     .mf-search { font: inherit; font-size: .95rem; padding: .4rem .75rem; border: 2px solid #d1d5db; border-radius: 8px; min-width: 200px; flex: 1 1 200px; max-width: 300px; }
@@ -103,12 +109,12 @@
     .mf-legend { text-align: center; font-size: .85rem; color: #4b5563; margin: .2rem 0 .6rem; }
     .mf-legend .mf-dot { margin: 0 .3rem 0 .9rem; } .mf-legend .mf-dot:first-child { margin-left: 0; }
     .mf-cands.mf-list { display: block; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #fff; }
-    .mf-list .mf-tile { display: flex; align-items: center; gap: 1rem; width: 100%; text-align: left; border: 0; border-bottom: 1px solid #e5e7eb; border-radius: 0; min-height: 0; padding: .4rem .85rem; transform: none; }
+    .mf-list .mf-tile { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 1rem; width: 100%; text-align: center; border: 0; border-bottom: 1px solid #e5e7eb; border-radius: 0; min-height: 0; padding: .4rem .85rem; transform: none; }
     .mf-list .mf-tile:last-child { border-bottom: 0; }
-    .mf-list .mf-tile .mf-t1 { min-width: 110px; } .mf-list .mf-tile .mf-t2 { margin: 0 0 0 auto; }
+    .mf-list .mf-tile .mf-t1 { width: auto; min-width: 110px; } .mf-list .mf-tile .mf-t2 { width: auto; margin: 0; }
     .mf-empty { text-align: center; padding: 1.2rem; color: #6b7280; grid-column: 1 / -1; }
     .mf-link { background: none; border: 0; color: #a02626; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: .4rem; }
-    #mfPGroup .mf-link { display: block; margin: .6rem auto 0; font-size: .9rem; }
+    #mfPGroup .mf-link, #mfPStation .mf-link { display: block; margin: .6rem auto 0; font-size: .9rem; }
     /* summary once everything is chosen */
     .mf-ready { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: center; background: #f0fdf4; border: 2px solid #86efac; border-radius: 10px; padding: .5rem .9rem; }
     .mf-ready-label { color: #166534; font-weight: 600; }
@@ -125,8 +131,9 @@
     body.dark-mode .mf-steps li.current .mf-n { background: #FEC503; color: #1f2937; }
     body.dark-mode .mf-n { background: #4b5563; color: #f3f4f6; }
     body.dark-mode .mf-tile .mf-t1 { color: #FEC503; }
-    body.dark-mode .mf-tile.marked { background: #23272b; border-color: #4b5563; }
-    body.dark-mode .mf-tile.marked .mf-t1 { color: #9ca3af; }
+    body.dark-mode .mf-tile.marked { background: #14301f; border-color: #166534; }
+    body.dark-mode .mf-tile.marked .mf-t1, body.dark-mode .mf-tile.marked .mf-t2 { color: #86efac; }
+    body.dark-mode .mf-tile.marked:hover { border-color: #22c55e; box-shadow: 0 4px 12px rgba(34,197,94,.2); }
     body.dark-mode .mf-review { color: #FEC503; }
     body.dark-mode .mf-tile.s-other { background: #172a45; border-color: #1d4ed8; }
     body.dark-mode .mf-tile.s-mine .mf-t1, body.dark-mode .mf-tile.s-mine .mf-t2 { color: #86efac; }
@@ -153,8 +160,10 @@
         reviewNeedsStation: @json($kind === 'mcs' || $kind === 'gs'), storeKey: 'cosecsa.candidatePicker.view'
     };
     var GROUP_KEY = 'cosecsa.flow.group.' + CFG.kind + (CFG.format || '');
-    var S = { step: 'group', list: [], marks: {}, flags: 'none', filter: 'all', q: '', view: 'tiles', cand: null, loading: false, allGroups: false, showTest: false };
+    var STATION_KEY = 'cosecsa.flow.station.' + CFG.kind + (CFG.format || '');
+    var S = { step: 'group', list: [], marks: {}, flags: 'none', filter: 'all', q: '', view: 'tiles', cand: null, loading: false, allGroups: false, showTest: false, lastStation: null, showAllStations: false };
     try { S.view = localStorage.getItem(CFG.storeKey) === 'list' ? 'list' : 'tiles'; } catch (e) {}
+    try { S.lastStation = parseInt(localStorage.getItem(STATION_KEY), 10) || null; } catch (e) {}
 
     function $(id) { return document.getElementById(id); }
     function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -163,7 +172,6 @@
     // The form's own boxes stay in the page but out of sight; this flow fills them in.
     var row = groupSel.closest('.form-row');
     [groupSel, candSel, stationSel].forEach(function (s) { s.removeAttribute('required'); });
-    row.style.display = 'none';
     row.insertAdjacentElement('afterend', mount);
     var gated = [];
     for (var el = mount.nextElementSibling; el; el = el.nextElementSibling) {
@@ -279,16 +287,35 @@
     }
 
     // ── 3. Station ──
+    // An examiner normally works one station at a time. Once they have marked a candidate somewhere,
+    // the next candidate offers only that station by default; "Show all stations" reveals the rest.
+    function rememberStation(no) {
+        var n = parseInt(no, 10);
+        if (!n) return;
+        S.lastStation = n;
+        try { localStorage.setItem(STATION_KEY, String(n)); } catch (e) {}
+    }
     function renderStations() {
         if (!S.cand) return;
         var m = marksOf(S.cand);
         $('mfStationFor').textContent = 'for ' + number(S.cand);
-        $('mfStationTiles').innerHTML = stationOptions().map(function (s) {
+        var options = stationOptions();
+        var only = null;
+        if (!S.showAllStations && S.lastStation) {
+            var usual = options.filter(function (s) { return s.no === S.lastStation; })[0];
+            // The usual station is only offered on its own while this candidate has not been marked there yet.
+            if (usual && m.mine.indexOf(usual.no) === -1) only = usual;
+        }
+        var show = only ? [only] : options;
+        $('mfStationTiles').innerHTML = show.map(function (s) {
             var mine = m.mine.indexOf(s.no) !== -1, other = !mine && m.all.indexOf(s.no) !== -1;
             var cls = mine ? ' s-mine' : other ? ' s-other' : '';
             var sub = S.flags !== 'ok' ? '' : mine ? '<span class="mf-t2"><i class="fas fa-check"></i> You have marked this</span>' : other ? '<span class="mf-t2">Done by another examiner</span>' : '<span class="mf-t2">Not done yet</span>';
             return '<button type="button" class="mf-tile' + cls + (String(stationSel.value) === String(s.no) ? ' is-picked' : '') + '" data-station="' + s.no + '"' + (mine ? ' disabled' : '') + '><span class="mf-t1">' + esc(s.name) + '</span>' + sub + '</button>';
         }).join('') || '<div class="mf-empty">No stations are available. Please tell the examinations office.</div>';
+        var all = $('mfAllStations');
+        all.hidden = !only;
+        all.textContent = 'Show all ' + options.length + ' stations';
     }
 
     function render() {
@@ -323,7 +350,7 @@
             S.list = Array.isArray(candidates) ? candidates.slice().sort(function (a, b) {
                 return String(number(a)).localeCompare(String(number(b)), undefined, { numeric: true, sensitivity: 'base' });
             }) : [];
-            S.marks = {}; S.flags = 'none'; S.cand = null; S.q = ''; S.filter = 'all'; $('mfSearch').value = '';
+            S.marks = {}; S.flags = 'none'; S.cand = null; S.q = ''; S.filter = 'all'; S.showAllStations = false; $('mfSearch').value = '';
             candSel.innerHTML = '<option value="">Choose a Candidate...</option>';
             S.list.forEach(function (c) { var o = document.createElement('option'); o.value = c.candidates_id; o.textContent = number(c); candSel.appendChild(o); });
             candSel.value = ''; stationSel.value = '';
@@ -350,12 +377,15 @@
             S.cand = candById(t.getAttribute('data-cand'));
             candSel.value = String(S.cand.candidates_id); candSel.dispatchEvent(new Event('change', { bubbles: true }));
             stationSel.value = '';
+            S.showAllStations = false;
             return forward('station');
         }
         if ((t = e.target.closest('[data-station]')) && !t.disabled) {
+            rememberStation(t.getAttribute('data-station'));
             stationSel.value = t.getAttribute('data-station'); stationSel.dispatchEvent(new Event('change', { bubbles: true }));
             return forward('mark');
         }
+        if (e.target.closest('#mfAllStations')) { S.showAllStations = true; return render(); }
         if ((t = e.target.closest('#mfFilter button'))) { S.filter = t.getAttribute('data-filter'); return render(); }
         if ((t = e.target.closest('#mfView button'))) { S.view = t.getAttribute('data-view'); try { localStorage.setItem(CFG.storeKey, S.view); } catch (x) {} return render(); }
         if (e.target.closest('#mfRefresh')) return fetchMarks();
@@ -396,16 +426,26 @@
     });
 
     // Start: resume in the group used a moment ago (the page reloads after each saved mark), else step 1.
-    gate(true);
-    var saved = null; try { saved = sessionStorage.getItem(GROUP_KEY); } catch (x) {}
-    if (saved && groupOptions().some(function (g) { return g.id === saved; })) {
-        groupSel.value = saved; S.loading = true;
-        stamp('group', 'replace'); stamp('candidate', 'push');   // Back from here goes to the group choice
-        setStep('candidate');
-        groupSel.dispatchEvent(new Event('change', { bubbles: true }));   // the form's own handler fetches the candidates
-    } else {
-        stamp('group', 'replace');
-        setStep('group');
+    // If anything goes wrong while starting the flow, fall back to the classic form rather than leaving
+    // the page with no candidate evaluation form at all.
+    try {
+        gate(true);
+        row.style.display = 'none';
+        var saved = null; try { saved = sessionStorage.getItem(GROUP_KEY); } catch (x) {}
+        if (saved && groupOptions().some(function (g) { return g.id === saved; })) {
+            groupSel.value = saved; S.loading = true;
+            stamp('group', 'replace'); stamp('candidate', 'push');   // Back from here goes to the group choice
+            setStep('candidate');
+            groupSel.dispatchEvent(new Event('change', { bubbles: true }));   // the form's own handler fetches the candidates
+        } else {
+            stamp('group', 'replace');
+            setStep('group');
+        }
+    } catch (err) {
+        if (window.console && console.error) console.error('Marking flow could not start; showing the classic form.', err);
+        try { mount.style.display = 'none'; } catch (x) {}
+        row.style.display = '';
+        gate(false);
     }
 })();
 </script>
