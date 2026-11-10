@@ -128,7 +128,7 @@ class ReportBuilderController extends Controller
 
     protected function runQuery(string $type, array $selectedFields, array $filters)
     {
-        [$query, $sqlMap] = $this->baseQuery($type);
+        [$query, $sqlMap] = $this->baseQuery($type, $filters);
 
         $selects = [];
         foreach ($selectedFields as $field) {
@@ -142,13 +142,15 @@ class ReportBuilderController extends Controller
         foreach ($filters as $key => $value) {
             if ($value === null || $value === '') continue;
             if (! isset($config['filters'][$key])) continue;
+            // Handled inside baseQuery() (they act on hospital_programmes, not a column of the base table).
+            if ($type === 'hospital_accreditation' && in_array($key, ['programme_id', 'accreditation_status'], true)) continue;
             $query->where($this->filterColumn($type, $key), $value);
         }
 
         return $query;
     }
 
-    protected function baseQuery(string $type): array
+    protected function baseQuery(string $type, array $filters = []): array
     {
         switch ($type) {
             case 'trainees':
@@ -240,6 +242,42 @@ class ReportBuilderController extends Controller
                         'phone_number'    => 't.phone_number',
                         'assistant_pd'    => 't.assistant_pd',
                         'assistant_email' => 't.assistant_email',
+                    ],
+                ];
+            case 'hospital_accreditation':
+                // One row per hospital. The Programmes cell is a correlated
+                // GROUP_CONCAT over hospital_programmes (non-deleted rows) so
+                // the list stays one row per hospital. The Programme and
+                // Accreditation Status filters narrow both the hospitals
+                // returned and the programmes listed in that cell.
+                $hpWhere = 'hp.hospital_id = h.id AND hp.is_delete = 0';
+                $bindings = [];
+                if (! empty($filters['programme_id'])) {
+                    $hpWhere .= ' AND hp.programme_id = ?';
+                    $bindings[] = (int) $filters['programme_id'];
+                }
+                if (in_array($filters['accreditation_status'] ?? null, ['Active', 'Expired'], true)) {
+                    $hpWhere .= ' AND hp.status = ?';
+                    $bindings[] = $filters['accreditation_status'];
+                }
+                $query = DB::table('hospitals as h')
+                    ->leftJoin('countries as co', 'co.id', '=', 'h.country_id')
+                    ->where('h.is_deleted', 0)
+                    ->whereNotIn('h.name', \App\Models\HospitalModel::PLACEHOLDER_NAMES)
+                    ->whereRaw("EXISTS (SELECT 1 FROM hospital_programmes hp WHERE {$hpWhere})", $bindings)
+                    ->orderBy('h.name');
+                $programmesSql = "(SELECT GROUP_CONCAT(DISTINCT p.name ORDER BY p.name SEPARATOR ', ') FROM hospital_programmes hp JOIN programmes p ON p.id = hp.programme_id WHERE {$hpWhere})";
+                // Inline the (validated int / whitelisted enum) bindings: the
+                // select expression is passed through DB::raw without bindings.
+                foreach ($bindings as $b) {
+                    $programmesSql = preg_replace('/\?/', is_int($b) ? (string) $b : "'" . $b . "'", $programmesSql, 1);
+                }
+                return [
+                    $query,
+                    [
+                        'hospital_name' => 'h.name',
+                        'programmes'    => $programmesSql,
+                        'country_name'  => 'co.country_name',
                     ],
                 ];
             case 'trainers':
@@ -341,6 +379,7 @@ class ReportBuilderController extends Controller
             'country_reps' => ['country_id' => 'cr.country_id'],
             'examiners'    => ['country_id' => 'e.country_id', 'gender' => 'e.gender', 'status' => 'e.status'],
             'exams'        => ['programme_id' => 'ce.programme_id', 'exam_year' => 'ce.exam_year', 'exam_type' => 'ce.exam_type', 'result' => 'ce.result'],
+            'hospital_accreditation' => ['country_id' => 'h.country_id'],
             'admission'    => ['programme_name' => 'sa.programme_name', 'country' => 'sa.country', 'application_stage' => 'sa.application_stage'],
         ];
 
@@ -356,6 +395,8 @@ class ReportBuilderController extends Controller
                 return DB::table('programmes')->orderBy('name')->pluck('name', 'id')->all();
             case 'categories':
                 return DB::table('categories')->orderBy('category_name')->pluck('category_name', 'id')->all();
+            case 'accreditation_status':
+                return ['Active' => 'Active', 'Expired' => 'Expired'];
             case 'gender':
                 return ['Male' => 'Male', 'Female' => 'Female'];
             case 'status':

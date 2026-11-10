@@ -107,6 +107,23 @@ return [
             'filters' => [],
             'group_by' => ['hospital_name'],
         ],
+        'hospital_accreditation' => [
+            'label' => 'Hospital Accreditation (Programmes per Hospital)',
+            // One row per hospital; every accredited programme of that
+            // hospital is listed in the Programmes cell. Column order below
+            // is the default Excel layout: A Hospital, B Programmes, C Country.
+            'fields' => [
+                'hospital_name' => 'Hospital Name',
+                'programmes'    => 'Programmes',
+                'country_name'  => 'Country',
+            ],
+            'filters' => [
+                'country_id'           => ['label' => 'Country', 'source' => 'countries'],
+                'programme_id'         => ['label' => 'Programme', 'source' => 'programmes'],
+                'accreditation_status' => ['label' => 'Accreditation Status', 'source' => 'accreditation_status'],
+            ],
+            'group_by' => ['country_name'],
+        ],
         'trainers' => [
             'label' => 'Trainers (ToT)',
             'fields' => [

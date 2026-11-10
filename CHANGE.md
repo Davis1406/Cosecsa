@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-11-10) — Hospital Accreditation report (programmes per hospital)
+- **College Reports** (`admin/reports`) has a new type, **Hospital Accreditation (Programmes per Hospital)**: one row per hospital with the default Excel layout **A Hospital Name, B Programmes, C Country**; the Programmes cell lists every programme the hospital is accredited for (placeholder and deleted hospitals are left out).
+- Still custom: tick/untick columns, filter by **Country**, **Programme** (only hospitals accredited for it, listing just that programme) and **Accreditation Status** (Active / Expired), group the chart by country, and export to Excel. The same type is added to the API's College Reports (CSV export).
+
 ### Added (2026-11-10) — MCS Results page: visual analysis, reports, pass marks and clearing marks
 - **Examinations → MCS Results** (`admin/exams/exam_results`): a **Report & analysis** section, **closed when the page opens** (a one-line summary stays visible; click it to open): summary tiles (candidates, average, highest/lowest, pass rate), four charts (score distribution coloured by the pass mark, results doughnut, station averages against the maximum, average total by group), tables by station and by session, group and country, and the candidates table with the station marks, total, percentage, group, session and a Pass / Fail / Incomplete badge (filters: minimum total, result, group).
 - **Pass marks** button: set the pass mark (total marks out of the sum of the station maximums, shown as a percentage) and an optional minimum at every station, per exam year; empty means no Pass / Fail is shown.
