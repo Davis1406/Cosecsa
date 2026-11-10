@@ -229,7 +229,7 @@
           </div>
           <small id="udPwExaminerNote" class="text-muted d-block mt-1" style="display:none;">A password set here also shows in the Draft Email for examiners, and is the one it sends.</small>
           <div id="udPwFromRow" class="mt-2" style="display:none;">
-            <small class="text-muted">Or, instead of typing one, give all ticked logins the same password as:</small>
+            <small class="text-muted" id="udPwFromHint">Or, instead of typing one, give all ticked logins the same password as:</small>
             <select id="udPwFromSel" class="form-control form-control-sm d-inline-block ml-1" style="width:auto;"></select>
           </div>
         </div>
@@ -321,9 +321,10 @@
       document.getElementById('udMust').checked = !!(d.logins.find(function (l) { return l.id === d.user.id; }) || {}).must_change_password;
 
       var many = d.logins.length > 1;
-      document.getElementById('udLoginsLabel').textContent = many ? 'This person has ' + d.logins.length + ' logins on this email' : 'Login';
+      var otherEmail = d.logins.some(function (l) { return l.email && l.email.toLowerCase().trim() !== d.user.email.toLowerCase().trim(); });
+      document.getElementById('udLoginsLabel').textContent = many ? 'This person has ' + d.logins.length + ' logins' + (otherEmail ? ' (some on other emails)' : ' on this email') : 'Login';
       document.getElementById('udLoginsHelp').textContent = many
-        ? 'Changes are applied to every ticked login, so the name and password stay the same everywhere. Logins with a different name are left unticked: tick them only if they really are the same person.'
+        ? 'Changes are applied to every ticked login, so the name and password stay the same everywhere' + (otherEmail ? ' (a new email only changes the logins that share this login\'s email)' : '') + '. Logins with a different name are left unticked: tick them only if they really are the same person.'
         : 'Only this login uses this email.';
       document.getElementById('udLogins').innerHTML = d.logins.map(function (l) {
         var isThis = l.id === d.user.id, locked = l.protected && !meIsSuper;
@@ -331,6 +332,7 @@
         return '<label class="ud-login d-block mb-1' + (l.name_compatible ? '' : ' mismatch') + '"><input type="checkbox" class="ud-apply mr-2" value="' + l.id + '"' + (checked ? ' checked' : '') + (isThis || locked ? ' disabled' : '') + '>' +
           '<strong>' + esc(l.type_label) + '</strong>' + (l.roles.length > 1 ? ' <span class="text-muted">(' + esc(l.roles.join(', ')) + ')</span>' : '') + ' — ' + esc(l.name) +
           (isThis ? ' <span class="ud-flag info">this login</span>' : '') +
+          (l.email && l.email.toLowerCase().trim() !== d.user.email.toLowerCase().trim() ? ' <span class="text-muted" style="font-size:.82rem;">' + esc(l.email) + '</span> <span class="ud-flag info" title="Linked through this person\'s Fellow / Trainee / Candidate / Member record, whose personal email is the other login\'s email">other email · linked by record</span>' : '') +
           (l.same_password ? '' : ' <span class="ud-flag warn">different password</span>') +
           (l.name_compatible ? '' : ' <span class="ud-flag warn">different name</span>') +
           (l.protected ? ' <span class="ud-flag info">Super Admin</span>' : '') + '</label>';
@@ -350,6 +352,12 @@
       var sel = document.getElementById('udPwFromSel');
       sel.innerHTML = '<option value="">— no, keep as is —</option>' + d.logins.map(function (l) { return '<option value="' + l.id + '">' + esc(l.type_label) + ' login' + (l.id === d.user.id ? ' (this one)' : '') + '</option>'; }).join('');
       document.getElementById('udPwFromRow').style.display = many ? '' : 'none';
+      // The logins do not share one password: the Gmail login is the default one to copy from.
+      var dflt = d.default_password_login;
+      if (dflt) { sel.value = String(dflt); }
+      document.getElementById('udPwFromHint').textContent = dflt
+        ? 'The passwords differ, so by default all ticked logins get the same password as the Gmail login (type a new password above to override, or choose "no" to leave them):'
+        : 'Or, instead of typing one, give all ticked logins the same password as:';
     }).catch(function (e) { setErr(e.message); document.getElementById('udLogins').innerHTML = ''; });
   }
 

@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-10) — Gmail login is the default; the Fellowship ID stays the username
+- When a person's logins do not share one password, the *Edit login* window pre-selects the **Gmail login** as the password to copy to the others (typing a new password overrides it). The Draft Email for examiners now uses the person's **Fellowship ID** as the username even when the Fellow record is attached to another of their logins (e.g. a Fellow login on Yahoo and an Examiner login on Gmail), and the password it sends works on that Fellow login too.
+
+### Fixed (2026-11-10) — A person's logins on different emails are now treated as one person
+- A person can have a Fellow login on one email and an Examiner login on another (the Fellow ID signs in through the Fellow login, while the examiner uses the other), tied together only by the personal email on their Fellow / Trainee / Candidate / Member record. Changing the password on one left the other unchanged ("invalid credentials" with the Fellow ID). The *Edit login* window and the Draft Email send now also include the logins linked this way (shown with their own email and "other email · linked by record"); those whose name differs are listed but left unticked. A new email only changes the ticked logins that share the edited login's email.
+
 ### Changed (2026-11-10) — Draft Email passwords and the Users directory stay the same
 - A password **prepared** in a Draft Email (Examiner Portal Access) is only applied when that email is sent, so it could differ from the one set on the login in the meantime. In the *Edit login* window a Super Admin now sees the prepared password (with *Use this password*), and a password typed or generated there is also written into every examiner Draft Email that carries a password: its existing line for the person (prepared or already sent, which keeps its "sent" mark but shows the current password) is updated, and a current recipient with no line yet gets one, so the email sends that same password. If the password was copied from another login instead, a warning says a prepared one is still waiting.
 - **Sending** that email now sets the password on the person's other logins on the same email whose name matches (e.g. their Fellow login as well as the Examiner login), and puts all of them back if the email fails; a different person on the same email is not touched.
