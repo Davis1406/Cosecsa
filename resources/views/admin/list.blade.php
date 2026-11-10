@@ -220,12 +220,14 @@
           <div class="form-group col-md-6"><label class="font-weight-bold">Email (login)</label><input type="email" id="udEmail" class="form-control" maxlength="255"></div>
         </div>
         <p class="text-muted" style="font-size:.8rem;margin-top:-8px;" id="udNameNote"></p>
+        <div id="udPrepared" class="py-2 px-3 mb-2" style="display:none;font-size:.88rem;background:#eef5ff;border:1px solid #c7dcf5;border-radius:6px;color:#1d3a5f;"></div>
         <div class="form-group mb-2">
           <label class="font-weight-bold d-block">New password <small class="text-muted font-weight-normal">(leave empty to keep the current one)</small></label>
           <div class="input-group" style="max-width:460px;">
             <input type="text" id="udPwText" class="form-control" autocomplete="new-password" placeholder="Type the new password (at least 6 characters)">
             <div class="input-group-append"><button type="button" class="btn btn-outline-secondary" id="udGen">Generate</button></div>
           </div>
+          <small id="udPwExaminerNote" class="text-muted d-block mt-1" style="display:none;">A password set here also shows in the Draft Email for examiners, and is the one it sends.</small>
           <div id="udPwFromRow" class="mt-2" style="display:none;">
             <small class="text-muted">Or, instead of typing one, give all ticked logins the same password as:</small>
             <select id="udPwFromSel" class="form-control form-control-sm d-inline-block ml-1" style="width:auto;"></select>
@@ -338,6 +340,13 @@
       document.getElementById('udNameNote').textContent = recs.length
         ? 'Changing the name also updates the first / middle / last name on ' + recs.map(function (r) { var t = r.table.replace(/s$/, ''); return t.charAt(0).toUpperCase() + t.slice(1) + ' record #' + r.id; }).join(', ') + '.'
         : '';
+      var prep = document.getElementById('udPrepared'), list = d.prepared || [];
+      prep.style.display = list.length ? '' : 'none';
+      prep.innerHTML = list.map(function (p) {
+        return '<div class="d-flex align-items-center flex-wrap" style="gap:8px;"><span><i class="fas fa-envelope mr-1"></i> Prepared in the Draft Email <strong>' + esc(p.subject || ('#' + p.draft_id)) + '</strong> (not sent yet): login <code style="color:#0b2a4a;background:#fff;padding:1px 6px;border-radius:4px;border:1px solid #c7dcf5;">' + esc(p.username) + '</code>, password <code style="font-size:1rem;color:#0b2a4a;background:#fff;padding:1px 7px;border-radius:4px;border:1px solid #c7dcf5;">' + esc(p.password) + '</code></span>' +
+          '<button type="button" class="btn btn-sm btn-light border ud-use" style="color:#a02626;font-weight:600;" data-pw="' + esc(p.password) + '">Use this password</button></div>';
+      }).join('') + (list.length ? '<small class="d-block mt-1" style="color:#4a6a8f;">When that email is sent it sets this password. A password set here is written into it too, so both stay the same.</small>' : '');
+      document.getElementById('udPwExaminerNote').style.display = d.logins.some(function (l) { return l.roles.indexOf('Examiner') !== -1; }) ? '' : 'none';
       var sel = document.getElementById('udPwFromSel');
       sel.innerHTML = '<option value="">— no, keep as is —</option>' + d.logins.map(function (l) { return '<option value="' + l.id + '">' + esc(l.type_label) + ' login' + (l.id === d.user.id ? ' (this one)' : '') + '</option>'; }).join('');
       document.getElementById('udPwFromRow').style.display = many ? '' : 'none';
@@ -347,6 +356,11 @@
   // The same generated password the Draft Email sends: 6 characters, no look-alikes (0/O, 1/l/I).
   document.getElementById('udGen').addEventListener('click', function () {
     api(base + '/new-password').then(function (r) { document.getElementById('udPwText').value = r.password; }).catch(function (e) { setErr(e.message); });
+  });
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('.ud-use'); if (!b) return;
+    document.getElementById('udPwText').value = b.dataset.pw; setErr('');
   });
 
   document.getElementById('udSave').addEventListener('click', function () {
@@ -370,7 +384,10 @@
       api(base + '/' + current.user.id, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(function (res) {
         var s = res.summary || {};
         $('#udModal').modal('hide');
-        if (window.CosecsaAlert && CosecsaAlert.toast) CosecsaAlert.toast('Saved on ' + s.logins + ' login' + (s.logins === 1 ? '' : 's') + (s.records ? ' and ' + s.records + ' record(s)' : '') + '.', 'success'); else alert('Saved.');
+        var msg = 'Saved on ' + s.logins + ' login' + (s.logins === 1 ? '' : 's') + (s.records ? ' and ' + s.records + ' record(s)' : '') + '.' +
+          (s.draft_passwords_updated ? ' The Draft Email for examiners now shows the same password.' : '');
+        if (s.draft_passwords_pending) { alert(msg + '\n\nNote: a password prepared in a Draft Email is still waiting and will replace this one when that email is sent. Use the Draft Email page to regenerate or change it.'); }
+        else if (window.CosecsaAlert && CosecsaAlert.toast) CosecsaAlert.toast(msg, 'success'); else alert(msg);
         if (document.getElementById('pane-directory').style.display !== 'none') load(); else location.reload();
       }).catch(function (e) { setErr(e.message); }).then(function () { btn.disabled = false; });
     };
