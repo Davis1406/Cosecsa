@@ -93,6 +93,17 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
+        // The Fellowship ID (or an email) can belong to a login that does not hold the role picked on the
+        // previous screen while the same person's other login does (Fellow login on one email, Examiner
+        // login on their Gmail): sign in to that one, using the same password.
+        if (!$user->hasRole($role)) {
+            $other = \App\Services\PersonLogins::loginHoldingRole($user, $role, (string) $request->password);
+            if ($other) {
+                Auth::login($other, $remember);
+                $user = $other;
+            }
+        }
+
         if (!$user->hasRole($role)) {
             Auth::logout();
             return redirect()->back()->with('error', 'You are not assigned to the selected role.');

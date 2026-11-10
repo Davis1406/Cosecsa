@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed (2026-11-10) — "You are not assigned to the selected role" when a person's logins are split
+- A person with a Fellow login on one email and an Examiner login on another (tied together by the personal email on their Fellow record) who typed their Fellowship ID and picked the **Examiner** role landed on the Fellow login, which does not hold that role. Sign-in now looks for the same person's other login that holds the chosen role and accepts the same password, and signs in to that one (and the same the other way round: an email plus the Fellow role). A different person on a shared email is never picked (names must match), and a wrong password is still rejected.
+
 ### Changed (2026-11-10) — Gmail login is the default; the Fellowship ID stays the username
 - When a person's logins do not share one password, the *Edit login* window pre-selects the **Gmail login** as the password to copy to the others (typing a new password overrides it). The Draft Email for examiners now uses the person's **Fellowship ID** as the username even when the Fellow record is attached to another of their logins (e.g. a Fellow login on Yahoo and an Examiner login on Gmail), and the password it sends works on that Fellow login too.
 
