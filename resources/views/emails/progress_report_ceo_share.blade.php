@@ -33,6 +33,17 @@
         is ready for your review. The formatted Word document is attached to this email, and a
         copy has also been sent to you via Messages on the COSECSA MIS.
       </p>
+      @if(!empty($reportUrl))
+        <p style="margin:0 0 14px;">
+          You can also open the report online, type into your own section and submit it from there, without logging in:
+        </p>
+        <p style="margin:0 0 18px;">
+          <a href="{{ $reportUrl }}" style="display:inline-block; background:#a02626; color:#ffffff; text-decoration:none; font-weight:bold; padding:12px 22px; border-radius:5px; border-bottom:3px solid #FEC503;">Open report and complete my section</a>
+        </p>
+        <p style="margin:0 0 14px; font-size:13px; color:#666;">
+          This link is private to you. If you have not opened it, we will send you a gentle reminder every few days.
+        </p>
+      @endif
 
       @include('emails._signature')
     </div>

@@ -51,6 +51,16 @@ return [
         // Stella Itungu — hardcoded like every other id in
         // config/progress_report_sections.php, not env-driven.
         'ceo_user_id' => 17991,
+
+        // The private link emailed to the CEO so she can complete and submit
+        // her section without logging in (App\Models\ProgressReportCeoLink).
+        // While she has not opened it she gets a reminder email every
+        // `reminder_every_days` days, at most `max_reminders` times.
+        'ceo_link' => [
+            'expires_days'        => 45,
+            'reminder_every_days' => 2,
+            'max_reminders'       => 5,
+        ],
     ],
 
     'capsule' => [

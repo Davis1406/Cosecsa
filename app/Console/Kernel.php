@@ -17,6 +17,11 @@ class Kernel extends ConsoleKernel
         // submitted their section. Guarded by reminder_sent_at so it only
         // fires once per period even if the server restarts mid-day.
         $schedule->command('progress-reports:send-reminders')->dailyAt('08:00');
+
+        // While the CEO has not opened her private report link (emailed by
+        // "Share with CEO"), remind her every couple of days (up to a limit);
+        // it stops as soon as she opens the link.
+        $schedule->command('progress-reports:remind-ceo-link')->dailyAt('08:05');
     }
 
     /**

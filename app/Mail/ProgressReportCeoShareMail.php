@@ -21,9 +21,11 @@ class ProgressReportCeoShareMail extends Mailable
     public ?string $senderTitle;
     public ?string $senderPhone;
     public ?string $senderEmail;
+    public ?string $reportUrl;
 
-    public function __construct(string $periodMonthFormatted, string $docxFilename, string $docxBinary, ?\App\Models\User $sender = null)
+    public function __construct(string $periodMonthFormatted, string $docxFilename, string $docxBinary, ?\App\Models\User $sender = null, ?string $reportUrl = null)
     {
+        $this->reportUrl = $reportUrl;
         $this->periodMonthFormatted = $periodMonthFormatted;
         $this->docxFilename = $docxFilename;
         $this->docxBinary = $docxBinary;

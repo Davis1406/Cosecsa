@@ -34,6 +34,21 @@
                 Due {{ $period->due_date->format('d M Y') }}
                 <span class="badge {{ $period->status === 'consolidated' ? 'badge-success' : 'badge-secondary' }} ml-2">{{ ucfirst($period->status) }}</span>
               </p>
+              @if(!empty($ceoLink))
+                <p class="mb-0 mt-1" style="font-size:.8rem;" title="The private link emailed to the CEO by Share with CEO">
+                  <i class="fas fa-link mr-1 text-muted"></i> CEO link:
+                  @if($ceoLink->submitted_at)
+                    <span class="text-success">section submitted {{ $ceoLink->submitted_at->format('d M Y H:i') }}</span>
+                  @elseif($ceoLink->first_opened_at)
+                    <span class="text-primary">opened {{ $ceoLink->first_opened_at->format('d M Y H:i') }} ({{ $ceoLink->open_count }}x) — not submitted yet</span>
+                  @elseif($ceoLink->isExpired())
+                    <span class="text-muted">expired {{ $ceoLink->expires_at->format('d M Y') }} — share again to send a new one</span>
+                  @else
+                    <span class="text-warning">sent {{ $ceoLink->sent_at?->format('d M Y H:i') }}, not opened yet</span>
+                    @if($ceoLink->reminder_count) <span class="text-muted">· {{ $ceoLink->reminder_count }} {{ \Illuminate\Support\Str::plural('reminder', $ceoLink->reminder_count) }} sent, last {{ $ceoLink->last_reminder_at?->format('d M') }}</span>@endif
+                  @endif
+                </p>
+              @endif
             @endif
 
             <div class="d-flex flex-wrap align-items-center mt-2" style="gap:20px;">

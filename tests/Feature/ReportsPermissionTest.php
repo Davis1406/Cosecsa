@@ -40,4 +40,12 @@ class ReportsPermissionTest extends TestCase
         $this->assertTrue($this->run_as(['fellows.view'], 'POST', '/admin/associates/fellows/add')->isRedirection());
         $this->assertSame('ok', $this->run_as(['fellows.manage'], 'POST', '/admin/associates/fellows/add')->getContent());
     }
+
+    public function test_the_users_directory_needs_admin_users_view_to_look_and_manage_to_change(): void
+    {
+        $this->assertSame('ok', $this->run_as(['admin_users.view'], 'GET', '/admin/list/users')->getContent());
+        $this->assertTrue($this->run_as(['admin_users.view'], 'POST', '/admin/list/users/5')->isRedirection());
+        $this->assertSame('ok', $this->run_as(['admin_users.manage'], 'POST', '/admin/list/users/5')->getContent());
+        $this->assertTrue($this->run_as(['fellows.manage'], 'GET', '/admin/list/users')->isRedirection());
+    }
 }

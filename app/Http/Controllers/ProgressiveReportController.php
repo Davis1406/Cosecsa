@@ -193,6 +193,10 @@ class ProgressiveReportController extends Controller
             'isManager'    => $isManager,
             'canApproveAccess' => $canApproveAccess,
             'myUserId'     => Auth::id(),
+            // Where the CEO's private report link stands (managers only).
+            'ceoLink'      => $isManager && \Illuminate\Support\Facades\Schema::hasTable('progress_report_ceo_links')
+                ? \App\Models\ProgressReportCeoLink::where('period_id', $period->id)->first()
+                : null,
             'templatesByUser' => $templatesByUser,
             'pendingAccessRequests' => $canApproveAccess
                 ? ProgressReportAccessRequest::with(['participant.period', 'requester'])->where('status', 'pending')->latest()->get()
@@ -732,8 +736,14 @@ class ProgressiveReportController extends Controller
         $this->authorizeManage();
         // Give her a section to fill in before the report is compiled, so
         // the PDF/DOCX she receives already carries her (blank) CEO rows.
-        ProgressReportParticipant::ensureCeoSection(ProgressReportPeriod::findOrFail($periodId));
+        $ceoSection = ProgressReportParticipant::ensureCeoSection(ProgressReportPeriod::findOrFail($periodId));
         $period = ProgressReportPeriod::with(['participants.user', 'participants.tasks'])->findOrFail($periodId);
+
+        // Private link so she can open the report from the email, type into
+        // her own section and submit it without logging in (reminders go out
+        // while she has not opened it — see SendCeoReportLinkReminders).
+        $ceoLink = $ceoSection ? \App\Models\ProgressReportCeoLink::issue($ceoSection, Auth::id()) : null;
+        $reportUrl = $ceoLink?->url();
 
         // Looked up via the dedicated ceo_user_id setting, NOT
         // config('progress_report_sections') — she's deliberately excluded
@@ -778,7 +788,7 @@ class ProgressiveReportController extends Controller
         $message = Message::create([
             'conversation_id' => $conversation->id,
             'sender_id'       => $myId,
-            'body'            => 'Consolidated Secretariat Report for ' . $period->period_month->format('F Y') . ' is ready for your review.',
+            'body'            => 'Consolidated Secretariat Report for ' . $period->period_month->format('F Y') . ' is ready for your review.' . ($reportUrl ? "\n\nOpen it online and complete your section: " . $reportUrl : ''),
         ]);
         MessageAttachment::create([
             'message_id'    => $message->id,
@@ -799,6 +809,7 @@ class ProgressiveReportController extends Controller
                 $docxFilename,
                 $docxBinary,
                 Auth::user(),
+                $reportUrl,
             ));
             $emailed = true;
         }

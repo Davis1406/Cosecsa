@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+### Added (2026-11-10) — Users directory on Admin List: every login by type, with name / email / password changes that stay consistent
+- **System Settings → User Management** (`admin/list`) now has tabs: **Secretariat** (the existing admin list) and **Fellows, Members, Candidates, Trainees, Programme Directors, Country Representatives, Examiners**, each with its count, search by name or email, and paging. A login appears under every role it holds (a Fellow who is also an Examiner shows in both).
+- **Edit login** (needs the *Admin Accounts* manage permission): change the full name, the email and the password, or copy one login's password to the others, with an option to ask for a password change at next login. A person can have several logins on the same email (175 people today, 160 with a different password on each login): the window lists them and applies the change to every **ticked** login, so the name and password stay the same everywhere. A new name also updates the first / middle / last name on the person's Fellow / Trainee / Candidate / Member record.
+- **Safeguards:** logins whose names do not match (two different people on one email) are left unticked and flagged; a login that does not share the email cannot be changed from another person's window; an email already used by another login is refused; only a Super Admin can change a Super Admin / Master Admin login; passwords are at least 8 characters and are never written to the activity log (the change is: "Password changed for … applied to N login(s)"); "remember me" sessions end when a password changes.
+- Needs the API (new `user-directory` endpoints); no migration.
+
+### Added (2026-11-10) — The CEO opens, fills in and submits her monthly report from an emailed link
+- **Share with CEO** (Progressive Reports) now also creates a **private link** for that month and puts it in the email (button *Open report and complete my section*) and in the Messages note. The page needs no login: she sees the whole report read-only and her own **CEO section** as editable rows (activity, planned activities, current status, next steps; Enter adds a bullet), everything saves as she types, *Add a row* / *Delete row*, and **Submit my section**. The link only reaches her own section; another person's rows cannot be changed through it. Her edits are kept in the row history like anyone else's. Sharing again keeps the same link and restarts the tracking; the link expires after 45 days.
+- **Reminders:** while she has **not opened** the link she gets a reminder email every 2 days (up to 5), daily at 08:05 (`progress-reports:remind-ceo-link`, `--dry-run` lists who would be reminded). They stop as soon as she opens the link, submits, or the link expires. Opens by mail-security scanners and link-preview bots are not counted.
+- The month's page shows the link's state for managers (sent / not opened / reminders sent / opened / submitted). Needs the API migration `create_progress_report_ceo_links_table`; settings in `config/services.php` (`progress_reports.ceo_link`).
+
+### Changed (2026-11-10) — September and October 2026 Secretariat reports updated from the reconsolidated documents
+- Rows of both months were brought in line with the supplied documents (September: wording and bullet clean-up only; October: proofread wording and lines moved between columns, the CEO's five activities added, one empty Academic and Records row removed). Row changes are kept in the row history. Done with a one-off script, rollback file on the server.
+
 ### Fixed (2026-11-10) — Generating a report sent view-only users back to the dashboard
 - On **College Reports**, *Generate* is a POST, and the permission check treated every POST as a "manage" action. Only Super Admin and Master Admin hold `reports.manage`, so every other role with `reports.view` (e.g. Academic Records Assistant) was redirected to the dashboard. Generating a report now needs only `reports.view` (config `admin_permissions.read_only_post_routes`); all other POST routes still need `manage`.
 

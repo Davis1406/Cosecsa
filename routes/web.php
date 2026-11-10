@@ -35,6 +35,16 @@ Route::get('/', [AuthController::class,'login'])->name('login');
 Route::post('login', [AuthController::class,'AuthLogin']);
 Route::get('logout', [AuthController::class,'logout']);
 Route::get('forget-password', [AuthController::class,'forgetpassword']);
+// The CEO's private report link (emailed by "Share with CEO"): the long random
+// token in the URL is the credential — no login. See CeoReportLinkController.
+Route::prefix('ceo-report/{token}')->middleware('throttle:120,1')->group(function () {
+    Route::get('/', [\App\Http\Controllers\CeoReportLinkController::class, 'show'])->name('ceo-report.show');
+    Route::post('/tasks/add', [\App\Http\Controllers\CeoReportLinkController::class, 'addTask'])->name('ceo-report.tasks.add');
+    Route::post('/tasks/{taskId}/update', [\App\Http\Controllers\CeoReportLinkController::class, 'updateTask'])->name('ceo-report.tasks.update');
+    Route::post('/tasks/{taskId}/delete', [\App\Http\Controllers\CeoReportLinkController::class, 'deleteTask'])->name('ceo-report.tasks.delete');
+    Route::post('/submit', [\App\Http\Controllers\CeoReportLinkController::class, 'submit'])->name('ceo-report.submit');
+});
+
 Route::post('forget-password', [AuthController::class,'PostForgetPassword'])->middleware('throttle:5,1');
 Route::get('reset/{token}', [AuthController::class,'ResetPassword']);
 Route::post('reset/{token}', [AuthController::class,'PostReset'])->middleware('throttle:10,1');
@@ -203,6 +213,10 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
 
     Route::get('admin/dashboard', [DashboardController::class,'dashboard']);
     Route::get('admin/list ', [AdminController::class,'list']);
+    // Users directory on the same page: every login by type, change name / email / password across a person's logins.
+    Route::get('admin/list/users', [AdminController::class,'directory']);
+    Route::get('admin/list/users/{id}', [AdminController::class,'directoryShow'])->whereNumber('id');
+    Route::post('admin/list/users/{id}', [AdminController::class,'directoryUpdate'])->whereNumber('id');
     Route::get('admin/add ', [AdminController::class,'add']);
     Route::post('admin/add ', [AdminController::class,'insert']);
     Route::get('admin/edit/{id} ', [AdminController::class,'edit']);

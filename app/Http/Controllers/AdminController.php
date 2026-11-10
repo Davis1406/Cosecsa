@@ -14,6 +14,7 @@ class AdminController extends Controller
         $response = $this->api->get('admin/users');
         $data = $response->object();
         $admins = collect($data->admins ?? []);
+        $summary = $this->api->get('user-directory/summary')->json() ?? [];
 
         return view('admin.list', [
             'getRecord' => new \Illuminate\Pagination\LengthAwarePaginator(
@@ -24,7 +25,35 @@ class AdminController extends Controller
                 ['path' => url('admin/list')]
             ),
             'header_title' => 'Admin List',
+            'directoryTabs' => collect($summary['tabs'] ?? []),
+            'directorySummary' => $summary,
         ]);
+    }
+
+    // ── Users directory (tabs on admin/list) ───────────────────────────────
+
+    public function directory(Request $request)
+    {
+        $res = $this->api->get('user-directory', $request->only(['type', 'q', 'page', 'per_page']));
+
+        return response()->json($res->json(), $res->status());
+    }
+
+    public function directoryShow($id)
+    {
+        $res = $this->api->get("user-directory/{$id}");
+
+        return response()->json($res->json(), $res->status());
+    }
+
+    public function directoryUpdate($id, Request $request)
+    {
+        $res = $this->api->post("user-directory/{$id}", array_filter(
+            $request->only(['name', 'email', 'password', 'password_from', 'must_change_password', 'apply_to']),
+            fn ($v) => $v !== null && $v !== ''
+        ));
+
+        return response()->json($res->json(), $res->status());
     }
 
     public function add()
