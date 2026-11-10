@@ -126,6 +126,13 @@ return [
     ],
 
     // Longest prefix wins — order doesn't matter, matching sorts by length.
+    // POST routes that only READ data (a form that builds a report). The
+    // middleware treats every non-GET request as a "manage" action, so these
+    // are listed to be checked against the module's "view" permission instead.
+    'read_only_post_routes' => [
+        'admin/reports/generate',
+    ],
+
     'route_map' => [
         'admin/dashboard'               => 'dashboard',
         'admin/global-search'           => 'dashboard',

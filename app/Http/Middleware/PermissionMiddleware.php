@@ -50,7 +50,10 @@ class PermissionMiddleware
         // start route is GET, so a view-only role can't reach it by URL.
         $isImpersonate = in_array('impersonate', $segments);
 
-        $suffix = (in_array($request->method(), ['GET', 'HEAD']) && ! $isImpersonate) ? 'view' : 'manage';
+        // A POST that only reads data (e.g. generating a report) needs "view", not "manage".
+        $readOnlyPost = $request->isMethod('post') && in_array($path, config('admin_permissions.read_only_post_routes', []), true);
+
+        $suffix = ((in_array($request->method(), ['GET', 'HEAD']) || $readOnlyPost) && ! $isImpersonate) ? 'view' : 'manage';
 
         if ($this->hasAny($user, $modules, $suffix)) {
             return $next($request);
