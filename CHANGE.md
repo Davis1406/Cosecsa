@@ -6,7 +6,7 @@
 
 ### Changed (2026-11-09) — Examiners land on the dashboard; a current exam set in the admin
 - **Landing page:** an examiner who logs in (or is impersonated) now lands on `examiner/dashboard` instead of the Examiner Training course (`AuthController::redirectToDashboard`, `ImpersonationController`). The course is still in the menu under *Examiner Training*.
-- **Dashboard:** it now puts the **current exam** first, as a big card with a **Start marking** button that opens that exam's marking page (MCS by default). The exam type list is kept under *Marking a different exam?*.
+- **Dashboard:** the usual *Select Exam Type* dropdown and **Proceed** button, with the **current exam already selected** (MCS for now, from the admin setting), so an examiner just presses Proceed.
 - **Admin:** *Examinations → Exam Groups & Stations* has a **Current exam** box at the top: pick the exam type and Save. Stored in the new `app_settings` table (key `current_exam`, API migration `create_app_settings_table`, set to MCS). Route `POST admin/exams/setup/current-exam`.
 
 ### Added (2026-11-09) — Exam Groups & Stations (admin) and a candidate picker with list / tiles on the examiner forms
