@@ -39,6 +39,13 @@ class AdminController extends Controller
         return response()->json($res->json(), $res->status());
     }
 
+    public function directoryNewPassword()
+    {
+        $res = $this->api->get('user-directory/new-password');
+
+        return response()->json($res->json(), $res->status());
+    }
+
     public function directoryShow($id)
     {
         $res = $this->api->get("user-directory/{$id}");

@@ -210,7 +210,6 @@
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">
-        <div id="udModalErr" class="alert alert-danger" style="display:none;"></div>
         <div id="udLoginsBox" class="mb-3">
           <label class="font-weight-bold mb-1" id="udLoginsLabel">Logins of this person</label>
           <p class="text-muted mb-2" style="font-size:.82rem;" id="udLoginsHelp"></p>
@@ -222,18 +221,20 @@
         </div>
         <p class="text-muted" style="font-size:.8rem;margin-top:-8px;" id="udNameNote"></p>
         <div class="form-group mb-2">
-          <label class="font-weight-bold d-block">Password</label>
-          <div class="custom-control custom-radio"><input type="radio" class="custom-control-input" name="udPw" id="udPwKeep" value="keep" checked><label class="custom-control-label" for="udPwKeep">Keep the current password(s)</label></div>
-          <div class="custom-control custom-radio"><input type="radio" class="custom-control-input" name="udPw" id="udPwNew" value="new"><label class="custom-control-label" for="udPwNew">Set a new password</label></div>
-          <div id="udPwNewBox" class="input-group mt-1 mb-1" style="display:none;max-width:420px;">
-            <input type="text" id="udPwText" class="form-control" autocomplete="new-password" placeholder="At least 8 characters">
+          <label class="font-weight-bold d-block">New password <small class="text-muted font-weight-normal">(leave empty to keep the current one)</small></label>
+          <div class="input-group" style="max-width:460px;">
+            <input type="text" id="udPwText" class="form-control" autocomplete="new-password" placeholder="Type the new password (at least 6 characters)">
             <div class="input-group-append"><button type="button" class="btn btn-outline-secondary" id="udGen">Generate</button></div>
           </div>
-          <div class="custom-control custom-radio" id="udPwFromRow"><input type="radio" class="custom-control-input" name="udPw" id="udPwFrom" value="from"><label class="custom-control-label" for="udPwFrom">Give all ticked logins the same password as: <select id="udPwFromSel" class="form-control form-control-sm d-inline-block ml-1" style="width:auto;"></select></label></div>
+          <div id="udPwFromRow" class="mt-2" style="display:none;">
+            <small class="text-muted">Or, instead of typing one, give all ticked logins the same password as:</small>
+            <select id="udPwFromSel" class="form-control form-control-sm d-inline-block ml-1" style="width:auto;"></select>
+          </div>
         </div>
         <div class="custom-control custom-checkbox">
           <input type="checkbox" class="custom-control-input" id="udMust"><label class="custom-control-label" for="udMust">Ask them to change the password at next login</label>
         </div>
+        <div id="udModalErr" class="alert alert-danger mt-3 mb-0" style="display:none;"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
@@ -314,7 +315,7 @@
       document.getElementById('udModalSub').textContent = d.user.type_label + ' login · ' + d.user.email;
       document.getElementById('udName').value = d.user.name;
       document.getElementById('udEmail').value = d.user.email;
-      document.getElementById('udPwKeep').checked = true; document.getElementById('udPwNewBox').style.display = 'none'; document.getElementById('udPwText').value = '';
+      document.getElementById('udPwText').value = '';
       document.getElementById('udMust').checked = !!(d.logins.find(function (l) { return l.id === d.user.id; }) || {}).must_change_password;
 
       var many = d.logins.length > 1;
@@ -338,18 +339,14 @@
         ? 'Changing the name also updates the first / middle / last name on ' + recs.map(function (r) { var t = r.table.replace(/s$/, ''); return t.charAt(0).toUpperCase() + t.slice(1) + ' record #' + r.id; }).join(', ') + '.'
         : '';
       var sel = document.getElementById('udPwFromSel');
-      sel.innerHTML = d.logins.map(function (l) { return '<option value="' + l.id + '">' + esc(l.type_label) + ' login' + (l.id === d.user.id ? ' (this one)' : '') + '</option>'; }).join('');
+      sel.innerHTML = '<option value="">— no, keep as is —</option>' + d.logins.map(function (l) { return '<option value="' + l.id + '">' + esc(l.type_label) + ' login' + (l.id === d.user.id ? ' (this one)' : '') + '</option>'; }).join('');
       document.getElementById('udPwFromRow').style.display = many ? '' : 'none';
     }).catch(function (e) { setErr(e.message); document.getElementById('udLogins').innerHTML = ''; });
   }
 
-  document.querySelectorAll('input[name=udPw]').forEach(function (r) {
-    r.addEventListener('change', function () { document.getElementById('udPwNewBox').style.display = document.getElementById('udPwNew').checked ? '' : 'none'; });
-  });
+  // The same generated password the Draft Email sends: 6 characters, no look-alikes (0/O, 1/l/I).
   document.getElementById('udGen').addEventListener('click', function () {
-    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789', out = '', a = new Uint32Array(12); crypto.getRandomValues(a);
-    for (var i = 0; i < 12; i++) out += chars[a[i] % chars.length];
-    document.getElementById('udPwText').value = out;
+    api(base + '/new-password').then(function (r) { document.getElementById('udPwText').value = r.password; }).catch(function (e) { setErr(e.message); });
   });
 
   document.getElementById('udSave').addEventListener('click', function () {
@@ -359,15 +356,15 @@
     if (!name || !email) { setErr('Name and email cannot be empty.'); return; }
     if (name !== String(current.user.name || '').trim()) body.name = name;
     if (email !== current.user.email) body.email = email;
-    if (document.getElementById('udPwNew').checked) {
-      var pw = document.getElementById('udPwText').value;
-      if (pw.length < 8) { setErr('The password must be at least 8 characters.'); return; }
+    var pw = document.getElementById('udPwText').value;
+    if (pw !== '') {
+      if (pw.length < 6) { setErr('The password must be at least 6 characters.'); return; }
       body.password = pw;
-    } else if (document.getElementById('udPwFrom').checked) { body.password_from = parseInt(document.getElementById('udPwFromSel').value, 10); }
+    } else if (document.getElementById('udPwFromSel').value) { body.password_from = parseInt(document.getElementById('udPwFromSel').value, 10); }
     body.must_change_password = document.getElementById('udMust').checked;
     var applying = body.apply_to.length + (body.apply_to.indexOf(current.user.id) === -1 ? 1 : 0);
     var what = [body.name ? 'name' : null, body.email ? 'email' : null, (body.password || body.password_from) ? 'password' : null].filter(Boolean);
-    if (!what.length && body.must_change_password === !!(current.logins.find(function (l) { return l.id === current.user.id; }) || {}).must_change_password) { setErr('Nothing to change.'); return; }
+    if (!what.length && body.must_change_password === !!(current.logins.find(function (l) { return l.id === current.user.id; }) || {}).must_change_password) { setErr('Nothing to change yet: type a new password (or change the name or email) first.'); return; }
     var go = function () {
       btn.disabled = true; setErr('');
       api(base + '/' + current.user.id, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(function (res) {

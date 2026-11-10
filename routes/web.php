@@ -215,6 +215,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::get('admin/list ', [AdminController::class,'list']);
     // Users directory on the same page: every login by type, change name / email / password across a person's logins.
     Route::get('admin/list/users', [AdminController::class,'directory']);
+    Route::get('admin/list/users/new-password', [AdminController::class,'directoryNewPassword']);
     Route::get('admin/list/users/{id}', [AdminController::class,'directoryShow'])->whereNumber('id');
     Route::post('admin/list/users/{id}', [AdminController::class,'directoryUpdate'])->whereNumber('id');
     Route::get('admin/add ', [AdminController::class,'add']);
