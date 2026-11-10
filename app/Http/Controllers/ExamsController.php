@@ -864,6 +864,7 @@ class ExamsController extends Controller
     {
         $response = $this->api->get('exam-results/mcs', $request->only(['year_id']));
         $d = $response->object();
+        $j = $response->json() ?? [];
 
         return view('admin.exams.exam_results', [
             'header_title'     => 'MCS Results',
@@ -871,7 +872,30 @@ class ExamsController extends Controller
             'allYears'         => collect($d->all_years ?? []),
             'selectedYearId'   => $d->selected_year_id ?? 0,
             'selectedYearName' => $d->selected_year_name ?? date('Y'),
+            // One row per candidate with station marks, total and result, the stations, the pass mark set for the
+            // year and the analysis behind the charts (see cosecsa-api ExamResultsController::mcsReport).
+            'rows'             => $j['rows'] ?? [],
+            'stations'         => $j['stations'] ?? [],
+            'passMarks'        => $j['pass_marks'] ?? ['total' => null, 'station' => null, 'max_total' => 160],
+            'analysis'         => $j['analysis'] ?? [],
         ]);
+    }
+
+    // POST admin/exams/exam_results/pass-marks — the pass mark (and optional station minimum) of the year; JSON.
+    public function saveMcsPassMarks(Request $request)
+    {
+        $response = $this->api->post('exam-results/mcs/pass-marks', $request->only(['year_id', 'total_pass_mark', 'station_pass_mark']));
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
+    }
+
+    // POST admin/exams/exam_results/clear — clear saved MCS marks (selected candidates, a station, a group or all); JSON.
+    // With dry_run=1 it only counts what would be cleared.
+    public function clearMcsMarks(Request $request)
+    {
+        $response = $this->api->post('exam-results/mcs/clear', $request->only(['year_id', 'scope', 'candidate_ids', 'station_id', 'group_id', 'group_name', 'dry_run']));
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
     }
 
     public function overallResults(Request $request)

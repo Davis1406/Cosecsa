@@ -1,125 +1,393 @@
 @extends('layout.app')
 
 @section('content')
+@php
+    $a = $analysis ?? [];
+    $max = $passMarks['max_total'] ?? 160;
+    $passTotal = $passMarks['total'] ?? null;
+    $passStation = $passMarks['station'] ?? null;
+    $passPct = ($passTotal !== null && $max) ? round($passTotal / $max * 100, 1) : null;
+@endphp
 
 <div class="wrapper">
     <div class="content-wrapper">
-        <section class="content-header">
-        </section>
+        <section class="content-header"></section>
 
         <div class="col-md-12">
             @include('_message')
+            <div id="rsAlert"></div>
         </div>
 
         <section class="content">
             <div class="container-wrapper">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="gap:.5rem;">
-                                <h3 class="card-title mb-0">MCS Results — {{ $selectedYearName }}</h3>
-                                <form method="GET" action="{{ url('admin/exams/exam_results') }}" class="d-flex align-items-center flex-shrink-0" style="gap:.4rem;">
-                                    <select name="year_id" class="form-control form-control-sm flex-shrink-0" style="width:110px;">
-                                        @foreach($allYears as $yr)
-                                            <option value="{{ $yr->id }}" {{ $selectedYearId == $yr->id ? 'selected' : '' }}>
-                                                {{ $yr->year_name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <button type="submit" class="btn btn-danger flex-shrink-0" style="white-space:nowrap;padding:4px 12px;font-size:.85rem;">
-                                        Filter
-                                    </button>
-                                </form>
-                            </div>
 
-                            <div class="card-body">
-                                {{-- Min total score filter --}}
-                                <div class="mb-3 d-flex align-items-center" style="gap:.5rem;">
-                                    <label class="mb-0 small font-weight-bold text-muted">Min Total Score:</label>
-                                    <input type="number" id="mcsMinScore" class="form-control form-control-sm"
-                                           min="0" placeholder="e.g. 150" style="width:110px;">
-                                    <button id="mcsClearScore" class="btn btn-sm btn-outline-secondary">
-                                        <i class="fas fa-times mr-1"></i>Clear
-                                    </button>
-                                    <small class="text-muted ml-2" id="mcsFilteredCount"></small>
-                                </div>
-                                <table id="adminresultstable" class="table table-bordered table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>Candidate ID</th>
-                                            <th>Name</th>
-                                            @for ($i = 1; $i <= 8; $i++)
-                                                <th>Station {{ $i }}</th>
-                                            @endfor
-                                            <th>Total Marks</th>
-                                        </tr>
-                                    </thead>
+                {{-- ───────── Header: year, pass mark, reports, clear ───────── --}}
+                <div class="card rs-noprint">
+                    <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="gap:.5rem;">
+                        <h3 class="card-title mb-0">MCS Results — {{ $selectedYearName }}</h3>
+                        <div class="d-flex align-items-center flex-wrap" style="gap:.4rem;">
+                            <form method="GET" action="{{ url('admin/exams/exam_results') }}" class="d-flex align-items-center" style="gap:.4rem;">
+                                <select name="year_id" class="form-control form-control-sm" style="width:110px;">
+                                    @foreach($allYears as $yr)
+                                        <option value="{{ $yr->id }}" {{ $selectedYearId == $yr->id ? 'selected' : '' }}>{{ $yr->year_name }}</option>
+                                    @endforeach
+                                </select>
+                                <button type="submit" class="btn btn-danger btn-sm" style="padding:4px 12px;">Filter</button>
+                            </form>
+                            <button class="btn btn-sm btn-outline-secondary" id="btnPassMarks"><i class="fas fa-bullseye mr-1"></i> Pass marks</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="btnCsv"><i class="fas fa-file-csv mr-1"></i> Download CSV</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="btnPrint"><i class="fas fa-print mr-1"></i> Print report</button>
+                            <button class="btn btn-sm btn-outline-danger" id="btnClear"><i class="fas fa-eraser mr-1"></i> Clear marks</button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Report heading (printed only) --}}
+                <div class="rs-print-only mb-3">
+                    <h2 style="margin:0;">COSECSA MCS Results — {{ $selectedYearName }}</h2>
+                    <div>
+                        @if($passTotal !== null)
+                            Pass mark: {{ $passTotal }} of {{ $max }} marks ({{ $passPct }}%)@if($passStation !== null), at least {{ $passStation }} at every station @endif
+                        @else
+                            No pass mark has been set.
+                        @endif
+                        · Printed {{ now()->format('j F Y') }}
+                    </div>
+                </div>
+
+                @if(empty($rows))
+                    <div class="card"><div class="card-body text-center text-muted py-5">
+                        <i class="fas fa-clipboard-list fa-2x mb-2"></i><br>No MCS marks have been saved for {{ $selectedYearName }}.
+                    </div></div>
+                @else
+
+                {{-- ───────── Report & analysis (collapsed until opened) ───────── --}}
+                <div class="card">
+                    <div class="card-header d-flex align-items-center rs-noprint" id="rsReportToggle" data-toggle="collapse" data-target="#rsReport" aria-expanded="false" aria-controls="rsReport" style="cursor:pointer;">
+                        <h3 class="card-title mb-0"><i class="fas fa-chart-bar mr-2" style="color:#a02626;"></i>Report &amp; analysis</h3>
+                        <small class="text-muted ml-3">
+                            {{ $a['candidates'] ?? 0 }} marked · {{ $a['complete'] ?? 0 }} complete
+                            @if(isset($a['mean'])) · average {{ $a['mean'] }}/{{ $max }} @endif
+                            @if(isset($a['pass_rate'])) · pass rate {{ $a['pass_rate'] }}% @else · pass mark not set @endif
+                        </small>
+                        <i class="fas fa-chevron-down ml-auto rs-chev"></i>
+                    </div>
+                    <div class="collapse" id="rsReport"><div class="card-body">
+
+                {{-- ───────── Summary tiles ───────── --}}
+                <div class="row">
+                    @php
+                        $tiles = [
+                            ['Candidates marked', $a['candidates'] ?? 0, ($a['complete'] ?? 0).' completed all stations'],
+                            ['Average total', isset($a['mean']) ? $a['mean'] : '—', 'of '.$max.' · median '.($a['median'] ?? '—')],
+                            ['Highest / lowest', ($a['highest'] ?? '—').' / '.($a['lowest'] ?? '—'), 'completed candidates'],
+                            ['Pass rate', isset($a['pass_rate']) ? $a['pass_rate'].'%' : 'Not set', isset($a['pass_rate']) ? ($a['passed'] ?? 0).' passed · '.($a['failed'] ?? 0).' failed' : 'set a pass mark'],
+                        ];
+                    @endphp
+                    @foreach($tiles as [$label, $value, $sub])
+                        <div class="col-6 col-lg-3 mb-3">
+                            <div class="card h-100 mb-0"><div class="card-body py-3 text-center">
+                                <div class="text-muted small text-uppercase" style="letter-spacing:.05em;">{{ $label }}</div>
+                                <div style="font-size:1.9rem;font-weight:800;color:#a02626;line-height:1.2;">{{ $value }}</div>
+                                <div class="text-muted small">{{ $sub }}</div>
+                            </div></div>
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- ───────── Charts ───────── --}}
+                <div class="row">
+                    <div class="col-lg-6 mb-3"><div class="card h-100 mb-0"><div class="card-header py-2"><h3 class="card-title" style="font-size:1rem;">Score distribution <small class="text-muted">(candidates who completed every station)</small></h3></div><div class="card-body"><canvas id="chBands" height="200"></canvas></div></div></div>
+                    <div class="col-lg-6 mb-3"><div class="card h-100 mb-0"><div class="card-header py-2"><h3 class="card-title" style="font-size:1rem;">Results</h3></div><div class="card-body"><div style="max-width:320px;margin:auto;"><canvas id="chResult" height="200"></canvas></div></div></div></div>
+                    <div class="col-lg-6 mb-3"><div class="card h-100 mb-0"><div class="card-header py-2"><h3 class="card-title" style="font-size:1rem;">Station averages <small class="text-muted">(bar = average, line = maximum)</small></h3></div><div class="card-body"><canvas id="chStations" height="200"></canvas></div></div></div>
+                    <div class="col-lg-6 mb-3"><div class="card h-100 mb-0"><div class="card-header py-2"><h3 class="card-title" style="font-size:1rem;">Average total by group</h3></div><div class="card-body"><canvas id="chGroups" height="200"></canvas></div></div></div>
+                </div>
+
+                {{-- ───────── Tables for the report ───────── --}}
+                <div class="row">
+                    <div class="col-lg-7 mb-3">
+                        <div class="card h-100 mb-0">
+                            <div class="card-header py-2"><h3 class="card-title" style="font-size:1rem;">By station</h3></div>
+                            <div class="card-body p-0">
+                                <table class="table table-sm mb-0" style="font-size:.85rem;">
+                                    <thead><tr><th>Station</th><th class="text-right">Marked</th><th class="text-right">Average</th><th class="text-right">Lowest</th><th class="text-right">Highest</th><th class="text-right">Max</th>@if($passStation !== null)<th class="text-right">Below {{ $passStation }}</th>@endif</tr></thead>
                                     <tbody>
-                                        @foreach ($getResults as $value)
-                                        @php $mcsTotal = collect($value->stations)->sum('total'); @endphp
-                                        <tr data-total="{{ $mcsTotal }}">
-                                            <td>{{ $value->candidate_id }}</td>
-                                            <td>{{ $value->fullname }}</td>
-                                            @for ($i = 1; $i <= 8; $i++)
-                                                <td>
-                                                    @php
-                                                        $station = collect($value->stations)->firstWhere('station_id', $i);
-                                                    @endphp
-                                                    @if ($station)
-                                                        <a href="{{ url('admin/exams/station_results/' . $value->cnd_id . '/' . $station->station_id) }}"
-                                                           style="color: inherit; text-decoration: none;">
-                                                           {{ $station->total }}
-                                                        </a>
-                                                    @else
-                                                        {{ ' ' }}
-                                                    @endif
-                                                </td>
-                                            @endfor
-                                            <td><b>{{ collect($value->stations)->sum('total') }}</b></td>
-                                        </tr>
-                                        @endforeach                                        
-                                        
+                                    @foreach(($a['stations'] ?? []) as $s)
+                                        <tr><td>{{ $s['name'] }}</td><td class="text-right">{{ $s['candidates'] }}</td><td class="text-right"><strong>{{ $s['mean'] ?? '—' }}</strong></td><td class="text-right">{{ $s['min'] ?? '—' }}</td><td class="text-right">{{ $s['highest'] ?? '—' }}</td><td class="text-right">{{ $s['max'] }}</td>@if($passStation !== null)<td class="text-right">{{ $s['below_pass'] ?? '—' }}</td>@endif</tr>
+                                    @endforeach
                                     </tbody>
-                                    
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-5 mb-3">
+                        <div class="card h-100 mb-0">
+                            <div class="card-header py-2"><h3 class="card-title" style="font-size:1rem;">By group, session and country</h3></div>
+                            <div class="card-body p-0">
+                                <table class="table table-sm mb-0" style="font-size:.85rem;">
+                                    <thead><tr><th></th><th class="text-right">Candidates</th><th class="text-right">Average</th>@if($passTotal !== null)<th class="text-right">Passed</th>@endif</tr></thead>
+                                    <tbody>
+                                    @foreach(['by_session' => 'Session', 'by_group' => 'Group', 'by_country' => 'Country'] as $key => $title)
+                                        <tr class="table-active"><td colspan="{{ $passTotal !== null ? 4 : 3 }}"><strong>{{ $title }}</strong></td></tr>
+                                        @foreach(($a[$key] ?? []) as $g)
+                                            <tr><td>{{ $g['label'] }}</td><td class="text-right">{{ $g['candidates'] }}</td><td class="text-right">{{ $g['mean'] ?? '—' }}</td>@if($passTotal !== null)<td class="text-right">{{ $g['passed'] }}</td>@endif</tr>
+                                        @endforeach
+                                    @endforeach
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                    </div></div>
+                </div>
+
+                {{-- ───────── Results table ───────── --}}
+                <div class="card">
+                    <div class="card-header d-flex align-items-center flex-wrap" style="gap:.5rem;">
+                        <h3 class="card-title mb-0">Candidates</h3>
+                        <small class="text-muted">A station marked more than once counts once, at the average (shown with *).</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3 d-flex align-items-center flex-wrap rs-noprint" style="gap:.5rem;">
+                            <label class="mb-0 small font-weight-bold text-muted">Min total:</label>
+                            <input type="number" id="mcsMinScore" class="form-control form-control-sm" min="0" placeholder="e.g. 100" style="width:100px;">
+                            <select id="rsResult" class="form-control form-control-sm" style="width:auto;">
+                                <option value="">All results</option><option>Pass</option><option>Fail</option><option>Incomplete</option>
+                            </select>
+                            <select id="rsGroup" class="form-control form-control-sm" style="width:auto;">
+                                <option value="">All groups</option>
+                                @foreach(collect($rows)->pluck('group')->filter()->unique()->sort(SORT_NATURAL|SORT_FLAG_CASE) as $g)<option>{{ $g }}</option>@endforeach
+                            </select>
+                            <button id="mcsClearScore" class="btn btn-sm btn-outline-secondary"><i class="fas fa-times mr-1"></i>Reset</button>
+                            <small class="text-muted ml-2" id="mcsFilteredCount"></small>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="adminresultstable" class="table table-bordered table-striped" style="width:100%;font-size:.88rem;">
+                                <thead>
+                                    <tr>
+                                        <th class="rs-noprint" style="width:28px;"><input type="checkbox" id="rsAll"></th>
+                                        <th>Candidate ID</th><th>Name</th><th>Group</th><th>Session</th>
+                                        @foreach($stations as $s)<th class="text-right" title="{{ $s['name'] }} (max {{ $s['max'] }})">S{{ $s['number'] }}</th>@endforeach
+                                        <th class="text-right">Total</th><th class="text-right">%</th><th>Result</th><th class="rs-noprint"></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
         </section>
     </div>
 </div>
 
+{{-- Pass marks --}}
+<div class="modal fade" id="passModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Pass marks — MCS {{ $selectedYearName }}</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="pmTotal">Pass mark (total marks out of {{ $max }})</label>
+                <input type="number" id="pmTotal" class="form-control" min="0" max="{{ $max }}" step="0.5" value="{{ $passTotal }}" placeholder="e.g. 96">
+                <small class="text-muted" id="pmPct"></small>
+            </div>
+            <div class="form-group mb-1">
+                <label for="pmStation">Minimum at every station <span class="text-muted">(optional)</span></label>
+                <input type="number" id="pmStation" class="form-control" min="0" step="0.5" value="{{ $passStation }}" placeholder="e.g. 8">
+                <small class="text-muted">A candidate who scores below this at any station fails, whatever the total.</small>
+            </div>
+            <p class="text-muted small mb-0 mt-3">Candidates who have not been marked at every station show as <em>Incomplete</em>. Leave the pass mark empty to show no Pass or Fail. It applies to {{ $selectedYearName }} only and can be changed any time.</p>
+        </div>
+        <div class="modal-footer"><button class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-danger" id="btnSavePass">Save pass marks</button></div>
+    </div></div>
+</div>
+
+{{-- Clear marks --}}
+<div class="modal fade" id="clearModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header" style="border-bottom:3px solid #dc3545;"><h5 class="modal-title text-danger"><i class="fas fa-eraser mr-1"></i> Clear marks — MCS {{ $selectedYearName }}</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
+        <div class="modal-body">
+            <p class="small text-muted">Deletes the saved marks, so the sitting can be marked again. A copy of everything deleted is kept on the server.</p>
+            <div class="custom-control custom-radio"><input type="radio" class="custom-control-input" name="clScope" id="clSel" value="candidates"><label class="custom-control-label" for="clSel">The candidates I ticked in the table (<span id="clSelCount">0</span>)</label></div>
+            <div class="custom-control custom-radio mt-2"><input type="radio" class="custom-control-input" name="clScope" id="clStation" value="station"><label class="custom-control-label" for="clStation">One station, for everyone</label>
+                <select id="clStationSel" class="form-control form-control-sm mt-1" style="max-width:260px;">@foreach($stations as $s)<option value="{{ $s['number'] }}">{{ $s['name'] }}</option>@endforeach</select></div>
+            <div class="custom-control custom-radio mt-2"><input type="radio" class="custom-control-input" name="clScope" id="clGroup" value="group"><label class="custom-control-label" for="clGroup">A whole group</label>
+                <select id="clGroupSel" class="form-control form-control-sm mt-1" style="max-width:260px;">@foreach(collect($rows)->pluck('group')->filter()->unique()->sort(SORT_NATURAL|SORT_FLAG_CASE) as $g)<option>{{ $g }}</option>@endforeach</select></div>
+            <div class="custom-control custom-radio mt-2"><input type="radio" class="custom-control-input" name="clScope" id="clAll" value="all"><label class="custom-control-label text-danger" for="clAll"><strong>Everything for {{ $selectedYearName }}</strong></label></div>
+            <div class="alert alert-warning mt-3 mb-2" id="clPreview" style="display:none;"></div>
+            <div id="clConfirmWrap" style="display:none;"><label class="small mb-1">Type <strong>CLEAR</strong> to confirm</label><input type="text" id="clConfirm" class="form-control" autocomplete="off" style="max-width:200px;"></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-danger" id="btnDoClear" disabled><i class="fas fa-eraser mr-1"></i> Clear these marks</button></div>
+    </div></div>
+</div>
 @endsection
+
+@push('styles')
+<style>
+    .rs-print-only { display: none; }
+    .rs-chev { transition: transform .2s; }
+    #rsReportToggle[aria-expanded="true"] .rs-chev { transform: rotate(180deg); }
+    #adminresultstable td, #adminresultstable th { white-space: nowrap; }
+    .rs-res { font-weight: 700; padding: .1rem .5rem; border-radius: 999px; font-size: .78rem; }
+    .rs-res.Pass { background: #dcfce7; color: #166534; } .rs-res.Fail { background: #fee2e2; color: #991b1b; } .rs-res.Incomplete { background: #fef3c7; color: #92400e; }
+    .rs-low { background: rgba(220,53,69,.14); }
+    @media print {
+        #rsReport.collapse { display: block !important; height: auto !important; }
+        .rs-noprint, .main-sidebar, .main-header, .main-footer, .dataTables_filter, .dataTables_length, .dataTables_paginate, .dataTables_info, .dt-buttons { display: none !important; }
+        .rs-print-only { display: block !important; }
+        .content-wrapper { margin-left: 0 !important; background: #fff !important; }
+        .card { break-inside: avoid; box-shadow: none !important; border: 1px solid #ddd !important; }
+        canvas { max-width: 100% !important; }
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>
-$(document).ready(function () {
+$(function () {
+    var ROWS = @json($rows), STATIONS = @json($stations), A = @json($analysis), PASS = @json($passMarks);
+    var YEAR_ID = @json($selectedYearId), YEAR = @json($selectedYearName), MAX = PASS.max_total || 160;
+    var base = @json(url('admin/exams/exam_results')), stationUrl = @json(url('admin/exams/station_results'));
+    var csrf = $('meta[name="csrf-token"]').attr('content') || @json(csrf_token());
+    function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+    function say(msg, ok) {
+        var el = $('<div class="alert alert-' + (ok === false ? 'danger' : 'success') + ' alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button>' + esc(msg) + '</div>');
+        $('#rsAlert').empty().append(el); window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    function post(path, data) {
+        return $.ajax({ url: base + path, method: 'POST', data: JSON.stringify(data), contentType: 'application/json', dataType: 'json', headers: { 'X-CSRF-TOKEN': csrf, Accept: 'application/json' } });
+    }
+    function fail(x) { say((x.responseJSON && x.responseJSON.message) || 'Something went wrong. Nothing was changed.', false); }
 
-    function redraw() {
-        var dt   = $('#adminresultstable').DataTable();
-        dt.draw();
-        var info = dt.page.info();
-        $('#mcsFilteredCount').text(
-            info.recordsDisplay < info.recordsTotal
-                ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal : ''
-        );
+    // ───── Table ─────
+    var dt = null;
+    if (ROWS.length) {
+        dt = $('#adminresultstable').DataTable({
+            data: ROWS, deferRender: true, pageLength: 25, order: [[1, 'asc']],
+            columns: [].concat(
+                [{ data: null, orderable: false, className: 'rs-noprint', render: function (d, t, r) { return '<input type="checkbox" class="rs-pick" value="' + r.cnd_id + '">'; } },
+                 { data: 'number', render: function (d, t, r) { return esc(d || r.pen || '—'); } },
+                 { data: 'name', render: function (d, t) { return esc(d); } },
+                 { data: 'group', defaultContent: '', render: function (d) { return esc(d || ''); } },
+                 { data: 'session', defaultContent: '', render: function (d) { return esc(d || ''); } }],
+                STATIONS.map(function (s, i) {
+                    return { data: null, className: 'text-right', orderable: true, render: function (d, type, r) {
+                        var st = r.stations[i]; if (type !== 'display') return st ? st.mark : -1;
+                        if (!st) return '';
+                        var low = PASS.station !== null && st.mark < PASS.station;
+                        return '<a href="' + stationUrl + '/' + r.cnd_id + '/' + s.number + '" style="color:inherit;text-decoration:none;" class="' + (low ? 'rs-low d-block' : '') + '" title="' + esc(s.name) + (st.marks > 1 ? ' (' + st.marks + ' marks, average)' : '') + '">' + st.mark + (st.marks > 1 ? '*' : '') + '</a>';
+                    } };
+                }),
+                [{ data: 'total', className: 'text-right', render: function (d, t) { return t === 'display' ? '<strong>' + d + '</strong>' : d; } },
+                 { data: 'percent', className: 'text-right', render: function (d, t) { return t === 'display' ? (d == null ? '' : d + '%') : d; } },
+                 { data: 'result', defaultContent: '', render: function (d, t) { return t === 'display' ? (d ? '<span class="rs-res ' + d + '">' + d + '</span>' : '<span class="text-muted">—</span>') : (d || ''); } },
+                 { data: null, orderable: false, className: 'rs-noprint text-right', render: function (d, t, r) { return '<button class="btn btn-xs btn-light border rs-clear-one" data-id="' + r.cnd_id + '" title="Clear this candidate\'s marks"><i class="fas fa-eraser text-danger"></i></button>'; } }]
+            )
+        });
+        $.fn.dataTable.ext.search.push(function (settings, data, i) {
+            if (settings.nTable.id !== 'adminresultstable') return true;
+            var r = ROWS[i] || dt.row(i).data(); if (!r) return true;
+            var min = parseFloat($('#mcsMinScore').val()), res = $('#rsResult').val(), grp = $('#rsGroup').val();
+            if (!isNaN(min) && !(r.total >= min)) return false;
+            if (res && (r.result || '') !== res) return false;
+            if (grp && (r.group || '') !== grp) return false;
+            return true;
+        });
+        var redraw = function () { dt.draw(); var info = dt.page.info(); $('#mcsFilteredCount').text(info.recordsDisplay < info.recordsTotal ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal : ''); };
+        $('#mcsMinScore').on('input', redraw); $('#rsResult, #rsGroup').on('change', redraw);
+        $('#mcsClearScore').on('click', function () { $('#mcsMinScore').val(''); $('#rsResult, #rsGroup').val(''); redraw(); });
+        $('#rsAll').on('change', function () { $('#adminresultstable .rs-pick').prop('checked', this.checked); });
     }
 
-    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-        if (settings.nTable.id !== 'adminresultstable') return true;
-        var min = parseInt($('#mcsMinScore').val(), 10);
-        if (isNaN(min)) return true;
-        var $row  = $($(settings.nTable).DataTable().row(dataIndex).node());
-        return parseInt($row.data('total'), 10) >= min;
+    // ───── Charts (built when the report is first opened, as a hidden canvas has no size) ─────
+    var chartsBuilt = false;
+    function buildCharts() {
+        if (chartsBuilt || !window.Chart || !ROWS.length) return;
+        chartsBuilt = true;
+        var maroon = '#a02626', gold = '#FEC503', green = '#2e9e5b', red = '#dc3545', grey = '#9aa3ad';
+        var passPct = PASS.total !== null ? PASS.total / MAX * 100 : null;
+        new Chart(document.getElementById('chBands'), { type: 'bar',
+            data: { labels: A.bands.map(function (b) { return b.label; }), datasets: [{ label: 'Candidates', data: A.bands.map(function (b) { return b.count; }),
+                backgroundColor: A.bands.map(function (b, i) { return passPct === null ? maroon : (i * 10 >= passPct ? green : red); }) }] },
+            options: { plugins: { legend: { display: false }, tooltip: { callbacks: { footer: function () { return passPct !== null ? 'Pass mark ' + passPct.toFixed(0) + '%' : ''; } } } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
+        var rs = [A.passed || 0, A.failed || 0, A.pass_set ? 0 : (A.complete || 0), A.incomplete || 0];
+        var labels = ['Pass', 'Fail', 'No pass mark set', 'Incomplete'], colors = [green, red, grey, gold];
+        new Chart(document.getElementById('chResult'), { type: 'doughnut', data: { labels: labels, datasets: [{ data: rs, backgroundColor: colors }] }, options: { plugins: { legend: { position: 'bottom' } } } });
+        new Chart(document.getElementById('chStations'), { data: { labels: A.stations.map(function (s) { return 'S' + s.number; }), datasets: [
+            { type: 'bar', label: 'Average', data: A.stations.map(function (s) { return s.mean; }), backgroundColor: maroon },
+            { type: 'line', label: 'Maximum', data: A.stations.map(function (s) { return s.max; }), borderColor: gold, backgroundColor: gold, pointRadius: 3 }] },
+            options: { scales: { y: { beginAtZero: true } }, plugins: { legend: { position: 'bottom' } } } });
+        var g = A.by_group.filter(function (x) { return x.mean !== null; });
+        new Chart(document.getElementById('chGroups'), { type: 'bar', data: { labels: g.map(function (x) { return x.label; }), datasets: [{ label: 'Average total', data: g.map(function (x) { return x.mean; }), backgroundColor: maroon }] },
+            options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, suggestedMax: MAX } } } });
+    }
+    $('#rsReport').on('shown.bs.collapse', buildCharts);
+    window.addEventListener('beforeprint', function () { $('#rsReport').addClass('show'); buildCharts(); });
+
+    // ───── Pass marks ─────
+    $('#btnPassMarks').on('click', function () { $('#passModal').modal('show'); updPct(); });
+    function updPct() { var v = parseFloat($('#pmTotal').val()); $('#pmPct').text(isNaN(v) ? 'Nothing set: no Pass / Fail is shown.' : (v / MAX * 100).toFixed(1) + '% of ' + MAX + ' marks'); }
+    $('#pmTotal').on('input', updPct);
+    $('#btnSavePass').on('click', function () {
+        post('/pass-marks', { year_id: YEAR_ID, total_pass_mark: $('#pmTotal').val(), station_pass_mark: $('#pmStation').val() })
+            .done(function (r) { sessionStorage.setItem('rsMsg', r.message); location.reload(); }).fail(fail);
+    });
+    var m = sessionStorage.getItem('rsMsg'); if (m) { say(m); sessionStorage.removeItem('rsMsg'); }
+
+    // ───── CSV ─────
+    $('#btnCsv').on('click', function () {
+        var head = ['Candidate ID', 'PEN', 'Name', 'Group', 'Session', 'Country'].concat(STATIONS.map(function (s) { return s.name; }), ['Stations marked', 'Total', 'Max', 'Percent', 'Result']);
+        var lines = [head].concat(ROWS.map(function (r) {
+            return [r.number, r.pen, r.name, r.group, r.session, r.country].concat(STATIONS.map(function (s, i) { return r.stations[i] ? r.stations[i].mark : ''; }), [r.stations_marked, r.total, r.max, r.percent, r.result || '']);
+        }));
+        var csv = lines.map(function (l) { return l.map(function (v) { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(','); }).join('\r\n');
+        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })); a.download = 'MCS-results-' + YEAR + '.csv'; document.body.appendChild(a); a.click(); a.remove();
     });
 
-    $('#mcsMinScore').on('input', redraw);
-    $('#mcsClearScore').on('click', function () {
-        $('#mcsMinScore').val('');
-        redraw();
-        $('#mcsFilteredCount').text('');
+    // ───── Print ─────
+    $('#btnPrint').on('click', function () {
+        $('#rsReport').addClass('show'); buildCharts();   // the printed report always has the analysis open
+        if (dt) dt.page.len(-1).draw(); setTimeout(function () { window.print(); if (dt) dt.page.len(25).draw(); }, 600);
+    });
+
+    // ───── Clear marks ─────
+    var clearIds = [];
+    function scopeData() {
+        var sc = $('input[name=clScope]:checked').val(); if (!sc) return null;
+        var d = { year_id: YEAR_ID, scope: sc };
+        if (sc === 'candidates') d.candidate_ids = clearIds.length ? clearIds : $('#adminresultstable .rs-pick:checked').map(function () { return this.value; }).get();
+        if (sc === 'station') d.station_id = $('#clStationSel').val();
+        if (sc === 'group') d.group_name = $('#clGroupSel').val();
+        return d;
+    }
+    function openClear(ids) {
+        clearIds = ids || []; var n = clearIds.length || $('#adminresultstable .rs-pick:checked').length;
+        $('#clSelCount').text(n); $('#clSel').prop('disabled', n === 0);
+        $('input[name=clScope]').prop('checked', false); if (n > 0) $('#clSel').prop('checked', true);
+        $('#clPreview').hide(); $('#clConfirm').val(''); $('#clConfirmWrap').hide(); $('#btnDoClear').prop('disabled', true);
+        $('#clearModal').modal('show'); if (n > 0) preview();
+    }
+    $('#btnClear').on('click', function () { openClear([]); });
+    $('#adminresultstable').on('click', '.rs-clear-one', function () { openClear([$(this).data('id')]); });
+    function preview() {
+        var d = scopeData(); if (!d) return;
+        d.dry_run = 1;
+        post('/clear', d).done(function (r) {
+            $('#clPreview').html(r.marks ? 'This will delete <strong>' + r.marks + '</strong> saved mark' + (r.marks === 1 ? '' : 's') + ' of <strong>' + r.candidates + '</strong> candidate' + (r.candidates === 1 ? '' : 's') + '.' : 'There are no saved marks for that selection.').show();
+            var needType = d.scope !== 'candidates' || r.candidates > 5;
+            $('#clConfirmWrap').toggle(needType && r.marks > 0); $('#btnDoClear').data('count', r.marks).data('needType', needType); checkConfirm();
+        }).fail(fail);
+    }
+    function checkConfirm() { var ok = ($('#btnDoClear').data('count') || 0) > 0 && (!$('#btnDoClear').data('needType') || $('#clConfirm').val().trim().toUpperCase() === 'CLEAR'); $('#btnDoClear').prop('disabled', !ok); }
+    $('input[name=clScope], #clStationSel, #clGroupSel').on('change', preview);
+    $('#clConfirm').on('input', checkConfirm);
+    $('#btnDoClear').on('click', function () {
+        var d = scopeData(); if (!d) return;
+        post('/clear', d).done(function (r) { sessionStorage.setItem('rsMsg', r.message); location.reload(); }).fail(fail);
     });
 });
 </script>

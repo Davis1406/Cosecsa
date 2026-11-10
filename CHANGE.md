@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Added (2026-11-10) — MCS Results page: visual analysis, reports, pass marks and clearing marks
+- **Examinations → MCS Results** (`admin/exams/exam_results`): a **Report & analysis** section, **closed when the page opens** (a one-line summary stays visible; click it to open): summary tiles (candidates, average, highest/lowest, pass rate), four charts (score distribution coloured by the pass mark, results doughnut, station averages against the maximum, average total by group), tables by station and by session, group and country, and the candidates table with the station marks, total, percentage, group, session and a Pass / Fail / Incomplete badge (filters: minimum total, result, group).
+- **Pass marks** button: set the pass mark (total marks out of the sum of the station maximums, shown as a percentage) and an optional minimum at every station, per exam year; empty means no Pass / Fail is shown.
+- **Reports:** *Download CSV* (every candidate with all station marks, total, percentage and result) and *Print report* (print/PDF layout with the pass mark, the charts and all tables).
+- **Clear marks:** for the candidates ticked in the table (or one candidate with the eraser button), one station for everyone, a whole group, or everything for the year. It first shows how many marks and candidates it will delete, asks to type CLEAR for anything bigger than a few candidates, and keeps a copy of the deleted marks on the server. Needs the API migration `create_exam_pass_marks_table`.
+- A station marked twice for the same candidate now counts once (at the average), so totals can no longer exceed the maximum.
+
 ### Changed (2026-11-09) — Examiners land on the dashboard; a current exam set in the admin
 - **Landing page:** an examiner who logs in (or is impersonated) now lands on `examiner/dashboard` instead of the Examiner Training course (`AuthController::redirectToDashboard`, `ImpersonationController`). The course is still in the menu under *Examiner Training*.
 - **Dashboard:** the usual *Select Exam Type* dropdown and **Proceed** button, with the **current exam already selected** (MCS for now, from the admin setting), so an examiner just presses Proceed.
