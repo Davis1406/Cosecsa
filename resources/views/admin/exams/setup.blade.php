@@ -23,6 +23,21 @@
             @include('_message')
             <div id="esAlert"></div>
 
+            <div class="card mb-3" style="border-left:4px solid #a02626;">
+                <div class="card-body py-2 d-flex flex-wrap align-items-center" style="gap:.75rem;">
+                    <div>
+                        <strong><i class="fas fa-flag-checkered mr-1" style="color:#a02626;"></i> Current exam</strong>
+                        <div class="text-muted" style="font-size:.8rem;">Examiners land on their dashboard with this exam ready to mark.</div>
+                    </div>
+                    <select id="currentExam" class="form-control form-control-sm ml-auto" style="width:auto;min-width:260px;">
+                        @foreach($types as $t)
+                            <option value="{{ $t['key'] }}" {{ ($current_exam ?? 'mcs') === $t['key'] ? 'selected' : '' }}>{{ $t['label'] }}</option>
+                        @endforeach
+                    </select>
+                    <button class="btn btn-sm btn-cosecsa" id="btnSaveCurrentExam"><i class="fas fa-save mr-1"></i> Save</button>
+                </div>
+            </div>
+
             <ul class="nav nav-tabs mb-3" id="esTabs">
                 <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#esGroups"><i class="fas fa-users mr-1"></i> Groups</a></li>
                 <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#esStations"><i class="fas fa-clipboard-list mr-1"></i> Stations</a></li>
@@ -187,6 +202,11 @@ $(function () {
                         headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' } });
     }
     function fail(x) { say((x.responseJSON && x.responseJSON.message) || 'Something went wrong. Nothing was changed.', false); }
+
+    // ───── Current exam ─────
+    $('#btnSaveCurrentExam').on('click', function () {
+        api('POST', '/current-exam', { exam_type: $('#currentExam').val() }).done(function (r) { say(r.message); }).fail(fail);
+    });
 
     // ───── Groups ─────
     function renderGroups() {

@@ -28,6 +28,11 @@ class ExamSetupController extends Controller
         return $this->reply($this->api->get('exam-setup/overview'));
     }
 
+    public function currentExamUpdate(Request $request)
+    {
+        return $this->reply($this->api->post('exam-setup/current-exam', ['exam_type' => $request->input('exam_type')]));
+    }
+
     public function group($id)
     {
         return $this->reply($this->api->get("exam-setup/groups/{$id}"));

@@ -459,6 +459,29 @@ public function dashboard()
     }
 
     // Updated examiner form method
+    // The exam the examiners' dashboard offers first (Exam Groups & Stations > Current exam in the admin; MCS by default),
+    // with the marking page it opens. Same exam type keys as the marking forms and exam_stations.
+    private const EXAM_PAGES = [
+        'mcs'                     => ['MCS (Membership)', 'examiner/examiner_form'],
+        'gs'                      => ['FCS General Surgery', 'examiner/general_surgery'],
+        'cardiothoracic'          => ['FCS Cardiothoracic Surgery', 'examiner/cardiothoracic'],
+        'urology'                 => ['FCS Urologic Surgery', 'examiner/urology'],
+        'paediatric'              => ['FCS Paediatric Surgery', 'examiner/paediatric'],
+        'orthopaedic'             => ['FCS Orthopaedic Surgery', 'examiner/orthopaedic'],
+        'ent'                     => ['FCS Otorhinolaryngology (ENT)', 'examiner/ent'],
+        'plastic_surgery'         => ['FCS Plastic Surgery', 'examiner/plastic_surgery'],
+        'neurosurgery'            => ['FCS Neurosurgery', 'examiner/neurosurgery'],
+        'paediatric_orthopaedics' => ['FCS Paediatric Orthopaedic Surgery', 'examiner/paediatric_orthopaedics'],
+    ];
+
+    private function currentExam(): array
+    {
+        $key = \Illuminate\Support\Facades\Schema::hasTable('app_settings') ? DB::table('app_settings')->where('key', 'current_exam')->value('value') : null;
+        $key = isset(self::EXAM_PAGES[$key]) ? $key : 'mcs';
+
+        return ['key' => $key, 'label' => self::EXAM_PAGES[$key][0], 'url' => url(self::EXAM_PAGES[$key][1])];
+    }
+
     public function examinerform()
     {
         $currentYear = YearModel::orderBy('id', 'desc')->first();
@@ -482,6 +505,7 @@ public function dashboard()
         $data['currentYear'] = $currentYear;
         $data['userRoles'] = Auth::user()->getRoles();
         $data['activeRole'] = Auth::user()->getActiveRole();
+        $data['currentExam'] = $this->currentExam();
 
         return view('examiner.dashboard', $data);
     }

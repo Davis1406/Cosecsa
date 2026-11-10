@@ -514,6 +514,7 @@ Route::post('admin/exams/edit_examiner/{id}', [ExamsController::class,'update'])
 Route::prefix('admin/exams/setup')->controller(\App\Http\Controllers\ExamSetupController::class)->group(function () {
     Route::get('/', 'index');
     Route::get('overview', 'overview');
+    Route::post('current-exam', 'currentExamUpdate');
     Route::get('groups/{id}', 'group')->whereNumber('id');
     Route::post('groups', 'groupStore');
     Route::post('groups/{id}', 'groupUpdate')->whereNumber('id');

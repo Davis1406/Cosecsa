@@ -53,38 +53,53 @@
                             <!-- Welcome Section -->
                             <div class="text-center my-4">
                                 <h3>Dear {{ auth()->user()->name }},</h3>
-                                <p>Welcome to the COSECSA marking portal. Please choose the EXAM TYPE you want to evaluate:</p>
+                                <p class="mb-0">Welcome to the COSECSA marking portal.</p>
                             </div>
 
                             <!-- Offline readiness (filled in by dist/js/examiner-offline.js) -->
                             <div id="examiner-offline-status"></div>
 
-                            <!-- Exam Type Selection Dropdown -->
-                            <div class="form-group">
-                                <label for="exam_type" style="font-weight: bold;">Select Exam Type</label>
-                                <select id="exam_type" name="exam_type" class="form-control" style="border-color: #FEC503;"
-                                        onchange="navigateToExamPage(this.value)">
-                                    <option value="">-- Select Exam Type --</option>
-                                    <option value="{{ url('examiner/examiner_form') }}">MCS</option>
-                                    <option value="{{ url('examiner/general_surgery') }}">FCS General Surgery</option>
-                                    <option value="{{ url('examiner/cardiothoracic') }}">FCS Cardiothoracic</option>
-                                    <option value="{{ url('examiner/urology') }}">FCS Urology</option>
-                                    <option value="{{ url('examiner/paediatric') }}">FCS Paediatric</option>
-                                    <option value="{{ url('examiner/orthopaedic') }}">FCS Orthopaedic</option>
-                                    <option value="{{ url('examiner/ent') }}">FCS ENT</option>
-                                    <option value="{{ url('examiner/plastic_surgery') }}">FCS Plastic Surgery</option>
-                                    <option value="{{ url('examiner/neurosurgery') }}">FCS Neurosurgery</option>
-                                    <option value="{{ url('examiner/paediatric_orthopaedics') }}">FCS Paediatric Orthopaedics</option>
-                                </select>
+                            <!-- The current exam, ready to mark (set by the examinations office under Exam Groups & Stations) -->
+                            <div class="text-center my-4 py-4 px-3" style="background:#fff8e1;border:2px solid #FEC503;border-radius:12px;">
+                                <div style="font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#856404;">Current exam</div>
+                                <div style="font-size:1.8rem;font-weight:800;color:#a02626;margin:.15rem 0 1rem;">{{ $currentExam['label'] }}</div>
+                                <a href="{{ $currentExam['url'] }}" class="btn btn-lg"
+                                   style="background-color:#a02626;color:#fff;border-color:#a02626;font-weight:700;padding:.7rem 2.2rem;border-radius:10px;">
+                                    Start marking <span class="fas fa-arrow-right ml-1"></span>
+                                </a>
                             </div>
 
-                            <!-- Submit Button -->
-                            <div class="text-center mt-4">
-                                <button type="button" class="btn"
-                                        style="background-color: #FEC503; color: black; border-color: #FEC503;"
-                                        onclick="proceedToNextPage()">
-                                    Proceed <span class="fas fa-arrow-right"></span>
-                                </button>
+                            <!-- Another exam type -->
+                            <div class="text-center">
+                                <a href="#otherExams" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="otherExams"
+                                   style="color:#a02626;font-weight:600;text-decoration:underline;">Marking a different exam?</a>
+                            </div>
+                            <div class="collapse mt-3" id="otherExams">
+                                <div class="form-group">
+                                    <label for="exam_type" style="font-weight: bold;">Select Exam Type</label>
+                                    <select id="exam_type" name="exam_type" class="form-control" style="border-color: #FEC503;"
+                                            onchange="navigateToExamPage(this.value)">
+                                        <option value="">-- Select Exam Type --</option>
+                                        <option value="{{ url('examiner/examiner_form') }}">MCS</option>
+                                        <option value="{{ url('examiner/general_surgery') }}">FCS General Surgery</option>
+                                        <option value="{{ url('examiner/cardiothoracic') }}">FCS Cardiothoracic</option>
+                                        <option value="{{ url('examiner/urology') }}">FCS Urology</option>
+                                        <option value="{{ url('examiner/paediatric') }}">FCS Paediatric</option>
+                                        <option value="{{ url('examiner/orthopaedic') }}">FCS Orthopaedic</option>
+                                        <option value="{{ url('examiner/ent') }}">FCS ENT</option>
+                                        <option value="{{ url('examiner/plastic_surgery') }}">FCS Plastic Surgery</option>
+                                        <option value="{{ url('examiner/neurosurgery') }}">FCS Neurosurgery</option>
+                                        <option value="{{ url('examiner/paediatric_orthopaedics') }}">FCS Paediatric Orthopaedics</option>
+                                    </select>
+                                </div>
+
+                                <div class="text-center mt-3">
+                                    <button type="button" class="btn"
+                                            style="background-color: #FEC503; color: black; border-color: #FEC503;"
+                                            onclick="proceedToNextPage()">
+                                        Proceed <span class="fas fa-arrow-right"></span>
+                                    </button>
+                                </div>
                             </div>
                         </fieldset>
                     </form>
