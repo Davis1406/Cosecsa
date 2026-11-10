@@ -245,7 +245,7 @@ class ReportBuilderController extends Controller
                     ],
                 ];
             case 'hospital_accreditation':
-                // One row per hospital. The Programmes cell is a correlated
+                // One row per live hospital. The Programmes cell is a correlated
                 // GROUP_CONCAT over hospital_programmes (non-deleted rows) so
                 // the list stays one row per hospital. The Programme and
                 // Accreditation Status filters narrow both the hospitals
@@ -264,8 +264,14 @@ class ReportBuilderController extends Controller
                     ->leftJoin('countries as co', 'co.id', '=', 'h.country_id')
                     ->where('h.is_deleted', 0)
                     ->whereNotIn('h.name', \App\Models\HospitalModel::PLACEHOLDER_NAMES)
-                    ->whereRaw("EXISTS (SELECT 1 FROM hospital_programmes hp WHERE {$hpWhere})", $bindings)
                     ->orderBy('h.name');
+                // Every live hospital is listed (a hospital with no accreditation
+                // yet shows an empty Programmes cell); only when a Programme or
+                // Accreditation Status filter is set are hospitals narrowed to
+                // those with a matching accreditation.
+                if (! empty($filters['programme_id']) || in_array($filters['accreditation_status'] ?? null, ['Active', 'Expired'], true)) {
+                    $query->whereRaw("EXISTS (SELECT 1 FROM hospital_programmes hp WHERE {$hpWhere})", $bindings);
+                }
                 $programmesSql = "(SELECT GROUP_CONCAT(DISTINCT p.name ORDER BY p.name SEPARATOR ', ') FROM hospital_programmes hp JOIN programmes p ON p.id = hp.programme_id WHERE {$hpWhere})";
                 // Inline the (validated int / whitelisted enum) bindings: the
                 // select expression is passed through DB::raw without bindings.

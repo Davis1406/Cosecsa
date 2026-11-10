@@ -5,7 +5,7 @@
 ## [Unreleased]
 
 ### Added (2026-11-10) — Hospital Accreditation report (programmes per hospital)
-- **College Reports** (`admin/reports`) has a new type, **Hospital Accreditation (Programmes per Hospital)**: one row per hospital with the default Excel layout **A Hospital Name, B Programmes, C Country**; the Programmes cell lists every programme the hospital is accredited for (placeholder and deleted hospitals are left out).
+- **College Reports** (`admin/reports`) has a new type, **Hospital Accreditation (Programmes per Hospital)**: one row per hospital with the default Excel layout **A Hospital Name, B Programmes, C Country**; the Programmes cell lists every programme the hospital is accredited for (every live hospital is listed, including ones with no accreditation yet, which show an empty Programmes cell; placeholder and deleted hospitals are left out).
 - Still custom: tick/untick columns, filter by **Country**, **Programme** (only hospitals accredited for it, listing just that programme) and **Accreditation Status** (Active / Expired), group the chart by country, and export to Excel. The same type is added to the API's College Reports (CSV export).
 
 ### Added (2026-11-10) — MCS Results page: visual analysis, reports, pass marks and clearing marks
