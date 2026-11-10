@@ -164,7 +164,7 @@
                             <small class="text-muted ml-2" id="mcsFilteredCount"></small>
                         </div>
                         <div class="table-responsive">
-                            <table id="adminresultstable" class="table table-bordered table-striped" style="width:100%;font-size:.88rem;">
+                            <table id="mcsresultstable" class="table table-bordered table-striped" style="width:100%;font-size:.88rem;">
                                 <thead>
                                     <tr>
                                         <th class="rs-noprint" style="width:28px;"><input type="checkbox" id="rsAll"></th>
@@ -230,7 +230,7 @@
     .rs-print-only { display: none; }
     .rs-chev { transition: transform .2s; }
     #rsReportToggle[aria-expanded="true"] .rs-chev { transform: rotate(180deg); }
-    #adminresultstable td, #adminresultstable th { white-space: nowrap; }
+    #mcsresultstable td, #mcsresultstable th { white-space: nowrap; }
     .rs-res { font-weight: 700; padding: .1rem .5rem; border-radius: 999px; font-size: .78rem; }
     .rs-res.Pass { background: #dcfce7; color: #166534; } .rs-res.Fail { background: #fee2e2; color: #991b1b; } .rs-res.Incomplete { background: #fef3c7; color: #92400e; }
     .rs-low { background: rgba(220,53,69,.14); }
@@ -266,7 +266,7 @@ $(function () {
     // ───── Table ─────
     var dt = null;
     if (ROWS.length) {
-        dt = $('#adminresultstable').DataTable({
+        dt = $('#mcsresultstable').DataTable({
             data: ROWS, deferRender: true, pageLength: 25, order: [[1, 'asc']],
             columns: [].concat(
                 [{ data: null, orderable: false, className: 'rs-noprint', render: function (d, t, r) { return '<input type="checkbox" class="rs-pick" value="' + r.cnd_id + '">'; } },
@@ -289,7 +289,7 @@ $(function () {
             )
         });
         $.fn.dataTable.ext.search.push(function (settings, data, i) {
-            if (settings.nTable.id !== 'adminresultstable') return true;
+            if (settings.nTable.id !== 'mcsresultstable') return true;
             var r = ROWS[i] || dt.row(i).data(); if (!r) return true;
             var min = parseFloat($('#mcsMinScore').val()), res = $('#rsResult').val(), grp = $('#rsGroup').val();
             if (!isNaN(min) && !(r.total >= min)) return false;
@@ -300,7 +300,7 @@ $(function () {
         var redraw = function () { dt.draw(); var info = dt.page.info(); $('#mcsFilteredCount').text(info.recordsDisplay < info.recordsTotal ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal : ''); };
         $('#mcsMinScore').on('input', redraw); $('#rsResult, #rsGroup').on('change', redraw);
         $('#mcsClearScore').on('click', function () { $('#mcsMinScore').val(''); $('#rsResult, #rsGroup').val(''); redraw(); });
-        $('#rsAll').on('change', function () { $('#adminresultstable .rs-pick').prop('checked', this.checked); });
+        $('#rsAll').on('change', function () { $('#mcsresultstable .rs-pick').prop('checked', this.checked); });
     }
 
     // ───── Charts (built when the report is first opened, as a hidden canvas has no size) ─────
@@ -359,20 +359,20 @@ $(function () {
     function scopeData() {
         var sc = $('input[name=clScope]:checked').val(); if (!sc) return null;
         var d = { year_id: YEAR_ID, scope: sc };
-        if (sc === 'candidates') d.candidate_ids = clearIds.length ? clearIds : $('#adminresultstable .rs-pick:checked').map(function () { return this.value; }).get();
+        if (sc === 'candidates') d.candidate_ids = clearIds.length ? clearIds : $('#mcsresultstable .rs-pick:checked').map(function () { return this.value; }).get();
         if (sc === 'station') d.station_id = $('#clStationSel').val();
         if (sc === 'group') d.group_name = $('#clGroupSel').val();
         return d;
     }
     function openClear(ids) {
-        clearIds = ids || []; var n = clearIds.length || $('#adminresultstable .rs-pick:checked').length;
+        clearIds = ids || []; var n = clearIds.length || $('#mcsresultstable .rs-pick:checked').length;
         $('#clSelCount').text(n); $('#clSel').prop('disabled', n === 0);
         $('input[name=clScope]').prop('checked', false); if (n > 0) $('#clSel').prop('checked', true);
         $('#clPreview').hide(); $('#clConfirm').val(''); $('#clConfirmWrap').hide(); $('#btnDoClear').prop('disabled', true);
         $('#clearModal').modal('show'); if (n > 0) preview();
     }
     $('#btnClear').on('click', function () { openClear([]); });
-    $('#adminresultstable').on('click', '.rs-clear-one', function () { openClear([$(this).data('id')]); });
+    $('#mcsresultstable').on('click', '.rs-clear-one', function () { openClear([$(this).data('id')]); });
     function preview() {
         var d = scopeData(); if (!d) return;
         d.dry_run = 1;
