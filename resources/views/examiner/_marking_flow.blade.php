@@ -65,14 +65,15 @@
     .mf { max-width: 940px; margin: 0 auto 1.25rem; padding: 0 10px; font-size: 1rem; }
     /* progress */
     .mf-steps { list-style: none; display: flex; gap: .5rem; padding: 0; margin: 0 0 1rem; }
-    .mf-steps li { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: .35rem .4rem; border-radius: 10px; border: 2px solid #e5e7eb; background: #fff; color: #6b7280; min-height: 62px; }
+    .mf-steps li { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: .35rem .4rem; border-radius: 10px; border: 2px solid #e5e7eb; background: #fff; color: #6b7280; min-height: 62px; }
     .mf-steps li.done { cursor: pointer; border-color: #86efac; background: #f0fdf4; color: #166534; }
     .mf-steps li.current { border-color: #a02626; color: #a02626; box-shadow: 0 0 0 3px rgba(160,38,38,.12); }
     .mf-n { width: 1.5rem; height: 1.5rem; font-size: .85rem; border-radius: 50%; background: #e5e7eb; color: #4b5563; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
     .mf-steps li.current .mf-n { background: #a02626; color: #fff; }
     .mf-steps li.done .mf-n { background: #16a34a; color: #fff; }
     .mf-l { font-weight: 700; font-size: .95rem; margin-top: .1rem; }
-    .mf-v { font-family: monospace; font-weight: 800; font-size: .9rem; min-height: 1rem; }
+    .mf-v { font-family: monospace; font-weight: 800; font-size: .9rem; }
+    .mf-v:empty { display: none; }
     /* panels */
     .mf-h { font-size: 1.3rem; font-weight: 800; text-align: center; margin: 0 0 .75rem; color: #111827; }
     .mf-sub { display: block; font-size: .9rem; font-weight: 500; color: #6b7280; margin-top: .15rem; }
