@@ -10,6 +10,9 @@
 ### Changed (2026-11-11) — Candidates show green only when you marked them
 - In the examiner marking flow a candidate is green only when *that examiner* has marked them. The tile just says **Marked** (green) or **Pending** (plain) — no "1 of 8 stations" count, since an examiner stays at one station. A candidate marked only by other examiners is Pending for you, and the *Pending* / *Marked* filters follow the same rule. The station tiles already separated your own marks (green) from other examiners' (blue).
 
+### Added (2026-11-11) — Place an examiner at a station
+- **Exam Groups & Stations ▸ Groups ▸ Manage**: each examiner in the group has a *station* dropdown (Any station, or Station 1–8). On the MCS marking form an examiner placed at a station is offered that station first, marked *Your station*, for that group; *Show all stations* is still there for a genuine change, and marks can still be moved afterwards. Groups with no placement behave as before. Needs the API migration `2026_11_11_130000_add_station_number_to_exams_groups`.
+
 ### Changed (2026-11-11) — MCS Pass / Fail uses the overall pass mark only
 - Pass or Fail now depends only on the overall pass mark, never on a single station. The *Minimum at every station* box is removed from **Pass marks**, and low station scores are no longer shaded red. The overall pass mark accepts decimals.
 

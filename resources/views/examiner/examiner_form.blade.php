@@ -203,6 +203,6 @@
         }
 
     </script>
-    @include('examiner._marking_flow', ['kind' => 'mcs', 'format' => null, 'assignedGroups' => $examinerGroupIds ?? []])
+    @include('examiner._marking_flow', ['kind' => 'mcs', 'format' => null, 'assignedGroups' => $examinerGroupIds ?? [], 'stationForGroup' => $stationForGroup ?? []])
     @include('examiner._offline')
 @endsection

@@ -155,7 +155,7 @@
     if (!groupSel || !candSel || !stationSel || !mount) return;
 
     var CFG = {
-        kind: @json($kind), format: @json($format ?? null), assigned: @json(array_map('strval', $assignedGroups ?? [])),
+        kind: @json($kind), format: @json($format ?? null), assigned: @json(array_map('strval', $assignedGroups ?? [])), stationFor: @json((object) ($stationForGroup ?? [])),
         examinedUrl: @json(url('examiner/examined')), reviewUrl: @json(url($kind === 'mcs' || $kind === 'gs' ? 'examiner/resubmit' : 'examiner/fcs-resubmit')),
         reviewNeedsStation: @json($kind === 'mcs' || $kind === 'gs'), userId: @json((int) Auth::id())
     };
@@ -306,16 +306,19 @@
         $('mfStationFor').textContent = 'for ' + number(S.cand);
         var options = stationOptions();
         var only = null;
-        if (!S.showAllStations && S.lastStation) {
-            var usual = options.filter(function (s) { return s.no === S.lastStation; })[0];
+        // The station the exams office placed this examiner at (for this group) comes first; otherwise the one used last.
+        var placed = parseInt(CFG.stationFor && CFG.stationFor[groupSel.value], 10) || 0;
+        var pref = placed || S.lastStation;
+        if (!S.showAllStations && pref) {
+            var usual = options.filter(function (s) { return s.no === pref; })[0];
             // The usual station is only offered on its own while this candidate has not been marked there yet.
-            if (usual && m.mine.indexOf(usual.no) === -1) only = usual;
+            if (usual && (placed || m.mine.indexOf(usual.no) === -1)) only = usual;
         }
         var show = only ? [only] : options;
         $('mfStationTiles').innerHTML = show.map(function (s) {
             var mine = m.mine.indexOf(s.no) !== -1, other = !mine && m.all.indexOf(s.no) !== -1;
             var cls = mine ? ' s-mine' : other ? ' s-other' : '';
-            var sub = S.flags !== 'ok' ? '' : mine ? '<span class="mf-t2"><i class="fas fa-check"></i> You have marked this</span>' : other ? '<span class="mf-t2">Done by another examiner</span>' : '<span class="mf-t2">Not done yet</span>';
+            var sub = S.flags !== 'ok' ? '' : mine ? '<span class="mf-t2"><i class="fas fa-check"></i> You have marked this</span>' : other ? '<span class="mf-t2">Done by another examiner</span>' : (placed === s.no ? '<span class="mf-t2">Your station</span>' : '<span class="mf-t2">Not done yet</span>');
             return '<button type="button" class="mf-tile' + cls + (String(stationSel.value) === String(s.no) ? ' is-picked' : '') + '" data-station="' + s.no + '"' + (mine ? ' disabled' : '') + '><span class="mf-t1">' + esc(s.name) + '</span>' + sub + '</button>';
         }).join('') || '<div class="mf-empty">No stations are available. Please tell the examinations office.</div>';
         var all = $('mfAllStations');

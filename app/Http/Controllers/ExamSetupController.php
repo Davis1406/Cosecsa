@@ -71,6 +71,11 @@ class ExamSetupController extends Controller
         return $this->reply($this->api->post("exam-setup/groups/{$id}/examiners", ['examiner_ids' => (array) $request->input('examiner_ids', [])]));
     }
 
+    public function examinerStation(Request $request, $id, $examinerId)
+    {
+        return $this->reply($this->api->post("exam-setup/groups/{$id}/examiners/{$examinerId}/station", ['station_number' => $request->input('station_number')]));
+    }
+
     public function examinerRemove($id, $examinerId)
     {
         return $this->reply($this->api->delete("exam-setup/groups/{$id}/examiners/{$examinerId}"));

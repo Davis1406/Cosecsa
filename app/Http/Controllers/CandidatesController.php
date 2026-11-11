@@ -282,6 +282,10 @@ class CandidatesController extends Controller
         $data['getRecord'] = User::getExaminerCandidates(null, $currentYearId);
         $data['groups'] = $groups;
         $data['examinerGroupIds'] = $examinerGroupIds;
+        // the station the exams office placed this examiner at, per group (empty: the examiner chooses)
+        $data['stationForGroup'] = \Illuminate\Support\Facades\Schema::hasColumn('exams_groups', 'station_number')
+            ? DB::table('exams_groups')->where('exm_id', $examinerId)->where('year_id', $currentYearId)->whereNotNull('station_number')->pluck('station_number', 'group_id')->all()
+            : [];
         return view('examiner.examiner_form', $data);
     }
 

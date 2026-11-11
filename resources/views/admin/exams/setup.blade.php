@@ -306,9 +306,11 @@ $(function () {
             $('#mgName').text(r.group.name); $('#mgYear').text(r.year);
             $('#mgExCount').text(r.examiners.length); $('#mgCandCount').text(r.candidates.length);
             $('#mgExTable tbody').html(r.examiners.map(function (e) {
+                var stOpts = '<option value="">Any station</option>' + (r.stations || []).map(function (s) { return '<option value="' + s.number + '"' + (String(e.station) === String(s.number) ? ' selected' : '') + '>' + esc(s.name || 'Station ' + s.number) + '</option>'; }).join('');
                 return '<tr><td>' + esc(e.name) + '<small class="text-muted d-block">' + esc(e.examiner_id || '') + (e.specialty ? ' · ' + esc(e.specialty) : '') + '</small></td>' +
+                       '<td style="width:150px;"><select class="form-control form-control-sm mg-station" data-id="' + e.id + '" title="MCS station for this examiner in this group">' + stOpts + '</select></td>' +
                        '<td class="text-right"><button class="btn btn-xs btn-light border btn-rmex" data-id="' + e.id + '" title="Remove"><i class="fas fa-times text-danger"></i></button></td></tr>';
-            }).join('') || '<tr><td class="text-muted">No examiners yet.</td></tr>');
+            }).join('') || '<tr><td class="text-muted" colspan="3">No examiners yet.</td></tr>');
             renderAvail();
             $('#mgCandTable tbody').html(r.candidates.map(function (c) {
                 return '<tr><td><input type="checkbox" class="mg-cand" value="' + c.id + '"></td><td><strong>' + esc(c.number || '—') + '</strong></td><td>' + esc(c.entry_number || '') +
@@ -330,6 +332,9 @@ $(function () {
         var ids = $('#mgExAvail').val() || [];
         if (!ids.length) return say('Pick one or more examiners first.', false);
         api('POST', '/groups/' + manageId + '/examiners', { examiner_ids: ids }).done(function (r) { say(r.message); loadManage(); reloadGroups(); }).fail(fail);
+    });
+    $('#mgExTable').on('change', '.mg-station', function () {
+        api('POST', '/groups/' + manageId + '/examiners/' + $(this).data('id') + '/station', { station_number: $(this).val() }).done(function (r) { say(r.message); }).fail(fail);
     });
     $('#mgExTable').on('click', '.btn-rmex', function () {
         if (!confirm('Remove this examiner from the group? Marks already saved are kept.')) return;
