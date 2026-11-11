@@ -5,7 +5,7 @@
 ## [Unreleased]
 
 ### Changed (2026-11-11) — Candidates show green only when you marked them
-- In the examiner marking flow a candidate is green only when *that examiner* has marked them. A candidate marked only by other examiners stays plain and reads "Not marked by you (marked at N stations by another examiner)", and the *Not marked* / *Marked* filters follow the same rule. The station tiles already separated your own marks (green) from other examiners' (blue).
+- In the examiner marking flow a candidate is green only when *that examiner* has marked them. The tile just says **Marked** (green) or **Pending** (plain) — no "1 of 8 stations" count, since an examiner stays at one station. A candidate marked only by other examiners is Pending for you, and the *Pending* / *Marked* filters follow the same rule. The station tiles already separated your own marks (green) from other examiners' (blue).
 
 ### Added (2026-11-11) — Move an examiner's MCS marks to another station
 - On **Examinations ▸ MCS Results ▸ (open a candidate's station)** each examiner's block has *Move to station…* for an examiner who examined at a different station from the one they marked on. It moves that examiner's marks for the candidate; the marks themselves do not change, nothing is overwritten (it refuses if that examiner already has a mark at the target station), and a copy of how they were is kept on the server. If another examiner already marked the candidate at the target station it asks to confirm first (the results page averages the two). After a move it returns to the results list. Needs the Examiners *manage* permission.

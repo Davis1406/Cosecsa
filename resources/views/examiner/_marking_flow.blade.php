@@ -32,7 +32,7 @@
             <input type="search" id="mfSearch" class="mf-search" placeholder="Type a candidate number…" autocomplete="off">
             <div class="mf-seg" id="mfFilter" role="group" aria-label="Show">
                 <button type="button" class="on" data-filter="all">All</button>
-                <button type="button" data-filter="todo">Not marked</button>
+                <button type="button" data-filter="todo">Pending</button>
                 <button type="button" data-filter="done">Marked</button>
             </div>
             <div class="mf-seg mf-view" id="mfView" role="group" aria-label="View">
@@ -41,7 +41,7 @@
             </div>
             <button type="button" class="mf-icon" id="mfRefresh" title="Refresh who has been examined" aria-label="Refresh"><i class="fas fa-sync-alt"></i></button>
         </div>
-        <p class="mf-legend"><span class="mf-dot none"></span>Not marked by you <span class="mf-dot full"></span>Marked by you (in green — tap <em>Review</em> to see your marks)</p>
+        <p class="mf-legend"><span class="mf-dot none"></span>Pending <span class="mf-dot full"></span>Marked (in green — tap <em>Review</em> to see your marks)</p>
         <div class="mf-cands mf-tiles" id="mfCandGrid" role="listbox" aria-label="Candidates"></div>
     </section>
 
@@ -252,15 +252,14 @@
     }
 
     // ── 2. Candidate ──
-    // A candidate is shown in green only when this examiner has marked them. A candidate marked only by other
-    // examiners stays plain (and still counts as not yet marked by you); the examiner's own marks can be reviewed.
+    // A candidate is shown in green ("Marked") only when this examiner has marked them. Anyone not marked by
+    // this examiner, including a candidate marked only by other examiners, is "Pending"; the examiner's own
+    // marks can be reviewed.
     function candState(c) {
-        var m = marksOf(c), n = m.all.length, t = stationOptions().length;
+        var m = marksOf(c);
         if (S.flags !== 'ok') return { k: 'none', text: '', review: null };
-        if (n === 0) return { k: 'none', text: 'Not marked yet', review: null };
-        if (!m.mine.length) return { k: 'none', text: 'Not marked by you (marked at ' + n + ' station' + (n === 1 ? '' : 's') + ' by another examiner)', review: null };
-        var k = m.mine.length;
-        return { k: 'marked', text: 'You marked ' + k + (t ? ' of ' + t : '') + ' station' + (k === 1 && !t ? '' : 's'), review: m.mine[0] };
+        if (!m.mine.length) return { k: 'none', text: 'Pending', review: null };
+        return { k: 'marked', text: 'Marked', review: m.mine[0] };
     }
     function reviewHref(c, station) {
         // Review opens the editable form of the examiner's saved marks (Resubmit): MCS and General Surgery
