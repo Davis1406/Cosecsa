@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed (2026-11-11) — MCS Results remembers where you were
+- After opening a candidate's station and coming back (browser Back, the arrow, a swipe, or *Back to Results List*) the MCS Results page returns to the same page of the table, the same filters (minimum score, result, group), search, sort order, page size, analysis panel and scroll position. A fresh visit or a reload starts clean. *Back to Results List* on the station page now keeps the exam year.
+
 ### Changed (2026-11-11) — Candidates show green only when you marked them
 - In the examiner marking flow a candidate is green only when *that examiner* has marked them. The tile just says **Marked** (green) or **Pending** (plain) — no "1 of 8 stations" count, since an examiner stays at one station. A candidate marked only by other examiners is Pending for you, and the *Pending* / *Marked* filters follow the same rule. The station tiles already separated your own marks (green) from other examiners' (blue).
 

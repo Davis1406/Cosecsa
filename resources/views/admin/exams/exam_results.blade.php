@@ -301,6 +301,39 @@ $(function () {
         $('#mcsMinScore').on('input', redraw); $('#rsResult, #rsGroup').on('change', redraw);
         $('#mcsClearScore').on('click', function () { $('#mcsMinScore').val(''); $('#rsResult, #rsGroup').val(''); redraw(); });
         $('#rsAll').on('change', function () { $('#mcsresultstable .rs-pick').prop('checked', this.checked); });
+
+        // ───── Come back to exactly where you were ─────
+        // The table is built by script, so the browser cannot put the page back by itself. When leaving (to a
+        // candidate's station, say) the page, filters, search, sort order and scroll position are kept for this
+        // exam year, and put back when the person returns with Back, the arrow, a swipe, or "Back to Results List".
+        var VIEW_KEY = 'rsView.' + YEAR_ID;
+        function saveView() {
+            try {
+                sessionStorage.setItem(VIEW_KEY, JSON.stringify({
+                    page: dt.page(), len: dt.page.len(), order: dt.order(), search: dt.search(),
+                    min: $('#mcsMinScore').val(), res: $('#rsResult').val(), grp: $('#rsGroup').val(),
+                    report: $('#rsReport').hasClass('show'), y: window.scrollY
+                }));
+            } catch (e) {}
+        }
+        window.addEventListener('pagehide', saveView);
+        $('#mcsresultstable').on('click', 'a', saveView);
+        try {
+            var nav = (performance.getEntriesByType('navigation')[0] || {}).type;
+            var fromStation = /\/admin\/exams\/station_results\//.test(document.referrer || '');
+            var v = (nav === 'back_forward' || fromStation) ? JSON.parse(sessionStorage.getItem(VIEW_KEY) || 'null') : null;
+            if (v) {
+                $('#mcsMinScore').val(v.min || ''); $('#rsResult').val(v.res || ''); $('#rsGroup').val(v.grp || '');
+                if (v.len) dt.page.len(v.len);
+                if (v.order) dt.order(v.order);
+                dt.search(v.search || '').draw(false);
+                var info = dt.page.info(); $('#mcsFilteredCount').text(info.recordsDisplay < info.recordsTotal ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal : '');
+                dt.page(Math.min(v.page || 0, Math.max(dt.page.info().pages - 1, 0))).draw('page');
+                if (v.report) $('#rsReport').collapse('show');
+                var back = function () { window.scrollTo(0, v.y || 0); };
+                back(); setTimeout(back, 150); setTimeout(back, 600);
+            }
+        } catch (e) {}
     }
 
     // ───── Charts (built when the report is first opened, as a hidden canvas has no size) ─────
