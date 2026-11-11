@@ -191,15 +191,11 @@
         <div class="modal-body">
             <div class="form-group">
                 <label for="pmTotal">Pass mark (total marks out of {{ $max }})</label>
-                <input type="number" id="pmTotal" class="form-control" min="0" max="{{ $max }}" step="0.5" value="{{ $passTotal }}" placeholder="e.g. 96">
+                <input type="number" id="pmTotal" class="form-control" min="0" max="{{ $max }}" step="any" value="{{ $passTotal }}" placeholder="e.g. 96">
                 <small class="text-muted" id="pmPct"></small>
             </div>
-            <div class="form-group mb-1">
-                <label for="pmStation">Minimum at every station <span class="text-muted">(optional)</span></label>
-                <input type="number" id="pmStation" class="form-control" min="0" step="0.5" value="{{ $passStation }}" placeholder="e.g. 8">
-                <small class="text-muted">A candidate who scores below this at any station fails, whatever the total.</small>
-            </div>
-            <p class="text-muted small mb-0 mt-3">Candidates who have not been marked at every station show as <em>Incomplete</em>. Leave the pass mark empty to show no Pass or Fail. It applies to {{ $selectedYearName }} only and can be changed any time.</p>
+            
+            <p class="text-muted small mb-0 mt-3">Pass or Fail depends only on this overall pass mark, never on a single station. Candidates who have not been marked at every station show as <em>Incomplete</em>. Leave the pass mark empty to show no Pass or Fail. It applies to {{ $selectedYearName }} only and can be changed any time.</p>
         </div>
         <div class="modal-footer"><button class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-danger" id="btnSavePass">Save pass marks</button></div>
     </div></div>
@@ -366,7 +362,7 @@ $(function () {
     function updPct() { var v = parseFloat($('#pmTotal').val()); $('#pmPct').text(isNaN(v) ? 'Nothing set: no Pass / Fail is shown.' : (v / MAX * 100).toFixed(1) + '% of ' + MAX + ' marks'); }
     $('#pmTotal').on('input', updPct);
     $('#btnSavePass').on('click', function () {
-        post('/pass-marks', { year_id: YEAR_ID, total_pass_mark: $('#pmTotal').val(), station_pass_mark: $('#pmStation').val() })
+        post('/pass-marks', { year_id: YEAR_ID, total_pass_mark: $('#pmTotal').val() })
             .done(function (r) { sessionStorage.setItem('rsMsg', r.message); location.reload(); }).fail(fail);
     });
     var m = sessionStorage.getItem('rsMsg'); if (m) { say(m); sessionStorage.removeItem('rsMsg'); }

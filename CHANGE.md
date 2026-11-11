@@ -10,6 +10,9 @@
 ### Changed (2026-11-11) — Candidates show green only when you marked them
 - In the examiner marking flow a candidate is green only when *that examiner* has marked them. The tile just says **Marked** (green) or **Pending** (plain) — no "1 of 8 stations" count, since an examiner stays at one station. A candidate marked only by other examiners is Pending for you, and the *Pending* / *Marked* filters follow the same rule. The station tiles already separated your own marks (green) from other examiners' (blue).
 
+### Changed (2026-11-11) — MCS Pass / Fail uses the overall pass mark only
+- Pass or Fail now depends only on the overall pass mark, never on a single station. The *Minimum at every station* box is removed from **Pass marks**, and low station scores are no longer shaded red. The overall pass mark accepts decimals.
+
 ### Added (2026-11-11) — Delete a score from the station results page
 - Next to *Move to station…*, each examiner's block on the station results page has **Delete score** for a score that should not count at all. It asks for confirmation, removes only that examiner's score for that candidate at that station, and keeps a copy of it on the server. It stays on the page while other examiners' scores remain, and returns to the results list when none is left. Needs the Examiners *manage* permission.
 
