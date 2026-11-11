@@ -45,9 +45,27 @@
 
                     {{-- One block per examiner --}}
                     @foreach ($allResults ?? [$candidateResult] as $i => $result)
-                        <h6 class="mt-3 mb-1" style="color:#a02626;">
-                            Examiner {{ $i + 1 }}: {{ $result->examin_id }} — {{ $result->examiner_name }}
-                        </h6>
+                        <div class="d-flex flex-wrap align-items-center justify-content-between mt-3 mb-1">
+                            <h6 class="mb-0" style="color:#a02626;">
+                                Examiner {{ $i + 1 }}: {{ $result->examin_id }} — {{ $result->examiner_name }}
+                            </h6>
+                            @if (!empty($result->result_id) && $stations->count() > 1)
+                                <div class="form-inline d-print-none move-station" data-id="{{ $result->result_id }}" data-from="{{ $result->station_id }}">
+                                    <label class="small text-muted mr-2 mb-0">Examined at a different station?</label>
+                                    <select class="form-control form-control-sm mr-2 move-station-to">
+                                        <option value="">Move to station…</option>
+                                        @foreach ($stations as $st)
+                                            @if ((int) $st->number !== (int) $result->station_id)
+                                                <option value="{{ $st->number }}">{{ $st->name ?: 'Station ' . $st->number }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                    <button type="button" class="btn btn-sm btn-primary move-station-go" style="background-color:#a02626;border-color:#a02626;">
+                                        <i class="fas fa-exchange-alt"></i> Move
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
                         <table class="table table-bordered mb-3" style="width:100%;">
                             @php $marks = json_decode($result->question_mark, true); @endphp
                             @if(is_array($marks))
@@ -83,3 +101,44 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+$(function () {
+    var moveUrl = @json(url('admin/exams/station_results/move'));
+    var csrf = $('meta[name="csrf-token"]').attr('content') || @json(csrf_token());
+
+    function send(box, to, confirm) {
+        return $.ajax({
+            url: moveUrl, method: 'POST', dataType: 'json', contentType: 'application/json',
+            data: JSON.stringify({ result_ids: [box.data('id')], to_station: to, confirm: !!confirm }),
+            headers: { 'X-CSRF-TOKEN': csrf, Accept: 'application/json' }
+        });
+    }
+    function done(msg) {
+        // the mark is no longer at this station: show where it went on the results page
+        CosecsaAlert.alert(msg, { variant: 'success' }).then(function () { window.location.href = @json(url('admin/exams/exam_results')); });
+    }
+    function failed(x) {
+        CosecsaAlert.alert((x.responseJSON && x.responseJSON.message) || 'Something went wrong. Nothing was moved.', { variant: 'warning' });
+    }
+
+    $('.move-station-go').on('click', function () {
+        var box = $(this).closest('.move-station'), btn = $(this), to = parseInt(box.find('.move-station-to').val(), 10);
+        if (!to) { failed({ responseJSON: { message: 'Choose the station to move this mark to.' } }); return; }
+        CosecsaAlert.confirm('Move this examiner\'s marks for this candidate from Station ' + box.data('from') + ' to Station ' + to + '? The marks themselves do not change, and a copy of how they were is kept.', { variant: 'question', confirmText: 'Move' }).then(function (ok) {
+            if (!ok) return;
+            btn.prop('disabled', true);
+            send(box, to, false).done(function (r) { done(r.message); }).fail(function (x) {
+                if (x.status === 409 && x.responseJSON && x.responseJSON.needs_confirm) {
+                    CosecsaAlert.confirm(x.responseJSON.message, { variant: 'warning' }).then(function (ok2) {
+                        if (!ok2) { btn.prop('disabled', false); return; }
+                        send(box, to, true).done(function (r) { done(r.message); }).fail(function (y) { btn.prop('disabled', false); failed(y); });
+                    });
+                } else { btn.prop('disabled', false); failed(x); }
+            });
+        });
+    });
+});
+</script>
+@endpush

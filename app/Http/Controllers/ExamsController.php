@@ -898,6 +898,13 @@ class ExamsController extends Controller
         return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
     }
 
+    public function moveMcsMarks(Request $request)
+    {
+        $response = $this->api->post('exam-results/mcs/move-station', $request->only(['result_ids', 'to_station', 'confirm']));
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
+    }
+
     public function overallResults(Request $request)
     {
         $response = $this->api->get('exam-results/overall', $request->only(['year', 'programme_id', 'result']));
@@ -1117,8 +1124,9 @@ class ExamsController extends Controller
         $candidateResult = $d->candidate_result ?? null;
         $allResults      = collect($d->all_results ?? []);
         $header_title    = 'Station Results';
+        $stations        = collect($d->stations ?? []);
 
-        return view('admin.exams.station_results', compact('candidateResult', 'allResults', 'header_title'));
+        return view('admin.exams.station_results', compact('candidateResult', 'allResults', 'header_title', 'stations'));
     }
 
     public function viewGsStationResult($candidate_id, $station_id)

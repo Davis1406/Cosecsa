@@ -24,7 +24,6 @@
         <h3 class="mf-h">Choose your group</h3>
         <div class="mf-tiles" id="mfGroupTiles"></div>
         <button type="button" class="mf-link" id="mfAllGroups" hidden>Show the other groups</button>
-        <button type="button" class="mf-link" id="mfTestGroups" hidden>Show test groups</button>
     </section>
 
     <section class="mf-panel" id="mfPCand" hidden>
@@ -166,7 +165,7 @@
     CFG.storeKey = 'cosecsa.candidatePicker.view.' + CFG.userId;
     var GROUP_KEY = 'cosecsa.flow.group.' + CFG.userId + '.' + CFG.kind + (CFG.format || '');
     var STATION_KEY = 'cosecsa.flow.station.' + CFG.userId + '.' + CFG.kind + (CFG.format || '');
-    var S = { step: 'group', list: [], marks: {}, flags: 'none', filter: 'all', q: '', view: 'tiles', cand: null, loading: false, allGroups: false, showTest: false, lastStation: null, showAllStations: false };
+    var S = { step: 'group', list: [], marks: {}, flags: 'none', filter: 'all', q: '', view: 'tiles', cand: null, loading: false, allGroups: false, lastStation: null, showAllStations: false };
     try { S.view = localStorage.getItem(CFG.storeKey) === 'list' ? 'list' : 'tiles'; } catch (e) {}
     try { S.lastStation = parseInt(localStorage.getItem(STATION_KEY), 10) || null; } catch (e) {}
 
@@ -237,11 +236,12 @@
     });
 
     // ── 1. Group ──
-    // Test (sandbox) groups, named TEST-..., are hidden unless asked for; if a form has nothing but test groups they are shown.
+    // Test (sandbox) groups, named TEST-..., are always hidden from examiners; only when a form has nothing but test groups
+    // (practice mode before the exam starts) are they shown.
     function isTest(g) { return /^(group\s+)?test-/i.test(g.name); }
     function renderGroups() {
         var everything = groupOptions(), real = everything.filter(function (g) { return !isTest(g); });
-        var all = (S.showTest || !real.length) ? everything : real;
+        var all = real.length ? real : everything;
         var mine = all.filter(function (g) { return CFG.assigned.indexOf(g.id) !== -1; });
         var show = (mine.length && mine.length < all.length && !S.allGroups) ? mine : all;
         $('mfGroupTiles').innerHTML = show.map(function (g) {
@@ -249,9 +249,6 @@
                    (CFG.assigned.indexOf(g.id) !== -1 ? '<span class="mf-tag">Yours</span>' : '') + '</button>';
         }).join('') || '<div class="mf-empty">No groups are available.</div>';
         $('mfAllGroups').hidden = !(mine.length && mine.length < all.length && !S.allGroups);
-        var hiddenTests = everything.length - real.length;
-        $('mfTestGroups').hidden = !(real.length && hiddenTests > 0);
-        $('mfTestGroups').textContent = S.showTest ? 'Hide test groups' : 'Show test groups';
     }
 
     // ── 2. Candidate ──
@@ -380,7 +377,6 @@
             return forward('candidate');
         }
         if (e.target.closest('#mfAllGroups')) { S.allGroups = true; return render(); }
-        if (e.target.closest('#mfTestGroups')) { S.showTest = !S.showTest; return render(); }
         if ((t = e.target.closest('[data-cand]'))) {
             S.cand = candById(t.getAttribute('data-cand'));
             candSel.value = String(S.cand.candidates_id); candSel.dispatchEvent(new Event('change', { bubbles: true }));

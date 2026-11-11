@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added (2026-11-11) — Move an examiner's MCS marks to another station
+- On **Examinations ▸ MCS Results ▸ (open a candidate's station)** each examiner's block has *Move to station…* for an examiner who examined at a different station from the one they marked on. It moves that examiner's marks for the candidate; the marks themselves do not change, nothing is overwritten (it refuses if that examiner already has a mark at the target station), and a copy of how they were is kept on the server. If another examiner already marked the candidate at the target station it asks to confirm first (the results page averages the two). After a move it returns to the results list. Needs the Examiners *manage* permission.
+
+### Changed (2026-11-11) — Test groups are always hidden from examiners
+- The *Show test groups* button is removed from the examiner marking flow: groups named TEST-… are never offered to examiners. The only time they appear is practice mode before the exam starts (where there is nothing else to show). The admin Exam Groups & Stations page keeps its own *Show test groups* switch.
+
 ### Fixed (2026-11-11) — The marking flow opened in another person's group
 - The MCS / FCS marking flow remembers the group used a moment ago (so the next candidate is one tap away after saving a mark), but kept it under one key for the whole browser tab. An examiner signing in after someone else on the same tab or device, or an admin using **View as** on several examiners, landed straight in the previous person's group (e.g. Dr Barendegere, assigned to group E, opened in group B). The remembered group, the remembered station and the tiles/list choice are now kept per signed-in person.
 
