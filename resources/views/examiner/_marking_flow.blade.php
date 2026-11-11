@@ -41,7 +41,7 @@
             </div>
             <button type="button" class="mf-icon" id="mfRefresh" title="Refresh who has been examined" aria-label="Refresh"><i class="fas fa-sync-alt"></i></button>
         </div>
-        <p class="mf-legend"><span class="mf-dot none"></span>Not marked yet <span class="mf-dot full"></span>Already marked (in green — tap <em>Review</em> to see your marks)</p>
+        <p class="mf-legend"><span class="mf-dot none"></span>Not marked by you <span class="mf-dot full"></span>Marked by you (in green — tap <em>Review</em> to see your marks)</p>
         <div class="mf-cands mf-tiles" id="mfCandGrid" role="listbox" aria-label="Candidates"></div>
     </section>
 
@@ -252,14 +252,15 @@
     }
 
     // ── 2. Candidate ──
-    // A candidate marked at any station (by anyone) is greyed out; the examiner's own marks can be reviewed.
+    // A candidate is shown in green only when this examiner has marked them. A candidate marked only by other
+    // examiners stays plain (and still counts as not yet marked by you); the examiner's own marks can be reviewed.
     function candState(c) {
         var m = marksOf(c), n = m.all.length, t = stationOptions().length;
         if (S.flags !== 'ok') return { k: 'none', text: '', review: null };
         if (n === 0) return { k: 'none', text: 'Not marked yet', review: null };
-        var text = 'Marked at ' + n + (t ? ' of ' + t : '') + ' station' + (n === 1 && !t ? '' : 's');
-        if (!m.mine.length) return { k: 'marked', text: text + ' by another examiner', review: null };
-        return { k: 'marked', text: text, review: m.mine[0] };
+        if (!m.mine.length) return { k: 'none', text: 'Not marked by you (marked at ' + n + ' station' + (n === 1 ? '' : 's') + ' by another examiner)', review: null };
+        var k = m.mine.length;
+        return { k: 'marked', text: 'You marked ' + k + (t ? ' of ' + t : '') + ' station' + (k === 1 && !t ? '' : 's'), review: m.mine[0] };
     }
     function reviewHref(c, station) {
         // Review opens the editable form of the examiner's saved marks (Resubmit): MCS and General Surgery
