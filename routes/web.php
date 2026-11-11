@@ -564,6 +564,7 @@ Route::get('admin/exams/test_results', [ExamsController::class,'testResults']); 
 Route::post('admin/exams/test_results/{specialty}/{id}/destroy', [ExamsController::class, 'destroyTestResult'])->name('test_results.destroy.record');
 Route::post('admin/exams/test_results/destroy', [ExamsController::class, 'destroyAllTestResults'])->name('test_results.destroy.all');
 Route::post('admin/exams/station_results/move', [ExamsController::class, 'moveMcsMarks']);
+Route::post('admin/exams/station_results/delete', [ExamsController::class, 'deleteMcsMarkScores']);
 Route::get('admin/exams/station_results/{candidate_id}/{station_id}', [ExamsController::class, 'viewCandidateStationResult']);
 Route::get('admin/exams/gs_station_results/{candidate_id}/{station_id}', [ExamsController::class, 'viewGsStationResult']);
 // FCS Programme Results

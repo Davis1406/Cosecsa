@@ -49,19 +49,24 @@
                             <h6 class="mb-0" style="color:#a02626;">
                                 Examiner {{ $i + 1 }}: {{ $result->examin_id }} — {{ $result->examiner_name }}
                             </h6>
-                            @if (!empty($result->result_id) && $stations->count() > 1)
-                                <div class="form-inline d-print-none move-station" data-id="{{ $result->result_id }}" data-from="{{ $result->station_id }}">
-                                    <label class="small text-muted mr-2 mb-0">Examined at a different station?</label>
-                                    <select class="form-control form-control-sm mr-2 move-station-to">
-                                        <option value="">Move to station…</option>
-                                        @foreach ($stations as $st)
-                                            @if ((int) $st->number !== (int) $result->station_id)
-                                                <option value="{{ $st->number }}">{{ $st->name ?: 'Station ' . $st->number }}</option>
-                                            @endif
-                                        @endforeach
-                                    </select>
-                                    <button type="button" class="btn btn-sm btn-primary move-station-go" style="background-color:#a02626;border-color:#a02626;">
-                                        <i class="fas fa-exchange-alt"></i> Move
+                            @if (!empty($result->result_id))
+                                <div class="form-inline d-print-none move-station" data-id="{{ $result->result_id }}" data-from="{{ $result->station_id }}" data-examiner="{{ $result->examin_id }}">
+                                    @if ($stations->count() > 1)
+                                        <label class="small text-muted mr-2 mb-0">Examined at a different station?</label>
+                                        <select class="form-control form-control-sm mr-2 move-station-to">
+                                            <option value="">Move to station…</option>
+                                            @foreach ($stations as $st)
+                                                @if ((int) $st->number !== (int) $result->station_id)
+                                                    <option value="{{ $st->number }}">{{ $st->name ?: 'Station ' . $st->number }}</option>
+                                                @endif
+                                            @endforeach
+                                        </select>
+                                        <button type="button" class="btn btn-sm btn-primary move-station-go mr-2" style="background-color:#a02626;border-color:#a02626;">
+                                            <i class="fas fa-exchange-alt"></i> Move
+                                        </button>
+                                    @endif
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-score-go" title="Delete this score completely">
+                                        <i class="fas fa-trash-alt"></i> Delete score
                                     </button>
                                 </div>
                             @endif
@@ -105,7 +110,7 @@
 @push('scripts')
 <script>
 $(function () {
-    var moveUrl = @json(url('admin/exams/station_results/move'));
+    var moveUrl = @json(url('admin/exams/station_results/move')), deleteUrl = @json(url('admin/exams/station_results/delete'));
     var csrf = $('meta[name="csrf-token"]').attr('content') || @json(csrf_token());
 
     function send(box, to, confirm) {
@@ -122,6 +127,23 @@ $(function () {
     function failed(x) {
         CosecsaAlert.alert((x.responseJSON && x.responseJSON.message) || 'Something went wrong. Nothing was moved.', { variant: 'warning' });
     }
+
+
+    $('.delete-score-go').on('click', function () {
+        var box = $(this).closest('.move-station'), btn = $(this), remaining = $('.move-station').length - 1;
+        CosecsaAlert.confirm('Delete the score examiner ' + box.data('examiner') + ' gave this candidate at Station ' + box.data('from') + '? It will no longer count in the results. A copy is kept on the server so it can be put back if it was a mistake.', { variant: 'danger', confirmText: 'Delete score' }).then(function (ok) {
+            if (!ok) return;
+            btn.prop('disabled', true);
+            $.ajax({ url: deleteUrl, method: 'POST', dataType: 'json', contentType: 'application/json', data: JSON.stringify({ result_ids: [box.data('id')] }),
+                headers: { 'X-CSRF-TOKEN': csrf, Accept: 'application/json' } })
+                .done(function (r) {
+                    CosecsaAlert.alert(r.message, { variant: 'success' }).then(function () {
+                        // other examiners' scores may still be here: stay on the page; otherwise go to the list
+                        if (remaining > 0) window.location.reload(); else window.location.href = @json(url('admin/exams/exam_results')) + @json(!empty($candidateResult->exam_year) ? '?year_id=' . $candidateResult->exam_year : '');
+                    });
+                }).fail(function (x) { btn.prop('disabled', false); failed(x); });
+        });
+    });
 
     $('.move-station-go').on('click', function () {
         var box = $(this).closest('.move-station'), btn = $(this), to = parseInt(box.find('.move-station-to').val(), 10);
