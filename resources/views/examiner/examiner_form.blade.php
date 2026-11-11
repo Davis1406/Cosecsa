@@ -5,6 +5,13 @@
         <div class="content-wrapper">
             <section class="content">
                 @include('_message')
+                @if (!empty($practiceOnly))
+                    <div class="alert alert-warning" style="max-width:900px;margin:10px auto;">
+                        <strong>Practice mode.</strong> Only the TEST groups are shown and nothing you save counts.
+                        Real marking opens when the exams officer starts the exam.
+                        <a href="{{ url('examiner/examiner_form') }}" class="alert-link">Check whether it has started</a>
+                    </div>
+                @endif
                 <section class="multi_step_form">
                     <form id="msform" data-offline-submit method="POST" action="{{ route('examiner.add') }}" enctype="multipart/form-data">
                         {{ csrf_field() }}

@@ -77,6 +77,15 @@
                                 </select>
                             </div>
 
+                            @if(!empty($mcsState) && !$mcsState['open'])
+                                <div class="alert alert-warning" style="margin-top:12px;">
+                                    <i class="fas fa-hourglass-half mr-1"></i>
+                                    <strong>MCS marking has not opened yet.</strong> The exams officer starts it a few minutes before the exam
+                                    @if(!empty($mcsState['scheduled_for'])) (the exam starts at <strong>{{ \Carbon\Carbon::parse($mcsState['scheduled_for'])->format('H:i') }}</strong>)@endif.
+                                    If you choose MCS you will wait on a screen that opens the form by itself when it starts.
+                                </div>
+                            @endif
+
                             <!-- Submit Button -->
                             <div class="text-center mt-4">
                                 <button type="button" class="btn"

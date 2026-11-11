@@ -506,6 +506,7 @@ public function dashboard()
         $data['userRoles'] = Auth::user()->getRoles();
         $data['activeRole'] = Auth::user()->getActiveRole();
         $data['currentExam'] = $this->currentExam();
+        $data['mcsState'] = \App\Services\ExamControl::state('mcs');
 
         return view('examiner.dashboard', $data);
     }

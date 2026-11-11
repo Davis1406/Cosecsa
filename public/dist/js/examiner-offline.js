@@ -179,6 +179,8 @@
         if (!json || !json.status) return { outcome: response.ok ? 'auth' : 'retry', message: message };
         if (json.status === 'success') return { outcome: 'success', message: message };
         if (json.status === 'duplicate') return { outcome: 'duplicate', message: message };
+        // The exams officer has not started the exam yet: keep the mark on the device and try again later.
+        if (json.status === 'locked') return { outcome: 'retry', message: message };
         return { outcome: 'invalid', message: message || 'The server rejected this mark.' };
       });
     });

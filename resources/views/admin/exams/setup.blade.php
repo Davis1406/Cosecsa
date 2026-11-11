@@ -38,6 +38,37 @@
                 </div>
             </div>
 
+            {{-- ───────── Exam control: examiners cannot select the exam or save marks until it is started ───────── --}}
+            @php $ec = $exam_control ?? null; @endphp
+            @if($ec && ($ec['guarded'] ?? false))
+            <div class="card mb-3" id="ecCard" style="border-left:4px solid {{ $ec['open'] ? '#28a745' : '#f0ad4e' }};">
+                <div class="card-body py-3">
+                    <div class="d-flex flex-wrap align-items-center" style="gap:.75rem;">
+                        <div>
+                            <strong><i class="fas fa-play-circle mr-1" style="color:#a02626;"></i> Start the exam — {{ $ec['label'] }} {{ $ec['year'] }}</strong>
+                            <div id="ecStatus" style="font-size:.9rem;"></div>
+                        </div>
+                        <div class="ml-auto d-flex flex-wrap align-items-center" style="gap:.5rem;">
+                            <button class="btn btn-cosecsa" id="btnExamStart"><i class="fas fa-play mr-1"></i> Start the exam</button>
+                            <button class="btn btn-outline-secondary" id="btnExamLock"><i class="fas fa-lock mr-1"></i> Lock marking again</button>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center mt-2" style="gap:.5rem;">
+                        <label class="mb-0 mr-1" style="font-size:.85rem;" for="ecWhen">Exam starts at</label>
+                        <input type="datetime-local" id="ecWhen" class="form-control form-control-sm" style="width:auto;" value="{{ !empty($ec['scheduled_for']) ? str_replace(' ', 'T', $ec['scheduled_for']) : '' }}">
+                        <button class="btn btn-sm btn-outline-secondary" id="btnExamWhen">Save time</button>
+                        <span class="text-muted" id="ecCountdown" style="font-size:.85rem;"></span>
+                    </div>
+                    <div class="text-muted mt-2" style="font-size:.8rem;">
+                        Until the exam is started, examiners see a waiting screen and cannot select the exam or save marks (practice on the TEST groups stays open).
+                        Start it about <strong>5 minutes before</strong> the exam begins. If you lock it again, marks saved on a phone without a connection wait and are saved once the exam is started.
+                    </div>
+                </div>
+            </div>
+            @elseif($ec)
+            <div class="alert alert-light border mb-3" style="font-size:.85rem;"><i class="fas fa-info-circle mr-1"></i> The start control covers MCS. The current exam ({{ $ec['label'] }}) is open to examiners.</div>
+            @endif
+
             <ul class="nav nav-tabs mb-3" id="esTabs">
                 <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#esGroups"><i class="fas fa-users mr-1"></i> Groups</a></li>
                 <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#esStations"><i class="fas fa-clipboard-list mr-1"></i> Stations</a></li>
@@ -202,6 +233,32 @@ $(function () {
                         headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' } });
     }
     function fail(x) { say((x.responseJSON && x.responseJSON.message) || 'Something went wrong. Nothing was changed.', false); }
+
+    // ───── Start the exam ─────
+    var examControl = @json($exam_control ?? null);
+    function fmtTime(t) { return t ? t.replace('T', ' ').slice(0, 16) : ''; }
+    function renderExamControl() {
+        if (!examControl || !examControl.guarded) return;
+        $('#ecCard').css('border-left-color', examControl.open ? '#28a745' : '#f0ad4e');
+        $('#ecStatus').html(examControl.open
+            ? '<span class="badge badge-success">Started</span> ' + esc(fmtTime(examControl.started_at)) + (examControl.started_by_name ? ' by ' + esc(examControl.started_by_name) : '') + ' — examiners can select groups and enter marks.'
+            : '<span class="badge badge-warning">Not started</span> Examiners see the waiting screen and cannot save marks yet.');
+        $('#btnExamStart').toggle(!examControl.open); $('#btnExamLock').toggle(!!examControl.open);
+        var cd = '';
+        if (!examControl.open && examControl.scheduled_for) {
+            var mins = Math.round((new Date(examControl.scheduled_for.replace(' ', 'T')) - new Date()) / 60000);
+            cd = mins > 0 ? 'Starts in ' + (mins >= 60 ? Math.floor(mins / 60) + ' h ' + (mins % 60) + ' min' : mins + ' min') + (mins <= 5 ? ' — start it now' : (mins <= 15 ? ' — start it in ' + (mins - 5) + ' min' : '')) : 'The start time has passed — start the exam.';
+        }
+        $('#ecCountdown').text(cd);
+    }
+    function examAction(body, confirmMsg) {
+        var go = function () { api('POST', '/exam-control', body).done(function (r) { examControl = r; renderExamControl(); say(r.message); }).fail(fail); };
+        if (confirmMsg && window.CosecsaAlert && CosecsaAlert.confirm) { CosecsaAlert.confirm(confirmMsg).then(function (ok) { if (ok) go(); }); } else { go(); }
+    }
+    $('#btnExamStart').on('click', function () { examAction({ action: 'start' }, 'Start the exam now? Examiners will be able to select groups and enter marks right away.'); });
+    $('#btnExamLock').on('click', function () { examAction({ action: 'lock' }, 'Lock marking again? Examiners will see the waiting screen and cannot save new marks until you start the exam.'); });
+    $('#btnExamWhen').on('click', function () { examAction({ action: 'schedule', scheduled_for: $('#ecWhen').val() || '' }); });
+    renderExamControl(); setInterval(renderExamControl, 30000);
 
     // ───── Current exam ─────
     $('#btnSaveCurrentExam').on('click', function () {

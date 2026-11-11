@@ -51,6 +51,25 @@ class ExaminerOfflineTest extends TestCase
         $this->assertSame(2, (int) $row->exam_year); // years.id of 2026
     }
 
+    public function test_a_real_mark_is_refused_until_the_exam_is_started_but_a_test_group_still_works(): void
+    {
+        DB::table('app_settings')->where('key', 'exam_control.mcs.2')->update(['value' => json_encode(['open' => false])]);
+
+        // reported as "locked" so the device keeps the mark and syncs it later; nothing is written
+        $this->postJson('examiner/examiner_form', $this->flatPayload(['overall' => 'pass']))
+            ->assertStatus(423)
+            ->assertJson(['status' => 'locked']);
+        $this->assertSame(0, DB::table('mcs_results')->count());
+
+        // the real candidate list is held back too, a test group's is not
+        $this->getJson('get-mcs-candidates/3')->assertStatus(423);
+        $this->assertNotSame(423, $this->getJson('get-mcs-candidates/17')->status()); // (this test schema has no users.is_deleted, so it may error after the guard)
+
+        // once the officer starts the exam the same mark goes through
+        DB::table('app_settings')->where('key', 'exam_control.mcs.2')->update(['value' => json_encode(['open' => true])]);
+        $this->postJson('examiner/examiner_form', $this->flatPayload(['overall' => 'pass']))->assertStatus(201);
+    }
+
     public function test_repeating_a_mark_is_a_duplicate_and_writes_nothing(): void
     {
         $payload = $this->flatPayload(['overall' => 'pass']);
@@ -490,6 +509,8 @@ class ExaminerOfflineTest extends TestCase
         DB::table('users')->insert(['id' => 1, 'name' => 'Dr Examiner', 'email' => 'e@example.org', 'password' => 'x']);
         DB::table('examiners')->insert(['id' => $this->examinerId, 'user_id' => 1]);
         DB::table('years')->insert(['id' => 2, 'year_name' => '2026']);
+        // The exams officer has started the MCS exam (see App\Services\ExamControl); the tests that check the guard lock it again.
+        DB::table('app_settings')->insert(['key' => 'exam_control.mcs.2', 'value' => json_encode(['open' => true])]);
         DB::table('programmes')->insert([['id' => 1, 'name' => 'Cardiothoracic', 'programme_name' => 'Cardiothoracic'], ['id' => 9, 'name' => 'Urologic', 'programme_name' => 'Urologic']]);
         DB::table('examiners_groups')->insert([['id' => 3, 'group_name' => 'A'], ['id' => 4, 'group_name' => 'B'], ['id' => 17, 'group_name' => 'TEST-PART1']]);
 
@@ -521,6 +542,12 @@ class ExaminerOfflineTest extends TestCase
         Schema::create('years', function ($t) {
             $t->increments('id');
             $t->string('year_name');
+        });
+        Schema::create('app_settings', function ($t) {
+            $t->increments('id');
+            $t->string('key')->unique();
+            $t->text('value')->nullable();
+            $t->timestamps();
         });
         Schema::create('examiners_groups', function ($t) {
             $t->increments('id');

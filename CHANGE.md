@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Fixed (2026-11-11) — The marking flow opened in another person's group
+- The MCS / FCS marking flow remembers the group used a moment ago (so the next candidate is one tap away after saving a mark), but kept it under one key for the whole browser tab. An examiner signing in after someone else on the same tab or device, or an admin using **View as** on several examiners, landed straight in the previous person's group (e.g. Dr Barendegere, assigned to group E, opened in group B). The remembered group, the remembered station and the tiles/list choice are now kept per signed-in person.
+
+### Added (2026-11-11) — The exam must be started by the exams officer before examiners can select it or save marks
+- **Exam Groups & Stations** has a new **Start the exam** panel for the current exam (MCS): *Start the exam* (confirmation), *Lock marking again*, and an optional **Exam starts at** time that examiners see, with a countdown ("start it in N min"). Start it about **5 minutes before** the exam begins. Needs the Examinations permission (manage).
+- Until it is started, an examiner who chooses MCS sees a **waiting screen** ("Waiting for the exam to start", with the start time) that checks every 8 seconds and opens the marking form by itself the moment the exam is started; the examiner dashboard also says marking has not opened. **Practice on the TEST groups stays open** (a "Practise with the test groups" button opens the form with only those groups).
+- The server enforces it, not just the screen: saving a real mark, and loading a real group's candidate list, is refused until the exam is started (web form, offline sync and the mobile app: `exam/submit`, `exam/sync`; the app can ask `GET exam/status`). A mark saved on a phone without a connection waits on the device and syncs once the exam is started (it is not lost). Marks already saved can still be viewed and corrected. A new year starts locked again.
+- The start/lock/time changes are written to the activity log. Needs the API (new `exam-setup/exam-control` and `exam/status`); no migration (uses `app_settings`).
+
 ### Fixed (2026-11-10) — "You are not assigned to the selected role" when a person's logins are split
 - A person with a Fellow login on one email and an Examiner login on another (tied together by the personal email on their Fellow record) who typed their Fellowship ID and picked the **Examiner** role landed on the Fellow login, which does not hold that role. Sign-in now looks for the same person's other login that holds the chosen role and accepts the same password, and signs in to that one (and the same the other way round: an email plus the Fellow role). A different person on a shared email is never picked (names must match), and a wrong password is still rejected.
 

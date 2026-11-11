@@ -20,7 +20,9 @@ class ExamSetupController extends Controller
             return redirect('admin/exams/examiners')->with('error', $response->json('message') ?? 'Could not load the exam set-up.');
         }
 
-        return view('admin.exams.setup', $response->json() + ['header_title' => 'Exam Groups & Stations']);
+        $control = $this->api->get('exam-setup/exam-control');
+
+        return view('admin.exams.setup', $response->json() + ['header_title' => 'Exam Groups & Stations', 'exam_control' => $control->successful() ? $control->json() : null]);
     }
 
     public function overview()
@@ -31,6 +33,17 @@ class ExamSetupController extends Controller
     public function currentExamUpdate(Request $request)
     {
         return $this->reply($this->api->post('exam-setup/current-exam', ['exam_type' => $request->input('exam_type')]));
+    }
+
+    // Start the exam / lock it again / set the start time shown to examiners.
+    public function examControl()
+    {
+        return $this->reply($this->api->get('exam-setup/exam-control'));
+    }
+
+    public function examControlUpdate(Request $request)
+    {
+        return $this->reply($this->api->post('exam-setup/exam-control', array_filter($request->only('action', 'scheduled_for'), fn ($v) => $v !== null)));
     }
 
     public function group($id)

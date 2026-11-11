@@ -530,6 +530,8 @@ Route::prefix('admin/exams/setup')->controller(\App\Http\Controllers\ExamSetupCo
     Route::get('/', 'index');
     Route::get('overview', 'overview');
     Route::post('current-exam', 'currentExamUpdate');
+    Route::get('exam-control', 'examControl');
+    Route::post('exam-control', 'examControlUpdate');
     Route::get('groups/{id}', 'group')->whereNumber('id');
     Route::post('groups', 'groupStore');
     Route::post('groups/{id}', 'groupUpdate')->whereNumber('id');
@@ -636,6 +638,7 @@ Route::group(['middleware' => 'examiner'], function(){
 
     Route::get('examiner/dashboard ', [DashboardController::class,'examinerform'])->name('dashboard');
     Route::get('examiner/examiner_form ', [CandidatesController::class,'mcsexaminerform']);
+    Route::get('examiner/exam-status', [CandidatesController::class,'examStatus']);
     Route::get('examiner/general_surgery ', [CandidatesController::class,'gsexaminerform']);
 
     // Separate routes for question-based and FCS results viewing

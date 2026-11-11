@@ -250,8 +250,22 @@ class CandidatesController extends Controller
         return view('examiner.candidates_list', $data);
     }
 
+    // GET examiner/exam-status — the waiting screen polls this and opens the form once the exam is started.
+    public function examStatus()
+    {
+        return response()->json(\App\Services\ExamControl::state('mcs'))->header('Cache-Control', 'no-store');
+    }
+
     public function mcsexaminerform()
     {
+        // Not before the exams officer has started the exam: a waiting screen (with practice on the TEST groups).
+        $examState = \App\Services\ExamControl::state('mcs');
+        $practice = ! $examState['open'] && request()->boolean('practice');
+        if (! $examState['open'] && ! $practice) {
+            // 423, not 200: the offline page cache only keeps successful pages, so it never stores the waiting screen.
+            return response()->view('examiner.exam_waiting', ['header_title' => 'MCS Form', 'examState' => $examState], 423);
+        }
+
         $examinerId = DB::table('examiners')->where('user_id', Auth::id())->value('id');
         $currentYearId = User::getCurrentYearId();
         $examinerGroupIds = DB::table('exams_groups')
@@ -259,6 +273,10 @@ class CandidatesController extends Controller
             ->pluck('group_id')->toArray();
         $groups = DB::table('examiners_groups')->where('group_name', 'not like', 'TEST-FCS-%')->get();   // the FCS sample groups belong on the FCS forms
 
+        if ($practice) {
+            $groups = $groups->filter(fn ($g) => strncasecmp((string) $g->group_name, 'TEST-', 5) === 0)->values();
+        }
+        $data['practiceOnly'] = $practice;
         $data['header_title'] = 'MCS Form';
         $data['stations'] = $this->stationsFor('mcs');
         $data['getRecord'] = User::getExaminerCandidates(null, $currentYearId);
@@ -286,6 +304,10 @@ class CandidatesController extends Controller
 
     public function getMcsCandidatesByGroup($groupId)
     {
+        if (! \App\Services\ExamControl::marksAllowed('mcs', $groupId)) {
+            return response()->json(['message' => 'The exam has not been started by the exams officer yet.', 'status' => 'locked'], 423);
+        }
+
         $currentYearId = User::getCurrentYearId();
         $currentYear = DB::table('years')->where('id', $currentYearId)->value('year_name');
         $examinerId = DB::table('examiners')->where('user_id', Auth::id())->value('id');
@@ -346,6 +368,11 @@ class CandidatesController extends Controller
         if ($sandboxGroup = $this->candidateSandboxGroup($request->candidate_id)) $request->merge(['group_id' => $sandboxGroup]);
         $table = $this->resultsTable('mcs_results', $request->group_id);
         if ($table === null) return $this->sandboxUnavailable($request);
+
+        // Real marks wait for the exams officer to start the exam (TEST- groups write to the test table, so they never do).
+        if ($table === 'mcs_results' && ! \App\Services\ExamControl::isOpen('mcs')) {
+            return $this->submissionResponse($request, 'locked', 'The exam has not been started by the exams officer yet. Your mark was not saved.', 423);
+        }
 
         $currentYearId = User::getCurrentYearId();
 

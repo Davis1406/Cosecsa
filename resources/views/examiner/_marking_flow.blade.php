@@ -158,10 +158,14 @@
     var CFG = {
         kind: @json($kind), format: @json($format ?? null), assigned: @json(array_map('strval', $assignedGroups ?? [])),
         examinedUrl: @json(url('examiner/examined')), reviewUrl: @json(url($kind === 'mcs' || $kind === 'gs' ? 'examiner/resubmit' : 'examiner/fcs-resubmit')),
-        reviewNeedsStation: @json($kind === 'mcs' || $kind === 'gs'), storeKey: 'cosecsa.candidatePicker.view'
+        reviewNeedsStation: @json($kind === 'mcs' || $kind === 'gs'), userId: @json((int) Auth::id())
     };
-    var GROUP_KEY = 'cosecsa.flow.group.' + CFG.kind + (CFG.format || '');
-    var STATION_KEY = 'cosecsa.flow.station.' + CFG.kind + (CFG.format || '');
+    // What the flow remembers (the group in use, the station, tiles or list) belongs to the person signed in:
+    // a tab or device used by one examiner after another (or an admin viewing as examiners) must not open in
+    // the previous person's group.
+    CFG.storeKey = 'cosecsa.candidatePicker.view.' + CFG.userId;
+    var GROUP_KEY = 'cosecsa.flow.group.' + CFG.userId + '.' + CFG.kind + (CFG.format || '');
+    var STATION_KEY = 'cosecsa.flow.station.' + CFG.userId + '.' + CFG.kind + (CFG.format || '');
     var S = { step: 'group', list: [], marks: {}, flags: 'none', filter: 'all', q: '', view: 'tiles', cand: null, loading: false, allGroups: false, showTest: false, lastStation: null, showAllStations: false };
     try { S.view = localStorage.getItem(CFG.storeKey) === 'list' ? 'list' : 'tiles'; } catch (e) {}
     try { S.lastStation = parseInt(localStorage.getItem(STATION_KEY), 10) || null; } catch (e) {}
