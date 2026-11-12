@@ -37,6 +37,7 @@
                             <button class="btn btn-sm btn-outline-secondary" id="btnPassMarks"><i class="fas fa-bullseye mr-1"></i> Pass marks</button>
                             <button class="btn btn-sm btn-outline-secondary" id="btnCsv"><i class="fas fa-file-csv mr-1"></i> Download CSV</button>
                             <button class="btn btn-sm btn-outline-secondary" id="btnPrint"><i class="fas fa-print mr-1"></i> Print report</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="btnAbsent" title="Mark the ticked candidates absent"><i class="fas fa-user-slash mr-1"></i> Mark absent</button>
                             <button class="btn btn-sm btn-outline-danger" id="btnClear"><i class="fas fa-eraser mr-1"></i> Clear marks</button>
                         </div>
                     </div>
@@ -78,7 +79,7 @@
                 <div class="row">
                     @php
                         $tiles = [
-                            ['Candidates marked', $a['candidates'] ?? 0, ($a['complete'] ?? 0).' completed all stations'],
+                            ['Candidates marked', $a['candidates'] ?? 0, ($a['complete'] ?? 0).' completed all stations'.(!empty($a['absent']) ? ' · '.$a['absent'].' absent' : '')],
                             ['Average total', isset($a['mean']) ? $a['mean'] : '—', 'of '.$max.' · median '.($a['median'] ?? '—')],
                             ['Highest / lowest', ($a['highest'] ?? '—').' / '.($a['lowest'] ?? '—'), 'completed candidates'],
                             ['Pass rate', isset($a['pass_rate']) ? $a['pass_rate'].'%' : 'Not set', isset($a['pass_rate']) ? ($a['passed'] ?? 0).' passed · '.($a['failed'] ?? 0).' failed' : 'set a pass mark'],
@@ -154,7 +155,7 @@
                             <label class="mb-0 small font-weight-bold text-muted">Min total:</label>
                             <input type="number" id="mcsMinScore" class="form-control form-control-sm" min="0" placeholder="e.g. 100" style="width:100px;">
                             <select id="rsResult" class="form-control form-control-sm" style="width:auto;">
-                                <option value="">All results</option><option>Pass</option><option>Fail</option><option>Incomplete</option>
+                                <option value="">All results</option><option>Pass</option><option>Fail</option><option>Incomplete</option><option>Absent</option>
                             </select>
                             <select id="rsGroup" class="form-control form-control-sm" style="width:auto;">
                                 <option value="">All groups</option>
@@ -195,7 +196,7 @@
                 <small class="text-muted" id="pmPct"></small>
             </div>
             
-            <p class="text-muted small mb-0 mt-3">Pass or Fail depends only on this overall pass mark, never on a single station. Candidates who have not been marked at every station show as <em>Incomplete</em>. Leave the pass mark empty to show no Pass or Fail. It applies to {{ $selectedYearName }} only and can be changed any time.</p>
+            <p class="text-muted small mb-0 mt-3">Pass or Fail depends only on this overall pass mark, never on a single station. Candidates who have not been marked at every station show as <em>Incomplete</em>; a candidate who did not sit the exam can be marked <em>Absent</em> (the user-slash button on their row, or tick several and use <em>Mark absent</em>) and is then left out of the averages and the pass rate. Leave the pass mark empty to show no Pass or Fail. It applies to {{ $selectedYearName }} only and can be changed any time.</p>
         </div>
         <div class="modal-footer"><button class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-danger" id="btnSavePass">Save pass marks</button></div>
     </div></div>
@@ -228,7 +229,7 @@
     #rsReportToggle[aria-expanded="true"] .rs-chev { transform: rotate(180deg); }
     #mcsresultstable td, #mcsresultstable th { white-space: nowrap; }
     .rs-res { font-weight: 700; padding: .1rem .5rem; border-radius: 999px; font-size: .78rem; }
-    .rs-res.Pass { background: #dcfce7; color: #166534; } .rs-res.Fail { background: #fee2e2; color: #991b1b; } .rs-res.Incomplete { background: #fef3c7; color: #92400e; }
+    .rs-res.Pass { background: #dcfce7; color: #166534; } .rs-res.Fail { background: #fee2e2; color: #991b1b; } .rs-res.Incomplete { background: #fef3c7; color: #92400e; } .rs-res.Absent { background: #e5e7eb; color: #374151; }
     .rs-low { background: rgba(220,53,69,.14); }
     @media print {
         #rsReport.collapse { display: block !important; height: auto !important; }
@@ -281,7 +282,7 @@ $(function () {
                 [{ data: 'total', className: 'text-right', render: function (d, t) { return t === 'display' ? '<strong>' + d + '</strong>' : d; } },
                  { data: 'percent', className: 'text-right', render: function (d, t) { return t === 'display' ? (d == null ? '' : d + '%') : d; } },
                  { data: 'result', defaultContent: '', render: function (d, t) { return t === 'display' ? (d ? '<span class="rs-res ' + d + '">' + d + '</span>' : '<span class="text-muted">—</span>') : (d || ''); } },
-                 { data: null, orderable: false, className: 'rs-noprint text-right', render: function (d, t, r) { return '<button class="btn btn-xs btn-light border rs-clear-one" data-id="' + r.cnd_id + '" title="Clear this candidate\'s marks"><i class="fas fa-eraser text-danger"></i></button>'; } }]
+                 { data: null, orderable: false, className: 'rs-noprint text-right', render: function (d, t, r) { return '<button class="btn btn-xs btn-light border rs-absent-one" data-id="' + r.cnd_id + '" data-absent="' + (r.absent ? 1 : 0) + '" title="' + (r.absent ? 'Absent: click to undo' : 'Mark absent') + '"><i class="fas fa-user-slash ' + (r.absent ? 'text-dark' : 'text-secondary') + '"></i></button> <button class="btn btn-xs btn-light border rs-clear-one" data-id="' + r.cnd_id + '" title="Clear this candidate\'s marks"><i class="fas fa-eraser text-danger"></i></button>'; } }]
             )
         });
         $.fn.dataTable.ext.search.push(function (settings, data, i) {
@@ -400,6 +401,22 @@ $(function () {
         $('#clPreview').hide(); $('#clConfirm').val(''); $('#clConfirmWrap').hide(); $('#btnDoClear').prop('disabled', true);
         $('#clearModal').modal('show'); if (n > 0) preview();
     }
+    // ───── Absent ─────
+    function setAbsent(ids, absent) {
+        post('/absent', { year_id: YEAR_ID, candidate_ids: ids, absent: absent })
+            .done(function (r) { sessionStorage.setItem('rsMsg', r.message); location.reload(); }).fail(fail);
+    }
+    $('#mcsresultstable').on('click', '.rs-absent-one', function () {
+        var id = $(this).data('id'), isAbs = String($(this).data('absent')) === '1', row = ROWS.filter(function (r) { return r.cnd_id == id; })[0] || {};
+        CosecsaAlert.confirm(isAbs ? 'Put ' + (row.number || '') + ' back? They will show as Incomplete or with their result again.' : 'Mark ' + (row.number || 'this candidate') + (row.name ? ' (' + row.name + ')' : '') + ' as absent? They will show as Absent instead of Incomplete and be left out of the averages and the pass rate. Saved marks are kept.', { variant: 'question', confirmText: isAbs ? 'Put back' : 'Mark absent' })
+            .then(function (ok) { if (ok) setAbsent([id], !isAbs); });
+    });
+    $('#btnAbsent').on('click', function () {
+        var ids = $('#mcsresultstable .rs-pick:checked').map(function () { return this.value; }).get();
+        if (!ids.length) return say('Tick the candidates to mark absent first.', false);
+        CosecsaAlert.confirm('Mark ' + ids.length + ' candidate' + (ids.length === 1 ? '' : 's') + ' as absent? They will show as Absent instead of Incomplete and be left out of the averages and the pass rate. Saved marks are kept.', { variant: 'question', confirmText: 'Mark absent' })
+            .then(function (ok) { if (ok) setAbsent(ids, true); });
+    });
     $('#btnClear').on('click', function () { openClear([]); });
     $('#mcsresultstable').on('click', '.rs-clear-one', function () { openClear([$(this).data('id')]); });
     function preview() {

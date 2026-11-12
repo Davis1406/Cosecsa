@@ -912,6 +912,13 @@ class ExamsController extends Controller
         return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
     }
 
+    public function setMcsAbsent(Request $request)
+    {
+        $response = $this->api->post('exam-results/mcs/absent', $request->only(['year_id', 'candidate_ids', 'absent']));
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
+    }
+
     public function overallResults(Request $request)
     {
         $response = $this->api->get('exam-results/overall', $request->only(['year', 'programme_id', 'result']));

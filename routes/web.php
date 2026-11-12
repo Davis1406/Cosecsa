@@ -560,6 +560,7 @@ Route::get('admin/exams/overall_results', [ExamsController::class,'overallResult
 Route::get('admin/exams/exam_results', [ExamsController::class,'adminResults']);
 Route::post('admin/exams/exam_results/pass-marks', [ExamsController::class,'saveMcsPassMarks']);
 Route::post('admin/exams/exam_results/clear', [ExamsController::class,'clearMcsMarks']);
+Route::post('admin/exams/exam_results/absent', [ExamsController::class,'setMcsAbsent']);
 Route::get('admin/exams/gs_results', [ExamsController::class,'gsResults']);
 Route::get('admin/exams/test_results', [ExamsController::class,'testResults']); // Examiner App test clone — expires 2026-08-20
 Route::post('admin/exams/test_results/{specialty}/{id}/destroy', [ExamsController::class, 'destroyTestResult'])->name('test_results.destroy.record');
