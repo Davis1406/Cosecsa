@@ -876,6 +876,7 @@ class ExamsController extends Controller
             // year and the analysis behind the charts (see cosecsa-api ExamResultsController::mcsReport).
             'rows'             => $j['rows'] ?? [],
             'stations'         => $j['stations'] ?? [],
+            'groups'           => $j['groups'] ?? [],
             'passMarks'        => $j['pass_marks'] ?? ['total' => null, 'station' => null, 'max_total' => 160],
             'analysis'         => $j['analysis'] ?? [],
         ]);
@@ -908,6 +909,13 @@ class ExamsController extends Controller
     public function deleteMcsMarkScores(Request $request)
     {
         $response = $this->api->post('exam-results/mcs/delete-marks', $request->only(['result_ids']));
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
+    }
+
+    public function setMcsGroupStations(Request $request)
+    {
+        $response = $this->api->post('exam-results/mcs/group-stations', $request->only(['year_id', 'group_id', 'stations']));
 
         return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
     }

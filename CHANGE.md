@@ -10,6 +10,9 @@
 ### Changed (2026-11-11) — Candidates show green only when you marked them
 - In the examiner marking flow a candidate is green only when *that examiner* has marked them. The tile just says **Marked** (green) or **Pending** (plain) — no "1 of 8 stations" count, since an examiner stays at one station. A candidate marked only by other examiners is Pending for you, and the *Pending* / *Marked* filters follow the same rule. The station tiles already separated your own marks (green) from other examiners' (blue).
 
+### Added (2026-11-12) — Judge a group on all stations or fewer
+- **MCS Results ▸ Group stations**: for a group where examiners were missing at some stations, untick those stations for the group and press *Save* (*All* ticks every station again). The group's candidates are then complete once marked at the ticked stations, their total and percentage are out of those stations only (shown as e.g. `36 / 60`, with a *3 stn* tag beside the group and the other stations faded), and Pass / Fail uses the same pass percentage as every other group. The averages and charts compare groups on the same footing. Saved marks are never changed and the default is still all stations. Needs the API migration `2026_11_12_130000_create_exam_group_stations_table`.
+
 ### Added (2026-11-12) — Mark a candidate absent on MCS Results
 - A candidate who did not sit the MCS exam can be marked **Absent**: the user-slash button on their row, or tick several and use **Mark absent**. They then show as *Absent* instead of *Incomplete*, are left out of the averages, the pass rate and the charts, and are counted in the *absent* note on the first tile. There is an *Absent* option in the result filter. The same button puts a candidate back; saved marks are never deleted. Needs the API migration `2026_11_12_100000_create_exam_absentees_table`.
 

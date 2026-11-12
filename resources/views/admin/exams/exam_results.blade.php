@@ -35,6 +35,7 @@
                                 <button type="submit" class="btn btn-danger btn-sm" style="padding:4px 12px;">Filter</button>
                             </form>
                             <button class="btn btn-sm btn-outline-secondary" id="btnPassMarks"><i class="fas fa-bullseye mr-1"></i> Pass marks</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="btnGroupStations" title="Choose the stations each group's results are based on"><i class="fas fa-layer-group mr-1"></i> Group stations</button>
                             <button class="btn btn-sm btn-outline-secondary" id="btnCsv"><i class="fas fa-file-csv mr-1"></i> Download CSV</button>
                             <button class="btn btn-sm btn-outline-secondary" id="btnPrint"><i class="fas fa-print mr-1"></i> Print report</button>
                             <button class="btn btn-sm btn-outline-secondary" id="btnAbsent" title="Mark the ticked candidates absent"><i class="fas fa-user-slash mr-1"></i> Mark absent</button>
@@ -186,6 +187,18 @@
 </div>
 
 {{-- Pass marks --}}
+{{-- Group stations --}}
+<div class="modal fade" id="gsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Group stations — MCS {{ $selectedYearName }}</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
+        <div class="modal-body">
+            <p class="small text-muted">Each group is judged on <strong>all stations</strong> unless you untick some here, for a group where examiners were missing at those stations. A group judged on fewer stations is <em>complete</em> once its candidates are marked at the ticked stations, its total is out of those stations only, and Pass / Fail uses the same pass percentage as every other group. Saved marks are never changed.</p>
+            <table class="table table-sm mb-0" id="gsTable"><thead><tr><th>Group</th>@foreach($stations as $s)<th class="text-center" title="{{ $s['name'] }}">S{{ $s['number'] }}</th>@endforeach<th></th></tr></thead><tbody></tbody></table>
+        </div>
+        <div class="modal-footer"><button class="btn btn-light" data-dismiss="modal">Close</button></div>
+    </div></div>
+</div>
+
 <div class="modal fade" id="passModal" tabindex="-1">
     <div class="modal-dialog"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title">Pass marks — MCS {{ $selectedYearName }}</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
@@ -196,7 +209,7 @@
                 <small class="text-muted" id="pmPct"></small>
             </div>
             
-            <p class="text-muted small mb-0 mt-3">Pass or Fail depends only on this overall pass mark, never on a single station. Candidates who have not been marked at every station show as <em>Incomplete</em>; a candidate who did not sit the exam can be marked <em>Absent</em> (the user-slash button on their row, or tick several and use <em>Mark absent</em>) and is then left out of the averages and the pass rate. Leave the pass mark empty to show no Pass or Fail. It applies to {{ $selectedYearName }} only and can be changed any time.</p>
+            <p class="text-muted small mb-0 mt-3">Pass or Fail depends only on this overall pass mark, never on a single station. A group judged on fewer stations (see <em>Group stations</em>) is held to the same percentage of its own total. Candidates who have not been marked at every station show as <em>Incomplete</em>; a candidate who did not sit the exam can be marked <em>Absent</em> (the user-slash button on their row, or tick several and use <em>Mark absent</em>) and is then left out of the averages and the pass rate. Leave the pass mark empty to show no Pass or Fail. It applies to {{ $selectedYearName }} only and can be changed any time.</p>
         </div>
         <div class="modal-footer"><button class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-danger" id="btnSavePass">Save pass marks</button></div>
     </div></div>
@@ -246,7 +259,7 @@
 @push('scripts')
 <script>
 $(function () {
-    var ROWS = @json($rows), STATIONS = @json($stations), A = @json($analysis), PASS = @json($passMarks);
+    var ROWS = @json($rows), STATIONS = @json($stations), GROUPS = @json($groups), A = @json($analysis), PASS = @json($passMarks);
     var YEAR_ID = @json($selectedYearId), YEAR = @json($selectedYearName), MAX = PASS.max_total || 160;
     var base = @json(url('admin/exams/exam_results')), stationUrl = @json(url('admin/exams/station_results'));
     var csrf = $('meta[name="csrf-token"]').attr('content') || @json(csrf_token());
@@ -269,17 +282,18 @@ $(function () {
                 [{ data: null, orderable: false, className: 'rs-noprint', render: function (d, t, r) { return '<input type="checkbox" class="rs-pick" value="' + r.cnd_id + '">'; } },
                  { data: 'number', render: function (d, t, r) { return esc(d || r.pen || '—'); } },
                  { data: 'name', render: function (d, t) { return esc(d); } },
-                 { data: 'group', defaultContent: '', render: function (d) { return esc(d || ''); } },
+                 { data: 'group', defaultContent: '', render: function (d, t, r) { return esc(d || '') + (t === 'display' && r.required_stations ? ' <span class="badge badge-light border" title="Judged on stations ' + r.required_stations.join(', ') + ' only">' + r.required_stations.length + ' stn</span>' : ''); } },
                  { data: 'session', defaultContent: '', render: function (d) { return esc(d || ''); } }],
                 STATIONS.map(function (s, i) {
                     return { data: null, className: 'text-right', orderable: true, render: function (d, type, r) {
                         var st = r.stations[i]; if (type !== 'display') return st ? st.mark : -1;
                         if (!st) return '';
+                        var outside = r.required_stations && r.required_stations.indexOf(s.number) === -1;
                         var low = PASS.station !== null && st.mark < PASS.station;
-                        return '<a href="' + stationUrl + '/' + r.cnd_id + '/' + s.number + '" style="color:inherit;text-decoration:none;" class="' + (low ? 'rs-low d-block' : '') + '" title="' + esc(s.name) + (st.marks > 1 ? ' (' + st.marks + ' marks, average)' : '') + '">' + st.mark + (st.marks > 1 ? '*' : '') + '</a>';
+                        return '<a href="' + stationUrl + '/' + r.cnd_id + '/' + s.number + '" style="color:inherit;text-decoration:none;' + (outside ? 'opacity:.4;' : '') + '" class="' + (low ? 'rs-low d-block' : '') + '" title="' + esc(s.name) + (st.marks > 1 ? ' (' + st.marks + ' marks, average)' : '') + '">' + st.mark + (st.marks > 1 ? '*' : '') + '</a>';
                     } };
                 }),
-                [{ data: 'total', className: 'text-right', render: function (d, t) { return t === 'display' ? '<strong>' + d + '</strong>' : d; } },
+                [{ data: 'total', className: 'text-right', render: function (d, t, r) { return t === 'display' ? '<strong>' + d + '</strong>' + (r.required_stations ? ' <small class="text-muted">/ ' + r.max + '</small>' : '') : d; } },
                  { data: 'percent', className: 'text-right', render: function (d, t) { return t === 'display' ? (d == null ? '' : d + '%') : d; } },
                  { data: 'result', defaultContent: '', render: function (d, t) { return t === 'display' ? (d ? '<span class="rs-res ' + d + '">' + d + '</span>' : '<span class="text-muted">—</span>') : (d || ''); } },
                  { data: null, orderable: false, className: 'rs-noprint text-right', render: function (d, t, r) { return '<button class="btn btn-xs btn-light border rs-absent-one" data-id="' + r.cnd_id + '" data-absent="' + (r.absent ? 1 : 0) + '" title="' + (r.absent ? 'Absent: click to undo' : 'Mark absent') + '"><i class="fas fa-user-slash ' + (r.absent ? 'text-dark' : 'text-secondary') + '"></i></button> <button class="btn btn-xs btn-light border rs-clear-one" data-id="' + r.cnd_id + '" title="Clear this candidate\'s marks"><i class="fas fa-eraser text-danger"></i></button>'; } }]
@@ -401,6 +415,25 @@ $(function () {
         $('#clPreview').hide(); $('#clConfirm').val(''); $('#clConfirmWrap').hide(); $('#btnDoClear').prop('disabled', true);
         $('#clearModal').modal('show'); if (n > 0) preview();
     }
+    // ───── Group stations ─────
+    function gsRows() {
+        var all = STATIONS.map(function (s) { return s.number; });
+        $('#gsTable tbody').html(GROUPS.map(function (g) {
+            var on = g.stations || all;
+            return '<tr data-group="' + g.id + '"><td><strong>' + esc(g.name) + '</strong>' + (g.stations ? ' <span class="badge badge-warning">' + g.stations.length + ' of ' + all.length + '</span>' : '') + '</td>' +
+                STATIONS.map(function (s) { return '<td class="text-center"><input type="checkbox" class="gs-st" value="' + s.number + '"' + (on.indexOf(s.number) !== -1 ? ' checked' : '') + '></td>'; }).join('') +
+                '<td class="text-right text-nowrap"><button class="btn btn-xs btn-light border gs-all" title="Tick every station">All</button> <button class="btn btn-xs btn-danger gs-save">Save</button></td></tr>';
+        }).join(''));
+    }
+    $('#btnGroupStations').on('click', function () { gsRows(); $('#gsModal').modal('show'); });
+    $('#gsTable').on('click', '.gs-all', function () { $(this).closest('tr').find('.gs-st').prop('checked', true); });
+    $('#gsTable').on('click', '.gs-save', function () {
+        var tr = $(this).closest('tr'), picked = tr.find('.gs-st:checked').map(function () { return parseInt(this.value, 10); }).get();
+        if (!picked.length) return say('Tick at least one station for the group.', false);
+        post('/group-stations', { year_id: YEAR_ID, group_id: tr.data('group'), stations: picked })
+            .done(function (r) { sessionStorage.setItem('rsMsg', r.message); location.reload(); }).fail(fail);
+    });
+
     // ───── Absent ─────
     function setAbsent(ids, absent) {
         post('/absent', { year_id: YEAR_ID, candidate_ids: ids, absent: absent })
