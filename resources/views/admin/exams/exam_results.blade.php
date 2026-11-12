@@ -232,7 +232,7 @@
                 <small class="text-muted d-block mb-2">For candidates judged on fewer stations (see <em>Group stations</em> and <em>Candidate stations</em>). Leave a box empty to hold them to the same percentage as everyone else.</small>
                 <div id="pmByMax"></div>
             </div>
-            <p class="text-muted small mb-0 mt-3">Pass or Fail depends only on this overall pass mark, never on a single station. A group judged on fewer stations (see <em>Group stations</em>) is held to the same percentage of its own total. Candidates who have not been marked at every station show as <em>Incomplete</em>; a candidate who did not sit the exam can be marked <em>Absent</em> (the user-slash button on their row, or tick several and use <em>Mark absent</em>) and is then left out of the averages and the pass rate. Leave the pass mark empty to show no Pass or Fail. It applies to {{ $selectedYearName }} only and can be changed any time.</p>
+            <p class="text-muted small mb-0 mt-3">Pass or Fail depends only on this overall pass mark, never on a single station. A group judged on fewer stations (see <em>Group stations</em>) is held to the same percentage of its own total.</p>
         </div>
         <div class="modal-footer"><button class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-danger" id="btnSavePass">Save pass marks</button></div>
     </div></div>
