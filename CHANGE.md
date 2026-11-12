@@ -10,6 +10,10 @@
 ### Changed (2026-11-11) — Candidates show green only when you marked them
 - In the examiner marking flow a candidate is green only when *that examiner* has marked them. The tile just says **Marked** (green) or **Pending** (plain) — no "1 of 8 stations" count, since an examiner stays at one station. A candidate marked only by other examiners is Pending for you, and the *Pending* / *Marked* filters follow the same rule. The station tiles already separated your own marks (green) from other examiners' (blue).
 
+### Added (2026-11-12) — Judge a candidate on fewer stations, and a pass mark for a smaller total
+- **MCS Results ▸ Candidate stations** (or the sliders button on a row): for candidates who were not examined at every station. Tick them and choose *the stations each was marked at*, a list of stations, or *back to their group's stations*. A candidate's own setting overrides the group's. Saved marks are never changed.
+- **Pass marks** now also lists the smaller totals in use (for seven stations of 20, a total of **140**): type a pass mark for that total, or leave it empty to hold those candidates to the same percentage as everyone else. Needs the API migrations `2026_11_12_150000_create_exam_candidate_stations_table` and `2026_11_12_160000_add_max_pass_marks_to_exam_pass_marks`.
+
 ### Added (2026-11-12) — Judge a group on all stations or fewer
 - **MCS Results ▸ Group stations**: for a group where examiners were missing at some stations, untick those stations for the group and press *Save* (*All* ticks every station again). The group's candidates are then complete once marked at the ticked stations, their total and percentage are out of those stations only (shown as e.g. `36 / 60`, with a *3 stn* tag beside the group and the other stations faded), and Pass / Fail uses the same pass percentage as every other group. The averages and charts compare groups on the same footing. Saved marks are never changed and the default is still all stations. Needs the API migration `2026_11_12_130000_create_exam_group_stations_table`.
 

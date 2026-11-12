@@ -877,7 +877,7 @@ class ExamsController extends Controller
             'rows'             => $j['rows'] ?? [],
             'stations'         => $j['stations'] ?? [],
             'groups'           => $j['groups'] ?? [],
-            'passMarks'        => $j['pass_marks'] ?? ['total' => null, 'station' => null, 'max_total' => 160],
+            'passMarks'        => $j['pass_marks'] ?? ['total' => null, 'station' => null, 'max_total' => 160, 'by_max' => []],
             'analysis'         => $j['analysis'] ?? [],
         ]);
     }
@@ -885,7 +885,7 @@ class ExamsController extends Controller
     // POST admin/exams/exam_results/pass-marks — the pass mark (and optional station minimum) of the year; JSON.
     public function saveMcsPassMarks(Request $request)
     {
-        $response = $this->api->post('exam-results/mcs/pass-marks', $request->only(['year_id', 'total_pass_mark', 'station_pass_mark']));
+        $response = $this->api->post('exam-results/mcs/pass-marks', $request->only(['year_id', 'total_pass_mark', 'station_pass_mark', 'max_pass_marks']));
 
         return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
     }
@@ -916,6 +916,13 @@ class ExamsController extends Controller
     public function setMcsGroupStations(Request $request)
     {
         $response = $this->api->post('exam-results/mcs/group-stations', $request->only(['year_id', 'group_id', 'stations']));
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
+    }
+
+    public function setMcsCandidateStations(Request $request)
+    {
+        $response = $this->api->post('exam-results/mcs/candidate-stations', $request->only(['year_id', 'candidate_ids', 'mode', 'stations']));
 
         return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
     }

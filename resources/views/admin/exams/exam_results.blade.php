@@ -38,6 +38,7 @@
                             <button class="btn btn-sm btn-outline-secondary" id="btnGroupStations" title="Choose the stations each group's results are based on"><i class="fas fa-layer-group mr-1"></i> Group stations</button>
                             <button class="btn btn-sm btn-outline-secondary" id="btnCsv"><i class="fas fa-file-csv mr-1"></i> Download CSV</button>
                             <button class="btn btn-sm btn-outline-secondary" id="btnPrint"><i class="fas fa-print mr-1"></i> Print report</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="btnCandStations" title="Judge the ticked candidates on the stations they sat"><i class="fas fa-sliders-h mr-1"></i> Candidate stations</button>
                             <button class="btn btn-sm btn-outline-secondary" id="btnAbsent" title="Mark the ticked candidates absent"><i class="fas fa-user-slash mr-1"></i> Mark absent</button>
                             <button class="btn btn-sm btn-outline-danger" id="btnClear"><i class="fas fa-eraser mr-1"></i> Clear marks</button>
                         </div>
@@ -187,6 +188,23 @@
 </div>
 
 {{-- Pass marks --}}
+{{-- Candidate stations --}}
+<div class="modal fade" id="csModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Candidate stations — MCS {{ $selectedYearName }}</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
+        <div class="modal-body">
+            <p class="small text-muted">For candidates who were not examined at every station (for example only seven). They are judged on the stations chosen here instead of their group's, and Pass / Fail uses the same pass percentage as everyone else. Saved marks are never changed.</p>
+            <div class="small mb-2"><strong id="csCount"></strong> <span class="text-muted">selected</span></div>
+            <div id="csList" class="small mb-3" style="max-height:140px;overflow:auto;"></div>
+            <div class="custom-control custom-radio"><input type="radio" id="csMarked" name="csMode" value="marked" class="custom-control-input" checked><label for="csMarked" class="custom-control-label">The stations each candidate was <strong>marked at</strong></label></div>
+            <div class="custom-control custom-radio mt-1"><input type="radio" id="csSet" name="csMode" value="set" class="custom-control-input"><label for="csSet" class="custom-control-label">These stations for all of them:</label></div>
+            <div id="csPick" class="ml-4 mt-1">@foreach($stations as $s)<label class="mr-2 mb-0 small"><input type="checkbox" class="cs-st" value="{{ $s['number'] }}" checked> S{{ $s['number'] }}</label>@endforeach</div>
+            <div class="custom-control custom-radio mt-2"><input type="radio" id="csClear" name="csMode" value="clear" class="custom-control-input"><label for="csClear" class="custom-control-label">Back to their <strong>group's</strong> stations</label></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-danger" id="btnApplyCs">Apply</button></div>
+    </div></div>
+</div>
+
 {{-- Group stations --}}
 <div class="modal fade" id="gsModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
@@ -209,6 +227,11 @@
                 <small class="text-muted" id="pmPct"></small>
             </div>
             
+            <div class="form-group mb-1" id="pmByMaxWrap" style="display:none;">
+                <label class="mb-1">Pass mark for a smaller total <span class="text-muted">(optional)</span></label>
+                <small class="text-muted d-block mb-2">For candidates judged on fewer stations (see <em>Group stations</em> and <em>Candidate stations</em>). Leave a box empty to hold them to the same percentage as everyone else.</small>
+                <div id="pmByMax"></div>
+            </div>
             <p class="text-muted small mb-0 mt-3">Pass or Fail depends only on this overall pass mark, never on a single station. A group judged on fewer stations (see <em>Group stations</em>) is held to the same percentage of its own total. Candidates who have not been marked at every station show as <em>Incomplete</em>; a candidate who did not sit the exam can be marked <em>Absent</em> (the user-slash button on their row, or tick several and use <em>Mark absent</em>) and is then left out of the averages and the pass rate. Leave the pass mark empty to show no Pass or Fail. It applies to {{ $selectedYearName }} only and can be changed any time.</p>
         </div>
         <div class="modal-footer"><button class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-danger" id="btnSavePass">Save pass marks</button></div>
@@ -282,7 +305,7 @@ $(function () {
                 [{ data: null, orderable: false, className: 'rs-noprint', render: function (d, t, r) { return '<input type="checkbox" class="rs-pick" value="' + r.cnd_id + '">'; } },
                  { data: 'number', render: function (d, t, r) { return esc(d || r.pen || '—'); } },
                  { data: 'name', render: function (d, t) { return esc(d); } },
-                 { data: 'group', defaultContent: '', render: function (d, t, r) { return esc(d || '') + (t === 'display' && r.required_stations ? ' <span class="badge badge-light border" title="Judged on stations ' + r.required_stations.join(', ') + ' only">' + r.required_stations.length + ' stn</span>' : ''); } },
+                 { data: 'group', defaultContent: '', render: function (d, t, r) { return esc(d || '') + (t === 'display' && r.required_stations ? ' <span class="badge badge-light border" title="Judged on stations ' + r.required_stations.join(', ') + ' only (' + (r.stations_scope === 'candidate' ? 'set for this candidate' : 'set for the group') + ')">' + r.required_stations.length + ' stn</span>' : ''); } },
                  { data: 'session', defaultContent: '', render: function (d) { return esc(d || ''); } }],
                 STATIONS.map(function (s, i) {
                     return { data: null, className: 'text-right', orderable: true, render: function (d, type, r) {
@@ -296,7 +319,7 @@ $(function () {
                 [{ data: 'total', className: 'text-right', render: function (d, t, r) { return t === 'display' ? '<strong>' + d + '</strong>' + (r.required_stations ? ' <small class="text-muted">/ ' + r.max + '</small>' : '') : d; } },
                  { data: 'percent', className: 'text-right', render: function (d, t) { return t === 'display' ? (d == null ? '' : d + '%') : d; } },
                  { data: 'result', defaultContent: '', render: function (d, t) { return t === 'display' ? (d ? '<span class="rs-res ' + d + '">' + d + '</span>' : '<span class="text-muted">—</span>') : (d || ''); } },
-                 { data: null, orderable: false, className: 'rs-noprint text-right', render: function (d, t, r) { return '<button class="btn btn-xs btn-light border rs-absent-one" data-id="' + r.cnd_id + '" data-absent="' + (r.absent ? 1 : 0) + '" title="' + (r.absent ? 'Absent: click to undo' : 'Mark absent') + '"><i class="fas fa-user-slash ' + (r.absent ? 'text-dark' : 'text-secondary') + '"></i></button> <button class="btn btn-xs btn-light border rs-clear-one" data-id="' + r.cnd_id + '" title="Clear this candidate\'s marks"><i class="fas fa-eraser text-danger"></i></button>'; } }]
+                 { data: null, orderable: false, className: 'rs-noprint text-right', render: function (d, t, r) { return '<button class="btn btn-xs btn-light border rs-stations-one" data-id="' + r.cnd_id + '" title="Choose the stations this candidate is judged on"><i class="fas fa-sliders-h text-secondary"></i></button> <button class="btn btn-xs btn-light border rs-absent-one" data-id="' + r.cnd_id + '" data-absent="' + (r.absent ? 1 : 0) + '" title="' + (r.absent ? 'Absent: click to undo' : 'Mark absent') + '"><i class="fas fa-user-slash ' + (r.absent ? 'text-dark' : 'text-secondary') + '"></i></button> <button class="btn btn-xs btn-light border rs-clear-one" data-id="' + r.cnd_id + '" title="Clear this candidate\'s marks"><i class="fas fa-eraser text-danger"></i></button>'; } }]
             )
         });
         $.fn.dataTable.ext.search.push(function (settings, data, i) {
@@ -373,11 +396,31 @@ $(function () {
     window.addEventListener('beforeprint', function () { $('#rsReport').addClass('show'); buildCharts(); });
 
     // ───── Pass marks ─────
-    $('#btnPassMarks').on('click', function () { $('#passModal').modal('show'); updPct(); });
+    // The totals a candidate can be judged on besides the full exam: every seven-station total, the totals in use, and any already set
+    function smallerTotals() {
+        var seen = {}, out = [];
+        function add(v) { v = Math.round(v * 100) / 100; if (v > 0 && v < MAX && !seen[v]) { seen[v] = 1; out.push(v); } }
+        STATIONS.forEach(function (s) { add(MAX - s.max); });
+        ROWS.forEach(function (r) { if (r.required_stations) add(r.max); });
+        Object.keys(PASS.by_max || {}).forEach(function (k) { add(parseFloat(k)); });
+        return out.sort(function (a, b) { return b - a; });
+    }
+    function byMaxBoxes() {
+        var t = smallerTotals();
+        $('#pmByMaxWrap').toggle(t.length > 0);
+        $('#pmByMax').html(t.map(function (m) {
+            var set = PASS.by_max && PASS.by_max[String(m)], same = PASS.total !== null ? Math.round(PASS.total / MAX * m * 100) / 100 : null;
+            return '<div class="d-flex align-items-center mb-1"><span class="mr-2" style="width:150px;">Total of <strong>' + m + '</strong></span>' +
+                   '<input type="number" class="form-control form-control-sm pm-max" data-max="' + m + '" min="0" max="' + m + '" step="any" style="width:110px;" value="' + (set != null ? set : '') + '" placeholder="' + (same != null ? same : '') + '">' +
+                   '<span class="small text-muted ml-2">marks' + (same != null ? ' (same percentage: ' + same + ')' : '') + '</span></div>';
+        }).join(''));
+    }
+    $('#btnPassMarks').on('click', function () { byMaxBoxes(); $('#passModal').modal('show'); updPct(); });
     function updPct() { var v = parseFloat($('#pmTotal').val()); $('#pmPct').text(isNaN(v) ? 'Nothing set: no Pass / Fail is shown.' : (v / MAX * 100).toFixed(1) + '% of ' + MAX + ' marks'); }
     $('#pmTotal').on('input', updPct);
     $('#btnSavePass').on('click', function () {
-        post('/pass-marks', { year_id: YEAR_ID, total_pass_mark: $('#pmTotal').val() })
+        var byMax = {}; $('.pm-max').each(function () { byMax[$(this).data('max')] = $(this).val(); });
+        post('/pass-marks', { year_id: YEAR_ID, total_pass_mark: $('#pmTotal').val(), max_pass_marks: byMax })
             .done(function (r) { sessionStorage.setItem('rsMsg', r.message); location.reload(); }).fail(fail);
     });
     var m = sessionStorage.getItem('rsMsg'); if (m) { say(m); sessionStorage.removeItem('rsMsg'); }
@@ -415,6 +458,28 @@ $(function () {
         $('#clPreview').hide(); $('#clConfirm').val(''); $('#clConfirmWrap').hide(); $('#btnDoClear').prop('disabled', true);
         $('#clearModal').modal('show'); if (n > 0) preview();
     }
+    // ───── Candidate stations ─────
+    var csIds = [];
+    function csOpen(ids) {
+        csIds = ids; if (!ids.length) return say('Tick the candidates first.', false);
+        var rows = ids.map(function (id) { return ROWS.filter(function (r) { return r.cnd_id == id; })[0]; }).filter(Boolean);
+        $('#csCount').text(rows.length);
+        $('#csList').html(rows.slice(0, 60).map(function (r) {
+            var marked = STATIONS.filter(function (s, i) { return r.stations[i]; }).map(function (s) { return s.number; });
+            return '<div><strong>' + esc(r.number || '') + '</strong> ' + esc(r.name || '') + ' <span class="text-muted">— marked at ' + (marked.length ? marked.join(', ') : 'no station') + (r.required_stations ? ' · now judged on ' + r.required_stations.join(', ') : '') + '</span></div>';
+        }).join('') + (rows.length > 60 ? '<div class="text-muted">…and ' + (rows.length - 60) + ' more</div>' : ''));
+        $('#csMarked').prop('checked', true); $('.cs-st').prop('checked', true);
+        $('#csModal').modal('show');
+    }
+    $('#mcsresultstable').on('click', '.rs-stations-one', function () { csOpen([$(this).data('id')]); });
+    $('#btnCandStations').on('click', function () { csOpen($('#mcsresultstable .rs-pick:checked').map(function () { return this.value; }).get()); });
+    $('#csPick').on('change', '.cs-st', function () { $('#csSet').prop('checked', true); });
+    $('#btnApplyCs').on('click', function () {
+        var mode = $('input[name=csMode]:checked').val(), data = { year_id: YEAR_ID, candidate_ids: csIds, mode: mode };
+        if (mode === 'set') { data.stations = $('.cs-st:checked').map(function () { return parseInt(this.value, 10); }).get(); if (!data.stations.length) return say('Tick at least one station.', false); }
+        post('/candidate-stations', data).done(function (r) { sessionStorage.setItem('rsMsg', r.message); location.reload(); }).fail(function (x) { $('#csModal').modal('hide'); fail(x); });
+    });
+
     // ───── Group stations ─────
     function gsRows() {
         var all = STATIONS.map(function (s) { return s.number; });
