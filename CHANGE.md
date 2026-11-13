@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added (2026-11-13) — MCS Results report: data labels, best / weakest hospitals, click to filter, candidate drawer
+- The charts print their values on the bars and doughnut slices.
+- New "Best performing hospitals" and "Hospitals needing support" sections (average percent, candidates, passed). Clicking a hospital, a country or a group in the report shows just those candidates in the Candidates table (new Country and Hospital filters, also remembered when you come back from a station).
+- Clicking a candidate's name in the table opens the candidate information drawer (full page link inside it). Hospital added to the CSV.
+
 ### Changed (2026-11-13) — MCS Results: Pass / Fail on the average percent
 - The Pass marks window now takes a percentage (e.g. 62.14). A candidate passes when their average percent over the stations marked so far reaches it. Candidates missing a station are judged on the stations they have (shown with "so far") and are re-evaluated when another mark is added. The smaller-total pass mark boxes are removed.
 

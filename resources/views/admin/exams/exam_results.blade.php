@@ -105,6 +105,41 @@
                     <div class="col-lg-6 mb-3"><div class="card h-100 mb-0"><div class="card-header py-2"><h3 class="card-title" style="font-size:1rem;">Average total by group</h3></div><div class="card-body"><canvas id="chGroups" height="200"></canvas></div></div></div>
                 </div>
 
+                {{-- ───────── Hospitals: who did well and who needs support ───────── --}}
+                @php
+                    $hosp = collect($a['by_hospital'] ?? []);
+                    $hn = $hosp->count();
+                    $best = $hosp->take(min(5, (int) ceil($hn / 2)))->values();
+                    $worst = $hosp->slice($hn - min(5, intdiv($hn, 2)))->reverse()->values();
+                @endphp
+                <div class="row">
+                    @foreach([['Best performing hospitals', 'Highest average percent', $best, '#2e9e5b'], ['Hospitals needing support', 'Lowest average percent', $worst, '#dc3545']] as [$hTitle, $hSub, $hList, $hColor])
+                        <div class="col-lg-6 mb-3"><div class="card h-100 mb-0">
+                            <div class="card-header py-2"><h3 class="card-title" style="font-size:1rem;">{{ $hTitle }} <small class="text-muted">({{ strtolower($hSub) }}; click one to see its candidates)</small></h3></div>
+                            <div class="card-body p-0">
+                                @if($hList->isEmpty())
+                                    <div class="p-3 text-muted small">Not enough hospitals with marked candidates to compare yet.</div>
+                                @else
+                                <table class="table table-sm mb-0" style="font-size:.85rem;">
+                                    <thead><tr><th style="width:26px;">#</th><th>Hospital</th><th class="text-right">Candidates</th><th style="width:34%;">Average</th>@if($passTotal !== null)<th class="text-right">Passed</th>@endif</tr></thead>
+                                    <tbody>
+                                    @foreach($hList as $i => $h)
+                                        <tr class="rs-go" data-kind="hospital" data-value="{{ $h['id'] }}" title="Show the candidates from {{ $h['label'] }}">
+                                            <td>{{ $hTitle === 'Best performing hospitals' ? $i + 1 : $hn - $i }}</td>
+                                            <td><strong>{{ $h['label'] }}</strong>@if(!empty($h['country']))<div class="text-muted" style="font-size:.75rem;">{{ $h['country'] }}</div>@endif</td>
+                                            <td class="text-right">{{ $h['candidates'] }}</td>
+                                            <td><div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;background:#eef0f3;border-radius:4px;height:10px;"><div style="width:{{ min(100, max(0, $h['mean_percent'])) }}%;background:{{ $hColor }};height:10px;border-radius:4px;"></div></div><strong>{{ $h['mean_percent'] }}%</strong></div></td>
+                                            @if($passTotal !== null)<td class="text-right">{{ $h['passed'] }}/{{ $h['passed'] + $h['failed'] }}</td>@endif
+                                        </tr>
+                                    @endforeach
+                                    </tbody>
+                                </table>
+                                @endif
+                            </div>
+                        </div></div>
+                    @endforeach
+                </div>
+
                 {{-- ───────── Tables for the report ───────── --}}
                 <div class="row">
                     <div class="col-lg-7 mb-3">
@@ -132,7 +167,8 @@
                                     @foreach(['by_session' => 'Session', 'by_group' => 'Group', 'by_country' => 'Country'] as $key => $title)
                                         <tr class="table-active"><td colspan="{{ $passTotal !== null ? 4 : 3 }}"><strong>{{ $title }}</strong></td></tr>
                                         @foreach(($a[$key] ?? []) as $g)
-                                            <tr><td>{{ $g['label'] }}</td><td class="text-right">{{ $g['candidates'] }}</td><td class="text-right">{{ $g['mean'] ?? '—' }}</td>@if($passTotal !== null)<td class="text-right">{{ $g['passed'] }}</td>@endif</tr>
+                                            @php $goKind = ['by_group' => 'group', 'by_country' => 'country'][$key] ?? null; @endphp
+                                            <tr @if($goKind && $g['label'] !== '—') class="rs-go" data-kind="{{ $goKind }}" data-value="{{ $g['label'] }}" title="Show these candidates" @endif><td>{{ $g['label'] }}</td><td class="text-right">{{ $g['candidates'] }}</td><td class="text-right">{{ $g['mean'] ?? '—' }}</td>@if($passTotal !== null)<td class="text-right">{{ $g['passed'] }}</td>@endif</tr>
                                         @endforeach
                                     @endforeach
                                     </tbody>
@@ -146,7 +182,7 @@
                 </div>
 
                 {{-- ───────── Results table ───────── --}}
-                <div class="card">
+                <div class="card" id="rsCandidates">
                     <div class="card-header d-flex align-items-center flex-wrap" style="gap:.5rem;">
                         <h3 class="card-title mb-0">Candidates</h3>
                         <small class="text-muted">A station marked more than once counts once, at the average (shown with *).</small>
@@ -161,6 +197,14 @@
                             <select id="rsGroup" class="form-control form-control-sm" style="width:auto;">
                                 <option value="">All groups</option>
                                 @foreach(collect($rows)->pluck('group')->filter()->unique()->sort(SORT_NATURAL|SORT_FLAG_CASE) as $g)<option>{{ $g }}</option>@endforeach
+                            </select>
+                            <select id="rsCountry" class="form-control form-control-sm" style="width:auto;max-width:180px;">
+                                <option value="">All countries</option>
+                                @foreach(collect($rows)->pluck('country')->filter()->unique()->sort(SORT_NATURAL|SORT_FLAG_CASE) as $c)<option>{{ $c }}</option>@endforeach
+                            </select>
+                            <select id="rsHospital" class="form-control form-control-sm" style="width:auto;max-width:240px;">
+                                <option value="">All hospitals</option>
+                                @foreach(collect($rows)->filter(fn ($r) => !empty($r['hospital_id']))->unique('hospital_id')->sortBy('hospital', SORT_NATURAL|SORT_FLAG_CASE) as $r)<option value="{{ $r['hospital_id'] }}">{{ $r['hospital'] }}</option>@endforeach
                             </select>
                             <button id="mcsClearScore" class="btn btn-sm btn-outline-secondary"><i class="fas fa-times mr-1"></i>Reset</button>
                             <small class="text-muted ml-2" id="mcsFilteredCount"></small>
@@ -260,6 +304,9 @@
     .rs-chev { transition: transform .2s; }
     #rsReportToggle[aria-expanded="true"] .rs-chev { transform: rotate(180deg); }
     #mcsresultstable td, #mcsresultstable th { white-space: nowrap; }
+    tr.rs-go { cursor: pointer; } tr.rs-go:hover td { background: #fdf3f3; }
+    #rsCandidates.rs-flash { animation: rsflash 1.2s ease; } @keyframes rsflash { 0% { box-shadow: 0 0 0 3px #FEC503; } 100% { box-shadow: 0 0 0 0 transparent; } }
+    .rs-name { color: inherit; font-weight: 600; } .rs-name:hover { color: #a02626; text-decoration: underline; }
     .rs-res { font-weight: 700; padding: .1rem .5rem; border-radius: 999px; font-size: .78rem; }
     .rs-res.Pass { background: #dcfce7; color: #166534; } .rs-res.Fail { background: #fee2e2; color: #991b1b; } .rs-res.Incomplete { background: #fef3c7; color: #92400e; } .rs-res.Absent { background: #e5e7eb; color: #374151; }
     .rs-low { background: rgba(220,53,69,.14); }
@@ -280,7 +327,7 @@
 $(function () {
     var ROWS = @json($rows), STATIONS = @json($stations), GROUPS = @json($groups), A = @json($analysis), PASS = @json($passMarks);
     var YEAR_ID = @json($selectedYearId), YEAR = @json($selectedYearName), MAX = PASS.max_total || 160;
-    var base = @json(url('admin/exams/exam_results')), stationUrl = @json(url('admin/exams/station_results'));
+    var base = @json(url('admin/exams/exam_results')), stationUrl = @json(url('admin/exams/station_results')), candUrl = @json(url('admin/associates/candidates/view'));
     var csrf = $('meta[name="csrf-token"]').attr('content') || @json(csrf_token());
     function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
     function say(msg, ok) {
@@ -300,7 +347,7 @@ $(function () {
             columns: [].concat(
                 [{ data: null, orderable: false, className: 'rs-noprint', render: function (d, t, r) { return '<input type="checkbox" class="rs-pick" value="' + r.cnd_id + '">'; } },
                  { data: 'number', render: function (d, t, r) { return esc(d || r.pen || '—'); } },
-                 { data: 'name', render: function (d, t) { return esc(d); } },
+                 { data: 'name', render: function (d, t, r) { return t === 'display' ? '<a class="rs-name" href="' + candUrl + '/' + r.cnd_id + '" title="Show the candidate\'s information">' + esc(d) + '</a>' : d; } },
                  { data: 'group', defaultContent: '', render: function (d, t, r) { return esc(d || '') + (t === 'display' && r.required_stations ? ' <span class="badge badge-light border" title="Judged on stations ' + r.required_stations.join(', ') + ' only (' + (r.stations_scope === 'candidate' ? 'set for this candidate' : 'set for the group') + ')">' + r.required_stations.length + ' stn</span>' : ''); } },
                  { data: 'session', defaultContent: '', render: function (d) { return esc(d || ''); } }],
                 STATIONS.map(function (s, i) {
@@ -321,15 +368,26 @@ $(function () {
         $.fn.dataTable.ext.search.push(function (settings, data, i) {
             if (settings.nTable.id !== 'mcsresultstable') return true;
             var r = ROWS[i] || dt.row(i).data(); if (!r) return true;
-            var min = parseFloat($('#mcsMinScore').val()), res = $('#rsResult').val(), grp = $('#rsGroup').val();
+            var min = parseFloat($('#mcsMinScore').val()), res = $('#rsResult').val(), grp = $('#rsGroup').val(), cty = $('#rsCountry').val(), hosp = $('#rsHospital').val();
             if (!isNaN(min) && !(r.total >= min)) return false;
             if (res && (r.result || '') !== res) return false;
             if (grp && (r.group || '') !== grp) return false;
+            if (cty && (r.country || '') !== cty) return false;
+            if (hosp && String(r.hospital_id || '') !== hosp) return false;
             return true;
         });
         var redraw = function () { dt.draw(); var info = dt.page.info(); $('#mcsFilteredCount').text(info.recordsDisplay < info.recordsTotal ? 'Showing ' + info.recordsDisplay + ' of ' + info.recordsTotal : ''); };
-        $('#mcsMinScore').on('input', redraw); $('#rsResult, #rsGroup').on('change', redraw);
-        $('#mcsClearScore').on('click', function () { $('#mcsMinScore').val(''); $('#rsResult, #rsGroup').val(''); redraw(); });
+        $('#mcsMinScore').on('input', redraw); $('#rsResult, #rsGroup, #rsCountry, #rsHospital').on('change', redraw);
+        $('#mcsClearScore').on('click', function () { $('#mcsMinScore').val(''); $('#rsResult, #rsGroup, #rsCountry, #rsHospital').val(''); redraw(); });
+        // Clicking a country, group or hospital in the report shows just those candidates in the table below
+        $(document).on('click', 'tr.rs-go', function () {
+            var kind = $(this).data('kind'), val = String($(this).data('value'));
+            $('#rsResult, #rsGroup, #rsCountry, #rsHospital').val(''); $('#mcsMinScore').val(''); dt.search('');
+            $({ group: '#rsGroup', country: '#rsCountry', hospital: '#rsHospital' }[kind]).val(val);
+            redraw();
+            var card = $('#rsCandidates'); card.removeClass('rs-flash'); void card[0].offsetWidth; card.addClass('rs-flash');
+            $('html, body').animate({ scrollTop: card.offset().top - 70 }, 300);
+        });
         $('#rsAll').on('change', function () { $('#mcsresultstable .rs-pick').prop('checked', this.checked); });
 
         // ───── Come back to exactly where you were ─────
@@ -341,7 +399,7 @@ $(function () {
             try {
                 sessionStorage.setItem(VIEW_KEY, JSON.stringify({
                     page: dt.page(), len: dt.page.len(), order: dt.order(), search: dt.search(),
-                    min: $('#mcsMinScore').val(), res: $('#rsResult').val(), grp: $('#rsGroup').val(),
+                    min: $('#mcsMinScore').val(), res: $('#rsResult').val(), grp: $('#rsGroup').val(), cty: $('#rsCountry').val(), hosp: $('#rsHospital').val(),
                     report: $('#rsReport').hasClass('show'), y: window.scrollY
                 }));
             } catch (e) {}
@@ -353,7 +411,7 @@ $(function () {
             var fromStation = /\/admin\/exams\/station_results\//.test(document.referrer || '');
             var v = (nav === 'back_forward' || fromStation) ? JSON.parse(sessionStorage.getItem(VIEW_KEY) || 'null') : null;
             if (v) {
-                $('#mcsMinScore').val(v.min || ''); $('#rsResult').val(v.res || ''); $('#rsGroup').val(v.grp || '');
+                $('#mcsMinScore').val(v.min || ''); $('#rsResult').val(v.res || ''); $('#rsGroup').val(v.grp || ''); $('#rsCountry').val(v.cty || ''); $('#rsHospital').val(v.hosp || '');
                 if (v.len) dt.page.len(v.len);
                 if (v.order) dt.order(v.order);
                 dt.search(v.search || '').draw(false);
@@ -368,24 +426,41 @@ $(function () {
 
     // ───── Charts (built when the report is first opened, as a hidden canvas has no size) ─────
     var chartsBuilt = false;
+    // Writes each value on its bar (in the middle, or just above a short one) and on each slice of the doughnut
+    var rsLabels = { id: 'rsLabels', afterDatasetsDraw: function (chart) {
+        var ctx = chart.ctx; ctx.save(); ctx.font = '600 12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        chart.data.datasets.forEach(function (ds, di) {
+            var meta = chart.getDatasetMeta(di); if (ds.rsNoLabel || meta.hidden) return;
+            meta.data.forEach(function (el, i) {
+                var v = ds.data[i]; if (v == null || !(v > 0)) return;
+                var txt = String(Math.round(v * 10) / 10), x, y, light = true;
+                if (meta.type === 'doughnut') { var p = el.tooltipPosition(); x = p.x; y = p.y; }
+                else { var h = Math.abs(el.base - el.y); x = el.x; if (h >= 20) { y = (el.y + el.base) / 2; } else { y = el.y - 10; light = false; } }
+                ctx.fillStyle = light ? '#fff' : (Chart.defaults.color || '#333');
+                if (light) { ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 2; } else { ctx.shadowBlur = 0; }
+                ctx.fillText(txt, x, y);
+            });
+        });
+        ctx.restore();
+    } };
     function buildCharts() {
         if (chartsBuilt || !window.Chart || !ROWS.length) return;
         chartsBuilt = true;
         var maroon = '#a02626', gold = '#FEC503', green = '#2e9e5b', red = '#dc3545', grey = '#9aa3ad';
         var passPct = PASS.total !== null ? PASS.total : null;
-        new Chart(document.getElementById('chBands'), { type: 'bar',
+        new Chart(document.getElementById('chBands'), { type: 'bar', plugins: [rsLabels],
             data: { labels: A.bands.map(function (b) { return b.label; }), datasets: [{ label: 'Candidates', data: A.bands.map(function (b) { return b.count; }),
                 backgroundColor: A.bands.map(function (b, i) { return passPct === null ? maroon : (i * 10 >= passPct ? green : red); }) }] },
             options: { plugins: { legend: { display: false }, tooltip: { callbacks: { footer: function () { return passPct !== null ? 'Pass mark ' + passPct.toFixed(0) + '%' : ''; } } } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
         var rs = [A.passed || 0, A.failed || 0, A.pass_set ? 0 : ((A.candidates || 0) - (A.incomplete || 0)), A.incomplete || 0];
         var labels = ['Pass', 'Fail', 'No pass mark set', 'Incomplete'], colors = [green, red, grey, gold];
-        new Chart(document.getElementById('chResult'), { type: 'doughnut', data: { labels: labels, datasets: [{ data: rs, backgroundColor: colors }] }, options: { plugins: { legend: { position: 'bottom' } } } });
-        new Chart(document.getElementById('chStations'), { data: { labels: A.stations.map(function (s) { return 'S' + s.number; }), datasets: [
+        new Chart(document.getElementById('chResult'), { type: 'doughnut', plugins: [rsLabels], data: { labels: labels, datasets: [{ data: rs, backgroundColor: colors }] }, options: { plugins: { legend: { position: 'bottom' } } } });
+        new Chart(document.getElementById('chStations'), { plugins: [rsLabels], data: { labels: A.stations.map(function (s) { return 'S' + s.number; }), datasets: [
             { type: 'bar', label: 'Average', data: A.stations.map(function (s) { return s.mean; }), backgroundColor: maroon },
-            { type: 'line', label: 'Maximum', data: A.stations.map(function (s) { return s.max; }), borderColor: gold, backgroundColor: gold, pointRadius: 3 }] },
+            { type: 'line', rsNoLabel: true, label: 'Maximum', data: A.stations.map(function (s) { return s.max; }), borderColor: gold, backgroundColor: gold, pointRadius: 3 }] },
             options: { scales: { y: { beginAtZero: true } }, plugins: { legend: { position: 'bottom' } } } });
         var g = A.by_group.filter(function (x) { return x.mean !== null; });
-        new Chart(document.getElementById('chGroups'), { type: 'bar', data: { labels: g.map(function (x) { return x.label; }), datasets: [{ label: 'Average total', data: g.map(function (x) { return x.mean; }), backgroundColor: maroon }] },
+        new Chart(document.getElementById('chGroups'), { type: 'bar', plugins: [rsLabels], data: { labels: g.map(function (x) { return x.label; }), datasets: [{ label: 'Average total', data: g.map(function (x) { return x.mean; }), backgroundColor: maroon }] },
             options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, suggestedMax: MAX } } } });
     }
     $('#rsReport').on('shown.bs.collapse', buildCharts);
@@ -403,9 +478,9 @@ $(function () {
 
     // ───── CSV ─────
     $('#btnCsv').on('click', function () {
-        var head = ['Candidate ID', 'PEN', 'Name', 'Group', 'Session', 'Country'].concat(STATIONS.map(function (s) { return s.name; }), ['Stations marked', 'Total', 'Max', 'Percent', 'Result']);
+        var head = ['Candidate ID', 'PEN', 'Name', 'Group', 'Session', 'Country', 'Hospital'].concat(STATIONS.map(function (s) { return s.name; }), ['Stations marked', 'Total', 'Max', 'Percent', 'Result']);
         var lines = [head].concat(ROWS.map(function (r) {
-            return [r.number, r.pen, r.name, r.group, r.session, r.country].concat(STATIONS.map(function (s, i) { return r.stations[i] ? r.stations[i].mark : ''; }), [r.stations_marked, r.total, r.max, r.percent, r.result || '']);
+            return [r.number, r.pen, r.name, r.group, r.session, r.country, r.hospital].concat(STATIONS.map(function (s, i) { return r.stations[i] ? r.stations[i].mark : ''; }), [r.stations_marked, r.total, r.max, r.percent, r.result || '']);
         }));
         var csv = lines.map(function (l) { return l.map(function (v) { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(','); }).join('\r\n');
         var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })); a.download = 'MCS-results-' + YEAR + '.csv'; document.body.appendChild(a); a.click(); a.remove();
