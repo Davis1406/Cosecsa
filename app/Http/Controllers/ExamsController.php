@@ -877,7 +877,7 @@ class ExamsController extends Controller
             'rows'             => $j['rows'] ?? [],
             'stations'         => $j['stations'] ?? [],
             'groups'           => $j['groups'] ?? [],
-            'passMarks'        => $j['pass_marks'] ?? ['total' => null, 'station' => null, 'max_total' => 160, 'by_max' => []],
+            'passMarks'        => $j['pass_marks'] ?? ['total' => null, 'station' => null, 'max_total' => 160],
             'analysis'         => $j['analysis'] ?? [],
         ]);
     }
@@ -885,7 +885,7 @@ class ExamsController extends Controller
     // POST admin/exams/exam_results/pass-marks — the pass mark (and optional station minimum) of the year; JSON.
     public function saveMcsPassMarks(Request $request)
     {
-        $response = $this->api->post('exam-results/mcs/pass-marks', $request->only(['year_id', 'total_pass_mark', 'station_pass_mark', 'max_pass_marks']));
+        $response = $this->api->post('exam-results/mcs/pass-marks', $request->only(['year_id', 'total_pass_mark']));
 
         return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
     }

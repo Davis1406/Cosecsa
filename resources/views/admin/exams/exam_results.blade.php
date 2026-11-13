@@ -6,7 +6,6 @@
     $max = $passMarks['max_total'] ?? 160;
     $passTotal = $passMarks['total'] ?? null;
     $passStation = $passMarks['station'] ?? null;
-    $passPct = ($passTotal !== null && $max) ? round($passTotal / $max * 100, 1) : null;
 @endphp
 
 <div class="wrapper">
@@ -50,7 +49,7 @@
                     <h2 style="margin:0;">COSECSA MCS Results — {{ $selectedYearName }}</h2>
                     <div>
                         @if($passTotal !== null)
-                            Pass mark: {{ $passTotal }} of {{ $max }} marks ({{ $passPct }}%)@if($passStation !== null), at least {{ $passStation }} at every station @endif
+                            Pass mark: {{ $passTotal }}% (average over the stations marked)
                         @else
                             No pass mark has been set.
                         @endif
@@ -221,18 +220,15 @@
     <div class="modal-dialog"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title">Pass marks — MCS {{ $selectedYearName }}</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
         <div class="modal-body">
-            <div class="form-group">
-                <label for="pmTotal">Pass mark (total marks out of {{ $max }})</label>
-                <input type="number" id="pmTotal" class="form-control" min="0" max="{{ $max }}" step="any" value="{{ $passTotal }}" placeholder="e.g. 96">
+            <div class="form-group mb-1">
+                <label for="pmTotal">Pass mark (average percent)</label>
+                <div class="input-group">
+                    <input type="number" id="pmTotal" class="form-control" min="0" max="100" step="any" value="{{ $passTotal }}" placeholder="e.g. 62.14">
+                    <div class="input-group-append"><span class="input-group-text">%</span></div>
+                </div>
                 <small class="text-muted" id="pmPct"></small>
             </div>
-            
-            <div class="form-group mb-1" id="pmByMaxWrap" style="display:none;">
-                <label class="mb-1">Pass mark for a smaller total <span class="text-muted">(optional)</span></label>
-                <small class="text-muted d-block mb-2">For candidates judged on fewer stations (see <em>Group stations</em> and <em>Candidate stations</em>). Leave a box empty to hold them to the same percentage as everyone else.</small>
-                <div id="pmByMax"></div>
-            </div>
-            <p class="text-muted small mb-0 mt-3">Pass or Fail depends only on this overall pass mark, never on a single station. A group judged on fewer stations (see <em>Group stations</em>) is held to the same percentage of its own total.</p>
+            <p class="text-muted small mb-0 mt-3">Pass or Fail looks at the candidate's average percent over the stations marked so far, never at a single station and not at the total. A candidate who is missing a station is judged on the stations they have; when another mark is added they are re-evaluated on the new average.</p>
         </div>
         <div class="modal-footer"><button class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-danger" id="btnSavePass">Save pass marks</button></div>
     </div></div>
@@ -318,7 +314,7 @@ $(function () {
                 }),
                 [{ data: 'total', className: 'text-right', render: function (d, t, r) { return t === 'display' ? '<strong>' + d + '</strong>' + (r.required_stations ? ' <small class="text-muted">/ ' + r.max + '</small>' : '') : d; } },
                  { data: 'percent', className: 'text-right', render: function (d, t) { return t === 'display' ? (d == null ? '' : d + '%') : d; } },
-                 { data: 'result', defaultContent: '', render: function (d, t) { return t === 'display' ? (d ? '<span class="rs-res ' + d + '">' + d + '</span>' : '<span class="text-muted">—</span>') : (d || ''); } },
+                 { data: 'result', defaultContent: '', render: function (d, t, r) { return t === 'display' ? (d ? '<span class="rs-res ' + d + '">' + d + '</span>' + ((d === 'Pass' || d === 'Fail') && !r.complete ? ' <small class="text-muted" title="Judged on the ' + r.stations_marked + ' station' + (r.stations_marked === 1 ? '' : 's') + ' marked so far; it is re-evaluated when another mark is added">so far</small>' : '') : '<span class="text-muted">—</span>') : (d || ''); } },
                  { data: null, orderable: false, className: 'rs-noprint text-right', render: function (d, t, r) { return '<button class="btn btn-xs btn-light border rs-stations-one" data-id="' + r.cnd_id + '" title="Choose the stations this candidate is judged on"><i class="fas fa-sliders-h text-secondary"></i></button> <button class="btn btn-xs btn-light border rs-absent-one" data-id="' + r.cnd_id + '" data-absent="' + (r.absent ? 1 : 0) + '" title="' + (r.absent ? 'Absent: click to undo' : 'Mark absent') + '"><i class="fas fa-user-slash ' + (r.absent ? 'text-dark' : 'text-secondary') + '"></i></button> <button class="btn btn-xs btn-light border rs-clear-one" data-id="' + r.cnd_id + '" title="Clear this candidate\'s marks"><i class="fas fa-eraser text-danger"></i></button>'; } }]
             )
         });
@@ -376,12 +372,12 @@ $(function () {
         if (chartsBuilt || !window.Chart || !ROWS.length) return;
         chartsBuilt = true;
         var maroon = '#a02626', gold = '#FEC503', green = '#2e9e5b', red = '#dc3545', grey = '#9aa3ad';
-        var passPct = PASS.total !== null ? PASS.total / MAX * 100 : null;
+        var passPct = PASS.total !== null ? PASS.total : null;
         new Chart(document.getElementById('chBands'), { type: 'bar',
             data: { labels: A.bands.map(function (b) { return b.label; }), datasets: [{ label: 'Candidates', data: A.bands.map(function (b) { return b.count; }),
                 backgroundColor: A.bands.map(function (b, i) { return passPct === null ? maroon : (i * 10 >= passPct ? green : red); }) }] },
             options: { plugins: { legend: { display: false }, tooltip: { callbacks: { footer: function () { return passPct !== null ? 'Pass mark ' + passPct.toFixed(0) + '%' : ''; } } } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
-        var rs = [A.passed || 0, A.failed || 0, A.pass_set ? 0 : (A.complete || 0), A.incomplete || 0];
+        var rs = [A.passed || 0, A.failed || 0, A.pass_set ? 0 : ((A.candidates || 0) - (A.incomplete || 0)), A.incomplete || 0];
         var labels = ['Pass', 'Fail', 'No pass mark set', 'Incomplete'], colors = [green, red, grey, gold];
         new Chart(document.getElementById('chResult'), { type: 'doughnut', data: { labels: labels, datasets: [{ data: rs, backgroundColor: colors }] }, options: { plugins: { legend: { position: 'bottom' } } } });
         new Chart(document.getElementById('chStations'), { data: { labels: A.stations.map(function (s) { return 'S' + s.number; }), datasets: [
@@ -396,31 +392,11 @@ $(function () {
     window.addEventListener('beforeprint', function () { $('#rsReport').addClass('show'); buildCharts(); });
 
     // ───── Pass marks ─────
-    // The totals a candidate can be judged on besides the full exam: every seven-station total, the totals in use, and any already set
-    function smallerTotals() {
-        var seen = {}, out = [];
-        function add(v) { v = Math.round(v * 100) / 100; if (v > 0 && v < MAX && !seen[v]) { seen[v] = 1; out.push(v); } }
-        STATIONS.forEach(function (s) { add(MAX - s.max); });
-        ROWS.forEach(function (r) { if (r.required_stations) add(r.max); });
-        Object.keys(PASS.by_max || {}).forEach(function (k) { add(parseFloat(k)); });
-        return out.sort(function (a, b) { return b - a; });
-    }
-    function byMaxBoxes() {
-        var t = smallerTotals();
-        $('#pmByMaxWrap').toggle(t.length > 0);
-        $('#pmByMax').html(t.map(function (m) {
-            var set = PASS.by_max && PASS.by_max[String(m)], same = PASS.total !== null ? Math.round(PASS.total / MAX * m * 100) / 100 : null;
-            return '<div class="d-flex align-items-center mb-1"><span class="mr-2" style="width:150px;">Total of <strong>' + m + '</strong></span>' +
-                   '<input type="number" class="form-control form-control-sm pm-max" data-max="' + m + '" min="0" max="' + m + '" step="any" style="width:110px;" value="' + (set != null ? set : '') + '" placeholder="' + (same != null ? same : '') + '">' +
-                   '<span class="small text-muted ml-2">marks' + (same != null ? ' (same percentage: ' + same + ')' : '') + '</span></div>';
-        }).join(''));
-    }
-    $('#btnPassMarks').on('click', function () { byMaxBoxes(); $('#passModal').modal('show'); updPct(); });
-    function updPct() { var v = parseFloat($('#pmTotal').val()); $('#pmPct').text(isNaN(v) ? 'Nothing set: no Pass / Fail is shown.' : (v / MAX * 100).toFixed(1) + '% of ' + MAX + ' marks'); }
+    $('#btnPassMarks').on('click', function () { $('#passModal').modal('show'); updPct(); });
+    function updPct() { var v = parseFloat($('#pmTotal').val()); $('#pmPct').text(isNaN(v) ? 'Nothing set: no Pass / Fail is shown.' : 'A candidate passes with an average of ' + v + '% or more (' + (v / 100 * 20).toFixed(2) + ' of 20 at each station).'); }
     $('#pmTotal').on('input', updPct);
     $('#btnSavePass').on('click', function () {
-        var byMax = {}; $('.pm-max').each(function () { byMax[$(this).data('max')] = $(this).val(); });
-        post('/pass-marks', { year_id: YEAR_ID, total_pass_mark: $('#pmTotal').val(), max_pass_marks: byMax })
+        post('/pass-marks', { year_id: YEAR_ID, total_pass_mark: $('#pmTotal').val() })
             .done(function (r) { sessionStorage.setItem('rsMsg', r.message); location.reload(); }).fail(fail);
     });
     var m = sessionStorage.getItem('rsMsg'); if (m) { say(m); sessionStorage.removeItem('rsMsg'); }
@@ -506,13 +482,13 @@ $(function () {
     }
     $('#mcsresultstable').on('click', '.rs-absent-one', function () {
         var id = $(this).data('id'), isAbs = String($(this).data('absent')) === '1', row = ROWS.filter(function (r) { return r.cnd_id == id; })[0] || {};
-        CosecsaAlert.confirm(isAbs ? 'Put ' + (row.number || '') + ' back? They will show as Incomplete or with their result again.' : 'Mark ' + (row.number || 'this candidate') + (row.name ? ' (' + row.name + ')' : '') + ' as absent? They will show as Absent instead of Incomplete and be left out of the averages and the pass rate. Saved marks are kept.', { variant: 'question', confirmText: isAbs ? 'Put back' : 'Mark absent' })
+        CosecsaAlert.confirm(isAbs ? 'Put ' + (row.number || '') + ' back? They will show with their result again.' : 'Mark ' + (row.number || 'this candidate') + (row.name ? ' (' + row.name + ')' : '') + ' as absent? They will show as Absent instead of a result and be left out of the averages and the pass rate. Saved marks are kept.', { variant: 'question', confirmText: isAbs ? 'Put back' : 'Mark absent' })
             .then(function (ok) { if (ok) setAbsent([id], !isAbs); });
     });
     $('#btnAbsent').on('click', function () {
         var ids = $('#mcsresultstable .rs-pick:checked').map(function () { return this.value; }).get();
         if (!ids.length) return say('Tick the candidates to mark absent first.', false);
-        CosecsaAlert.confirm('Mark ' + ids.length + ' candidate' + (ids.length === 1 ? '' : 's') + ' as absent? They will show as Absent instead of Incomplete and be left out of the averages and the pass rate. Saved marks are kept.', { variant: 'question', confirmText: 'Mark absent' })
+        CosecsaAlert.confirm('Mark ' + ids.length + ' candidate' + (ids.length === 1 ? '' : 's') + ' as absent? They will show as Absent instead of a result and be left out of the averages and the pass rate. Saved marks are kept.', { variant: 'question', confirmText: 'Mark absent' })
             .then(function (ok) { if (ok) setAbsent(ids, true); });
     });
     $('#btnClear').on('click', function () { openClear([]); });

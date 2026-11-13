@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-13) — MCS Results: Pass / Fail on the average percent
+- The Pass marks window now takes a percentage (e.g. 62.14). A candidate passes when their average percent over the stations marked so far reaches it. Candidates missing a station are judged on the stations they have (shown with "so far") and are re-evaluated when another mark is added. The smaller-total pass mark boxes are removed.
+
 ### Fixed (2026-11-11) — MCS Results remembers where you were
 - After opening a candidate's station and coming back (browser Back, the arrow, a swipe, or *Back to Results List*) the MCS Results page returns to the same page of the table, the same filters (minimum score, result, group), search, sort order, page size, analysis panel and scroll position. A fresh visit or a reload starts clean. *Back to Results List* on the station page now keeps the exam year.
 
