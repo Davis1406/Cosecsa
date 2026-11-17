@@ -201,6 +201,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::get('admin/letters/sent/{id}/download', [\App\Http\Controllers\LetterController::class, 'downloadSentPdf'])->name('admin.letters.sent.download');
     Route::get('admin/letters/create', [\App\Http\Controllers\LetterController::class, 'create'])->name('admin.letters.create');
     Route::post('admin/letters', [\App\Http\Controllers\LetterController::class, 'store'])->name('admin.letters.store');
+    Route::post('admin/letters/preview-html', [\App\Http\Controllers\LetterController::class, 'livePreview'])->name('admin.letters.live-preview');
     Route::get('admin/letters/{id}/edit', [\App\Http\Controllers\LetterController::class, 'edit'])->name('admin.letters.edit');
     Route::get('admin/letters/{id}/preview', [\App\Http\Controllers\LetterController::class, 'templatePreview'])->name('admin.letters.preview');
     Route::post('admin/letters/{id}/update', [\App\Http\Controllers\LetterController::class, 'update'])->name('admin.letters.update');

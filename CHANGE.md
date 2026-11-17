@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-11-17) — College letters: bold / styling in the letter body, live preview
+- Letter template editor (`/admin/letters/{id}/edit`, `/create`): the Letter Body is a rich-text editor (styles, bold, italic, underline, strikethrough, size, colour, lists, alignment, links), with a live preview of the letter on the college letterhead on the right (same idea as the examiner course editor). The merge fields are click-to-insert buttons. Existing plain-text letters open with their line breaks and render as before.
+- New route `POST admin/letters/preview-html` (`LetterController@livePreview`) feeding the preview from the API.
+
 ### Added (2026-11-13) — MCS Results report: data labels, best / weakest hospitals, click to filter, candidate drawer
 - The charts print their values on the bars and doughnut slices.
 - New "Best performing hospitals" and "Hospitals needing support" sections (average percent, candidates, passed). Clicking a hospital, a country or a group in the report shows just those candidates in the Candidates table (new Country and Hospital filters, also remembered when you come back from a station).

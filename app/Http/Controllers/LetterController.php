@@ -124,6 +124,14 @@ class LetterController extends Controller
         ]);
     }
 
+    /** Live preview for the template editor: the letter on the letterhead, from the body as typed (not yet saved). */
+    public function livePreview(Request $request)
+    {
+        $response = $this->api->post('letters/preview-html', ['pdf_body' => (string) $request->input('pdf_body', '')]);
+
+        return response()->json(['html' => $response->json('html') ?? ''], $response->successful() ? 200 : 422);
+    }
+
     public function templatePreview($id)
     {
         $response = $this->api->get("letters/{$id}/preview");

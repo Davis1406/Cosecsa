@@ -17,9 +17,11 @@
       <div class="container-fluid">
         @include('_message')
 
+        <div class="lt-split">
+        <div class="lt-left">
         <div class="card">
           <div class="card-body">
-            <form method="POST" action="{{ $template ? url('admin/letters/'.$template->id.'/update') : url('admin/letters') }}">
+            <form method="POST" id="letterForm" action="{{ $template ? url('admin/letters/'.$template->id.'/update') : url('admin/letters') }}">
               @csrf
               <div class="form-row">
                 <div class="form-group col-md-6">
@@ -53,15 +55,23 @@
               </div>
 
               <div class="alert alert-light border" style="font-size:.82rem;">
-                <strong>Available merge fields:</strong>
-                @verbatim
-                {{name}} {{first_name}} {{email}} {{country}} {{programme}} {{hospital}} {{entry_number}} {{exam_year}} {{admission_year}} {{sfs_username}} {{sfs_password}} {{date}}
-                @endverbatim
+                <strong>Merge fields</strong> <span class="text-muted">&mdash; click one to put it into the letter body at the cursor</span><br>
+                @foreach(['name','first_name','email','country','programme','hospital','entry_number','exam_year','admission_year','sfs_username','sfs_password','date'] as $mf)
+                  <button type="button" class="lt-chip" data-field="{{ $mf }}">&#123;&#123;{{ $mf }}&#125;&#125;</button>
+                @endforeach
               </div>
 
+              @php
+                // Letters saved before the editor are plain text (line breaks only): show them in the editor with
+                // the same line breaks. Anything already HTML is shown as it is.
+                $rawBody = old('pdf_body', $template->pdf_body ?? '');
+                $bodyForEditor = preg_match('/<\/?(p|br|b|strong|i|em|u|s|span|div|ul|ol|li|h[1-4]|a|table|hr|blockquote)\b[^>]*>/i', $rawBody)
+                    ? $rawBody
+                    : ($rawBody === '' ? '' : '<p>' . nl2br(e($rawBody)) . '</p>');
+              @endphp
               <div class="form-group">
-                <label>Letter Body (rendered on the letterhead PDF)</label>
-                <textarea name="pdf_body" class="form-control" rows="14" required>{{ old('pdf_body', $template->pdf_body ?? '') }}</textarea>
+                <label>Letter Body <span class="text-muted font-weight-normal">(rendered on the letterhead PDF &mdash; select text to make it bold, change size, colour or alignment)</span></label>
+                <textarea name="pdf_body" id="pdfBody" class="form-control">{{ $bodyForEditor }}</textarea>
               </div>
 
               @php
@@ -86,7 +96,87 @@
             </form>
           </div>
         </div>
+        </div>{{-- /lt-left --}}
+
+        <div class="lt-right">
+          <div class="lt-pv-head"><span>Live preview</span><span class="text-muted">The letter on the college letterhead &mdash; updates as you type</span></div>
+          <iframe id="ltFrame" class="lt-frame" title="Live preview of the letter"></iframe>
+        </div>
+        </div>{{-- /lt-split --}}
       </div>
     </section>
   </div>
 @endsection
+
+@push('styles')
+<style>
+  .lt-split { display: flex; gap: 16px; align-items: flex-start; }
+  .lt-left { flex: 1 1 52%; min-width: 0; }
+  .lt-right { flex: 1 1 46%; min-width: 0; position: sticky; top: 70px; background: #fff; border: 1px solid #e3e6ea; border-radius: 6px; overflow: hidden; }
+  .lt-pv-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 14px; font-size: 13px; font-weight: 700; border-bottom: 1px solid #eef0f3; background: #f8fafc; }
+  .lt-pv-head .text-muted { font-weight: 400; font-size: 12px; }
+  .lt-frame { display: block; width: 100%; height: calc(100vh - 190px); min-height: 520px; border: 0; background: #e9ecef; }
+  .lt-chip { border: 1px solid #ced4da; background: #fff; border-radius: 12px; padding: 0 8px; margin: 2px 2px 0 0; font: 12px/20px monospace; cursor: pointer; }
+  .lt-chip:hover { background: #fdf6dd; border-color: #F0C129; }
+  .note-editor.note-frame { border-color: #ced4da; }
+  .note-editable { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; }
+  @media (max-width: 1100px) { .lt-split { flex-direction: column; } .lt-left, .lt-right { flex: none; width: 100%; position: static; } .lt-frame { height: 70vh; } }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+$(function () {
+    var $body = $('#pdfBody'), frame = document.getElementById('ltFrame'), timer = null, seq = 0;
+    var CSRF = $('meta[name="csrf-token"]').attr('content') || $('input[name=_token]').first().val();
+
+    $body.summernote({
+        height: 380,
+        dialogsInBody: true,
+        fontSizes: ['9', '10', '11', '12', '14', '16', '18', '20', '24'],
+        toolbar: [
+            ['style',  ['style']],
+            ['font',   ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
+            ['fontsize', ['fontsize']],
+            ['color',  ['color']],
+            ['para',   ['ul', 'ol', 'paragraph']],
+            ['insert', ['link', 'hr']],
+            ['view',   ['undo', 'redo', 'codeview']]
+        ],
+        styleTags: ['p', 'h2', 'h3', 'h4', 'blockquote'],
+        callbacks: { onChange: schedule, onKeyup: schedule, onPaste: schedule }
+    });
+
+    function schedule() { clearTimeout(timer); timer = setTimeout(refresh, 400); }
+
+    function refresh() {
+        var my = ++seq;
+        fetch(@json(route('admin.letters.live-preview')), {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+            body: JSON.stringify({ pdf_body: $body.summernote('code') })
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            if (my !== seq || !d.html) return;
+            var y = 0; try { y = frame.contentWindow.scrollY || 0; } catch (e) {}
+            frame.onload = function () { try { frame.contentWindow.scrollTo(0, y); } catch (e) {} };
+            frame.srcdoc = d.html;
+        }).catch(function () {});
+    }
+
+    // merge-field chips: insert at the cursor in the editor
+    $('.lt-chip').on('click', function () {
+        $body.summernote('focus');
+        $body.summernote('editor.insertText', '\u007b\u007b' + $(this).data('field') + '\u007d\u007d');
+        schedule();
+    });
+
+    // the textarea is hidden by the editor, so check it here rather than with the browser's "required"
+    $('#letterForm').on('submit', function (e) {
+        var text = (new DOMParser().parseFromString($body.summernote('code'), 'text/html').body.textContent || '').replace(/\s+/g, '');
+        if (!text) { e.preventDefault(); alert('The letter body is empty.'); $body.summernote('focus'); }
+    });
+
+    refresh();
+});
+</script>
+@endpush
