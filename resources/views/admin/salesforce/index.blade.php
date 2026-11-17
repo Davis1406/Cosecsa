@@ -115,10 +115,10 @@
                         </div>
                         <div>
                             <label class="d-block mb-1 small font-weight-bold text-muted">Programme</label>
-                            <select name="programme" class="form-control form-control-sm" style="width:190px;" onchange="this.form.submit()">
-                                <option value="">All programmes</option>
+                            @php $selectedProgrammes = array_values(array_filter((array) $programme)); @endphp
+                            <select name="programme[]" id="sfProgramme" multiple class="form-control form-control-sm" style="width:260px;" data-placeholder="All programmes">
                                 @foreach($programmes as $p)
-                                    <option value="{{ $p }}" {{ $programme == $p ? 'selected' : '' }}>{{ $p }}</option>
+                                    <option value="{{ $p }}" {{ in_array($p, $selectedProgrammes, true) ? 'selected' : '' }}>{{ $p }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -299,7 +299,6 @@
                                     <th>Applicant</th>
                                     <th>Email</th>
                                     <th>Programme</th>
-                                    <th>Level</th>
                                     <th>Country</th>
                                     <th>Hospital</th>
                                     <th>Entry Number</th>
@@ -328,7 +327,6 @@
                                     <td>{{ $app->applicant_name ?: '—' }}</td>
                                     <td>{{ $app->applicant_email ?: '—' }}</td>
                                     <td>{{ $app->programme_name ?: '—' }}</td>
-                                    <td>{{ $app->application_level ?: '—' }}</td>
                                     <td>{{ $app->country ?: '—' }}</td>
                                     <td>{{ $app->hospital_name ?: '—' }}</td>
                                     <td>
@@ -395,6 +393,15 @@ function sfPrintReport() {
     }
 }
 $(document).ready(function () {
+    // Programme: pick several; the page reloads when the list closes (or a programme is removed)
+    var $prog = $('#sfProgramme').select2({ placeholder: 'All programmes', closeOnSelect: false, width: '260px', allowClear: false });
+    var progDirty = false;
+    $prog.on('change', function () {
+        progDirty = true;
+        if (!$prog.data('select2').isOpen()) { this.form.submit(); }
+    });
+    $prog.on('select2:close', function () { if (progDirty) { this.form.submit(); } });
+
     $('#applicationsTable').DataTable({
         dom: 'Blfrtip',
         buttons: [
@@ -410,7 +417,7 @@ $(document).ready(function () {
         ],
         lengthMenu: [[25, 50, 75, 100], [25, 50, 75, 100]],
         pageLength: 25,
-        order: [[8, 'desc']]
+        order: [[7, 'desc']]
     });
 
     var raw, levelRaw;

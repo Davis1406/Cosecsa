@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-17) — Salesforce Applications: multi-select Programme filter, Level column removed
+- The Programme filter is a multi-select (tick several, applied when the list closes). The Level column is removed from the table and its exports (the Level filter and chart stay).
+
 ### Added (2026-11-17) — Salesforce Applications table: Hospital column and filter, rows per page
 - New Hospital column (Salesforce's base hospital, also in the exports) and a Hospital filter beside Country; the search also matches the hospital.
 - The table has a "show 25 / 50 / 75 / 100" menu (default 25).
