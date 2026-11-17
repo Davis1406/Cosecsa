@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-17) — Salesforce application detail page: PEN row hidden
+- `admin/salesforce/view/{id}`: the "PEN" row (Salesforce's own number, which is not the MIS entry number) is no longer shown.
+
 ### Changed (2026-11-17) — Salesforce Application table: the entry number a person already holds
 - Complete applications that were not populated as a new trainee (the person is already in the MIS) show the one entry number they hold (the proper COUNTRY/year/sequence number, newest record), matched on email; no Salesforce number is shown next to it. Previously only Salesforce's PEN was shown, which never matches the MIS number. The search finds them by any number they hold.
 
