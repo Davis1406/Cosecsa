@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-17) — Salesforce Application table: the entry number a person already holds
+- Complete applications that were not populated as a new trainee (the person is already in the MIS) show the entry number(s) they hold, matched on email, with Salesforce's own PEN underneath in grey ("Salesforce: …"). Previously only Salesforce's PEN was shown, which never matches the MIS number. The search finds them by that number.
+
 ### Added (2026-11-17) — College letters: bold / styling in the letter body, live preview
 - Letter template editor (`/admin/letters/{id}/edit`, `/create`): the Letter Body is a rich-text editor (styles, bold, italic, underline, strikethrough, size, colour, lists, alignment, links), with a live preview of the letter on the college letterhead on the right (same idea as the examiner course editor). The merge fields are click-to-insert buttons. Existing plain-text letters open with their line breaks and render as before.
 - New route `POST admin/letters/preview-html` (`LetterController@livePreview`) feeding the preview from the API.

@@ -325,6 +325,12 @@
                                             —
                                         @elseif(!empty($app->trainee_entry_number))
                                             {{ $app->trainee_entry_number }}
+                                        @elseif(!empty($app->existing_entry_numbers))
+                                            {{-- Not populated as a new trainee because the person is already in the MIS (matched on email): show the number they hold; Salesforce's own number stays underneath --}}
+                                            <span title="Already in the MIS: this application was not added as a new trainee, so the entry number they already hold is shown.">{{ implode(', ', (array) $app->existing_entry_numbers) }}</span>
+                                            @if($app->pen ?: $app->entry_number)
+                                                <div class="small text-muted" title="Salesforce's own number for this application; it is not the MIS entry number.">Salesforce: {{ $app->pen ?: $app->entry_number }}</div>
+                                            @endif
                                         @elseif($app->pen ?: $app->entry_number)
                                             {{-- No trainee record yet: Salesforce's own number, which can differ from the entry number the MIS issues --}}
                                             <span class="text-muted" title="Salesforce PEN. No trainee record yet, so the MIS entry number has not been issued.">{{ $app->pen ?: $app->entry_number }}</span>
