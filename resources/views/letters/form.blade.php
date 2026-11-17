@@ -21,7 +21,7 @@
         <div class="lt-left">
         <div class="card">
           <div class="card-body">
-            <form method="POST" id="letterForm" action="{{ $template ? url('admin/letters/'.$template->id.'/update') : url('admin/letters') }}">
+            <form method="POST" id="letterForm" enctype="multipart/form-data" action="{{ $template ? url('admin/letters/'.$template->id.'/update') : url('admin/letters') }}">
               @csrf
               <div class="form-row">
                 <div class="form-group col-md-6">
@@ -87,6 +87,49 @@
                 <textarea name="email_body" class="form-control" rows="6" required>{{ old('email_body', $defaultEmailBody) }}</textarea>
               </div>
 
+              <div class="card card-outline card-secondary mb-3" id="signatureCard">
+                <div class="card-header py-2"><strong>Signature block</strong> <span class="text-muted small">&mdash; shown under &ldquo;Kind Regards,&rdquo;. Leave anything blank to sign as the person sending the letter.</span></div>
+                <div class="card-body pb-1">
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label>Name</label>
+                      <input type="text" name="signatory_name" id="sigName" class="form-control" maxlength="255" placeholder="e.g. Mr. Davis Kondamwali" value="{{ old('signatory_name', $template->signatory_name ?? '') }}">
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label>Role</label>
+                      <input type="text" name="signatory_title" id="sigTitle" class="form-control" maxlength="255" placeholder="e.g. Admission Assistant" value="{{ old('signatory_title', $template->signatory_title ?? '') }}">
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label>Signature image</label>
+                      @if(!empty($template->signature_path))
+                        <div class="mb-2"><img src="{{ \App\Support\ApiAsset::url($template->signature_path) }}" style="height:46px;background:#f6f6f6;border:1px solid #e3e6ea;padding:2px;"></div>
+                      @endif
+                      <input type="file" name="signature" id="sigFile" class="form-control-file" accept="image/png,image/jpeg,image/webp">
+                      <small class="text-muted d-block">PNG or JPG, up to 2&nbsp;MB. A white background is made transparent so it can sit over the stamp.</small>
+                      @if(!empty($template->signature_path))
+                        <div class="custom-control custom-checkbox mt-1"><input type="checkbox" class="custom-control-input" id="rmSig" name="remove_signature" value="1"><label class="custom-control-label small" for="rmSig">Remove the saved signature</label></div>
+                      @endif
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label>Stamp</label>
+                      @if(!empty($template->stamp_path))
+                        <div class="mb-2"><img src="{{ \App\Support\ApiAsset::url($template->stamp_path) }}" style="height:60px;background:#f6f6f6;border:1px solid #e3e6ea;padding:2px;"></div>
+                      @endif
+                      <input type="file" name="stamp" id="stampFile" class="form-control-file" accept="image/png,image/jpeg,image/webp">
+                      <small class="text-muted d-block">PNG with a transparent background works best, up to 2&nbsp;MB.</small>
+                      @if(!empty($collegeStampAvailable))
+                        <div class="custom-control custom-checkbox mt-1"><input type="checkbox" class="custom-control-input" id="useCollegeStamp" name="use_college_stamp" value="1"><label class="custom-control-label small" for="useCollegeStamp">Use the college stamp (the one already on the transcripts)</label></div>
+                      @endif
+                      @if(!empty($template->stamp_path))
+                        <div class="custom-control custom-checkbox mt-1"><input type="checkbox" class="custom-control-input" id="rmStamp" name="remove_stamp" value="1"><label class="custom-control-label small" for="rmStamp">Remove the saved stamp</label></div>
+                      @endif
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div class="form-group form-check">
                 <input type="checkbox" name="is_active" id="is_active" class="form-check-input" value="1" {{ old('is_active', $template->is_active ?? true) ? 'checked' : '' }}>
                 <label class="form-check-label" for="is_active">Active (selectable when dispatching)</label>
@@ -149,12 +192,45 @@ $(function () {
 
     function schedule() { clearTimeout(timer); timer = setTimeout(refresh, 400); }
 
+    // a signature / stamp picked in the form but not saved yet is sent with the preview request as a data URI
+    var picks = { signature: null, stamp: null };
+    function readPick(input, key) {
+        var f = input.files && input.files[0];
+        picks[key] = null;
+        if (f && /^image\/(png|jpeg|webp)$/.test(f.type) && f.size <= 2 * 1024 * 1024) {
+            var r = new FileReader();
+            r.onload = function () { picks[key] = r.result; schedule(); };
+            r.readAsDataURL(f);
+        } else {
+            if (f) { alert('Please choose a PNG, JPG or WEBP image of up to 2 MB.'); input.value = ''; }
+            schedule();
+        }
+    }
+    $('#sigFile').on('change', function () { readPick(this, 'signature'); });
+    $('#stampFile').on('change', function () { readPick(this, 'stamp'); });
+    $('#sigName, #sigTitle, #rmSig, #rmStamp, #useCollegeStamp').on('input change', schedule);
+
+    function previewPayload() {
+        var tid = @json($template->id ?? null);
+        return {
+            pdf_body: $body.summernote('code'),
+            template_id: tid,
+            signatory_name: $('#sigName').val(),
+            signatory_title: $('#sigTitle').val(),
+            signature_data: picks.signature,
+            stamp_data: picks.stamp,
+            clear_signature: $('#rmSig').is(':checked') ? 1 : 0,
+            clear_stamp: $('#rmStamp').is(':checked') ? 1 : 0,
+            use_college_stamp: $('#useCollegeStamp').is(':checked') ? 1 : 0
+        };
+    }
+
     function refresh() {
         var my = ++seq;
         fetch(@json(route('admin.letters.live-preview')), {
             method: 'POST', credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
-            body: JSON.stringify({ pdf_body: $body.summernote('code') })
+            body: JSON.stringify(previewPayload())
         }).then(function (r) { return r.json(); }).then(function (d) {
             if (my !== seq || !d.html) return;
             var y = 0; try { y = frame.contentWindow.scrollY || 0; } catch (e) {}

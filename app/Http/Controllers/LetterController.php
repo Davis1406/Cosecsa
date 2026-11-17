@@ -26,16 +26,43 @@ class LetterController extends Controller
 
     public function create()
     {
+        $response = $this->api->get('letters/create');
+
         return view('letters.form', [
             'header_title' => 'New Letter Template',
             'template'     => null,
             'sources'      => LetterRecipientResolver::SOURCES,
+            'collegeStampAvailable' => (bool) $response->json('college_stamp_available'),
         ]);
+    }
+
+    /**
+     * What the template form sends to the API. Files (signature, stamp) go as a multipart upload, and since a browser
+     * sends nothing for an unticked checkbox the API is told the "Active" box was on the page.
+     */
+    private function templatePayload(Request $request): array
+    {
+        return $request->only([
+            'name', 'subject', 'pdf_body', 'email_body', 'recipient_source', 'legacy_status_field',
+            'signatory_name', 'signatory_title', 'remove_signature', 'remove_stamp', 'use_college_stamp',
+        ]) + ['is_active_form' => '1', 'is_active' => $request->boolean('is_active') ? '1' : null];
+    }
+
+    private function templateFiles(Request $request): array
+    {
+        $files = [];
+        foreach (['signature', 'stamp'] as $field) {
+            if ($request->hasFile($field)) {
+                $files[$field] = $request->file($field);
+            }
+        }
+
+        return $files;
     }
 
     public function store(Request $request)
     {
-        $response = $this->api->post('letters/', $request->except('_token'));
+        $response = $this->api->postWithFile('letters/', $this->templatePayload($request), $this->templateFiles($request));
 
         if ($response->failed()) {
             return back()->withInput()->with('error', $response->json('message') ?? 'Error creating template.');
@@ -53,12 +80,13 @@ class LetterController extends Controller
             'header_title' => 'Edit Letter Template',
             'template'     => $data->template,
             'sources'      => (array) ($data->sources ?? []),
+            'collegeStampAvailable' => (bool) ($data->college_stamp_available ?? false),
         ]);
     }
 
     public function update(Request $request, $id)
     {
-        $response = $this->api->post("letters/{$id}/update", $request->except('_token'));
+        $response = $this->api->postWithFile("letters/{$id}/update", $this->templatePayload($request), $this->templateFiles($request));
 
         if ($response->failed()) {
             return back()->withInput()->with('error', $response->json('message') ?? 'Error updating template.');
@@ -127,7 +155,10 @@ class LetterController extends Controller
     /** Live preview for the template editor: the letter on the letterhead, from the body as typed (not yet saved). */
     public function livePreview(Request $request)
     {
-        $response = $this->api->post('letters/preview-html', ['pdf_body' => (string) $request->input('pdf_body', '')]);
+        $response = $this->api->post('letters/preview-html', array_filter($request->only([
+            'pdf_body', 'template_id', 'signatory_name', 'signatory_title', 'signature_data', 'stamp_data',
+            'clear_signature', 'clear_stamp', 'use_college_stamp',
+        ]), fn ($v) => $v !== null && $v !== ''));
 
         return response()->json(['html' => $response->json('html') ?? ''], $response->successful() ? 200 : 422);
     }

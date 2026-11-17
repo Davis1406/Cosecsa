@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-11-17) — College letters: signature block per template
+- Letter template form: new "Signature block" with Name, Role, Signature image and Stamp (or "use the college stamp" already on the transcripts, remove tick-boxes for saved images). Shown in the live preview as you type or pick files, and on the letter PDF. Blank = sign as the person sending, as before.
+- The template form now uploads files (multipart) and unticking "Active" deactivates the template.
+
 ### Changed (2026-11-17) — Salesforce Applications: multi-select Programme filter, Level column removed
 - The Programme filter is a multi-select (tick several, applied when the list closes). The Level column is removed from the table and its exports (the Level filter and chart stay).
 
