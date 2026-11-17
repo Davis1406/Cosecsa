@@ -141,6 +141,15 @@
                             </select>
                         </div>
                         <div>
+                            <label class="d-block mb-1 small font-weight-bold text-muted">Hospital</label>
+                            <select name="hospital" class="form-control form-control-sm" style="width:220px;" onchange="this.form.submit()">
+                                <option value="">All hospitals</option>
+                                @foreach($hospitals as $h)
+                                    <option value="{{ $h }}" {{ $hospital == $h ? 'selected' : '' }}>{{ $h }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
                             <label class="d-block mb-1 small font-weight-bold text-muted">Stage</label>
                             <select name="stage" class="form-control form-control-sm" style="width:190px;" onchange="if (this.form.group) this.form.group.remove(); this.form.submit()">
                                 <option value="">All stages</option>
@@ -292,6 +301,7 @@
                                     <th>Programme</th>
                                     <th>Level</th>
                                     <th>Country</th>
+                                    <th>Hospital</th>
                                     <th>Entry Number</th>
                                     <th>Date Applied</th>
                                     <th>Stage</th>
@@ -320,6 +330,7 @@
                                     <td>{{ $app->programme_name ?: '—' }}</td>
                                     <td>{{ $app->application_level ?: '—' }}</td>
                                     <td>{{ $app->country ?: '—' }}</td>
+                                    <td>{{ $app->hospital_name ?: '—' }}</td>
                                     <td>
                                         @if($stageLower !== 'complete')
                                             —
@@ -385,7 +396,7 @@ function sfPrintReport() {
 }
 $(document).ready(function () {
     $('#applicationsTable').DataTable({
-        dom: 'Bfrtip',
+        dom: 'Blfrtip',
         buttons: [
             { extend: 'copyHtml5',  className: 'btn-sm', exportOptions: { columns: ':not(.no-export)' } },
             { extend: 'csvHtml5',   className: 'btn-sm', title: 'salesforce_applications', exportOptions: { columns: ':not(.no-export)' } },
@@ -397,8 +408,9 @@ $(document).ready(function () {
             { orderable: false, targets: -1 },
             { orderable: false, targets: 0, render: function (data, type, row, meta) { return meta.row + 1; } }
         ],
+        lengthMenu: [[25, 50, 75, 100], [25, 50, 75, 100]],
         pageLength: 25,
-        order: [[7, 'desc']]
+        order: [[8, 'desc']]
     });
 
     var raw, levelRaw;

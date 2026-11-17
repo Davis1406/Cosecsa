@@ -15,7 +15,7 @@ class SalesforceSyncController extends Controller
     public function index(Request $request)
     {
         $response = $this->api->get('salesforce/', $request->only([
-            'q', 'stage', 'programme', 'country', 'level',
+            'q', 'stage', 'programme', 'country', 'hospital', 'level',
             'received', 'approved', 'application_year', 'group', 'tile',
         ]));
 
@@ -33,12 +33,14 @@ class SalesforceSyncController extends Controller
             'stages'          => collect($data->stages ?? []),
             'programmes'      => collect($data->programmes ?? []),
             'countries'       => collect($data->countries ?? []),
+            'hospitals'       => collect($data->hospitals ?? []),
             'levels'          => collect($data->levels ?? []),
             'years'           => collect($data->years ?? []),
             'search'          => $data->search ?? '',
             'stage'           => $data->stage ?? null,
             'programme'       => $data->programme ?? null,
             'country'         => $data->country ?? null,
+            'hospital'        => $data->hospital ?? null,
             'level'           => $data->level ?? null,
             'received'        => $data->received ?? null,
             'approved'        => $data->approved ?? null,

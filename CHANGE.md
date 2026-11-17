@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-11-17) — Salesforce Applications table: Hospital column and filter, rows per page
+- New Hospital column (Salesforce's base hospital, also in the exports) and a Hospital filter beside Country; the search also matches the hospital.
+- The table has a "show 25 / 50 / 75 / 100" menu (default 25).
+
 ### Changed (2026-11-17) — Salesforce application detail page: PEN row hidden
 - `admin/salesforce/view/{id}`: the "PEN" row (Salesforce's own number, which is not the MIS entry number) is no longer shown.
 
