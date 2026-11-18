@@ -500,10 +500,10 @@ class CandidatesController extends Controller
             return $rows;
         }
 
-        // Nothing configured: the Viva form starts with Viva 1 and Viva 2, everything else with Station 1-8 as it always did
+        // Nothing configured: the Viva form starts with Viva A (1) and Viva B (2), everything else with Station 1-8 as it always did
         $label = $format === 'viva' ? 'Viva' : 'Station';
 
-        return collect(range(1, $format === 'viva' ? 2 : 8))->map(fn ($i) => (object) ['number' => $i, 'name' => "$label $i", 'max_total' => $examType === 'mcs' ? 20 : null]);
+        return collect(range(1, $format === 'viva' ? 2 : 8))->map(fn ($i) => (object) ['number' => $i, 'name' => $format === 'viva' ? 'Viva ' . chr(64 + $i) . " ($i)" : "$label $i", 'max_total' => $examType === 'mcs' ? 20 : null]);
     }
 
     /**
@@ -967,6 +967,9 @@ class CandidatesController extends Controller
             'g_id'          => $existingRecord->group_id,
             'g_name'        => DB::table('examiners_groups')->where('id', $existingRecord->group_id)->value('group_name'),
             'station_id'    => $existingRecord->station_id,
+            'station_name'  => (\Illuminate\Support\Facades\Schema::hasColumn('exam_stations', 'exam_format')
+                                ? DB::table('exam_stations')->where('exam_type', $exam_type)->where('exam_format', $exam_format === 'viva' ? 'viva' : 'clinical')->where('station_number', $existingRecord->station_id)->value('name') : null)
+                            ?: ($exam_format === 'viva' ? 'Viva ' . chr(64 + min(26, max(1, (int) $existingRecord->station_id))) . " ({$existingRecord->station_id})" : 'Station ' . $existingRecord->station_id),
             'question_mark' => json_decode($existingRecord->question_mark, true),
             'total'         => $existingRecord->total,
             'remarks'       => $existingRecord->remarks,

@@ -314,7 +314,13 @@
             // The usual station is only offered on its own while this candidate has not been marked there yet.
             if (usual && (placed || m.mine.indexOf(usual.no) === -1)) only = usual;
         }
-        var show = only ? [only] : options;
+        // The Viva form always offers its first two stations (Viva A and Viva B); any further station is one tap away.
+        var vivaMore = 0;
+        if (CFG.format === 'viva') {
+            only = null;
+            if (!S.showAllStations && options.length > 2) { vivaMore = options.length - 2; }
+        }
+        var show = only ? [only] : (vivaMore ? options.slice(0, 2) : options);
         $('mfStationTiles').innerHTML = show.map(function (s) {
             var mine = m.mine.indexOf(s.no) !== -1, other = !mine && m.all.indexOf(s.no) !== -1;
             var cls = mine ? ' s-mine' : other ? ' s-other' : '';
@@ -322,8 +328,8 @@
             return '<button type="button" class="mf-tile' + cls + (String(stationSel.value) === String(s.no) ? ' is-picked' : '') + '" data-station="' + s.no + '"' + (mine ? ' disabled' : '') + '><span class="mf-t1">' + esc(s.name) + '</span>' + sub + '</button>';
         }).join('') || '<div class="mf-empty">No stations are available. Please tell the examinations office.</div>';
         var all = $('mfAllStations');
-        all.hidden = !only;
-        all.textContent = 'Show all ' + options.length + ' stations';
+        all.hidden = !only && !vivaMore;
+        all.textContent = vivaMore ? 'Show ' + vivaMore + ' more station' + (vivaMore === 1 ? '' : 's') : 'Show all ' + options.length + ' stations';
     }
 
     function render() {

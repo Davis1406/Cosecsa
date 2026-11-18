@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-19) — Viva stations: two shown by default, labelled Viva A (1), Viva B (2)
+- **Examiner side:** the station step of a Viva form now shows the first **two** stations (Viva A (1) and Viva B (2)) and, when there are more, a **"Show N more station(s)"** link for the rest. (Clinical forms keep the old "usual station + Show all" behaviour.)
+- **Labels:** Viva stations are named **Viva A (1), Viva B (2), Viva C (3)…** (migration `2026_11_19_170000_label_viva_stations_viva_a_1` renames the default names; typed-in names stay). The Resubmit form shows the station's name instead of "Station 2".
+- **Admin:** Exams Settings > Stations > *Viva form* has an **Add Viva station** button (the next one is offered as "Viva C (3)"…), and the *Form labels* editor's Select Station drop-down lists the stations examiners really get, with an *Add or rename stations* link that opens that list. Needs the API migration first.
+
 ### Changed (2026-11-19) — The submit check can be corrected in the popup
 - The "Check before you submit" popup now shows **Group, Candidate and Station as drop-downs**: if one is wrong, change it there and press *Yes, submit the marks*; the corrections go onto the form and the marks are sent. Choosing another group loads that group's candidates (the candidate must be chosen again) and the submit button waits until they are. Offline, the group cannot be reloaded and is put back with a message. *Go back* sends nothing. (`examiner/_confirm_submit.blade.php`; each marking form carries `data-candidates-url`.)
 

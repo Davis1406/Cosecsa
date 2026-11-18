@@ -289,6 +289,8 @@ $(function () {
     var examTypes = @json($types);
     function examType() { return $('#examType').val() || 'mcs'; }
     function examLabel() { var t = examTypes.filter(function (x) { return x.key === examType(); })[0]; return t ? t.label : ''; }
+    // Viva stations are named Viva A (1), Viva B (2), Viva C (3)…
+    function vivaName(n) { return 'Viva ' + String.fromCharCode(64 + Math.min(26, Math.max(1, n))) + ' (' + n + ')'; }
     function stationFormat() { return isFcsExam() ? ($('#stationFormat').val() || 'clinical') : ''; }
     function isFcsExam() { return ['mcs', 'gs'].indexOf(examType()) === -1; }   // the FCS specialties mark by cases (Clinical / Viva)
     var manageId = null, manageData = null, groupEditId = null, stationEditId = null, showTest = false;
@@ -443,7 +445,7 @@ $(function () {
     // ───── Stations ─────
     function loadStations() {
         var type = examType(), format = stationFormat();
-        $('#stationsExamLabel').text(examLabel());
+        $('#stationsExamLabel').text(examLabel()); addStationLabel();
         $('#stationsTable tbody').html('<tr><td colspan="7" class="text-muted p-3">Loading…</td></tr>');
         api('GET', '/stations?exam_type=' + encodeURIComponent(type) + '&format=' + format).done(function (r) {
             if (type !== examType() || format !== stationFormat()) return;   // the exam was changed while this was loading
@@ -456,6 +458,10 @@ $(function () {
                        '<button class="btn btn-xs btn-light border btn-delst" data-id="' + s.id + '" title="Delete"><i class="fas fa-trash text-danger"></i></button></td></tr>';
             }).join('') || '<tr><td colspan="7" class="text-muted p-3">No stations for this exam type yet.</td></tr>');
         }).fail(fail);
+    }
+    function addStationLabel() {
+        var viva = stationFormat() === 'viva';
+        $('#btnAddStation').html('<i class="fas fa-plus mr-1"></i> ' + (viva ? 'Add Viva station' : 'Add station'));
     }
     function stationModalFor() { var fcs = isFcsExam(); $('.st-marks-only').toggleClass('d-none', fcs); $('.st-fcs-only').toggleClass('d-none', !fcs); }
     $('a[href="#esStations"]').on('shown.bs.tab', loadStations);
@@ -483,7 +489,7 @@ $(function () {
     $('#btnAddStation').on('click', function () {
         stationEditId = null; $('#stationModalTitle').text('Add station');
         var used = (window.__stations || []).map(function (s) { return s.number; }), next = 1; while (used.indexOf(next) !== -1) next++;
-        stationModalFor(); $('#stNumber').val(next); $('#stName').val((stationFormat() === 'viva' ? 'Viva ' : 'Station ') + next); $('#stMax').val(''); $('#stActive').prop('checked', true); $('#stQuestions').empty(); updateSum(); $('#stationModal').modal('show');
+        stationModalFor(); $('#stNumber').val(next); $('#stName').val(stationFormat() === 'viva' ? vivaName(next) : 'Station ' + next); $('#stMax').val(''); $('#stActive').prop('checked', true); $('#stQuestions').empty(); updateSum(); $('#stationModal').modal('show');
     });
     $('#stationsTable').on('click', '.btn-editst', function () {
         var s = window.__stations.filter(function (x) { return x.id == $(this).data('id'); }.bind(this))[0]; stationEditId = s.id;
@@ -565,7 +571,8 @@ $(function () {
              '<div class="fm-formtitle">FCS ' + esc(formExamLabel.replace(/^FCS\s*/, '')) + ' - ' + title + ' Evaluation Form</div>' +
              '<div class="form-row fm-top"><div class="form-group col-md-4"><label>Select Group</label><select class="form-control" disabled><option>Select Group...</option></select></div>' +
              '<div class="form-group col-md-4"><label>Select Candidate</label><select class="form-control" disabled><option>Choose a Candidate...</option></select></div>' +
-             '<div class="form-group col-md-4"><label>Select Station</label><select class="form-control" disabled><option>Choose a Station...</option></select></div></div>';
+             '<div class="form-group col-md-4"><label>Select Station</label><select class="form-control fm-station-preview" disabled><option>Choose a Station...</option></select>' +
+             '<a href="#" class="fm-go-stations small" data-format="' + f + '"><i class="fas fa-plus-circle mr-1"></i>Add or rename ' + (f === 'viva' ? 'Viva ' : '') + 'stations</a></div></div>';
         h += '<div class="fm-box"><div class="fm-cases row mx-0">' + c.cases.map(function (cs, i) { return caseBlock(cs, i + 1); }).join('') + '</div>' +
              '<div class="text-center mt-1"><button type="button" class="btn btn-sm btn-outline-secondary fm-cadd"><i class="fas fa-plus mr-1"></i> Add case</button></div></div>';
         h += '<div class="form-row fm-bottom mt-3"><div class="form-group col-md-6"><label>Overall Marks</label><input class="form-control" disabled placeholder="Total marks will be calculated automatically"></div>' +
@@ -592,9 +599,20 @@ $(function () {
             $('#formsBody').html('<div class="text-muted small mb-2">The ' + esc(r.label) + ' marking forms, shown as examiners see them: edit them right here. ' +
                 'Labels are read by position, so reordering or renaming also changes how marks already saved are labelled; the marks themselves are never changed. Changes show the next time an examiner opens the form. The names of the stations (Station 1… or Viva 1…) are under <strong>Stations</strong>.</div>' +
                 ['clinical', 'viva'].map(function (f) { return formCard(f, r.formats[f]); }).join(''));
-            $('#formsBody .fm-card').each(function () { renumberForm($(this)); enableDragging($(this)); });
+            $('#formsBody .fm-card').each(function () {
+                var card = $(this), f = card.data('format');
+                renumberForm(card); enableDragging(card);
+                // the station drop-down shows the stations the examiners really get on this form
+                api('GET', '/stations?exam_type=' + encodeURIComponent(t) + '&format=' + f).done(function (sr) {
+                    var on = sr.stations.filter(function (x) { return x.is_active; });
+                    card.find('.fm-station-preview').html('<option>Choose a Station...</option>' + on.map(function (x) { return '<option>' + esc(x.name) + '</option>'; }).join(''));
+                });
+            });
         }).fail(fail);
     }
+    $('#formsBody').on('click', '.fm-go-stations', function (e) {
+        e.preventDefault(); $('#stationFormat').val($(this).data('format')); $('a[href="#esStations"]').tab('show');   // opens the Stations tab on that form's list
+    });
     $('#formsBody').on('input', '.fm-marks', function () { renumberForm($(this).closest('.fm-card')); })
     .on('change', '.fm-extra', function () { renumberForm($(this).closest('.fm-card')); })
     .on('click', '.fm-cadd', function () {

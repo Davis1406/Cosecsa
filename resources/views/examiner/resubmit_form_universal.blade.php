@@ -35,7 +35,7 @@
 
                             <div class="form-group col-md-4 col-sm-12">
                                 <label>Station</label>
-                                <input type="text" class="form-control" value="Station {{ $candidate->station_id }}" readonly>
+                                <input type="text" class="form-control" value="{{ $candidate->station_name ?? 'Station ' . $candidate->station_id }}" readonly>
                                 <input type="hidden" name="station_id" value="{{ $candidate->station_id }}">
                             </div>
                         </div>
