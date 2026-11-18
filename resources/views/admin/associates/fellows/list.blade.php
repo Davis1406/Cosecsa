@@ -110,6 +110,7 @@
                                 @foreach(range(now()->year, now()->year - 4) as $y)<option value="{{ $y }}">{{ $y }}</option>@endforeach
                             </select>
                             <button type="button" class="btn btn-sm btn-success" id="qrShow"><i class="fas fa-eye mr-1"></i>Show list</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="qrSettingsBtn" data-toggle="modal" data-target="#qrSettingsModal"><i class="fas fa-sliders-h mr-1"></i>QR settings</button>
                         </div>
                     </div>
                     <div class="card-body py-2 d-none" id="qrBody"></div>
@@ -120,6 +121,75 @@
                     <div id="qrHoverQr" style="line-height:0;"></div>
                     <div id="qrHoverName" style="margin-top:8px;font-weight:700;font-size:.9rem;line-height:1.25;"></div>
                     <div id="qrHoverType" class="small text-muted"></div>
+                </div>
+
+                {{-- QR settings: the wording of the public verification page, the graduation date, and the scan counts --}}
+                <div class="modal fade" id="qrSettingsModal" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header py-2">
+                                <h5 class="modal-title"><i class="fas fa-sliders-h mr-1"></i> QR settings</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="qsLoading" class="text-muted">Loading…</div>
+                                <form id="qsForm" class="d-none" autocomplete="off" onsubmit="return false;">
+                                    <p class="small text-muted mb-3">This is the page people see when they scan a certificate. Leave a box empty to use the standard wording (shown faintly inside the box). To see a change, save, then open a person's page from their name.</p>
+
+                                    <h6 class="font-weight-bold">Graduation date</h6>
+                                    <div class="d-flex align-items-center flex-wrap mb-3" style="gap:.6rem;">
+                                        <input type="date" class="form-control form-control-sm qs-field" id="qs_graduation_date" name="graduation_date" style="width:auto;">
+                                        <small class="text-muted" style="flex:1 1 280px;">Shown as "Graduated in" for the Fellows by Examination who became Fellows in that year and have no graduation date of their own (a date set on a fellow's own page wins). Leave empty to show just the year.</small>
+                                    </div>
+
+                                    <h6 class="font-weight-bold">Fellows</h6>
+                                    <div class="form-group mb-2"><label class="small mb-0" for="qs_sentence_fellow">Sentence under the name</label>
+                                        <textarea class="form-control form-control-sm qs-field" id="qs_sentence_fellow" name="sentence_fellow" rows="2" maxlength="300"></textarea></div>
+                                    <div class="small text-muted mb-1">Fellow by Election shows: Fellowship Type, Specialty, Fellowship Year. Fellow by Examination shows: Fellowship Type, Exam Year, Specialty, Graduated in. The headings:</div>
+                                    <div class="form-row">
+                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_fellowship_type">Fellowship Type</label>
+                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_fellowship_type" name="label_fellowship_type" maxlength="60" autocomplete="off"></div>
+                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_specialty">Specialty</label>
+                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_specialty" name="label_specialty" maxlength="60" autocomplete="off"></div>
+                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_fellowship_year">Fellowship Year</label>
+                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_fellowship_year" name="label_fellowship_year" maxlength="60" autocomplete="off"></div>
+                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_exam_year">Exam Year</label>
+                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_exam_year" name="label_exam_year" maxlength="60" autocomplete="off"></div>
+                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_graduated">Graduated in</label>
+                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_graduated" name="label_graduated" maxlength="60" autocomplete="off"></div>
+                                    </div>
+
+                                    <h6 class="font-weight-bold mt-3">FCS candidates who passed Part I</h6>
+                                    <div class="form-group mb-2"><label class="small mb-0" for="qs_sentence_candidate_passed">Sentence under the name <span class="text-muted">({year} becomes the year of the pass)</span></label>
+                                        <textarea class="form-control form-control-sm qs-field" id="qs_sentence_candidate_passed" name="sentence_candidate_passed" rows="2" maxlength="300"></textarea></div>
+                                    <div class="form-group mb-2"><label class="small mb-0" for="qs_sentence_candidate">Sentence when no Part I pass is on record</label>
+                                        <textarea class="form-control form-control-sm qs-field" id="qs_sentence_candidate" name="sentence_candidate" rows="2" maxlength="300"></textarea></div>
+                                    <div class="form-row">
+                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_programme">Programme</label>
+                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_programme" name="label_programme" maxlength="60" autocomplete="off"></div>
+                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_joined">Year joined</label>
+                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_joined" name="label_joined" maxlength="60" autocomplete="off"></div>
+                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_part_one">Part I exam</label>
+                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_part_one" name="label_part_one" maxlength="60" autocomplete="off"></div>
+                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_country">Country</label>
+                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_country" name="label_country" maxlength="60" autocomplete="off"></div>
+                                    </div>
+
+                                    <h6 class="font-weight-bold mt-3">Scan counts</h6>
+                                    <div class="d-flex align-items-center flex-wrap" style="gap:.7rem;">
+                                        <span id="qsScans" class="small"></span>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="qsResetAll"><i class="fas fa-undo mr-1"></i>Reset all scan counts</button>
+                                        <small class="text-muted">Starts everyone from zero, for example after testing. This cannot be undone. A single person's count can be reset from the list (the arrow next to their number).</small>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer py-2">
+                                <span id="qsMsg" class="small mr-auto"></span>
+                                <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-success btn-sm" id="qsSave"><i class="fas fa-save mr-1"></i>Save settings</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -538,7 +608,8 @@ $(function () {
 (function () {
     var batchUrl = @json(url('admin/associates/fellows/certificate-batch')),
         profile  = { fellow: @json(url('admin/associates/fellows/view')), candidate: @json(url('admin/associates/candidates/view')) },
-        verifyBase = @json(rtrim(config('app.url'), '/') . '/verify/');
+        verifyBase = @json(rtrim(config('app.url'), '/') . '/verify/'),
+        settingsUrl = @json(url('admin/associates/fellows/qr-settings')), resetUrl = @json(url('admin/associates/fellows/qr-scans/reset')), csrf = @json(csrf_token());
     var $body = $('#qrBody'), $show = $('#qrShow'), $hover = $('#qrHover'), people = [], year = '', made = {}, hideTimer = null;
 
     function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -549,12 +620,8 @@ $(function () {
     }
     function when(t) { return t ? t.replace(/:\d\d$/, '') : ''; }
     function personOf(el) { var k = $(el).closest('tr').data('key'); return people.filter(function (p) { return p.key === k; })[0]; }
-    function fileName(p, used) {
-        var b = FellowQR.slug(p.name) + '_' + FellowQR.slug(p.type), n = b, i = 2;
-        while (used && used[n]) { n = b + '-' + (i++); }
-        if (used) used[n] = 1;
-        return n;
-    }
+    // the file is named after the person: First Last, or First Middle Last (see FellowQR.fileBase)
+    function fileName(p, used) { return FellowQR.fileBase(p.name, used); }
 
     // ── the list, with search and filters ──
     function shown() {
@@ -570,7 +637,7 @@ $(function () {
                 '<td>' + typeBadge(p.type, p.kind) + '</td>' +
                 '<td>' + esc(p.trained_in || '—') + '</td><td>' + esc(p.country || '—') + '</td>' +
                 '<td class="small text-muted">' + esc(p.basis) + '</td>' +
-                '<td class="text-center" title="' + (p.last_scan ? 'Last scanned ' + esc(when(p.last_scan)) : 'Not scanned yet') + '">' + (p.scans ? '<strong style="color:#2e8b57;">' + p.scans + '</strong>' : '<span class="text-muted">0</span>') + '</td>' +
+                '<td class="text-center text-nowrap" title="' + (p.last_scan ? 'Last scanned ' + esc(when(p.last_scan)) : 'Not scanned yet') + '">' + (p.scans ? '<strong style="color:#2e8b57;">' + p.scans + '</strong> <a href="#" class="qr-reset text-muted" title="Reset this person\'s scan count to zero"><i class="fas fa-undo-alt"></i></a>' : '<span class="text-muted">0</span>') + '</td>' +
                 '<td class="text-nowrap"><button type="button" class="btn btn-xs btn-outline-secondary qr-png" title="PNG, 4000 px or more"><i class="fas fa-download"></i> PNG</button> ' +
                 '<button type="button" class="btn btn-xs btn-outline-secondary qr-svg" title="Vector, sharp at any size"><i class="fas fa-download"></i> SVG</button> ' +
                 '<button type="button" class="btn btn-xs btn-outline-secondary qr-peek" title="Show the QR"><i class="fas fa-qrcode"></i></button></td></tr>';
@@ -634,6 +701,52 @@ $(function () {
     });
     $(document).on('click', function () { $hover.hide(); });
     $body.on('scroll', function () { $hover.hide(); });
+
+    // ── QR settings: wording, graduation date, scan counts ──
+    var $qs = $('#qrSettingsModal'), qsDefaults = {};
+    function qsMsg(text, ok) { $('#qsMsg').attr('class', 'small mr-auto ' + (ok ? 'text-success' : 'text-danger')).text(text || ''); }
+    $qs.on('show.bs.modal', function () {
+        qsMsg(''); $('#qsForm').addClass('d-none'); $('#qsLoading').removeClass('d-none').text('Loading…');
+        $.getJSON(settingsUrl).done(function (d) {
+            qsDefaults = d.defaults || {};
+            $('#qsForm .qs-field').each(function () {
+                var k = this.name; $(this).val((d.custom && d.custom[k]) || '');
+                if (k !== 'graduation_date') $(this).attr('placeholder', qsDefaults[k] || '');
+            });
+            $('#qsScans').text(d.scans_total + ' scan' + (d.scans_total === 1 ? '' : 's') + ' recorded in all');
+            $('#qsLoading').addClass('d-none'); $('#qsForm').removeClass('d-none');
+        }).fail(function (xhr) { $('#qsLoading').text((xhr.responseJSON && xhr.responseJSON.message) || 'The settings could not be loaded.'); });
+    });
+    $('#qsSave').on('click', function () {
+        var btn = $(this).prop('disabled', true), data = { _token: csrf };
+        $('#qsForm .qs-field').each(function () { data[this.name] = $.trim($(this).val()); });
+        $.post(settingsUrl, data).done(function () { qsMsg('Saved. Open a person\'s page to see it.', true); })
+            .fail(function (xhr) {
+                var j = xhr.responseJSON || {}, first = j.errors ? j.errors[Object.keys(j.errors)[0]][0] : null;
+                qsMsg(first || j.message || 'The settings could not be saved.', false);
+            }).always(function () { btn.prop('disabled', false); });
+    });
+    function afterReset(removed, personKey) {
+        people.forEach(function (p) { if (!personKey || p.key === personKey) { p.scans = 0; p.last_scan = null; } });
+        if (people.length) draw();
+        return removed;
+    }
+    $('#qsResetAll').on('click', function () {
+        if (!confirm('Reset ALL scan counts to zero?\n\nEvery recorded scan is removed. This cannot be undone.')) return;
+        var btn = $(this).prop('disabled', true);
+        $.post(resetUrl, { _token: csrf, scope: 'all' }).done(function (d) {
+            afterReset(d.removed); $('#qsScans').text('0 scans recorded in all'); qsMsg(d.message, true);
+        }).fail(function (xhr) { qsMsg((xhr.responseJSON && xhr.responseJSON.message) || 'The scan counts could not be reset.', false); })
+          .always(function () { btn.prop('disabled', false); });
+    });
+    $body.on('click', '.qr-reset', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var p = personOf(this);
+        if (!confirm('Reset the scan count of ' + p.name + ' to zero? This cannot be undone.')) return;
+        $.post(resetUrl, { _token: csrf, subject_type: p.kind, subject_id: p.id })
+            .done(function () { afterReset(0, p.key); })
+            .fail(function (xhr) { alert((xhr.responseJSON && xhr.responseJSON.message) || 'The scan count could not be reset.'); });
+    });
 
     // ── downloads ──
     $body.on('click', '.qr-png', function () {

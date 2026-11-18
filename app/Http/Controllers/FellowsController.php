@@ -56,6 +56,37 @@ class FellowsController extends Controller
         return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status() ?: 502);
     }
 
+    // QR settings (Fellows list > Certificate QR codes): the verification page's wording and the graduation date, and the
+    // scan counts. All passed straight through to the API, which knows the allowed settings and validates them.
+    public function qrSettings()
+    {
+        $response = $this->api->get('certificate-qr/settings');
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status() ?: 502);
+    }
+
+    public function saveQrSettings(Request $request)
+    {
+        $response = $this->api->post('certificate-qr/settings', $request->except('_token'));
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status() ?: 502);
+    }
+
+    // Zero the scan counts of one person (subject_type + subject_id) or, only when scope=all is sent, of everyone.
+    public function resetQrScans(Request $request)
+    {
+        $request->validate([
+            'scope'        => 'nullable|in:all',
+            'subject_type' => 'required_without:scope|in:fellow,candidate',
+            'subject_id'   => 'required_without:scope|integer',
+        ]);
+        $payload = $request->input('scope') === 'all' ? [] : $request->only(['subject_type', 'subject_id']);
+
+        $response = $this->api->post('certificate-qr/reset-scans', $payload);
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status() ?: 502);
+    }
+
     // JSON rows for the Fellows table (DataTables renders them client-side).
     public function listRows()
     {

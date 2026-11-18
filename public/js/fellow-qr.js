@@ -44,6 +44,14 @@ window.FellowQR = (function () {
         return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'fellow';
     }
 
+    // The file name for a person's QR: just their name as written (First Last, or First Middle Last), without the characters
+    // a file name cannot hold. `used` (an object kept by the caller) keeps two people with the same name apart: "Name (2)".
+    function fileBase(name, used) {
+        var base = String(name || '').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '').replace(/\s+/g, ' ').trim().replace(/^\.+/, '') || 'Fellow', n = base, i = 2;
+        if (used) { while (used[n.toLowerCase()]) { n = base + ' (' + (i++) + ')'; } used[n.toLowerCase()] = 1; }
+        return n;
+    }
+
     function save(blob, filename) {
         var a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -52,5 +60,5 @@ window.FellowQR = (function () {
         setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
     }
 
-    return { make: make, slug: slug, save: save, PNG_MIN: PNG_MIN };
+    return { make: make, slug: slug, fileBase: fileBase, save: save, PNG_MIN: PNG_MIN };
 })();

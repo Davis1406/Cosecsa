@@ -949,15 +949,8 @@ body.dark-mode .admin-action-bar span[style*="a02626"] { color:#f48a8a !importan
                         $vExam    = ($fellow->exam_year_previous ?? null) ?: ($fellow->exam_year_upcoming ?? null);
                         $vDate    = ! empty($fellow->graduation_date) ? \Carbon\Carbon::parse($fellow->graduation_date) : null;
                         $vWhen    = fn ($t) => \Carbon\Carbon::parse($t)->format('j M Y, H:i');
-                        $vShown   = [
-                            'Name'        => trim(($fellow->cert_name ?? '') ?: ($fellow->firstname.' '.$fellow->middlename.' '.$fellow->lastname)),
-                            'Fellowship type' => $fellow->fellowship_type ?? null,
-                            'Trained in'  => ($fellow->programme_name ?? null) ?: ($fellow->current_specialty ?? null),
-                            'Year joined' => $fellow->admission_year ?? null,
-                            'Exam year'   => $vExam,
-                            'Graduated'   => $vDate ? $vDate->format('j F Y') : (($fellow->fellowship_year ?? null) ? $fellow->fellowship_year.' (year only: set the date below)' : null),
-                            'Country'     => $fellow->country_name ?? null,
-                        ];
+                        $vName    = trim(($fellow->cert_name ?? '') ?: trim(($fellow->firstname ?? '').' '.($fellow->middlename ?? '').' '.($fellow->lastname ?? '')));
+                        $vPage    = $verification->page ?? null;
                     @endphp
                     <div class="tab-pane fade" id="tab-certificate">
                         @if(! $vUrl)
@@ -1010,11 +1003,15 @@ body.dark-mode .admin-action-bar span[style*="a02626"] { color:#f48a8a !importan
                         </div>
 
                         <p class="sect-div">What the page shows</p>
-                        <small class="text-muted d-block mb-2">Anything marked "Not set" is left off the page. Fill it in from the Personal and Fellowship tabs.</small>
-                        @foreach($vShown as $label => $value)
-                            <div class="field-row"><span class="field-lbl">{{ $label }}</span>
-                                <span class="field-val">@if($value){{ $value }}@else<span class="text-muted">Not set</span>@endif</span></div>
-                        @endforeach
+                        <small class="text-muted d-block mb-2">The page reads exactly like this. Anything marked "Not set" is left off until you fill it in on the Personal and Fellowship tabs. The wording and a graduation date for everyone are in <a href="{{ url('admin/associates/fellows/list') }}">Fellows list &rsaquo; Certificate QR codes &rsaquo; QR settings</a>.</small>
+                        <div class="field-row"><span class="field-lbl">Name</span><span class="field-val">{{ $vName ?: '—' }}</span></div>
+                        @if($vPage)
+                            <div class="field-row"><span class="field-lbl">Sentence</span><span class="field-val" style="white-space:normal;">{{ $vPage->sentence }}</span></div>
+                            @foreach($vPage->rows as $row)
+                                <div class="field-row"><span class="field-lbl">{{ $row->label }}</span>
+                                    <span class="field-val">@if($row->value !== null && $row->value !== ''){{ $row->value }}@else<span class="text-muted">Not set</span>@endif</span></div>
+                            @endforeach
+                        @endif
                         <div class="field-row"><span class="field-lbl">Graduation date</span>
                             <span class="field-val ie-field" data-ie="graduation_date" data-ie-type="date"
                                   data-ie-value="{{ $fellow->graduation_date ?? '' }}"
@@ -1024,7 +1021,7 @@ body.dark-mode .admin-action-bar span[style*="a02626"] { color:#f48a8a !importan
                                 <button class="ie-pencil" type="button" title="Edit graduation date"><i class="fas fa-pen"></i></button>
                             </span>
                         </div>
-                        <small class="text-muted d-block mt-1">Shown as the full date on the page. Until it is set, the page shows the fellowship year.</small>
+                        <small class="text-muted d-block mt-1">This fellow's own date, shown as the full date for a Fellow by Examination. If empty, the ceremony date set in QR settings is used (for a fellow of that year), else just the year.</small>
                         @endif
                     </div>
 
@@ -1413,13 +1410,13 @@ $('#addRoleForm').on('submit', function (e) {
 (function () {
     var input = document.getElementById('vUrl'), box = document.getElementById('vQr');
     if (!input || !box || typeof FellowQR === 'undefined') return;
-    var q = FellowQR.make(input.value), name = FellowQR.slug(@json(trim(($fellow->firstname ?? '').' '.($fellow->lastname ?? ''))));
+    var q = FellowQR.make(input.value), name = FellowQR.fileBase(@json($vName));   // the file is named after the person
     box.innerHTML = q.svg();
     document.getElementById('vSvg').addEventListener('click', function () {
-        FellowQR.save(new Blob([q.svg(1024)], { type: 'image/svg+xml' }), 'cosecsa-certificate-qr-' + name + '.svg');
+        FellowQR.save(new Blob([q.svg(1024)], { type: 'image/svg+xml' }), name + '.svg');
     });
     document.getElementById('vPng').addEventListener('click', function () {
-        q.png().then(function (b) { FellowQR.save(b, 'cosecsa-certificate-qr-' + name + '.png'); });
+        q.png().then(function (b) { FellowQR.save(b, name + '.png'); });
     });
     document.getElementById('vCopy').addEventListener('click', function () {
         var btn = this, done = function () { var t = btn.innerHTML; btn.innerHTML = '<i class="fas fa-check mr-1"></i>Copied'; setTimeout(function () { btn.innerHTML = t; }, 1500); };

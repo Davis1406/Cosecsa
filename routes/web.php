@@ -390,6 +390,9 @@ Route::get('admin/associates/reps/delete/{id}', [CountryRepsController::class,'d
 Route::get('admin/associates/fellows/list', [FellowsController::class,'list']);
 Route::get('admin/associates/fellows/list-rows', [FellowsController::class,'listRows']);
 Route::get('admin/associates/fellows/certificate-batch', [FellowsController::class,'certificateBatch'])->name('fellows.certificate-batch');
+Route::get('admin/associates/fellows/qr-settings',  [FellowsController::class,'qrSettings'])->name('fellows.qr-settings');
+Route::post('admin/associates/fellows/qr-settings', [FellowsController::class,'saveQrSettings'])->name('fellows.qr-settings.save');
+Route::post('admin/associates/fellows/qr-scans/reset', [FellowsController::class,'resetQrScans'])->name('fellows.qr-scans.reset');
 
 Route::get('admin/associates/fellows/add',  [FellowsController::class,'add']);
 Route::post('admin/associates/fellows/add', [FellowsController::class,'insert'])->name('admin.associates.fellows.add');
