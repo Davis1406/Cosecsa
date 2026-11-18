@@ -30,10 +30,17 @@
   }
   .card {
     width: 100%; max-width: 420px; background: var(--card); border-radius: 24px; box-shadow: var(--shadow);
-    padding: 32px 24px 22px; text-align: center; position: relative; overflow: hidden;
+    padding: 0; text-align: center; position: relative; overflow: hidden;
   }
-  .card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 5px; background: var(--brand); }
-  .card.bad::before { background: var(--bad); } .card.warn::before { background: var(--warn); }
+  .inner { padding: 26px 24px 22px; }
+
+  /* the small burgundy header: the college logo on the left */
+  .top { display: flex; align-items: center; gap: 11px; padding: 10px 16px; background: var(--brand); color: #fff; text-align: left; }
+  .card.bad .top { background: var(--bad); } .card.warn .top { background: var(--warn); }
+  .logo { flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+  .logo img { width: 34px; height: 34px; display: block; object-fit: contain; }
+  .org b { display: block; font-size: 15px; font-weight: 750; letter-spacing: .16em; line-height: 1.1; }
+  .org small { display: block; margin-top: 2px; font-size: 10.5px; line-height: 1.25; opacity: .88; letter-spacing: .02em; text-wrap: balance; }
 
   .emblem { position: relative; width: 116px; height: 116px; margin: 6px auto 18px; }
   /* the seal sits on a light plate so its blue stays readable on the dark theme too */
@@ -70,7 +77,7 @@
   .brand { margin-top: 18px; font-size: 12px; letter-spacing: .08em; color: var(--muted); text-align: center; }
   .btn { display: inline-block; margin-top: 18px; padding: 10px 18px; border-radius: 12px; background: var(--brand); color: #fff;
          text-decoration: none; font-weight: 600; font-size: 14.5px; border: 0; cursor: pointer; }
-  @media (max-width: 360px) { h1 { font-size: 23px; } .card { padding: 28px 18px 20px; } }
+  @media (max-width: 360px) { h1 { font-size: 23px; } .inner { padding: 22px 18px 20px; } .org small { font-size: 9.5px; } }
 </style>
 </head>
 <body>
@@ -101,6 +108,11 @@
 @endphp
 
 <main class="card {{ $state === 'ok' ? 'ok' : $tone }}" role="main">
+  <header class="top">
+    <span class="logo"><img src="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}" alt="COSECSA logo" width="34" height="34"></span>
+    <span class="org"><b>COSECSA</b><small>College of Surgeons of East, Central and Southern Africa</small></span>
+  </header>
+  <div class="inner">
   <div class="emblem">
     <span class="plate"><img class="seal" src="{{ asset('dist/img/cosecsa_seal.png') }}" alt="College of Surgeons of East, Central and Southern Africa seal" width="96" height="96"></span>
     <span class="badge {{ $tone }}" aria-hidden="true">
@@ -141,6 +153,7 @@
     <p class="sub">We couldn’t reach the COSECSA register just now. This does not mean the certificate is invalid.</p>
     <a class="btn" href="">Try again</a>
   @endif
+  </div>
 </main>
 
 <div class="brand">COSECSA · cosecsa.org</div>
