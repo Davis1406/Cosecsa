@@ -250,12 +250,34 @@
 
 
 <style>
-    .fm-handle { cursor: grab; }
+    .fm-handle { cursor: grab; color: #8a8a8a; }
     .fm-handle:active { cursor: grabbing; }
-    .fm-chandle { padding: 0 .25rem; }
-    .fm-q .input-group-text.fm-handle { background: #f8f9fa; }
-    .fm-placeholder { border: 2px dashed #a02626; border-radius: .25rem; background: rgba(160,38,38,.05); margin-bottom: .5rem; }
+    .fm-handle:hover { color: #a02626; }
+    .fm-placeholder { border: 2px dashed #a02626; border-radius: 5px; background: rgba(160,38,38,.05); margin-bottom: .5rem; }
     .fm-case.ui-sortable-helper, .fm-q.ui-sortable-helper { background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+    /* the form as examiners see it */
+    .fm-canvas { background: #fff; border: 1px solid #e3e3e3; border-radius: 8px; padding: 18px 20px 14px; }
+    .fm-tip { background: #fff8e1; border: 1px solid #f3dd8c; border-radius: 5px; padding: 6px 10px; font-size: .82rem; margin-bottom: 14px; }
+    .fm-formtitle { text-align: center; font-size: 1.35rem; font-weight: 700; margin-bottom: 14px; }
+    .fm-canvas .form-group label { font-weight: bold; }
+    .fm-box { border: 1px solid #a02626; border-radius: 5px; padding: 15px 8px 10px; }
+    .fm-case { padding: 0 14px; margin-bottom: 8px; }
+    .fm-casebar { display: flex; align-items: center; justify-content: space-between; font-size: .75rem; margin-bottom: 2px; }
+    .fm-cn { text-transform: uppercase; letter-spacing: .04em; }
+    .fm-canvas input.fm-inline { border: 0; border-bottom: 1px dashed transparent; background: transparent; box-shadow: none; padding: 1px 2px; min-width: 0; }
+    .fm-canvas input.fm-inline:hover { border-bottom-color: #bbb; }
+    .fm-canvas input.fm-inline:focus { outline: none; border-bottom: 1px solid #a02626; background: rgba(254,197,3,.14); }
+    .fm-canvas .fm-h5 { display: block; width: 100%; text-align: center; font-weight: bold; font-size: 1.25rem; color: #a02626; margin-bottom: 14px; }
+    .fm-qline { display: flex; align-items: center; gap: .35rem; }
+    .fm-lbl { flex: 1 1 auto; width: 100%; font-weight: bold; }
+    .fm-colon { font-weight: bold; }
+    .fm-x { border: 0; background: transparent; color: #c0392b; opacity: .35; padding: 0 4px; cursor: pointer; }
+    .fm-q:hover .fm-x, .fm-casebar:hover .fm-x { opacity: 1; }
+    .fm-x:disabled { opacity: .12; cursor: not-allowed; }
+    .fm-mark-preview { pointer-events: none; background: #fafafa; }
+    .fm-qadd { color: #000; background-color: #FEC503; border-color: #FEC503; margin-bottom: 1rem; }
+    .fm-submit { display: inline-block; background: #a02626; color: #fff; padding: 8px 34px; border-radius: 4px; font-weight: 600; opacity: .55; }
+    .fm-settings { background: #f8f9fa; border: 1px solid #e3e3e3; border-radius: 6px; padding: 12px 14px 4px; }
 </style>
 @push('scripts')
 <script>
@@ -482,38 +504,48 @@ $(function () {
         api('POST', '/stations/' + id + '/delete').done(function (r) { say(r.message); loadStations(); }).fail(fail);
     });
 
-    // ───── Form labels (FCS Clinical / Viva): cases, questions, labels, marks ─────
-    var formLimits = { cases: 8, questions: 10 };
+    // ───── Form labels (FCS Clinical / Viva): the form as the examiner sees it, edited in place ─────
+    var formLimits = { cases: 8, questions: 10 }, formExamLabel = '';
+    function marksList(text) {
+        var seen = {}, out = [];
+        String(text || '').split(/[\s,;]+/).forEach(function (v) { if (v !== '' && !isNaN(v) && !seen[+v]) { seen[+v] = 1; out.push(+v); } });
+        return out.sort(function (x, y) { return x - y; });
+    }
     function questionRow(label, n) {
-        return '<div class="input-group input-group-sm mb-1 fm-q"><div class="input-group-prepend"><span class="input-group-text fm-handle fm-qhandle" title="Drag to reorder, or into another case"><i class="fas fa-grip-vertical"></i></span><span class="input-group-text fm-qn">' + n + '</span></div>' +
-               '<input class="form-control fm-label" maxlength="120" value="' + esc(label) + '" placeholder="Question ' + n + '">' +
-               '<div class="input-group-append"><button type="button" class="btn btn-light border fm-qdel" title="Remove this question"><i class="fas fa-times text-danger"></i></button></div></div>';
+        return '<div class="form-group question-block fm-q"><div class="fm-qline"><span class="fm-handle fm-qhandle" title="Drag to reorder, or into another case"><i class="fas fa-grip-vertical"></i></span>' +
+               '<input class="fm-inline fm-lbl fm-label" maxlength="120" value="' + esc(label) + '" placeholder="Question ' + n + '"><span class="fm-colon">:</span>' +
+               '<button type="button" class="fm-x fm-qdel" title="Remove this question"><i class="fas fa-times"></i></button></div>' +
+               '<select class="form-control fm-mark-preview" disabled tabindex="-1"><option>Select Mark</option></select></div>';
     }
     function caseBlock(c, n) {
-        return '<div class="border rounded p-2 mb-2 fm-case"><div class="d-flex align-items-center mb-2" style="gap:.5rem;"><span class="fm-handle fm-chandle text-muted" title="Drag to reorder the cases"><i class="fas fa-grip-vertical"></i></span><strong class="fm-cn text-nowrap">Case ' + n + '</strong>' +
-               '<input class="form-control form-control-sm fm-title" maxlength="80" value="' + esc(c.title) + '" placeholder="Heading (empty: Case ' + n + ')">' +
-               '<button type="button" class="btn btn-sm btn-light border fm-cdel text-nowrap" title="Remove this case"><i class="fas fa-trash text-danger"></i></button></div>' +
+        return '<div class="fm-case col-md-6"><div class="fm-case-in"><div class="fm-casebar"><span class="fm-handle fm-chandle" title="Drag to reorder the cases"><i class="fas fa-grip-horizontal"></i> <span class="fm-cn">Case ' + n + '</span></span>' +
+               '<button type="button" class="fm-x fm-cdel" title="Remove this case"><i class="fas fa-trash"></i></button></div>' +
+               '<input class="fm-inline fm-h5 fm-title" maxlength="80" value="' + esc(c.title) + '" placeholder="Case ' + n + '">' +
                '<div class="fm-qs">' + c.questions.map(function (q, i) { return questionRow(q, i + 1); }).join('') + '</div>' +
-               '<button type="button" class="btn btn-xs btn-outline-secondary fm-qadd"><i class="fas fa-plus mr-1"></i> Add question</button></div>';
+               '<button type="button" class="btn btn-sm fm-qadd"><i class="fas fa-plus mr-1"></i> Add question to this case</button></div></div>';
     }
+    // keeps numbering, column widths, limits and the mark dropdowns of the preview in step with the editor
     function renumberForm(card) {
-        card.find('.fm-case').each(function (ci) {
-            var n = ci + 1;
-            $(this).find('.fm-cn').text('Case ' + n); $(this).find('.fm-title').attr('placeholder', 'Heading (empty: Case ' + n + ')');
-            $(this).find('.fm-q').each(function (qi) { $(this).find('.fm-qn').text(qi + 1); $(this).find('.fm-label').attr('placeholder', 'Question ' + (qi + 1)); });
-        });
-        card.find('.fm-cadd').prop('disabled', card.find('.fm-case').length >= formLimits.cases);
-        card.find('.fm-cdel').prop('disabled', card.find('.fm-case').length <= 1);
-        card.find('.fm-case').each(function () {
+        var cases = card.find('.fm-case'), n = cases.length, w = n === 1 ? 12 : (n === 2 ? 6 : (n === 4 ? 3 : 4));
+        cases.removeClass('col-md-12 col-md-6 col-md-4 col-md-3').addClass('col-md-' + w);
+        cases.each(function (ci) {
+            var k = ci + 1;
+            $(this).find('.fm-cn').text('Case ' + k); $(this).find('.fm-title').attr('placeholder', 'Case ' + k);
+            $(this).find('.fm-q').each(function (qi) { $(this).find('.fm-label').attr('placeholder', 'Question ' + (qi + 1)); });
             $(this).find('.fm-qdel').prop('disabled', $(this).find('.fm-q').length <= 1);
             $(this).find('.fm-qadd').prop('disabled', $(this).find('.fm-q').length >= formLimits.questions);
         });
+        card.find('.fm-cadd').prop('disabled', n >= formLimits.cases);
+        card.find('.fm-cdel').prop('disabled', n <= 1);
+        var opts = '<option>Select Mark</option>' + marksList(card.find('.fm-marks').val()).map(function (m) { return '<option>' + m + '</option>'; }).join('');
+        card.find('.fm-mark-preview').html(opts);
+        card.find('.fm-extra-preview').toggle(card.find('.fm-extra').is(':checked'));
     }
     // Drag and drop: cases by their grip, questions by theirs (also from one case into another of the same form)
     function enableDragging(card) {
         var f = card.data('format');
         card.find('.fm-cases').not('.ui-sortable').sortable({
-            items: '> .fm-case', handle: '.fm-chandle', axis: 'y', tolerance: 'pointer', placeholder: 'fm-placeholder', forcePlaceholderSize: true,
+            items: '> .fm-case', handle: '.fm-chandle', tolerance: 'pointer', placeholder: 'fm-placeholder col-md-6', forcePlaceholderSize: true,
             stop: function () { renumberForm(card); }
         });
         card.find('.fm-qs').addClass('fm-qs-' + f).not('.ui-sortable').sortable({
@@ -525,16 +557,25 @@ $(function () {
         });
     }
     function formCard(f, c) {
-        var title = f === 'clinical' ? 'Clinical form' : 'Viva form';
-        var h = '<div class="card mb-3 fm-card" data-format="' + f + '"><div class="card-header d-flex align-items-center"><h3 class="card-title mb-0">' + title + '</h3><span class="ml-auto">' +
+        var title = f === 'clinical' ? 'Clinical' : 'Viva';
+        var h = '<div class="card mb-4 fm-card" data-format="' + f + '"><div class="card-header d-flex align-items-center"><h3 class="card-title mb-0">' + title + ' form</h3><span class="ml-auto">' +
                 (c.customised ? '<span class="badge badge-warning">Changed</span>' : '<span class="badge badge-light border">Standard layout</span>') + '</span></div><div class="card-body">';
-        h += '<div class="fm-cases">' + c.cases.map(function (cs, i) { return caseBlock(cs, i + 1); }).join('') + '</div>';
-        h += '<button type="button" class="btn btn-sm btn-outline-secondary fm-cadd"><i class="fas fa-plus mr-1"></i> Add case</button>';
-        h += '<div class="form-group mt-3 mb-2"><label>Marks an examiner can give</label><input class="form-control form-control-sm fm-marks" style="max-width:320px;" value="' + esc(c.marks.join(', ')) +
-             '"><small class="text-muted">Separated by commas, for example 2, 4, 6, 8, 10: these are the choices in each question\'s drop-down.</small></div>';
-        h += '<div class="custom-control custom-switch"><input type="checkbox" class="custom-control-input fm-extra" id="fmExtra_' + f + '"' + (c.allow_extra ? ' checked' : '') + '><label class="custom-control-label" for="fmExtra_' + f +
-             '">Examiners can add an extra question to a case while marking</label></div>';
-        h += '</div><div class="card-footer d-flex" style="gap:.5rem;"><button class="btn btn-sm btn-cosecsa fm-save"><i class="fas fa-save mr-1"></i> Save ' + title + '</button>' +
+        // the form as the examiner sees it; headings and labels are typed in place
+        h += '<div class="fm-canvas"><div class="fm-tip"><i class="fas fa-pen mr-1"></i> This is the form as examiners see it. Click a heading or a question to rename it, drag the grips to reorder, and use the buttons to add or remove.</div>' +
+             '<div class="fm-formtitle">FCS ' + esc(formExamLabel.replace(/^FCS\s*/, '')) + ' - ' + title + ' Evaluation Form</div>' +
+             '<div class="form-row fm-top"><div class="form-group col-md-4"><label>Select Group</label><select class="form-control" disabled><option>Select Group...</option></select></div>' +
+             '<div class="form-group col-md-4"><label>Select Candidate</label><select class="form-control" disabled><option>Choose a Candidate...</option></select></div>' +
+             '<div class="form-group col-md-4"><label>Select Station</label><select class="form-control" disabled><option>Choose a Station...</option></select></div></div>';
+        h += '<div class="fm-box"><div class="fm-cases row mx-0">' + c.cases.map(function (cs, i) { return caseBlock(cs, i + 1); }).join('') + '</div>' +
+             '<div class="text-center mt-1"><button type="button" class="btn btn-sm btn-outline-secondary fm-cadd"><i class="fas fa-plus mr-1"></i> Add case</button></div></div>';
+        h += '<div class="form-row fm-bottom mt-3"><div class="form-group col-md-6"><label>Overall Marks</label><input class="form-control" disabled placeholder="Total marks will be calculated automatically"></div>' +
+             '<div class="form-group col-md-6"><label>Examiner Remarks</label><textarea class="form-control" rows="2" disabled placeholder="Enter remarks"></textarea></div></div>' +
+             '<div class="text-center"><span class="fm-submit">Submit</span></div></div>';
+        h += '<div class="fm-settings mt-3"><div class="d-flex flex-wrap align-items-end" style="gap:1.25rem;"><div><label class="mb-1">Marks an examiner can give</label>' +
+             '<input class="form-control form-control-sm fm-marks" style="min-width:260px;" value="' + esc(c.marks.join(', ')) + '"><small class="text-muted">Separated by commas, e.g. 2, 4, 6, 8, 10. They fill the drop-downs above.</small></div>' +
+             '<div class="custom-control custom-switch mb-4"><input type="checkbox" class="custom-control-input fm-extra" id="fmExtra_' + f + '"' + (c.allow_extra ? ' checked' : '') + '><label class="custom-control-label" for="fmExtra_' + f +
+             '">Examiners can add an extra question to a case while marking</label></div></div></div>';
+        h += '</div><div class="card-footer d-flex" style="gap:.5rem;"><button class="btn btn-sm btn-cosecsa fm-save"><i class="fas fa-save mr-1"></i> Save ' + title + ' form</button>' +
              '<button class="btn btn-sm btn-outline-secondary fm-reset"' + (c.customised ? '' : ' disabled') + '>Back to standard layout</button></div></div>';
         return h;
     }
@@ -547,15 +588,16 @@ $(function () {
                 $('#formsBody').html('<div class="alert alert-light border"><i class="fas fa-info-circle mr-1"></i> The ' + esc(r.label) + ' form has its own fixed layout, so there is nothing to change here. Rename its stations under <strong>Stations</strong>. Pick an FCS specialty above to change its Clinical and Viva forms.</div>');
                 return;
             }
-            formLimits = r.limits || formLimits;
-            $('#formsBody').html('<div class="text-muted small mb-2">The cases, questions and wording of the ' + esc(r.label) + ' marking forms. Add or remove cases and questions as the exam needs, and drag the grip at the left of a case or a question to put it in order (a question can also be dragged into another case). ' +
-                'Labels are read by position, so reordering or renaming also changes how marks already saved are labelled. ' +
-                'Marks already given are kept exactly as they were saved. Changes show the next time an examiner opens the form. The names of the stations (Station 1… or Viva 1…) are under <strong>Stations</strong>.</div>' +
+            formLimits = r.limits || formLimits; formExamLabel = r.label;
+            $('#formsBody').html('<div class="text-muted small mb-2">The ' + esc(r.label) + ' marking forms, shown as examiners see them: edit them right here. ' +
+                'Labels are read by position, so reordering or renaming also changes how marks already saved are labelled; the marks themselves are never changed. Changes show the next time an examiner opens the form. The names of the stations (Station 1… or Viva 1…) are under <strong>Stations</strong>.</div>' +
                 ['clinical', 'viva'].map(function (f) { return formCard(f, r.formats[f]); }).join(''));
             $('#formsBody .fm-card').each(function () { renumberForm($(this)); enableDragging($(this)); });
         }).fail(fail);
     }
-    $('#formsBody').on('click', '.fm-cadd', function () {
+    $('#formsBody').on('input', '.fm-marks', function () { renumberForm($(this).closest('.fm-card')); })
+    .on('change', '.fm-extra', function () { renumberForm($(this).closest('.fm-card')); })
+    .on('click', '.fm-cadd', function () {
         var card = $(this).closest('.fm-card'), last = card.find('.fm-case').last();   // a new case starts with the questions of the one before it
         var qs = last.find('.fm-label').map(function () { return $(this).val(); }).get();
         card.find('.fm-cases').append(caseBlock({ title: '', questions: qs.length ? qs : [''] }, card.find('.fm-case').length + 1)); renumberForm(card); enableDragging(card);

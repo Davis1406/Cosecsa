@@ -4,8 +4,10 @@
 
 ## [Unreleased]
 
-### Added (2026-11-19) — Exams Settings > Form labels: drag and drop
-- In the FCS form layout editor, drag the grip at the left of a **case** to put the cases in order, and the grip at the left of a **question** to reorder the questions of a case or drag one into another case of the same form. Numbering and placeholders follow; a case never ends up empty. (Reordering relabels marks already saved, since labels are read by position; the page says so.) jQuery UI sortable, already on the page: no new library.
+### Changed (2026-11-19) — Exams Settings > Form labels: edit the form as examiners see it
+- The Clinical and Viva editors now show **the marking form itself**, laid out and styled as examiners see it (title, group / candidate / station row, the red case box with its columns, the mark drop-downs, remarks and Submit). **Click a case heading or a question to rename it in place**; there is no separate list any more.
+- **Drag** the grip of a case to reorder the cases, and the grip of a question to reorder it or move it into another case; *Add question to this case*, *Add case* and the red remove buttons sit on the form. Column widths follow the number of cases exactly like the real form.
+- The **marks** box under the form fills the drop-downs of the preview as you type, so the scale is seen live. Saving, resetting and the API are unchanged. (Reordering relabels marks already saved, since labels are read by position; the page says so.) jQuery UI sortable, already on the page: no new library.
 
 ### Added (2026-11-18) — Exams Settings works for every exam: start control, groups, stations, FCS form layout
 - The admin menu item **Exam Groups & Stations** is now **Exams Settings** (Examinations menu, `admin/exams/setup`).
