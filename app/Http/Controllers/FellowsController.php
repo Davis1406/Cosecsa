@@ -116,8 +116,18 @@ class FellowsController extends Controller
             return redirect('admin/associates/fellows/list')->with('error', 'Fellow not found or failed to load.');
         }
 
+        // The link and QR on the fellow's certificate, and how often it was scanned (made on first view).
+        $verification = null;
+        try {
+            $v = $this->api->get("fellows/{$id}/verification");
+            $verification = $v->successful() ? $v->object() : null;
+        } catch (\Throwable $e) {
+            // the page still opens; its Certificate QR tab says the link could not be loaded
+        }
+
         return view('admin.associates.fellows.view', [
             'header_title'       => 'View Fellow',
+            'verification'       => $verification,
             'fellow'             => $data->fellow,
             'subscriptions'      => collect($data->subscriptions ?? []),
             'fellowResults'      => collect($data->fellowResults ?? []),

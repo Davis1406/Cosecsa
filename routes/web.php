@@ -45,6 +45,10 @@ Route::prefix('ceo-report/{token}')->middleware('throttle:120,1')->group(functio
     Route::post('/submit', [\App\Http\Controllers\CeoReportLinkController::class, 'submit'])->name('ceo-report.submit');
 });
 
+// The QR code on a Fellow's certificate opens this: a public page that confirms the person is a COSECSA Fellow.
+// No login; the long random token is the key. See FellowVerifyController.
+Route::get('verify/{token}', [\App\Http\Controllers\FellowVerifyController::class, 'show'])->middleware('throttle:60,1')->name('fellow.verify');
+
 Route::post('forget-password', [AuthController::class,'PostForgetPassword'])->middleware('throttle:5,1');
 Route::get('reset/{token}', [AuthController::class,'ResetPassword']);
 Route::post('reset/{token}', [AuthController::class,'PostReset'])->middleware('throttle:10,1');

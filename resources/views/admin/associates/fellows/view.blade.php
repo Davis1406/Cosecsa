@@ -594,6 +594,15 @@ body.dark-mode .admin-action-bar span[style*="a02626"] { color:#f48a8a !importan
                 <ul class="nav nav-tabs fellow-tabs" id="fellowTabs" role="tablist">
                     <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tab-personal">Personal</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-fellowship">Fellowship</a></li>
+                    @php $vScans = (int) ($verification->scans->total ?? 0); @endphp
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#tab-certificate">
+                            <i class="fas fa-qrcode mr-1"></i>Certificate QR
+                            @if($vScans)
+                            <span class="badge badge-pill ml-1" style="background:#2e8b57;color:#fff;font-size:.65rem;" title="Times the certificate QR was scanned">{{ $vScans }}</span>
+                            @endif
+                        </a>
+                    </li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-fees">Fees &amp; Payments</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-subs">Subscriptions</a></li>
                     @php $resultsCount = isset($fellowResults) ? $fellowResults->count() : 0; @endphp
@@ -932,6 +941,92 @@ body.dark-mode .admin-action-bar span[style*="a02626"] { color:#f48a8a !importan
                     </div>
 
                     {{-- ── TAB: Fees & Payments ── --}}
+                    {{-- ── TAB: Certificate QR ── the link and QR code printed on the fellow's certificate, and how often it was scanned ── --}}
+                    @php
+                        $vToken   = $verification->token ?? null;
+                        $vUrl     = $vToken ? rtrim(config('app.url'), '/') . '/verify/' . $vToken : null;
+                        $vS       = $verification->scans ?? null;
+                        $vExam    = ($fellow->exam_year_previous ?? null) ?: ($fellow->exam_year_upcoming ?? null);
+                        $vDate    = ! empty($fellow->graduation_date) ? \Carbon\Carbon::parse($fellow->graduation_date) : null;
+                        $vWhen    = fn ($t) => \Carbon\Carbon::parse($t)->format('j M Y, H:i');
+                        $vShown   = [
+                            'Name'        => trim(($fellow->cert_name ?? '') ?: ($fellow->firstname.' '.$fellow->middlename.' '.$fellow->lastname)),
+                            'Trained in'  => ($fellow->programme_name ?? null) ?: ($fellow->current_specialty ?? null),
+                            'Year joined' => $fellow->admission_year ?? null,
+                            'Exam year'   => $vExam,
+                            'Graduated'   => $vDate ? $vDate->format('j F Y') : (($fellow->fellowship_year ?? null) ? $fellow->fellowship_year.' (year only: set the date below)' : null),
+                            'Country'     => $fellow->country_name ?? null,
+                        ];
+                    @endphp
+                    <div class="tab-pane fade" id="tab-certificate">
+                        @if(! $vUrl)
+                            <p class="text-danger mb-0" style="font-size:.9rem;"><i class="fas fa-exclamation-triangle mr-1"></i>The verification link could not be loaded. Reload the page; if it persists, the API did not answer.</p>
+                        @else
+                        <p class="sect-div">Certificate verification</p>
+                        <small class="text-muted d-block mb-3">Put this QR code on the fellow's certificate. Anyone who scans it lands on a public page with a green tick and the details below (no login, no contact details). The link never changes, so a printed code keeps working.</small>
+
+                        <div class="row">
+                            <div class="col-md-5 mb-3 text-center">
+                                <div id="vQr" style="display:inline-block;width:100%;max-width:230px;background:#fff;border:1px solid #e3e6ef;border-radius:12px;padding:10px;line-height:0;"></div>
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="vPng"><i class="fas fa-download mr-1"></i>PNG</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="vSvg"><i class="fas fa-download mr-1"></i>SVG</button>
+                                </div>
+                                <small class="text-muted d-block mt-1">PNG for Word, SVG for print.</small>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="small text-muted mb-1">Verification link</label>
+                                <div class="input-group input-group-sm mb-1">
+                                    <input type="text" class="form-control" id="vUrl" value="{{ $vUrl }}" readonly onclick="this.select()">
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-secondary" id="vCopy"><i class="fas fa-copy mr-1"></i>Copy</button>
+                                        <a class="btn btn-outline-secondary" href="{{ $vUrl }}?preview=1" target="_blank" rel="noopener"><i class="fas fa-external-link-alt mr-1"></i>Open page</a>
+                                    </div>
+                                </div>
+                                <small class="text-muted">"Open page" is not counted as a scan.</small>
+
+                                <p class="sect-div mt-3">Scans</p>
+                                <div class="d-flex align-items-center mb-2" style="gap:.9rem;">
+                                    <div style="font-size:2.2rem;font-weight:700;line-height:1;color:#2e8b57;">{{ $vS->total ?? 0 }}</div>
+                                    <div class="small text-muted" style="line-height:1.35;">
+                                        {{ ($vS->total ?? 0) === 1 ? 'time' : 'times' }} scanned<br>
+                                        @if(! empty($vS->last))Last: <strong>{{ $vWhen($vS->last) }}</strong>@if(($vS->total ?? 0) > 1) · First: <strong>{{ $vWhen($vS->first) }}</strong>@endif
+                                        @else Not scanned yet @endif
+                                    </div>
+                                </div>
+                                @if(! empty($vS->recent))
+                                    <div class="small" style="max-height:160px;overflow:auto;border:1px solid #eee;border-radius:6px;">
+                                        <table class="table table-sm mb-0"><tbody>
+                                            @foreach($vS->recent as $i => $at)
+                                                <tr><td style="width:2rem;color:#9aa3b2;">{{ $i + 1 }}</td><td>{{ $vWhen($at) }}</td></tr>
+                                            @endforeach
+                                        </tbody></table>
+                                    </div>
+                                    @if(($vS->total ?? 0) > count($vS->recent))<small class="text-muted">Showing the latest {{ count($vS->recent) }}.</small>@endif
+                                @endif
+                                <small class="text-muted d-block mt-1">A reload by the same phone within 10 minutes counts once; link-preview bots and admins are not counted.</small>
+                            </div>
+                        </div>
+
+                        <p class="sect-div">What the page shows</p>
+                        <small class="text-muted d-block mb-2">Anything marked "Not set" is left off the page. Fill it in from the Personal and Fellowship tabs.</small>
+                        @foreach($vShown as $label => $value)
+                            <div class="field-row"><span class="field-lbl">{{ $label }}</span>
+                                <span class="field-val">@if($value){{ $value }}@else<span class="text-muted">Not set</span>@endif</span></div>
+                        @endforeach
+                        <div class="field-row"><span class="field-lbl">Graduation date</span>
+                            <span class="field-val ie-field" data-ie="graduation_date" data-ie-type="date"
+                                  data-ie-value="{{ $fellow->graduation_date ?? '' }}"
+                                  data-ie-url="{{ url('admin/associates/fellows/'.$fellow->fellow_id.'/quick-update') }}"
+                                  data-ie-csrf="{{ csrf_token() }}">
+                                <span class="ie-value">{{ $vDate ? $vDate->format('d M Y') : '—' }}</span>
+                                <button class="ie-pencil" type="button" title="Edit graduation date"><i class="fas fa-pen"></i></button>
+                            </span>
+                        </div>
+                        <small class="text-muted d-block mt-1">Shown as the full date on the page. Until it is set, the page shows the fellowship year.</small>
+                        @endif
+                    </div>
+
                     <div class="tab-pane fade" id="tab-fees">
                         <p class="sect-div">Programme Entry Fee</p>
                         <div class="field-row"><span class="field-lbl">Entry Fee Year</span>
@@ -1305,6 +1400,52 @@ $('#addRoleForm').on('submit', function (e) {
     });
 });
 </script>
+@endpush
+
+
+@push('scripts')
+@if(! empty($verification->token))
+<script src="{{ asset('js/vendor/qrcode-generator-1.4.4.min.js') }}"></script>
+<script>
+// The QR code for the fellow's verification link, drawn in the browser (nothing is sent anywhere).
+(function () {
+    var input = document.getElementById('vUrl'), box = document.getElementById('vQr');
+    if (!input || !box || typeof qrcode === 'undefined') return;
+    var qr = qrcode(0, 'Q');            // 'Q': still scans with a quarter of the code damaged or printed small
+    qr.addData(input.value); qr.make();
+    var n = qr.getModuleCount(), quiet = 4, size = n + quiet * 2;
+
+    function svg(px) {
+        var d = '';
+        for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) if (qr.isDark(r, c)) d += 'M' + (c + quiet) + ' ' + (r + quiet) + 'h1v1h-1z';
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + size + ' ' + size + '"' + (px ? ' width="' + px + '" height="' + px + '"' : ' style="width:100%;height:auto"') +
+               ' shape-rendering="crispEdges"><rect width="' + size + '" height="' + size + '" fill="#fff"/><path d="' + d + '" fill="#000"/></svg>';
+    }
+    box.innerHTML = svg();
+
+    function save(blob, ext) {
+        var a = document.createElement('a'), name = @json(\Illuminate\Support\Str::slug(trim(($fellow->firstname ?? '').' '.($fellow->lastname ?? '')) ?: 'fellow'));
+        a.href = URL.createObjectURL(blob); a.download = 'cosecsa-certificate-qr-' + name + '.' + ext;
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    }
+    document.getElementById('vSvg').addEventListener('click', function () {
+        save(new Blob([svg(1024)], { type: 'image/svg+xml' }), 'svg');
+    });
+    document.getElementById('vPng').addEventListener('click', function () {
+        var cell = Math.max(4, Math.floor(1200 / size)), cv = document.createElement('canvas'), ctx;
+        cv.width = cv.height = cell * size; ctx = cv.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.fillStyle = '#000';
+        for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * cell, (r + quiet) * cell, cell, cell);
+        cv.toBlob(function (b) { save(b, 'png'); }, 'image/png');
+    });
+    document.getElementById('vCopy').addEventListener('click', function () {
+        var btn = this, done = function () { var t = btn.innerHTML; btn.innerHTML = '<i class="fas fa-check mr-1"></i>Copied'; setTimeout(function () { btn.innerHTML = t; }, 1500); };
+        if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(input.value).then(done); }
+        else { input.select(); try { document.execCommand('copy'); done(); } catch (e) {} }
+    });
+})();
+</script>
+@endif
 @endpush
 
 @endsection
