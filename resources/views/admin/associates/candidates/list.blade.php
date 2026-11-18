@@ -1,14 +1,27 @@
 @extends('layout.app')
 
 @section('content')
-@include('admin._dt_prefetch', ['url' => url('admin/associates/candidates/list-rows')])
+@php
+    $rowsUrl = url('admin/associates/candidates/list-rows') . (($showInactive ?? false) ? '?inactive=1' : '');
+@endphp
+@include('admin._dt_prefetch', ['url' => $rowsUrl])
 <div class="wrapper">
     <div class="content-wrapper">
 
         <section class="content-header">
             <div class="container-fluid">
                 <div class="row mb-2">
-                    <div class="col-sm-6"></div>
+                    <div class="col-sm-6">
+                        @if($showInactive ?? false)
+                        <a href="{{ url('admin/associates/candidates/list') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left mr-1"></i> Back to active candidates
+                        </a>
+                        @else
+                        <a href="{{ url('admin/associates/candidates/list?inactive=1') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-user-slash mr-1"></i> Inactive candidates
+                        </a>
+                        @endif
+                    </div>
                     <div class="col-sm-6 text-right">
                         <a href="{{ url('admin/associates/candidates/reports') }}"
                            class="btn btn-sm btn-outline-secondary mr-1">
@@ -44,11 +57,12 @@
                         $filterDefs = [
                             ['id'=>'filterCountry',   'label'=>'Country',   'options'=>$filterCountries,         'default'=>[], 'optLabels'=>[]],
                             ['id'=>'filterProgramme', 'label'=>'Programme', 'options'=>$filterProgrammes,        'default'=>[], 'optLabels'=>[]],
-                            ['id'=>'filterYear',      'label'=>'Exam Year', 'options'=>$filterYears,             'default'=>[(string)date('Y')], 'optLabels'=>[]],
+                            ['id'=>'filterYear',      'label'=>'Exam Year', 'options'=>$filterYears,             'default'=>($showInactive ?? false) ? [] : [(string)date('Y')], 'optLabels'=>[]],
                             ['id'=>'filterGender',    'label'=>'Gender',    'options'=>collect(['Male','Female']),'default'=>[], 'optLabels'=>[]],
                             ['id'=>'filterFeePaid',   'label'=>'Fee Paid',  'options'=>collect(['Yes','No']),     'default'=>[], 'optLabels'=>['Yes'=>'Paid','No'=>'Not Paid']],
                             ['id'=>'filterPartOne',   'label'=>'Part I',    'options'=>collect(['Pass','Fail','None']), 'default'=>[], 'optLabels'=>['None'=>'No result yet']],
                             ['id'=>'filterPartTwo',   'label'=>'Part II',   'options'=>collect(['Yes','No']),     'default'=>[], 'optLabels'=>['Yes'=>'Promoted','No'=>'Not promoted']],
+                            ['id'=>'filterRepeat',    'label'=>'Repeating', 'options'=>collect(['Yes','No']),     'default'=>[], 'optLabels'=>['Yes'=>'Repeating a paper','No'=>'Not repeating']],
                             ['id'=>'filterTags',      'label'=>'Tags',      'options'=>$filterTags,              'default'=>[], 'optLabels'=>[]],
                         ];
                         @endphp
@@ -88,16 +102,36 @@
                     </div>
                 </div>
 
+                @if(Auth::user()->isSuperAdmin() || Auth::user()->hasPermission('candidates.manage'))
+                <form id="bulkPartTwoForm" method="POST" action="{{ url('admin/associates/candidates/part-two-bulk') }}" class="d-none">
+                    @csrf
+                    <input type="hidden" name="promote" id="bulkPromote" value="1">
+                    <div id="bulkIds"></div>
+                </form>
+                <div class="card card-outline card-info mb-2 shadow-sm" id="bulkBar">
+                    <div class="card-body py-2 d-flex flex-wrap align-items-center" style="gap:.6rem;">
+                        <strong class="mr-1"><i class="fas fa-check-double mr-1"></i> Bulk Part II</strong>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="bulkSelectFiltered">Select everyone shown</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="bulkClear" style="display:none;">Clear selection</button>
+                        <span class="text-muted small" id="bulkCount">Tick candidates in the list, or filter (e.g. Repeating) and select everyone shown.</span>
+                        <span class="ml-auto" id="bulkActions" style="display:none;">
+                            <button type="button" class="btn btn-sm btn-success" id="bulkPromoteBtn"><i class="fas fa-level-up-alt mr-1"></i> Promote to Part II</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="bulkUnpromoteBtn"><i class="fas fa-undo mr-1"></i> Remove promotion</button>
+                        </span>
+                    </div>
+                </div>
+                @endif
+
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h3 class="card-title mb-0">Candidates List <span id="cardYearLabel">{{ date('Y') }}</span></h3>
+                                <h3 class="card-title mb-0">@if($showInactive ?? false)Inactive Candidates<span class="d-none" id="cardYearLabel"></span>@else Candidates List <span id="cardYearLabel">{{ date('Y') }}</span>@endif</h3>
                                 <small class="text-muted" id="filteredCount"></small>
                             </div>
                             <div class="card-body">
                                 <table id="candidatestable" class="table table-bordered table-striped"
-                                       data-rows-url="{{ url('admin/associates/candidates/list-rows') }}"
+                                       data-rows-url="{{ $rowsUrl }}"
                                        data-base-url="{{ url('admin/associates/candidates') }}"
                                        data-app-url="{{ url('') }}"
                                        data-can-delete="{{ Auth::user()->isSuperAdmin() ? 1 : 0 }}"
@@ -248,6 +282,11 @@ $(document).ready(function () {
             var rowTags = row.tags || [];
             if (!chkTags.some(function (t) { return rowTags.indexOf(t) !== -1; })) return false;
         }
+        var chkRepeat = getChecked('filterRepeat');
+        if (chkRepeat.length) {
+            var repeating = (row.repeat_paper_one === 'Yes' || row.repeat_paper_two === 'Yes') ? 'Yes' : 'No';
+            if (chkRepeat.indexOf(repeating) === -1) return false;
+        }
         var chkPartOne = getChecked('filterPartOne'), chkPartTwo = getChecked('filterPartTwo');
         if (chkPartOne.length   && chkPartOne.indexOf(row.part1_result || 'None')       === -1) return false;
         if (chkPartTwo.length   && chkPartTwo.indexOf(row.part_two_promoted_at ? 'Yes' : 'No') === -1) return false;
@@ -303,6 +342,43 @@ $(document).ready(function () {
         redraw();
         $('#filteredCount').text('');
     });
+
+    // ── Bulk Part II: tick candidates (or select everyone the filters show), then promote them together ──
+    window.candSel = window.candSel || {};
+    function selCount() { return Object.keys(window.candSel).length; }
+    function refreshBulk() {
+        var n = selCount();
+        $('#bulkCount').text(n ? n + ' selected' : 'Tick candidates in the list, or filter (e.g. Repeating) and select everyone shown.');
+        $('#bulkActions, #bulkClear').toggle(n > 0);
+    }
+    $(document).on('change', '.cand-pick', function () {
+        if (this.checked) window.candSel[this.value] = 1; else delete window.candSel[this.value];
+        refreshBulk();
+    });
+    $('#bulkSelectFiltered').on('click', function () {
+        var dt = $('#candidatestable').DataTable();
+        dt.rows({ search: 'applied' }).data().each(function (r) { if (r.candidates_id) window.candSel[r.candidates_id] = 1; });
+        $('.cand-pick').prop('checked', true);
+        refreshBulk();
+    });
+    $('#bulkClear').on('click', function () {
+        window.candSel = {};
+        $('.cand-pick').prop('checked', false);
+        refreshBulk();
+    });
+    function bulkSubmit(promote) {
+        var ids = Object.keys(window.candSel), n = ids.length;
+        if (!n) return;
+        CosecsaAlert.confirm((promote ? 'Promote ' : 'Remove the Part II promotion of ') + n + ' candidate' + (n === 1 ? '' : 's') + (promote ? ' to Part II?' : '?'), { variant: 'info' })
+            .then(function (ok) {
+                if (!ok) return;
+                $('#bulkPromote').val(promote ? 1 : 0);
+                $('#bulkIds').html(ids.map(function (id) { return '<input type="hidden" name="ids[]" value="' + id + '">'; }).join(''));
+                document.getElementById('bulkPartTwoForm').submit();
+            });
+    }
+    $('#bulkPromoteBtn').on('click', function () { bulkSubmit(true); });
+    $('#bulkUnpromoteBtn').on('click', function () { bulkSubmit(false); });
 
     // Apply default year filter once the rows have loaded
     $('#candidatestable').on('init.dt', redraw);

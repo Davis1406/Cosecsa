@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added (2026-11-25) — Candidates: set a candidate Inactive
+- On a **candidate's profile** (needs candidates *manage*): **Set Inactive** (with an optional reason) takes the candidate off the Candidates list and changes the linked **trainee status to Inactive**. A grey banner on the profile shows since when and why. **Set Active again** (profile) puts the candidate back on the list and gives the trainee its earlier status back (unless it was changed by hand meanwhile). **Candidates list > Inactive candidates** shows only the inactive ones (every year) so they can be opened and reactivated. Nothing is deleted. Letters to Candidates skip them. Needs the API release first (migration `2026_11_25_100000_add_status_to_candidates`).
+
+### Added (2026-11-25) — Candidates: promote to Part II in bulk
+- **Candidates list > Bulk Part II** (needs candidates *manage*): tick candidates in the list, or filter and press **Select everyone shown**, then **Promote to Part II** or **Remove promotion**; the selection is kept while paging. A new **Repeating** filter (repeating a paper / not repeating) finds the repeaters. Candidates already promoted keep their date; Inactive candidates are skipped, and the result says how many changed. Needs the API release first.
+
 ### Changed (2026-11-19) — College letters: build the "To" section by dragging fields
 - Under the **"To" section** box of the template editor there is a row of merge fields (full name, first name, e-mail, country, programme, hospital, entry number, admission year, exam year): **drag one into the box** (it lands where you drop it) or click it to put it at the cursor; the live preview follows. **Title** buttons (Dr., Prof., Mr., Ms., Mrs.) put or swap the title in front of the first line, and *Back to the standard block* empties the box. Type your own words around the fields (e.g. *Entry no.*). Web-only change, no API release needed. (`letters/form.blade.php`.)
 

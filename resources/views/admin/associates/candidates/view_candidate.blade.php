@@ -157,6 +157,23 @@
                     <i class="fas fa-user-md mr-1"></i> View Trainee Profile
                 </a>
                 @endif
+                @php
+                    $isInactive = ($candidate->status ?? 'Active') === 'Inactive';
+                    $canManageStatus = Auth::user()->isSuperAdmin() || Auth::user()->hasPermission('candidates.manage');
+                @endphp
+                @if($canManageStatus)
+                    @if($isInactive)
+                    <form method="POST" action="{{ url('admin/associates/candidates/' . ($candidate->candidates_id ?? 0) . '/status') }}" class="d-inline">
+                        @csrf
+                        <input type="hidden" name="status" value="Active">
+                        <button type="submit" class="btn btn-sm btn-success" data-confirm-variant="info" data-confirm="Make this candidate Active again? They will return to the Candidates list{{ !empty($linkedTrainee) ? ' and the trainee status will be put back' : '' }}."><i class="fas fa-user-check mr-1"></i> Set Active again</button>
+                    </form>
+                    @else
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#setInactiveModal">
+                        <i class="fas fa-user-slash mr-1"></i> Set Inactive
+                    </button>
+                    @endif
+                @endif
                 @include('admin._impersonate_button', ['userId' => $candidate->user_id ?? null])
                 <a href="{{ url('admin/associates/candidates/list') }}"
                    class="btn btn-sm btn-outline-secondary">
@@ -164,6 +181,18 @@
                 </a>
             </div>
         </div>
+
+        @if(!empty($isInactive))
+        <div class="alert alert-secondary d-flex align-items-start" style="gap:10px;">
+            <i class="fas fa-user-slash mt-1"></i>
+            <div>
+                <strong>This candidate is Inactive.</strong>
+                They are not on the Candidates list{{ !empty($linkedTrainee) ? ' and their trainee status is Inactive' : '' }}.
+                @if(!empty($candidate->inactivated_at))<span class="text-muted">Since {{ \Carbon\Carbon::parse($candidate->inactivated_at)->format('d M Y, H:i') }}.</span>@endif
+                @if(!empty($candidate->inactive_reason))<div class="mt-1">Reason: {{ $candidate->inactive_reason }}</div>@endif
+            </div>
+        </div>
+        @endif
 
         <div class="row">
             {{-- ══ LEFT PANEL ══ --}}
@@ -754,6 +783,35 @@
                 <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Candidate not found.</h5>
                 <a href="{{ url('admin/associates/candidates/list') }}" class="btn btn-sm btn-secondary mt-2">Back to List</a>
+            </div>
+        </div>
+        @endif
+
+        @if($candidate && !empty($canManageStatus) && empty($isInactive))
+        <div class="modal fade" id="setInactiveModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <form method="POST" action="{{ url('admin/associates/candidates/' . ($candidate->candidates_id ?? 0) . '/status') }}" class="modal-content">
+                    @csrf
+                    <input type="hidden" name="status" value="Inactive">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fas fa-user-slash mr-1"></i> Set candidate Inactive</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-2">
+                            <strong>{{ $candidate->name ?? trim(($candidate->firstname ?? '') . ' ' . ($candidate->lastname ?? '')) }}</strong>
+                            will no longer show on the Candidates list
+                            @if(!empty($linkedTrainee))and their trainee status will change to <strong>Inactive</strong>@endif.
+                            You can make them Active again from the <em>Inactive candidates</em> list.
+                        </p>
+                        <label for="inactiveReason" class="mb-1">Reason <span class="text-muted">(optional)</span></label>
+                        <textarea name="reason" id="inactiveReason" class="form-control" rows="3" maxlength="1000" placeholder="e.g. Withdrew from the 2026 sitting"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger"><i class="fas fa-user-slash mr-1"></i> Set Inactive</button>
+                    </div>
+                </form>
             </div>
         </div>
         @endif

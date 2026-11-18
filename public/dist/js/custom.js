@@ -548,7 +548,12 @@ $(function () {
                 { "data": null, "defaultContent": "", "className": "row-num", "orderable": false, "searchable": false }, // 0 #
                 { "data": "name", "render": function (d, type, r) {
                     if (type !== "display") return dtDash(d);
-                    return '<a href="' + cBase + '/view/' + (r.candidates_id || 0) + '" class="candidate-name-link font-weight-500">' + dtEsc(dtDash(d)) + '</a>';
+                    var pick = cCanManage
+                        ? '<input type="checkbox" class="cand-pick mr-2" value="' + (r.candidates_id || 0) + '"' +
+                          ((window.candSel || {})[r.candidates_id] ? ' checked' : '') + ' title="Select for bulk actions">'
+                        : '';
+                    return pick + '<a href="' + cBase + '/view/' + (r.candidates_id || 0) + '" class="candidate-name-link font-weight-500">' + dtEsc(dtDash(d)) + '</a>' +
+                        (r.status === "Inactive" ? ' <span class="badge badge-secondary" title="' + dtEsc(r.inactive_reason || "") + '">Inactive</span>' : "");
                 } },
                 $.extend({ "data": "entry_number" }, craw),
                 { "data": "candidate_id", "render": function (d, type) {

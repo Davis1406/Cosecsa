@@ -333,10 +333,12 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
   Route::get('admin/associates/candidates/part-one',          [\App\Http\Controllers\PartOneResultsController::class, 'upload']);
   Route::post('admin/associates/candidates/part-one/preview', [\App\Http\Controllers\PartOneResultsController::class, 'preview']);
   Route::post('admin/associates/candidates/part-one/import',  [\App\Http\Controllers\PartOneResultsController::class, 'import']);
+  Route::post('admin/associates/candidates/part-two-bulk',    [\App\Http\Controllers\PartOneResultsController::class, 'bulkPartTwo']);
   Route::post('admin/associates/candidates/part-two/{id}',    [\App\Http\Controllers\PartOneResultsController::class, 'setPartTwo']);
   Route::get('admin/associates/candidates/view/{id}',  [CandidatesController::class,'view'])->name('candidates.view');
   Route::post('admin/associates/candidates/{id}/notes', [AssociateNoteController::class,'store'])->name('candidate.notes.store')->defaults('type', 'candidate');
   Route::post('admin/associates/candidates/notes/{noteId}/delete', [AssociateNoteController::class,'destroy'])->name('candidate.notes.destroy')->defaults('type', 'candidate');
+  Route::post('admin/associates/candidates/{id}/status', [CandidatesController::class,'setStatus'])->name('candidates.status');
   Route::post('admin/associates/candidates/{id}/quick-update', [CandidatesController::class,'quickUpdate'])->name('candidates.quick.update');
   Route::get('admin/associates/candidates/edit/{id} ', [CandidatesController::class,'edit']);
   Route::post('admin/associates/candidates/edit/{id} ', [CandidatesController::class,'update']);

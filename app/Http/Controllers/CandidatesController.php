@@ -54,6 +54,7 @@ class CandidatesController extends Controller
 
         return view('admin.associates.candidates.list', [
             'header_title'    => 'Candidates List',
+            'showInactive'    => request('inactive') === '1',
             'filterCountries' => collect($data->filterCountries ?? []),
             'filterProgrammes'=> collect($data->filterProgrammes ?? []),
             'filterYears'     => collect($data->filterYears ?? []),
@@ -69,7 +70,12 @@ class CandidatesController extends Controller
                  'personal_email', 'repeat_paper_one', 'repeat_paper_two', 'mmed', 'sponsor', 'exam_year',
                  'mode_of_payment', 'part1_overall', 'part1_result', 'part_two_promoted_at', 'tags'];
 
-        $rows = collect($this->api->get('candidates/list-data')->object()->candidates ?? [])
+        $query = request('inactive') === '1' ? ['inactive' => 1] : [];
+        $keys[] = 'status';
+        $keys[] = 'inactive_reason';
+        $keys[] = 'inactivated_at';
+
+        $rows = collect($this->api->get('candidates/list-data', $query)->object()->candidates ?? [])
             ->map(fn ($c) => array_intersect_key((array) $c, array_flip($keys)))
             ->values();
 
@@ -103,6 +109,29 @@ class CandidatesController extends Controller
         ]);
 
         return response()->json($response->json(), $response->status());
+    }
+
+    // Set a candidate Inactive (off the Candidates list, trainee status Inactive too) or Active again.
+    public function setStatus(Request $request, $id)
+    {
+        $user = Auth::user();
+        abort_unless($user && ($user->isSuperAdmin() || $user->hasPermission('candidates.manage')), 403);
+
+        $request->validate(['status' => 'required|in:Active,Inactive', 'reason' => 'nullable|string|max:1000']);
+
+        $response = $this->api->post("candidates/{$id}/status", [
+            'status' => $request->input('status'),
+            'reason' => (string) $request->input('reason', ''),
+        ]);
+
+        if ($response->failed()) {
+            return back()->with('error', $response->json('message') ?: 'Could not change the candidate status.');
+        }
+
+        // Going Inactive removes them from the list, so go to the list; Active again goes back to the profile.
+        return $request->input('status') === 'Inactive'
+            ? redirect('admin/associates/candidates/list?inactive=1')->with('success', $response->json('message'))
+            : redirect("admin/associates/candidates/view/{$id}")->with('success', $response->json('message'));
     }
 
     public function add()

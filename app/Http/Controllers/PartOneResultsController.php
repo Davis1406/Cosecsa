@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\ApiClient;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -83,6 +84,23 @@ class PartOneResultsController extends Controller
         $response = $this->api->post("candidates/{$candidateId}/part-two", ['promote' => $request->boolean('promote')]);
 
         return back()->with($response->failed() ? 'error' : 'success',
+            $response->json('message') ?? ($response->failed() ? 'Could not update the Part II status.' : 'Updated.'));
+    }
+
+    // Promote the candidates ticked on the Candidates list to Part II (or take them off it) in one go.
+    public function bulkPartTwo(Request $request)
+    {
+        $user = Auth::user();
+        abort_unless($user && ($user->isSuperAdmin() || $user->hasPermission('candidates.manage')), 403);
+
+        $request->validate(['ids' => 'required|array|min:1|max:2000', 'ids.*' => 'integer', 'promote' => 'nullable']);
+
+        $response = $this->api->post('candidates/bulk/part-two', [
+            'ids'     => array_map('intval', $request->input('ids')),
+            'promote' => $request->boolean('promote'),
+        ]);
+
+        return redirect('admin/associates/candidates/list')->with($response->failed() ? 'error' : 'success',
             $response->json('message') ?? ($response->failed() ? 'Could not update the Part II status.' : 'Updated.'));
     }
 
