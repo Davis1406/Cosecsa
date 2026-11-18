@@ -18,7 +18,7 @@ class FellowVerifyPageTest extends TestCase
     private function fellow(array $over = []): array
     {
         return ['verified' => true, 'fellow' => $over + [
-            'name' => 'Amina Otieno', 'trained_in' => 'FCS General Surgery', 'joined' => '2021', 'exam_year' => '2026',
+            'name' => 'Amina Otieno', 'fellowship_type' => 'Fellow by Election', 'trained_in' => 'FCS General Surgery', 'joined' => '2021', 'exam_year' => '2026',
             'graduated_on' => '26 November 2026', 'graduated_year' => '2026', 'country' => 'Zambia',
         ]];
     }
@@ -47,7 +47,7 @@ class FellowVerifyPageTest extends TestCase
 
         $r = $this->visit('/verify/' . self::TOKEN)->assertOk();
 
-        $r->assertSee('Amina Otieno')->assertSee('Verified')->assertSee('FCS General Surgery')->assertSee('2021')->assertSee('26 November 2026')->assertSee('Zambia');
+        $r->assertSee('Amina Otieno')->assertSee('Verified')->assertSee('Fellowship')->assertSee('Fellow by Election')->assertSee('FCS General Surgery')->assertSee('2021')->assertSee('26 November 2026')->assertSee('Zambia');
         $r->assertSee('dist/img/cosecsa_seal.png', false)->assertSee('Year joined')->assertSee('Exam year');
     }
 

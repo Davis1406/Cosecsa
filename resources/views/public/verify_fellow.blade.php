@@ -77,6 +77,7 @@
 @php
   $f = $fellow;
   $rows = $state === 'ok' ? array_filter([
+      'Fellowship'  => $f->fellowship_type ?? null,
       'Trained in'  => $f->trained_in ?? null,
       'Year joined' => $f->joined ?? null,
       'Exam year'   => $f->exam_year ?? null,

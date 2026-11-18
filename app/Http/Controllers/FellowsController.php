@@ -47,6 +47,15 @@ class FellowsController extends Controller
         ]);
     }
 
+    // The Fellows list's Certificate QR section: who gets a certificate for a year (exam year, plus Fellows by Election of that
+    // year) with the token for each QR code. Passed straight through from the API.
+    public function certificateBatch(Request $request)
+    {
+        $response = $this->api->get('fellows/certificate-batch', array_filter(['year' => $request->input('year')]));
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status() ?: 502);
+    }
+
     // JSON rows for the Fellows table (DataTables renders them client-side).
     public function listRows()
     {

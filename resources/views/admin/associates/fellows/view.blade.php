@@ -951,6 +951,7 @@ body.dark-mode .admin-action-bar span[style*="a02626"] { color:#f48a8a !importan
                         $vWhen    = fn ($t) => \Carbon\Carbon::parse($t)->format('j M Y, H:i');
                         $vShown   = [
                             'Name'        => trim(($fellow->cert_name ?? '') ?: ($fellow->firstname.' '.$fellow->middlename.' '.$fellow->lastname)),
+                            'Fellowship type' => $fellow->fellowship_type ?? null,
                             'Trained in'  => ($fellow->programme_name ?? null) ?: ($fellow->current_specialty ?? null),
                             'Year joined' => $fellow->admission_year ?? null,
                             'Exam year'   => $vExam,
@@ -969,10 +970,10 @@ body.dark-mode .admin-action-bar span[style*="a02626"] { color:#f48a8a !importan
                             <div class="col-md-5 mb-3 text-center">
                                 <div id="vQr" style="display:inline-block;width:100%;max-width:230px;background:#fff;border:1px solid #e3e6ef;border-radius:12px;padding:10px;line-height:0;"></div>
                                 <div class="mt-2">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="vPng"><i class="fas fa-download mr-1"></i>PNG</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="vPng"><i class="fas fa-download mr-1"></i>PNG (4000 px)</button>
                                     <button type="button" class="btn btn-sm btn-outline-secondary" id="vSvg"><i class="fas fa-download mr-1"></i>SVG</button>
                                 </div>
-                                <small class="text-muted d-block mt-1">PNG for Word, SVG for print.</small>
+                                <small class="text-muted d-block mt-1">PNG for Word, SVG for print (sharp at any size).</small>
                             </div>
                             <div class="col-md-7">
                                 <label class="small text-muted mb-1">Verification link</label>
@@ -1406,37 +1407,19 @@ $('#addRoleForm').on('submit', function (e) {
 @push('scripts')
 @if(! empty($verification->token))
 <script src="{{ asset('js/vendor/qrcode-generator-1.4.4.min.js') }}"></script>
+<script src="{{ asset('js/fellow-qr.js') }}"></script>
 <script>
-// The QR code for the fellow's verification link, drawn in the browser (nothing is sent anywhere).
+// The QR code for the fellow's verification link: PNG (4000 px+) and SVG (vector) for the certificate.
 (function () {
     var input = document.getElementById('vUrl'), box = document.getElementById('vQr');
-    if (!input || !box || typeof qrcode === 'undefined') return;
-    var qr = qrcode(0, 'Q');            // 'Q': still scans with a quarter of the code damaged or printed small
-    qr.addData(input.value); qr.make();
-    var n = qr.getModuleCount(), quiet = 4, size = n + quiet * 2;
-
-    function svg(px) {
-        var d = '';
-        for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) if (qr.isDark(r, c)) d += 'M' + (c + quiet) + ' ' + (r + quiet) + 'h1v1h-1z';
-        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + size + ' ' + size + '"' + (px ? ' width="' + px + '" height="' + px + '"' : ' style="width:100%;height:auto"') +
-               ' shape-rendering="crispEdges"><rect width="' + size + '" height="' + size + '" fill="#fff"/><path d="' + d + '" fill="#000"/></svg>';
-    }
-    box.innerHTML = svg();
-
-    function save(blob, ext) {
-        var a = document.createElement('a'), name = @json(\Illuminate\Support\Str::slug(trim(($fellow->firstname ?? '').' '.($fellow->lastname ?? '')) ?: 'fellow'));
-        a.href = URL.createObjectURL(blob); a.download = 'cosecsa-certificate-qr-' + name + '.' + ext;
-        document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
-    }
+    if (!input || !box || typeof FellowQR === 'undefined') return;
+    var q = FellowQR.make(input.value), name = FellowQR.slug(@json(trim(($fellow->firstname ?? '').' '.($fellow->lastname ?? ''))));
+    box.innerHTML = q.svg();
     document.getElementById('vSvg').addEventListener('click', function () {
-        save(new Blob([svg(1024)], { type: 'image/svg+xml' }), 'svg');
+        FellowQR.save(new Blob([q.svg(1024)], { type: 'image/svg+xml' }), 'cosecsa-certificate-qr-' + name + '.svg');
     });
     document.getElementById('vPng').addEventListener('click', function () {
-        var cell = Math.max(4, Math.floor(1200 / size)), cv = document.createElement('canvas'), ctx;
-        cv.width = cv.height = cell * size; ctx = cv.getContext('2d');
-        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.fillStyle = '#000';
-        for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * cell, (r + quiet) * cell, cell, cell);
-        cv.toBlob(function (b) { save(b, 'png'); }, 'image/png');
+        q.png().then(function (b) { FellowQR.save(b, 'cosecsa-certificate-qr-' + name + '.png'); });
     });
     document.getElementById('vCopy').addEventListener('click', function () {
         var btn = this, done = function () { var t = btn.innerHTML; btn.innerHTML = '<i class="fas fa-check mr-1"></i>Copied'; setTimeout(function () { btn.innerHTML = t; }, 1500); };
