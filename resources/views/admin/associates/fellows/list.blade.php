@@ -185,28 +185,6 @@
                                         <button type="button" class="btn btn-success btn-sm qs-save ml-auto"><i class="fas fa-save mr-1"></i>Save this section</button>
                                     </div>
                                 </div>
-                                <div class="qs-section border rounded p-3 mb-3" data-section="candidate">
-                                    <h6 class="font-weight-bold mb-1">FCS candidate who passed Part I</h6>
-                                    <div class="small text-muted mb-2">A candidate is not a Fellow, so the page says what the register holds.</div>
-                                        <div class="form-group mb-2"><label class="small text-muted mb-0" for="qs_candidate_sentence_passed">Sentence under the name ({year} becomes the year of the pass)</label>
-                                            <textarea class="form-control form-control-sm qs-field" id="qs_candidate_sentence_passed" name="candidate_sentence_passed" rows="2" maxlength="300"></textarea></div>
-                                        <div class="form-group mb-2"><label class="small text-muted mb-0" for="qs_candidate_sentence_none">Sentence when no Part I pass is on record</label>
-                                            <textarea class="form-control form-control-sm qs-field" id="qs_candidate_sentence_none" name="candidate_sentence_none" rows="2" maxlength="300"></textarea></div>
-                                        <div class="form-row">
-                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_candidate_programme">Row 1 · programme</label>
-                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_candidate_programme" name="candidate_programme" maxlength="60" autocomplete="off"></div>
-                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_candidate_joined">Row 2 · year joined</label>
-                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_candidate_joined" name="candidate_joined" maxlength="60" autocomplete="off"></div>
-                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_candidate_part_one">Row 3 · Part I result</label>
-                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_candidate_part_one" name="candidate_part_one" maxlength="60" autocomplete="off"></div>
-                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_candidate_country">Row 4 · country</label>
-                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_candidate_country" name="candidate_country" maxlength="60" autocomplete="off"></div>
-                                        </div>
-                                    <div class="d-flex align-items-center mt-2" style="gap:.6rem;">
-                                        <button type="button" class="btn btn-link btn-sm qs-restore p-0 mr-3">Use the standard wording</button><span class="qs-status small"></span>
-                                        <button type="button" class="btn btn-success btn-sm qs-save ml-auto"><i class="fas fa-save mr-1"></i>Save this section</button>
-                                    </div>
-                                </div>
                                 <div class="qs-section border rounded p-3" data-section="scans">
                                     <h6 class="font-weight-bold mb-2">Scan counts</h6>
                                     <div class="d-flex align-items-center flex-wrap" style="gap:.7rem;">
@@ -646,7 +624,7 @@ $(function () {
     function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
     function qrOf(p) { return made[p.key] || (made[p.key] = FellowQR.make(verifyBase + p.token)); }   // drawn only when needed
     function typeBadge(t, kind) {
-        var c = /election/i.test(t) ? ['#fff4d6', '#8a6100'] : (kind === 'candidate' ? ['#e6f6ec', '#1d7a41'] : ['#e3f0fb', '#1a5d96']);
+        var c = /election/i.test(t) ? ['#fff4d6', '#8a6100'] : ['#e3f0fb', '#1a5d96'];
         return '<span class="badge" style="background:' + c[0] + ';color:' + c[1] + ';font-weight:600;font-size:.76rem;padding:.35em .6em;">' + esc(t) + '</span>';
     }
     function when(t) { return t ? t.replace(/:\d\d$/, '') : ''; }
@@ -689,7 +667,7 @@ $(function () {
         people.forEach(function (p) { types[p.type] = 1; if (p.trained_in) progs[p.trained_in] = 1; });
         function opts(o) { return Object.keys(o).sort().map(function (k) { return '<option value="' + esc(k) + '">' + esc(k) + '</option>'; }).join(''); }
         $body.html(
-            '<p class="small text-muted mb-2"><strong>' + people.length + ' people for ' + esc(year) + '</strong>: ' + nc + ' FCS candidate' + (nc === 1 ? '' : 's') + ' who passed Part I, and ' + nf +
+            '<p class="small text-muted mb-2"><strong>' + people.length + ' people for ' + esc(year) + '</strong>: ' + nc + ' Fellow' + (nc === 1 ? '' : 's') + ' by Examination (FCS candidates with a Part I pass in ' + esc(year) + ') and ' + nf +
             ' Fellow' + (nf === 1 ? '' : 's') + ' by Election. <strong>Hover a name to see their QR.</strong> Each QR opens that person\'s public verification page.</p>' +
             '<div class="d-flex align-items-center flex-wrap mb-2" style="gap:.5rem;">' +
               '<input type="search" id="qrSearch" class="form-control form-control-sm" style="width:210px;" placeholder="Search name or country">' +

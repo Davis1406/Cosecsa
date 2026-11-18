@@ -63,20 +63,6 @@ class FellowVerifyPageTest extends TestCase
         $this->visit('/verify/' . self::TOKEN)->assertOk()->assertSee('is a Fellow of COSECSA.')->assertSee('Discipline')->assertDontSee('Specialty');
     }
 
-    public function test_a_candidate_who_passed_part_one_is_not_called_a_fellow(): void
-    {
-        Http::fake(['*' => Http::response(['verified' => true, 'fellow' => [
-            'kind' => 'candidate', 'name' => 'Anna Banda',
-            'sentence' => 'is an FCS candidate of the College of Surgeons of East, Central and Southern Africa who passed the Part I examination in 2026.',
-            'rows' => [['label' => 'Programme', 'value' => 'FCS General Surgery'], ['label' => 'Part I exam', 'value' => 'Passed · 2026'], ['label' => 'Country', 'value' => 'Zambia']],
-        ]])]);
-
-        $r = $this->visit('/verify/' . self::TOKEN)->assertOk();
-
-        $r->assertSee('Anna Banda')->assertSee('Verified')->assertSee('passed the Part I examination in 2026')->assertSee('Programme')->assertSee('Passed · 2026');
-        $r->assertDontSee('is a Fellow')->assertDontSee('Graduated')->assertDontSee('Fellowship');
-    }
-
     public function test_rows_without_a_value_are_left_off_not_shown_as_blanks(): void
     {
         Http::fake(['*' => Http::response($this->fellow(['rows' => [['label' => 'Fellowship Type', 'value' => 'Fellow by Election'], ['label' => 'Specialty', 'value' => null], ['label' => 'Fellowship Year', 'value' => '']]]))]);
