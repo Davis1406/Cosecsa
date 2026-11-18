@@ -51,6 +51,29 @@ class FellowVerifyPageTest extends TestCase
         $r->assertSee('dist/img/cosecsa_seal.png', false)->assertSee('Year joined')->assertSee('Exam year');
     }
 
+    public function test_a_candidate_who_passed_part_one_is_not_called_a_fellow(): void
+    {
+        Http::fake(['*' => Http::response(['verified' => true, 'fellow' => [
+            'kind' => 'candidate', 'name' => 'Anna Banda', 'fellowship_type' => null, 'trained_in' => 'FCS General Surgery', 'joined' => '2024',
+            'exam_year' => '2026', 'part_one_passed' => '2026', 'graduated_on' => null, 'graduated_year' => null, 'country' => 'Zambia',
+        ]])]);
+
+        $r = $this->visit('/verify/' . self::TOKEN)->assertOk();
+
+        $r->assertSee('Anna Banda')->assertSee('Verified')->assertSee('passed the Part I examination in 2026')->assertSee('Programme')->assertSee('Passed · 2026');
+        $r->assertDontSee('is a Fellow')->assertDontSee('Graduated')->assertDontSee('Fellowship');
+    }
+
+    public function test_a_candidate_with_no_part_one_pass_on_record_gets_no_pass_claimed(): void
+    {
+        Http::fake(['*' => Http::response(['verified' => true, 'fellow' => [
+            'kind' => 'candidate', 'name' => 'Anna Banda', 'fellowship_type' => null, 'trained_in' => 'FCS General Surgery', 'joined' => '2024',
+            'exam_year' => null, 'part_one_passed' => null, 'graduated_on' => null, 'graduated_year' => null, 'country' => 'Zambia',
+        ]])]);
+
+        $this->visit('/verify/' . self::TOKEN)->assertOk()->assertSee('registered FCS candidate')->assertDontSee('passed the Part I')->assertDontSee('Part I exam');
+    }
+
     public function test_facts_the_register_does_not_have_are_left_off_not_shown_as_blanks(): void
     {
         Http::fake(['*' => Http::response($this->fellow(['joined' => null, 'exam_year' => null, 'graduated_on' => null]))]);

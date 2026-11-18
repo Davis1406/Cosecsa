@@ -76,14 +76,27 @@
 <body>
 @php
   $f = $fellow;
-  $rows = $state === 'ok' ? array_filter([
-      'Fellowship'  => $f->fellowship_type ?? null,
-      'Trained in'  => $f->trained_in ?? null,
-      'Year joined' => $f->joined ?? null,
-      'Exam year'   => $f->exam_year ?? null,
-      'Graduated'   => ($f->graduated_on ?? null) ?: ($f->graduated_year ?? null),
-      'Country'     => $f->country ?? null,
-  ]) : [];
+  $candidate = $state === 'ok' && (($f->kind ?? 'fellow') === 'candidate');
+  if ($state !== 'ok') {
+      $rows = [];
+  } elseif ($candidate) {
+      // an FCS candidate: say only what the register holds (a Part I pass, not a fellowship)
+      $rows = array_filter([
+          'Programme'   => $f->trained_in ?? null,
+          'Year joined' => $f->joined ?? null,
+          'Part I exam' => ($f->part_one_passed ?? null) ? 'Passed · ' . $f->part_one_passed : null,
+          'Country'     => $f->country ?? null,
+      ]);
+  } else {
+      $rows = array_filter([
+          'Fellowship'  => $f->fellowship_type ?? null,
+          'Trained in'  => $f->trained_in ?? null,
+          'Year joined' => $f->joined ?? null,
+          'Exam year'   => $f->exam_year ?? null,
+          'Graduated'   => ($f->graduated_on ?? null) ?: ($f->graduated_year ?? null),
+          'Country'     => $f->country ?? null,
+      ]);
+  }
   $tone = $state === 'ok' ? '' : ($state === 'invalid' ? 'bad' : 'warn');
 @endphp
 
@@ -104,7 +117,11 @@
   @if($state === 'ok')
     <span class="status">Verified</span>
     <h1>{{ $f->name }}</h1>
-    <p class="sub">is a Fellow of the College of Surgeons of East, Central and Southern Africa.</p>
+    @if($candidate)
+      <p class="sub">{{ ($f->part_one_passed ?? null) ? 'is an FCS candidate of the College of Surgeons of East, Central and Southern Africa who passed the Part I examination in ' . $f->part_one_passed . '.' : 'is a registered FCS candidate of the College of Surgeons of East, Central and Southern Africa.' }}</p>
+    @else
+      <p class="sub">is a Fellow of the College of Surgeons of East, Central and Southern Africa.</p>
+    @endif
     @if($rows)
       <dl>
         @foreach($rows as $label => $value)

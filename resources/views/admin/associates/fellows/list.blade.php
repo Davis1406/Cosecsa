@@ -95,39 +95,31 @@
                     </div>
                 </div>
 
-                {{-- Certificate QR codes: the QR printed on each Fellow's certificate (see Fellow page > Certificate QR) --}}
+                {{-- Certificate QR codes: the QR printed on each certificate. FCS candidates who passed Part I, and the Fellows by
+                     Election of the year. The QR shows when hovering a name; see also Fellow page > Certificate QR. --}}
                 <div class="card card-outline card-success mb-2 shadow-sm" id="qrCard">
-                    <div class="card-header py-2 d-flex align-items-center flex-wrap" style="gap:.6rem;">
-                        <h3 class="card-title mb-0"><i class="fas fa-qrcode mr-1"></i> Certificate QR codes</h3>
+                    <div class="card-header py-2 d-flex align-items-center flex-wrap" style="gap:.75rem;">
+                        <img src="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}" alt="COSECSA" width="42" height="42" style="object-fit:contain;flex:0 0 auto;">
+                        <div style="line-height:1.2;">
+                            <div style="font-size:1.05rem;font-weight:700;color:#222;">Certificate QR codes</div>
+                            <small class="text-muted">College of Surgeons of East, Central and Southern Africa</small>
+                        </div>
                         <div class="ml-auto d-flex align-items-center flex-wrap" style="gap:.5rem;">
                             <label class="mb-0 small text-muted" for="qrYear">Year</label>
                             <select id="qrYear" class="form-control form-control-sm" style="width:auto;">
                                 @foreach(range(now()->year, now()->year - 4) as $y)<option value="{{ $y }}">{{ $y }}</option>@endforeach
                             </select>
-                            <button type="button" class="btn btn-sm btn-success" id="qrShow"><i class="fas fa-eye mr-1"></i>Show QR codes</button>
-                            <button type="button" class="btn btn-sm btn-outline-success d-none" id="qrZip"><i class="fas fa-file-archive mr-1"></i>Download all (ZIP)</button>
+                            <button type="button" class="btn btn-sm btn-success" id="qrShow"><i class="fas fa-eye mr-1"></i>Show list</button>
                         </div>
                     </div>
                     <div class="card-body py-2 d-none" id="qrBody"></div>
                 </div>
 
-                {{-- a closer look at one QR code, with its downloads --}}
-                <div class="modal fade" id="qrModal" tabindex="-1" role="dialog" aria-hidden="true">
-                    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header py-2"><h6 class="modal-title" id="qrModalTitle"></h6>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>
-                            <div class="modal-body text-center">
-                                <div id="qrModalQr" style="background:#fff;border:1px solid #e3e6ef;border-radius:12px;padding:10px;line-height:0;"></div>
-                                <div class="small text-muted mt-2" id="qrModalType"></div>
-                                <div class="mt-2">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="qrModalPng"><i class="fas fa-download mr-1"></i>PNG (4000 px)</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="qrModalSvg"><i class="fas fa-download mr-1"></i>SVG</button>
-                                </div>
-                                <input type="text" class="form-control form-control-sm mt-2" id="qrModalUrl" readonly onclick="this.select()">
-                            </div>
-                        </div>
-                    </div>
+                {{-- the QR of the name being hovered --}}
+                <div id="qrHover" style="display:none;position:fixed;z-index:1080;width:210px;background:#fff;border:1px solid #dfe3ec;border-radius:12px;box-shadow:0 10px 30px rgba(20,30,60,.22);padding:12px;text-align:center;pointer-events:none;">
+                    <div id="qrHoverQr" style="line-height:0;"></div>
+                    <div id="qrHoverName" style="margin-top:8px;font-weight:700;font-size:.9rem;line-height:1.25;"></div>
+                    <div id="qrHoverType" class="small text-muted"></div>
                 </div>
 
                 <div class="row">
@@ -540,106 +532,141 @@ $(function () {
 <script src="{{ asset('js/vendor/jszip-3.10.1.min.js') }}"></script>
 <script src="{{ asset('js/fellow-qr.js') }}"></script>
 <script>
-// Certificate QR codes: everyone with the chosen exam year, plus the Fellows by Election of that year. The codes are
-// drawn here in the browser; the downloads are a >= 4000 px PNG and a vector SVG per fellow, or all of them in one ZIP.
+// Certificate QR codes for a year: FCS candidates who passed Part I, plus the Fellows by Election of that year. The list
+// is plain text; a name's QR appears while hovering it. The QR codes are drawn here in the browser; downloads are a
+// >= 4000 px PNG and a vector SVG per person, or those currently listed in one ZIP.
 (function () {
     var batchUrl = @json(url('admin/associates/fellows/certificate-batch')),
-        viewUrl  = @json(url('admin/associates/fellows/view')),
+        profile  = { fellow: @json(url('admin/associates/fellows/view')), candidate: @json(url('admin/associates/candidates/view')) },
         verifyBase = @json(rtrim(config('app.url'), '/') . '/verify/');
-    var $body = $('#qrBody'), $show = $('#qrShow'), $zip = $('#qrZip'), fellows = [], year = '', made = {};
+    var $body = $('#qrBody'), $show = $('#qrShow'), $hover = $('#qrHover'), people = [], year = '', made = {}, hideTimer = null;
 
     function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-    function qrOf(f) { return made[f.id] || (made[f.id] = FellowQR.make(verifyBase + f.token)); }
-    function typeBadge(t) {
-        if (!t) return '<span class="text-muted">—</span>';
-        var c = /election/i.test(t) ? ['#fff4d6', '#8a6100'] : (/examination/i.test(t) ? ['#e3f0fb', '#1a5d96'] : ['#eef0f4', '#4b5563']);
-        return '<span class="badge" style="background:' + c[0] + ';color:' + c[1] + ';font-weight:600;font-size:.78rem;padding:.35em .6em;">' + esc(t) + '</span>';
+    function qrOf(p) { return made[p.key] || (made[p.key] = FellowQR.make(verifyBase + p.token)); }   // drawn only when needed
+    function typeBadge(t, kind) {
+        var c = /election/i.test(t) ? ['#fff4d6', '#8a6100'] : (kind === 'candidate' ? ['#e6f6ec', '#1d7a41'] : ['#e3f0fb', '#1a5d96']);
+        return '<span class="badge" style="background:' + c[0] + ';color:' + c[1] + ';font-weight:600;font-size:.76rem;padding:.35em .6em;">' + esc(t) + '</span>';
     }
-    function fileBase(f, used) {
-        var b = FellowQR.slug(f.name) + '_' + FellowQR.slug(f.fellowship_type || 'fellow'), n = b, i = 2;
-        while (used[n]) { n = b + '-' + (i++); }
-        used[n] = 1;
+    function when(t) { return t ? t.replace(/:\d\d$/, '') : ''; }
+    function personOf(el) { var k = $(el).closest('tr').data('key'); return people.filter(function (p) { return p.key === k; })[0]; }
+    function fileName(p, used) {
+        var b = FellowQR.slug(p.name) + '_' + FellowQR.slug(p.type), n = b, i = 2;
+        while (used && used[n]) { n = b + '-' + (i++); }
+        if (used) used[n] = 1;
         return n;
     }
 
-    function render(data) {
-        fellows = data.fellows || []; year = data.year; made = {};
-        if (!fellows.length) {
-            $body.html('<p class="text-muted mb-0 py-2">No fellows have exam year ' + esc(year) + ', and no Fellows by Election have fellowship year ' + esc(year) + '.</p>').removeClass('d-none');
-            $zip.addClass('d-none'); return;
-        }
-        var byExam = fellows.filter(function (f) { return f.basis.some(function (b) { return /^Exam/.test(b); }); }).length,
-            byElection = fellows.filter(function (f) { return f.basis.some(function (b) { return /Election/.test(b); }); }).length;
-        var rows = fellows.map(function (f, i) {
-            return '<tr data-id="' + f.id + '">' +
-                '<td class="text-muted">' + (i + 1) + '</td>' +
-                '<td><a href="#" class="qr-open d-inline-block" title="Open larger" style="width:84px;line-height:0;border:1px solid #e3e6ef;border-radius:8px;padding:4px;background:#fff;">' + qrOf(f).svg() + '</a></td>' +
-                '<td><a href="' + esc(viewUrl) + '/' + f.id + '" style="color:#222;font-weight:600;">' + esc(f.name) + '</a></td>' +
-                '<td>' + typeBadge(f.fellowship_type) + '</td>' +
-                '<td>' + esc(f.trained_in || '—') + '</td>' +
-                '<td>' + esc(f.country || '—') + '</td>' +
-                '<td>' + esc(f.exam_year || '—') + '</td>' +
-                '<td>' + esc(f.fellowship_year || '—') + '</td>' +
-                '<td class="small text-muted">' + f.basis.map(esc).join('<br>') + '</td>' +
-                '<td class="text-nowrap"><button type="button" class="btn btn-xs btn-outline-secondary qr-png" title="PNG, 4000 px or more"><i class="fas fa-download"></i> PNG</button> ' +
-                '<button type="button" class="btn btn-xs btn-outline-secondary qr-svg" title="Vector, sharp at any size"><i class="fas fa-download"></i> SVG</button></td></tr>';
-        }).join('');
-        $body.html(
-            '<p class="small text-muted mb-2"><strong>' + fellows.length + ' fellow' + (fellows.length === 1 ? '' : 's') + '</strong>: ' + byExam + ' with exam year ' + esc(year) +
-            ' and ' + byElection + ' Fellow' + (byElection === 1 ? '' : 's') + ' by Election with fellowship year ' + esc(year) + '. Each QR opens that fellow\'s public verification page. PNG downloads are 4000 px or larger; SVG is vector.</p>' +
-            '<div class="table-responsive"><table class="table table-sm table-striped mb-0" id="qrTable"><thead><tr><th>#</th><th>QR</th><th>Name</th><th>Fellowship type</th><th>Trained in</th><th>Country</th><th>Exam year</th><th>Fellowship year</th><th>Included because</th><th>Download</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
-        ).removeClass('d-none');
-        $zip.removeClass('d-none');
+    // ── the list, with search and filters ──
+    function shown() {
+        var q = $.trim($('#qrSearch').val()).toLowerCase(), t = $('#qrType').val(), g = $('#qrProg').val();
+        return people.filter(function (p) {
+            return (!t || p.type === t) && (!g || p.trained_in === g) && (!q || (p.name + ' ' + (p.country || '')).toLowerCase().indexOf(q) !== -1);
+        });
     }
-
-    function find(el) { var id = $(el).closest('tr').data('id'); return fellows.filter(function (f) { return f.id === id; })[0]; }
-    function names(f) { return FellowQR.slug(f.name) + '_' + FellowQR.slug(f.fellowship_type || 'fellow'); }
+    function draw() {
+        var list = shown(), rows = list.map(function (p, i) {
+            return '<tr data-key="' + p.key + '"><td class="text-muted">' + (i + 1) + '</td>' +
+                '<td><a href="' + esc(profile[p.kind]) + '/' + p.id + '" class="qr-name" style="color:#222;font-weight:600;">' + esc(p.name) + '</a></td>' +
+                '<td>' + typeBadge(p.type, p.kind) + '</td>' +
+                '<td>' + esc(p.trained_in || '—') + '</td><td>' + esc(p.country || '—') + '</td>' +
+                '<td class="small text-muted">' + esc(p.basis) + '</td>' +
+                '<td class="text-center" title="' + (p.last_scan ? 'Last scanned ' + esc(when(p.last_scan)) : 'Not scanned yet') + '">' + (p.scans ? '<strong style="color:#2e8b57;">' + p.scans + '</strong>' : '<span class="text-muted">0</span>') + '</td>' +
+                '<td class="text-nowrap"><button type="button" class="btn btn-xs btn-outline-secondary qr-png" title="PNG, 4000 px or more"><i class="fas fa-download"></i> PNG</button> ' +
+                '<button type="button" class="btn btn-xs btn-outline-secondary qr-svg" title="Vector, sharp at any size"><i class="fas fa-download"></i> SVG</button> ' +
+                '<button type="button" class="btn btn-xs btn-outline-secondary qr-peek" title="Show the QR"><i class="fas fa-qrcode"></i></button></td></tr>';
+        }).join('');
+        $('#qrRows').html(rows || '<tr><td colspan="8" class="text-center text-muted py-3">Nobody matches.</td></tr>');
+        $('#qrCount').text(list.length === people.length ? people.length + ' people' : list.length + ' of ' + people.length);
+        $('#qrZipPng, #qrZipSvg').prop('disabled', !list.length);
+    }
+    function render(data) {
+        people = data.fellows || []; year = data.year; made = {};
+        $hover.hide();
+        if (!people.length) {
+            $body.html('<p class="text-muted mb-0 py-2">Nobody yet: no FCS candidate has a Part I pass in ' + esc(year) + ', and no Fellow by Election has fellowship year ' + esc(year) + '.</p>').removeClass('d-none');
+            return;
+        }
+        var nc = people.filter(function (p) { return p.kind === 'candidate'; }).length, nf = people.length - nc;
+        var types = {}, progs = {};
+        people.forEach(function (p) { types[p.type] = 1; if (p.trained_in) progs[p.trained_in] = 1; });
+        function opts(o) { return Object.keys(o).sort().map(function (k) { return '<option value="' + esc(k) + '">' + esc(k) + '</option>'; }).join(''); }
+        $body.html(
+            '<p class="small text-muted mb-2"><strong>' + people.length + ' people for ' + esc(year) + '</strong>: ' + nc + ' FCS candidate' + (nc === 1 ? '' : 's') + ' who passed Part I, and ' + nf +
+            ' Fellow' + (nf === 1 ? '' : 's') + ' by Election. <strong>Hover a name to see their QR.</strong> Each QR opens that person\'s public verification page.</p>' +
+            '<div class="d-flex align-items-center flex-wrap mb-2" style="gap:.5rem;">' +
+              '<input type="search" id="qrSearch" class="form-control form-control-sm" style="width:210px;" placeholder="Search name or country">' +
+              '<select id="qrType" class="form-control form-control-sm" style="width:auto;"><option value="">All types</option>' + opts(types) + '</select>' +
+              '<select id="qrProg" class="form-control form-control-sm" style="width:auto;"><option value="">All programmes</option>' + opts(progs) + '</select>' +
+              '<small class="text-muted" id="qrCount"></small>' +
+              '<span class="ml-auto"><button type="button" class="btn btn-sm btn-outline-success" id="qrZipPng" title="Everything listed, one PNG each (4000 px or more), as one ZIP; can be large"><i class="fas fa-file-archive mr-1"></i>ZIP of PNGs</button> ' +
+              '<button type="button" class="btn btn-sm btn-outline-success" id="qrZipSvg" title="Everything listed, one vector SVG each, as one ZIP"><i class="fas fa-file-archive mr-1"></i>ZIP of SVGs</button></span>' +
+            '</div>' +
+            '<div style="max-height:62vh;overflow:auto;border:1px solid #eee;border-radius:6px;"><table class="table table-sm table-hover mb-0" id="qrTable"><thead style="position:sticky;top:0;background:#f7f8fa;z-index:1;"><tr><th>#</th><th>Name</th><th>Type</th><th>Programme</th><th>Country</th><th>Included because</th><th class="text-center">Scans</th><th>Download</th></tr></thead><tbody id="qrRows"></tbody></table></div>'
+        ).removeClass('d-none');
+        draw();
+    }
 
     $show.on('click', function () {
         $show.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Loading…');
         $.getJSON(batchUrl, { year: $('#qrYear').val() })
             .done(render)
-            .fail(function (xhr) { $body.html('<div class="alert alert-danger mb-0">' + esc((xhr.responseJSON && xhr.responseJSON.message) || 'The QR codes could not be loaded.') + '</div>').removeClass('d-none'); })
+            .fail(function (xhr) { $body.html('<div class="alert alert-danger mb-0">' + esc((xhr.responseJSON && xhr.responseJSON.message) || 'The list could not be loaded.') + '</div>').removeClass('d-none'); })
             .always(function () { $show.prop('disabled', false).html('<i class="fas fa-sync-alt mr-1"></i>Refresh'); });
     });
+    $body.on('input change', '#qrSearch, #qrType, #qrProg', draw);
 
+    // ── the QR while hovering a name (or after tapping the QR button, for touch screens) ──
+    function showHover(el, p) {
+        clearTimeout(hideTimer);
+        $('#qrHoverQr').html(qrOf(p).svg()); $('#qrHoverName').text(p.name); $('#qrHoverType').text([p.type, p.trained_in].filter(Boolean).join(' · '));
+        $hover.show();
+        var r = el.getBoundingClientRect(), w = $hover.outerWidth(), h = $hover.outerHeight(), x = r.right + 14, y = r.top + r.height / 2 - h / 2;
+        if (x + w > window.innerWidth - 8) x = Math.max(8, r.left - w - 14);
+        $hover.css({ left: x + 'px', top: Math.min(Math.max(8, y), window.innerHeight - h - 8) + 'px' });
+    }
+    function hideHover() { hideTimer = setTimeout(function () { $hover.hide(); }, 80); }
+    $body.on('mouseenter', '.qr-name', function () { showHover(this, personOf(this)); });
+    $body.on('mouseleave', '.qr-name', hideHover);
+    $body.on('click', '.qr-peek', function (e) {
+        e.stopPropagation();
+        var p = personOf(this), shownNow = $hover.is(':visible') && $('#qrHoverName').text() === p.name;
+        if (shownNow) { $hover.hide(); } else { showHover($(this).closest('tr').find('.qr-name')[0], p); }
+    });
+    $(document).on('click', function () { $hover.hide(); });
+    $body.on('scroll', function () { $hover.hide(); });
+
+    // ── downloads ──
     $body.on('click', '.qr-png', function () {
-        var f = find(this), btn = $(this).prop('disabled', true);
-        qrOf(f).png().then(function (b) { FellowQR.save(b, names(f) + '.png'); }).finally(function () { btn.prop('disabled', false); });
+        var p = personOf(this), btn = $(this).prop('disabled', true);
+        qrOf(p).png().then(function (b) { FellowQR.save(b, fileName(p) + '.png'); }).finally(function () { btn.prop('disabled', false); });
     });
     $body.on('click', '.qr-svg', function () {
-        var f = find(this);
-        FellowQR.save(new Blob([qrOf(f).svg(1024)], { type: 'image/svg+xml' }), names(f) + '.svg');
-    });
-    $body.on('click', '.qr-open', function (e) {
-        e.preventDefault();
-        var f = find(this), q = qrOf(f);
-        $('#qrModalTitle').text(f.name); $('#qrModalType').text([f.fellowship_type, f.trained_in, f.country].filter(Boolean).join(' · '));
-        $('#qrModalQr').html(q.svg()); $('#qrModalUrl').val(verifyBase + f.token);
-        $('#qrModalPng').off('click').on('click', function () { q.png().then(function (b) { FellowQR.save(b, names(f) + '.png'); }); });
-        $('#qrModalSvg').off('click').on('click', function () { FellowQR.save(new Blob([q.svg(1024)], { type: 'image/svg+xml' }), names(f) + '.svg'); });
-        $('#qrModal').modal('show');
+        var p = personOf(this);
+        FellowQR.save(new Blob([qrOf(p).svg(1024)], { type: 'image/svg+xml' }), fileName(p) + '.svg');
     });
 
-    // Everything in one ZIP: PNG/ and SVG/ folders and a CSV listing each fellow with their link.
-    $zip.on('click', async function () {
-        var label = $zip.html(), zipper = new JSZip(), png = zipper.folder('PNG'), svg = zipper.folder('SVG'), used = {}, csv = [['Name', 'Fellowship type', 'Trained in', 'Country', 'Exam year', 'Fellowship year', 'Verification link', 'File']];
-        $zip.prop('disabled', true);
+    // Everything currently listed in one ZIP (with a CSV of who and which link): PNGs (large) or SVGs (small).
+    async function zipListed(kind, $btn) {
+        var list = shown(), label = $btn.html(), z = new JSZip(), used = {}, csv = [['Name', 'Type', 'Programme', 'Country', 'Included because', 'Verification link', 'File']];
+        if (kind === 'png' && list.length > 60 && !confirm(list.length + ' PNGs of 4000 px each make a large ZIP (roughly ' + Math.round(list.length * 0.35) + ' MB) and may take a minute. Continue?\n\nTip: the SVG ZIP is tiny and prints sharper.')) return;
+        $('#qrZipPng, #qrZipSvg').prop('disabled', true);
         try {
-            for (var i = 0; i < fellows.length; i++) {
-                var f = fellows[i], base = fileBase(f, used), q = qrOf(f);
-                $zip.html('<i class="fas fa-spinner fa-spin mr-1"></i>Preparing ' + (i + 1) + ' of ' + fellows.length + '…');
-                png.file(base + '.png', await q.png());
-                svg.file(base + '.svg', q.svg(1024));
-                csv.push([f.name, f.fellowship_type, f.trained_in, f.country, f.exam_year, f.fellowship_year, verifyBase + f.token, base].map(function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }));
+            for (var i = 0; i < list.length; i++) {
+                var p = list[i], base = fileName(p, used), q = qrOf(p);
+                $btn.html('<i class="fas fa-spinner fa-spin mr-1"></i>' + (i + 1) + ' of ' + list.length + '…');
+                if (kind === 'png') { z.file(base + '.png', await q.png()); } else { z.file(base + '.svg', q.svg(1024)); }
+                csv.push([p.name, p.type, p.trained_in, p.country, p.basis, verifyBase + p.token, base + '.' + kind].map(function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }));
             }
-            zipper.file('qr-codes.csv', '\ufeff' + csv.map(function (r) { return r.join(','); }).join('\r\n'));
-            FellowQR.save(await zipper.generateAsync({ type: 'blob', compression: 'STORE' }), 'cosecsa-certificate-qr-codes-' + year + '.zip');
+            z.file('qr-codes.csv', '\ufeff' + csv.map(function (r) { return r.join(','); }).join('\r\n'));
+            FellowQR.save(await z.generateAsync({ type: 'blob', compression: 'STORE' }), 'cosecsa-certificate-qr-' + year + '-' + kind + '.zip');
         } catch (e) {
             alert('The ZIP could not be made: ' + (e && e.message ? e.message : e));
         }
-        $zip.prop('disabled', false).html(label);
-    });
+        $btn.html(label);
+        $('#qrZipPng, #qrZipSvg').prop('disabled', !shown().length);
+    }
+    $body.on('click', '#qrZipPng', function () { zipListed('png', $(this)); });
+    $body.on('click', '#qrZipSvg', function () { zipListed('svg', $(this)); });
 })();
 </script>
 @endpush
