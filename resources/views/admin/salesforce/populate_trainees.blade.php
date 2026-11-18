@@ -74,7 +74,7 @@
                             @forelse($ready as $row)
                             <tr>
                                 <td>{{ $row['app']->applicant_name }}</td>
-                                <td>{{ $row['pen'] }} <small class="text-muted">({{ $row['pen_source'] === 'existing' ? 'existing PEN' : 'new' }})</small></td>
+                                <td>{{ $row['pen'] }} <small class="text-muted">({{ $row['pen_source'] === 'existing' ? 'existing PEN' : 'new' }}{{ ! empty($row['rejoining']) ? ' · rejoining another programme' : '' }})</small></td>
                                 <td>{{ $row['app']->programme_name }}</td>
                                 <td>{{ $row['app']->country }}</td>
                                 <td>{{ $row['app']->hospital_name }}</td>
