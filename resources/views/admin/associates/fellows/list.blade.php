@@ -609,7 +609,7 @@ $(function () {
 @push('scripts')
 <script src="{{ asset('js/vendor/qrcode-generator-1.4.4.min.js') }}"></script>
 <script src="{{ asset('js/vendor/jszip-3.10.1.min.js') }}"></script>
-<script src="{{ asset('js/fellow-qr.js') }}"></script>
+<script src="{{ asset('js/fellow-qr.js') }}?v={{ filemtime(public_path('js/fellow-qr.js')) }}"></script>   {{-- the version changes with the file, so a browser never runs an old copy against this page --}}
 <script>
 // Certificate QR codes for a year: FCS candidates who passed Part I, plus the Fellows by Election of that year. The list
 // is plain text; a name's QR appears while hovering it. The QR codes are drawn here in the browser; downloads are a

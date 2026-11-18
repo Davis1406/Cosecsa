@@ -1404,7 +1404,7 @@ $('#addRoleForm').on('submit', function (e) {
 @push('scripts')
 @if(! empty($verification->token))
 <script src="{{ asset('js/vendor/qrcode-generator-1.4.4.min.js') }}"></script>
-<script src="{{ asset('js/fellow-qr.js') }}"></script>
+<script src="{{ asset('js/fellow-qr.js') }}?v={{ filemtime(public_path('js/fellow-qr.js')) }}"></script>   {{-- the version changes with the file, so a browser never runs an old copy against this page --}}
 <script>
 // The QR code for the fellow's verification link: PNG (4000 px+) and SVG (vector) for the certificate.
 (function () {

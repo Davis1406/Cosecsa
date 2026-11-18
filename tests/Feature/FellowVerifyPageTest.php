@@ -52,7 +52,7 @@ class FellowVerifyPageTest extends TestCase
 
         $r->assertSee('Amina Otieno')->assertSee('Verified')->assertSee('is a Fellow of the College of Surgeons of East, Central and Southern Africa.')
           ->assertSeeInOrder(['Fellowship Type', 'Fellow by Examination', 'Exam Year', '2026', 'Specialty', 'FCS General Surgery', 'Graduated in', '26 November 2026']);
-        $r->assertSee('dist/img/cosecsa_seal.png', false)->assertSee('Cosecsa_Logo_sm.png', false);
+        $r->assertSee('dist/img/cosecsa_seal_plate.png', false)->assertSee('Cosecsa_Logo_plate.png', false);
         $r->assertDontSee('Country')->assertDontSee('Year joined');
     }
 

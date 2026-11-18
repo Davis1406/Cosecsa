@@ -6,6 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#a02626">
+<meta name="color-scheme" content="light dark">
 <title>@if($state === 'ok') Verified COSECSA Fellow @elseif($state === 'invalid') Certificate not verified @else Verification unavailable @endif · COSECSA</title>
 <link rel="icon" href="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}">
 <style>
@@ -18,6 +19,7 @@
     :root { --bg: #0e1116; --card: #171b22; --ink: #eef1f6; --muted: #9aa3b2; --line: #262c37; --ok-soft: #12301f;
             --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.45); }
   }
+  :root { color-scheme: light dark; }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
   body {
@@ -37,16 +39,15 @@
   /* the small burgundy header: the college logo on the left */
   .top { display: flex; align-items: center; gap: 11px; padding: 10px 16px; background: var(--brand); color: #fff; text-align: left; }
   .card.bad .top { background: var(--bad); } .card.warn .top { background: var(--warn); }
-  .logo { flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
-  .logo img { width: 34px; height: 34px; display: block; object-fit: contain; }
+  .logo { display: block; flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+  .logo img { width: 42px; height: 42px; display: block; border-radius: 50%; }   /* the white circle is in the image itself */
   .org b { display: block; font-size: 15px; font-weight: 750; letter-spacing: .16em; line-height: 1.1; }
   .org small { display: block; margin-top: 2px; font-size: 10.5px; line-height: 1.25; opacity: .88; letter-spacing: .02em; text-wrap: balance; }
 
   .emblem { position: relative; width: 116px; height: 116px; margin: 6px auto 18px; }
-  /* the seal sits on a light plate so its blue stays readable on the dark theme too */
-  .plate { width: 116px; height: 116px; border-radius: 50%; background: #fff; display: grid; place-items: center;
-           box-shadow: 0 0 0 1px var(--line), 0 8px 22px rgba(28,34,48,.12); }
-  .seal { width: 96px; height: 96px; display: block; object-fit: contain; }
+  /* the seal sits on a white circle (part of the image, so the browser cannot darken it) and stays readable in the dark theme too */
+  .plate { display: block; width: 116px; height: 116px; border-radius: 50%; box-shadow: 0 0 0 1px var(--line), 0 8px 22px rgba(28,34,48,.12); }
+  .seal { width: 116px; height: 116px; display: block; border-radius: 50%; }   /* the white circle is in the image itself */
   .card:not(.ok) .seal { filter: grayscale(1); opacity: .5; }
   .badge {
     position: absolute; right: -6px; bottom: -4px; width: 44px; height: 44px; border-radius: 50%;
@@ -91,12 +92,12 @@
 
 <main class="card {{ $state === 'ok' ? 'ok' : $tone }}" role="main">
   <header class="top">
-    <span class="logo"><img src="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}" alt="COSECSA logo" width="34" height="34"></span>
+    <span class="logo"><img src="{{ asset('dist/img/Cosecsa_Logo_plate.png') }}" alt="COSECSA logo" width="42" height="42"></span>
     <span class="org"><b>COSECSA</b><small>College of Surgeons of East, Central and Southern Africa</small></span>
   </header>
   <div class="inner">
   <div class="emblem">
-    <span class="plate"><img class="seal" src="{{ asset('dist/img/cosecsa_seal.png') }}" alt="College of Surgeons of East, Central and Southern Africa seal" width="96" height="96"></span>
+    <span class="plate"><img class="seal" src="{{ asset('dist/img/cosecsa_seal_plate.png') }}" alt="College of Surgeons of East, Central and Southern Africa seal" width="116" height="116"></span>
     <span class="badge {{ $tone }}" aria-hidden="true">
       @if($state === 'ok')
         <svg viewBox="0 0 24 24"><path class="draw" d="M5 12.5l4.5 4.5L19 7.5"/></svg>
