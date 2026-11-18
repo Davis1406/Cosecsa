@@ -119,6 +119,8 @@
                       @endif
                       <input type="file" name="stamp" id="stampFile" class="form-control-file" accept="image/png,image/jpeg,image/webp">
                       <small class="text-muted d-block">PNG with a transparent background works best, up to 2&nbsp;MB.</small>
+                      <small class="d-block"><i class="fas fa-arrows-alt mr-1"></i>Drag the stamp in the preview to place it. <a href="#" id="resetStamp" class="{{ isset($template->stamp_x) ? '' : 'd-none' }}">Reset position</a></small>
+                      <input type="hidden" name="stamp_pos" id="stampPos" value="{{ old('stamp_pos', isset($template->stamp_x, $template->stamp_y) ? $template->stamp_x . ',' . $template->stamp_y : '') }}">
                       @if(!empty($collegeStampAvailable))
                         <div class="custom-control custom-checkbox mt-1"><input type="checkbox" class="custom-control-input" id="useCollegeStamp" name="use_college_stamp" value="1"><label class="custom-control-label small" for="useCollegeStamp">Use the college stamp (the one already on the transcripts)</label></div>
                       @endif
@@ -210,6 +212,20 @@ $(function () {
     $('#stampFile').on('change', function () { readPick(this, 'stamp'); });
     $('#sigName, #sigTitle, #rmSig, #rmStamp, #useCollegeStamp').on('input change', schedule);
 
+    // the preview reports where the stamp was dragged to; keep it in the form (saved with the template) and re-draw
+    window.addEventListener('message', function (e) {
+        if (!frame || e.source !== frame.contentWindow || !e.data || e.data.type !== 'letter-stamp-pos') return;
+        $('#stampPos').val(Math.round(e.data.x) + ',' + Math.round(e.data.y));
+        $('#resetStamp').removeClass('d-none');
+        schedule();
+    });
+    $('#resetStamp').on('click', function (ev) {
+        ev.preventDefault();
+        $('#stampPos').val('');
+        $(this).addClass('d-none');
+        schedule();
+    });
+
     function previewPayload() {
         var tid = @json($template->id ?? null);
         return {
@@ -221,7 +237,8 @@ $(function () {
             stamp_data: picks.stamp,
             clear_signature: $('#rmSig').is(':checked') ? 1 : 0,
             clear_stamp: $('#rmStamp').is(':checked') ? 1 : 0,
-            use_college_stamp: $('#useCollegeStamp').is(':checked') ? 1 : 0
+            use_college_stamp: $('#useCollegeStamp').is(':checked') ? 1 : 0,
+            stamp_pos: $('#stampPos').val() || 'default'   // empty = the standard spot (and overrides a saved position in the preview)
         };
     }
 

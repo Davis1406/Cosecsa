@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added (2026-11-18) — College letters: drag the stamp
+- In the letter template editor's live preview the stamp can be dragged into place (hover for a dashed outline). The position is kept in the form, saved with the template and used on the letter PDF; "Reset position" puts it back at the standard spot.
+
 ### Added (2026-11-17) — College letters: signature block per template
 - Letter template form: new "Signature block" with Name, Role, Signature image and Stamp (or "use the college stamp" already on the transcripts, remove tick-boxes for saved images). Shown in the live preview as you type or pick files, and on the letter PDF. Blank = sign as the person sending, as before.
 - The template form now uploads files (multipart) and unticking "Active" deactivates the template.

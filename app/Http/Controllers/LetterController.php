@@ -44,7 +44,7 @@ class LetterController extends Controller
     {
         return $request->only([
             'name', 'subject', 'pdf_body', 'email_body', 'recipient_source', 'legacy_status_field',
-            'signatory_name', 'signatory_title', 'remove_signature', 'remove_stamp', 'use_college_stamp',
+            'signatory_name', 'signatory_title', 'remove_signature', 'remove_stamp', 'use_college_stamp', 'stamp_pos',
         ]) + ['is_active_form' => '1', 'is_active' => $request->boolean('is_active') ? '1' : null];
     }
 
@@ -157,7 +157,7 @@ class LetterController extends Controller
     {
         $response = $this->api->post('letters/preview-html', array_filter($request->only([
             'pdf_body', 'template_id', 'signatory_name', 'signatory_title', 'signature_data', 'stamp_data',
-            'clear_signature', 'clear_stamp', 'use_college_stamp',
+            'clear_signature', 'clear_stamp', 'use_college_stamp', 'stamp_pos',
         ]), fn ($v) => $v !== null && $v !== ''));
 
         return response()->json(['html' => $response->json('html') ?? ''], $response->successful() ? 200 : 422);
