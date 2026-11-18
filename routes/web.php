@@ -214,6 +214,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::post('admin/letters/{id}/delete', [\App\Http\Controllers\LetterController::class, 'destroy'])->name('admin.letters.delete');
     Route::get('admin/letters/{id}/recipients', [\App\Http\Controllers\LetterController::class, 'recipients'])->name('admin.letters.recipients');
     Route::post('admin/letters/{id}/dispatch', [\App\Http\Controllers\LetterController::class, 'dispatch'])->name('admin.letters.dispatch');
+    Route::post('admin/letters/{id}/dispatch-batch', [\App\Http\Controllers\LetterController::class, 'dispatchBatch'])->name('admin.letters.dispatch-batch');
     Route::get('admin/letters', [\App\Http\Controllers\LetterController::class, 'index'])->name('admin.letters.index');
 
     Route::get('admin/global-search', [DashboardController::class,'globalSearch'])->name('admin.global.search');

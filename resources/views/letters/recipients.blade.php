@@ -270,12 +270,19 @@
         <div class="modal-body">
           <p class="mb-2" id="rvSummary"></p>
           <div id="rvWarnings"></div>
-          <div class="table-responsive" style="max-height:340px;overflow-y:auto;border:1px solid #eee;">
+          {{-- shown while the letters are going out, a few at a time --}}
+          <div id="rvProgressBox" class="d-none mb-3">
+            <div class="progress" style="height:22px;"><div id="rvBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width:0%">0%</div></div>
+            <div id="rvProgressText" class="small mt-2"></div>
+            <div id="rvResult" class="mt-2"></div>
+          </div>
+          <div class="table-responsive" id="rvTableBox" style="max-height:340px;overflow-y:auto;border:1px solid #eee;">
             <table class="table table-sm table-striped mb-0"><thead><tr><th>#</th><th>Name</th><th>E-mail</th><th>Country</th><th>Programme</th><th>Year</th></tr></thead><tbody id="rvRows"></tbody></table>
           </div>
         </div>
         <div class="modal-footer py-2">
-          <button type="button" class="btn btn-light" data-dismiss="modal"><i class="fas fa-arrow-left mr-1"></i> Back</button>
+          <button type="button" class="btn btn-light" data-dismiss="modal" id="rvBack"><i class="fas fa-arrow-left mr-1"></i> Back</button>
+          <a href="{{ url('admin/letters') }}" class="btn btn-cosecsa d-none" id="rvDone"><i class="fas fa-list mr-1"></i> Go to College Letters</a>
           <button type="button" class="btn btn-cosecsa" id="rvSend"><i class="fas fa-paper-plane mr-1"></i> <span id="rvSendLabel">Send</span></button>
         </div>
       </div>
@@ -414,9 +421,74 @@
       return '<tr><td>' + (i + 1) + '</td><td>' + esc(d.name) + (d.sent === '1' ? ' <span class="badge badge-success">Already sent</span>' : '') + '</td><td>' + (d.email ? esc(d.email) : '<span class="text-danger">none</span>') + '</td><td>' + esc(d.country) + '</td><td>' + esc(d.programme) + '</td><td>' + esc(d.year) + '</td></tr>';
     }).join('');
     document.getElementById('rvSendLabel').textContent = 'Send ' + rows.length + ' letter' + (rows.length === 1 ? '' : 's');
-    $('#reviewModal').modal('show');
+    $('#reviewModal').modal({ backdrop: 'static', keyboard: false, show: true });   // not closed by a stray click while sending
   });
-  document.getElementById('rvSend').addEventListener('click', function () { this.disabled = true; form.submit(); });
+
+  // Send: a few letters at a time, so no single request runs long enough to time out (each letter takes about three
+  // seconds). The first batch creates the dispatch and the rest add to it; the progress bar follows the batches.
+  var BATCH = 5;
+  document.getElementById('rvSend').addEventListener('click', function () {
+    var btn = this;
+    var ids = Array.prototype.map.call(form.querySelectorAll('.recip-check:checked'), function (c) { return c.value; });
+    if (!ids.length) return;
+    var batches = [], k;
+    for (k = 0; k < ids.length; k += BATCH) batches.push(ids.slice(k, k + BATCH));
+    var total = ids.length, sent = 0, failed = 0, dispatchId = '', i = 0;
+    var bar = document.getElementById('rvBar'), text = document.getElementById('rvProgressText'), result = document.getElementById('rvResult');
+
+    btn.disabled = true; document.getElementById('rvBack').disabled = true;
+    document.getElementById('rvTableBox').classList.add('d-none');
+    document.getElementById('rvWarnings').classList.add('d-none');
+    document.getElementById('rvProgressBox').classList.remove('d-none');
+    window.onbeforeunload = function () { return 'Letters are still being sent. Leaving now stops the sending.'; };
+
+    // everything in the form except the ticked people (sent a batch at a time) and the extra files (sent once)
+    function baseBody() {
+      var body = new FormData();
+      Array.prototype.forEach.call(form.elements, function (el) {
+        if (!el.name || el.disabled || el.type === 'file' || el.classList.contains('recip-check')) return;
+        if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) return;
+        body.append(el.name, el.value);
+      });
+      return body;
+    }
+    function show() {
+      var pct = Math.round(100 * (sent + failed) / total);
+      bar.style.width = pct + '%'; bar.textContent = pct + '%';
+      text.textContent = 'Sending… ' + (sent + failed) + ' of ' + total + ' done. Please keep this page open.';
+    }
+    function finish(problem) {
+      window.onbeforeunload = null;
+      bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
+      var cls = problem ? 'danger' : (failed ? 'warning' : 'success');
+      bar.className = 'progress-bar bg-' + cls;
+      text.textContent = '';
+      result.innerHTML = '<div class="alert alert-' + cls + ' mb-0">' +
+        (problem ? '<strong>Sending stopped after ' + (sent + failed) + ' of ' + total + '.</strong> ' + esc(problem) + '<br>' : '') +
+        '<strong>' + sent + '</strong> letter' + (sent === 1 ? '' : 's') + ' sent' + (failed ? ', <strong>' + failed + '</strong> could not be sent (see the Sent Letters report)' : '') + '.' +
+        (problem ? ' After reloading, those already sent show as "Already Sent": tick only the rest.' : '') + '</div>';
+      document.getElementById('rvSend').classList.add('d-none');
+      var done = document.getElementById('rvDone'); done.classList.remove('d-none');
+      if (problem) { var back = document.getElementById('rvBack'); back.disabled = false; back.removeAttribute('data-dismiss'); back.innerHTML = '<i class="fas fa-redo mr-1"></i> Reload the list'; back.onclick = function () { window.location.reload(); }; }
+    }
+    function next() {
+      if (i >= batches.length) { finish(null); return; }
+      var body = baseBody();
+      batches[i].forEach(function (id) { body.append('recipient_ids[]', id); });
+      if (dispatchId) body.append('dispatch_id', dispatchId);
+      if (i === 0) files().forEach(function (f) { body.append('attachments[]', f); });   // stored with the dispatch: later batches reuse them
+      fetch(base + '/dispatch-batch', { method: 'POST', body: body, credentials: 'same-origin', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' } })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }, function () { return { ok: false, d: null }; }); })
+        .then(function (res) {
+          if (!res.ok) { finish((res.d && res.d.message) || 'This batch could not be sent.'); return; }
+          dispatchId = res.d.dispatch_id || dispatchId;
+          sent += res.d.sent || 0; failed += res.d.failed || 0; i++;
+          show(); next();
+        })
+        .catch(function () { finish('No connection to the server, so it is not known whether this batch went out. Check the Sent Letters report before sending again.'); });
+    }
+    show(); next();
+  });
 })();
 
 document.getElementById('checkAll').addEventListener('change', function () {

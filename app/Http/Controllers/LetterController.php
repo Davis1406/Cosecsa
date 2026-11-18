@@ -227,6 +227,33 @@ class LetterController extends Controller
         return redirect('admin/letters')->with('success', $response->json('message'));
     }
 
+    // One batch of a larger sending, answered as JSON. The page sends a few letters at a time (each takes about three
+    // seconds to make and e-mail) so no request outlasts the 30-second wait on the API; the first batch creates the
+    // dispatch and the rest pass its id (dispatch_id) to add to it.
+    public function dispatchBatch(Request $request, $id)
+    {
+        $user = Auth::user();
+        $fields = array_merge(
+            $request->except('_token', 'attachments'),
+            ['sender_name' => $user?->name, 'sender_email' => $user?->email]
+        );
+
+        $attachments = $request->file('attachments', []);
+        try {
+            $response = $attachments
+                ? $this->api->postWithFile("letters/{$id}/dispatch", $fields, ['attachments' => $attachments])
+                : $this->api->post("letters/{$id}/dispatch", $fields);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            return response()->json(['message' => 'The server took too long to answer, so it is not known whether this batch went out. Check the Sent Letters report before sending again.'], 504);
+        }
+
+        if ($response->failed()) {
+            return response()->json(['message' => $response->json('message') ?? 'This batch could not be sent.'], $response->status() ?: 502);
+        }
+
+        return response()->json($response->json());
+    }
+
     // ── Report ────────────────────────────────────────────────────────
 
     public function report(Request $request)
