@@ -6,7 +6,7 @@
             <section class="content">
                 @include('_message')
                 <section class="multi_step_form">
-                    <form id="msform" data-offline-submit method="POST" action="{{ route('gs.add') }}" enctype="multipart/form-data">
+                    <form id="msform" data-offline-submit data-candidates-url="{{ url('get-gs-candidates') }}/" method="POST" action="{{ route('gs.add') }}" enctype="multipart/form-data">
                         {{ csrf_field() }}
 
                         <div class="tittle">

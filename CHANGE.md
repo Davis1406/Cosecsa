@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-19) — The submit check can be corrected in the popup
+- The "Check before you submit" popup now shows **Group, Candidate and Station as drop-downs**: if one is wrong, change it there and press *Yes, submit the marks*; the corrections go onto the form and the marks are sent. Choosing another group loads that group's candidates (the candidate must be chosen again) and the submit button waits until they are. Offline, the group cannot be reloaded and is put back with a message. *Go back* sends nothing. (`examiner/_confirm_submit.blade.php`; each marking form carries `data-candidates-url`.)
+
 ### Added (2026-11-19) — Check before you submit; Viva starts with Viva 1 and Viva 2
 - **Submit confirmation:** when an examiner presses Submit on the MCS, General Surgery or FCS marking form, a popup says *You are submitting marks for: Group … Station … Candidate … Form …* and asks them to **Go back** and select the right group and station if it is wrong, or **Yes, submit the marks**. Nothing is sent until they confirm (works the same offline). (`examiner/_confirm_submit.blade.php`.)
 - **Viva stations:** every FCS Viva form now offers **Viva 1 and Viva 2** by default; more are added under Exams Settings > Stations (Viva 1, Viva 2, Viva 3…). With no stations configured the Viva form falls back to Viva 1 and 2. Needs the API migration `2026_11_19_150000_default_viva_stations_to_viva_1_and_2`.

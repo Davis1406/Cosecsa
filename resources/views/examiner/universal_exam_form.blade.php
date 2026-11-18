@@ -7,7 +7,7 @@
                 @include('_message')
                 <section class="multi_step_form">
 
-                    <form id="msform" data-offline-submit method="POST" action="{{ route('examiner.submit.exam') }}" enctype="multipart/form-data">
+                    <form id="msform" data-offline-submit data-candidates-url="{{ url('get-exam-candidates/' . $exam_type) }}/" method="POST" action="{{ route('examiner.submit.exam') }}" enctype="multipart/form-data">
                         {{ csrf_field() }}
                         <input type="hidden" name="exam_type" value="{{ $exam_type }}">
                         <input type="hidden" name="form_type" value="{{ $form_type }}">
