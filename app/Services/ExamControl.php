@@ -7,13 +7,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Read side of the "start the exam" guard (the officer starts and locks it under Exam Groups & Stations;
+ * Read side of the "start the exam" guard (the officer starts and locks it under Exams Settings;
  * the rules and the writes live in cosecsa-api's App\Services\ExamControl). Until an exam is started
  * examiners cannot select it or save real marks for it; the TEST- practice groups stay open.
  */
 class ExamControl
 {
-    public const GUARDED = ['mcs'];
+    public const GUARDED = ['mcs', 'gs', 'cardiothoracic', 'neurosurgery', 'orthopaedic', 'ent', 'paediatric_orthopaedics', 'paediatric', 'plastic_surgery', 'urology'];
 
     public static function state(string $exam): array
     {

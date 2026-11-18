@@ -459,7 +459,7 @@ public function dashboard()
     }
 
     // Updated examiner form method
-    // The exam the examiners' dashboard offers first (Exam Groups & Stations > Current exam in the admin; MCS by default),
+    // The exam the examiners' dashboard offers first (Exams Settings > Current exam in the admin; MCS by default),
     // with the marking page it opens. Same exam type keys as the marking forms and exam_stations.
     private const EXAM_PAGES = [
         'mcs'                     => ['MCS (Membership)', 'examiner/examiner_form'],
@@ -506,7 +506,7 @@ public function dashboard()
         $data['userRoles'] = Auth::user()->getRoles();
         $data['activeRole'] = Auth::user()->getActiveRole();
         $data['currentExam'] = $this->currentExam();
-        $data['mcsState'] = \App\Services\ExamControl::state('mcs');
+        $data['examState'] = \App\Services\ExamControl::state($data['currentExam']['key']);
 
         return view('examiner.dashboard', $data);
     }

@@ -542,6 +542,9 @@ Route::prefix('admin/exams/setup')->controller(\App\Http\Controllers\ExamSetupCo
     Route::post('groups/{id}/examiners/{examinerId}/remove', 'examinerRemove')->whereNumber(['id', 'examinerId']);
     Route::post('groups/{id}/examiners/{examinerId}/station', 'examinerStation')->whereNumber(['id', 'examinerId']);
     Route::post('groups/{id}/move-candidates', 'candidatesMove')->whereNumber('id');
+    Route::get('forms', 'forms');
+    Route::post('forms', 'formUpdate');
+    Route::post('forms/reset', 'formReset');
     Route::get('stations', 'stations');
     Route::post('stations', 'stationStore');
     Route::post('stations/{id}', 'stationUpdate')->whereNumber('id');

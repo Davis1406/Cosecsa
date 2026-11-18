@@ -31,8 +31,8 @@
                             </div>
                         </div>
 
-                        @include('examiner._fcs_records', ['records' => $candidateResult->clinical_records, 'format' => 'clinical', 'total' => $candidateResult->clinical_total])
-                        @include('examiner._fcs_records', ['records' => $candidateResult->viva_records, 'format' => 'viva', 'total' => $candidateResult->viva_total])
+                        @include('examiner._fcs_records', ['records' => $candidateResult->clinical_records, 'examType' => $examType ?? '', 'format' => 'clinical', 'total' => $candidateResult->clinical_total])
+                        @include('examiner._fcs_records', ['records' => $candidateResult->viva_records, 'examType' => $examType ?? '', 'format' => 'viva', 'total' => $candidateResult->viva_total])
 
                         <div class="vr-actions">
                             <a class="vr-btn primary" href="{{ url('examiner/fcs-resubmit/' . $candidateResult->candidate_id) }}">Resubmit</a>

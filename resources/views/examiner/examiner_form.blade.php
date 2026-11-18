@@ -134,7 +134,7 @@
             updateTotalMarks();
         }
 
-        // The most marks a candidate can get at the chosen station (set under Exam Groups & Stations; 20 by default).
+        // The most marks a candidate can get at the chosen station (set under Exams Settings; 20 by default).
         function stationMax() {
             const sel = document.querySelector('select[name="station_id"]');
             const opt = sel && sel.options[sel.selectedIndex];

@@ -49,77 +49,36 @@
                         </div>
 
                         <!-- ================= CASE MARKING SECTION ================= -->
+                        @php
+                            // the cases, questions and marks of this form (Exams Settings > Form labels)
+                            $nCases = count($formConfig['cases']);
+                            $colWidth = $nCases == 1 ? 12 : ($nCases == 2 ? 6 : ($nCases == 4 ? 3 : 4));
+                        @endphp
                         <div class="form-row" style="border: 1px solid #a02626; padding: 15px; border-radius: 5px; position: relative;">
 
-                            @for ($case = 1; $case <= $cases_count; $case++)
-                                <div class="col-md-{{ $cases_count == 2 ? '6' : ($cases_count == 4 ? '3' : '12') }}"
-                                     style="padding: {{ $cases_count > 2 ? '10px' : '0 20px' }};">
+                            @foreach ($formConfig['cases'] as $caseIndex => $caseCfg)
+                                @php $case = $caseIndex + 1; @endphp
+                                <div class="col-md-{{ $colWidth }}" style="padding: {{ $nCases > 2 ? '10px' : '0 20px' }};">
 
-                                    <h5 class="case-heading" style="text-align: center; color: #a02626;" data-case-index="{{ $case }}">
-                                        @if($form_type == 'viva' && $cases_count == 2)
-                                            @if($case == 1)
-                                                Knowledge & Judgement
-                                            @else
-                                                Quality of Response
-                                            @endif
-                                        @else
-                                            Case {{ $case }}
-                                        @endif
-                                    </h5>
-
-                                    @php
-                                        // Determine how many default questions to show
-                                        if ($form_type == 'viva') {
-                                            if ($exam_type == 'paediatric') {
-                                                $defaultQuestions = 2; // Paediatrics viva has only 2 questions
-                                            } else {
-                                                $defaultQuestions = 3; // Other vivas have 3 questions
-                                            }
-                                        } else {
-                                            $defaultQuestions = 3; // Clinical exams have 3 questions
-                                        }
-
-                                        $isUrologyViva = ($exam_type == 'urology' && $form_type == 'viva');
-                                        $isPaediatricViva = ($exam_type == 'paediatric' && $form_type == 'viva');
-                                    @endphp
+                                    <h5 class="case-heading" style="text-align: center; color: #a02626;" data-case-index="{{ $case }}" data-custom="{{ \App\Services\ExamFormConfig::hasCustomTitle($formConfig, $case) ? 1 : 0 }}">{{ \App\Services\ExamFormConfig::caseTitle($formConfig, $case) }}</h5>
 
                                     <div id="case-container-{{ $case }}">
-                                        @for ($q = 1; $q <= $defaultQuestions; $q++)
+                                        @for ($q = 1; $q <= count($caseCfg['questions']); $q++)
                                             <div class="form-group question-block">
-                                                <label>
-                                                    @if($form_type == 'clinical')
-                                                        @if($q == 1)
-                                                            Overall Professional Capacity and Patient Care:
-                                                        @elseif($q == 2)
-                                                            Knowledge and Judgement:
-                                                        @elseif($q == 3)
-                                                            Quality of Response:
-                                                        @elseif($q == 4)
-                                                            Bedside Manner:
-                                                        @endif
-                                                    @else
-                                                        Question {{ $q }}:
-                                                    @endif
-                                                </label>
+                                                <label>{{ \App\Services\ExamFormConfig::questionLabel($formConfig, $case, $q) }}:</label>
                                                 <select name="question_marks_case{{ $case }}[]"
                                                         class="form-control question-mark"
                                                         required onchange="updateTotalMarks()">
                                                     <option value="">Select Mark</option>
-                                                    @if($isUrologyViva || $isPaediatricViva)
-                                                        <option value="0">0</option>
-                                                    @endif
-                                                    <option value="2">2</option>
-                                                    <option value="4">4</option>
-                                                    <option value="6">6</option>
-                                                    <option value="8">8</option>
-                                                    <option value="10">10</option>
+                                                    @foreach ($formConfig['marks'] as $m)
+                                                        <option value="{{ $m }}">{{ $m }}</option>
+                                                    @endforeach
                                                 </select>
                                             </div>
                                         @endfor
                                     </div>
 
-                                    @if(!($exam_type == 'paediatric' && $form_type == 'viva'))
-                                        <!-- Hide "Add Question" button for Paediatrics viva since it only has 2 questions -->
+                                    @if ($formConfig['allow_extra'])
                                         <button type="button"
                                                 class="btn btn-outline-secondary btn-sm mb-3 add-question-btn"
                                                 onclick="addCaseQuestion({{ $case }})"
@@ -129,7 +88,7 @@
                                     @endif
 
                                 </div>
-                            @endfor
+                            @endforeach
                         </div>
 
                         <!-- ================= TOTAL MARKS ================= -->
@@ -166,32 +125,22 @@
 
     <!-- ================= JS ================= -->
     <script>
-        // Check if this is a clinical exam
-        const casesCount = {{ $cases_count }};
         const formType = '{{ $form_type }}';
         const examType = '{{ $exam_type }}';
         const isClinical = (formType === 'clinical');
-        const isUrologyViva = (examType === 'urology' && formType === 'viva');
-        const isPaediatricViva = (examType === 'paediatric' && formType === 'viva');
-        const isSpecialViva = (isUrologyViva || isPaediatricViva); // Combined check for special viva rules
+        const casesCount = {{ count($formConfig['cases']) }};
 
-        // Determine default questions based on exam type
-        let defaultQuestions = 3;
-        if (formType === 'viva') {
-            if (examType === 'paediatric') {
-                defaultQuestions = 2; // Paediatrics viva has only 2 questions
-            } else {
-                defaultQuestions = 3; // Other vivas have 3 questions
-            }
+        // The layout, wording and marks of this form (Exams Settings > Form labels)
+        const formCfg = @json($formConfig);
+        function questionLabel(caseNo, n) {
+            const list = ((formCfg.cases[caseNo - 1] || {}).questions) || [];
+            if (n <= list.length) return ((list[n - 1] || '').trim() || 'Question ' + n) + ':';
+            return ((formCfg.legacy_labels || [])[n - 1] || 'Question ' + n) + ':';   // a question the examiner added
         }
-
-        // Question labels for clinical exams
-        const clinicalQuestionLabels = [
-            'Overall Professional Capacity and Patient Care:',
-            'Knowledge and Judgement:',
-            'Quality of Response:',
-            'Bedside Manner:'
-        ];
+        function maxQuestions(caseNo) {
+            const list = ((formCfg.cases[caseNo - 1] || {}).questions) || [];
+            return isClinical ? Math.max(4, list.length) : 99;
+        }
 
         // Update case numbers based on selected station (only for single-case clinical)
         function updateCaseNumbers() {
@@ -202,6 +151,7 @@
 
             if (selectedStation) {
                 document.querySelectorAll('.case-heading').forEach(function(heading) {
+                    if (heading.dataset.custom === '1') return;   // a heading the exams office named stays as named
                     heading.textContent = 'Case ' + selectedStation;
                 });
             }
@@ -209,18 +159,10 @@
 
         function addCaseQuestion(caseNumber) {
             const container = document.getElementById(`case-container-${caseNumber}`);
-            const questionBlocks = container.querySelectorAll(".question-block");
-            const count = questionBlocks.length;
+            const count = container.querySelectorAll(".question-block").length;
 
-            // Limit to 4 questions for clinical exams
-            if (isClinical && count >= 4) {
-                alert('Maximum of 4 questions allowed for clinical exams.');
-                return;
-            }
-
-            // For Paediatrics viva, don't allow adding more questions (only 2 allowed)
-            if (isPaediatricViva) {
-                alert('Paediatrics viva only has 2 questions. Cannot add more.');
+            if (count >= maxQuestions(caseNumber)) {
+                alert('Maximum of ' + maxQuestions(caseNumber) + ' questions allowed for this case.');
                 return;
             }
 
@@ -228,27 +170,11 @@
             let newField = document.createElement("div");
             newField.classList.add("form-group", "question-block", "mt-2");
 
-            // Determine label
-            let labelText = `Question ${questionNumber}:`;
-            if (isClinical && questionNumber <= 4) {
-                labelText = clinicalQuestionLabels[questionNumber - 1];
-            }
-
-            // Build mark options - add 0 for urology and paediatric viva
             let markOptions = '<option value="">Select Mark</option>';
-            if (isSpecialViva) {
-                markOptions += '<option value="0">0</option>';
-            }
-            markOptions += `
-                <option value="2">2</option>
-                <option value="4">4</option>
-                <option value="6">6</option>
-                <option value="8">8</option>
-                <option value="10">10</option>
-            `;
+            formCfg.marks.forEach(function (m) { markOptions += `<option value="${m}">${m}</option>`; });
 
             newField.innerHTML = `
-                <label>${labelText}</label>
+                <label>${questionLabel(caseNumber, questionNumber)}</label>
                 <div class="input-group">
                     <select name="question_marks_case${caseNumber}[]" class="form-control question-mark"
                             required onchange="updateTotalMarks()">
@@ -262,46 +188,37 @@
             `;
 
             container.appendChild(newField);
-
-            // Hide add button if we've reached the limit
-            if (isClinical && questionNumber >= 4) {
-                const addButton = container.nextElementSibling;
-                if (addButton && addButton.classList.contains('add-question-btn')) {
-                    addButton.style.display = 'none';
-                }
-            }
+            toggleAddButton(caseNumber);
         }
 
         function removeQuestion(button, caseNumber) {
-            const questionBlock = button.closest('.question-block');
             const container = document.getElementById(`case-container-${caseNumber}`);
-            const count = container.querySelectorAll(".question-block").length;
-
-            // Don't allow removing if we're at the minimum number of questions
-            if (isPaediatricViva && count <= 2) {
-                alert('Paediatrics viva must have at least 2 questions.');
+            if (container.querySelectorAll(".question-block").length <= 1) {
+                alert('A case needs at least one question.');
                 return;
             }
-
-            questionBlock.remove();
+            button.closest('.question-block').remove();
+            container.querySelectorAll(".question-block").forEach(function (block, index) {   // keep the numbering of the labels in step
+                const label = block.querySelector('label');
+                if (label) label.textContent = questionLabel(caseNumber, index + 1);
+            });
             updateTotalMarks();
+            toggleAddButton(caseNumber);
+        }
 
-            // Show add button again if we're below the limit
-            if (isClinical) {
-                const currentCount = container.querySelectorAll(".question-block").length;
-                if (currentCount < 4) {
-                    const addButton = container.nextElementSibling;
-                    if (addButton && addButton.classList.contains('add-question-btn')) {
-                        addButton.style.display = 'inline-block';
-                    }
-                }
+        // The Add Question button goes away at the limit and comes back below it
+        function toggleAddButton(caseNumber) {
+            const container = document.getElementById(`case-container-${caseNumber}`);
+            const addButton = container.nextElementSibling;
+            if (addButton && addButton.classList.contains('add-question-btn')) {
+                addButton.style.display = container.querySelectorAll(".question-block").length >= maxQuestions(caseNumber) ? 'none' : 'inline-block';
             }
         }
 
         function updateTotalMarks() {
             let total = 0;
             document.querySelectorAll('.question-mark').forEach(function(select) {
-                let value = parseInt(select.value) || 0;
+                let value = parseFloat(select.value) || 0;
                 if (select.value !== "") total += value;
             });
             document.getElementById('total_marks').value = total;
@@ -333,13 +250,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Update total marks on page load
             updateTotalMarks();
-
-            // For Paediatrics viva, hide any existing "Add Question" buttons
-            if (isPaediatricViva) {
-                document.querySelectorAll('.add-question-btn').forEach(function(button) {
-                    button.style.display = 'none';
-                });
-            }
         });
     </script>
     @include('examiner._marking_flow', ['kind' => $exam_type, 'format' => $form_type, 'assignedGroups' => []])

@@ -600,7 +600,7 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                                 <li class="nav-item">
                                     <a href="{{ url('admin/exams/setup') }}" class="nav-link @if (Request::segment(3) == 'setup') active @endif">
                                         <i class="fas fa-layer-group nav-icon"></i>
-                                        <p>Exam Groups &amp; Stations</p>
+                                        <p>Exams Settings</p>
                                     </a>
                                 </li>
                                 @endif

@@ -23,10 +23,12 @@ class ExamControlReadTest extends TestCase
         DB::table('examiners_groups')->insert([['id' => 1, 'group_name' => 'A'], ['id' => 2, 'group_name' => 'TEST-PART1']]);
     }
 
-    public function test_an_exam_is_closed_until_the_officer_starts_it_and_only_mcs_is_guarded(): void
+    public function test_an_exam_is_closed_until_the_officer_starts_it_and_each_exam_is_started_on_its_own(): void
     {
         $this->assertFalse(ExamControl::isOpen('mcs'));
-        $this->assertTrue(ExamControl::isOpen('gs'));
+        $this->assertFalse(ExamControl::isOpen('gs'));
+        $this->assertFalse(ExamControl::isOpen('ent'));
+        $this->assertTrue(ExamControl::isOpen('something-unlisted'));
 
         DB::table('app_settings')->insert(['key' => 'exam_control.mcs.7', 'value' => json_encode(['open' => true, 'started_at' => '2026-11-11 08:25:00', 'started_by_name' => 'Amani'])]);
 

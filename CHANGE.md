@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Added (2026-11-18) — Exams Settings works for every exam: start control, groups, stations, FCS form layout
+- The admin menu item **Exam Groups & Stations** is now **Exams Settings** (Examinations menu, `admin/exams/setup`).
+- New **Exam** picker at the top of the page: MCS, General Surgery or any FCS specialty. Everything below follows it.
+- **Start the exam works for every exam** (MCS, General Surgery and each FCS specialty), each on its own: *Start the exam*, *Lock marking again* and the *Exam starts at* time. **Every exam starts locked**: until it is started, examiners who open its marking form see the waiting screen (which opens the form by itself when it starts), cannot load candidates or save marks, and can practise on the TEST groups with *Practise with the test groups*. The examiner dashboard warns about the current exam. **Start each exam before it begins.**
+- **Groups** shows the chosen exam's candidates per group (and *Show every exam* in a group's Candidates tab).
+- **Stations:** an FCS exam has one list for its **Clinical form** and one for its **Viva form** (switch at the top of the tab). The Viva list is Viva 1, Viva 2… ; add, rename, switch off or delete stations to match the exam. The names show in "Select Station" on the marking form and on "View marks". The max-marks and questions boxes remain for MCS and General Surgery.
+- **Form labels** (FCS specialties): for the Clinical and Viva form, **add or remove cases and questions**, name each case and each question (e.g. Case 1 / Case 2, each with *Overall Professional Capacity and Patient Care*), choose the marks an examiner can pick (e.g. `0, 2, 4, 6, 8, 10`) and whether an examiner may add an extra question while marking. A new case starts with the questions of the one before it. *Back to standard layout* undoes it. The layout shows on the marking form, the Resubmit form and "View marks".
+- **Saved marks are safe:** the marking form now saves how many questions each case had (`case_layout`, API migration `2026_11_19_100000_add_case_layout_and_exam_format_to_fcs`), so Resubmit and View marks lay old marks out as they were given even after the form is changed; marks saved before this (and by the mobile app) are laid out the way they always were. (`App\Services\ExamFormConfig`, `ExamSetupController`, `CandidatesController::waitingScreen/loadExamForm/stationsFor`, `universal_exam_form`, `resubmit_form_universal`, `_fcs_records`, `exam_waiting`.) Needs the API release first.
+
 ### Added (2026-11-18) — Examiners' landing page
 - Examinations > Exam Groups & Stations: new "Examiners' landing page" card (Dashboard, Examiner Training or Profile settings). After logging in, every examiner opens that page; the default is the dashboard. (`AuthController::examinerLanding`, setting `examiner_landing` in `app_settings`.)
 

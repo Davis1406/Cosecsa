@@ -59,7 +59,7 @@
                             <!-- Offline readiness (filled in by dist/js/examiner-offline.js) -->
                             <div id="examiner-offline-status"></div>
 
-                            <!-- Exam Type Selection Dropdown: the current exam (set under Exam Groups & Stations in the admin; MCS for now) is already selected -->
+                            <!-- Exam Type Selection Dropdown: the current exam (set under Exams Settings in the admin; MCS for now) is already selected -->
                             @php
                                 $examOptions = [
                                     'mcs' => 'MCS', 'gs' => 'FCS General Surgery', 'cardiothoracic' => 'FCS Cardiothoracic', 'urology' => 'FCS Urology',
@@ -77,12 +77,12 @@
                                 </select>
                             </div>
 
-                            @if(!empty($mcsState) && !$mcsState['open'])
+                            @if(!empty($examState) && !$examState['open'])
                                 <div class="alert alert-warning" style="margin-top:12px;">
                                     <i class="fas fa-hourglass-half mr-1"></i>
-                                    <strong>MCS marking has not opened yet.</strong> The exams officer starts it a few minutes before the exam
-                                    @if(!empty($mcsState['scheduled_for'])) (the exam starts at <strong>{{ \Carbon\Carbon::parse($mcsState['scheduled_for'])->format('H:i') }}</strong>)@endif.
-                                    If you choose MCS you will wait on a screen that opens the form by itself when it starts.
+                                    <strong>{{ $currentExam['label'] ?? 'Marking' }} has not opened yet.</strong> The exams officer starts it a few minutes before the exam
+                                    @if(!empty($examState['scheduled_for'])) (the exam starts at <strong>{{ \Carbon\Carbon::parse($examState['scheduled_for'])->format('H:i') }}</strong>)@endif.
+                                    If you choose it you will wait on a screen that opens the form by itself when it starts.
                                 </div>
                             @endif
 

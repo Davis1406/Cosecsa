@@ -131,6 +131,45 @@ class ExaminerOfflineTest extends TestCase
         $this->assertSame('[3,4,5]', DB::table('cardiothoracic_results')->where('exam_format', 'clinical')->value('question_mark'));
     }
 
+    public function test_an_fcs_exam_that_was_not_started_refuses_real_marks_but_not_test_groups(): void
+    {
+        DB::table('app_settings')->where('key', 'exam_control.cardiothoracic.2')->update(['value' => json_encode(['open' => false])]);
+
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical'))->assertStatus(423)->assertJson(['status' => 'locked']);
+        $this->assertSame(0, DB::table('cardiothoracic_results')->count());
+        // another FCS exam that was started is not held back
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical', ['exam_type' => 'urology']))->assertStatus(201);
+        // practice on a TEST- group stays open and writes to the test table
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical', ['group_id' => 17]))->assertStatus(201);
+        $this->assertSame(1, DB::table('test_cardiothoracic_results')->count());
+
+        DB::table('app_settings')->where('key', 'exam_control.cardiothoracic.2')->update(['value' => json_encode(['open' => true])]);
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical'))->assertStatus(201);
+    }
+
+    public function test_an_fcs_mark_remembers_how_many_questions_each_case_had(): void
+    {
+        $this->postJson('examiner/submit-exam', $this->fcsPayload('viva', [
+            'question_marks_case1' => [2, 4, 6], 'question_marks_case2' => [8, 10], 'question_marks_case3' => [4],
+        ]))->assertStatus(201);
+
+        $row = DB::table('cardiothoracic_results')->where('exam_format', 'viva')->first();
+        $this->assertSame('[2,4,6,8,10,4]', $row->question_mark);
+        $this->assertSame('[3,2,1]', $row->case_layout);
+        $this->assertSame([3, 2, 1], \App\Services\ExamFormConfig::layout('cardiothoracic', 'viva', $row->case_layout, 6));
+    }
+
+    public function test_marks_without_a_saved_layout_are_laid_out_the_way_the_forms_always_did(): void
+    {
+        $this->assertSame([3, 3], \App\Services\ExamFormConfig::layout('ent', 'viva', null, 6));
+        $this->assertSame([4], \App\Services\ExamFormConfig::layout('ent', 'clinical', null, 4));
+        $this->assertSame([3, 3], \App\Services\ExamFormConfig::layout('urology', 'clinical', null, 6));
+        $this->assertSame([2, 2], \App\Services\ExamFormConfig::layout('paediatric', 'viva', null, 4));
+        // a layout that does not add up to the marks is ignored, never trusted
+        $this->assertSame([3, 3], \App\Services\ExamFormConfig::layout('ent', 'viva', '[9,9]', 6));
+        $this->assertSame([2, 2, 2], \App\Services\ExamFormConfig::layout('ent', 'viva', '[2,2,2]', 6));
+    }
+
     public function test_fcs_rejects_an_unknown_exam_type(): void
     {
         $this->postJson('examiner/submit-exam', $this->fcsPayload('clinical', ['exam_type' => 'nonsense']))
@@ -509,8 +548,10 @@ class ExaminerOfflineTest extends TestCase
         DB::table('users')->insert(['id' => 1, 'name' => 'Dr Examiner', 'email' => 'e@example.org', 'password' => 'x']);
         DB::table('examiners')->insert(['id' => $this->examinerId, 'user_id' => 1]);
         DB::table('years')->insert(['id' => 2, 'year_name' => '2026']);
-        // The exams officer has started the MCS exam (see App\Services\ExamControl); the tests that check the guard lock it again.
-        DB::table('app_settings')->insert(['key' => 'exam_control.mcs.2', 'value' => json_encode(['open' => true])]);
+        // The exams officer has started these exams (see App\Services\ExamControl); the tests that check the guard lock them again.
+        foreach (['mcs', 'gs', 'cardiothoracic', 'urology'] as $exam) {
+            DB::table('app_settings')->insert(['key' => "exam_control.$exam.2", 'value' => json_encode(['open' => true])]);
+        }
         DB::table('programmes')->insert([['id' => 1, 'name' => 'Cardiothoracic', 'programme_name' => 'Cardiothoracic'], ['id' => 9, 'name' => 'Urologic', 'programme_name' => 'Urologic']]);
         DB::table('examiners_groups')->insert([['id' => 3, 'group_name' => 'A'], ['id' => 4, 'group_name' => 'B'], ['id' => 17, 'group_name' => 'TEST-PART1']]);
 
@@ -587,7 +628,7 @@ class ExaminerOfflineTest extends TestCase
                 $t->string('remarks')->nullable();
                 $t->integer('exam_year');
                 if (str_ends_with($table, 'mcs_results')) $t->string('overall')->nullable();
-                if (str_ends_with($table, 'cardiothoracic_results') || str_ends_with($table, 'urology_results')) $t->string('exam_format')->nullable();
+                if (str_ends_with($table, 'cardiothoracic_results') || str_ends_with($table, 'urology_results')) { $t->string('exam_format')->nullable(); $t->text('case_layout')->nullable(); }
                 $t->timestamps();
             });
         }

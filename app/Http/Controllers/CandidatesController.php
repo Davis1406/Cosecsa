@@ -251,20 +251,34 @@ class CandidatesController extends Controller
     }
 
     // GET examiner/exam-status — the waiting screen polls this and opens the form once the exam is started.
-    public function examStatus()
+    public function examStatus(Request $request)
     {
-        return response()->json(\App\Services\ExamControl::state('mcs'))->header('Cache-Control', 'no-store');
+        $exam = in_array($request->query('exam'), \App\Services\ExamControl::GUARDED, true) ? $request->query('exam') : 'mcs';
+
+        return response()->json(\App\Services\ExamControl::state($exam))->header('Cache-Control', 'no-store');
+    }
+
+    /**
+     * The waiting screen for an exam that has not been started (423, not 200: the offline page cache only keeps
+     * successful pages, so it never stores it). Null when the exam is open or the examiner asked to practise.
+     */
+    private function waitingScreen(string $exam, string $title, string $practiceUrl)
+    {
+        $state = \App\Services\ExamControl::state($exam);
+        if ($state['open'] || request()->boolean('practice')) {
+            return null;
+        }
+
+        return response()->view('examiner.exam_waiting', ['header_title' => $title, 'examState' => $state, 'exam' => $exam, 'formUrl' => request()->url(), 'practiceUrl' => $practiceUrl], 423);
     }
 
     public function mcsexaminerform()
     {
         // Not before the exams officer has started the exam: a waiting screen (with practice on the TEST groups).
-        $examState = \App\Services\ExamControl::state('mcs');
-        $practice = ! $examState['open'] && request()->boolean('practice');
-        if (! $examState['open'] && ! $practice) {
-            // 423, not 200: the offline page cache only keeps successful pages, so it never stores the waiting screen.
-            return response()->view('examiner.exam_waiting', ['header_title' => 'MCS Form', 'examState' => $examState], 423);
+        if ($waiting = $this->waitingScreen('mcs', 'MCS Form', url('examiner/examiner_form?practice=1'))) {
+            return $waiting;
         }
+        $practice = ! \App\Services\ExamControl::isOpen('mcs') && request()->boolean('practice');
 
         $examinerId = DB::table('examiners')->where('user_id', Auth::id())->value('id');
         $currentYearId = User::getCurrentYearId();
@@ -291,12 +305,19 @@ class CandidatesController extends Controller
 
     public function gsexaminerform()
     {
+        if ($waiting = $this->waitingScreen('gs', 'GS Form', url('examiner/general_surgery?practice=1'))) {
+            return $waiting;
+        }
+        $practice = ! \App\Services\ExamControl::isOpen('gs') && request()->boolean('practice');
         $examinerId = DB::table('examiners')->where('user_id', Auth::id())->value('id');
         $currentYearId = User::getCurrentYearId();
         $examinerGroupIds = DB::table('exams_groups')
             ->where('exm_id', $examinerId)->where('year_id', $currentYearId)
             ->pluck('group_id')->toArray();
         $groups = DB::table('examiners_groups')->where('group_name', 'not like', 'TEST-FCS-%')->get();   // the FCS sample groups belong on the FCS forms
+        if ($practice) {
+            $groups = $groups->filter(fn ($g) => strncasecmp((string) $g->group_name, 'TEST-', 5) === 0)->values();
+        }
 
         $data['header_title'] = 'GS Form';
         $data['stations'] = $this->stationsFor('gs');
@@ -335,6 +356,10 @@ class CandidatesController extends Controller
 
     public function getGsCandidatesByGroup($groupId)
     {
+        if (! \App\Services\ExamControl::marksAllowed('gs', $groupId)) {
+            return response()->json(['message' => 'The exam has not been started by the exams officer yet.', 'status' => 'locked'], 423);
+        }
+
         $currentYearId = User::getCurrentYearId();
         $currentYear = DB::table('years')->where('id', $currentYearId)->value('year_name');
         $examinerId = DB::table('examiners')->where('user_id', Auth::id())->value('id');
@@ -421,6 +446,9 @@ class CandidatesController extends Controller
         if ($sandboxGroup = $this->candidateSandboxGroup($request->candidate_id)) $request->merge(['group_id' => $sandboxGroup]);
         $table = $this->resultsTable('gs_results', $request->group_id);
         if ($table === null) return $this->sandboxUnavailable($request);
+        if ($table === 'gs_results' && ! \App\Services\ExamControl::isOpen('gs')) {
+            return $this->submissionResponse($request, 'locked', 'The exam has not been started by the exams officer yet. Your mark was not saved.', 423);
+        }
 
         $currentYearId = User::getCurrentYearId();
 
@@ -456,19 +484,25 @@ class CandidatesController extends Controller
      * real group and land in the real results). Returns that sandbox group's id, or null.
      */
     /**
-     * The stations the examiner forms offer for an exam type (Exam Groups & Stations, in the admin).
+     * The stations the examiner forms offer for an exam type (Exams Settings, in the admin).
      * Falls back to Station 1-8 when none are configured, which is what the forms always offered.
      */
-    private function stationsFor(string $examType)
+    private function stationsFor(string $examType, string $format = '')
     {
+        // The FCS specialties keep one station list for the Clinical form and one for the Viva form; MCS and General Surgery have one.
+        $fcs = ! in_array($examType, ['mcs', 'gs'], true);
+        $format = $fcs ? ($format === 'viva' ? 'viva' : 'clinical') : '';
+        $hasFormat = \Illuminate\Support\Facades\Schema::hasColumn('exam_stations', 'exam_format');
         $rows = \Illuminate\Support\Facades\Schema::hasTable('exam_stations')
-            ? DB::table('exam_stations')->where('exam_type', $examType)->where('is_active', 1)->orderBy('station_number')->get(['station_number as number', 'name', 'max_total'])
+            ? DB::table('exam_stations')->where('exam_type', $examType)->when($hasFormat, fn ($q) => $q->where('exam_format', $format))->where('is_active', 1)->orderBy('station_number')->get(['station_number as number', 'name', 'max_total'])
             : collect();
         if ($rows->isNotEmpty()) {
             return $rows;
         }
 
-        return collect(range(1, 8))->map(fn ($i) => (object) ['number' => $i, 'name' => "Station $i", 'max_total' => $examType === 'mcs' ? 20 : null]);
+        $label = $format === 'viva' ? 'Viva' : 'Station';
+
+        return collect(range(1, 8))->map(fn ($i) => (object) ['number' => $i, 'name' => "$label $i", 'max_total' => $examType === 'mcs' ? 20 : null]);
     }
 
     /**
@@ -572,7 +606,7 @@ class CandidatesController extends Controller
         $rules = [
             'candidate_id' => 'required|integer|exists:candidates,id',
             'group_id'     => 'required|integer|exists:examiners_groups,id',
-            // Stations 1-8 as always, plus any station an admin added under Exam Groups & Stations.
+            // Stations 1-8 as always, plus any station an admin added under Exams Settings.
             'station_id'   => ['required', 'integer', function ($attribute, $value, $fail) {
                 if (! ($value >= 1 && $value <= 8) && ! DB::table('exam_stations')->where('station_number', (int) $value)->where('is_active', 1)->exists()) {
                     $fail('That station is not available.');
@@ -758,7 +792,7 @@ class CandidatesController extends Controller
             'viva_records' => $vivaRecords,
         ];
 
-        return view('examiner.view_fcs_results', ['candidateResult' => $candidateResult, 'header_title' => "Candidate Full Results", 'lastSource' => $sourceTable]);
+        return view('examiner.view_fcs_results', ['candidateResult' => $candidateResult, 'header_title' => "Candidate Full Results", 'lastSource' => $sourceTable, 'examType' => preg_replace('/_results$/', '', (string) $this->baseTable($sourceTable))]);
     }
 
     public function viewCandidateResults($candidate_id, $station_id)
@@ -919,12 +953,11 @@ class CandidatesController extends Controller
 
         if (!$existingRecord) return redirect()->back()->with('error', 'No existing evaluation found for this exam format.');
 
-        // Must match what the marking forms (loadExamForm callers above) save, or the Resubmit page cannot lay the saved
-        // marks out: Clinical is two cases for neurosurgery, plastic surgery and urology (one case for the rest), Viva is two cases.
-        $casesCount = 2;
-        if ($exam_format === 'clinical') {
-            $casesCount = in_array($exam_type, ['plastic_surgery', 'neurosurgery', 'urology']) ? 2 : 1;
-        }
+        // How the saved marks split into cases: the layout saved with them, else the way the forms always did (Clinical is two
+        // cases for neurosurgery, plastic surgery and urology and one for the rest; Viva is two).
+        $savedMarks = json_decode($existingRecord->question_mark, true) ?: [];
+        $caseLayout = \App\Services\ExamFormConfig::layout($exam_type, $exam_format, $existingRecord->case_layout ?? null, count($savedMarks));
+        $casesCount = count($caseLayout);
 
         $candidateData = (object)[
             'candidates_id' => $candidate->id,
@@ -941,7 +974,7 @@ class CandidatesController extends Controller
 
         if (in_array($candidate->programme_id, [1,3,4,5,6,7,8,9])) {
             $examNames = ['cardiothoracic'=>'Cardiothoracic Surgery','urology'=>'Urology','orthopaedic'=>'Orthopaedic','paediatric'=>'Paediatric Surgery','ent'=>'ENT Surgery','plastic_surgery'=>'Plastic Surgery','neurosurgery'=>'Neurosurgery','paediatric_orthopaedics'=>'Paediatric Orthopaedics'];
-            return view('examiner.resubmit_form_universal', ['candidate' => $candidateData, 'exam_name' => DB::table('programmes')->where('id', $candidate->programme_id)->value('name'), 'exam_type' => $exam_type, 'form_type' => $exam_format, 'cases_count' => $casesCount, 'programme_id' => $candidate->programme_id, 'groups' => $groups, 'examinerGroupIds' => $examinerGroupIds, 'header_title' => 'Resubmit '.ucfirst($exam_format), 'isResubmit' => true]);
+            return view('examiner.resubmit_form_universal', ['candidate' => $candidateData, 'exam_name' => DB::table('programmes')->where('id', $candidate->programme_id)->value('name'), 'exam_type' => $exam_type, 'form_type' => $exam_format, 'cases_count' => $casesCount, 'caseLayout' => $caseLayout, 'formConfig' => \App\Services\ExamFormConfig::get($exam_type, $exam_format), 'programme_id' => $candidate->programme_id, 'groups' => $groups, 'examinerGroupIds' => $examinerGroupIds, 'header_title' => 'Resubmit '.ucfirst($exam_format), 'isResubmit' => true]);
         }
 
         return view('examiner.resubmit', ['candidate' => $candidateData, 'header_title' => 'Resubmit Evaluation', 'isResubmit' => true]);
@@ -966,6 +999,9 @@ class CandidatesController extends Controller
             if (!$record) continue;
             $updateData = ['group_id' => $request->group_id ?? $record->group_id, 'station_id' => $request->station_id ?? $record->station_id, 'question_mark' => json_encode($questionMarks), 'total' => $request->total_marks ?? array_sum($questionMarks), 'remarks' => $request->remarks ?? $record->remarks, 'updated_at' => now()];
             if ($settings['grade_field'] && isset($request->grade)) $updateData[$settings['grade_field']] = $request->grade;
+            // the resubmit form reports how many questions each case now has
+            $layout = json_decode((string) $request->input('case_layout'), true);
+            if (is_array($layout) && $layout && array_sum($layout) === count($questionMarks) && \App\Services\ExamFormConfig::tableHasLayout($table)) $updateData['case_layout'] = json_encode(array_map('intval', $layout));
             DB::table($table)->where('id', $record->id)->update($updateData);
             $updated = true;
             break;
@@ -1003,6 +1039,11 @@ class CandidatesController extends Controller
 
     private function loadExamForm($examType, $formType, $programmeId, $casesCount)
     {
+        // Not before the exams officer has started this exam: a waiting screen (with practice on the TEST groups).
+        if ($waiting = $this->waitingScreen($examType, 'FCS ' . ucfirst(str_replace('_', ' ', $examType)) . ' - ' . ucfirst($formType), request()->url() . '?practice=1')) {
+            return $waiting;
+        }
+        $practice = ! \App\Services\ExamControl::isOpen($examType) && request()->boolean('practice');
         $examinerId = DB::table('examiners')->where('user_id', Auth::id())->value('id');
         $currentYearId = User::getCurrentYearId();
         $currentYear = DB::table('years')->where('id', $currentYearId)->value('year_name');
@@ -1011,12 +1052,20 @@ class CandidatesController extends Controller
         $groupsWithCandidates = DB::table('candidates')->join('examiners_groups', 'candidates.group_id', '=', 'examiners_groups.id')->where('candidates.programme_id', $programmeId)->where('candidates.exam_year', $currentYear)->whereNotNull('candidates.group_id')->select('examiners_groups.id', 'examiners_groups.group_name')->distinct()->get()
             // TEST-PART1 is the Part I sandbox (it holds every specialty's candidates); each FCS specialty page only lists its own groups (e.g. TEST-FCS-URO).
             ->reject(fn ($g) => strcasecmp($g->group_name, 'TEST-PART1') === 0)->values();
+        if ($practice) {
+            $groupsWithCandidates = $groupsWithCandidates->filter(fn ($g) => strncasecmp((string) $g->group_name, 'TEST-', 5) === 0)->values();
+        }
+        $formConfig = \App\Services\ExamFormConfig::get($examType, $formType);
+        $casesCount = count($formConfig['cases']);
         $examNames = ['cardiothoracic'=>'Cardiothoracic Surgery','urology'=>'Urology','orthopaedic'=>'Orthopaedic','paediatric'=>'Paediatric Surgery','ent'=>'ENT Surgery','plastic_surgery'=>'Plastic Surgery','neurosurgery'=>'Neurosurgery','paediatric_orthopaedics'=>'Paediatric Orthopaedics'];
-        return view('examiner.universal_exam_form', ['header_title'=>'FCS '.$examNames[$examType].' - '.ucfirst($formType),'exam_name'=>$examNames[$examType],'exam_type'=>$examType,'form_type'=>$formType,'cases_count'=>$casesCount,'programme_id'=>$programmeId,'groups'=>$groupsWithCandidates,'stations'=>$this->stationsFor($examType)]);
+        return view('examiner.universal_exam_form', ['header_title'=>'FCS '.$examNames[$examType].' - '.ucfirst($formType),'exam_name'=>$examNames[$examType],'exam_type'=>$examType,'form_type'=>$formType,'cases_count'=>$casesCount,'programme_id'=>$programmeId,'groups'=>$groupsWithCandidates,'stations'=>$this->stationsFor($examType, $formType),'formConfig'=>$formConfig]);
     }
 
     public function getExamCandidatesByGroup($examType, $groupId)
     {
+        if (! \App\Services\ExamControl::marksAllowed($examType, $groupId)) {
+            return response()->json(['message' => 'The exam has not been started by the exams officer yet.', 'status' => 'locked'], 423);
+        }
         $currentYearId = User::getCurrentYearId();
         $currentYear = DB::table('years')->where('id', $currentYearId)->value('year_name');
         $examinerId = DB::table('examiners')->where('user_id', Auth::id())->value('id');
@@ -1050,8 +1099,13 @@ class CandidatesController extends Controller
         if (!$tableName) return $this->submissionResponse($request, 'invalid', 'Invalid exam type.', 422);
 
         if ($sandboxGroup = $this->candidateSandboxGroup($request->candidate_id)) $request->merge(['group_id' => $sandboxGroup]);
+        $realTable = $tableName;
         $tableName = $this->resultsTable($tableName, $request->group_id);
         if ($tableName === null) return $this->sandboxUnavailable($request);
+        // Real marks wait for the exams officer to start this exam (TEST- groups write to the test table, so they never do).
+        if ($tableName === $realTable && ! \App\Services\ExamControl::isOpen($request->exam_type)) {
+            return $this->submissionResponse($request, 'locked', 'The exam has not been started by the exams officer yet. Your mark was not saved.', 423);
+        }
 
         $existingSubmission = DB::table($tableName)->where('candidate_id', $request->candidate_id)->where('examiner_id', $examiner->id)->where('station_id', $request->station_id)->where('exam_format', $request->form_type)->where('exam_year', $currentYearId)->first();
         if ($existingSubmission) return $this->submissionResponse($request, 'duplicate', 'Candidate marks already submitted for this station and format. Please use Resubmit to edit.', 409);
@@ -1066,7 +1120,11 @@ class CandidatesController extends Controller
             }
         }
 
-        DB::table($tableName)->insert(['candidate_id'=>$request->candidate_id,'examiner_id'=>$examiner->id,'station_id'=>$request->station_id,'group_id'=>$request->group_id,'exam_format'=>$request->form_type,'question_mark'=>json_encode($questionMarks),'total'=>$request->total_marks,'remarks'=>$request->remarks,'exam_year'=>$currentYearId,'created_at'=>now(),'updated_at'=>now()]);
+        $row = ['candidate_id'=>$request->candidate_id,'examiner_id'=>$examiner->id,'station_id'=>$request->station_id,'group_id'=>$request->group_id,'exam_format'=>$request->form_type,'question_mark'=>json_encode($questionMarks),'total'=>$request->total_marks,'remarks'=>$request->remarks,'exam_year'=>$currentYearId,'created_at'=>now(),'updated_at'=>now()];
+        // how many questions each case had, so the saved marks can be laid out again whatever the form becomes later
+        $layout = \App\Services\ExamFormConfig::layoutFromRequest($request->all());
+        if ($layout && array_sum($layout) === count($questionMarks) && \App\Services\ExamFormConfig::tableHasLayout($tableName)) $row['case_layout'] = json_encode($layout);
+        DB::table($tableName)->insert($row);
 
         return $this->submissionResponse($request, 'success', ucfirst($request->exam_type) . ' evaluation submitted successfully.', 201);
     }

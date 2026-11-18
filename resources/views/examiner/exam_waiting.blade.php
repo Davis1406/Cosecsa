@@ -19,7 +19,7 @@
             <div class="mt-3" id="waitStatus" style="font-size:.95rem;color:#6b6b6b;">Checking…</div>
             <hr class="my-4">
             <p class="text-muted mb-2" style="font-size:.95rem;">Want to try the form first?</p>
-            <a href="{{ url('examiner/examiner_form?practice=1') }}" class="btn btn-outline-secondary btn-lg">Practise with the test groups</a>
+            <a href="{{ $practiceUrl ?? url('examiner/examiner_form?practice=1') }}" class="btn btn-outline-secondary btn-lg">Practise with the test groups</a>
             <div class="mt-3"><a href="{{ url('examiner/dashboard') }}">Back to my dashboard</a></div>
           </div>
         </div>
@@ -31,7 +31,7 @@
 @push('scripts')
 <script>
 (function () {
-  var statusUrl = @json(url('examiner/exam-status')), formUrl = @json(url('examiner/examiner_form')), box = document.getElementById('waitStatus');
+  var statusUrl = @json(url('examiner/exam-status') . '?exam=' . ($exam ?? 'mcs')), formUrl = @json($formUrl ?? url('examiner/examiner_form')), box = document.getElementById('waitStatus');
   function check() {
     fetch(statusUrl, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin', cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : Promise.reject(); })

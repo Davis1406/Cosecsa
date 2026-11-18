@@ -41,76 +41,46 @@
                         </div>
 
                         <!-- ================= CASE MARKING SECTION ================= -->
+                        @php
+                            // $caseLayout: how many questions each case had when these marks were saved
+                            $nCases = count($caseLayout);
+                            $colWidth = $nCases == 1 ? 12 : ($nCases == 2 ? 6 : ($nCases == 4 ? 3 : 4));
+                            $savedMarks = $candidate->question_mark;
+                            $offset = 0;
+                        @endphp
                         <div class="form-row" style="border: 1px solid #a02626; padding: 15px; border-radius: 5px; position: relative;">
 
-                            @php
-                                $clinicalLabels = [
-                                    'Overall Professional Capacity and Patient Care:',
-                                    'Knowledge and Judgement:',
-                                    'Quality of Response:',
-                                    'Bedside Manner:'
-                                ];
-                            @endphp
+                            @foreach ($caseLayout as $caseIndex => $questionCount)
+                                @php $case = $caseIndex + 1; $configured = count($formConfig['cases'][$caseIndex]['questions'] ?? []); @endphp
+                                <div class="col-md-{{ $colWidth }}" style="padding: {{ $nCases > 2 ? '10px' : '0 20px' }};">
 
-                            @for ($case = 1; $case <= $cases_count; $case++)
-                                <div class="col-md-{{ $cases_count == 2 ? '6' : ($cases_count == 4 ? '3' : '12') }}"
-                                     style="padding: {{ $cases_count > 2 ? '10px' : '0 20px' }};">
-
-                                    <h5 class="case-heading" style="text-align: center; color: #a02626;" data-station="{{ $candidate->station_id }}">
-                                        @if($form_type == 'viva' && $cases_count == 2)
-                                            @if($case == 1)
-                                                Knowledge & Judgement
-                                            @else
-                                                Quality of Response
-                                            @endif
-                                        @else
-                                            Case {{ $cases_count == 1 ? $candidate->station_id : $case }}
-                                        @endif
-                                    </h5>
+                                    @php
+                                        $customTitle = \App\Services\ExamFormConfig::hasCustomTitle($formConfig, $case);
+                                        // a one-case Clinical form with no heading set has always been called after the station
+                                        $heading = ($customTitle || $nCases > 1) ? \App\Services\ExamFormConfig::caseTitle($formConfig, $case) : 'Case ' . $candidate->station_id;
+                                    @endphp
+                                    <h5 class="case-heading" style="text-align: center; color: #a02626;" data-station="{{ $candidate->station_id }}" data-custom="{{ $customTitle ? 1 : 0 }}">{{ $heading }}</h5>
 
                                     <div id="case-container-{{ $case }}">
-                                        @php
-                                            // Calculate the starting index for this case's questions
-                                            $questionsPerCase = $cases_count == 1 ? count($candidate->question_mark) : (count($candidate->question_mark) / $cases_count);
-                                            $startIndex = ($case - 1) * $questionsPerCase;
-                                        @endphp
-
-                                        @for($i = 0; $i < $questionsPerCase; $i++)
+                                        @for ($i = 0; $i < $questionCount; $i++)
                                             @php
-                                                $questionIndex = $startIndex + $i;
-                                                if ($questionIndex >= count($candidate->question_mark)) break;
-
-                                                // Determine label
-                                                if ($form_type == 'clinical') {
-                                                    if ($cases_count == 1) {
-                                                        // Single case: use clinical labels as-is
-                                                        $label = $clinicalLabels[$i];
-                                                    } else {
-                                                        // Multiple cases: append case number to clinical labels
-                                                        $label = str_replace(':', '', $clinicalLabels[$i]) . ':' . $case;
-                                                    }
-                                                } else {
-                                                    $label = "Question " . ($i + 1) . ":";
-                                                }
+                                                $saved = $savedMarks[$offset + $i] ?? null;
+                                                // the marks to pick from; a saved mark outside the current scale stays selectable
+                                                $marks = $formConfig['marks'];
+                                                if (is_numeric($saved) && $saved > 0 && ! in_array((float) $saved, array_map('floatval', $marks), true)) { $marks[] = $saved + 0; sort($marks); }
                                             @endphp
-
                                             <div class="form-group question-block">
-                                                <label>{{ $label }}</label>
+                                                <label>{{ \App\Services\ExamFormConfig::questionLabel($formConfig, $case, $i + 1) }}:</label>
                                                 <div class="input-group">
                                                     <select name="question_marks[]"
                                                             class="form-control question-mark"
                                                             required onchange="updateTotalMarks()">
                                                         <option value="">Select Mark</option>
-                                                        @if($exam_type == 'urology' && $form_type == 'viva')
-                                                            <option value="0" {{ $candidate->question_mark[$questionIndex] == 0 ? 'selected' : '' }}>0</option>
-                                                        @endif
-                                                        <option value="2" {{ $candidate->question_mark[$questionIndex] == 2 ? 'selected' : '' }}>2</option>
-                                                        <option value="4" {{ $candidate->question_mark[$questionIndex] == 4 ? 'selected' : '' }}>4</option>
-                                                        <option value="6" {{ $candidate->question_mark[$questionIndex] == 6 ? 'selected' : '' }}>6</option>
-                                                        <option value="8" {{ $candidate->question_mark[$questionIndex] == 8 ? 'selected' : '' }}>8</option>
-                                                        <option value="10" {{ $candidate->question_mark[$questionIndex] == 10 ? 'selected' : '' }}>10</option>
+                                                        @foreach ($marks as $m)
+                                                            <option value="{{ $m }}" {{ is_numeric($saved) && (float) $saved === (float) $m ? 'selected' : '' }}>{{ $m }}</option>
+                                                        @endforeach
                                                     </select>
-                                                    @if($i >= 3)
+                                                    @if($i >= $configured)
                                                         <div class="input-group-append">
                                                             <button type="button" class="btn btn-danger" onclick="removeQuestion(this, {{ $case }})">X</button>
                                                         </div>
@@ -118,23 +88,27 @@
                                                 </div>
                                             </div>
                                         @endfor
+                                        @php $offset += $questionCount; @endphp
                                     </div>
 
-                                    <!-- ALWAYS SHOW ADD QUESTION BUTTON (like original form) -->
-                                    <button type="button"
-                                            class="btn btn-outline-secondary btn-sm mb-3 add-question-btn"
-                                            onclick="addCaseQuestion({{ $case }})"
-                                            style="color:black; background-color: #FEC503; border-color: #FEC503;">
-                                        + Add Question
-                                    </button>
+                                    @if ($formConfig['allow_extra'])
+                                        <button type="button"
+                                                class="btn btn-outline-secondary btn-sm mb-3 add-question-btn"
+                                                onclick="addCaseQuestion({{ $case }})"
+                                                style="color:black; background-color: #FEC503; border-color: #FEC503;">
+                                            + Add Question
+                                        </button>
+                                    @endif
 
                                 </div>
 
-                                @if($case < $cases_count && $cases_count == 2)
+                                @if($caseIndex < $nCases - 1 && $nCases == 2)
                                     <div class="separator-lg"></div>
                                 @endif
-                            @endfor
+                            @endforeach
                         </div>
+                        {{-- how many questions each case has now (kept up to date by the page) --}}
+                        <input type="hidden" name="case_layout" id="case_layout" value="{{ json_encode($caseLayout) }}">
 
                         <!-- ================= TOTAL MARKS ================= -->
                         <div class="form-row justify-content-center">
@@ -191,17 +165,27 @@
 
     <!-- ================= JS ================= -->
     <script>
-        const casesCount = {{ $cases_count }};
         const formType = '{{ $form_type }}';
         const examType = '{{ $exam_type }}';
         const isClinical = formType === 'clinical';
-        const isUrologyViva = (examType === 'urology' && formType === 'viva');
-        const clinicalLabels = [
-            'Overall Professional Capacity and Patient Care:',
-            'Knowledge and Judgement:',
-            'Quality of Response:',
-            'Bedside Manner:'
-        ];
+        const casesCount = {{ count($caseLayout) }};
+
+        // The layout, wording and marks of this form (Exams Settings > Form labels)
+        const formCfg = @json($formConfig);
+        function questionLabel(caseNo, n) {
+            const list = ((formCfg.cases[caseNo - 1] || {}).questions) || [];
+            if (n <= list.length) return ((list[n - 1] || '').trim() || 'Question ' + n) + ':';
+            return ((formCfg.legacy_labels || [])[n - 1] || 'Question ' + n) + ':';   // a question that was added while marking
+        }
+        function maxQuestions(caseNo) {
+            const list = ((formCfg.cases[caseNo - 1] || {}).questions) || [];
+            return isClinical ? Math.max(4, list.length) : 99;
+        }
+        function markOptionsHtml() {
+            let html = '<option value="">Select Mark</option>';
+            formCfg.marks.forEach(function (m) { html += `<option value="${m}">${m}</option>`; });
+            return html;
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             updateTotalMarks();
@@ -211,51 +195,19 @@
             const container = document.getElementById(`case-container-${caseNumber}`);
             const count = container.querySelectorAll(".question-block").length;
 
-            // For clinical exams, limit to 4 questions per case (like original form)
-            if (isClinical && count >= 4) {
-                alert('Maximum of 4 questions allowed for clinical exams.');
+            if (count >= maxQuestions(caseNumber)) {
+                alert('Maximum of ' + maxQuestions(caseNumber) + ' questions allowed for this case.');
                 return;
             }
 
-            const questionNumber = count + 1;
-
-            // Determine label based on clinical type and case count
-            let labelText;
-            if (isClinical) {
-                if (casesCount === 1) {
-                    // Single case: use clinical labels as-is
-                    labelText = clinicalLabels[count];
-                } else {
-                    // Multiple cases: append case number (remove existing colon first)
-                    const baseLabel = clinicalLabels[count].replace(':', '');
-                    labelText = baseLabel + ':' + caseNumber;
-                }
-            } else {
-                labelText = `Question ${questionNumber}:`;
-            }
-
-            // Build mark options - add 0 for urology viva
-            let markOptions = '<option value="">Select Mark</option>';
-            if (isUrologyViva) {
-                markOptions += '<option value="0">0</option>';
-            }
-            markOptions += `
-                <option value="2">2</option>
-                <option value="4">4</option>
-                <option value="6">6</option>
-                <option value="8">8</option>
-                <option value="10">10</option>
-            `;
-
             let newField = document.createElement("div");
             newField.classList.add("form-group", "question-block", "mt-2");
-
             newField.innerHTML = `
-            <label>${labelText}</label>
+            <label>${questionLabel(caseNumber, count + 1)}</label>
             <div class="input-group">
                 <select name="question_marks[]" class="form-control question-mark"
                         required onchange="updateTotalMarks()">
-                    ${markOptions}
+                    ${markOptionsHtml()}
                 </select>
                 <div class="input-group-append">
                     <button type="button" class="btn btn-danger" onclick="removeQuestion(this, ${caseNumber})">X</button>
@@ -264,64 +216,47 @@
         `;
 
             container.appendChild(newField);
-
-            // Hide add button if clinical exam and limit reached (like original form)
-            if (isClinical && questionNumber >= 4) {
-                const addButton = container.nextElementSibling;
-                if (addButton && addButton.classList.contains('add-question-btn')) {
-                    addButton.style.display = 'none';
-                }
-            }
-
+            toggleAddButton(caseNumber);
             updateTotalMarks();
         }
 
         function removeQuestion(button, caseNumber) {
-            const questionBlock = button.closest('.question-block');
             const container = document.getElementById(`case-container-${caseNumber}`);
-            const questionBlocks = container.querySelectorAll(".question-block");
-
-            questionBlock.remove();
-
-            // For clinical exams, re-label remaining questions
-            if (isClinical) {
-                questionBlocks.forEach((block, index) => {
-                    let newLabel;
-                    if (casesCount === 1) {
-                        // Single case: use clinical labels as-is
-                        newLabel = clinicalLabels[index];
-                    } else {
-                        // Multiple cases: append case number
-                        const baseLabel = clinicalLabels[index].replace(':', '');
-                        newLabel = baseLabel + ':' + caseNumber;
-                    }
-
-                    const label = block.querySelector('label');
-                    if (label) {
-                        label.textContent = newLabel;
-                    }
-                });
+            if (container.querySelectorAll(".question-block").length <= 1) {
+                alert('A case needs at least one question.');
+                return;
             }
-
+            button.closest('.question-block').remove();
+            container.querySelectorAll(".question-block").forEach((block, index) => {   // keep the numbering of the labels in step
+                const label = block.querySelector('label');
+                if (label) label.textContent = questionLabel(caseNumber, index + 1);
+            });
             updateTotalMarks();
+            toggleAddButton(caseNumber);
+        }
 
-            // Show add button again if we're below the limit (like original form)
-            if (isClinical) {
-                const currentCount = container.querySelectorAll(".question-block").length;
-                const addButton = container.nextElementSibling;
-                if (currentCount < 4 && addButton && addButton.classList.contains('add-question-btn')) {
-                    addButton.style.display = 'inline-block';
-                }
+        function toggleAddButton(caseNumber) {
+            const container = document.getElementById(`case-container-${caseNumber}`);
+            const addButton = container.nextElementSibling;
+            if (addButton && addButton.classList.contains('add-question-btn')) {
+                addButton.style.display = container.querySelectorAll(".question-block").length >= maxQuestions(caseNumber) ? 'none' : 'inline-block';
             }
         }
 
         function updateTotalMarks() {
             let total = 0;
             document.querySelectorAll('.question-mark').forEach(function(select) {
-                let value = parseInt(select.value) || 0;
+                let value = parseFloat(select.value) || 0;
                 if (select.value !== "") total += value;
             });
             document.getElementById('total_marks').value = total;
+            // tell the server how many questions each case has now
+            const layout = [];
+            for (let c = 1; c <= casesCount; c++) {
+                const box = document.getElementById('case-container-' + c);
+                layout.push(box ? box.querySelectorAll('.question-block').length : 0);
+            }
+            document.getElementById('case_layout').value = JSON.stringify(layout);
         }
     </script>
     @include('examiner._offline')

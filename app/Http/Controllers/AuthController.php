@@ -219,7 +219,7 @@ class AuthController extends Controller
     }
 
     // Where an examiner opens first after logging in: the dashboard, the Examiner Training or the profile settings,
-    // as chosen by an admin on Exam Groups & Stations (app_settings `examiner_landing`; the dashboard if unset).
+    // as chosen by an admin on Exams Settings (app_settings `examiner_landing`; the dashboard if unset).
     private function examinerLanding(): string
     {
         $key = \Illuminate\Support\Facades\Schema::hasTable('app_settings')
