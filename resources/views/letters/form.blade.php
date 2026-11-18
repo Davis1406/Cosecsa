@@ -72,7 +72,20 @@
               <div class="form-group">
                 <label for="recipientBlock">&ldquo;To&rdquo; section <span class="text-muted font-weight-normal">(the name and details above the letter; one line each. Leave empty for the standard block)</span></label>
                 <textarea name="recipient_block" id="recipientBlock" class="form-control" rows="4" maxlength="1000" placeholder="Dr. &#123;&#123;name&#125;&#125;&#10;Email: &#123;&#123;email&#125;&#125;&#10;Country: &#123;&#123;country&#125;&#125;">{{ old('recipient_block', $template->recipient_block ?? '') }}</textarea>
-                <small class="text-muted">The first line is shown in bold. Type anything, with details like &#123;&#123;name&#125;&#125;, &#123;&#123;email&#125;&#125;, &#123;&#123;country&#125;&#125;, &#123;&#123;programme&#125;&#125;, &#123;&#123;hospital&#125;&#125;, &#123;&#123;entry_number&#125;&#125;: for example <em>Dr. &#123;&#123;name&#125;&#125;</em>. A line whose detail a person does not have (no e-mail) is left out for that person.</small>
+                <div class="to-tools mt-1">
+                  <span class="small text-muted mr-1">Drag a field into the box above (or click it to put it at the cursor):</span>
+                  @foreach(['name' => 'Full name', 'first_name' => 'First name', 'email' => 'E-mail', 'country' => 'Country', 'programme' => 'Programme', 'hospital' => 'Hospital', 'entry_number' => 'Entry number', 'admission_year' => 'Admission year', 'exam_year' => 'Exam year'] as $mf => $label)
+                    <span class="lt-chip to-chip" draggable="true" role="button" tabindex="0" data-field="{{ $mf }}" title="{{ $label }}">&#123;&#123;{{ $mf }}&#125;&#125;</span>
+                  @endforeach
+                </div>
+                <div class="to-tools mt-1">
+                  <span class="small text-muted mr-1">Title before the name:</span>
+                  @foreach(['Dr.', 'Prof.', 'Mr.', 'Ms.', 'Mrs.'] as $t)
+                    <span class="lt-chip to-title" role="button" tabindex="0" data-title="{{ $t }}">{{ $t }}</span>
+                  @endforeach
+                  <a href="#" id="toReset" class="small ml-2">Back to the standard block</a>
+                </div>
+                <small class="text-muted d-block mt-1">The first line is shown in bold. A line whose detail a person does not have (no e-mail) is left out for that person. Add your own words around the fields, for example <em>Entry no. &#123;&#123;entry_number&#125;&#125;</em>.</small>
               </div>
 
               <div class="form-group">
@@ -169,6 +182,10 @@
   .lt-frame { display: block; width: 100%; height: calc(100vh - 190px); min-height: 520px; border: 0; background: #e9ecef; }
   .lt-chip { border: 1px solid #ced4da; background: #fff; border-radius: 12px; padding: 0 8px; margin: 2px 2px 0 0; font: 12px/20px monospace; cursor: pointer; }
   .lt-chip:hover { background: #fdf6dd; border-color: #F0C129; }
+  .to-chip { display: inline-block; cursor: grab; user-select: none; }
+  .to-chip:active { cursor: grabbing; }
+  .to-title { display: inline-block; font-family: inherit; }
+  #recipientBlock.to-over { border-color: #a02626; background: #fff8e1; box-shadow: 0 0 0 .15rem rgba(160,38,38,.15); }
   .note-editor.note-frame { border-color: #ced4da; }
   .note-editable { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; }
   @media (max-width: 1100px) { .lt-split { flex-direction: column; } .lt-left, .lt-right { flex: none; width: 100%; position: static; } .lt-frame { height: 70vh; } }
@@ -263,8 +280,37 @@ $(function () {
         }).catch(function () {});
     }
 
+    // "To" section: fields are dragged into the box (the browser drops the text where the pointer is) or clicked to go at the cursor
+    var $to = $('#recipientBlock');
+    function insertIntoTo(text) {
+        var el = $to[0], a = el.selectionStart, b = el.selectionEnd, v = el.value;
+        if (a == null) { a = b = v.length; }
+        el.value = v.slice(0, a) + text + v.slice(b);
+        el.focus(); el.selectionStart = el.selectionEnd = a + text.length;
+        $to.trigger('input');
+    }
+    $('.to-chip').on('dragstart', function (ev) {
+        var f = '\u007b\u007b' + $(this).data('field') + '\u007d\u007d';
+        ev.originalEvent.dataTransfer.setData('text/plain', f); ev.originalEvent.dataTransfer.effectAllowed = 'copy';
+    }).on('click keydown', function (ev) {
+        if (ev.type === 'keydown' && ev.key !== 'Enter' && ev.key !== ' ') return;
+        ev.preventDefault(); insertIntoTo('\u007b\u007b' + $(this).data('field') + '\u007d\u007d');
+    });
+    // (the browser itself drops the text where the pointer is: only the highlight is ours)
+    $to.on('dragenter dragover', function () { $to.addClass('to-over'); }).on('dragleave drop dragend', function () { $to.removeClass('to-over'); });
+    $('.to-title').on('click keydown', function (ev) {
+        if (ev.type === 'keydown' && ev.key !== 'Enter' && ev.key !== ' ') return;
+        ev.preventDefault();
+        var t = $(this).data('title'), lines = ($to.val() || '').split('\n');
+        if (!lines[0].trim()) lines[0] = '\u007b\u007bname\u007d\u007d';
+        lines[0] = lines[0].replace(/^(Dr\.|Prof\.|Mr\.|Ms\.|Mrs\.)\s+/i, '');   // a title already there is replaced, not doubled
+        lines[0] = t + ' ' + lines[0];
+        $to.val(lines.join('\n')).trigger('input');
+    });
+    $('#toReset').on('click', function (ev) { ev.preventDefault(); $to.val('').trigger('input'); });
+
     // merge-field chips: insert at the cursor in the editor
-    $('.lt-chip').on('click', function () {
+    $('.lt-chip').not('.to-chip, .to-title').on('click', function () {
         $body.summernote('focus');
         $body.summernote('editor.insertText', '\u007b\u007b' + $(this).data('field') + '\u007d\u007d');
         schedule();

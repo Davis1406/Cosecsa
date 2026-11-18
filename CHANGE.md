@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-19) — College letters: build the "To" section by dragging fields
+- Under the **"To" section** box of the template editor there is a row of merge fields (full name, first name, e-mail, country, programme, hospital, entry number, admission year, exam year): **drag one into the box** (it lands where you drop it) or click it to put it at the cursor; the live preview follows. **Title** buttons (Dr., Prof., Mr., Ms., Mrs.) put or swap the title in front of the first line, and *Back to the standard block* empties the box. Type your own words around the fields (e.g. *Entry no.*). Web-only change, no API release needed. (`letters/form.blade.php`.)
+
 ### Added (2026-11-19) — College letters: edit the "To" section of a letter
 - In the letter template editor, a new **"To" section** box controls what is printed above the letter (the name, e-mail and country). Type one line each with details in double braces, for example **Dr. {{name}}**, then Email: {{email}} and Country: {{country}}; the live preview on the right shows it straight away. The first line is bold. A line whose detail a person does not have is left out for that person. Leave it empty for the standard block. It applies to every letter sent, the PDF, the web copy and test sends. Needs the API release first (migration `2026_11_19_220000_add_recipient_block_to_letter_templates`).
 
