@@ -35,6 +35,12 @@ class ExamSetupController extends Controller
         return $this->reply($this->api->post('exam-setup/current-exam', ['exam_type' => $request->input('exam_type')]));
     }
 
+    // The page examiners open after they log in (dashboard, Examiner Training or profile settings).
+    public function examinerLandingUpdate(Request $request)
+    {
+        return $this->reply($this->api->post('exam-setup/examiner-landing', ['landing' => $request->input('landing')]));
+    }
+
     // Start the exam / lock it again / set the start time shown to examiners.
     public function examControl()
     {

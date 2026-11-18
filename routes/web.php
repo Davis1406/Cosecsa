@@ -531,6 +531,7 @@ Route::prefix('admin/exams/setup')->controller(\App\Http\Controllers\ExamSetupCo
     Route::get('/', 'index');
     Route::get('overview', 'overview');
     Route::post('current-exam', 'currentExamUpdate');
+    Route::post('examiner-landing', 'examinerLandingUpdate');
     Route::get('exam-control', 'examControl');
     Route::post('exam-control', 'examControlUpdate');
     Route::get('groups/{id}', 'group')->whereNumber('id');

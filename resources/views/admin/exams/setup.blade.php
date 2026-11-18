@@ -38,6 +38,21 @@
                 </div>
             </div>
 
+            <div class="card mb-3" style="border-left:4px solid #a02626;">
+                <div class="card-body py-2 d-flex flex-wrap align-items-center" style="gap:.75rem;">
+                    <div>
+                        <strong><i class="fas fa-door-open mr-1" style="color:#a02626;"></i> Examiners' landing page</strong>
+                        <div class="text-muted" style="font-size:.8rem;">The page examiners open first after they log in.</div>
+                    </div>
+                    <select id="examinerLanding" class="form-control form-control-sm ml-auto" style="width:auto;min-width:260px;">
+                        @foreach(($landing_options ?? []) as $o)
+                            <option value="{{ $o['key'] }}" {{ ($examiner_landing ?? 'dashboard') === $o['key'] ? 'selected' : '' }}>{{ $o['label'] }}</option>
+                        @endforeach
+                    </select>
+                    <button class="btn btn-sm btn-cosecsa" id="btnSaveLanding"><i class="fas fa-save mr-1"></i> Save</button>
+                </div>
+            </div>
+
             {{-- ───────── Exam control: examiners cannot select the exam or save marks until it is started ───────── --}}
             @php $ec = $exam_control ?? null; @endphp
             @if($ec && ($ec['guarded'] ?? false))
@@ -263,6 +278,11 @@ $(function () {
     // ───── Current exam ─────
     $('#btnSaveCurrentExam').on('click', function () {
         api('POST', '/current-exam', { exam_type: $('#currentExam').val() }).done(function (r) { say(r.message); }).fail(fail);
+    });
+
+    // ───── Where examiners land after login ─────
+    $('#btnSaveLanding').on('click', function () {
+        api('POST', '/examiner-landing', { landing: $('#examinerLanding').val() }).done(function (r) { say(r.message); }).fail(fail);
     });
 
     // ───── Groups ─────

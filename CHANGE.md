@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added (2026-11-18) — Examiners' landing page
+- Examinations > Exam Groups & Stations: new "Examiners' landing page" card (Dashboard, Examiner Training or Profile settings). After logging in, every examiner opens that page; the default is the dashboard. (`AuthController::examinerLanding`, setting `examiner_landing` in `app_settings`.)
+
 ### Added (2026-11-18) — College letters: drag the stamp
 - In the letter template editor's live preview the stamp can be dragged into place (hover for a dashed outline). The position is kept in the form, saved with the template and used on the letter PDF; "Reset position" puts it back at the standard spot.
 

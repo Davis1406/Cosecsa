@@ -218,6 +218,17 @@ class AuthController extends Controller
         return redirect()->route('select.role')->with('success', 'Your password has been changed. Choose your role and log in with the new password.');
     }
 
+    // Where an examiner opens first after logging in: the dashboard, the Examiner Training or the profile settings,
+    // as chosen by an admin on Exam Groups & Stations (app_settings `examiner_landing`; the dashboard if unset).
+    private function examinerLanding(): string
+    {
+        $key = \Illuminate\Support\Facades\Schema::hasTable('app_settings')
+            ? DB::table('app_settings')->where('key', 'examiner_landing')->value('value')
+            : null;
+
+        return ['learning' => 'examiner/learning', 'profile' => 'examiner/profile_settings'][$key] ?? 'examiner/dashboard';
+    }
+
     private function redirectToDashboard()
     {
         $activeRole = Auth::user()->getActiveRole();
@@ -230,7 +241,7 @@ class AuthController extends Controller
             case 5: return redirect('country-rep/dashboard');
             case 7: return redirect('fellow/dashboard');
             case 8: return redirect('member/dashboard');
-            case 9: return redirect('examiner/dashboard');
+            case 9: return redirect($this->examinerLanding());
             default:
                 Auth::logout();
                 return redirect('login')->with('error', 'Invalid user role');
