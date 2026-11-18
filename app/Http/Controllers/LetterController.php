@@ -180,7 +180,7 @@ class LetterController extends Controller
     {
         $response = $this->api->get(
             "letters/{$id}/recipients",
-            $request->only(['country_id', 'programme_id', 'year', 'search', 'unsent_only'])
+            $request->only(['country_id', 'programme_id', 'year', 'search', 'unsent_only', 'source', 'conditions'])
         );
         $data = $response->object();
 
@@ -190,7 +190,10 @@ class LetterController extends Controller
             'recipients'   => collect($data->recipients ?? []),
             'countries'    => collect($data->countries ?? []),
             'programmes'   => collect($data->programmes ?? []),
-            'filters'      => (array) ($data->filters ?? []),
+            'filters'      => json_decode(json_encode($data->filters ?? []), true) ?: [],
+            'source'       => $data->source ?? ($data->template->recipient_source ?? ''),
+            'sources'      => (array) ($data->sources ?? []),
+            'columns'      => json_decode(json_encode($data->columns ?? []), true) ?: [],
         ]);
     }
 
@@ -239,6 +242,71 @@ class LetterController extends Controller
             'templates'    => collect($data->templates ?? []),
             'filters'      => (array) ($data->filters ?? []),
         ]);
+    }
+
+    // ── Preview, test send and the letters kept on a profile ──────────
+
+    // The e-mail and the letter exactly as one recipient would receive them (JSON for the page's preview window).
+    public function compose(Request $request, $id)
+    {
+        $response = $this->api->get("letters/{$id}/compose", array_filter($request->only(['source', 'recipient_id', 'letter_date']), fn ($v) => $v !== null && $v !== ''));
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
+    }
+
+    // A test to one address (the admin's own by default); nothing is recorded and no one is marked as sent.
+    public function sendTest(Request $request, $id)
+    {
+        $fields = array_filter($request->only(['to', 'source', 'recipient_id', 'letter_date']), fn ($v) => $v !== null && $v !== '');
+        $attachments = $request->file('attachments', []);
+        $response = $attachments
+            ? $this->api->postWithFile("letters/{$id}/test", $fields, ['attachments' => $attachments])
+            : $this->api->post("letters/{$id}/test", $fields);
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
+    }
+
+    // The letters sent to one person, for the Letters tab of their profile.
+    public function forProfile($source, $recordId)
+    {
+        $response = $this->api->get("letters/for/{$source}/{$recordId}");
+
+        return response()->json($response->json() ?? ['letters' => []], $response->status());
+    }
+
+    // A sent letter as a web page, built from the person's current details.
+    public function sentView(Request $request, $id)
+    {
+        $response = $this->api->get("letters/sent/{$id}/view", array_filter($request->only('letter_date')));
+        if ($response->failed()) {
+            return redirect('admin/letters/report')->with('error', $response->json('message') ?? 'This letter cannot be shown.');
+        }
+
+        return view('letters.sent_view', ['id' => $id, 'letter' => $response->json(), 'header_title' => ($response->json('letter') ?? 'Letter')]);
+    }
+
+    // The letter as a PDF made now from the current details.
+    public function sentPdf(Request $request, $id)
+    {
+        $response = $this->api->get("letters/sent/{$id}/pdf", array_filter($request->only('letter_date')));
+        if ($response->failed()) {
+            return back()->with('error', $response->json('message') ?? 'The PDF could not be made.');
+        }
+
+        $filename = 'letter.pdf';
+        if (($cd = $response->header('Content-Disposition')) && preg_match('/filename=["\']?([^"\';\s]+)/', $cd, $m)) {
+            $filename = $m[1];
+        }
+
+        return response($response->body(), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => "attachment; filename=\"{$filename}\""]);
+    }
+
+    // Send the letter again, composed from the current details.
+    public function resend(Request $request, $id)
+    {
+        $response = $this->api->post("letters/sent/{$id}/resend", array_filter($request->only(['to', 'letter_date']), fn ($v) => $v !== null && $v !== ''));
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
     }
 
     public function downloadSentPdf($id)

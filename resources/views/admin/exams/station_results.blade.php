@@ -48,6 +48,7 @@
                         <div class="d-flex flex-wrap align-items-center justify-content-between mt-3 mb-1">
                             <h6 class="mb-0" style="color:#a02626;">
                                 Examiner {{ $i + 1 }}: {{ $result->examin_id }} — {{ $result->examiner_name }}
+                                <small class="text-muted font-weight-normal ml-2"><i class="far fa-clock mr-1"></i>Submitted @include('_submitted_at', ['created' => $result->created_at ?? null, 'updated' => $result->updated_at ?? null])</small>
                             </h6>
                             @if (!empty($result->result_id))
                                 <div class="form-inline d-print-none move-station" data-id="{{ $result->result_id }}" data-from="{{ $result->station_id }}" data-examiner="{{ $result->examin_id }}">

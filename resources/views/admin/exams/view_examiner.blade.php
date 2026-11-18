@@ -870,7 +870,7 @@ $(function(){
         var url = '/admin/exams/examiner/' + examinerId + '/candidate/' + candidateId + '/results';
 
         $('#candidateResultsBody').html(
-            '<tr><td colspan="5" class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading…</td></tr>'
+            '<tr><td colspan="6" class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading…</td></tr>'
         );
         $('#candidateResultsModalLabel').text('Loading…');
         $('#candidateResultsModal').modal('show');
@@ -886,7 +886,7 @@ $(function(){
 
             if (!data.results || data.results.length === 0) {
                 $('#candidateResultsBody').html(
-                    '<tr><td colspan="5" class="text-center text-muted py-4">No results recorded for this candidate.</td></tr>'
+                    '<tr><td colspan="6" class="text-center text-muted py-4">No results recorded for this candidate.</td></tr>'
                 );
                 return;
             }
@@ -894,6 +894,20 @@ $(function(){
             var progColors = { 'MCS':'#007bff', 'FCS General Surgery':'#28a745' };
             function progColor(p){ return progColors[p] || '#a02626'; }
 
+            // "18 Nov 2026, 09:42" (and when it was edited, if later)
+            function stamp(v) {
+                if (!v) return '';
+                var d = new Date(String(v).replace(' ', 'T').replace(/\.\d+Z?$/, ''));
+                if (isNaN(d)) return String(v);
+                var mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()], p2 = function (n) { return (n < 10 ? '0' : '') + n; };
+                return p2(d.getDate()) + ' ' + mon + ' ' + d.getFullYear() + ', ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+            }
+            function submittedAt(created, edited) {
+                if (!created) return '<span class="text-muted">—</span>';
+                var out = stamp(created);
+                if (edited && Math.abs(new Date(String(edited).replace(' ', 'T').replace(/\.\d+Z?$/, '')) - new Date(String(created).replace(' ', 'T').replace(/\.\d+Z?$/, ''))) > 120000) out += '<small class="text-muted d-block">edited ' + stamp(edited) + '</small>';
+                return out;
+            }
             var html = '';
             var prevProg = null;
             $.each(data.results, function(i, r){
@@ -918,12 +932,13 @@ $(function(){
                 html += '<td>' + (qmarks || '<span class="text-muted">—</span>') + remarks + '</td>';
                 html += '<td><strong>' + total + '</strong></td>';
                 html += '<td>' + (r.exam_year || '—') + '</td>';
+                html += '<td style="white-space:nowrap;font-size:.82rem;">' + submittedAt(r.submitted_at, r.edited_at) + '</td>';
                 html += '</tr>';
             });
             $('#candidateResultsBody').html(html);
         }).fail(function(){
             $('#candidateResultsBody').html(
-                '<tr><td colspan="5" class="text-center text-danger py-4"><i class="fas fa-exclamation-triangle mr-1"></i>Failed to load results.</td></tr>'
+                '<tr><td colspan="6" class="text-center text-danger py-4"><i class="fas fa-exclamation-triangle mr-1"></i>Failed to load results.</td></tr>'
             );
         });
     });
@@ -1005,10 +1020,11 @@ function showVEDeleteModal() {
                                 <th>Question Marks</th>
                                 <th style="width:70px;">Total</th>
                                 <th style="width:70px;">Year</th>
+                                <th style="width:150px;">Submitted</th>
                             </tr>
                         </thead>
                         <tbody id="candidateResultsBody">
-                            <tr><td colspan="5" class="text-center py-4 text-muted">Select a candidate to view results.</td></tr>
+                            <tr><td colspan="6" class="text-center py-4 text-muted">Select a candidate to view results.</td></tr>
                         </tbody>
                     </table>
                 </div>

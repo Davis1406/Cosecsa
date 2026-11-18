@@ -686,6 +686,8 @@ class CandidatesController extends Controller
                         'formats'        => $records->groupBy('exam_format'),
                         'source_table'   => $records->first()->source_table,
                         'is_test'        => (bool) $records->first()->is_test,
+                        'submitted_at'   => $records->max('created_at'),
+                        'updated_at'     => $records->max('updated_at'),
                     ];
                 })->values();
         }
@@ -831,6 +833,8 @@ class CandidatesController extends Controller
             'overall'        => $firstRecord->overall ?? null,
             'remarks'        => $firstRecord->remarks ?? '',
             'source_table'   => $firstRecord->source_table,
+            'created_at'     => $firstRecord->created_at ?? null,
+            'updated_at'     => $firstRecord->updated_at ?? null,
         ];
 
         return view('examiner.view_results', ['candidateResult' => $candidateResult, 'header_title' => "Candidate Results", 'lastSource' => $sourceTable]);

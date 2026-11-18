@@ -35,6 +35,7 @@
                                                 <th>Question 5</th>
                                                 <th>Total Marks</th>
                                                 <th>Overall Grade</th>
+                                                <th>Submitted</th>
                                                 <th>Actions</th>
                                             </tr>
                                             </thead>
@@ -55,6 +56,7 @@
 
                                                     <td><b>{{ $value->total }}</b></td>
                                                     <td>{{ $value->overall ?? '-' }}</td>
+                                                    <td data-order="{{ $value->created_at ? \Carbon\Carbon::parse($value->created_at)->timestamp : 0 }}" style="white-space:nowrap;">@include('_submitted_at', ['created' => $value->created_at ?? null, 'updated' => $value->updated_at ?? null])</td>
 
                                                     <td>
                                                         <div class="btn-group">
@@ -100,6 +102,7 @@
                                                 <th>Question 5</th>
                                                 <th>Total Marks</th>
                                                 <th>Overall Grade</th>
+                                                <th>Submitted</th>
                                                 <th>Actions</th>
                                             </tr>
                                             </thead>
@@ -120,6 +123,7 @@
 
                                                     <td><b>{{ $value->total }}</b></td>
                                                     <td>{{ $value->overall ?? '-' }}</td>
+                                                    <td data-order="{{ $value->created_at ? \Carbon\Carbon::parse($value->created_at)->timestamp : 0 }}" style="white-space:nowrap;">@include('_submitted_at', ['created' => $value->created_at ?? null, 'updated' => $value->updated_at ?? null])</td>
 
                                                     <td>
                                                         <div class="btn-group">
@@ -161,6 +165,7 @@
                                                 <th>Clinical Total</th>
                                                 <th>Viva Total</th>
                                                 <th>Overall Total</th>
+                                                <th>Submitted</th>
                                                 <th>Actions</th>
                                             </tr>
                                             </thead>
@@ -173,6 +178,7 @@
                                                     <td><b>{{ $value->clinical_total }}</b></td>
                                                     <td><b>{{ $value->viva_total }}</b></td>
                                                     <td><b>{{ $value->overall_total }}</b></td>
+                                                    <td data-order="{{ $value->submitted_at ? \Carbon\Carbon::parse($value->submitted_at)->timestamp : 0 }}" style="white-space:nowrap;">@include('_submitted_at', ['created' => $value->submitted_at ?? null, 'updated' => $value->updated_at ?? null])</td>
                                                     <td>
                                                         <div class="btn-group">
                                                             <a class="btn btn-info btn-sm"
@@ -238,10 +244,10 @@
 
     $(document).ready(function () {
         // Candidate, Actions, Total, Grade, Group, then the five question marks.
-        var questionTable = { 0: 1, 9: 2, 7: 3, 8: 4, 1: 5, 2: 10, 3: 11, 4: 12, 5: 13, 6: 14 };
+        var questionTable = { 0: 1, 10: 2, 7: 3, 8: 4, 9: 6, 1: 5, 2: 10, 3: 11, 4: 12, 5: 13, 6: 14 };
         @if($showMcs) initResultsTable('#mcsResultsTable', questionTable); @endif
         @if($showGs) initResultsTable('#gsResultsTable', questionTable); @endif
-        @if($showFcs) initResultsTable('#fcsResultsTable', { 0: 1, 5: 2, 4: 3, 2: 4, 3: 5, 1: 6 }); @endif
+        @if($showFcs) initResultsTable('#fcsResultsTable', { 0: 1, 6: 2, 4: 3, 2: 4, 3: 5, 5: 6, 1: 7 }); @endif
     });
 </script>
 @endpush

@@ -73,6 +73,7 @@
                                     <h5 class="mb-0">
                                         <i class="fas fa-user-md mr-2"></i>
                                         Examiner {{ $index + 1 }}: {{ $result->examiner_name }} (ID: {{ $result->examiner_id }})
+                                        <small class="text-muted font-weight-normal ml-2"><i class="far fa-clock mr-1"></i>Submitted @include('_submitted_at', ['created' => $result->created_at ?? null, 'updated' => $result->updated_at ?? null])</small>
                                     </h5>
                                 </div>
                                 <div class="card-body">

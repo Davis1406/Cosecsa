@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+### Added (2026-11-19) — College letters: check before sending, and letters kept on the trainee profile
+- **Send page > Check before sending:** *See what will be sent* shows the e-mail (to, subject, body, attachments) and the letter for any person on the list, or sample details; *Send a test to* (your own address is filled in) sends the real e-mail and PDF to that one address, marked [TEST]: nobody on the list gets it and nothing is recorded. *Review & Dispatch Selected* lists everyone who will receive the letter (name, e-mail, country, programme, year), warns about people with no e-mail address and people who already got this letter, then *Send N letters*.
+- **Trainee profile > Letters tab** (needs letters access): every letter sent to the trainee with *View* (the letter as a web page, with the e-mail), *PDF* (made now from the current details), *Original* (the PDF exactly as e-mailed) and *Send again*. **Letters are made from the profile as it is now**: correct a detail on the profile (name, year, hospital, e-mail…), then *Send again* (or open *View*) and the letter carries the correction; the date on the letter and the address can be changed when re-sending. A re-send is recorded as a new sending.
+- **Fix:** sending a letter from the MIS never recorded the sender (the API needs it and internal calls carried none), so no letter had been dispatched before this. Needs the API release first (migration `2026_11_19_200000_add_letter_date_to_letter_dispatch_recipients`).
+
+### Added (2026-11-19) — College letters: choose the group and filter by columns when sending
+- On the **Send** page of a letter (College Letters > Send): a **Send to** group picker (Trainees, Candidates, Fellows, Members, Examiners, Country Reps, Programme Directors, Trainers; it starts on the template's own group) and **Only those where…**: add up to 5 conditions, each *column · is / is not / contains / is greater than / is less than / is empty / is not empty · value*, all of which must match. The column list is the group's own table (Admission year, Admission letter status, Exam year, Sponsor, Fee paid…), plus **Application stage / level (Salesforce)** for trainees and **This letter already sent**. Example: Trainees, Admission year is 2027, Application stage (Salesforce) is Complete, Admission letter status is Pending. Columns with a few values offer a list. Changing the group starts the conditions afresh.
+- The recipients list shows a **Year** column, and *Dispatch Selected* sends to the selected people from exactly that filtered list. Needs the API release first.
+
+### Added (2026-11-19) — Date and time marks were submitted
+- Shown as **"18 Nov 2026, 09:42"**, with *edited …* underneath when the marks were changed later (after a Resubmit).
+- **Examiner:** a **Submitted** column on the Results tables (MCS, General Surgery, FCS; the FCS row shows the latest of its Clinical and Viva), and *Submitted …* on the marks view of a candidate (MCS/GS, and per station on the FCS view).
+- **Admin:** *Submitted …* on each examiner's block of the MCS, General Surgery and FCS station result pages, and a **Submitted** column in the examiner's candidate-results list (Examiner > view > candidates). (`_submitted_at.blade.php`; needs the API release that returns the timestamps.)
+
 ### Changed (2026-11-19) — Viva stations: two shown by default, labelled Viva A (1), Viva B (2)
 - **Examiner side:** the station step of a Viva form now shows the first **two** stations (Viva A (1) and Viva B (2)) and, when there are more, a **"Show N more station(s)"** link for the rest. (Clinical forms keep the old "usual station + Show all" behaviour.)
 - **Labels:** Viva stations are named **Viva A (1), Viva B (2), Viva C (3)…** (migration `2026_11_19_170000_label_viva_stations_viva_a_1` renames the default names; typed-in names stay). The Resubmit form shows the station's name instead of "Station 2".

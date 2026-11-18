@@ -36,6 +36,10 @@
                                     <td>{{ $result->examiner_id }}</td>
                                 </tr>
                                 <tr>
+                                    <th>Submitted</th>
+                                    <td>@include('_submitted_at', ['created' => $result->created_at ?? null, 'updated' => $result->updated_at ?? null])</td>
+                                </tr>
+                                <tr>
                                     <th>Group ID</th>
                                     <td> Group {{ $result->g_name }}</td>
                                 </tr>

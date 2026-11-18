@@ -198,6 +198,12 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::post('admin/letters/letterhead', [\App\Http\Controllers\LetterController::class, 'letterheadUpdate'])->name('admin.letters.letterhead.update');
     Route::get('admin/letters/letterhead/preview', [\App\Http\Controllers\LetterController::class, 'letterheadPreview'])->name('admin.letters.letterhead.preview');
     Route::get('admin/letters/report', [\App\Http\Controllers\LetterController::class, 'report'])->name('admin.letters.report');
+    Route::get('admin/letters/for/{source}/{recordId}', [\App\Http\Controllers\LetterController::class, 'forProfile'])->name('admin.letters.for');
+    Route::get('admin/letters/sent/{id}/view', [\App\Http\Controllers\LetterController::class, 'sentView'])->name('admin.letters.sent.view');
+    Route::get('admin/letters/sent/{id}/pdf', [\App\Http\Controllers\LetterController::class, 'sentPdf'])->name('admin.letters.sent.pdf');
+    Route::post('admin/letters/sent/{id}/resend', [\App\Http\Controllers\LetterController::class, 'resend'])->name('admin.letters.sent.resend');
+    Route::get('admin/letters/{id}/compose', [\App\Http\Controllers\LetterController::class, 'compose'])->name('admin.letters.compose');
+    Route::post('admin/letters/{id}/test', [\App\Http\Controllers\LetterController::class, 'sendTest'])->name('admin.letters.test');
     Route::get('admin/letters/sent/{id}/download', [\App\Http\Controllers\LetterController::class, 'downloadSentPdf'])->name('admin.letters.sent.download');
     Route::get('admin/letters/create', [\App\Http\Controllers\LetterController::class, 'create'])->name('admin.letters.create');
     Route::post('admin/letters', [\App\Http\Controllers\LetterController::class, 'store'])->name('admin.letters.store');

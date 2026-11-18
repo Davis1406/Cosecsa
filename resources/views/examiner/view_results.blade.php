@@ -24,6 +24,9 @@
                                 <span class="vr-chip">Group {{ $candidateResult->group_name }}</span>
                                 <span class="vr-chip">Station {{ $candidateResult->station_id }}</span>
                             </div>
+                            @if (!empty($candidateResult->created_at))
+                                <div class="vr-eyebrow mt-2"><i class="far fa-clock mr-1"></i>Submitted @include('_submitted_at', ['created' => $candidateResult->created_at, 'updated' => $candidateResult->updated_at ?? null])</div>
+                            @endif
                         </div>
 
                         <div class="vr-score">

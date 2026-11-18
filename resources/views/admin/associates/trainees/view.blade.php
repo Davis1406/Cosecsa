@@ -432,6 +432,9 @@
                             @endif
                         </a>
                     </li>
+                    @if(Auth::user()->hasPermission('letters.view'))
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-letters">Letters</a></li>
+                    @endif
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-admin">Admin</a></li>
                 </ul>
 
@@ -854,6 +857,18 @@
                         @endif
                     </div>
 
+                    {{-- ── TAB: Letters (sent from College Letters; shown and re-sent from the details on this profile) ── --}}
+                    @if(Auth::user()->hasPermission('letters.view'))
+                    <div class="tab-pane fade" id="tab-letters">
+                        <p class="sect-div">Letters sent to this trainee</p>
+                        <p class="small text-muted">
+                            Each letter is made from the details on this profile as they are now. If something in a letter is wrong, correct it under
+                            <strong>Personal</strong> or <strong>Training</strong> (Edit), then press <em>Send again</em>: the new letter carries the corrected details.
+                        </p>
+                        <div id="lettersBody"><p class="text-muted small">Loading…</p></div>
+                    </div>
+                    @endif
+
                     {{-- ── TAB: Admin ── --}}
                     <div class="tab-pane fade" id="tab-admin">
                         <p class="sect-div">System Access</p>
@@ -912,7 +927,45 @@
     </section>
 </div>{{-- /.content-wrapper --}}
 
+@if(Auth::user()->hasPermission('letters.view'))
+    @include('letters._resend_modal')
+@endif
+
 @push('scripts')
+@if(Auth::user()->hasPermission('letters.view'))
+<script>
+// ── Letters tab ──────────────────────────────────────────────────────────────
+(function () {
+    var loaded = false, canManage = @json(Auth::user()->hasPermission('letters.manage')), email = @json($trainee->personal_email ?? '');
+    var base = @json(url('admin/letters'));
+    function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function when(v, withTime) {
+        if (!v) return '—';
+        var d = new Date(String(v).replace(' ', 'T')); if (isNaN(d)) return esc(v);
+        var m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()], p = function (n) { return (n < 10 ? '0' : '') + n; };
+        return p(d.getDate()) + ' ' + m + ' ' + d.getFullYear() + (withTime ? ', ' + p(d.getHours()) + ':' + p(d.getMinutes()) : '');
+    }
+    function load() {
+        $('#lettersBody').html('<p class="text-muted small">Loading…</p>');
+        $.getJSON(base + '/for/trainees/' + {{ (int) $trainee->id }}).done(function (r) {
+            var rows = r.letters || [];
+            if (!rows.length) { $('#lettersBody').html('<p class="text-muted">No letter has been sent to this trainee from College Letters yet.</p>'); return; }
+            $('#lettersBody').html('<div class="table-responsive"><table class="table table-sm table-striped"><thead><tr><th>Letter</th><th>Sent</th><th>Letter date</th><th>Sent to</th><th>By</th><th>Status</th><th class="text-right">Actions</th></tr></thead><tbody>' +
+                rows.map(function (l) {
+                    var actions = '<a class="btn btn-xs btn-outline-secondary" target="_blank" href="' + base + '/sent/' + l.id + '/view" title="Open the letter as a web page"><i class="fas fa-eye mr-1"></i>View</a> ' +
+                        '<a class="btn btn-xs btn-outline-secondary" href="' + base + '/sent/' + l.id + '/pdf" title="PDF made now from the current details"><i class="fas fa-file-pdf mr-1"></i>PDF</a> ' +
+                        (l.has_original ? '<a class="btn btn-xs btn-outline-secondary" href="' + base + '/sent/' + l.id + '/download" title="The PDF exactly as it was e-mailed"><i class="fas fa-download mr-1"></i>Original</a> ' : '') +
+                        (canManage ? '<button type="button" class="btn btn-xs btn-cosecsa btn-resend" data-id="' + l.id + '" title="Make the letter again from the current details and e-mail it"><i class="fas fa-paper-plane mr-1"></i>Send again</button>' : '');
+                    return '<tr><td><strong>' + esc(l.letter) + '</strong></td><td>' + when(l.sent_at, true) + '</td><td>' + when(l.letter_date, false) + '</td><td>' + esc(l.sent_to || '—') + '</td><td>' + esc(l.sent_by || '—') + '</td>' +
+                           '<td>' + (l.status === 'sent' ? '<span class="badge badge-success">Sent</span>' : '<span class="badge badge-danger" title="' + esc(l.error || '') + '">Failed</span>') + '</td><td class="text-right text-nowrap">' + actions + '</td></tr>';
+                }).join('') + '</tbody></table></div>');
+        }).fail(function () { $('#lettersBody').html('<p class="text-danger small">The letters could not be loaded.</p>'); });
+    }
+    $('a[href="#tab-letters"]').on('shown.bs.tab', function () { if (!loaded) { loaded = true; load(); } });
+    $(document).on('click', '#lettersBody .btn-resend', function () { openLetterResend($(this).data('id'), email, load); });
+})();
+</script>
+@endif
 <script>
 $(document).ready(function () {
     // ── Tab memory ───────────────────────────────────────────────────────────

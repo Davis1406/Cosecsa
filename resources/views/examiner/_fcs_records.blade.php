@@ -18,6 +18,9 @@
             $offset = 0;
         @endphp
         <div class="vr-station"><span>{{ $stationNames[$rec->station_id] ?? 'Station ' . $rec->station_id }}</span><small>Total {{ $rec->total }}</small></div>
+        @if (!empty($rec->created_at))
+            <p class="vr-note" style="margin:2px 0 6px;"><i class="far fa-clock mr-1"></i>Submitted @include('_submitted_at', ['created' => $rec->created_at, 'updated' => $rec->updated_at ?? null])</p>
+        @endif
 
         @foreach ($layout as $caseIndex => $questionCount)
             @if (count($layout) > 1)
