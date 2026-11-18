@@ -123,7 +123,7 @@
                     <div id="qrHoverType" class="small text-muted"></div>
                 </div>
 
-                {{-- QR settings: the wording of the public verification page, the graduation date, and the scan counts --}}
+                {{-- QR settings: the wording of the public verification page, section by section, the graduation date, the scan counts --}}
                 <div class="modal fade" id="qrSettingsModal" tabindex="-1" role="dialog" aria-hidden="true">
                     <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
                         <div class="modal-content">
@@ -134,60 +134,91 @@
                             <div class="modal-body">
                                 <div id="qsLoading" class="text-muted">Loading…</div>
                                 <form id="qsForm" class="d-none" autocomplete="off" onsubmit="return false;">
-                                    <p class="small text-muted mb-3">This is the page people see when they scan a certificate. Leave a box empty to use the standard wording (shown faintly inside the box). To see a change, save, then open a person's page from their name.</p>
-
-                                    <h6 class="font-weight-bold">Graduation date</h6>
-                                    <div class="d-flex align-items-center flex-wrap mb-3" style="gap:.6rem;">
+                                    <p class="small text-muted mb-3">Each box holds the wording exactly as the verification page reads now. Rewrite it, then use <strong>Save this section</strong>; each section saves on its own, so the others are not touched. To see a change, open a person's page from their name.</p>
+                                <div class="qs-section border rounded p-3 mb-3" data-section="graduation">
+                                    <h6 class="font-weight-bold mb-1">Graduation date</h6>
+                                    <div class="small text-muted mb-2"></div>
+                                    <div class="d-flex align-items-center flex-wrap mb-1" style="gap:.6rem;">
                                         <input type="date" class="form-control form-control-sm qs-field" id="qs_graduation_date" name="graduation_date" style="width:auto;">
-                                        <small class="text-muted" style="flex:1 1 280px;">Shown as "Graduated in" for the Fellows by Examination who became Fellows in that year and have no graduation date of their own (a date set on a fellow's own page wins). Leave empty to show just the year.</small>
+                                        <small class="text-muted" style="flex:1 1 280px;">Shown as "Graduated in" for the Fellows by Examination who became Fellows in that year and have no graduation date of their own (a date set on a fellow's own page wins). Empty = just the year.</small>
                                     </div>
-
-                                    <h6 class="font-weight-bold">Fellows</h6>
-                                    <div class="form-group mb-2"><label class="small mb-0" for="qs_sentence_fellow">Sentence under the name</label>
-                                        <textarea class="form-control form-control-sm qs-field" id="qs_sentence_fellow" name="sentence_fellow" rows="2" maxlength="300"></textarea></div>
-                                    <div class="small text-muted mb-1">Fellow by Election shows: Fellowship Type, Specialty, Fellowship Year. Fellow by Examination shows: Fellowship Type, Exam Year, Specialty, Graduated in. The headings:</div>
-                                    <div class="form-row">
-                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_fellowship_type">Fellowship Type</label>
-                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_fellowship_type" name="label_fellowship_type" maxlength="60" autocomplete="off"></div>
-                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_specialty">Specialty</label>
-                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_specialty" name="label_specialty" maxlength="60" autocomplete="off"></div>
-                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_fellowship_year">Fellowship Year</label>
-                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_fellowship_year" name="label_fellowship_year" maxlength="60" autocomplete="off"></div>
-                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_exam_year">Exam Year</label>
-                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_exam_year" name="label_exam_year" maxlength="60" autocomplete="off"></div>
-                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_graduated">Graduated in</label>
-                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_graduated" name="label_graduated" maxlength="60" autocomplete="off"></div>
+                                    <div class="d-flex align-items-center mt-2" style="gap:.6rem;">
+                                        <span class="qs-status small"></span>
+                                        <button type="button" class="btn btn-success btn-sm qs-save ml-auto"><i class="fas fa-save mr-1"></i>Save this section</button>
                                     </div>
-
-                                    <h6 class="font-weight-bold mt-3">FCS candidates who passed Part I</h6>
-                                    <div class="form-group mb-2"><label class="small mb-0" for="qs_sentence_candidate_passed">Sentence under the name <span class="text-muted">({year} becomes the year of the pass)</span></label>
-                                        <textarea class="form-control form-control-sm qs-field" id="qs_sentence_candidate_passed" name="sentence_candidate_passed" rows="2" maxlength="300"></textarea></div>
-                                    <div class="form-group mb-2"><label class="small mb-0" for="qs_sentence_candidate">Sentence when no Part I pass is on record</label>
-                                        <textarea class="form-control form-control-sm qs-field" id="qs_sentence_candidate" name="sentence_candidate" rows="2" maxlength="300"></textarea></div>
-                                    <div class="form-row">
-                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_programme">Programme</label>
-                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_programme" name="label_programme" maxlength="60" autocomplete="off"></div>
-                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_joined">Year joined</label>
-                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_joined" name="label_joined" maxlength="60" autocomplete="off"></div>
-                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_part_one">Part I exam</label>
-                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_part_one" name="label_part_one" maxlength="60" autocomplete="off"></div>
-                                    <div class="form-group col-md-6 mb-2"><label class="small mb-0" for="qs_label_country">Country</label>
-                                        <input type="text" class="form-control form-control-sm qs-field" id="qs_label_country" name="label_country" maxlength="60" autocomplete="off"></div>
+                                </div>
+                                <div class="qs-section border rounded p-3 mb-3" data-section="election">
+                                    <h6 class="font-weight-bold mb-1">Fellow by Election</h6>
+                                    <div class="small text-muted mb-2">The page shows the name, the sentence, then these three rows in order (a row with no value for that person is left off).</div>
+                                        <div class="form-group mb-2"><label class="small text-muted mb-0" for="qs_election_sentence">Sentence under the name</label>
+                                            <textarea class="form-control form-control-sm qs-field" id="qs_election_sentence" name="election_sentence" rows="2" maxlength="300"></textarea></div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_election_type">Row 1 · fellowship type</label>
+                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_election_type" name="election_type" maxlength="60" autocomplete="off"></div>
+                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_election_specialty">Row 2 · specialty</label>
+                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_election_specialty" name="election_specialty" maxlength="60" autocomplete="off"></div>
+                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_election_year">Row 3 · fellowship year</label>
+                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_election_year" name="election_year" maxlength="60" autocomplete="off"></div>
+                                        </div>
+                                    <div class="d-flex align-items-center mt-2" style="gap:.6rem;">
+                                        <button type="button" class="btn btn-link btn-sm qs-restore p-0 mr-3">Use the standard wording</button><span class="qs-status small"></span>
+                                        <button type="button" class="btn btn-success btn-sm qs-save ml-auto"><i class="fas fa-save mr-1"></i>Save this section</button>
                                     </div>
-
-                                    <h6 class="font-weight-bold mt-3">Scan counts</h6>
+                                </div>
+                                <div class="qs-section border rounded p-3 mb-3" data-section="exam">
+                                    <h6 class="font-weight-bold mb-1">Fellow by Examination</h6>
+                                    <div class="small text-muted mb-2">The page shows the name, the sentence, then these four rows in order.</div>
+                                        <div class="form-group mb-2"><label class="small text-muted mb-0" for="qs_exam_sentence">Sentence under the name</label>
+                                            <textarea class="form-control form-control-sm qs-field" id="qs_exam_sentence" name="exam_sentence" rows="2" maxlength="300"></textarea></div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_exam_type">Row 1 · fellowship type</label>
+                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_exam_type" name="exam_type" maxlength="60" autocomplete="off"></div>
+                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_exam_year">Row 2 · exam year</label>
+                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_exam_year" name="exam_year" maxlength="60" autocomplete="off"></div>
+                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_exam_specialty">Row 3 · specialty</label>
+                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_exam_specialty" name="exam_specialty" maxlength="60" autocomplete="off"></div>
+                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_exam_graduated">Row 4 · graduation (date, or the year)</label>
+                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_exam_graduated" name="exam_graduated" maxlength="60" autocomplete="off"></div>
+                                        </div>
+                                    <div class="d-flex align-items-center mt-2" style="gap:.6rem;">
+                                        <button type="button" class="btn btn-link btn-sm qs-restore p-0 mr-3">Use the standard wording</button><span class="qs-status small"></span>
+                                        <button type="button" class="btn btn-success btn-sm qs-save ml-auto"><i class="fas fa-save mr-1"></i>Save this section</button>
+                                    </div>
+                                </div>
+                                <div class="qs-section border rounded p-3 mb-3" data-section="candidate">
+                                    <h6 class="font-weight-bold mb-1">FCS candidate who passed Part I</h6>
+                                    <div class="small text-muted mb-2">A candidate is not a Fellow, so the page says what the register holds.</div>
+                                        <div class="form-group mb-2"><label class="small text-muted mb-0" for="qs_candidate_sentence_passed">Sentence under the name ({year} becomes the year of the pass)</label>
+                                            <textarea class="form-control form-control-sm qs-field" id="qs_candidate_sentence_passed" name="candidate_sentence_passed" rows="2" maxlength="300"></textarea></div>
+                                        <div class="form-group mb-2"><label class="small text-muted mb-0" for="qs_candidate_sentence_none">Sentence when no Part I pass is on record</label>
+                                            <textarea class="form-control form-control-sm qs-field" id="qs_candidate_sentence_none" name="candidate_sentence_none" rows="2" maxlength="300"></textarea></div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_candidate_programme">Row 1 · programme</label>
+                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_candidate_programme" name="candidate_programme" maxlength="60" autocomplete="off"></div>
+                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_candidate_joined">Row 2 · year joined</label>
+                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_candidate_joined" name="candidate_joined" maxlength="60" autocomplete="off"></div>
+                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_candidate_part_one">Row 3 · Part I result</label>
+                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_candidate_part_one" name="candidate_part_one" maxlength="60" autocomplete="off"></div>
+                                            <div class="form-group col-md-6 mb-2"><label class="small text-muted mb-0" for="qs_candidate_country">Row 4 · country</label>
+                                                <input type="text" class="form-control form-control-sm qs-field" id="qs_candidate_country" name="candidate_country" maxlength="60" autocomplete="off"></div>
+                                        </div>
+                                    <div class="d-flex align-items-center mt-2" style="gap:.6rem;">
+                                        <button type="button" class="btn btn-link btn-sm qs-restore p-0 mr-3">Use the standard wording</button><span class="qs-status small"></span>
+                                        <button type="button" class="btn btn-success btn-sm qs-save ml-auto"><i class="fas fa-save mr-1"></i>Save this section</button>
+                                    </div>
+                                </div>
+                                <div class="qs-section border rounded p-3" data-section="scans">
+                                    <h6 class="font-weight-bold mb-2">Scan counts</h6>
                                     <div class="d-flex align-items-center flex-wrap" style="gap:.7rem;">
                                         <span id="qsScans" class="small"></span>
                                         <button type="button" class="btn btn-sm btn-outline-danger" id="qsResetAll"><i class="fas fa-undo mr-1"></i>Reset all scan counts</button>
-                                        <small class="text-muted">Starts everyone from zero, for example after testing. This cannot be undone. A single person's count can be reset from the list (the arrow next to their number).</small>
                                     </div>
+                                    <div class="small text-muted mt-1">Starts everyone from zero, for example after testing. This cannot be undone. One person's count is reset from the list (the arrow next to their number).</div>
+                                    <div class="qs-status small mt-1" id="qsScanStatus"></div>
+                                </div>
                                 </form>
                             </div>
-                            <div class="modal-footer py-2">
-                                <span id="qsMsg" class="small mr-auto"></span>
-                                <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-success btn-sm" id="qsSave"><i class="fas fa-save mr-1"></i>Save settings</button>
-                            </div>
+                            <div class="modal-footer py-2"><button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Close</button></div>
                         </div>
                     </div>
                 </div>
@@ -702,29 +733,53 @@ $(function () {
     $(document).on('click', function () { $hover.hide(); });
     $body.on('scroll', function () { $hover.hide(); });
 
-    // ── QR settings: wording, graduation date, scan counts ──
-    var $qs = $('#qrSettingsModal'), qsDefaults = {};
-    function qsMsg(text, ok) { $('#qsMsg').attr('class', 'small mr-auto ' + (ok ? 'text-success' : 'text-danger')).text(text || ''); }
+    // ── QR settings: the wording of the page, section by section; the graduation date; scan counts ──
+    var $qs = $('#qrSettingsModal'), qsDefaults = {}, qsBase = {};
+    function qsSection(el) { return $(el).closest('.qs-section'); }
+    function qsFields($sec) { return $sec.find('.qs-field'); }
+    function qsStatus($sec, text, cls) { $sec.find('.qs-status').first().attr('class', 'qs-status small ' + (cls || 'text-muted')).text(text || ''); }
+    function qsDirty($sec) {
+        var changed = false;
+        qsFields($sec).each(function () { if ($.trim($(this).val()) !== (qsBase[this.name] || '')) changed = true; });
+        return changed;
+    }
+    function qsFill($sec, values) {
+        qsFields($sec).each(function () { var v = values[this.name] || ''; $(this).val(v); qsBase[this.name] = v; });
+        qsStatus($sec, '');
+    }
+    function qsValues(d) { return d.values || $.extend({}, d.defaults, d.custom); }
     $qs.on('show.bs.modal', function () {
-        qsMsg(''); $('#qsForm').addClass('d-none'); $('#qsLoading').removeClass('d-none').text('Loading…');
+        $('#qsForm').addClass('d-none'); $('#qsLoading').removeClass('d-none').text('Loading…'); $('#qsScanStatus').text('');
         $.getJSON(settingsUrl).done(function (d) {
             qsDefaults = d.defaults || {};
-            $('#qsForm .qs-field').each(function () {
-                var k = this.name; $(this).val((d.custom && d.custom[k]) || '');
-                if (k !== 'graduation_date') $(this).attr('placeholder', qsDefaults[k] || '');
-            });
+            var v = qsValues(d);
+            $('#qsForm .qs-section').each(function () { qsFill($(this), v); });
             $('#qsScans').text(d.scans_total + ' scan' + (d.scans_total === 1 ? '' : 's') + ' recorded in all');
             $('#qsLoading').addClass('d-none'); $('#qsForm').removeClass('d-none');
         }).fail(function (xhr) { $('#qsLoading').text((xhr.responseJSON && xhr.responseJSON.message) || 'The settings could not be loaded.'); });
     });
-    $('#qsSave').on('click', function () {
-        var btn = $(this).prop('disabled', true), data = { _token: csrf };
-        $('#qsForm .qs-field').each(function () { data[this.name] = $.trim($(this).val()); });
-        $.post(settingsUrl, data).done(function () { qsMsg('Saved. Open a person\'s page to see it.', true); })
-            .fail(function (xhr) {
-                var j = xhr.responseJSON || {}, first = j.errors ? j.errors[Object.keys(j.errors)[0]][0] : null;
-                qsMsg(first || j.message || 'The settings could not be saved.', false);
-            }).always(function () { btn.prop('disabled', false); });
+    $qs.on('input change', '.qs-field', function () {
+        var $sec = qsSection(this);
+        qsStatus($sec, qsDirty($sec) ? 'Unsaved changes' : '', 'text-warning');
+    });
+    // put this section's standard wording in the boxes (saved only when the section is saved)
+    $qs.on('click', '.qs-restore', function () {
+        var $sec = qsSection(this);
+        qsFields($sec).each(function () { $(this).val(qsDefaults[this.name] || ''); });
+        qsStatus($sec, qsDirty($sec) ? 'Standard wording restored: save the section to keep it' : 'Already the standard wording', 'text-warning');
+    });
+    // save only this section's fields; the other sections are not sent and keep what is typed in them
+    $qs.on('click', '.qs-save', function () {
+        var $sec = qsSection(this), btn = $(this).prop('disabled', true), data = { _token: csrf };
+        qsFields($sec).each(function () { data[this.name] = $.trim($(this).val()); });
+        qsStatus($sec, 'Saving…');
+        $.post(settingsUrl, data).done(function () {
+            // show what the page now says (a box that was emptied shows the standard wording again)
+            $.getJSON(settingsUrl).done(function (d) { qsFill($sec, qsValues(d)); qsStatus($sec, 'Saved', 'text-success'); });
+        }).fail(function (xhr) {
+            var j = xhr.responseJSON || {}, first = j.errors ? j.errors[Object.keys(j.errors)[0]][0] : null;
+            qsStatus($sec, first || j.message || 'This section could not be saved.', 'text-danger');
+        }).always(function () { btn.prop('disabled', false); });
     });
     function afterReset(removed, personKey) {
         people.forEach(function (p) { if (!personKey || p.key === personKey) { p.scans = 0; p.last_scan = null; } });
@@ -735,8 +790,8 @@ $(function () {
         if (!confirm('Reset ALL scan counts to zero?\n\nEvery recorded scan is removed. This cannot be undone.')) return;
         var btn = $(this).prop('disabled', true);
         $.post(resetUrl, { _token: csrf, scope: 'all' }).done(function (d) {
-            afterReset(d.removed); $('#qsScans').text('0 scans recorded in all'); qsMsg(d.message, true);
-        }).fail(function (xhr) { qsMsg((xhr.responseJSON && xhr.responseJSON.message) || 'The scan counts could not be reset.', false); })
+            afterReset(d.removed); $('#qsScans').text('0 scans recorded in all'); $('#qsScanStatus').attr('class', 'qs-status small mt-1 text-success').text(d.message);
+        }).fail(function (xhr) { $('#qsScanStatus').attr('class', 'qs-status small mt-1 text-danger').text((xhr.responseJSON && xhr.responseJSON.message) || 'The scan counts could not be reset.'); })
           .always(function () { btn.prop('disabled', false); });
     });
     $body.on('click', '.qr-reset', function (e) {
