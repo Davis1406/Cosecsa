@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-11-19) — Check before you submit; Viva starts with Viva 1 and Viva 2
+- **Submit confirmation:** when an examiner presses Submit on the MCS, General Surgery or FCS marking form, a popup says *You are submitting marks for: Group … Station … Candidate … Form …* and asks them to **Go back** and select the right group and station if it is wrong, or **Yes, submit the marks**. Nothing is sent until they confirm (works the same offline). (`examiner/_confirm_submit.blade.php`.)
+- **Viva stations:** every FCS Viva form now offers **Viva 1 and Viva 2** by default; more are added under Exams Settings > Stations (Viva 1, Viva 2, Viva 3…). With no stations configured the Viva form falls back to Viva 1 and 2. Needs the API migration `2026_11_19_150000_default_viva_stations_to_viva_1_and_2`.
+
 ### Changed (2026-11-19) — Exams Settings > Form labels: edit the form as examiners see it
 - The Clinical and Viva editors now show **the marking form itself**, laid out and styled as examiners see it (title, group / candidate / station row, the red case box with its columns, the mark drop-downs, remarks and Submit). **Click a case heading or a question to rename it in place**; there is no separate list any more.
 - **Drag** the grip of a case to reorder the cases, and the grip of a question to reorder it or move it into another case; *Add question to this case*, *Add case* and the red remove buttons sit on the form. Column widths follow the number of cases exactly like the real form.

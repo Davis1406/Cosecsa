@@ -253,5 +253,6 @@
         });
     </script>
     @include('examiner._marking_flow', ['kind' => $exam_type, 'format' => $form_type, 'assignedGroups' => []])
+    @include('examiner._confirm_submit')
     @include('examiner._offline')
 @endsection

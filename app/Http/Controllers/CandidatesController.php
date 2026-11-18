@@ -500,9 +500,10 @@ class CandidatesController extends Controller
             return $rows;
         }
 
+        // Nothing configured: the Viva form starts with Viva 1 and Viva 2, everything else with Station 1-8 as it always did
         $label = $format === 'viva' ? 'Viva' : 'Station';
 
-        return collect(range(1, 8))->map(fn ($i) => (object) ['number' => $i, 'name' => "$label $i", 'max_total' => $examType === 'mcs' ? 20 : null]);
+        return collect(range(1, $format === 'viva' ? 2 : 8))->map(fn ($i) => (object) ['number' => $i, 'name' => "$label $i", 'max_total' => $examType === 'mcs' ? 20 : null]);
     }
 
     /**

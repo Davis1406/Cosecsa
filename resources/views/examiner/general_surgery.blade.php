@@ -203,5 +203,6 @@
         }
     </script>
     @include('examiner._marking_flow', ['kind' => 'gs', 'format' => null, 'assignedGroups' => $examinerGroupIds ?? []])
+    @include('examiner._confirm_submit')
     @include('examiner._offline')
 @endsection

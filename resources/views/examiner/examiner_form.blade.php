@@ -204,5 +204,6 @@
 
     </script>
     @include('examiner._marking_flow', ['kind' => 'mcs', 'format' => null, 'assignedGroups' => $examinerGroupIds ?? [], 'stationForGroup' => $stationForGroup ?? []])
+    @include('examiner._confirm_submit')
     @include('examiner._offline')
 @endsection
