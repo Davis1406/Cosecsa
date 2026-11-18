@@ -70,6 +70,12 @@
                     : ($rawBody === '' ? '' : '<p>' . nl2br(e($rawBody)) . '</p>');
               @endphp
               <div class="form-group">
+                <label for="recipientBlock">&ldquo;To&rdquo; section <span class="text-muted font-weight-normal">(the name and details above the letter; one line each. Leave empty for the standard block)</span></label>
+                <textarea name="recipient_block" id="recipientBlock" class="form-control" rows="4" maxlength="1000" placeholder="Dr. &#123;&#123;name&#125;&#125;&#10;Email: &#123;&#123;email&#125;&#125;&#10;Country: &#123;&#123;country&#125;&#125;">{{ old('recipient_block', $template->recipient_block ?? '') }}</textarea>
+                <small class="text-muted">The first line is shown in bold. Type anything, with details like &#123;&#123;name&#125;&#125;, &#123;&#123;email&#125;&#125;, &#123;&#123;country&#125;&#125;, &#123;&#123;programme&#125;&#125;, &#123;&#123;hospital&#125;&#125;, &#123;&#123;entry_number&#125;&#125;: for example <em>Dr. &#123;&#123;name&#125;&#125;</em>. A line whose detail a person does not have (no e-mail) is left out for that person.</small>
+              </div>
+
+              <div class="form-group">
                 <label>Letter Body <span class="text-muted font-weight-normal">(rendered on the letterhead PDF &mdash; select text to make it bold, change size, colour or alignment)</span></label>
                 <textarea name="pdf_body" id="pdfBody" class="form-control">{{ $bodyForEditor }}</textarea>
               </div>
@@ -210,7 +216,7 @@ $(function () {
     }
     $('#sigFile').on('change', function () { readPick(this, 'signature'); });
     $('#stampFile').on('change', function () { readPick(this, 'stamp'); });
-    $('#sigName, #sigTitle, #rmSig, #rmStamp, #useCollegeStamp').on('input change', schedule);
+    $('#sigName, #sigTitle, #rmSig, #rmStamp, #useCollegeStamp, #recipientBlock').on('input change', schedule);
 
     // the preview reports where the stamp was dragged to; keep it in the form (saved with the template) and re-draw
     window.addEventListener('message', function (e) {
@@ -230,6 +236,7 @@ $(function () {
         var tid = @json($template->id ?? null);
         return {
             pdf_body: $body.summernote('code'),
+            recipient_block: $('#recipientBlock').val(),
             template_id: tid,
             signatory_name: $('#sigName').val(),
             signatory_title: $('#sigTitle').val(),

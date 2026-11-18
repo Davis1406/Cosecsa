@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added (2026-11-19) — College letters: edit the "To" section of a letter
+- In the letter template editor, a new **"To" section** box controls what is printed above the letter (the name, e-mail and country). Type one line each with details in double braces, for example **Dr. {{name}}**, then Email: {{email}} and Country: {{country}}; the live preview on the right shows it straight away. The first line is bold. A line whose detail a person does not have is left out for that person. Leave it empty for the standard block. It applies to every letter sent, the PDF, the web copy and test sends. Needs the API release first (migration `2026_11_19_220000_add_recipient_block_to_letter_templates`).
+
 ### Changed (2026-11-19) — College letters: the Send page opens on the current intake
 - The recipient list no longer loads every name: it opens on the **current intake** (today the 2027 admissions for Trainees; the latest exam year for Candidates), with a note saying so. Change the **Year** box and Apply for another year, or clear it for everyone. Switching **Send to** group starts that group's own intake. *Clear All* returns to the current intake. Needs the API release first.
 

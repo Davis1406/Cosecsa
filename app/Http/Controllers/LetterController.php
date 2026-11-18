@@ -43,9 +43,9 @@ class LetterController extends Controller
     private function templatePayload(Request $request): array
     {
         return $request->only([
-            'name', 'subject', 'pdf_body', 'email_body', 'recipient_source', 'legacy_status_field',
+            'name', 'subject', 'pdf_body', 'email_body', 'recipient_block', 'recipient_source', 'legacy_status_field',
             'signatory_name', 'signatory_title', 'remove_signature', 'remove_stamp', 'use_college_stamp', 'stamp_pos',
-        ]) + ['is_active_form' => '1', 'is_active' => $request->boolean('is_active') ? '1' : null];
+        ]) + ['is_active_form' => '1', 'recipient_block_form' => '1', 'is_active' => $request->boolean('is_active') ? '1' : null];
     }
 
     private function templateFiles(Request $request): array
@@ -155,10 +155,13 @@ class LetterController extends Controller
     /** Live preview for the template editor: the letter on the letterhead, from the body as typed (not yet saved). */
     public function livePreview(Request $request)
     {
-        $response = $this->api->post('letters/preview-html', array_filter($request->only([
+        $payload = array_filter($request->only([
             'pdf_body', 'template_id', 'signatory_name', 'signatory_title', 'signature_data', 'stamp_data',
             'clear_signature', 'clear_stamp', 'use_college_stamp', 'stamp_pos',
-        ]), fn ($v) => $v !== null && $v !== ''));
+        ]), fn ($v) => $v !== null && $v !== '');
+        // sent even when empty: an emptied "To" section means the standard one, not the saved one
+        $payload['recipient_block'] = (string) $request->input('recipient_block', '');
+        $response = $this->api->post('letters/preview-html', $payload);
 
         return response()->json(['html' => $response->json('html') ?? ''], $response->successful() ? 200 : 422);
     }
