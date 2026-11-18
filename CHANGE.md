@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-19) — College letters: the Send page opens on the current intake
+- The recipient list no longer loads every name: it opens on the **current intake** (today the 2027 admissions for Trainees; the latest exam year for Candidates), with a note saying so. Change the **Year** box and Apply for another year, or clear it for everyone. Switching **Send to** group starts that group's own intake. *Clear All* returns to the current intake. Needs the API release first.
+
 ### Added (2026-11-19) — College letters: check before sending, and letters kept on the trainee profile
 - **Send page > Check before sending:** *See what will be sent* shows the e-mail (to, subject, body, attachments) and the letter for any person on the list, or sample details; *Send a test to* (your own address is filled in) sends the real e-mail and PDF to that one address, marked [TEST]: nobody on the list gets it and nothing is recorded. *Review & Dispatch Selected* lists everyone who will receive the letter (name, e-mail, country, programme, year), warns about people with no e-mail address and people who already got this letter, then *Send N letters*.
 - **Trainee profile > Letters tab** (needs letters access): every letter sent to the trainee with *View* (the letter as a web page, with the e-mail), *PDF* (made now from the current details), *Original* (the PDF exactly as e-mailed) and *Send again*. **Letters are made from the profile as it is now**: correct a detail on the profile (name, year, hospital, e-mail…), then *Send again* (or open *View*) and the letter carries the correction; the date on the letter and the address can be changed when re-sending. A re-send is recorded as a new sending.

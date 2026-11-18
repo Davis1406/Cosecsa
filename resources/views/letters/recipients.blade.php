@@ -107,7 +107,7 @@
                 </div>
               </div>
 
-              <input type="number" name="year" class="form-control form-control-sm" style="max-width:120px;" value="{{ $filters['year'] ?? '' }}" placeholder="Year">
+              <input type="number" name="year" id="yearBox" class="form-control form-control-sm" style="max-width:120px;" value="{{ $filters['year'] ?? '' }}" placeholder="Year" title="Clear it and press Apply to list every year">
               <input type="text" name="search" class="form-control form-control-sm" style="max-width:200px;" value="{{ $filters['search'] ?? '' }}" placeholder="Search name…">
 
               <div class="form-check ml-1">
@@ -121,6 +121,10 @@
               <a href="{{ url('admin/letters/'.$template->id.'/recipients') }}" class="btn btn-sm btn-outline-secondary">
                 <i class="fas fa-times mr-1"></i>Clear All
               </a>
+
+              @if(!empty($default_year))
+                <div class="w-100 small text-info"><i class="fas fa-bolt mr-1"></i> Showing the current intake, <strong>{{ $default_year }}</strong>, so the list opens quickly. To see other years, change the Year box (or clear it for everyone) and press Apply.</div>
+              @endif
 
               {{-- Conditions on the columns of the chosen group's table: every condition must hold --}}
               <div class="w-100 pt-2 mt-1" style="border-top:1px dashed #ddd;">
@@ -337,7 +341,11 @@
   INITIAL.forEach(addRow);
 
   // a different group has different columns: start its conditions afresh
-  document.getElementById('sendTo').addEventListener('change', function () { rows.innerHTML = ''; form.submit(); });
+  document.getElementById('sendTo').addEventListener('change', function () {
+    rows.innerHTML = '';
+    document.getElementById('yearBox').disabled = true;   // not sent, so the new group opens on its own current intake
+    form.submit();
+  });
   // rows with no column chosen are not sent
   form.addEventListener('submit', function () {
     Array.prototype.forEach.call(rows.querySelectorAll('.cond-row'), function (r) { if (!r.querySelector('.cond-field').value) r.remove(); });

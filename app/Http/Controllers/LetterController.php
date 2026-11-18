@@ -178,10 +178,13 @@ class LetterController extends Controller
 
     public function recipients(Request $request, $id)
     {
-        $response = $this->api->get(
-            "letters/{$id}/recipients",
-            $request->only(['country_id', 'programme_id', 'year', 'search', 'unsent_only', 'source', 'conditions'])
-        );
+        $query = $request->only(['country_id', 'programme_id', 'year', 'search', 'unsent_only', 'source', 'conditions']);
+        // The year box submitted empty means "every year"; a page opened without it starts on the current intake (the API decides).
+        // (An empty value would be dropped from the query string, so it is sent as an explicit empty string.)
+        if ($request->has('year')) {
+            $query['year'] = (string) $request->input('year', '');
+        }
+        $response = $this->api->get("letters/{$id}/recipients", $query);
         $data = $response->object();
 
         return view('letters.recipients', [
@@ -191,6 +194,7 @@ class LetterController extends Controller
             'countries'    => collect($data->countries ?? []),
             'programmes'   => collect($data->programmes ?? []),
             'filters'      => json_decode(json_encode($data->filters ?? []), true) ?: [],
+            'default_year' => $data->default_year ?? null,
             'source'       => $data->source ?? ($data->template->recipient_source ?? ''),
             'sources'      => (array) ($data->sources ?? []),
             'columns'      => json_decode(json_encode($data->columns ?? []), true) ?: [],
