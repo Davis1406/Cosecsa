@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added (2026-11-26) — Certificate QR codes: Overseas, Associate and Honorary Fellows
+- **Fellows list > Certificate QR codes** now also lists the **Overseas Fellows, Associate Fellows and Honorary Fellows** whose fellowship year is the year chosen, besides the FCS Part I passers and the Fellows by Election. Each type has its own badge colour, the summary line counts each type, and the Type filter offers them. Needs the API release first (no migration).
+
 ### Added (2026-11-25) — Candidates: set a candidate Inactive
 - On a **candidate's profile** (needs candidates *manage*): **Set Inactive** (with an optional reason) takes the candidate off the Candidates list and changes the linked **trainee status to Inactive**. A grey banner on the profile shows since when and why. **Set Active again** (profile) puts the candidate back on the list and gives the trainee its earlier status back (unless it was changed by hand meanwhile). **Candidates list > Inactive candidates** shows only the inactive ones (every year) so they can be opened and reactivated. Nothing is deleted. Letters to Candidates skip them. Needs the API release first (migration `2026_11_25_100000_add_status_to_candidates`).
 

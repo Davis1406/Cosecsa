@@ -96,7 +96,7 @@
                 </div>
 
                 {{-- Certificate QR codes: the QR printed on each certificate. FCS candidates who passed Part I, and the Fellows by
-                     Election of the year. The QR shows when hovering a name; see also Fellow page > Certificate QR. --}}
+                     Election, Overseas, Associate and Honorary Fellows of the year. The QR shows when hovering a name; see also Fellow page > Certificate QR. --}}
                 <div class="card card-outline card-success mb-2 shadow-sm" id="qrCard">
                     <div class="card-header py-2 d-flex align-items-center flex-wrap" style="gap:.75rem;">
                         <img src="{{ asset('dist/img/Cosecsa_Logo_sm.png') }}" alt="COSECSA" width="42" height="42" style="object-fit:contain;flex:0 0 auto;">
@@ -611,7 +611,7 @@ $(function () {
 <script src="{{ asset('js/vendor/jszip-3.10.1.min.js') }}"></script>
 <script src="{{ asset('js/fellow-qr.js') }}?v={{ filemtime(public_path('js/fellow-qr.js')) }}"></script>   {{-- the version changes with the file, so a browser never runs an old copy against this page --}}
 <script>
-// Certificate QR codes for a year: FCS candidates who passed Part I, plus the Fellows by Election of that year. The list
+// Certificate QR codes for a year: FCS candidates who passed Part I, plus the Fellows by Election, Overseas, Associate and Honorary Fellows of that year. The list
 // is plain text; a name's QR appears while hovering it. The QR codes are drawn here in the browser; downloads are a
 // >= 4000 px PNG and a vector SVG per person, or those currently listed in one ZIP.
 (function () {
@@ -624,7 +624,11 @@ $(function () {
     function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
     function qrOf(p) { return made[p.key] || (made[p.key] = FellowQR.make(verifyBase + p.token)); }   // drawn only when needed
     function typeBadge(t, kind) {
-        var c = /election/i.test(t) ? ['#fff4d6', '#8a6100'] : ['#e3f0fb', '#1a5d96'];
+        var c = /election/i.test(t) ? ['#fff4d6', '#8a6100']
+              : /overseas/i.test(t) ? ['#e6f6ec', '#1d6b3a']
+              : /honorary/i.test(t) ? ['#f1e8fa', '#5b2d8a']
+              : /associate/i.test(t) ? ['#fde9e4', '#a23b1d']
+              : ['#e3f0fb', '#1a5d96'];
         return '<span class="badge" style="background:' + c[0] + ';color:' + c[1] + ';font-weight:600;font-size:.76rem;padding:.35em .6em;">' + esc(t) + '</span>';
     }
     function when(t) { return t ? t.replace(/:\d\d$/, '') : ''; }
@@ -659,16 +663,18 @@ $(function () {
         people = data.fellows || []; year = data.year; made = {};
         $hover.hide();
         if (!people.length) {
-            $body.html('<p class="text-muted mb-0 py-2">Nobody yet: no FCS candidate has a Part I pass in ' + esc(year) + ', and no Fellow by Election has fellowship year ' + esc(year) + '.</p>').removeClass('d-none');
+            $body.html('<p class="text-muted mb-0 py-2">Nobody yet: no FCS candidate has a Part I pass in ' + esc(year) + ', and no Fellow by Election, Overseas, Associate or Honorary Fellow has fellowship year ' + esc(year) + '.</p>').removeClass('d-none');
             return;
         }
-        var nc = people.filter(function (p) { return p.kind === 'candidate'; }).length, nf = people.length - nc;
+        var nc = people.filter(function (p) { return p.kind === 'candidate'; }).length;
+        var byType = {};
+        people.forEach(function (p) { if (p.kind !== 'candidate') { byType[p.type] = (byType[p.type] || 0) + 1; } });
+        var fellowParts = Object.keys(byType).sort().map(function (k) { return byType[k] + ' ' + esc(k); }).join(', ');
         var types = {}, progs = {};
         people.forEach(function (p) { types[p.type] = 1; if (p.trained_in) progs[p.trained_in] = 1; });
         function opts(o) { return Object.keys(o).sort().map(function (k) { return '<option value="' + esc(k) + '">' + esc(k) + '</option>'; }).join(''); }
         $body.html(
-            '<p class="small text-muted mb-2"><strong>' + people.length + ' people for ' + esc(year) + '</strong>: ' + nc + ' Fellow' + (nc === 1 ? '' : 's') + ' by Examination (FCS candidates with a Part I pass in ' + esc(year) + ') and ' + nf +
-            ' Fellow' + (nf === 1 ? '' : 's') + ' by Election. <strong>Hover a name to see their QR.</strong> Each QR opens that person\'s public verification page.</p>' +
+            '<p class="small text-muted mb-2"><strong>' + people.length + ' people for ' + esc(year) + '</strong>: ' + nc + ' Fellow' + (nc === 1 ? '' : 's') + ' by Examination (FCS candidates with a Part I pass in ' + esc(year) + ')' + (fellowParts ? ' and, by fellowship year ' + esc(year) + ': ' + fellowParts : '') + '. <strong>Hover a name to see their QR.</strong> Each QR opens that person\'s public verification page.</p>' +
             '<div class="d-flex align-items-center flex-wrap mb-2" style="gap:.5rem;">' +
               '<input type="search" id="qrSearch" class="form-control form-control-sm" style="width:210px;" placeholder="Search name or country">' +
               '<select id="qrType" class="form-control form-control-sm" style="width:auto;"><option value="">All types</option>' + opts(types) + '</select>' +
