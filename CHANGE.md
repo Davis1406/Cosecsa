@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-26) — Certificate QR codes: candidates by fee paid, Part II promoted, not MCS
+- **Fellows list > Certificate QR codes** lists the candidates with Fee Paid = Paid, Part II = Promoted and any programme except MCS (so candidates repeating exams are in, whatever year they sat Part I), plus the Fellows of the chosen **fellowship year**. The list is paged 25 at a time and reads like the Candidates table: "Showing 1 to 25 of 226 entries (filtered from 1,460 total entries)". Search and the Type/Programme filters narrow it further; the ZIP downloads still take everything listed, not just the page. Needs the API release first (no migration).
+
 ### Added (2026-11-26) — Fellows list: Merge Profiles
 - **Fellows list > Merge Profiles** (needs fellows *manage*): for one person who is a Fellow and also has a profile under another type (Member, Trainee, Candidate, Examiner, Country Representative, Programme Director, Trainer). Pick the Fellow, pick the type and search the other profile, **Compare the two profiles**, and for every value that differs (or that only one profile has) choose *Keep the Fellow's* or *Take the other profile's*; values that are the same are not touched. **Merge profiles** then copies the chosen values onto the Fellow, moves the other profile (and any other records on its login) to the Fellow's login and retires the duplicate login (it can no longer sign in; nothing is deleted). A ToT trainer has no login, so only the chosen values are copied. A backup of everything changed is kept on the server. Needs the API release first (no migration).
 

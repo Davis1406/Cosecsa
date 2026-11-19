@@ -47,8 +47,8 @@ class FellowsController extends Controller
         ]);
     }
 
-    // The Fellows list's Certificate QR section: who gets a certificate for a year (exam year, plus Fellows by Election of that
-    // year) with the token for each QR code. Passed straight through from the API.
+    // The Fellows list's Certificate QR section: who gets a certificate (the fee-paid, Part II promoted, non-MCS candidates, plus the
+    // Fellows of the year) with the token for each QR code. Passed straight through from the API.
     public function certificateBatch(Request $request)
     {
         $response = $this->api->get('fellows/certificate-batch', array_filter(['year' => $request->input('year')]));

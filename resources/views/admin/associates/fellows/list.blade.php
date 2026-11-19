@@ -99,7 +99,7 @@
                     </div>
                 </div>
 
-                {{-- Certificate QR codes: the QR printed on each certificate. FCS candidates who passed Part I, and the Fellows by
+                {{-- Certificate QR codes: the QR printed on each certificate. Candidates fee paid, promoted to Part II and outside MCS, and the Fellows by
                      Election, Overseas, Associate and Honorary Fellows of the year. The QR shows when hovering a name; see also Fellow page > Certificate QR. --}}
                 <div class="card card-outline card-success mb-2 shadow-sm" id="qrCard">
                     <div class="card-header py-2 d-flex align-items-center flex-wrap" style="gap:.75rem;">
@@ -109,7 +109,7 @@
                             <small class="text-muted">College of Surgeons of East, Central and Southern Africa</small>
                         </div>
                         <div class="ml-auto d-flex align-items-center flex-wrap" style="gap:.5rem;">
-                            <label class="mb-0 small text-muted" for="qrYear">Year</label>
+                            <label class="mb-0 small text-muted" for="qrYear" title="The fellowship year of the Fellows listed; the candidates do not depend on it">Fellowship year</label>
                             <select id="qrYear" class="form-control form-control-sm" style="width:auto;">
                                 @foreach(range(now()->year, now()->year - 4) as $y)<option value="{{ $y }}">{{ $y }}</option>@endforeach
                             </select>
@@ -669,7 +669,7 @@ $(function () {
 <script src="{{ asset('js/vendor/jszip-3.10.1.min.js') }}"></script>
 <script src="{{ asset('js/fellow-qr.js') }}?v={{ filemtime(public_path('js/fellow-qr.js')) }}"></script>   {{-- the version changes with the file, so a browser never runs an old copy against this page --}}
 <script>
-// Certificate QR codes for a year: FCS candidates who passed Part I, plus the Fellows by Election, Overseas, Associate and Honorary Fellows of that year. The list
+// Certificate QR codes: the candidates with Fee Paid = Paid, Part II = Promoted and any programme but MCS (those repeating exams included), plus the Fellows by Election, Overseas, Associate and Honorary Fellows of the chosen year. The list
 // is plain text; a name's QR appears while hovering it. The QR codes are drawn here in the browser; downloads are a
 // >= 4000 px PNG and a vector SVG per person, or those currently listed in one ZIP.
 (function () {
@@ -677,7 +677,7 @@ $(function () {
         profile  = { fellow: @json(url('admin/associates/fellows/view')), candidate: @json(url('admin/associates/candidates/view')) },
         verifyBase = @json(rtrim(config('app.url'), '/') . '/verify/'),
         settingsUrl = @json(url('admin/associates/fellows/qr-settings')), resetUrl = @json(url('admin/associates/fellows/qr-scans/reset')), csrf = @json(csrf_token());
-    var $body = $('#qrBody'), $show = $('#qrShow'), $hover = $('#qrHover'), people = [], year = '', made = {}, hideTimer = null;
+    var $body = $('#qrBody'), $show = $('#qrShow'), $hover = $('#qrHover'), people = [], year = '', made = {}, hideTimer = null, totalEntries = 0, page = 1, PER_PAGE = 25;
 
     function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
     function qrOf(p) { return made[p.key] || (made[p.key] = FellowQR.make(verifyBase + p.token)); }   // drawn only when needed
@@ -702,8 +702,10 @@ $(function () {
         });
     }
     function draw() {
-        var list = shown(), rows = list.map(function (p, i) {
-            return '<tr data-key="' + p.key + '"><td class="text-muted">' + (i + 1) + '</td>' +
+        var list = shown(), pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+        page = Math.min(Math.max(1, page), pages);
+        var from = (page - 1) * PER_PAGE, rows = list.slice(from, from + PER_PAGE).map(function (p, i) {
+            return '<tr data-key="' + p.key + '"><td class="text-muted">' + (from + i + 1) + '</td>' +
                 '<td><a href="' + esc(profile[p.kind]) + '/' + p.id + '" class="qr-name" style="color:#222;font-weight:600;">' + esc(p.name) + '</a></td>' +
                 '<td>' + typeBadge(p.type, p.kind) + '</td>' +
                 '<td>' + esc(p.trained_in || '—') + '</td><td>' + esc(p.country || '—') + '</td>' +
@@ -714,14 +716,19 @@ $(function () {
                 '<button type="button" class="btn btn-xs btn-outline-secondary qr-peek" title="Show the QR"><i class="fas fa-qrcode"></i></button></td></tr>';
         }).join('');
         $('#qrRows').html(rows || '<tr><td colspan="8" class="text-center text-muted py-3">Nobody matches.</td></tr>');
-        $('#qrCount').text(list.length === people.length ? people.length + ' people' : list.length + ' of ' + people.length);
+        // the same wording as the Candidates table: "Showing 1 to 25 of 226 entries (filtered from 1,460 total entries)"
+        var total = Math.max(totalEntries, people.length), nf = function (n) { return Number(n).toLocaleString('en-US'); };
+        $('#qrCount').text(list.length
+            ? 'Showing ' + nf(from + 1) + ' to ' + nf(Math.min(from + PER_PAGE, list.length)) + ' of ' + nf(list.length) + ' entries' + (list.length !== total ? ' (filtered from ' + nf(total) + ' total entries)' : '')
+            : 'Showing 0 entries' + (total ? ' (filtered from ' + nf(total) + ' total entries)' : ''));
+        $('#qrPrev').prop('disabled', page <= 1); $('#qrNext').prop('disabled', page >= pages); $('#qrPage').text('Page ' + page + ' of ' + pages);
         $('#qrZipPng, #qrZipSvg').prop('disabled', !list.length);
     }
     function render(data) {
-        people = data.fellows || []; year = data.year; made = {};
+        people = data.fellows || []; year = data.year; totalEntries = data.total_entries || people.length; page = 1; made = {};
         $hover.hide();
         if (!people.length) {
-            $body.html('<p class="text-muted mb-0 py-2">Nobody yet: no FCS candidate has a Part I pass in ' + esc(year) + ', and no Fellow by Election, Overseas, Associate or Honorary Fellow has fellowship year ' + esc(year) + '.</p>').removeClass('d-none');
+            $body.html('<p class="text-muted mb-0 py-2">Nobody yet: no candidate is fee paid, promoted to Part II and outside MCS, and no Fellow by Election, Overseas, Associate or Honorary Fellow has fellowship year ' + esc(year) + '.</p>').removeClass('d-none');
             return;
         }
         var nc = people.filter(function (p) { return p.kind === 'candidate'; }).length;
@@ -732,16 +739,17 @@ $(function () {
         people.forEach(function (p) { types[p.type] = 1; if (p.trained_in) progs[p.trained_in] = 1; });
         function opts(o) { return Object.keys(o).sort().map(function (k) { return '<option value="' + esc(k) + '">' + esc(k) + '</option>'; }).join(''); }
         $body.html(
-            '<p class="small text-muted mb-2"><strong>' + people.length + ' people for ' + esc(year) + '</strong>: ' + nc + ' Fellow' + (nc === 1 ? '' : 's') + ' by Examination (FCS candidates with a Part I pass in ' + esc(year) + ')' + (fellowParts ? ' and, by fellowship year ' + esc(year) + ': ' + fellowParts : '') + '. <strong>Hover a name to see their QR.</strong> Each QR opens that person\'s public verification page.</p>' +
+            '<p class="small text-muted mb-2"><strong>' + people.length + ' people for ' + esc(year) + '</strong>: ' + nc + ' Fellow' + (nc === 1 ? '' : 's') + ' by Examination (candidates with Fee Paid, promoted to Part II, any programme except MCS; those repeating exams are included)' + (fellowParts ? ' and, by fellowship year ' + esc(year) + ': ' + fellowParts : '') + '. <strong>Hover a name to see their QR.</strong> Each QR opens that person\'s public verification page.</p>' +
             '<div class="d-flex align-items-center flex-wrap mb-2" style="gap:.5rem;">' +
               '<input type="search" id="qrSearch" class="form-control form-control-sm" style="width:210px;" placeholder="Search name or country">' +
               '<select id="qrType" class="form-control form-control-sm" style="width:auto;"><option value="">All types</option>' + opts(types) + '</select>' +
               '<select id="qrProg" class="form-control form-control-sm" style="width:auto;"><option value="">All programmes</option>' + opts(progs) + '</select>' +
-              '<small class="text-muted" id="qrCount"></small>' +
               '<span class="ml-auto"><button type="button" class="btn btn-sm btn-outline-success" id="qrZipPng" title="Everything listed, one PNG each (4000 px or more), as one ZIP; can be large"><i class="fas fa-file-archive mr-1"></i>ZIP of PNGs</button> ' +
               '<button type="button" class="btn btn-sm btn-outline-success" id="qrZipSvg" title="Everything listed, one vector SVG each, as one ZIP"><i class="fas fa-file-archive mr-1"></i>ZIP of SVGs</button></span>' +
             '</div>' +
-            '<div style="max-height:62vh;overflow:auto;border:1px solid #eee;border-radius:6px;"><table class="table table-sm table-hover mb-0" id="qrTable"><thead style="position:sticky;top:0;background:#f7f8fa;z-index:1;"><tr><th>#</th><th>Name</th><th>Type</th><th>Programme</th><th>Country</th><th>Included because</th><th class="text-center">Scans</th><th>Download</th></tr></thead><tbody id="qrRows"></tbody></table></div>'
+            '<div style="max-height:62vh;overflow:auto;border:1px solid #eee;border-radius:6px;"><table class="table table-sm table-hover mb-0" id="qrTable"><thead style="position:sticky;top:0;background:#f7f8fa;z-index:1;"><tr><th>#</th><th>Name</th><th>Type</th><th>Programme</th><th>Country</th><th>Included because</th><th class="text-center">Scans</th><th>Download</th></tr></thead><tbody id="qrRows"></tbody></table></div>' +
+            '<div class="d-flex align-items-center flex-wrap mt-2" style="gap:.5rem;"><small class="text-muted" id="qrCount"></small>' +
+              '<span class="ml-auto d-flex align-items-center" style="gap:.5rem;"><button type="button" class="btn btn-sm btn-outline-secondary" id="qrPrev">Previous</button><small class="text-muted" id="qrPage"></small><button type="button" class="btn btn-sm btn-outline-secondary" id="qrNext">Next</button></span></div>'
         ).removeClass('d-none');
         draw();
     }
@@ -753,7 +761,9 @@ $(function () {
             .fail(function (xhr) { $body.html('<div class="alert alert-danger mb-0">' + esc((xhr.responseJSON && xhr.responseJSON.message) || 'The list could not be loaded.') + '</div>').removeClass('d-none'); })
             .always(function () { $show.prop('disabled', false).html('<i class="fas fa-sync-alt mr-1"></i>Refresh'); });
     });
-    $body.on('input change', '#qrSearch, #qrType, #qrProg', draw);
+    $body.on('input change', '#qrSearch, #qrType, #qrProg', function () { page = 1; draw(); });
+    $body.on('click', '#qrPrev', function () { page--; draw(); $('#qrTable').parent().scrollTop(0); });
+    $body.on('click', '#qrNext', function () { page++; draw(); $('#qrTable').parent().scrollTop(0); });
 
     // ── the QR while hovering a name (or after tapping the QR button, for touch screens) ──
     function showHover(el, p) {
