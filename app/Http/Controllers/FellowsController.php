@@ -45,6 +45,8 @@ class FellowsController extends Controller
             'uniqueAlumniCount' => $data->uniqueAlumniCount ?? 0,
             'allAlumniCount'    => $data->allAlumniCount ?? 0,
             'tentativeCount'    => $data->tentativeCount ?? 0,
+            'associateFellowCount' => $data->associateFellowCount ?? 0,
+            'fellowCountries'   => \App\Models\Country::getCountry(),
         ]);
     }
 
@@ -118,7 +120,7 @@ class FellowsController extends Controller
             'kind'      => 'tentative',
             'id'        => $t->id,
             'name'      => $t->name,
-            'email'     => null,
+            'email'     => $t->linked_email ?? null,
             'cid'       => $t->country_id,
             'country'   => $t->country_name,
             'pid'       => $t->programme_id,
@@ -663,6 +665,14 @@ class FellowsController extends Controller
     public function mergeProfiles(Request $request, $id)
     {
         $response = $this->api->post("fellows/{$id}/merge", $request->only(['type', 'other_id', 'choices']));
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    // Confirm a tentative person as a Fellow (fellowship type, year, email and country come from the modal; the API creates the Fellow).
+    public function confirmTentative(Request $request, $id)
+    {
+        $response = $this->api->post("fellows/tentative/{$id}/confirm", $request->only(['category_id', 'fellowship_year', 'email', 'country_id', 'programme_id', 'admission_year']));
 
         return response()->json($response->json(), $response->status());
     }

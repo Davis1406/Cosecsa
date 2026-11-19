@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-11-28) — Fellows list: Confirm as Fellow, Associate Fellows button
+- **Tentative rows > Confirm as Fellow**: asks for the fellowship type (Associate Fellow, Fellow By Election, Overseas, Honorary), the fellowship year, their email (the login) and country, then makes them a real Fellow (next Fellow ID) and takes them off the tentative list; the Fellow's page opens. They count in the Fellows total from then on and are on the Certificate QR list for that year. Needs the API release first.
+- **Associate Fellows (N) button** in the filter bar: shows only the Associate Fellow type (click again to clear).
+
 ### Added (2026-11-27) — Fellows list: Tentative Associate Fellows
 - **Fellows list > Tentative filter**: people expected to be admitted as Associate Fellows at the December meeting. They are shown (with a yellow "Tentative · December 2026" label, a profile link where the system already holds them as a trainer, and a note) only while the Tentative filter is ticked, and are never counted in the Fellows total. Super admins can remove one from the menu. Needs the API release first (it has a migration).
 

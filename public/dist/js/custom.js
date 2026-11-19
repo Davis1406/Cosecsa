@@ -745,7 +745,13 @@ $(function () {
                   "render": function (d, type, r) {
                     if (type !== "display" || r.kind === "extra") return "";
                     if (r.kind === "tentative") {
-                        return canDelete ? dtActionMenu(dtMenuItem(fBase + "/tentative/delete/" + r.id, "fas fa-trash", "Remove from tentative list", { cls: "text-danger", confirm: "Remove " + String(r.name || "this person").replace(/['"\\]/g, "") + " from the tentative list?" })) : "";
+                        // Confirm opens the modal on the Fellows list (it needs an email and a country, which the tentative entry may not have)
+                        var tItems = '<a class="dropdown-item confirm-tentative" href="#" data-id="' + esc(r.id) + '" data-name="' + esc(r.name || "") + '" data-email="' + esc(r.email || "") +
+                            '" data-cid="' + esc(r.cid || "") + '" data-type="' + esc(r.ftype || "") + '" data-meeting="' + esc(r.meeting || "") + '"><i class="fas fa-check-circle text-success mr-2"></i> Confirm as Fellow</a>';
+                        if (canDelete) {
+                            tItems += '<div class="dropdown-divider"></div>' + dtMenuItem(fBase + "/tentative/delete/" + r.id, "fas fa-trash", "Remove from tentative list", { cls: "text-danger", confirm: "Remove " + String(r.name || "this person").replace(/['"\\]/g, "") + " from the tentative list?" });
+                        }
+                        return dtActionMenu(tItems);
                     }
                     var items =
                         dtMenuItem(fBase + "/view/" + r.id, "fas fa-eye text-info", "View") +

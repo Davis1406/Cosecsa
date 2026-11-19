@@ -99,6 +99,9 @@
                                 </div>
                             </div>
                             @endforeach
+                            <button type="button" id="btnAssociateFellows" class="btn btn-sm btn-outline-warning" title="List the Associate Fellows (shows only that Fellowship Type; click again to clear)">
+                                <i class="fas fa-user-tag mr-1"></i>Associate Fellows ({{ number_format($associateFellowCount ?? 0) }})
+                            </button>
                             <button id="btnClearFilters" class="btn btn-sm btn-outline-secondary">
                                 <i class="fas fa-times mr-1"></i>Clear All
                             </button>
@@ -319,6 +322,55 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-danger" id="afaSubmit" disabled>Add as Fellow</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Confirm a tentative person as a Fellow: they are admitted, so they get a login, a Fellow ID and the chosen fellowship type and year --}}
+<div class="modal fade" id="confirmTentativeModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form id="confirmTentativeForm" class="modal-content" autocomplete="off">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-check-circle mr-1 text-success"></i> Confirm as Fellow</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div id="ctAlert" class="alert d-none" role="alert"></div>
+                <p class="mb-2"><strong id="ctName"></strong></p>
+                <p class="small text-muted">They become a real Fellow (counted in the Fellows total, on the QR list for the year chosen) with a login and the next Fellow ID, and leave the tentative list.</p>
+                <input type="hidden" id="ctId">
+                <div class="form-row">
+                    <div class="form-group col-md-8">
+                        <label>Fellowship Type <span class="text-danger">*</span></label>
+                        <select class="form-control" id="ctCategory" name="category_id">
+                            <option value="2">Associate Fellow</option>
+                            <option value="7">Fellow By Election</option>
+                            <option value="9">Overseas Fellow</option>
+                            <option value="8">Honorary Fellow (ASEA)</option>
+                            <option value="10">Honorary Fellow (COSECSA)</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Fellowship Year <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="ctYear" name="fellowship_year" maxlength="4" placeholder="e.g. 2026">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email (their login) <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" id="ctEmail" name="email" placeholder="name@example.org">
+                </div>
+                <div class="form-group mb-0">
+                    <label>Country <span class="text-danger">*</span></label>
+                    <select class="form-control" id="ctCountry" name="country_id">
+                        <option value="">Select…</option>
+                        @foreach($fellowCountries ?? [] as $c)<option value="{{ $c->id }}">{{ $c->country_name }}</option>@endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-success" id="ctSubmit"><i class="fas fa-check mr-1"></i>Confirm as Fellow</button>
             </div>
         </form>
     </div>
@@ -1048,6 +1100,55 @@ $(function () {
                 alertBox('danger', (xhr.responseJSON && xhr.responseJSON.message) || 'The merge failed; nothing was changed.');
                 $b.prop('disabled', false).html('<i class="fas fa-code-branch mr-1"></i>Merge profiles');
             });
+    });
+});
+</script>
+@endpush
+
+@push('scripts')
+<script>
+// Associate Fellows quick list, and Confirm as Fellow for the tentative people.
+$(function () {
+    // the Fellowship Type filter, set to the Associate Fellow category
+    $('#btnAssociateFellows').on('click', function () {
+        var $opts = $('.chk-option[data-filter="filterType"]'), $assoc = $opts.filter(function () { return /^associate fellow/i.test(this.value); });
+        var already = $assoc.length && $assoc.filter(':checked').length === $assoc.length && $opts.filter(':checked').length === $assoc.length;
+        $opts.prop('checked', false);
+        if (!already) { $assoc.prop('checked', true); }
+        $opts.first().trigger('change');
+    });
+
+    var ctTypes = { 'associate fellow': 2, 'fellow by election': 7, 'overseas fellow': 9, 'honorary fellow (asea)': 8, 'honorary fellow (cosecsa)': 10 };
+    var ctUrl = @json(url('admin/associates/fellows/tentative/__ID__/confirm')), ctCsrf = @json(csrf_token());
+    function ctAlert(kind, msg) { $('#ctAlert').removeClass('d-none alert-danger alert-success').addClass('alert-' + kind).text(msg); }
+
+    $(document).on('click', '.confirm-tentative', function (e) {
+        e.preventDefault();
+        var $a = $(this), meeting = String($a.data('meeting') || ''), year = (meeting.match(/\d{4}/) || [new Date().getFullYear()])[0];
+        $('#ctAlert').addClass('d-none');
+        $('#ctId').val($a.data('id'));
+        $('#ctName').text($a.data('name'));
+        $('#ctCategory').val(ctTypes[String($a.data('type') || '').toLowerCase()] || 2);
+        $('#ctYear').val(year);
+        $('#ctEmail').val($a.data('email') || '');
+        $('#ctCountry').val($a.data('cid') || '');
+        $('#confirmTentativeModal').modal('show');
+    });
+
+    $('#confirmTentativeForm').on('submit', function (e) {
+        e.preventDefault();
+        var $btn = $('#ctSubmit').prop('disabled', true), id = $('#ctId').val();
+        $.post(ctUrl.replace('__ID__', id), {
+            _token: ctCsrf, category_id: $('#ctCategory').val(), fellowship_year: $.trim($('#ctYear').val()),
+            email: $.trim($('#ctEmail').val()), country_id: $('#ctCountry').val()
+        }).done(function (d) {
+            ctAlert('success', d.message || 'Confirmed.');
+            setTimeout(function () { window.location.href = @json(url('admin/associates/fellows/view')) + '/' + d.fellow_id; }, 700);
+        }).fail(function (xhr) {
+            var j = xhr.responseJSON || {}, first = j.errors ? j.errors[Object.keys(j.errors)[0]][0] : null;
+            ctAlert('danger', first || j.message || 'They could not be confirmed.');
+            $btn.prop('disabled', false);
+        });
     });
 });
 </script>
