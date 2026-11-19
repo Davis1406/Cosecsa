@@ -22,6 +22,10 @@
                                 data-toggle="modal" data-target="#addFromAssociateModal">
                             <span class="fas fa-user-friends mr-1"></span> Add Fellow from Associate
                         </button>
+                        <button type="button" class="btn btn-outline-secondary mr-2"
+                                data-toggle="modal" data-target="#mergeProfilesModal">
+                            <span class="fas fa-code-branch mr-1"></span> Merge Profiles
+                        </button>
                         <a href="{{ url('admin/associates/fellows/add') }}"
                            class="btn btn-primary"
                            style="background-color:#a02626; border-color:#a02626;">
@@ -309,6 +313,60 @@
                 <button type="submit" class="btn btn-danger" id="afaSubmit" disabled>Add as Fellow</button>
             </div>
         </form>
+    </div>
+</div>
+
+{{-- Merge Profiles: the same person held as a Fellow and under another associate type. Pick both, compare value by value, choose which
+     value to keep where they differ; the other profile then moves to the Fellow's login and its duplicate login is retired. --}}
+<div class="modal fade" id="mergeProfilesModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-code-branch mr-1"></i> Merge Profiles</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div id="mpAlert" class="alert d-none" role="alert"></div>
+                <p class="small text-muted mb-2">For one person who has a Fellow profile and a second profile under another type (member, trainee, examiner…).
+                    The Fellow profile stays; you choose which value to keep wherever the two differ.</p>
+
+                <div class="form-group mb-2">
+                    <label class="mb-1">1. The Fellow <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="mp_fellow_search" placeholder="Type a name, email or Fellow ID…" autocomplete="off">
+                    <div class="list-group mt-1 d-none" id="mp_fellow_results" style="max-height:180px; overflow-y:auto;"></div>
+                    <div class="d-none mt-2" id="mp_fellow_selected"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4 mb-2">
+                        <label class="mb-1">2. Their other profile is a</label>
+                        <select class="form-control" id="mp_type">
+                            <option value="member">Member</option>
+                            <option value="trainee">Trainee</option>
+                            <option value="candidate">Candidate</option>
+                            <option value="examiner">Examiner</option>
+                            <option value="country_rep">Country Representative</option>
+                            <option value="programme_director">Programme Director</option>
+                            <option value="trainer">Trainer (ToT)</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-8 mb-2">
+                        <label class="mb-1">Search that profile <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="mp_other_search" placeholder="Type a name or email…" autocomplete="off" disabled>
+                        <div class="list-group mt-1 d-none" id="mp_other_results" style="max-height:180px; overflow-y:auto;"></div>
+                        <div class="d-none mt-2" id="mp_other_selected"></div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-sm btn-outline-primary mb-2" id="mpCompare" disabled><i class="fas fa-columns mr-1"></i>Compare the two profiles</button>
+
+                <div class="d-none" id="mp_compare"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="mpMerge" disabled><i class="fas fa-code-branch mr-1"></i>Merge profiles</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -820,5 +878,138 @@ $(function () {
     $body.on('click', '#qrZipPng', function () { zipListed('png', $(this)); });
     $body.on('click', '#qrZipSvg', function () { zipListed('svg', $(this)); });
 })();
+</script>
+@endpush
+
+@push('scripts')
+<script>
+// Merge Profiles: pick the Fellow and their other profile, compare, choose, merge. The API does the work and keeps a backup.
+$(function () {
+    var urls = {
+        fellowSearch: @json(route('fellows.search')),
+        otherSearch:  @json(url('admin/associates/fellows/__ID__/merge/search')),
+        preview:      @json(url('admin/associates/fellows/__ID__/merge/preview')),
+        merge:        @json(url('admin/associates/fellows/__ID__/merge')),
+        view:         @json(url('admin/associates/fellows/view')),
+        csrf:         @json(csrf_token())
+    };
+    var fellowId = null, otherId = null, timer = null, comparing = false;
+    function esc(v) { return $('<div>').text(v == null ? '' : v).html(); }
+    function at(u) { return u.replace('__ID__', fellowId); }
+    function alertBox(kind, msg) { $('#mpAlert').removeClass('d-none alert-danger alert-success alert-warning').addClass('alert-' + kind).text(msg); }
+    function resetCompare() { $('#mp_compare').addClass('d-none').empty(); $('#mpMerge').prop('disabled', true); comparing = false; }
+    function readyToCompare() { $('#mpCompare').prop('disabled', !(fellowId && otherId)); }
+    function resetOther() {
+        otherId = null; $('#mp_other_selected').addClass('d-none').empty(); $('#mp_other_results').addClass('d-none').empty(); $('#mp_other_search').val('');
+        resetCompare(); readyToCompare();
+    }
+
+    $('#mergeProfilesModal').on('hidden.bs.modal', function () {
+        fellowId = null; $('#mp_fellow_search').val(''); $('#mp_fellow_results').addClass('d-none').empty(); $('#mp_fellow_selected').addClass('d-none').empty();
+        $('#mpAlert').addClass('d-none'); $('#mp_other_search').prop('disabled', true); resetOther();
+    });
+
+    // 1. the Fellow
+    $('#mp_fellow_search').on('input', function () {
+        var q = $.trim($(this).val());
+        clearTimeout(timer);
+        fellowId = null; $('#mp_fellow_selected').addClass('d-none').empty(); $('#mp_other_search').prop('disabled', true); resetOther();
+        if (q.length < 2) { $('#mp_fellow_results').addClass('d-none').empty(); return; }
+        timer = setTimeout(function () {
+            $.get(urls.fellowSearch, { q: q }).done(function (res) {
+                var $l = $('#mp_fellow_results').empty(), rows = res.fellows || [];
+                if (!rows.length) { $l.append('<div class="list-group-item small text-muted">No Fellow found.</div>'); }
+                rows.forEach(function (r) {
+                    $l.append($('<button type="button" class="list-group-item list-group-item-action mp-fellow"></button>')
+                        .text(r.name + (r.email ? ' — ' + r.email : '')).data('id', r.fellow_id).data('label', r.name));
+                });
+                $l.removeClass('d-none');
+            });
+        }, 300);
+    });
+    $(document).on('click', '#mp_fellow_results .mp-fellow', function () {
+        fellowId = $(this).data('id');
+        $('#mp_fellow_selected').removeClass('d-none').html('<span class="badge badge-secondary p-2"><i class="fas fa-check mr-1"></i>' + esc($(this).data('label')) + '</span>');
+        $('#mp_fellow_results').addClass('d-none').empty();
+        $('#mp_other_search').prop('disabled', false).focus();
+        readyToCompare();
+    });
+
+    // 2. the other profile
+    $('#mp_type').on('change', resetOther);
+    $('#mp_other_search').on('input', function () {
+        var q = $.trim($(this).val());
+        clearTimeout(timer); otherId = null; $('#mp_other_selected').addClass('d-none').empty(); resetCompare(); readyToCompare();
+        if (!fellowId || q.length < 2) { $('#mp_other_results').addClass('d-none').empty(); return; }
+        timer = setTimeout(function () {
+            $.get(at(urls.otherSearch), { type: $('#mp_type').val(), q: q }).done(function (res) {
+                var $l = $('#mp_other_results').empty(), rows = res.results || [];
+                if (!rows.length) { $l.append('<div class="list-group-item small text-muted">No matches (profiles on this Fellow\'s own login are left out).</div>'); }
+                rows.forEach(function (r) {
+                    $l.append($('<button type="button" class="list-group-item list-group-item-action mp-other"></button>')
+                        .text((r.name || '') + (r.email ? ' — ' + r.email : '') + (r.country ? ' (' + r.country + ')' : '')).data('id', r.id).data('label', r.name || ''));
+                });
+                $l.removeClass('d-none');
+            }).fail(function (xhr) { alertBox('danger', (xhr.responseJSON && xhr.responseJSON.message) || 'The search failed.'); });
+        }, 300);
+    });
+    $(document).on('click', '#mp_other_results .mp-other', function () {
+        otherId = $(this).data('id');
+        $('#mp_other_selected').removeClass('d-none').html('<span class="badge badge-secondary p-2"><i class="fas fa-check mr-1"></i>' + esc($(this).data('label')) + '</span>');
+        $('#mp_other_results').addClass('d-none').empty();
+        readyToCompare();
+    });
+
+    // 3. compare: every value both profiles carry. Same value: shown once. Different, or only one has it: choose.
+    var statusLabel = { conflict: 'Different', other_only: 'Only on the other profile', fellow_only: 'Only on the Fellow' };
+    $('#mpCompare').on('click', function () {
+        var $b = $(this).prop('disabled', true); $('#mpAlert').addClass('d-none');
+        $.get(at(urls.preview), { type: $('#mp_type').val(), other_id: otherId }).done(function (p) {
+            var rows = '', diff = 0;
+            p.fields.forEach(function (f) {
+                if (f.status === 'same') {
+                    rows += '<tr class="text-muted"><td>' + esc(f.label) + '</td><td colspan="2">' + esc(f.fellow_display) + ' <small>(same on both)</small></td></tr>';
+                    return;
+                }
+                diff++;
+                function cell(side, val) {
+                    var empty = val === null || val === '';
+                    return '<td><label class="mb-0 d-block" style="cursor:pointer;"><input type="radio" class="mp-choice" name="mp_' + esc(f.key) + '" value="' + side + '"' + (f.default === side ? ' checked' : '') + '> ' +
+                        (empty ? '<em class="text-muted">empty</em>' : esc(val)) + '</label></td>';
+                }
+                rows += '<tr' + (f.status === 'conflict' ? ' style="background:#fff8e1;"' : '') + '><td>' + esc(f.label) + '<br><small class="text-muted">' + statusLabel[f.status] + '</small></td>' +
+                    cell('fellow', f.fellow_display) + cell('other', f.other_display) + '</tr>';
+            });
+            var notes = (p.notes || []).map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('');
+            $('#mp_compare').removeClass('d-none').html(
+                '<div class="d-flex justify-content-between mb-1"><strong>' + esc(p.fellow.name) + ' <small class="text-muted">(Fellow)</small></strong>' +
+                '<strong>' + esc(p.other.name) + ' <small class="text-muted">(' + esc(p.other.type_label) + ')</small></strong></div>' +
+                '<div style="max-height:46vh; overflow:auto; border:1px solid #eee; border-radius:6px;"><table class="table table-sm mb-0"><thead style="position:sticky;top:0;background:#f7f8fa;"><tr><th style="width:26%;">Value</th><th>Keep the Fellow\'s</th><th>Take the other profile\'s</th></tr></thead><tbody>' +
+                (rows || '<tr><td colspan="3" class="text-center text-muted py-3">Nothing to compare.</td></tr>') + '</tbody></table></div>' +
+                '<p class="small text-muted mt-2 mb-1">' + diff + ' value' + (diff === 1 ? '' : 's') + ' to decide. Values that are the same on both are not touched.</p>' +
+                '<ul class="small mb-0 pl-3">' + notes + '</ul>');
+            comparing = true; $('#mpMerge').prop('disabled', false);
+        }).fail(function (xhr) {
+            alertBox('danger', (xhr.responseJSON && xhr.responseJSON.message) || 'The profiles could not be compared.');
+        }).always(function () { $b.prop('disabled', false); });
+    });
+
+    // 4. merge
+    $('#mpMerge').on('click', function () {
+        if (!comparing || !fellowId || !otherId) return;
+        var choices = {};
+        $('#mp_compare .mp-choice:checked').each(function () { choices[$(this).attr('name').replace(/^mp_/, '')] = $(this).val(); });
+        if (!window.confirm('Merge these two profiles?\n\nThe other profile moves to the Fellow\'s login and its duplicate login is retired (it can no longer sign in). A backup of what was changed is kept on the server.')) return;
+        var $b = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Merging…');
+        $.ajax({ url: at(urls.merge), method: 'POST', data: { _token: urls.csrf, type: $('#mp_type').val(), other_id: otherId, choices: choices } })
+            .done(function (res) {
+                alertBox('success', res.message || 'Merged.');
+                setTimeout(function () { window.location.href = urls.view + '/' + fellowId; }, 1200);
+            }).fail(function (xhr) {
+                alertBox('danger', (xhr.responseJSON && xhr.responseJSON.message) || 'The merge failed; nothing was changed.');
+                $b.prop('disabled', false).html('<i class="fas fa-code-branch mr-1"></i>Merge profiles');
+            });
+    });
+});
 </script>
 @endpush

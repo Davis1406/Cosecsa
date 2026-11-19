@@ -423,6 +423,9 @@ Route::post('admin/associates/fellows/quick-add-hospital', [FellowsController::c
 // Add a fellow from an existing Examiner/Country Rep/Member (reuses their login).
 Route::get('admin/associates/fellows/search-associates', [FellowsController::class,'searchAssociates'])->name('fellows.search-associates');
 Route::post('admin/associates/fellows/from-associate', [FellowsController::class,'addFromAssociate'])->name('fellows.from-associate');
+Route::get('admin/associates/fellows/{id}/merge/search',  [FellowsController::class,'mergeSearch'])->whereNumber('id')->name('fellows.merge.search');
+Route::get('admin/associates/fellows/{id}/merge/preview', [FellowsController::class,'mergePreview'])->whereNumber('id')->name('fellows.merge.preview');
+Route::post('admin/associates/fellows/{id}/merge',        [FellowsController::class,'mergeProfiles'])->whereNumber('id')->name('fellows.merge');
 Route::get('admin/associates/fellows/delete/{id}', [FellowsController::class,'delete']);
 Route::get('admin/associates/fellows/reports', [FellowsController::class,'reports'])->name('fellows.reports');
 Route::get('admin/associates/fellows/reports/data', [FellowsController::class,'reportsData'])->name('fellows.reports.data');

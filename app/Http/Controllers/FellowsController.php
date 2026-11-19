@@ -619,6 +619,29 @@ class FellowsController extends Controller
         return response()->json($response->json(), $response->status());
     }
 
+    // Merge a Fellow with the same person's profile under another associate type: the typeahead for the other profile,
+    // the side-by-side comparison, and the merge itself (the API does the work and keeps a backup of what it changed).
+    public function mergeSearch(Request $request, $id)
+    {
+        $response = $this->api->get("fellows/{$id}/merge/search", $request->only(['type', 'q']));
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    public function mergePreview(Request $request, $id)
+    {
+        $response = $this->api->get("fellows/{$id}/merge/preview", $request->only(['type', 'other_id']));
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    public function mergeProfiles(Request $request, $id)
+    {
+        $response = $this->api->post("fellows/{$id}/merge", $request->only(['type', 'other_id', 'choices']));
+
+        return response()->json($response->json(), $response->status());
+    }
+
     public function delete($id)
     {
         $response = $this->api->delete("fellows/{$id}");

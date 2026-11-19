@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added (2026-11-26) — Fellows list: Merge Profiles
+- **Fellows list > Merge Profiles** (needs fellows *manage*): for one person who is a Fellow and also has a profile under another type (Member, Trainee, Candidate, Examiner, Country Representative, Programme Director, Trainer). Pick the Fellow, pick the type and search the other profile, **Compare the two profiles**, and for every value that differs (or that only one profile has) choose *Keep the Fellow's* or *Take the other profile's*; values that are the same are not touched. **Merge profiles** then copies the chosen values onto the Fellow, moves the other profile (and any other records on its login) to the Fellow's login and retires the duplicate login (it can no longer sign in; nothing is deleted). A ToT trainer has no login, so only the chosen values are copied. A backup of everything changed is kept on the server. Needs the API release first (no migration).
+
 ### Added (2026-11-26) — Certificate QR codes: Overseas, Associate and Honorary Fellows
 - **Fellows list > Certificate QR codes** now also lists the **Overseas Fellows, Associate Fellows and Honorary Fellows** whose fellowship year is the year chosen, besides the FCS Part I passers and the Fellows by Election. Each type has its own badge colour, the summary line counts each type, and the Type filter offers them. Needs the API release first (no migration).
 
