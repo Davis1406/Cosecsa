@@ -686,7 +686,7 @@ $(function () {
             "responsive": true, "lengthChange": true, "autoWidth": false,
             "paging": true, "pageLength": 25, "stateSave": true,
             "deferRender": true,
-            "ajax": dtAjax($ft, function (json) { $ft.data("extra-rows", json.extra || []); }),
+            "ajax": dtAjax($ft, function (json) { $ft.data("extra-rows", json.extra || []); $ft.data("tentative-rows", json.tentative || []); }),
             "language": { "loadingRecords": "Loading fellows…" },
             "order": [[1, "asc"]],
             "dom": '<"row"<"col-md-4"l><"col-md-4"f><"col-md-4 text-right"B>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
@@ -713,6 +713,12 @@ $(function () {
                         return link(fBase + "/view/" + r.id, d || "-", "color:#3a7a1a;") +
                             ' <span class="text-muted small">(add\'l specialty)</span>';
                     }
+                    // Expected Associate Fellow, not a Fellow yet: no Fellow page, so the name links to their profile in the system when they have one.
+                    if (r.kind === "tentative") {
+                        var nm = r.link ? link(r.link, d || "-", "color:#222;") : esc(d || "-");
+                        return '<span title="' + esc(r.note || "") + '">' + nm + '</span> <span class="badge" style="background:#fff4d6;color:#8a6100;font-weight:600;">Tentative' +
+                            (r.meeting ? ' · ' + esc(r.meeting) : '') + '</span>' + (r.note ? ' <i class="fas fa-info-circle text-muted" title="' + esc(r.note) + '"></i>' : '');
+                    }
                     var html = link(fBase + "/view/" + r.id, d || "-", multi ? "color:#a02626; font-weight:600;" : "color:#222;");
                     if (multi) {
                         html += '<sup class="fellow-spec-count" title="' + r.specs + ' FCS specialties">' + r.specs + '</sup>';
@@ -722,7 +728,7 @@ $(function () {
                 { "data": "email", "render": function (d, type) { return type === "display" ? esc(plain(d)) : plain(d); } },
                 { "data": "country", "render": function (d, type, r) {
                     if (type !== "display") return plain(d);
-                    return r.cid && r.kind !== "extra"
+                    return r.cid && r.kind !== "extra" && r.kind !== "tentative"
                         ? link(appUrl + "/admin/countries/view/" + r.cid, plain(d), "color:#a02626;font-weight:500;")
                         : esc(plain(d));
                 } },
@@ -738,6 +744,9 @@ $(function () {
                 { "data": null, "orderable": false, "searchable": false, "className": "text-center",
                   "render": function (d, type, r) {
                     if (type !== "display" || r.kind === "extra") return "";
+                    if (r.kind === "tentative") {
+                        return canDelete ? dtActionMenu(dtMenuItem(fBase + "/tentative/delete/" + r.id, "fas fa-trash", "Remove from tentative list", { cls: "text-danger", confirm: "Remove " + String(r.name || "this person").replace(/['"\\]/g, "") + " from the tentative list?" })) : "";
+                    }
                     var items =
                         dtMenuItem(fBase + "/view/" + r.id, "fas fa-eye text-info", "View") +
                         dtMenuItem(fBase + "/edit/" + r.id, "fas fa-edit text-warning", "Edit");

@@ -44,6 +44,7 @@ class FellowsController extends Controller
             'filterTags'        => collect($data->filterTags ?? []),
             'uniqueAlumniCount' => $data->uniqueAlumniCount ?? 0,
             'allAlumniCount'    => $data->allAlumniCount ?? 0,
+            'tentativeCount'    => $data->tentativeCount ?? 0,
         ]);
     }
 
@@ -112,9 +113,33 @@ class FellowsController extends Controller
             'specs'     => 1 + (! empty($f->second_fcs_specialty) ? 1 : 0) + (! empty($f->third_fcs_specialty) ? 1 : 0),
         ])->values();
 
+        // Expected Associate Fellows: kept out of 'rows' so no total changes; the table adds them only under its Tentative filter.
+        $tentative = collect($data->tentative ?? [])->map(fn ($t) => [
+            'kind'      => 'tentative',
+            'id'        => $t->id,
+            'name'      => $t->name,
+            'email'     => null,
+            'cid'       => $t->country_id,
+            'country'   => $t->country_name,
+            'pid'       => $t->programme_id,
+            'programme' => $t->programme_name,
+            'specialty' => $t->specialty ?: ($t->programme_name ? preg_replace('/^FCS\s+/i', '', $t->programme_name) : null),
+            'ftype'     => $t->expected_category ?: 'Associate Fellow',
+            'year'      => null,
+            'hospital'  => $t->organisation,
+            'gender'    => '',
+            'alumni'    => 0,
+            'tags'      => [],
+            'specs'     => 1,
+            'meeting'   => $t->meeting,
+            'note'      => $t->note,
+            'link'      => ($t->linked_type ?? null) === 'trainer' && $t->linked_id ? url('admin/associates/trainers/view/' . $t->linked_id) : null,
+        ])->values();
+
         return response()->json([
-            'rows'  => $rows,
-            'extra' => $data->extraAlumniRows ?? [],
+            'rows'      => $rows,
+            'extra'     => $data->extraAlumniRows ?? [],
+            'tentative' => $tentative,
         ]);
     }
 
@@ -640,6 +665,17 @@ class FellowsController extends Controller
         $response = $this->api->post("fellows/{$id}/merge", $request->only(['type', 'other_id', 'choices']));
 
         return response()->json($response->json(), $response->status());
+    }
+
+    // Take someone off the tentative list; real Fellows are not touched.
+    public function deleteTentative($id)
+    {
+        $response = $this->api->delete("fellows/tentative/{$id}");
+
+        return redirect('admin/associates/fellows/list')->with(
+            $response->failed() ? 'error' : 'success',
+            $response->json('message') ?? ($response->failed() ? 'The tentative entry could not be removed.' : 'Removed from the tentative list.')
+        );
     }
 
     public function delete($id)

@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added (2026-11-27) — Fellows list: Tentative Associate Fellows
+- **Fellows list > Tentative filter**: people expected to be admitted as Associate Fellows at the December meeting. They are shown (with a yellow "Tentative · December 2026" label, a profile link where the system already holds them as a trainer, and a note) only while the Tentative filter is ticked, and are never counted in the Fellows total. Super admins can remove one from the menu. Needs the API release first (it has a migration).
+
 ### Changed (2026-11-26) — Certificate QR codes: candidates by fee paid, Part II promoted, not MCS
 - **Fellows list > Certificate QR codes** lists the candidates with Fee Paid = Paid, Part II = Promoted and any programme except MCS (so candidates repeating exams are in, whatever year they sat Part I), plus the Fellows of the chosen **fellowship year**. The list is paged 25 at a time and reads like the Candidates table: "Showing 1 to 25 of 226 entries (filtered from 1,460 total entries)". Search and the Type/Programme filters narrow it further; the ZIP downloads still take everything listed, not just the page. Needs the API release first (no migration).
 

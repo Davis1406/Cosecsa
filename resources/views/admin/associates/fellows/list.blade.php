@@ -52,6 +52,9 @@
                             ['id'=>'filterYear',      'label'=>'Year',            'options'=>$filterYears,              'default'=>[], 'optLabels'=>[]],
                             ['id'=>'filterGender',    'label'=>'Gender',          'options'=>collect(['Male','Female']), 'default'=>[], 'optLabels'=>[]],
                             ['id'=>'filterTags',      'label'=>'Tags',            'options'=>$filterTags,               'default'=>[], 'optLabels'=>[]],
+                            ['id'=>'filterTentative', 'label'=>'Tentative',       'options'=>collect(['tentative']),    'default'=>[], 'optLabels'=>[
+                                'tentative' => 'Tentative Associate Fellows (' . number_format($tentativeCount ?? 0) . ')',
+                            ]],
                             ['id'=>'filterAlumni',    'label'=>'Alumni',          'options'=>collect(['unique','all','0']), 'default'=>[], 'optLabels'=>[
                                 'unique' => 'Unique Alumni (' . number_format($uniqueAlumniCount ?? 0) . ')',
                                 'all'    => 'All Alumni (' . number_format($allAlumniCount ?? 0) . ')',
@@ -68,6 +71,11 @@
                                     <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
                                 </button>
                                 <div class="chk-filter-panel shadow" id="{{ $fd['id'] }}-panel" style="display:none;">
+                                    @if($fd['id'] === 'filterTentative')
+                                    <div class="small text-muted mb-2" style="border-bottom:1px solid #eee;padding-bottom:.4rem;">
+                                        Expected to be admitted as Associate Fellows at a coming meeting. They are not Fellows yet: they are listed only while this is ticked and are never counted in the Fellows total.
+                                    </div>
+                                    @endif
                                     @if($fd['id'] === 'filterAlumni')
                                     <div class="small text-muted mb-2" style="border-bottom:1px solid #eee;padding-bottom:.4rem;">
                                         "Unique" = one row per person. "All" also lists each additional FCS specialty as its own row, matching the source alumni spreadsheet.
@@ -433,8 +441,22 @@ $(document).ready(function () {
         else $badge.hide();
     }
 
+    // Tentative rows are added to the table (not just hidden) only while their filter is ticked, so the Fellows total never includes them.
+    var tentativeAdded = false;
+    function syncTentativeRows() {
+        var dt = $('#fellowstable').DataTable(), wants = getChecked('filterTentative').length > 0;
+        if (wants && !tentativeAdded) {
+            dt.rows.add($('#fellowstable').data('tentative-rows') || []);
+            tentativeAdded = true;
+        } else if (!wants && tentativeAdded) {
+            dt.rows(function (idx, d) { return d.kind === 'tentative'; }).remove();
+            tentativeAdded = false;
+        }
+    }
+
     function redraw() {
         var dt   = $('#fellowstable').DataTable();
+        syncTentativeRows();
         dt.draw();
         var info = dt.page.info();
         $('#filteredCount').text(
@@ -447,13 +469,20 @@ $(document).ready(function () {
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, row) {
         if (settings.nTable.id !== 'fellowstable') return true;
 
+        // Tentative people are in the table only while their filter is ticked, and then they are all it shows
+        if (getChecked('filterTentative').length) return row.kind === 'tentative' && matchesSelected(row);
+
+        return matchesSelected(row);
+    });
+
+    // the usual filters, shared by real and tentative rows
+    function matchesSelected(row) {
         var chkProgramme = getChecked('filterProgramme');
         var chkCountry   = getChecked('filterCountry');
         var chkType      = getChecked('filterType');
         var chkYear      = getChecked('filterYear');
         var chkGender    = getChecked('filterGender');
         var chkAlumni    = getChecked('filterAlumni');
-
         if (chkProgramme.length && chkProgramme.indexOf(String(row.programme || '')) === -1) return false;
         if (chkCountry.length   && chkCountry.indexOf(String(row.country     || '')) === -1) return false;
         if (chkType.length      && chkType.indexOf(String(row.ftype          || '')) === -1) return false;
@@ -471,7 +500,7 @@ $(document).ready(function () {
             if (!((wantsYes && rowAlumni === '1') || (wantsNo && rowAlumni === '0'))) return false;
         }
         return true;
-    });
+    }
 
     // ── "All Alumni" split-specialty rows — added/removed from the table
     // (not just hidden), so the default row count never changes unless this
