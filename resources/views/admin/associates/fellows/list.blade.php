@@ -99,9 +99,6 @@
                                 </div>
                             </div>
                             @endforeach
-                            <button type="button" id="btnAssociateFellows" class="btn btn-sm btn-outline-warning" title="List the Associate Fellows (shows only that Fellowship Type; click again to clear)">
-                                <i class="fas fa-user-tag mr-1"></i>Associate Fellows ({{ number_format($associateFellowCount ?? 0) }})
-                            </button>
                             <button id="btnClearFilters" class="btn btn-sm btn-outline-secondary">
                                 <i class="fas fa-times mr-1"></i>Clear All
                             </button>
@@ -1107,17 +1104,8 @@ $(function () {
 
 @push('scripts')
 <script>
-// Associate Fellows quick list, and Confirm as Fellow for the tentative people.
+// Confirm as Fellow for the tentative people.
 $(function () {
-    // the Fellowship Type filter, set to the Associate Fellow category
-    $('#btnAssociateFellows').on('click', function () {
-        var $opts = $('.chk-option[data-filter="filterType"]'), $assoc = $opts.filter(function () { return /^associate fellow/i.test(this.value); });
-        var already = $assoc.length && $assoc.filter(':checked').length === $assoc.length && $opts.filter(':checked').length === $assoc.length;
-        $opts.prop('checked', false);
-        if (!already) { $assoc.prop('checked', true); }
-        $opts.first().trigger('change');
-    });
-
     var ctTypes = { 'associate fellow': 2, 'fellow by election': 7, 'overseas fellow': 9, 'honorary fellow (asea)': 8, 'honorary fellow (cosecsa)': 10 };
     var ctUrl = @json(url('admin/associates/fellows/tentative/__ID__/confirm')), ctCsrf = @json(csrf_token());
     function ctAlert(kind, msg) { $('#ctAlert').removeClass('d-none alert-danger alert-success').addClass('alert-' + kind).text(msg); }

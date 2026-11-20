@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-30) — Associate Fellows are on the QR list, not on top of the Fellows list
+- The **Associate Fellows (N)** button above the Fellows table is removed. Associate Fellows are listed in **Certificate QR codes** (Type filter and the per-type counts in its summary), for the fellowship year chosen. No API change in the web app for this.
+
 ### Changed (2026-11-30) — Draft Emails: send the password already set
 - A credential email now carries the password already set for that person (prepared, or set in the Users list) instead of making a new one; only people with none get a new one. The Review panel's warning and both confirmations say which: "Each is sent the password already set for them; none is changed", or how many get a new one. Needs the API release first (no migration).
 
@@ -15,7 +18,7 @@
 
 ### Added (2026-11-28) — Fellows list: Confirm as Fellow, Associate Fellows button
 - **Tentative rows > Confirm as Fellow**: asks for the fellowship type (Associate Fellow, Fellow By Election, Overseas, Honorary), the fellowship year, their email (the login) and country, then makes them a real Fellow (next Fellow ID) and takes them off the tentative list; the Fellow's page opens. They count in the Fellows total from then on and are on the Certificate QR list for that year. Needs the API release first.
-- **Associate Fellows (N) button** in the filter bar: shows only the Associate Fellow type (click again to clear).
+- (The Associate Fellows button in the filter bar was removed again on 2026-11-30: Associate Fellows are on the Certificate QR list.)
 
 ### Added (2026-11-27) — Fellows list: Tentative Associate Fellows
 - **Fellows list > Tentative filter**: people expected to be admitted as Associate Fellows at the December meeting. They are shown (with a yellow "Tentative · December 2026" label, a profile link where the system already holds them as a trainer, and a note) only while the Tentative filter is ticked, and are never counted in the Fellows total. Super admins can remove one from the menu. Needs the API release first (it has a migration).
