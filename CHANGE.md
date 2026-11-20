@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-30) — Draft Emails: send the password already set
+- A credential email now carries the password already set for that person (prepared, or set in the Users list) instead of making a new one; only people with none get a new one. The Review panel's warning and both confirmations say which: "Each is sent the password already set for them; none is changed", or how many get a new one. Needs the API release first (no migration).
+
 ### Changed (2026-11-29) — Draft Emails > Review before sending
 - Each recipient's **Status** now says **Sent** with the date and time it was last sent (any time, not just the last day), or **Not sent yet**; the old "Will send" / "Sent before" wording is gone.
 - **Tick people** (or tick all shown) and use **Send to selected** to email only them. Each row shows Sending, then Sent (or Failed with the reason) as it goes; the list then refreshes from the server. A credential email still cannot go to the same person twice within 24 hours.

@@ -243,8 +243,8 @@
 
                     <div class="alert alert-warning d-none" id="rvCredWarn">
                         <i class="fas fa-key mr-1"></i>
-                        <strong>Sending sets a password for each person below.</strong> It replaces their current one
-                        (it also changes their Fellow login), and it cannot be undone in bulk. They receive it in this email.
+                        <strong>Each person is sent the password already set for them</strong> (a prepared one, or the one set in the Users list), and nothing changes for them.
+                        <span id="rvNewPwNote">Anyone with no password set yet gets a new one made, which replaces their current one (it also changes their Fellow login) and cannot be undone in bulk.</span>
                     </div>
 
                     <div class="small mb-2" id="rvLeftOut"></div>
@@ -653,7 +653,7 @@ $(function () {
                     ? '<span class="badge badge-success">Sent</span> <span class="text-muted small">' + esc(r.sent_at.slice(0, 16)) + '</span>'
                     : '<span class="badge badge-light border">Not sent yet</span>';
                 var locked = d.running || (d.credentials && r.sent);   // a credential email is never sent twice within a day
-                var pick = '<td><input type="checkbox" class="rv-pick" data-email="' + esc(r.email) + '" data-name="' + esc(r.name) + '" data-sent="' + (r.sent_at ? 1 : 0) + '"'
+                var pick = '<td><input type="checkbox" class="rv-pick" data-email="' + esc(r.email) + '" data-name="' + esc(r.name) + '" data-sent="' + (r.sent_at ? 1 : 0) + '" data-ready="' + (r.password_ready ? 1 : 0) + '"'
                          + (locked ? ' disabled title="' + (d.running ? 'A send is running' : 'Already sent in the last 24 hours') + '"' : '') + '></td>';
                 var user = d.credentials
                     ? '<td><code>' + esc(r.username) + '</code></td>' : '';
@@ -704,14 +704,21 @@ $(function () {
         // Send to the ticked people, one after another (each is about two seconds); each row says Sending, then Sent or Failed as it goes.
         // The question is asked on the page itself (not with a browser pop-up, which some browsers and embedded panes block).
         function picked() {
-            return $('#rvTable .rv-pick:checked').map(function () { return { email: $(this).data('email'), name: $(this).data('name'), again: String($(this).data('sent')) === '1', $row: $(this).closest('tr') }; }).get();
+            return $('#rvTable .rv-pick:checked').map(function () { return { email: $(this).data('email'), name: $(this).data('name'), again: String($(this).data('sent')) === '1', ready: String($(this).data('ready')) === '1', $row: $(this).closest('tr') }; }).get();
         }
         $('#rvSendSelected').on('click', function () {
             var list = picked();
             if (!list.length || selSending) { return; }
             var again = list.filter(function (p) { return p.again; }).length;
             var lines = ['Send this email to the ' + list.length + ' selected ' + (list.length === 1 ? 'person' : 'people') + ' now?'];
-            if (last && last.credentials) { lines.push('This sets a NEW password for each of them and emails it.'); }
+            if (last && last.credentials) {
+                var fresh = list.filter(function (p) { return !p.ready; }).length;
+                lines.push(fresh === 0
+                    ? (list.length === 1 ? 'They are sent the password already set for them; it is not changed.' : 'Each is sent the password already set for them; none is changed.')
+                    : (fresh === list.length
+                        ? 'No password is set for ' + (list.length === 1 ? 'them' : 'them yet') + ': a new one is made, set and emailed.'
+                        : (list.length - fresh) + ' are sent the password already set for them; ' + fresh + ' have none yet, so a new one is made for them.'));
+            }
             if (again) { lines.push(again + ' of them already received it and will get it again.'); }
             $('#rvSelResult').empty();
             $('#rvSelConfirm').html('<div class="alert alert-warning py-2 mb-0"><div class="mb-2">' + lines.map(esc).join('<br>') + '</div>'
@@ -839,7 +846,9 @@ $(function () {
         $('#rvSendForm').on('submit', function () {
             if (!last) { return false; }
             var msg = last.credentials
-                ? 'Send to ' + num(last.will_send) + ' people now?\n\nThis sets a NEW password for each of them and emails it. It cannot be undone in bulk.'
+                ? 'Send to ' + num(last.will_send) + ' people now?\n\n' + (last.ready_count >= last.will_send
+                    ? 'Each is sent the password already set for them; none is changed.'
+                    : num(last.ready_count) + ' are sent the password already set for them; ' + num(last.will_send - last.ready_count) + ' have none yet, so a new one is made for them (it replaces their current one and cannot be undone in bulk).')
                 : 'Send this draft to ' + num(last.will_send) + ' people now?' + (last.sent_total ? '\n\n' + num(last.sent_total) + ' of them already received it and will get it again. To send only to some people, tick them in the list and use "Send to selected".' : '');
             return confirm(msg);
         });
