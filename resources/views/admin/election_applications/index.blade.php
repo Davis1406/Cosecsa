@@ -144,7 +144,7 @@
                                             <span class="fe-avatar">{{ strtoupper($initials) ?: '?' }}</span>
                                             <div>
                                                 <a class="name" href="{{ route('admin.election.show', $a['id']) }}">{{ $a['name'] }}</a>
-                                                @if ($a['times_applied'] > 1)<span class="fe-pill info plain ml-1" title="Applied more than once (same email)">{{ $a['times_applied'] }} entries</span>@endif
+                                                @if ($a['times_applied'] > 1)<span class="fe-tag ml-1" title="Applied more than once (same email)">· {{ $a['times_applied'] }} entries</span>@endif
                                                 <div class="fe-note">{{ $a['email'] }}</div>
                                             </div>
                                         </div>
@@ -153,11 +153,11 @@
                                     <td><div class="fe-clip" title="{{ $a['specialty'] }}">{{ $a['specialty'] ?: '—' }}</div></td>
                                     <td>
                                         @if ($kind === 'fellow')
-                                            <span class="fe-pill info" title="Matched by {{ $k['by'] }}">Fellow · {{ $k['label'] }}</span>
+                                            <div class="fe-sys fellow" title="Matched by {{ $k['by'] }}">Fellow<small>{{ $k['label'] }}</small></div>
                                         @elseif ($kind === 'tentative')
-                                            <span class="fe-pill warn" title="Matched by {{ $k['by'] }}">Tentative · {{ $k['label'] }}</span>
+                                            <div class="fe-sys tentative" title="Matched by {{ $k['by'] }}">Tentative<small>{{ $k['label'] }}</small></div>
                                         @else
-                                            <span class="fe-note">Not yet</span>
+                                            <span class="fe-note">—</span>
                                         @endif
                                         @if ($isFellowRecord && $missing > 0)
                                             <div><a href="{{ route('admin.election.show', $a['id']) }}#fellow-record" class="fe-note" style="color:var(--fe-warn-fg) !important;"><i class="fas fa-exclamation-circle mr-1"></i>{{ $missing }} {{ $missing === 1 ? 'detail' : 'details' }} missing</a></div>

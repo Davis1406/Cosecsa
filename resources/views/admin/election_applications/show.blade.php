@@ -29,10 +29,10 @@
     details.fe-more summary::-webkit-details-marker { display:none; }
     details.fe-more[open] .chev { transform:rotate(90deg); }
     .chev { transition:transform .15s; }
-    .fe-callout { border-radius:10px; padding:11px 14px; font-size:.84rem; margin-bottom:14px; }
-    .fe-callout.info { background:var(--fe-info-bg); color:var(--fe-info-fg); }
-    .fe-callout.warn { background:var(--fe-warn-bg); color:var(--fe-warn-fg); }
-    .fe-callout.ok { background:var(--fe-ok-bg); color:var(--fe-ok-fg); }
+    .fe-callout { border-left:3px solid var(--fe-line); padding:2px 0 2px 12px; font-size:.86rem; margin-bottom:14px; color:var(--fe-text); }
+    .fe-callout.info { border-color:var(--fe-info-fg); }
+    .fe-callout.warn { border-color:var(--fe-warn-fg); }
+    .fe-callout.ok { border-color:var(--fe-ok-fg); }
     .fe-callout a { text-decoration:underline; }
     .fe-gap { display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-top:1px solid var(--fe-line); font-size:.88rem; cursor:pointer; margin:0; }
     .fe-gap:first-of-type { border-top:0; }
