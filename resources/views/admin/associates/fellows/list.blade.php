@@ -52,9 +52,6 @@
                             ['id'=>'filterYear',      'label'=>'Year',            'options'=>$filterYears,              'default'=>[], 'optLabels'=>[]],
                             ['id'=>'filterGender',    'label'=>'Gender',          'options'=>collect(['Male','Female']), 'default'=>[], 'optLabels'=>[]],
                             ['id'=>'filterTags',      'label'=>'Tags',            'options'=>$filterTags,               'default'=>[], 'optLabels'=>[]],
-                            ['id'=>'filterTentative', 'label'=>'Tentative',       'options'=>collect(['tentative']),    'default'=>[], 'optLabels'=>[
-                                'tentative' => 'Tentative Associate Fellows (' . number_format($tentativeCount ?? 0) . ')',
-                            ]],
                             ['id'=>'filterAlumni',    'label'=>'Alumni',          'options'=>collect(['unique','all','0']), 'default'=>[], 'optLabels'=>[
                                 'unique' => 'Unique Alumni (' . number_format($uniqueAlumniCount ?? 0) . ')',
                                 'all'    => 'All Alumni (' . number_format($allAlumniCount ?? 0) . ')',
@@ -71,11 +68,6 @@
                                     <i class="fas fa-caret-down ml-1" style="font-size:.7rem;"></i>
                                 </button>
                                 <div class="chk-filter-panel shadow" id="{{ $fd['id'] }}-panel" style="display:none;">
-                                    @if($fd['id'] === 'filterTentative')
-                                    <div class="small text-muted mb-2" style="border-bottom:1px solid #eee;padding-bottom:.4rem;">
-                                        Expected to be admitted as Associate Fellows at a coming meeting. They are not Fellows yet: they are listed only while this is ticked and are never counted in the Fellows total.
-                                    </div>
-                                    @endif
                                     @if($fd['id'] === 'filterAlumni')
                                     <div class="small text-muted mb-2" style="border-bottom:1px solid #eee;padding-bottom:.4rem;">
                                         "Unique" = one row per person. "All" also lists each additional FCS specialty as its own row, matching the source alumni spreadsheet.
@@ -490,22 +482,8 @@ $(document).ready(function () {
         else $badge.hide();
     }
 
-    // Tentative rows are added to the table (not just hidden) only while their filter is ticked, so the Fellows total never includes them.
-    var tentativeAdded = false;
-    function syncTentativeRows() {
-        var dt = $('#fellowstable').DataTable(), wants = getChecked('filterTentative').length > 0;
-        if (wants && !tentativeAdded) {
-            dt.rows.add($('#fellowstable').data('tentative-rows') || []);
-            tentativeAdded = true;
-        } else if (!wants && tentativeAdded) {
-            dt.rows(function (idx, d) { return d.kind === 'tentative'; }).remove();
-            tentativeAdded = false;
-        }
-    }
-
     function redraw() {
         var dt   = $('#fellowstable').DataTable();
-        syncTentativeRows();
         dt.draw();
         var info = dt.page.info();
         $('#filteredCount').text(
@@ -518,13 +496,10 @@ $(document).ready(function () {
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, row) {
         if (settings.nTable.id !== 'fellowstable') return true;
 
-        // Tentative people are in the table only while their filter is ticked, and then they are all it shows
-        if (getChecked('filterTentative').length) return row.kind === 'tentative' && matchesSelected(row);
-
         return matchesSelected(row);
     });
 
-    // the usual filters, shared by real and tentative rows
+    // the usual filters
     function matchesSelected(row) {
         var chkProgramme = getChecked('filterProgramme');
         var chkCountry   = getChecked('filterCountry');
@@ -747,14 +722,15 @@ $(function () {
 <script src="{{ asset('js/vendor/jszip-3.10.1.min.js') }}"></script>
 <script src="{{ asset('js/fellow-qr.js') }}?v={{ filemtime(public_path('js/fellow-qr.js')) }}"></script>   {{-- the version changes with the file, so a browser never runs an old copy against this page --}}
 <script>
-// Certificate QR codes: the candidates with Fee Paid = Paid, Part II = Promoted and any programme but MCS (those repeating exams included), plus the Fellows by Election, Overseas, Associate and Honorary Fellows of the chosen year. The list
+// Certificate QR codes (including the TENTATIVE people: expected at a coming meeting, not Fellows or in any total until approved): the candidates with Fee Paid = Paid, Part II = Promoted and any programme but MCS (those repeating exams included), plus the Fellows by Election, Overseas, Associate and Honorary Fellows of the chosen year. The list
 // is plain text; a name's QR appears while hovering it. The QR codes are drawn here in the browser; downloads are a
 // >= 4000 px PNG and a vector SVG per person, or those currently listed in one ZIP.
 (function () {
     var batchUrl = @json(url('admin/associates/fellows/certificate-batch')),
         profile  = { fellow: @json(url('admin/associates/fellows/view')), candidate: @json(url('admin/associates/candidates/view')) },
         verifyBase = @json(rtrim(config('app.url'), '/') . '/verify/'),
-        settingsUrl = @json(url('admin/associates/fellows/qr-settings')), resetUrl = @json(url('admin/associates/fellows/qr-scans/reset')), csrf = @json(csrf_token());
+        settingsUrl = @json(url('admin/associates/fellows/qr-settings')), resetUrl = @json(url('admin/associates/fellows/qr-scans/reset')), csrf = @json(csrf_token()),
+        approveUrl = @json(url('admin/associates/fellows/__ID__/approve')), removeUrl = @json(url('admin/associates/fellows/tentative/delete/__ID__'));
     var $body = $('#qrBody'), $show = $('#qrShow'), $hover = $('#qrHover'), people = [], year = '', made = {}, hideTimer = null, totalEntries = 0, page = 1, PER_PAGE = 25;
 
     function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -774,9 +750,9 @@ $(function () {
 
     // ── the list, with search and filters ──
     function shown() {
-        var q = $.trim($('#qrSearch').val()).toLowerCase(), t = $('#qrType').val(), g = $('#qrProg').val();
+        var q = $.trim($('#qrSearch').val()).toLowerCase(), t = $('#qrType').val(), g = $('#qrProg').val(), st = $('#qrStatus').val();
         return people.filter(function (p) {
-            return (!t || p.type === t) && (!g || p.trained_in === g) && (!q || (p.name + ' ' + (p.country || '')).toLowerCase().indexOf(q) !== -1);
+            return (!t || p.type === t) && (!g || p.trained_in === g) && (!st || (st === 'tentative') === !!p.tentative) && (!q || (p.name + ' ' + (p.country || '')).toLowerCase().indexOf(q) !== -1);
         });
     }
     function draw() {
@@ -784,16 +760,22 @@ $(function () {
         page = Math.min(Math.max(1, page), pages);
         var from = (page - 1) * PER_PAGE, rows = list.slice(from, from + PER_PAGE).map(function (p, i) {
             return '<tr data-key="' + p.key + '"><td class="text-muted">' + (from + i + 1) + '</td>' +
-                '<td><a href="' + esc(profile[p.kind]) + '/' + p.id + '" class="qr-name" style="color:#222;font-weight:600;">' + esc(p.name) + '</a></td>' +
-                '<td>' + typeBadge(p.type, p.kind) + '</td>' +
+                '<td>' + (profile[p.kind]
+                    ? '<a href="' + esc(profile[p.kind]) + '/' + p.id + '" class="qr-name" style="color:#222;font-weight:600;">' + esc(p.name) + '</a>'
+                    : '<span class="qr-name" style="color:#222;font-weight:600;cursor:default;">' + esc(p.name) + '</span>') + '</td>' +
+                '<td>' + typeBadge(p.type, p.kind) + (p.tentative ? ' <span class="badge" style="background:#fff4d6;color:#8a6100;font-weight:600;font-size:.76rem;padding:.35em .6em;" title="Expected at a coming meeting: not a Fellow, not in the Fellows table or any total, and the QR page does not verify until approved">Tentative</span>' : '') + '</td>' +
                 '<td>' + esc(p.trained_in || '—') + '</td><td>' + esc(p.country || '—') + '</td>' +
                 '<td class="small text-muted">' + esc(p.basis) + '</td>' +
                 '<td class="text-center text-nowrap" title="' + (p.last_scan ? 'Last scanned ' + esc(when(p.last_scan)) : 'Not scanned yet') + '">' + (p.scans ? '<strong style="color:#2e8b57;">' + p.scans + '</strong> <a href="#" class="qr-reset text-muted" title="Reset this person\'s scan count to zero"><i class="fas fa-undo-alt"></i></a>' : '<span class="text-muted">0</span>') + '</td>' +
                 '<td class="text-nowrap"><button type="button" class="btn btn-xs btn-outline-secondary qr-png" title="PNG, 4000 px or more"><i class="fas fa-download"></i> PNG</button> ' +
                 '<button type="button" class="btn btn-xs btn-outline-secondary qr-svg" title="Vector, sharp at any size"><i class="fas fa-download"></i> SVG</button> ' +
-                '<button type="button" class="btn btn-xs btn-outline-secondary qr-peek" title="Show the QR"><i class="fas fa-qrcode"></i></button></td></tr>';
+                '<button type="button" class="btn btn-xs btn-outline-secondary qr-peek" title="Show the QR"><i class="fas fa-qrcode"></i></button></td>' +
+                '<td class="text-nowrap">' + (!p.tentative ? '' : (p.kind === 'fellow'
+                    ? '<button type="button" class="btn btn-xs btn-success qr-approve" title="Approve: they become a counted Fellow and their QR page verifies"><i class="fas fa-check mr-1"></i>Approve</button>'
+                    : '<button type="button" class="btn btn-xs btn-success qr-confirm" title="Confirm as a Fellow: needs an email and country"><i class="fas fa-check mr-1"></i>Confirm as Fellow</button> ' +
+                      '<button type="button" class="btn btn-xs btn-outline-danger qr-remove" title="Take them off the tentative list"><i class="fas fa-trash"></i></button>')) + '</td></tr>';
         }).join('');
-        $('#qrRows').html(rows || '<tr><td colspan="8" class="text-center text-muted py-3">Nobody matches.</td></tr>');
+        $('#qrRows').html(rows || '<tr><td colspan="9" class="text-center text-muted py-3">Nobody matches.</td></tr>');
         // the same wording as the Candidates table: "Showing 1 to 25 of 226 entries (filtered from 1,460 total entries)"
         var total = Math.max(totalEntries, people.length), nf = function (n) { return Number(n).toLocaleString('en-US'); };
         $('#qrCount').text(list.length
@@ -810,22 +792,25 @@ $(function () {
             return;
         }
         var nc = people.filter(function (p) { return p.kind === 'candidate'; }).length;
+        var nt = people.filter(function (p) { return p.tentative; }).length;
         var byType = {};
-        people.forEach(function (p) { if (p.kind !== 'candidate') { byType[p.type] = (byType[p.type] || 0) + 1; } });
+        people.forEach(function (p) { if (p.kind !== 'candidate' && !p.tentative) { byType[p.type] = (byType[p.type] || 0) + 1; } });
         var fellowParts = Object.keys(byType).sort().map(function (k) { return byType[k] + ' ' + esc(k); }).join(', ');
         var types = {}, progs = {};
         people.forEach(function (p) { types[p.type] = 1; if (p.trained_in) progs[p.trained_in] = 1; });
         function opts(o) { return Object.keys(o).sort().map(function (k) { return '<option value="' + esc(k) + '">' + esc(k) + '</option>'; }).join(''); }
         $body.html(
-            '<p class="small text-muted mb-2"><strong>' + people.length + ' people for ' + esc(year) + '</strong>: ' + nc + ' Fellow' + (nc === 1 ? '' : 's') + ' by Examination (candidates with Fee Paid, promoted to Part II, any programme except MCS; those repeating exams are included)' + (fellowParts ? ' and, by fellowship year ' + esc(year) + ': ' + fellowParts : '') + '. <strong>Hover a name to see their QR.</strong> Each QR opens that person\'s public verification page.</p>' +
+            '<p class="small text-muted mb-2"><strong>' + people.length + ' people for ' + esc(year) + '</strong>: ' + nc + ' Fellow' + (nc === 1 ? '' : 's') + ' by Examination (candidates with Fee Paid, promoted to Part II, any programme except MCS; those repeating exams are included)' + (fellowParts ? ' and, by fellowship year ' + esc(year) + ': ' + fellowParts : '') + (nt ? ', plus <strong>' + nt + ' tentative</strong> (expected at the coming meeting, approved afterwards: not Fellows yet, not in the Fellows table or any total)' : '') + '. <strong>Hover a name to see their QR.</strong> Each QR opens that person\'s public verification page.</p>' +
             '<div class="d-flex align-items-center flex-wrap mb-2" style="gap:.5rem;">' +
               '<input type="search" id="qrSearch" class="form-control form-control-sm" style="width:210px;" placeholder="Search name or country">' +
               '<select id="qrType" class="form-control form-control-sm" style="width:auto;"><option value="">All types</option>' + opts(types) + '</select>' +
               '<select id="qrProg" class="form-control form-control-sm" style="width:auto;"><option value="">All programmes</option>' + opts(progs) + '</select>' +
+              (nt ? '<select id="qrStatus" class="form-control form-control-sm" style="width:auto;"><option value="">All (approved and tentative)</option><option value="tentative">Tentative only</option><option value="approved">Approved only</option></select>' : '<span id="qrStatus" class="d-none"></span>') +
               '<span class="ml-auto"><button type="button" class="btn btn-sm btn-outline-success" id="qrZipPng" title="Everything listed, one PNG each (4000 px or more), as one ZIP; can be large"><i class="fas fa-file-archive mr-1"></i>ZIP of PNGs</button> ' +
               '<button type="button" class="btn btn-sm btn-outline-success" id="qrZipSvg" title="Everything listed, one vector SVG each, as one ZIP"><i class="fas fa-file-archive mr-1"></i>ZIP of SVGs</button></span>' +
             '</div>' +
-            '<div style="max-height:62vh;overflow:auto;border:1px solid #eee;border-radius:6px;"><table class="table table-sm table-hover mb-0" id="qrTable"><thead style="position:sticky;top:0;background:#f7f8fa;z-index:1;"><tr><th>#</th><th>Name</th><th>Type</th><th>Programme</th><th>Country</th><th>Included because</th><th class="text-center">Scans</th><th>Download</th></tr></thead><tbody id="qrRows"></tbody></table></div>' +
+            '<div id="qrNote"></div>' +
+            '<div style="max-height:62vh;overflow:auto;border:1px solid #eee;border-radius:6px;"><table class="table table-sm table-hover mb-0" id="qrTable"><thead style="position:sticky;top:0;background:#f7f8fa;z-index:1;"><tr><th>#</th><th>Name</th><th>Type</th><th>Programme</th><th>Country</th><th>Included because</th><th class="text-center">Scans</th><th>Download</th><th>Tentative</th></tr></thead><tbody id="qrRows"></tbody></table></div>' +
             '<div class="d-flex align-items-center flex-wrap mt-2" style="gap:.5rem;"><small class="text-muted" id="qrCount"></small>' +
               '<span class="ml-auto d-flex align-items-center" style="gap:.5rem;"><button type="button" class="btn btn-sm btn-outline-secondary" id="qrPrev">Previous</button><small class="text-muted" id="qrPage"></small><button type="button" class="btn btn-sm btn-outline-secondary" id="qrNext">Next</button></span></div>'
         ).removeClass('d-none');
@@ -839,9 +824,43 @@ $(function () {
             .fail(function (xhr) { $body.html('<div class="alert alert-danger mb-0">' + esc((xhr.responseJSON && xhr.responseJSON.message) || 'The list could not be loaded.') + '</div>').removeClass('d-none'); })
             .always(function () { $show.prop('disabled', false).html('<i class="fas fa-sync-alt mr-1"></i>Refresh'); });
     });
-    $body.on('input change', '#qrSearch, #qrType, #qrProg', function () { page = 1; draw(); });
+    $body.on('input change', '#qrSearch, #qrType, #qrProg, #qrStatus', function () { page = 1; draw(); });
     $body.on('click', '#qrPrev', function () { page--; draw(); $('#qrTable').parent().scrollTop(0); });
     $body.on('click', '#qrNext', function () { page++; draw(); $('#qrTable').parent().scrollTop(0); });
+
+    // ── tentative people: approve (an existing Fellow record), confirm (no record yet: opens the form), remove ──
+    function qrNote(kind, msg) { $('#qrNote').html('<div class="alert alert-' + kind + ' py-2 mb-2 small">' + esc(msg) + '</div>'); }
+    // a second click within four seconds does it (a question on the button itself, not a browser pop-up)
+    function twice($b, label, go) {
+        if ($b.data('armed')) { clearTimeout($b.data('armed')); $b.data('armed', null); go(); return; }
+        var html = $b.html();
+        $b.html(label).addClass('btn-warning').data('armed', setTimeout(function () { $b.html(html).removeClass('btn-warning').data('armed', null); }, 4000));
+    }
+    $body.on('click', '.qr-approve', function (e) {
+        e.stopPropagation();
+        var p = personOf(this), $b = $(this);
+        twice($b, 'Sure? Approve', function () {
+            $b.prop('disabled', true);
+            $.post(approveUrl.replace('__ID__', p.id), { _token: csrf })
+                .done(function (d) { $show.trigger('click'); setTimeout(function () { qrNote('success', d.message || 'Approved.'); }, 600); })
+                .fail(function (xhr) { $b.prop('disabled', false); qrNote('danger', (xhr.responseJSON && xhr.responseJSON.message) || 'They could not be approved.'); });
+        });
+    });
+    $body.on('click', '.qr-confirm', function (e) {
+        e.stopPropagation();
+        var p = personOf(this);
+        window.openConfirmTentative({ id: p.id, name: p.name, type: p.type, year: p.fellowship_year });
+    });
+    $body.on('click', '.qr-remove', function (e) {
+        e.stopPropagation();
+        var p = personOf(this), $b = $(this);
+        twice($b, 'Sure? Remove', function () {
+            $b.prop('disabled', true);
+            $.get(removeUrl.replace('__ID__', p.id))
+                .done(function () { $show.trigger('click'); })
+                .fail(function () { $b.prop('disabled', false); qrNote('danger', 'They could not be removed.'); });
+        });
+    });
 
     // ── the QR while hovering a name (or after tapping the QR button, for touch screens) ──
     function showHover(el, p) {
@@ -945,7 +964,7 @@ $(function () {
 
     // Everything currently listed in one ZIP (with a CSV of who and which link): PNGs (large) or SVGs (small).
     async function zipListed(kind, $btn) {
-        var list = shown(), label = $btn.html(), z = new JSZip(), used = {}, csv = [['Name', 'Type', 'Programme', 'Country', 'Included because', 'Verification link', 'File']];
+        var list = shown(), label = $btn.html(), z = new JSZip(), used = {}, csv = [['Name', 'Type', 'Programme', 'Country', 'Included because', 'Status', 'Verification link', 'File']];
         if (kind === 'png' && list.length > 60 && !confirm(list.length + ' PNGs of 4000 px each make a large ZIP (roughly ' + Math.round(list.length * 0.35) + ' MB) and may take a minute. Continue?\n\nTip: the SVG ZIP is tiny and prints sharper.')) return;
         $('#qrZipPng, #qrZipSvg').prop('disabled', true);
         try {
@@ -953,7 +972,7 @@ $(function () {
                 var p = list[i], base = fileName(p, used), q = qrOf(p);
                 $btn.html('<i class="fas fa-spinner fa-spin mr-1"></i>' + (i + 1) + ' of ' + list.length + '…');
                 if (kind === 'png') { z.file(base + '.png', await q.png()); } else { z.file(base + '.svg', q.svg(1024)); }
-                csv.push([p.name, p.type, p.trained_in, p.country, p.basis, verifyBase + p.token, base + '.' + kind].map(function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }));
+                csv.push([p.name, p.type, p.trained_in, p.country, p.basis, p.tentative ? 'Tentative' : 'Approved', verifyBase + p.token, base + '.' + kind].map(function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }));
             }
             z.file('qr-codes.csv', '\ufeff' + csv.map(function (r) { return r.join(','); }).join('\r\n'));
             FellowQR.save(await z.generateAsync({ type: 'blob', compression: 'STORE' }), 'cosecsa-certificate-qr-' + year + '-' + kind + '.zip');
@@ -1104,24 +1123,24 @@ $(function () {
 
 @push('scripts')
 <script>
-// Confirm as Fellow for the tentative people.
+// Confirm as Fellow, for a tentative person with no Fellow record yet (opened from the Certificate QR section).
 $(function () {
     var ctTypes = { 'associate fellow': 2, 'fellow by election': 7, 'overseas fellow': 9, 'honorary fellow (asea)': 8, 'honorary fellow (cosecsa)': 10 };
     var ctUrl = @json(url('admin/associates/fellows/tentative/__ID__/confirm')), ctCsrf = @json(csrf_token());
     function ctAlert(kind, msg) { $('#ctAlert').removeClass('d-none alert-danger alert-success').addClass('alert-' + kind).text(msg); }
 
-    $(document).on('click', '.confirm-tentative', function (e) {
-        e.preventDefault();
-        var $a = $(this), meeting = String($a.data('meeting') || ''), year = (meeting.match(/\d{4}/) || [new Date().getFullYear()])[0];
+    // opened from the Certificate QR section (a tentative person with no Fellow record yet)
+    window.openConfirmTentative = function (o) {
         $('#ctAlert').addClass('d-none');
-        $('#ctId').val($a.data('id'));
-        $('#ctName').text($a.data('name'));
-        $('#ctCategory').val(ctTypes[String($a.data('type') || '').toLowerCase()] || 2);
-        $('#ctYear').val(year);
-        $('#ctEmail').val($a.data('email') || '');
-        $('#ctCountry').val($a.data('cid') || '');
+        $('#ctId').val(o.id);
+        $('#ctName').text(o.name);
+        $('#ctCategory').val(ctTypes[String(o.type || '').toLowerCase()] || 2);
+        $('#ctYear').val(o.year || new Date().getFullYear());
+        $('#ctEmail').val(o.email || '');
+        $('#ctCountry').val(o.cid || '');
+        $('#ctSubmit').prop('disabled', false);
         $('#confirmTentativeModal').modal('show');
-    });
+    };
 
     $('#confirmTentativeForm').on('submit', function (e) {
         e.preventDefault();
@@ -1131,7 +1150,10 @@ $(function () {
             email: $.trim($('#ctEmail').val()), country_id: $('#ctCountry').val()
         }).done(function (d) {
             ctAlert('success', d.message || 'Confirmed.');
-            setTimeout(function () { window.location.href = @json(url('admin/associates/fellows/view')) + '/' + d.fellow_id; }, 700);
+            setTimeout(function () {
+                $('#confirmTentativeModal').modal('hide');
+                if ($('#qrShow').length) { $('#qrShow').trigger('click'); } else { window.location.reload(); }   // the QR list shows them as approved Fellows
+            }, 700);
         }).fail(function (xhr) {
             var j = xhr.responseJSON || {}, first = j.errors ? j.errors[Object.keys(j.errors)[0]][0] : null;
             ctAlert('danger', first || j.message || 'They could not be confirmed.');

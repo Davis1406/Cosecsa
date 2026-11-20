@@ -44,8 +44,6 @@ class FellowsController extends Controller
             'filterTags'        => collect($data->filterTags ?? []),
             'uniqueAlumniCount' => $data->uniqueAlumniCount ?? 0,
             'allAlumniCount'    => $data->allAlumniCount ?? 0,
-            'tentativeCount'    => $data->tentativeCount ?? 0,
-            'associateFellowCount' => $data->associateFellowCount ?? 0,
             'fellowCountries'   => \App\Models\Country::getCountry(),
         ]);
     }
@@ -115,33 +113,9 @@ class FellowsController extends Controller
             'specs'     => 1 + (! empty($f->second_fcs_specialty) ? 1 : 0) + (! empty($f->third_fcs_specialty) ? 1 : 0),
         ])->values();
 
-        // Expected Associate Fellows: kept out of 'rows' so no total changes; the table adds them only under its Tentative filter.
-        $tentative = collect($data->tentative ?? [])->map(fn ($t) => [
-            'kind'      => 'tentative',
-            'id'        => $t->id,
-            'name'      => $t->name,
-            'email'     => $t->linked_email ?? null,
-            'cid'       => $t->country_id,
-            'country'   => $t->country_name,
-            'pid'       => $t->programme_id,
-            'programme' => $t->programme_name,
-            'specialty' => $t->specialty ?: ($t->programme_name ? preg_replace('/^FCS\s+/i', '', $t->programme_name) : null),
-            'ftype'     => $t->expected_category ?: 'Associate Fellow',
-            'year'      => null,
-            'hospital'  => $t->organisation,
-            'gender'    => '',
-            'alumni'    => 0,
-            'tags'      => [],
-            'specs'     => 1,
-            'meeting'   => $t->meeting,
-            'note'      => $t->note,
-            'link'      => ($t->linked_type ?? null) === 'trainer' && $t->linked_id ? url('admin/associates/trainers/view/' . $t->linked_id) : null,
-        ])->values();
-
         return response()->json([
-            'rows'      => $rows,
-            'extra'     => $data->extraAlumniRows ?? [],
-            'tentative' => $tentative,
+            'rows'  => $rows,
+            'extra' => $data->extraAlumniRows ?? [],
         ]);
     }
 
@@ -665,6 +639,14 @@ class FellowsController extends Controller
     public function mergeProfiles(Request $request, $id)
     {
         $response = $this->api->post("fellows/{$id}/merge", $request->only(['type', 'other_id', 'choices']));
+
+        return response()->json($response->json(), $response->status());
+    }
+
+    // Approve a Fellow who was tentative: from now on they are in the table and every total.
+    public function approveTentative($id)
+    {
+        $response = $this->api->post("fellows/{$id}/approve");
 
         return response()->json($response->json(), $response->status());
     }

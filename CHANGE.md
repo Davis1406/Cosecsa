@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed (2026-12-01) — Tentative Fellows live in the Certificate QR section only
+- The Fellows table and its filters no longer show tentative people at all, and no Fellows total counts them (also not the dashboard, reports, voting or the public directory).
+- **Fellows > Certificate QR codes** lists them for their fellowship year, tagged **Tentative** (yellow), with a **Status** filter (All / Tentative only / Approved only), a QR code each (the page does not verify until approved) and an **Approve** button (an existing Fellow record) or **Confirm as Fellow** / remove (no Fellow record yet; Confirm asks for an email and country). A second click on Approve or Remove confirms it. The ZIP's CSV has a Status column. Needs the API release first (it has a migration).
+
 ### Changed (2026-11-30) — Associate Fellows are on the QR list, not on top of the Fellows list
 - The **Associate Fellows (N)** button above the Fellows table is removed. Associate Fellows are listed in **Certificate QR codes** (Type filter and the per-type counts in its summary), for the fellowship year chosen. No API change in the web app for this.
 
