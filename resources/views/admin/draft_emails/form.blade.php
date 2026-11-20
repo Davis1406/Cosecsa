@@ -270,6 +270,8 @@
                         </div>
                     </div>
 
+ <div id="rvSelConfirm" class="mb-2"></div>
+                    <div id="rvSelResult" class="mb-2"></div>
                     <input type="search" id="rvSearch" class="form-control form-control-sm mb-2" placeholder="Search name, email, country or username&hellip;">
                     <div class="table-responsive border rounded" style="max-height:340px; overflow:auto;">
                         <table class="table table-sm table-hover mb-0" id="rvTable">
@@ -280,15 +282,16 @@
                         </table>
                     </div>
                     <div class="small text-muted mt-1" id="rvShown"></div>
-                    <div id="rvSelResult" class="mt-2"></div>
                 </div>
             </div>
             <div class="modal-footer justify-content-between">
                 <div>
                     <button type="button" class="btn btn-light border btn-sm" id="rvRefresh"><i class="fas fa-sync-alt mr-1"></i>Refresh</button>
+                    <small class="text-muted ml-2" id="rvUpdated"></small>
                 </div>
                 <div class="d-flex align-items-center">
                     <button type="button" class="btn btn-light border mr-2" data-dismiss="modal">Close</button>
+                    <small class="text-muted mr-2" id="rvSelHint"></small>
                     <button type="button" class="btn btn-outline-danger mr-2" id="rvSendSelected" disabled title="Send only to the people ticked in the list"><i class="fas fa-paper-plane mr-1"></i><span>Send to selected</span></button>
                     <form method="POST" action="{{ url('admin/draft-emails/'.$draftEmail->id.'/send-now') }}" id="rvSendForm" class="m-0">
                         @csrf
@@ -689,6 +692,7 @@ $(function () {
             var n = $('#rvTable .rv-pick:checked').length;
             $('#rvSendSelected').prop('disabled', !n || selSending || !!(last && last.running))
                 .find('span').text(selSending ? 'Sending\u2026' : (n ? 'Send to ' + n + ' selected' : 'Send to selected'));
+            $('#rvSelHint').text(last && last.running ? 'A send is running: ticking is off until it finishes.' : (!n && !selSending ? 'Tick people in the list to send to them only.' : ''));
         }
         $('#rvTable').on('change', '.rv-pick', updatePicked);
         $('#rvPickAll').on('change', function () {
@@ -698,15 +702,31 @@ $(function () {
         });
 
         // Send to the ticked people, one after another (each is about two seconds); each row says Sending, then Sent or Failed as it goes.
+        // The question is asked on the page itself (not with a browser pop-up, which some browsers and embedded panes block).
+        function picked() {
+            return $('#rvTable .rv-pick:checked').map(function () { return { email: $(this).data('email'), name: $(this).data('name'), again: String($(this).data('sent')) === '1', $row: $(this).closest('tr') }; }).get();
+        }
         $('#rvSendSelected').on('click', function () {
-            var list = $('#rvTable .rv-pick:checked').map(function () { return { email: $(this).data('email'), name: $(this).data('name'), again: String($(this).data('sent')) === '1', $row: $(this).closest('tr') }; }).get();
+            var list = picked();
             if (!list.length || selSending) { return; }
             var again = list.filter(function (p) { return p.again; }).length;
-            var msg = 'Send this email to the ' + list.length + ' selected ' + (list.length === 1 ? 'person' : 'people') + ' now?'
-                    + (last && last.credentials ? '\n\nThis sets a NEW password for each of them and emails it.' : '')
-                    + (again ? '\n\n' + again + ' of them already received it and will get it again.' : '');
-            if (!confirm(msg)) { return; }
+            var lines = ['Send this email to the ' + list.length + ' selected ' + (list.length === 1 ? 'person' : 'people') + ' now?'];
+            if (last && last.credentials) { lines.push('This sets a NEW password for each of them and emails it.'); }
+            if (again) { lines.push(again + ' of them already received it and will get it again.'); }
+            $('#rvSelResult').empty();
+            $('#rvSelConfirm').html('<div class="alert alert-warning py-2 mb-0"><div class="mb-2">' + lines.map(esc).join('<br>') + '</div>'
+                + '<button type="button" class="btn btn-danger btn-sm mr-1" id="rvSelGo"><i class="fas fa-paper-plane mr-1"></i>Yes, send</button>'
+                + '<button type="button" class="btn btn-light border btn-sm" id="rvSelCancel">Cancel</button></div>');
+            $('#rvSelConfirm')[0].scrollIntoView({ block: 'nearest' });
+        });
+        $('#rvSelConfirm').on('click', '#rvSelCancel', function () { $('#rvSelConfirm').empty(); });
+        $('#rvSelConfirm').on('click', '#rvSelGo', function () {
+            var list = picked();
+            $('#rvSelConfirm').empty();
+            if (list.length && !selSending) { sendPicked(list); }
+        });
 
+        function sendPicked(list) {
             selSending = true; updatePicked();
             $('#rvSendForm button, #rvRefresh').prop('disabled', true);
             $('#rvSelResult').empty();
@@ -739,7 +759,7 @@ $(function () {
                 // the list refreshes from the server (the real record of who has it), keeping the passwords shown if they were
                 if (pw) { $.getJSON(@json(url('admin/draft-emails/'.$draftEmail->id.'/credentials'))).done(function (c) { pw = c.logins || {}; }).always(load); } else { load(); }
             }
-        });
+        }
 
         function filter() {
             var q = ($('#rvSearch').val() || '').trim().toLowerCase(), shown = 0, total = 0;
@@ -752,8 +772,14 @@ $(function () {
             $('#rvShown').text(q ? ('Showing ' + shown + ' of ' + total) : (total + ' recipients'));
         }
 
-        function load() {
-            $.getJSON(url).done(render).fail(function (xhr) {
+        function load(done) {
+            $.getJSON(url).done(function (d) {
+                try { render(d); $('#rvUpdated').text('Updated ' + new Date().toLocaleTimeString()); }
+                catch (e) {   // say so on the page instead of leaving it looking unchanged
+                    $('#rvLoading').addClass('d-none');
+                    $('#rvError').removeClass('d-none').text('The list could not be shown: ' + e.message);
+                }
+            }).always(function () { if (typeof done === 'function') { done(); } }).fail(function (xhr) {
                 $('#rvLoading').addClass('d-none');
                 $('#rvContent').addClass('d-none');
                 $('#rvError').removeClass('d-none').text((xhr.responseJSON && xhr.responseJSON.message) || 'Could not load the recipients. Please try again.');
@@ -801,7 +827,12 @@ $(function () {
         $('#rvRegen').on('click', function () {
             if (confirm('Replace every prepared password that has not been sent with a new one?\n\nUse this only if the list you looked at should not be used.')) { prepare(true); }
         });
-        $('#rvRefresh').on('click', load);
+        $('#rvRefresh').on('click', function () {
+            var $b = $(this).prop('disabled', true);
+            $b.find('i').addClass('fa-spin');
+            $('#rvUpdated').text('Refreshing\u2026');
+            load(function () { $b.prop('disabled', false).find('i').removeClass('fa-spin'); });
+        });
         $('#rvSearch').on('input', filter);
         $('#reviewModal').on('hidden.bs.modal', function () { clearTimeout(timer); });
 
