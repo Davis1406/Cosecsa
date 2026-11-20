@@ -653,7 +653,7 @@ $(function () {
                 var pick = '<td><input type="checkbox" class="rv-pick" data-email="' + esc(r.email) + '" data-name="' + esc(r.name) + '" data-sent="' + (r.sent_at ? 1 : 0) + '"'
                          + (locked ? ' disabled title="' + (d.running ? 'A send is running' : 'Already sent in the last 24 hours') + '"' : '') + '></td>';
                 var user = d.credentials
-                    ? '<td><code>' + esc(r.username) + '</code> <span class="text-muted small">' + esc(r.username_label) + '</span></td>' : '';
+                    ? '<td><code>' + esc(r.username) + '</code></td>' : '';
                 var pass = '';
                 if (d.can_see_passwords) {
                     var shown = pw && pw[r.email] && pw[r.email].password;
