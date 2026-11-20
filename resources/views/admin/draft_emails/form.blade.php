@@ -274,12 +274,13 @@
                     <div class="table-responsive border rounded" style="max-height:340px; overflow:auto;">
                         <table class="table table-sm table-hover mb-0" id="rvTable">
                             <thead class="thead-light" style="position:sticky; top:0;">
-                                <tr><th style="width:44px;">#</th><th>Name</th><th>Email</th><th>Country</th><th class="rv-cred d-none">Username</th><th class="rv-pw d-none">Password</th><th style="width:110px;">Status</th><th class="rv-act d-none" style="width:80px;"></th></tr>
+                                <tr><th style="width:34px;"><input type="checkbox" id="rvPickAll" title="Tick everyone shown"></th><th style="width:44px;">#</th><th>Name</th><th>Email</th><th>Country</th><th class="rv-cred d-none">Username</th><th class="rv-pw d-none">Password</th><th style="width:170px;">Status</th></tr>
                             </thead>
                             <tbody></tbody>
                         </table>
                     </div>
                     <div class="small text-muted mt-1" id="rvShown"></div>
+                    <div id="rvSelResult" class="mt-2"></div>
                 </div>
             </div>
             <div class="modal-footer justify-content-between">
@@ -288,6 +289,7 @@
                 </div>
                 <div class="d-flex align-items-center">
                     <button type="button" class="btn btn-light border mr-2" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-outline-danger mr-2" id="rvSendSelected" disabled title="Send only to the people ticked in the list"><i class="fas fa-paper-plane mr-1"></i><span>Send to selected</span></button>
                     <form method="POST" action="{{ url('admin/draft-emails/'.$draftEmail->id.'/send-now') }}" id="rvSendForm" class="m-0">
                         @csrf
                         <button type="submit" class="btn btn-danger" id="rvSendBtn" disabled><i class="fas fa-paper-plane mr-1"></i><span>Send</span></button>
@@ -582,7 +584,7 @@ $(function () {
     @if($draftEmail)
     (function () {
         var url = @json(url('admin/draft-emails/'.$draftEmail->id.'/review'));
-        var timer = null, last = null, pw = null; // pw: email -> {username, password} while passwords are shown
+        var timer = null, last = null, pw = null, selSending = false; // pw: email -> {username, password} while passwords are shown
 
         function num(n) { return Number(n || 0).toLocaleString(); }
         function card(value, label, tone) {
@@ -606,7 +608,6 @@ $(function () {
             $('#rvCredWarn').toggleClass('d-none', !d.credentials);
             $('.rv-cred').toggleClass('d-none', !d.credentials);
             $('.rv-pw, #rvPwBox').toggleClass('d-none', !d.can_see_passwords);
-            $('.rv-act').toggleClass('d-none', !d.credentials);
             if (d.can_see_passwords) {
                 var todo = d.will_send;
                 $('#rvPwState').html(d.prepared >= todo && todo > 0
@@ -644,10 +645,13 @@ $(function () {
             }
 
             var rows = d.recipients.map(function (r, i) {
-                var status = r.sent
-                    ? '<span class="badge badge-success">Sent</span>'
-                    : (d.credentials ? '<span class="badge badge-light border">Will send</span>' : '<span class="badge badge-light border">Will send</span>');
-                if (r.sent && !d.credentials) { status = '<span class="badge badge-secondary">Sent before</span>'; }
+                // who it has gone to, and when (any time, not only the last day)
+                var status = r.sent_at
+                    ? '<span class="badge badge-success">Sent</span> <span class="text-muted small">' + esc(r.sent_at.slice(0, 16)) + '</span>'
+                    : '<span class="badge badge-light border">Not sent yet</span>';
+                var locked = d.running || (d.credentials && r.sent);   // a credential email is never sent twice within a day
+                var pick = '<td><input type="checkbox" class="rv-pick" data-email="' + esc(r.email) + '" data-name="' + esc(r.name) + '" data-sent="' + (r.sent_at ? 1 : 0) + '"'
+                         + (locked ? ' disabled title="' + (d.running ? 'A send is running' : 'Already sent in the last 24 hours') + '"' : '') + '></td>';
                 var user = d.credentials
                     ? '<td><code>' + esc(r.username) + '</code> <span class="text-muted small">' + esc(r.username_label) + '</span></td>' : '';
                 var pass = '';
@@ -657,18 +661,20 @@ $(function () {
                         : (shown ? '<code class="rv-pwval">' + esc(shown) + '</code>' : '<span class="rv-pwdots">&bull;&bull;&bull;&bull;&bull;&bull;</span>')) + '</td>';
                 }
                 return '<tr data-s="' + esc((r.name + ' ' + r.email + ' ' + (r.country || '') + ' ' + (r.username || '')).toLowerCase()) + '">'
-                     + '<td class="text-muted">' + (i + 1) + '</td><td>' + esc(r.name) + '</td><td>' + esc(r.email) + '</td><td>' + esc(r.country || '') + '</td>'
-                     + user + pass + '<td>' + status + '</td>'
-                     + (d.credentials ? '<td class="text-right">' + (r.sent || d.running ? ''
-                         : '<button type="button" class="rv-btn rv-btn-ghost rv-btn-sm rv-send-one" data-email="' + esc(r.email) + '" data-name="' + esc(r.name) + '"><i class="fas fa-paper-plane"></i>Send</button>') + '</td>' : '')
+                     + pick + '<td class="text-muted">' + (i + 1) + '</td><td>' + esc(r.name) + '</td><td>' + esc(r.email) + '</td><td>' + esc(r.country || '') + '</td>'
+                     + user + pass + '<td class="rv-st">' + status + '</td>'
                      + '</tr>';
             });
             $('#rvTable tbody').html(rows.join(''));
+            $('#rvPickAll').prop('checked', false);
             filter();
+            updatePicked();
 
-            var canSend = !d.running && d.will_send > 0;
+            // everyone has had it: the button says so (people can still be re-sent one by one by ticking them)
+            var everyone = d.total > 0 && (d.credentials ? d.will_send === 0 : d.sent_total >= d.total);
+            var canSend = !d.running && !everyone && d.will_send > 0;
             $('#rvSendBtn').prop('disabled', !canSend).find('span').text(
-                d.running ? 'Sending\u2026' : (d.will_send > 0 ? 'Send to ' + num(d.will_send) + ' ' + (d.will_send === 1 ? 'person' : 'people') : 'Nothing to send')
+                d.running ? 'Sending\u2026' : (everyone ? 'Sent to everyone' : (d.will_send > 0 ? 'Send to ' + num(d.will_send) + ' ' + (d.will_send === 1 ? 'person' : 'people') : 'Nothing to send'))
             );
 
             $('#rvLoading').addClass('d-none');
@@ -678,6 +684,62 @@ $(function () {
             clearTimeout(timer);
             if (d.running && $('#reviewModal').hasClass('show')) { timer = setTimeout(load, 5000); }
         }
+
+        function updatePicked() {
+            var n = $('#rvTable .rv-pick:checked').length;
+            $('#rvSendSelected').prop('disabled', !n || selSending || !!(last && last.running))
+                .find('span').text(selSending ? 'Sending\u2026' : (n ? 'Send to ' + n + ' selected' : 'Send to selected'));
+        }
+        $('#rvTable').on('change', '.rv-pick', updatePicked);
+        $('#rvPickAll').on('change', function () {
+            var on = this.checked;
+            $('#rvTable tbody tr:visible .rv-pick:not(:disabled)').prop('checked', on);
+            updatePicked();
+        });
+
+        // Send to the ticked people, one after another (each is about two seconds); each row says Sending, then Sent or Failed as it goes.
+        $('#rvSendSelected').on('click', function () {
+            var list = $('#rvTable .rv-pick:checked').map(function () { return { email: $(this).data('email'), name: $(this).data('name'), again: String($(this).data('sent')) === '1', $row: $(this).closest('tr') }; }).get();
+            if (!list.length || selSending) { return; }
+            var again = list.filter(function (p) { return p.again; }).length;
+            var msg = 'Send this email to the ' + list.length + ' selected ' + (list.length === 1 ? 'person' : 'people') + ' now?'
+                    + (last && last.credentials ? '\n\nThis sets a NEW password for each of them and emails it.' : '')
+                    + (again ? '\n\n' + again + ' of them already received it and will get it again.' : '');
+            if (!confirm(msg)) { return; }
+
+            selSending = true; updatePicked();
+            $('#rvSendForm button, #rvRefresh').prop('disabled', true);
+            $('#rvSelResult').empty();
+            var ok = 0, failed = [];
+            (function next(i) {
+                if (i >= list.length) { finish(); return; }
+                var p = list[i], $st = p.$row.find('.rv-st');
+                $st.html('<span class="badge badge-info"><i class="fas fa-spinner fa-spin mr-1"></i>Sending</span>');
+                $.ajax({ method: 'POST', url: @json(url('admin/draft-emails/'.$draftEmail->id.'/send-to')), dataType: 'json',
+                         headers: { 'X-CSRF-TOKEN': @json(csrf_token()) }, data: { email: p.email } })
+                .done(function (res) {
+                    ok++;
+                    $st.html('<span class="badge badge-success">Sent</span> <span class="text-muted small">' + esc((res.sent_at || '').slice(0, 16)) + '</span>');
+                    p.$row.find('.rv-pick').prop({ checked: false, disabled: !!(last && last.credentials) });
+                })
+                .fail(function (xhr) {
+                    var why = (xhr.responseJSON && xhr.responseJSON.message) || 'Could not send.';
+                    failed.push(p.name + ': ' + why);
+                    $st.html('<span class="badge badge-danger" title="' + esc(why) + '">Failed</span>');
+                })
+                .always(function () { next(i + 1); });
+            })(0);
+
+            function finish() {
+                selSending = false;
+                $('#rvSelResult').html('<div class="alert alert-' + (failed.length ? (ok ? 'warning' : 'danger') : 'success') + ' py-2 mb-0 small">'
+                    + '<strong>' + ok + ' of ' + list.length + ' sent.</strong>'
+                    + (failed.length ? '<ul class="mb-0 pl-3 mt-1">' + failed.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' : '') + '</div>');
+                $('#rvRefresh').prop('disabled', false);
+                // the list refreshes from the server (the real record of who has it), keeping the passwords shown if they were
+                if (pw) { $.getJSON(@json(url('admin/draft-emails/'.$draftEmail->id.'/credentials'))).done(function (c) { pw = c.logins || {}; }).always(load); } else { load(); }
+            }
+        });
 
         function filter() {
             var q = ($('#rvSearch').val() || '').trim().toLowerCase(), shown = 0, total = 0;
@@ -735,19 +797,6 @@ $(function () {
                 alert((xhr.responseJSON && xhr.responseJSON.message) || 'Could not prepare the passwords.');
             }).always(function () { btns.prop('disabled', false); });
         }
-        // Send to one person only: a test of the whole path (email, username, password) before the rest.
-        $('#rvTable').on('click', '.rv-send-one', function () {
-            var btn = $(this), name = btn.data('name'), email = btn.data('email');
-            if (!confirm('Send the login email to ' + name + ' (' + email + ') now?\n\nIt sets their ' + (pw || last && last.prepared ? 'prepared ' : '') + 'password and emails it to them only.')) { return; }
-            btn.prop('disabled', true);
-            $.ajax({ method: 'POST', url: @json(url('admin/draft-emails/'.$draftEmail->id.'/send-to')), dataType: 'json',
-                     headers: { 'X-CSRF-TOKEN': @json(csrf_token()) }, data: { email: email } })
-            .done(function (res) { alert(res.message || 'Sent.'); })
-            .fail(function (xhr) { alert((xhr.responseJSON && xhr.responseJSON.message) || 'Could not send.'); })
-            .always(function () {
-                if (pw) { $.getJSON(@json(url('admin/draft-emails/'.$draftEmail->id.'/credentials'))).done(function (c) { pw = c.logins || {}; }).always(load); } else { load(); }
-            });
-        });
         $('#rvPrepare').on('click', function () { prepare(false); });
         $('#rvRegen').on('click', function () {
             if (confirm('Replace every prepared password that has not been sent with a new one?\n\nUse this only if the list you looked at should not be used.')) { prepare(true); }
@@ -760,7 +809,7 @@ $(function () {
             if (!last) { return false; }
             var msg = last.credentials
                 ? 'Send to ' + num(last.will_send) + ' people now?\n\nThis sets a NEW password for each of them and emails it. It cannot be undone in bulk.'
-                : 'Send this draft to ' + num(last.will_send) + ' people now?';
+                : 'Send this draft to ' + num(last.will_send) + ' people now?' + (last.sent_total ? '\n\n' + num(last.sent_total) + ' of them already received it and will get it again. To send only to some people, tick them in the list and use "Send to selected".' : '');
             return confirm(msg);
         });
     })();

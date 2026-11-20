@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Changed (2026-11-29) — Draft Emails > Review before sending
+- Each recipient's **Status** now says **Sent** with the date and time it was last sent (any time, not just the last day), or **Not sent yet**; the old "Will send" / "Sent before" wording is gone.
+- **Tick people** (or tick all shown) and use **Send to selected** to email only them. Each row shows Sending, then Sent (or Failed with the reason) as it goes; the list then refreshes from the server. A credential email still cannot go to the same person twice within 24 hours.
+- The main button reads **Sent to everyone** once everyone has had it, and warns how many will get it again if some already have.
+- Needs the API release first (no migration).
+
 ### Added (2026-11-28) — Fellows list: Confirm as Fellow, Associate Fellows button
 - **Tentative rows > Confirm as Fellow**: asks for the fellowship type (Associate Fellow, Fellow By Election, Overseas, Honorary), the fellowship year, their email (the login) and country, then makes them a real Fellow (next Fellow ID) and takes them off the tentative list; the Fellow's page opens. They count in the Fellows total from then on and are on the Certificate QR list for that year. Needs the API release first.
 - **Associate Fellows (N) button** in the filter bar: shows only the Associate Fellow type (click again to clear).
