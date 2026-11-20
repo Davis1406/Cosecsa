@@ -45,6 +45,7 @@ class ElectionApplicationsController extends Controller
             'answers'      => $data['answers'] ?? [],
             'files'        => $data['files'] ?? [],
             'known'        => $data['known'] ?? null,
+            'fellow'       => $data['fellow'] ?? null,
             'otherEntries' => $data['other_entries'] ?? [],
             'defaultYear'  => $data['default_year'] ?? date('Y'),
         ]);
@@ -62,7 +63,7 @@ class ElectionApplicationsController extends Controller
         $request->validate(['status' => 'required|in:pending,rejected', 'note' => 'nullable|string|max:2000']);
         $response = $this->api->post("election-applications/{$id}/review", $request->only('status', 'note'));
 
-        return redirect("admin/fellowship-by-election/{$id}")->with($response->successful() ? 'success' : 'error', $response->json('message') ?: 'No answer from the server.');
+        return redirect($this->after($request, $id))->with($response->successful() ? 'success' : 'error', $response->json('message') ?: 'No answer from the server.');
     }
 
     public function approve(Request $request, $id)
@@ -70,9 +71,36 @@ class ElectionApplicationsController extends Controller
         $request->validate(['fellowship_year' => 'required|digits:4', 'note' => 'nullable|string|max:2000']);
         $response = $this->api->post("election-applications/{$id}/approve", $request->only('fellowship_year', 'note') + ['force' => $request->boolean('force')]);
 
-        $back = redirect("admin/fellowship-by-election/{$id}")->with($response->successful() ? 'success' : 'error', $response->json('message') ?: 'No answer from the server.');
+        $back = redirect($this->after($request, $id))->with($response->successful() ? 'success' : 'error', $response->json('message') ?: 'No answer from the server.');
 
         return $response->status() === 422 && $response->json('can_force') ? $back->with('can_force', true) : $back;
+    }
+
+    // Approve the ticked pending applications from the list.
+    public function bulkApprove(Request $request)
+    {
+        $request->validate(['ids' => 'required|array|min:1|max:200', 'ids.*' => 'integer', 'fellowship_year' => 'required|digits:4']);
+        $response = $this->api->post('election-applications/bulk-approve', $request->only('ids', 'fellowship_year'));
+
+        $back = redirect('admin/fellowship-by-election')->with($response->successful() ? 'success' : 'error', $response->json('message') ?: 'No answer from the server.');
+        $skipped = $response->json('skipped') ?: [];
+
+        return $skipped ? $back->with('skipped', $skipped) : $back;
+    }
+
+    // Fill the blanks of the matching Fellow record from the application (only the ticked fields; nothing is overwritten).
+    public function fillFellow(Request $request, $id)
+    {
+        $request->validate(['fields' => 'required|array|min:1', 'fields.*' => 'string']);
+        $response = $this->api->post("election-applications/{$id}/fill-fellow", $request->only('fields'));
+
+        return redirect("admin/fellowship-by-election/{$id}")->with($response->successful() ? 'success' : 'error', $response->json('message') ?: 'No answer from the server.');
+    }
+
+    // Quick actions in the list send the person back to the list; the application page's own buttons stay on the page.
+    private function after(Request $request, $id): string
+    {
+        return $request->input('return') === 'list' ? 'admin/fellowship-by-election' : "admin/fellowship-by-election/{$id}";
     }
 
     // An uploaded document, fetched from Wufoo by the API and shown in the browser.

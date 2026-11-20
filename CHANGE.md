@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Changed (2026-12-02) — Fellowship by Election: redesigned, quick approval, missing Fellow details
+- Both pages redesigned to be minimal and to follow light and dark mode (shared `_style.blade.php`).
+- **List:** status tabs with counts, search, year and "in the system" filters (incl. "Fellow with missing details"); one-click **Approve** / **Reject** on a row (dialog asks for the year / reason); tick several pending applications and **Approve selected** (people already tentative are linked, counted Fellows are skipped and listed).
+- **Application page:** a sticky Decision panel (Approve, Reject, Back to pending) and a **Fellow record** panel when the applicant is already a Fellow: it lists the details the Fellow record lacks that the application has (email, phone, gender, country, organisation, address) and **Fill the ticked details** copies them in. Only empty fields are filled; nothing is overwritten.
+- `ElectionApplicationsController` (`bulkApprove`, `fillFellow`), routes `admin.election.bulk` / `admin.election.fill`.
+
 ### Added (2026-12-02) — Fellowship by Election (applications from the Wufoo form)
 - New sidebar item **Fellowship by Election** (Fellows permission; approving, rejecting and syncing need Fellows "manage"): `admin/fellowship-by-election`.
 - The list shows the applications to the COSECSA Ordinary Fellow by Election form: year applied (the latest year is selected first), who is **already in the system** (already a Fellow / already tentative), how many times the same email applied, status tiles that follow the filters, search and sorting. **Sync with Wufoo** pulls the newest entries (also every 30 minutes on its own).

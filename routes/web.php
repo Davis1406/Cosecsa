@@ -453,9 +453,11 @@ Route::post('admin/capsule/sync/{id}',       [CapsuleSyncController::class, 'syn
 // Fellowship by Election: applications from the Wufoo form (permissions: the Fellows module, see config/admin_permissions.php)
 Route::get('admin/fellowship-by-election',                   [ElectionApplicationsController::class, 'index'])->name('admin.election.index');
 Route::post('admin/fellowship-by-election/sync',             [ElectionApplicationsController::class, 'sync'])->name('admin.election.sync');
+Route::post('admin/fellowship-by-election/bulk-approve',     [ElectionApplicationsController::class, 'bulkApprove'])->name('admin.election.bulk');
 Route::get('admin/fellowship-by-election/{id}',              [ElectionApplicationsController::class, 'show'])->whereNumber('id')->name('admin.election.show');
 Route::post('admin/fellowship-by-election/{id}/review',      [ElectionApplicationsController::class, 'review'])->whereNumber('id')->name('admin.election.review');
 Route::post('admin/fellowship-by-election/{id}/approve',     [ElectionApplicationsController::class, 'approve'])->whereNumber('id')->name('admin.election.approve');
+Route::post('admin/fellowship-by-election/{id}/fill-fellow', [ElectionApplicationsController::class, 'fillFellow'])->whereNumber('id')->name('admin.election.fill');
 Route::get('admin/fellowship-by-election/{id}/file/{slot}',  [ElectionApplicationsController::class, 'file'])->whereNumber('id')->where('slot', 'motivation|reference1|reference2|cv|photo')->name('admin.election.file');
 
 // Salesforce CRM Integration

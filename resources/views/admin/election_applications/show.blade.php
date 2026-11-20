@@ -3,20 +3,42 @@
 @section('title', 'Fellowship by Election application')
 
 @push('styles')
+@include('admin.election_applications._style')
 <style>
-    .fe-hero { background:linear-gradient(135deg,#a02626 0%,#7a1f1f 100%); border-radius:10px; padding:20px 24px; color:#fff; margin-bottom:1.2rem; }
-    .detail-card { background:#fff; border-radius:8px; padding:20px; box-shadow:0 1px 6px rgba(0,0,0,.08); margin-bottom:20px; }
-    body.dark-mode .detail-card { background:#374151; }
-    .detail-card h6 { color:#a02626; font-weight:700; text-transform:uppercase; font-size:.78rem; letter-spacing:.04em; margin-bottom:14px; border-bottom:1px solid #eee; padding-bottom:8px; }
-    .dl-row { display:flex; padding:6px 0; font-size:.9rem; border-bottom:1px solid #f5f5f5; }
-    body.dark-mode .dl-row { border-color:#4a5568; }
-    .dl-row .dl-label { width:190px; flex-shrink:0; color:#888; font-weight:600; }
-    .dl-row .dl-value { flex:1; white-space:pre-line; word-break:break-word; }
-    .fe-pill { display:inline-block; padding:3px 12px; border-radius:20px; font-weight:600; font-size:.78rem; }
-    .fe-pending  { background:#fff3cd; color:#856404; }
-    .fe-approved { background:#d4edda; color:#155724; }
-    .fe-rejected { background:#f8d7da; color:#721c24; }
-    .fe-note { font-size:.82rem; opacity:.85; }
+    .fe-grid { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:20px; align-items:start; }
+    @media (max-width: 991px) { .fe-grid { grid-template-columns:1fr; } }
+    .fe-aside { position:sticky; top:12px; }
+    @media (max-width: 991px) { .fe-aside { position:static; } }
+    .fe-back { color:var(--fe-muted) !important; font-size:.85rem; text-decoration:none !important; }
+    .fe-back:hover { color:var(--fe-accent) !important; }
+    .fe-id { display:flex; align-items:center; gap:16px; margin:10px 0 22px; }
+    .fe-id h1 { font-size:1.5rem; font-weight:650; margin:0; letter-spacing:-.01em; }
+    .fe-dl { display:grid; grid-template-columns:190px 1fr; }
+    .fe-dl dt, .fe-dl dd { margin:0; padding:10px 0; border-top:1px solid var(--fe-line); font-size:.9rem; }
+    .fe-dl dt:first-of-type, .fe-dl dd:first-of-type { border-top:0; }
+    .fe-dl dt { color:var(--fe-muted); font-weight:550; padding-right:14px; }
+    .fe-dl dd { white-space:pre-line; word-break:break-word; }
+    .fe-dl .none { color:var(--fe-muted); opacity:.6; }
+    @media (max-width: 575px) { .fe-dl { grid-template-columns:1fr; } .fe-dl dt { border-top:1px solid var(--fe-line); padding-bottom:0; } .fe-dl dd { border-top:0; padding-top:2px; } }
+    .fe-doc { display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--fe-line); }
+    .fe-doc:first-child { border-top:0; }
+    .fe-doc .ic { width:34px; height:34px; border-radius:8px; background:var(--fe-soft); color:var(--fe-muted); display:flex; align-items:center; justify-content:center; }
+    .fe-doc.on .ic { background:var(--fe-accent-soft); color:var(--fe-accent); }
+    .fe-doc .t { flex:1; font-size:.9rem; font-weight:550; }
+    details.fe-more summary { cursor:pointer; list-style:none; }
+    details.fe-more summary::-webkit-details-marker { display:none; }
+    details.fe-more[open] .chev { transform:rotate(90deg); }
+    .chev { transition:transform .15s; }
+    .fe-callout { border-radius:10px; padding:11px 14px; font-size:.84rem; margin-bottom:14px; }
+    .fe-callout.info { background:var(--fe-info-bg); color:var(--fe-info-fg); }
+    .fe-callout.warn { background:var(--fe-warn-bg); color:var(--fe-warn-fg); }
+    .fe-callout.ok { background:var(--fe-ok-bg); color:var(--fe-ok-fg); }
+    .fe-callout a { text-decoration:underline; }
+    .fe-gap { display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-top:1px solid var(--fe-line); font-size:.88rem; cursor:pointer; margin:0; }
+    .fe-gap:first-of-type { border-top:0; }
+    .fe-gap input { margin-top:3px; accent-color:var(--fe-accent); }
+    .fe-gap .l { font-weight:600; } .fe-gap .v { color:var(--fe-muted); word-break:break-word; }
+    .fe-stack > * + * { margin-top:10px; }
 </style>
 @endpush
 
@@ -24,14 +46,17 @@
 @php
     $docs = [
         'motivation' => 'Motivation letter',
-        'reference1' => 'Reference 1' . ($app['referee1_name'] ? ' (' . $app['referee1_name'] . ')' : ''),
-        'reference2' => 'Reference 2' . ($app['referee2_name'] ? ' (' . $app['referee2_name'] . ')' : ''),
+        'reference1' => 'Reference 1' . ($app['referee1_name'] ? ' · ' . $app['referee1_name'] : ''),
+        'reference2' => 'Reference 2' . ($app['referee2_name'] ? ' · ' . $app['referee2_name'] : ''),
         'cv'         => 'CV',
         'photo'      => 'Passport photograph',
     ];
     $available = collect($files)->pluck('slot')->all();
     $canManage = Auth::user()->hasPermission('fellows.manage');
-    $row = fn ($label, $value) => '<div class="dl-row"><div class="dl-label">' . e($label) . '</div><div class="dl-value">' . (filled($value) ? e($value) : '—') . '</div></div>';
+    $e = fn ($v) => filled($v) ? e($v) : '<span class="none">—</span>';
+    $dl = fn ($label, $value) => '<dt>' . e($label) . '</dt><dd>' . $e($value) . '</dd>';
+    $initials = strtoupper(collect(preg_split('/\s+/', trim(preg_replace('/^(Dr|Prof|Mr|Mrs|Ms|Miss)\.?\s+/i', '', $app['full_name']))))->filter()->map(fn ($w) => mb_substr($w, 0, 1))->take(2)->implode(''));
+    $isFellowRecord = $known && in_array($known['kind'], ['fellow', 'fellow_tentative'], true);
 @endphp
 <div class="wrapper">
     <div class="content-wrapper">
@@ -40,154 +65,191 @@
 
         <section class="content">
             <div class="container-wrapper">
+            <div class="fe">
 
-                <div class="fe-hero d-flex flex-wrap justify-content-between align-items-center">
+                <a href="{{ url('admin/fellowship-by-election') }}" class="fe-back"><i class="fas fa-arrow-left mr-1"></i>All applications</a>
+
+                <div class="fe-id">
+                    <span class="fe-avatar lg">{{ $initials ?: '?' }}</span>
                     <div>
-                        <h4 class="mb-0"><i class="fas fa-vote-yea mr-2"></i>{{ $app['full_name'] }}</h4>
-                        <div style="font-size:.85rem;opacity:.85;">
-                            Wufoo entry {{ $app['wufoo_entry_id'] }}
-                            @if ($app['submitted_at']) &middot; applied {{ \Carbon\Carbon::parse($app['submitted_at'])->format('d M Y') }} @endif
+                        <h1>{{ $app['full_name'] }}</h1>
+                        <div class="fe-sub">
+                            Wufoo entry {{ $app['wufoo_entry_id'] }}@if ($app['submitted_at']) · applied {{ \Carbon\Carbon::parse($app['submitted_at'])->format('d M Y') }}@endif
+                            · <span class="fe-pill {{ $app['status'] }}">{{ ucfirst($app['status']) }}</span>
                         </div>
                     </div>
-                    <a href="{{ url('admin/fellowship-by-election') }}" class="btn btn-light btn-sm font-weight-bold" style="color:#a02626;">
-                        <i class="fas fa-arrow-left mr-1"></i>Back to list
-                    </a>
                 </div>
 
-                <div class="row">
-                    <div class="col-lg-8">
-                        <div class="detail-card">
-                            <h6>Applicant</h6>
-                            {!! $row('Title', $app['title']) !!}
-                            {!! $row('Name', trim(($app['firstname'] ?? '') . ' ' . ($app['middlename'] ?? '') . ' ' . ($app['lastname'] ?? ''))) !!}
-                            {!! $row('Gender', $app['gender']) !!}
-                            {!! $row('Phone', $app['phone']) !!}
-                            {!! $row('Email', $app['email']) !!}
-                            {!! $row('Home address', $app['address']) !!}
-                            {!! $row('Country', $app['country']) !!}
-                            {!! $row('Organisation(s)', $app['organisation']) !!}
-                            {!! $row('Job title(s)', $app['job_title']) !!}
+                <div class="fe-grid">
+                    <div>
+                        <div class="fe-panel">
+                            <div class="fe-panel-h">Applicant</div>
+                            <div class="fe-panel-b"><dl class="fe-dl">
+                                {!! $dl('Name', trim(($app['title'] ?? '') . ' ' . ($app['firstname'] ?? '') . ' ' . ($app['middlename'] ?? '') . ' ' . ($app['lastname'] ?? ''))) !!}
+                                {!! $dl('Gender', $app['gender']) !!}
+                                {!! $dl('Email', $app['email']) !!}
+                                {!! $dl('Phone', $app['phone']) !!}
+                                {!! $dl('Country', $app['country']) !!}
+                                {!! $dl('Home address', $app['address']) !!}
+                                {!! $dl('Organisation(s)', $app['organisation']) !!}
+                                {!! $dl('Job title(s)', $app['job_title']) !!}
+                            </dl></div>
                         </div>
 
-                        <div class="detail-card">
-                            <h6>Qualifications</h6>
-                            {!! $row('Medical qualification(s)', $app['medical_qualifications']) !!}
-                            {!! $row('Specialty qualification(s)', $app['specialty_qualifications']) !!}
-                            {!! $row('Specialty qualification date', $app['specialty_qualification_date']) !!}
-                            {!! $row('Other qualification(s)', $app['other_qualifications']) !!}
-                            {!! $row('Fellow of another College?', $app['other_fellowship']) !!}
-                            @if (filled($app['other_fellowship_details']) || filled($app['other_fellowship_date']))
-                                {!! $row('Details of that Fellowship', $app['other_fellowship_details']) !!}
-                                {!! $row('Date of that Fellowship', $app['other_fellowship_date']) !!}
-                            @endif
+                        <div class="fe-panel">
+                            <div class="fe-panel-h">Qualifications</div>
+                            <div class="fe-panel-b"><dl class="fe-dl">
+                                {!! $dl('Medical', $app['medical_qualifications']) !!}
+                                {!! $dl('Specialty', $app['specialty_qualifications']) !!}
+                                {!! $dl('Specialty date', $app['specialty_qualification_date']) !!}
+                                {!! $dl('Other', $app['other_qualifications']) !!}
+                                {!! $dl('Fellow of another College?', $app['other_fellowship']) !!}
+                                @if (filled($app['other_fellowship_details']) || filled($app['other_fellowship_date']))
+                                    {!! $dl('That Fellowship', $app['other_fellowship_details']) !!}
+                                    {!! $dl('Date', $app['other_fellowship_date']) !!}
+                                @endif
+                            </dl></div>
                         </div>
 
-                        <div class="detail-card">
-                            <h6>Referees and documents</h6>
-                            {!! $row('Referee 1', $app['referee1_name']) !!}
-                            {!! $row('Referee 2', $app['referee2_name']) !!}
-                            <div class="mt-3">
+                        <div class="fe-panel">
+                            <div class="fe-panel-h">Documents</div>
+                            <div class="fe-panel-b">
                                 @foreach ($docs as $slot => $label)
-                                    @if (in_array($slot, $available, true))
-                                        <a href="{{ route('admin.election.file', [$app['id'], $slot]) }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm mb-1">
-                                            <i class="fas fa-file-download mr-1"></i>{{ $label }}
-                                        </a>
-                                    @else
-                                        <span class="btn btn-outline-secondary btn-sm mb-1 disabled" title="The document opens after the next sync with Wufoo"><i class="fas fa-file mr-1"></i>{{ $label }}</span>
-                                    @endif
-                                @endforeach
-                            </div>
-                            @if (! count($available))
-                                <div class="fe-note mt-2">The documents open once Wufoo is connected live (the list was loaded from an export, which has file names but no links).</div>
-                            @endif
-                        </div>
-
-                        <div class="detail-card">
-                            <h6>Everything the applicant submitted</h6>
-                            @foreach ($answers as $a)
-                                {!! $row($a['label'], $a['value']) !!}
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4">
-                        <div class="detail-card">
-                            <h6>Review</h6>
-                            <div class="mb-2">
-                                <span class="fe-pill fe-{{ $app['status'] }}">{{ ucfirst($app['status']) }}</span>
-                                @if ($app['fellowship_year'] && $app['status'] === 'approved') <span class="fe-note ml-1">for {{ $app['fellowship_year'] }}</span> @endif
-                            </div>
-                            @if ($app['reviewed_at'])<div class="fe-note mb-2">Reviewed {{ \Carbon\Carbon::parse($app['reviewed_at'])->format('d M Y H:i') }}</div>@endif
-                            @if ($app['review_note'])<div class="mb-2" style="white-space:pre-line;">{{ $app['review_note'] }}</div>@endif
-
-                            @if ($known)
-                                <div class="alert alert-{{ $known['kind'] === 'fellow' ? 'warning' : 'info' }} py-2 small mb-3">
-                                    @if ($known['kind'] === 'fellow')
-                                        <strong>Already a Fellow:</strong> {{ $known['label'] }} (#{{ $known['id'] }}), matched by {{ $known['by'] === 'email' ? 'the same email' : 'the same name' }}.
-                                    @elseif ($known['kind'] === 'fellow_tentative')
-                                        <strong>Already tentative:</strong> Fellow #{{ $known['id'] }} ({{ $known['label'] }}). Approving links this application to them; nothing new is added.
-                                    @else
-                                        <strong>Already on the tentative list:</strong> {{ $known['label'] }} (#{{ $known['id'] }}). Approving links this application to them; nothing new is added.
-                                    @endif
-                                </div>
-                            @endif
-
-                            @if ($canManage)
-                                @if ($app['status'] !== 'approved')
-                                    <form method="POST" action="{{ route('admin.election.approve', $app['id']) }}" class="mb-3">
-                                        @csrf
-                                        <label class="small font-weight-bold mb-0">Fellowship year</label>
-                                        <input type="number" name="fellowship_year" value="{{ $defaultYear }}" min="2000" max="2100" class="form-control form-control-sm mb-2" required>
-                                        <label class="small font-weight-bold mb-0">Note (optional)</label>
-                                        <textarea name="note" rows="2" class="form-control form-control-sm mb-2">{{ old('note') }}</textarea>
-                                        @if (session('can_force'))
-                                            <input type="hidden" name="force" value="1">
-                                            <button type="submit" class="btn btn-warning btn-block btn-sm" onclick="return confirm('Approve anyway? Only do this if this is a different person from the Fellow with the same name.');">
-                                                <i class="fas fa-user-plus mr-1"></i>This is a different person: approve anyway
-                                            </button>
+                                    @php $has = in_array($slot, $available, true); @endphp
+                                    <div class="fe-doc {{ $has ? 'on' : '' }}">
+                                        <span class="ic"><i class="fas {{ $slot === 'photo' ? 'fa-image' : 'fa-file-alt' }}"></i></span>
+                                        <span class="t">{{ $label }}</span>
+                                        @if ($has)
+                                            <a href="{{ route('admin.election.file', [$app['id'], $slot]) }}" target="_blank" rel="noopener" class="fe-btn">Open</a>
                                         @else
-                                            <button type="submit" class="btn btn-success btn-block btn-sm">
-                                                <i class="fas fa-check mr-1"></i>Approve (tentative Fellow By Election)
-                                            </button>
+                                            <span class="fe-note">Not available yet</span>
                                         @endif
-                                    </form>
-                                @endif
-
-                                @if ($app['status'] !== 'rejected')
-                                    <form method="POST" action="{{ route('admin.election.review', $app['id']) }}" class="mb-2" onsubmit="return confirm('Reject this application?');">
-                                        @csrf
-                                        <input type="hidden" name="status" value="rejected">
-                                        <textarea name="note" rows="2" class="form-control form-control-sm mb-2" placeholder="Reason (optional)"></textarea>
-                                        <button type="submit" class="btn btn-outline-danger btn-block btn-sm"><i class="fas fa-times mr-1"></i>Reject</button>
-                                    </form>
-                                @endif
-
-                                @if ($app['status'] !== 'pending')
-                                    <form method="POST" action="{{ route('admin.election.review', $app['id']) }}" onsubmit="return confirm('Set this application back to pending?{{ $app['status'] === 'approved' ? ' The tentative entry this approval made is removed.' : '' }}');">
-                                        @csrf
-                                        <input type="hidden" name="status" value="pending">
-                                        <button type="submit" class="btn btn-outline-secondary btn-block btn-sm"><i class="fas fa-undo mr-1"></i>Back to pending</button>
-                                    </form>
-                                @endif
-                            @endif
-                        </div>
-
-                        @if (count($otherEntries))
-                            <div class="detail-card">
-                                <h6>Other entries by this email</h6>
-                                @foreach ($otherEntries as $o)
-                                    <div class="dl-row">
-                                        <div class="dl-value">
-                                            <a href="{{ route('admin.election.show', $o['id']) }}">{{ $o['submitted_at'] ? \Carbon\Carbon::parse($o['submitted_at'])->format('d M Y') : 'Entry' }}</a>
-                                            <span class="fe-pill fe-{{ $o['status'] }} ml-1">{{ ucfirst($o['status']) }}</span>
-                                        </div>
                                     </div>
                                 @endforeach
+                                @if (! count($available))
+                                    <div class="fe-note mt-2">Documents open once Wufoo is connected live; the export has file names but no links.</div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <details class="fe-panel fe-more">
+                            <summary class="fe-panel-h"><span>Everything submitted</span><i class="fas fa-chevron-right chev"></i></summary>
+                            <div class="fe-panel-b"><dl class="fe-dl">
+                                @foreach ($answers as $a){!! $dl($a['label'], $a['value']) !!}@endforeach
+                            </dl></div>
+                        </details>
+                    </div>
+
+                    <div class="fe-aside fe-stack">
+                        {{-- The decision --}}
+                        <div class="fe-panel">
+                            <div class="fe-panel-h">Decision</div>
+                            <div class="fe-panel-b" style="padding-top:16px;">
+                                @if ($app['status'] === 'approved')
+                                    <div class="fe-callout ok"><i class="fas fa-check-circle mr-1"></i>Approved @if ($app['fellowship_year']) for {{ $app['fellowship_year'] }}@endif
+                                        @if ($app['reviewed_at']) · {{ \Carbon\Carbon::parse($app['reviewed_at'])->format('d M Y') }}@endif</div>
+                                @elseif ($app['status'] === 'rejected')
+                                    <div class="fe-callout warn"><i class="fas fa-ban mr-1"></i>Rejected @if ($app['reviewed_at']) · {{ \Carbon\Carbon::parse($app['reviewed_at'])->format('d M Y') }}@endif</div>
+                                @else
+                                    <div class="fe-note mb-2">Waiting for a decision.</div>
+                                @endif
+                                @if ($app['review_note'])<div class="mb-3" style="white-space:pre-line;font-size:.88rem;">{{ $app['review_note'] }}</div>@endif
+
+                                @if ($known)
+                                    <div class="fe-callout {{ $known['kind'] === 'fellow' ? 'warn' : 'info' }}">
+                                        @if ($known['kind'] === 'fellow')
+                                            <strong>Already a Fellow</strong> · {{ $known['label'] }} (#{{ $known['id'] }}), same {{ $known['by'] }}. Approving is refused.
+                                        @elseif ($known['kind'] === 'fellow_tentative')
+                                            <strong>Already tentative</strong> · Fellow #{{ $known['id'] }}, {{ $known['label'] }}. Approving links them; nothing new is added.
+                                        @else
+                                            <strong>On the tentative list</strong> · {{ $known['label'] }}. Approving links them; nothing new is added.
+                                        @endif
+                                    </div>
+                                @endif
+
+                                @if ($canManage)
+                                    @if ($app['status'] !== 'approved')
+                                        <form method="POST" action="{{ route('admin.election.approve', $app['id']) }}">
+                                            @csrf
+                                            <label class="fe-label">Fellowship year</label>
+                                            <input type="number" name="fellowship_year" value="{{ $defaultYear }}" min="2000" max="2100" class="fe-input mb-2" required>
+                                            <label class="fe-label">Note (optional)</label>
+                                            <textarea name="note" rows="2" class="fe-textarea mb-3">{{ old('note') }}</textarea>
+                                            @if (session('can_force'))
+                                                <input type="hidden" name="force" value="1">
+                                                <button type="submit" class="fe-btn block" onclick="return confirm('Approve anyway? Only do this if this is a different person from the Fellow with the same name.');"><i class="fas fa-user-plus"></i>Different person: approve anyway</button>
+                                            @elseif (! $known || $known['kind'] !== 'fellow')
+                                                <button type="submit" class="fe-btn ok block"><i class="fas fa-check"></i>Approve</button>
+                                            @else
+                                                <button type="button" class="fe-btn block" disabled><i class="fas fa-check"></i>Already a Fellow</button>
+                                            @endif
+                                        </form>
+                                    @endif
+
+                                    <div class="d-flex mt-2" style="gap:8px;">
+                                        @if ($app['status'] !== 'rejected')
+                                            <form method="POST" action="{{ route('admin.election.review', $app['id']) }}" style="flex:1" onsubmit="var r=prompt('Reason for rejecting (optional):'); if (r === null) return false; this.note.value=r; return true;">
+                                                @csrf
+                                                <input type="hidden" name="status" value="rejected"><input type="hidden" name="note" value="">
+                                                <button type="submit" class="fe-btn ghost-danger block"><i class="fas fa-times"></i>Reject</button>
+                                            </form>
+                                        @endif
+                                        @if ($app['status'] !== 'pending')
+                                            <form method="POST" action="{{ route('admin.election.review', $app['id']) }}" style="flex:1" onsubmit="return confirm('Set this application back to pending?{{ $app['status'] === 'approved' ? ' The tentative entry this approval made is removed.' : '' }}');">
+                                                @csrf
+                                                <input type="hidden" name="status" value="pending">
+                                                <button type="submit" class="fe-btn block"><i class="fas fa-undo"></i>Back to pending</button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- The matching Fellow record and what it is missing --}}
+                        @if ($fellow)
+                            <div class="fe-panel" id="fellow-record">
+                                <div class="fe-panel-h"><span>Fellow record</span><a href="{{ url($fellow['url']) }}" class="fe-note" style="text-decoration:underline;">Open #{{ $fellow['id'] }}</a></div>
+                                <div class="fe-panel-b" style="padding-top:14px;">
+                                    <div class="mb-2" style="font-size:.9rem;"><strong>{{ $fellow['name'] }}</strong> <span class="fe-note">· {{ $fellow['label'] }}</span></div>
+                                    @if (count($fellow['missing']))
+                                        <div class="fe-callout warn"><i class="fas fa-exclamation-circle mr-1"></i>This record is missing {{ count($fellow['missing']) }} {{ count($fellow['missing']) === 1 ? 'detail' : 'details' }} that this application has.</div>
+                                        @if ($canManage)
+                                            <form method="POST" action="{{ route('admin.election.fill', $app['id']) }}">
+                                                @csrf
+                                                @foreach ($fellow['missing'] as $m)
+                                                    <label class="fe-gap"><input type="checkbox" name="fields[]" value="{{ $m['field'] }}" checked><span><span class="l">{{ $m['label'] }}</span><br><span class="v">{{ $m['value'] }}</span></span></label>
+                                                @endforeach
+                                                <button type="submit" class="fe-btn primary block mt-3"><i class="fas fa-fill-drip"></i>Fill the ticked details</button>
+                                                <div class="fe-note mt-2">Only empty fields are filled. Nothing already on the record is changed.</div>
+                                            </form>
+                                        @else
+                                            @foreach ($fellow['missing'] as $m)<div class="fe-gap" style="cursor:default;"><span><span class="l">{{ $m['label'] }}</span><br><span class="v">{{ $m['value'] }}</span></span></div>@endforeach
+                                        @endif
+                                    @else
+                                        <div class="fe-callout ok mb-0"><i class="fas fa-check-circle mr-1"></i>Nothing missing: the record already has these details.</div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+
+                        @if (count($otherEntries))
+                            <div class="fe-panel">
+                                <div class="fe-panel-h">Other entries by this email</div>
+                                <div class="fe-panel-b">
+                                    @foreach ($otherEntries as $o)
+                                        <div class="d-flex justify-content-between align-items-center py-2">
+                                            <a href="{{ route('admin.election.show', $o['id']) }}" style="font-size:.9rem;">{{ $o['submitted_at'] ? \Carbon\Carbon::parse($o['submitted_at'])->format('d M Y') : 'Entry' }}</a>
+                                            <span class="fe-pill {{ $o['status'] }}">{{ ucfirst($o['status']) }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
                             </div>
                         @endif
                     </div>
                 </div>
 
+            </div>
             </div>
         </section>
     </div>
