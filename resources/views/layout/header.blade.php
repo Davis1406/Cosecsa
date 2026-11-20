@@ -459,8 +459,8 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                         @endif
 
                         @if (Auth::user()->hasPermission('trainees.view') || Auth::user()->hasPermission('candidates.view') || Auth::user()->hasPermission('members.view') || Auth::user()->hasPermission('fellows.view') || Auth::user()->hasPermission('programme_directors.view') || Auth::user()->hasPermission('trainers.view') || Auth::user()->hasPermission('country_reps.view') || Auth::user()->hasPermission('promotions.view'))
-                        <li class="nav-item @if (Request::segment(2) == 'associates') menu-open @endif">
-                            <a href="#" class="nav-link @if (Request::segment(2) == 'associates') active @endif">
+                        <li class="nav-item @if (in_array(Request::segment(2), ['associates', 'fellowship-by-election'])) menu-open @endif">
+                            <a href="#" class="nav-link @if (in_array(Request::segment(2), ['associates', 'fellowship-by-election'])) active @endif">
                                 <i class="nav-icon fas fa-users"></i>
                                 <p>
                                     Associates
@@ -510,6 +510,15 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                                         class="nav-link @if (Request::segment(3) == 'fellows') active @endif">
                                         <i class="fas fa-user nav-icon"></i>
                                         <p>Fellows</p>
+                                    </a>
+                                </li>
+                                @endif
+                                @if (Auth::user()->hasPermission('fellows.view'))
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/fellowship-by-election') }}"
+                                        class="nav-link @if (Request::segment(2) == 'fellowship-by-election') active @endif">
+                                        <i class="fas fa-vote-yea nav-icon"></i>
+                                        <p>Fellowship by Election</p>
                                     </a>
                                 </li>
                                 @endif
@@ -782,18 +791,6 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                             </ul>
                         </li>
                         <!-- /.Examinations -->
-                        @endif
-
-                        @if (Auth::user()->hasPermission('fellows.view'))
-                        <li class="nav-item">
-                            <a href="{{ url('admin/fellowship-by-election') }}"
-                                class="nav-link @if (Request::segment(2) == 'fellowship-by-election') active @endif">
-                                <i class="nav-icon fas fa-vote-yea"></i>
-                                <p>
-                                    Fellowship by Election
-                                </p>
-                            </a>
-                        </li>
                         @endif
 
                         @if (Auth::user()->hasPermission('salesforce.view'))

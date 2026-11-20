@@ -13,7 +13,7 @@
 - `ElectionApplicationsController` (`bulkApprove`, `fillFellow`), routes `admin.election.bulk` / `admin.election.fill`.
 
 ### Added (2026-12-02) — Fellowship by Election (applications from the Wufoo form)
-- New sidebar item **Fellowship by Election** (Fellows permission; approving, rejecting and syncing need Fellows "manage"): `admin/fellowship-by-election`.
+- New sidebar item **Associates > Fellowship by Election** (a sub-item under Associates, after Fellows; the URL is unchanged) (Fellows permission; approving, rejecting and syncing need Fellows "manage"): `admin/fellowship-by-election`.
 - The list shows the applications to the COSECSA Ordinary Fellow by Election form: year applied (the latest year is selected first), who is **already in the system** (already a Fellow / already tentative), how many times the same email applied, status tiles that follow the filters, search and sorting. **Sync with Wufoo** pulls the newest entries (also every 30 minutes on its own).
 - The application page shows everything the applicant submitted, the qualifications, the two referees and the five documents (motivation letter, references, CV, photo; they open once Wufoo is connected live), the other entries by the same email, and the review box: **Approve** (fellowship year, note), **Reject** (reason), **Back to pending**.
 - **Approve puts the applicant on the tentative list** (Fellows > Certificate QR codes), never in the Fellows table or any total. Someone who is already tentative is linked, not added twice; someone who is already a Fellow is refused (a same-name match can be forced for a different person).
