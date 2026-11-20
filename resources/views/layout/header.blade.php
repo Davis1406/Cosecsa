@@ -784,6 +784,18 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                         <!-- /.Examinations -->
                         @endif
 
+                        @if (Auth::user()->hasPermission('fellows.view'))
+                        <li class="nav-item">
+                            <a href="{{ url('admin/fellowship-by-election') }}"
+                                class="nav-link @if (Request::segment(2) == 'fellowship-by-election') active @endif">
+                                <i class="nav-icon fas fa-vote-yea"></i>
+                                <p>
+                                    Fellowship by Election
+                                </p>
+                            </a>
+                        </li>
+                        @endif
+
                         @if (Auth::user()->hasPermission('salesforce.view'))
                         <li class="nav-item">
                             <a href="{{ url('admin/salesforce') }}"

@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Added (2026-12-02) — Fellowship by Election (applications from the Wufoo form)
+- New sidebar item **Fellowship by Election** (Fellows permission; approving, rejecting and syncing need Fellows "manage"): `admin/fellowship-by-election`.
+- The list shows the applications to the COSECSA Ordinary Fellow by Election form: year applied (the latest year is selected first), who is **already in the system** (already a Fellow / already tentative), how many times the same email applied, status tiles that follow the filters, search and sorting. **Sync with Wufoo** pulls the newest entries (also every 30 minutes on its own).
+- The application page shows everything the applicant submitted, the qualifications, the two referees and the five documents (motivation letter, references, CV, photo; they open once Wufoo is connected live), the other entries by the same email, and the review box: **Approve** (fellowship year, note), **Reject** (reason), **Back to pending**.
+- **Approve puts the applicant on the tentative list** (Fellows > Certificate QR codes), never in the Fellows table or any total. Someone who is already tentative is linked, not added twice; someone who is already a Fellow is refused (a same-name match can be forced for a different person).
+- `ElectionApplicationsController`, `admin/election_applications/{index,show}`, `config/admin_permissions.php` (`admin/fellowship-by-election` => fellows). The data and rules are in cosecsa-api.
+
 ### Fixed (2026-11-20) — Examiner offline: "Some pages could not be downloaded" while an exam is not started
 - Until the exams officer starts an exam, its marking forms and candidate lists answer **423 (locked)** by design. The offline preparation counted every non-OK answer as a failed download, so every examiner saw "Some pages could not be downloaded (X of N)" on the dashboard until the exams were started.
 - A 423 is now reported as "waiting for the exam to start": the status reads "Ready for offline marking…" with a note that the forms are saved once the exams officer starts the exam (open the dashboard again, online, then). A page that really fails (404, 500, no connection) still shows the error.

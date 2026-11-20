@@ -23,6 +23,7 @@ use App\Http\Controllers\ExamsController;
 use App\Http\Controllers\FellowLabelController;
 use App\Http\Controllers\CapsuleSyncController;
 use App\Http\Controllers\SalesforceSyncController;
+use App\Http\Controllers\ElectionApplicationsController;
 use App\Http\Controllers\FeesController;
 use App\Http\Controllers\CountryController;
 
@@ -448,6 +449,14 @@ Route::get('admin/capsule/count',            [CapsuleSyncController::class, 'cap
 Route::get('admin/capsule/status',           [CapsuleSyncController::class, 'status'])->name('admin.capsule.status');
 Route::post('admin/capsule/sync',            [CapsuleSyncController::class, 'sync'])->name('admin.capsule.sync');
 Route::post('admin/capsule/sync/{id}',       [CapsuleSyncController::class, 'syncOne'])->name('admin.capsule.sync.one');
+
+// Fellowship by Election: applications from the Wufoo form (permissions: the Fellows module, see config/admin_permissions.php)
+Route::get('admin/fellowship-by-election',                   [ElectionApplicationsController::class, 'index'])->name('admin.election.index');
+Route::post('admin/fellowship-by-election/sync',             [ElectionApplicationsController::class, 'sync'])->name('admin.election.sync');
+Route::get('admin/fellowship-by-election/{id}',              [ElectionApplicationsController::class, 'show'])->whereNumber('id')->name('admin.election.show');
+Route::post('admin/fellowship-by-election/{id}/review',      [ElectionApplicationsController::class, 'review'])->whereNumber('id')->name('admin.election.review');
+Route::post('admin/fellowship-by-election/{id}/approve',     [ElectionApplicationsController::class, 'approve'])->whereNumber('id')->name('admin.election.approve');
+Route::get('admin/fellowship-by-election/{id}/file/{slot}',  [ElectionApplicationsController::class, 'file'])->whereNumber('id')->where('slot', 'motivation|reference1|reference2|cv|photo')->name('admin.election.file');
 
 // Salesforce CRM Integration
 Route::get('admin/salesforce',           [SalesforceSyncController::class, 'index'])->name('admin.salesforce.index');
