@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Fixed (2026-12-03) — Examiner course, Module 8 (Using the Marking Portal): "Finish" did nothing visible
+- On the last step of the MCS walkthrough, **Finish** now moves on to the **FCS** walkthrough (starting at its first FCS step; the steps both exams share are already ticked). The button says "Finish MCS, continue with FCS →".
+- On the last step of FCS, **Finish** marks every topic read in one saved request, shows "Module 8 complete" and opens the **next module**. The button says "Finish and open the next module →". (If FCS was already done when MCS is finished, MCS finish goes straight to the next module.)
+- `public/js/course/modules/module-8-portal.js`.
+
+### Added (2026-12-03) — Unapprove a Fellow (Fellows list)
+- The action menu (⋮) of each row in **Associates > Fellows** has **Unapprove** (Fellows "manage"). After a confirmation the Fellow goes back to tentative: out of the Fellows table and every total, and their QR page stops verifying. The record is kept and they can be approved again from Fellows > Certificate QR codes. The change is logged on the Fellow.
+- `FellowsController::unapproveFellow`, route `fellows.unapprove`, `custom.js` (the Fellows table), `fellows/list.blade.php`.
+
 ### Changed (2026-12-02) — Fellowship by Election: redesigned, quick approval, missing Fellow details
 - Both pages redesigned to be minimal and to follow light and dark mode (shared `_style.blade.php`). Status is a coloured dot with plain text, "in the system" is a coloured word with the category underneath, and notes are a plain line with a coloured edge: no chips or tinted boxes.
 - **List:** status tabs with counts, search, year and "in the system" filters (incl. "Fellow with missing details"); one-click **Approve** / **Reject** on a row (dialog asks for the year / reason); tick several pending applications and **Approve selected** (people already tentative are linked, counted Fellows are skipped and listed).

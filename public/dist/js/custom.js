@@ -679,6 +679,7 @@ $(function () {
         var appUrl = $ft.data("app-url");
         var canTranscript = $ft.data("can-transcript") === 1;
         var canDelete = $ft.data("can-delete") === 1;
+        var canUnapprove = $ft.data("can-unapprove") === 1;
         var esc = dtEsc, link = dtLink, plain = dtDash;
 
         showLoader("fellowstable");
@@ -744,6 +745,9 @@ $(function () {
                     if (canTranscript && r.ftype === "Fellow by Examination") {
                         items += dtMenuItem(appUrl + "/admin/transcripts/edit/" + r.uid, "fas fa-file-signature text-secondary", "Issue Transcript");
                     }
+                    if (canUnapprove) {
+                        items += '<a class="dropdown-item fellow-unapprove" href="#" data-id="' + r.id + '"><i class="fas fa-undo text-secondary mr-2"></i> Unapprove</a>';
+                    }
                     if (canDelete) {
                         items += '<div class="dropdown-divider"></div>' +
                             dtMenuItem(fBase + "/delete/" + r.fid, "fas fa-trash", "Delete", { cls: "text-danger", confirm: "Delete this fellow?" });
@@ -755,6 +759,19 @@ $(function () {
             "drawCallback": function () { dtNumberRows(this.api()); reinitDropdowns(this); }
         });
     }
+
+    // Unapprove a Fellow: back to tentative, so they leave this table and every total (they stay in Certificate QR codes, and can be approved again).
+    $(document).on("click", ".fellow-unapprove", function (e) {
+        e.preventDefault();
+        var $a = $(this), $t = $("#fellowstable"), $tr = $a.closest("tr"), dt = $t.DataTable(), name = $tr.find("td").eq(1).text().trim();
+        if (!window.confirm("Unapprove " + name + "?\n\nThey go back to tentative: out of the Fellows table and every total, and their QR page stops verifying. Their record is kept and they can be approved again from Fellows > Certificate QR codes.")) return;
+        $.post($t.data("unapprove-url").replace("__ID__", $a.data("id")), { _token: $t.data("csrf") })
+            .done(function (d) {
+                dt.row($tr).remove().draw(false);
+                $("#fellowstable").closest(".card").before('<div class="alert alert-success alert-dismissible fade show"><button type="button" class="close" data-dismiss="alert">&times;</button>' + dtEsc(d.message || "Unapproved.") + '</div>');
+            })
+            .fail(function (xhr) { window.alert((xhr.responseJSON && xhr.responseJSON.message) || "They could not be unapproved."); });
+    });
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // Programme Directors

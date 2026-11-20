@@ -429,6 +429,7 @@ Route::get('admin/associates/fellows/{id}/merge/preview', [FellowsController::cl
 Route::post('admin/associates/fellows/{id}/merge',        [FellowsController::class,'mergeProfiles'])->whereNumber('id')->name('fellows.merge');
 Route::get('admin/associates/fellows/delete/{id}', [FellowsController::class,'delete']);
 Route::post('admin/associates/fellows/{id}/approve', [FellowsController::class,'approveTentative'])->whereNumber('id')->name('fellows.approve');
+Route::post('admin/associates/fellows/{id}/unapprove', [FellowsController::class,'unapproveFellow'])->whereNumber('id')->name('fellows.unapprove');
 Route::post('admin/associates/fellows/tentative/{id}/confirm', [FellowsController::class,'confirmTentative'])->whereNumber('id')->name('fellows.tentative.confirm');
 Route::get('admin/associates/fellows/tentative/delete/{id}', [FellowsController::class,'deleteTentative'])->whereNumber('id')->name('fellows.tentative.delete');
 Route::get('admin/associates/fellows/reports', [FellowsController::class,'reports'])->name('fellows.reports');

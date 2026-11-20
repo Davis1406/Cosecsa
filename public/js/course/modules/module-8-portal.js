@@ -108,7 +108,7 @@ function renderList(){
 function renderCard(){
   var st=steps(),s=st[cur],n=st.length;
   elCard.innerHTML='<div class="wp-c1"><div class="wp-kick">Step '+(cur+1)+' of '+n+' · '+s.kick+'</div><h2>'+s.title+'</h2>'+s.left.join('')+
-   '<div class="wp-nav"><button class="wp-btn" id="wp-prev"'+(cur===0?' disabled':'')+'>← Back</button><button class="wp-btn pri" id="wp-next"'+(s.gate&&!gateOK?' disabled':'')+'>'+(s.gate&&!gateOK?'Click the highlighted area to continue':cur===n-1?'Finish':s.choose?'Continue with '+(deck==='mcs'?'MCS':'FCS')+' →':'Done, next step →')+'</button></div></div>'+
+   '<div class="wp-nav"><button class="wp-btn" id="wp-prev"'+(cur===0?' disabled':'')+'>← Back</button><button class="wp-btn pri" id="wp-next"'+(s.gate&&!gateOK?' disabled':'')+'>'+(s.gate&&!gateOK?'Click the highlighted area to continue':cur===n-1?finishLabel():s.choose?'Continue with '+(deck==='mcs'?'MCS':'FCS')+' →':'Done, next step →')+'</button></div></div>'+
    '<div class="wp-c2">'+s.right.join('')+(s.choose?'<div class="wp-picks"><button type="button" class="wp-pick'+(deck==='mcs'?' on':'')+'" data-pick="mcs"><b>MCS</b></button><button type="button" class="wp-pick'+(deck==='fcs'?' on':'')+'" data-pick="fcs"><b>FCS specialties</b></button></div>':'')+'</div>';
   if(EDIT){[].forEach.call(elCard.querySelectorAll('.wp-c1,.wp-c2'),function(c){c.setAttribute('data-tid',s.tid)});if(s.wtBid)elFit.setAttribute('data-bid',s.wtBid);else elFit.removeAttribute('data-bid')}
   elCard.classList.remove('swap');void elCard.offsetWidth;elCard.classList.add('swap');
@@ -118,7 +118,32 @@ function renderCard(){
   [].forEach.call(elCard.querySelectorAll('[data-pick]'),function(b){b.onclick=function(){if(b.dataset.pick!==deck)setDeck(b.dataset.pick,steps().indexOf(s));[].forEach.call(elCard.querySelectorAll('[data-pick]'),function(x){x.classList.toggle('on',x.dataset.pick===deck)})}});
 }
 function nudge(){var c=$('.wp-coach');if(c){c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake')}}
-function advance(){var st=steps(),s=st[cur];if(s.gate)gateOK=true;setDone(s,true);markRead(s);if(cur<st.length-1)go(cur+1);else{markAllRead();renderList()}}
+/* "Finish" on the last step: MCS hands over to FCS (unless FCS is already done); finishing FCS completes the module and opens the next one */
+function deckDone(d){return STEPS.filter(function(s){return s.deck==='all'||s.deck===d}).every(function(s){return !!ticks[d+':'+s.k]})}
+function finishToFcs(){return deck==='mcs'&&!deckDone('fcs')}
+function finishLabel(){return finishToFcs()?'Finish MCS, continue with FCS →':'Finish and open the next module →'}
+function toFcs(){
+  /* the steps both exams share (sign-in, choosing the exam) are already done, so FCS starts at its own first step */
+  STEPS.forEach(function(s){if(s.deck==='all')ticks['fcs:'+s.k]=true});saveTicks();
+  var first=STEPS.filter(function(s){return s.deck==='all'||s.deck==='fcs'}).map(function(s){return s.deck}).indexOf('fcs');
+  setDeck('fcs',Math.max(0,first));
+}
+function finishModule(){
+  /* every topic card counts as read; one request saves them all, and only then the next module opens (a page change would cancel separate ones) */
+  topicEls.forEach(function(t){CSCourse.seen[t.dataset.i]=1});CSCourse.paint();renderList();
+  var save=root.getAttribute('data-save-url'),csrf=root.getAttribute('data-csrf'),nx=document.querySelector('.pn-next'),href=nx&&nx.getAttribute('href');
+  if(EDIT||!save)return;
+  var go=function(){if(href)location.href=href},t=setTimeout(go,5000);
+  elCard.insertAdjacentHTML('afterbegin','<div style="margin:0 0 12px;padding:10px 14px;border-radius:10px;background:#e6f6ec;color:#166534;font-weight:600">Module 8 complete.'+(href?' Opening the next module…':'')+'</div>');
+  fetch(save,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':csrf},body:JSON.stringify({topics:topicEls.map(function(t){return +t.dataset.i})})})
+    .then(function(){clearTimeout(t);go()},function(){clearTimeout(t);go()});
+}
+function advance(){
+  var st=steps(),s=st[cur];if(s.gate)gateOK=true;setDone(s,true);markRead(s);
+  if(cur<st.length-1){go(cur+1);return}
+  if(finishToFcs()){renderList();toFcs();return}
+  finishModule();
+}
 
 function layout(){
   var tight=window.innerWidth>=900,box=elFit.parentElement,availW=box.clientWidth-24;

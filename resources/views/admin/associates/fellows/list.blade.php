@@ -215,7 +215,10 @@
                                        data-base-url="{{ url('admin/associates/fellows') }}"
                                        data-app-url="{{ url('') }}"
                                        data-can-transcript="{{ Auth::user()->hasPermission('transcripts.view') ? 1 : 0 }}"
-                                       data-can-delete="{{ Auth::user()->isSuperAdmin() ? 1 : 0 }}">
+                                       data-can-delete="{{ Auth::user()->isSuperAdmin() ? 1 : 0 }}"
+                                       data-can-unapprove="{{ Auth::user()->hasPermission('fellows.manage') ? 1 : 0 }}"
+                                       data-unapprove-url="{{ url('admin/associates/fellows/__ID__/unapprove') }}"
+                                       data-csrf="{{ csrf_token() }}">
                                     <thead>
                                         <tr>
                                             <th>#</th>

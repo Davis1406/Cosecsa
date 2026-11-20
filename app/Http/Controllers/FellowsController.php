@@ -651,6 +651,14 @@ class FellowsController extends Controller
         return response()->json($response->json(), $response->status());
     }
 
+    // Undo an approval: the Fellow goes back to tentative (out of the table and every total; the API keeps the record).
+    public function unapproveFellow($id)
+    {
+        $response = $this->api->post("fellows/{$id}/unapprove");
+
+        return response()->json($response->json(), $response->status());
+    }
+
     // Confirm a tentative person as a Fellow (fellowship type, year, email and country come from the modal; the API creates the Fellow).
     public function confirmTentative(Request $request, $id)
     {
