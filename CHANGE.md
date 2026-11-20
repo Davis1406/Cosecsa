@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed (2026-11-20) — Examiner offline: "Some pages could not be downloaded" while an exam is not started
+- Until the exams officer starts an exam, its marking forms and candidate lists answer **423 (locked)** by design. The offline preparation counted every non-OK answer as a failed download, so every examiner saw "Some pages could not be downloaded (X of N)" on the dashboard until the exams were started.
+- A 423 is now reported as "waiting for the exam to start": the status reads "Ready for offline marking…" with a note that the forms are saved once the exams officer starts the exam (open the dashboard again, online, then). A page that really fails (404, 500, no connection) still shows the error.
+- `public/dist/js/examiner-offline.js` only; no server change.
+
 ### Changed (2026-12-01) — Tentative Fellows live in the Certificate QR section only
 - The Fellows table and its filters no longer show tentative people at all, and no Fellows total counts them (also not the dashboard, reports, voting or the public directory).
 - **Fellows > Certificate QR codes** lists them for their fellowship year, tagged **Tentative** (yellow), with a **Status** filter (All / Tentative only / Approved only), a QR code each (the page does not verify until approved) and an **Approve** button (an existing Fellow record) or **Confirm as Fellow** / remove (no Fellow record yet; Confirm asks for an email and country). A second click on Approve or Remove confirms it. The ZIP's CSV has a Status column. Needs the API release first (it has a migration).

@@ -447,21 +447,24 @@
     }).then(function (manifest) {
       var urls = (manifest.pages || []).concat(manifest.data || []);
       var okCount = 0;
+      var waitingCount = 0; // 423: the exams officer has not started that exam yet - not a failure, the page is saved once it opens
       var next = 0;
 
       var worker = function () {
         if (next >= urls.length) return Promise.resolve();
         var url = urls[next++];
         return fetch(url, { credentials: 'same-origin' }).then(function (response) {
-          if (response.ok && !response.redirected) okCount++;
+          if (response.status === 423) waitingCount++;
+          else if (response.ok && !response.redirected) okCount++;
         }, function () { /* counted as a miss */ }).then(worker);
       };
 
       var workers = [];
       for (var i = 0; i < WARM_CONCURRENCY; i++) workers.push(worker());
       return Promise.all(workers).then(function () {
-        writeWarm({ userId: cfg.userId, at: Date.now(), total: urls.length, ok: okCount });
-        if (okCount < urls.length) state.warmError = 'Some pages could not be downloaded (' + okCount + ' of ' + urls.length + ').';
+        writeWarm({ userId: cfg.userId, at: Date.now(), total: urls.length, ok: okCount, waiting: waitingCount });
+        var missed = urls.length - okCount - waitingCount;
+        if (missed > 0) state.warmError = 'Some pages could not be downloaded (' + (okCount + waitingCount) + ' of ' + urls.length + ').';
       });
     }).catch(function (error) {
       state.warmError = error && error.message ? error.message : 'Could not prepare for offline use.';
@@ -752,6 +755,7 @@
       cls += ' bad';
     } else if (ready) {
       message = 'Ready for offline marking. Last updated ' + formatTime(warm.at) + '.';
+      if (warm.waiting > 0) message += ' The marking forms for an exam are saved once the exams officer starts it - open this page again then, while online.';
       cls += ' ok';
     } else {
       message = 'Not prepared for offline marking yet.';
