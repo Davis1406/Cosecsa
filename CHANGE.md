@@ -8,6 +8,8 @@
 - Both pages redesigned to be minimal and to follow light and dark mode (shared `_style.blade.php`). Status is a coloured dot with plain text, "in the system" is a coloured word with the category underneath, and notes are a plain line with a coloured edge: no chips or tinted boxes.
 - **List:** status tabs with counts, search, year and "in the system" filters (incl. "Fellow with missing details"); one-click **Approve** / **Reject** on a row (dialog asks for the year / reason); tick several pending applications and **Approve selected** (people already tentative are linked, counted Fellows are skipped and listed).
 - **Application page:** a sticky Decision panel (Approve, Reject, Back to pending) and a **Fellow record** panel when the applicant is already a Fellow: it lists the details the Fellow record lacks that the application has (email, phone, gender, country, organisation, address) and **Fill the ticked details** copies them in. Only empty fields are filled; nothing is overwritten.
+- **Side drawer:** clicking an applicant's name (or "n details missing") opens their application beside the list, with the Decision and Fellow record panels first; Esc or a click outside closes it, "Open full page" and ctrl/cmd-click still open the page. Approving, rejecting or filling from the drawer returns to the list with the drawer reopened. The page and the drawer share `_detail.blade.php`.
+- A running number (1, 2, 3 …) before the applicant name; it follows the filters, search and page.
 - `ElectionApplicationsController` (`bulkApprove`, `fillFellow`), routes `admin.election.bulk` / `admin.election.fill`.
 
 ### Added (2026-12-02) — Fellowship by Election (applications from the Wufoo form)

@@ -28,7 +28,7 @@ class ElectionApplicationsController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $response = $this->api->get("election-applications/{$id}");
         if ($response->status() === 404) {
@@ -39,7 +39,12 @@ class ElectionApplicationsController extends Controller
         }
         $data = $response->json();
 
-        return view('admin.election_applications.show', [
+        // ?drawer=1: just the application's details, for the list's side drawer.
+        $view = $request->boolean('drawer') ? 'admin.election_applications._detail' : 'admin.election_applications.show';
+
+        return view($view, [
+            'drawer'       => $request->boolean('drawer'),
+            'canForce'     => $request->boolean('force') ?: null,
             'header_title' => 'Fellowship by Election',
             'app'          => $data['application'],
             'answers'      => $data['answers'] ?? [],
@@ -100,7 +105,11 @@ class ElectionApplicationsController extends Controller
     // Quick actions in the list send the person back to the list; the application page's own buttons stay on the page.
     private function after(Request $request, $id): string
     {
-        return $request->input('return') === 'list' ? 'admin/fellowship-by-election' : "admin/fellowship-by-election/{$id}";
+        return match ($request->input('return')) {
+            'list'   => 'admin/fellowship-by-election',
+            'drawer' => "admin/fellowship-by-election?open={$id}",   // back to the list with this person's drawer open
+            default  => "admin/fellowship-by-election/{$id}",
+        };
     }
 
     // An uploaded document, fetched from Wufoo by the API and shown in the browser.

@@ -4,6 +4,7 @@
 
 @push('styles')
 @include('admin.election_applications._style')
+@include('admin.election_applications._detail_style')
 <style>
     .fe-tabs { display:inline-flex; gap:4px; padding:4px; background:var(--fe-soft); border:1px solid var(--fe-line); border-radius:10px; flex-wrap:wrap; }
     .fe-tab { border:0; background:transparent; color:var(--fe-muted); font-size:.86rem; font-weight:600; padding:6px 14px; border-radius:7px; cursor:pointer; }
@@ -17,12 +18,21 @@
     .fe-table td { padding:12px 14px; border-top:1px solid var(--fe-line) !important; vertical-align:middle; font-size:.88rem; background:transparent !important; }
     .fe-table tbody tr:first-child td { border-top:0 !important; }
     .fe-table tbody tr:hover td { background:var(--fe-soft) !important; }
+    .fe-num { color:var(--fe-muted); font-size:.82rem; font-variant-numeric:tabular-nums; width:40px; }
     .fe-who { display:flex; align-items:center; gap:12px; min-width:200px; }
     .fe-who a.name { font-weight:600; text-decoration:none; }
     .fe-who a.name:hover { color:var(--fe-accent); }
     .fe-clip { max-width:190px; color:var(--fe-muted); font-size:.82rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
     .fe-actions { display:flex; gap:6px; justify-content:flex-end; }
     .fe-check { width:16px; height:16px; accent-color:var(--fe-accent); cursor:pointer; }
+    /* the side drawer */
+    .fe-drawer-bg { position:fixed; inset:0; background:rgba(15,23,42,.45); opacity:0; pointer-events:none; transition:opacity .2s; z-index:1059; }
+    .fe-drawer { position:fixed; top:0; right:0; bottom:0; width:min(760px,100vw); background:var(--fe-soft); border-left:1px solid var(--fe-line); transform:translateX(100%); transition:transform .22s ease; z-index:1060; display:flex; flex-direction:column; }
+    .fe-drawer.on { transform:none; box-shadow:-12px 0 32px rgba(0,0,0,.18); } .fe-drawer-bg.on { opacity:1; pointer-events:auto; }
+    .fe-drawer-top { display:flex; justify-content:space-between; align-items:center; padding:12px 18px; background:var(--fe-surface); border-bottom:1px solid var(--fe-line); }
+    .fe-drawer-body { flex:1; overflow-y:auto; padding:18px; }
+    .fe-drawer-body .fe-id { margin-top:0; }
+    .fe-drawer-load { padding:60px 0; text-align:center; color:var(--fe-muted); }
     .fe-empty { padding:40px 0; text-align:center; color:var(--fe-muted); }
     .fe-selbar { display:none; align-items:center; gap:12px; padding:10px 14px; margin-bottom:14px; border:1px solid var(--fe-accent); background:var(--fe-accent-soft); border-radius:10px; }
     .fe-selbar.on { display:flex; }
@@ -116,6 +126,7 @@
                         <thead>
                             <tr>
                                 @if ($canManage)<th style="width:34px;"><input type="checkbox" class="fe-check" id="fePickAll" title="Select every pending application shown"></th>@endif
+                                <th style="width:40px;">#</th>
                                 <th>Applicant</th>
                                 <th>Country</th>
                                 <th>Qualification</th>
@@ -139,6 +150,7 @@
                                     @if ($canManage)
                                         <td>@if ($a['status'] === 'pending' && $kind !== 'fellow')<input type="checkbox" class="fe-check fe-pick" value="{{ $a['id'] }}">@endif</td>
                                     @endif
+                                    <td class="fe-num"></td>
                                     <td>
                                         <div class="fe-who">
                                             <span class="fe-avatar">{{ strtoupper($initials) ?: '?' }}</span>
@@ -160,7 +172,7 @@
                                             <span class="fe-note">—</span>
                                         @endif
                                         @if ($isFellowRecord && $missing > 0)
-                                            <div><a href="{{ route('admin.election.show', $a['id']) }}#fellow-record" class="fe-note" style="color:var(--fe-warn-fg) !important;"><i class="fas fa-exclamation-circle mr-1"></i>{{ $missing }} {{ $missing === 1 ? 'detail' : 'details' }} missing</a></div>
+                                            <div><a href="{{ route('admin.election.show', $a['id']) }}#fellow-record" class="fe-note fe-open" style="color:var(--fe-warn-fg) !important;"><i class="fas fa-exclamation-circle mr-1"></i>{{ $missing }} {{ $missing === 1 ? 'detail' : 'details' }} missing</a></div>
                                         @endif
                                     </td>
                                     <td data-order="{{ $a['status'] }}">
@@ -188,6 +200,15 @@
                     <div class="fe-empty" id="feEmpty" style="display:none;">No applications match.</div>
                     <div class="fe-foot"><span id="feInfo"></span><ul class="pagination pagination-sm" id="fePager"></ul></div>
                 </div>
+
+                <div class="fe-drawer-bg" id="feDrawerBg"></div>
+                <aside class="fe-drawer" id="feDrawer" aria-hidden="true">
+                    <div class="fe-drawer-top">
+                        <a href="#" id="feDrawerFull" class="fe-btn"><i class="fas fa-external-link-alt"></i>Open full page</a>
+                        <button type="button" class="fe-btn fe-icon-btn" id="feDrawerClose" title="Close (Esc)"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="fe-drawer-body" id="feDrawerBody"></div>
+                </aside>
 
                 @if ($canManage)
                     {{-- One approve dialog serves a single row and the bulk button; JS points the form at the right place. --}}
@@ -237,8 +258,13 @@ $(function () {
     var status = '';
     var table = $('#feTable').DataTable({
         order: [], pageLength: 25, autoWidth: false, dom: 't',
-        columnDefs: [{ orderable: false, targets: {{ $canManage ? '[0, 6]' : '[]' }} }],
-        drawCallback: function () { renderFooter(this.api()); }
+        columnDefs: [{ orderable: false, targets: {{ $canManage ? '[0, 1, 7]' : '[0]' }} }],
+        drawCallback: function () {
+            var api = this.api(), start = api.page.info().start;
+            // the running number follows the filters, the search and the page: 1, 2, 3 … of what is shown
+            api.column({{ $canManage ? 1 : 0 }}, { page: 'current' }).nodes().each(function (cell, i) { cell.textContent = start + i + 1; });
+            renderFooter(api);
+        }
     });
 
     function pass(tr, withStatus) {
@@ -318,6 +344,31 @@ $(function () {
         $('#feRejectTitle').text('Reject ' + tr.data('name'));
         $('#feRejectModal').modal('show');
     });
+
+    // ---- the drawer: a click on a name opens the application beside the list ----
+    var forceFor = @json(session('can_force') ? (int) request('open') : null);
+    function openDrawer(id) {
+        var url = base + '/' + id;
+        $('#feDrawerFull').attr('href', url);
+        $('#feDrawerBody').html('<div class="fe-drawer-load"><i class="fas fa-spinner fa-spin mr-2"></i>Loading…</div>').scrollTop(0);
+        $('#feDrawer, #feDrawerBg').addClass('on'); $('#feDrawer').attr('aria-hidden', 'false');
+        $.get(url, { drawer: 1, force: forceFor === id ? 1 : 0 })
+            .done(function (html) { $('#feDrawerBody').html(html); })
+            .fail(function () { $('#feDrawerBody').html('<div class="fe-drawer-load">Could not load this application. <a href="' + url + '">Open the full page</a>.</div>'); });
+    }
+    function closeDrawer() {
+        $('#feDrawer, #feDrawerBg').removeClass('on'); $('#feDrawer').attr('aria-hidden', 'true');
+        if (location.search.indexOf('open=') !== -1) history.replaceState(null, '', location.pathname);
+    }
+    $('#feTable').on('click', 'a.name, a.fe-open', function (e) {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.which === 2) return;   // keep "open in a new tab" working
+        e.preventDefault();
+        openDrawer($(this).closest('tr').data('id'));
+    });
+    $('#feDrawerClose, #feDrawerBg').on('click', closeDrawer);
+    $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#feDrawer').hasClass('on')) closeDrawer(); });
+    var openId = parseInt(new URLSearchParams(location.search).get('open'), 10);
+    if (openId) openDrawer(openId);
 
     redraw();
 });
