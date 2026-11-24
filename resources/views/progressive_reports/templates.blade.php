@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
     tr.dataset.templateId = t.id;
     tr.innerHTML = `
       <td><textarea class="form-control form-control-sm pr-tpl-field pr-tpl-autogrow" data-field="activity_description" rows="1" placeholder="Activity description">${(t.activity_description || '')}</textarea></td>
-      <td><textarea class="form-control form-control-sm pr-tpl-field pr-tpl-autogrow" data-field="default_planned_activities" rows="1" placeholder="One per line">${(t.default_planned_activities || '')}</textarea></td>
+      <td><textarea class="form-control form-control-sm pr-tpl-field pr-tpl-autogrow pr-tpl-bullet" data-field="default_planned_activities" rows="1" placeholder="Press Enter for a new bullet point">${(t.default_planned_activities || '')}</textarea></td>
       <td class="text-center"><input type="checkbox" class="pr-tpl-field" data-field="is_active" ${t.is_active ? 'checked' : ''}></td>
       <td class="text-center"><button type="button" class="btn btn-sm btn-danger pr-tpl-delete" title="Delete"><i class="fas fa-trash"></i></button></td>`;
     tr.querySelectorAll('.pr-tpl-autogrow').forEach(autoGrow);
@@ -88,6 +88,32 @@ document.addEventListener('DOMContentLoaded', function () {
   document.addEventListener('input', function (e) {
     if (e.target.classList.contains('pr-tpl-autogrow')) autoGrow(e.target);
   });
+
+  // Default Planned Activities are a bulleted list, exactly like the report's own
+  // Planned Activities field: the first focus starts "❖ ", Enter starts a new "❖ "
+  // point. Delegated, so rows added later behave the same. Lines saved before
+  // bullets existed are shown bulleted too (they are saved bulleted on the next edit).
+  function prBulletize(text) {
+    return String(text || '').split(/\r\n|\r|\n/).map(function (l) { return l.trim(); }).filter(Boolean)
+      .map(function (l) { return l.charAt(0) === '❖' ? l : '❖ ' + l; }).join('\n');
+  }
+  document.addEventListener('keydown', function (e) {
+    const f = e.target;
+    if (e.key !== 'Enter' || !f.matches || !f.matches('.pr-tpl-bullet')) return;
+    e.preventDefault();
+    const start = f.selectionStart, end = f.selectionEnd, insert = '\n❖ ';
+    f.value = f.value.slice(0, start) + insert + f.value.slice(end);
+    f.selectionStart = f.selectionEnd = start + insert.length;
+    f.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  document.addEventListener('focusin', function (e) {
+    const f = e.target;
+    if (!f.matches || !f.matches('.pr-tpl-bullet') || f.value) return;
+    f.value = '❖ ';
+    f.selectionStart = f.selectionEnd = f.value.length;
+    f.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  document.querySelectorAll('.pr-tpl-bullet').forEach(function (f) { if (f.value) { f.value = prBulletize(f.value); autoGrow(f); } });
 
   // Autosave, same pattern as the report-task fields below: one request per
   // field on change (blur), no manual Save button. Delete stays explicit.

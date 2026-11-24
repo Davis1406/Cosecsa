@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added (2026-12-03) — Progress reports: bullets in the recurring-task template
+- **Default Planned Activities** of a recurring task (Progress Reports > Recurring Tasks, and "My Recurring Tasks" on a report) is now a bullet list like the report's own Planned Activities: the field starts with "❖ ", **Enter** starts a new "❖ " point, and older plain lines show bulleted. The bullets are saved normalised, and a new report period copies them into each task bulleted.
+- `progressive_reports/{_template_row,templates,show}.blade.php`, `ProgressiveReportController` (`templateUpdate`, opening a period).
+
 ### Fixed (2026-12-03) — Examiner course, Module 8 (Using the Marking Portal): "Finish" did nothing visible
 - On the last step of the MCS walkthrough, **Finish** now moves on to the **FCS** walkthrough (starting at its first FCS step; the steps both exams share are already ticked). The button says "Finish MCS, continue with FCS →".
 - On the last step of FCS, **Finish** marks every topic read in one saved request, shows "Module 8 complete" and opens the **next module**. The button says "Finish and open the next module →". (If FCS was already done when MCS is finished, MCS finish goes straight to the next module.)

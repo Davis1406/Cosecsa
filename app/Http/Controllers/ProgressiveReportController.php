@@ -166,7 +166,7 @@ class ProgressiveReportController extends Controller
                     'template_id'           => $template->id,
                     'row_no'                => $ti + 1,
                     'activity_description'  => $template->activity_description,
-                    'planned_activities'    => $template->default_planned_activities,
+                    'planned_activities'    => $this->normalizeBullets($template->default_planned_activities),
                 ]);
             }
         }
@@ -925,6 +925,10 @@ class ProgressiveReportController extends Controller
         $data = $request->only(['activity_description', 'default_planned_activities', 'is_active']);
         if (array_key_exists('activity_description', $data) && $data['activity_description'] === null) {
             $data['activity_description'] = '';
+        }
+        // Default Planned Activities are a bullet list, like the report's own Planned Activities
+        if (array_key_exists('default_planned_activities', $data)) {
+            $data['default_planned_activities'] = $this->normalizeBullets($data['default_planned_activities']);
         }
 
         $template->update($data);
