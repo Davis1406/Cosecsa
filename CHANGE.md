@@ -10,6 +10,11 @@
 - `letters/sent_view.blade.php`, `letters/_pdf_write_modal.blade.php` (pdf.js + pdf-lib), `LetterController::sentPdfSource/saveSentPdf/downloadOriginalSentPdf`, routes `admin.letters.sent.pdf-source/save-pdf/original`. The data lives in cosecsa-api.
 - Tests: `LetterPdfWriteTest`.
 
+### Added (2026-11-26) — Countries: visual Country Report
+- Sidebar **Countries** is now a menu: **All Countries** and **Country Report** (`admin/countries/report/{id?}`, Lookups "view"); also a button on the countries list and on each country page.
+- Choose a country, exam year and application intake: the sheet shows active trainees by programme, FCS Part II candidates by specialty and applications by stage. **Download image** saves it as a PNG (html2canvas from cdnjs); **Print / PDF** prints the sheet alone on A4. A "Check before presenting" list under it flags data gaps and is not part of the image or print.
+- `CountryController::report`, `admin/countries/report.blade.php`, `layout/header.blade.php`. The numbers come from cosecsa-api.
+
 ### Added (2026-12-03) — Progress reports: bullets in the recurring-task template
 - **Default Planned Activities** of a recurring task (Progress Reports > Recurring Tasks, and "My Recurring Tasks" on a report) is now a bullet list like the report's own Planned Activities: the field starts with "❖ ", **Enter** starts a new "❖ " point, and older plain lines show bulleted. The bullets are saved normalised, and a new report period copies them into each task bulleted.
 - `progressive_reports/{_template_row,templates,show}.blade.php`, `ProgressiveReportController` (`templateUpdate`, opening a period).

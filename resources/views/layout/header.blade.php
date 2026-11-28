@@ -447,14 +447,30 @@ body.dark-mode #globalSearchResults .gs-recent-head a { color:#f48a8a; }
                             </a>
                         </li>
 
-                        <li class="nav-item">
-                            <a href="{{ url('admin/countries/list') }}"
-                                class="nav-link @if (Request::segment(2) == 'countries') active @endif">
+                        <li class="nav-item @if (Request::segment(2) == 'countries') menu-open @endif">
+                            <a href="#" class="nav-link @if (Request::segment(2) == 'countries') active @endif">
                                 <i class="nav-icon fas fa-globe-africa"></i>
                                 <p>
                                     Countries
+                                    <i class="right fas fa-angle-left"></i>
                                 </p>
                             </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/countries/list') }}"
+                                        class="nav-link @if (Request::segment(2) == 'countries' && Request::segment(3) != 'report') active @endif">
+                                        <i class="fas fa-list nav-icon"></i>
+                                        <p>All Countries</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ url('admin/countries/report') }}"
+                                        class="nav-link @if (Request::segment(3) == 'report' && Request::segment(2) == 'countries') active @endif">
+                                        <i class="fas fa-chart-bar nav-icon"></i>
+                                        <p>Country Report</p>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                         @endif
 

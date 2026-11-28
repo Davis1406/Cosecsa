@@ -181,6 +181,9 @@
                         <button id="ctryBtnToggleReport" class="btn btn-sm" style="background:#a02626;color:#fff;border:none;">
                             <i class="fas fa-chart-bar mr-1"></i> Visual Report
                         </button>
+                        <a href="{{ route('countries.report') }}" class="btn btn-sm" style="background:#a02626;color:#fff;border:none;">
+                            <i class="fas fa-file-image mr-1"></i> Country Report
+                        </a>
                         <button id="ctryBtnExportCsv" class="btn btn-sm btn-warning">
                             <i class="fas fa-file-csv mr-1"></i> Export CSV
                         </button>

@@ -63,6 +63,9 @@
                 {{-- Hero --}}
                 <div class="country-hero">
                     <h4><i class="fas fa-flag mr-2"></i>{{ $country->country_name }}</h4>
+                    <a href="{{ route('countries.report', $country->id) }}" class="btn btn-sm btn-light font-weight-bold mt-2" style="color:#a02626;">
+                        <i class="fas fa-chart-bar mr-1"></i>Country report
+                    </a>
                 </div>
 
                 {{-- Stat chips — one restrained accent color, differentiated by icon only --}}

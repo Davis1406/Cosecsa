@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\ApiClient;
+use Illuminate\Http\Request;
 
 class CountryController extends Controller
 {
@@ -40,6 +41,28 @@ class CountryController extends Controller
             'programmeDirectors' => collect($data->programme_directors ?? []),
             'examiners'    => collect($data->examiners ?? []),
             'trainers'     => collect($data->trainers ?? []),
+        ]);
+    }
+
+    // The visual "Updates on candidates and trainees" report of one country; the numbers come from cosecsa-api.
+    public function report(Request $request, $id = null)
+    {
+        $countries = collect($this->api->get('admin/countries')->object()->countries ?? []);
+        $report = null;
+
+        if ($id) {
+            $response = $this->api->get("admin/countries/{$id}/report", array_filter($request->only('exam_year', 'intake')));
+            if ($response->failed()) {
+                return redirect('admin/countries/report')->with('error', 'Could not build the report: ' . ($response->json('message') ?: 'no answer from the server.'));
+            }
+            $report = $response->json();
+        }
+
+        return view('admin.countries.report', [
+            'header_title' => 'Country report',
+            'countries'    => $countries,
+            'countryId'    => $id,
+            'report'       => $report,
         ]);
     }
 }

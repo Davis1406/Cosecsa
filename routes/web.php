@@ -243,6 +243,7 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     // Country Routes
     Route::get('admin/countries/list', [CountryController::class, 'list']);
     Route::get('admin/countries/view/{id}', [CountryController::class, 'view']);
+    Route::get('admin/countries/report/{id?}', [CountryController::class, 'report'])->whereNumber('id')->name('countries.report');
 
     //Hospital Routes;
     Route::get('admin/hospital/dashboard', [HospitalController::class,'dashboard']);
