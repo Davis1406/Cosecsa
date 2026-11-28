@@ -335,10 +335,43 @@ class LetterController extends Controller
         return response($response->body(), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => "attachment; filename=\"{$filename}\""]);
     }
 
-    // The PDF served inline so the writing editor can render it on the page (the download route is an attachment).
+    // The edit panel of a sent letter: the letter as it would look with the changes being typed (nothing is saved).
+    public function previewSentEdits(Request $request, $id)
+    {
+        $response = $this->api->post("letters/sent/{$id}/preview", $this->editPayload($request));
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
+    }
+
+    // Keep the changes to this one letter, or ("reset") go back to the template wording.
+    public function saveSentEdits(Request $request, $id)
+    {
+        $payload = $request->boolean('reset') ? ['reset' => true] : $this->editPayload($request);
+        $response = $this->api->post("letters/sent/{$id}/edits", $payload);
+
+        if ($response->successful()) {
+            session()->flash('success', $response->json('message'));
+        }
+
+        return response()->json($response->json() ?? ['message' => 'No answer from the server.'], $response->status());
+    }
+
+    // Every field is sent even when empty: an emptied "To" section or signatory is a change.
+    private function editPayload(Request $request): array
+    {
+        $payload = [];
+        foreach (['letter_date', 'recipient_block', 'pdf_body', 'signatory_name', 'signatory_title', 'stamp_pos'] as $field) {
+            $payload[$field] = (string) $request->input($field, '');
+        }
+
+        return $payload;
+    }
+
+    // The PDF served inline so the writing editor can render it on the page: the written-on copy, else the edited
+    // letter, else the PDF as it was e-mailed (the API decides).
     public function sentPdfSource($id)
     {
-        $response = $this->api->get("letters/sent/{$id}/download");
+        $response = $this->api->get("letters/sent/{$id}/source");
         if ($response->failed()) {
             abort($response->status() === 404 ? 404 : 502, $response->json('message') ?? 'The PDF could not be loaded.');
         }

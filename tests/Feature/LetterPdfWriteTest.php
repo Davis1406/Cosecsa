@@ -31,4 +31,12 @@ class LetterPdfWriteTest extends TestCase
         $this->assertSame('ok', $this->run_as(['letters.manage'], 'POST', '/admin/letters/sent/15/pdf')->getContent());
         $this->assertTrue($this->run_as(['fellows.manage'], 'POST', '/admin/letters/sent/15/pdf')->isRedirection());
     }
+
+    public function test_editing_a_sent_letter_needs_manage(): void
+    {
+        foreach (['preview', 'edits'] as $action) {
+            $this->assertTrue($this->run_as(['letters.view'], 'POST', "/admin/letters/sent/15/$action")->isRedirection());
+            $this->assertSame('ok', $this->run_as(['letters.manage'], 'POST', "/admin/letters/sent/15/$action")->getContent());
+        }
+    }
 }

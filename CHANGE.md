@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Added (2026-11-28) — College letters: edit one sent letter, with a live preview
+- The sent-letter page now has two panels: **Edit & format** (date, "To" section, letter body with the text editor and merge fields, signatory name and role, stamp position) and the **letter preview** beside it, which updates as you type.
+- **Save changes** applies to that letter only; the template and other people's letters are not touched. **Download PDF (current details)**, **Write on PDF** and **Send again** use the edited letter; the PDF as it was e-mailed is still kept. **Use the template wording again** removes the changes.
+- Saving changes removes writing made on the earlier version's PDF (asked first). Downloads, writing and sending are held back while there are unsaved changes. Letters "manage" to edit; "view" sees the preview only.
+- `letters/sent_view.blade.php`, `letters/_resend_modal.blade.php`, `LetterController::previewSentEdits/saveSentEdits`, routes `admin.letters.sent.preview/edits`.
+- **Deploy cosecsa-api first** (it has a migration).
+
 ### Added (2026-11-28) — College letters: write on a sent letter's PDF
 - A **Write on PDF** button on the sent-letter page opens the saved PDF with a pen and a text tool: draw with the mouse, or type words and click where they go; undo, clear a page and move between pages. **Save writing** puts the writing on that letter's PDF.
 - The downloaded PDF then carries the writing; **Download PDF (current details)** is unchanged, and **Original before writing** opens the PDF exactly as it was e-mailed. A note on the page says when writing was saved, and **Send again** uses the written-on PDF. Letters "manage" to write or save, "view" to open the PDF.

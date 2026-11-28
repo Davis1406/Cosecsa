@@ -1,5 +1,6 @@
 {{-- "Send this letter again": asks where to send it and which date it carries, then composes it from the person's CURRENT
-     details and e-mails it. Open it with window.openLetterResend(sentLetterId, defaultEmail, onDone). --}}
+     details and e-mails it. Open it with window.openLetterResend(sentLetterId, defaultEmail, onDone, date);
+     without a date the letter is dated today. --}}
 <div class="modal fade" id="letterResendModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -30,10 +31,10 @@
 <script>
 (function () {
   var current = { id: null, done: null };
-  window.openLetterResend = function (id, email, onDone) {
+  window.openLetterResend = function (id, email, onDone, date) {
     current = { id: id, done: onDone || null };
     document.getElementById('resendTo').value = email || '';
-    document.getElementById('resendDate').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('resendDate').value = date || new Date().toISOString().slice(0, 10);
     document.getElementById('resendMsg').textContent = '';
     $('#letterResendModal').modal('show');
   };
