@@ -206,6 +206,9 @@ Route::group(['middleware' => ['admin', 'permission']], function(){
     Route::get('admin/letters/for/{source}/{recordId}', [\App\Http\Controllers\LetterController::class, 'forProfile'])->name('admin.letters.for');
     Route::get('admin/letters/sent/{id}/view', [\App\Http\Controllers\LetterController::class, 'sentView'])->name('admin.letters.sent.view');
     Route::get('admin/letters/sent/{id}/pdf', [\App\Http\Controllers\LetterController::class, 'sentPdf'])->name('admin.letters.sent.pdf');
+    Route::get('admin/letters/sent/{id}/pdf-source', [\App\Http\Controllers\LetterController::class, 'sentPdfSource'])->name('admin.letters.sent.pdf-source');
+    Route::get('admin/letters/sent/{id}/original', [\App\Http\Controllers\LetterController::class, 'downloadOriginalSentPdf'])->name('admin.letters.sent.original');
+    Route::post('admin/letters/sent/{id}/pdf', [\App\Http\Controllers\LetterController::class, 'saveSentPdf'])->name('admin.letters.sent.save-pdf');
     Route::post('admin/letters/sent/{id}/resend', [\App\Http\Controllers\LetterController::class, 'resend'])->name('admin.letters.sent.resend');
     Route::get('admin/letters/{id}/compose', [\App\Http\Controllers\LetterController::class, 'compose'])->name('admin.letters.compose');
     Route::post('admin/letters/{id}/test', [\App\Http\Controllers\LetterController::class, 'sendTest'])->name('admin.letters.test');

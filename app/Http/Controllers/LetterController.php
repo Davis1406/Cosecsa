@@ -335,6 +335,54 @@ class LetterController extends Controller
         return response($response->body(), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => "attachment; filename=\"{$filename}\""]);
     }
 
+    // The PDF served inline so the writing editor can render it on the page (the download route is an attachment).
+    public function sentPdfSource($id)
+    {
+        $response = $this->api->get("letters/sent/{$id}/download");
+        if ($response->failed()) {
+            abort($response->status() === 404 ? 404 : 502, $response->json('message') ?? 'The PDF could not be loaded.');
+        }
+
+        return response($response->body(), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="letter.pdf"']);
+    }
+
+    // The PDF exactly as it was e-mailed, kept even after writing is saved on a copy.
+    public function downloadOriginalSentPdf($id)
+    {
+        $response = $this->api->get("letters/sent/{$id}/original");
+        if ($response->status() === 404) {
+            abort(404);
+        }
+        if ($response->failed()) {
+            return back()->with('error', $response->json('message') ?? 'The original PDF could not be loaded.');
+        }
+
+        return response($response->body(), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="letter-original.pdf"',
+        ]);
+    }
+
+    // Save the PDF the page made after the admin wrote on it. The finished PDF arrives as a multipart file.
+    public function saveSentPdf(Request $request, $id)
+    {
+        $request->validate(['pdf' => 'required|file|max:20480']);
+        $file = $request->file('pdf');
+        $content = file_get_contents($file->getRealPath());
+        if (strtolower($file->getClientOriginalExtension()) !== 'pdf' || ! is_string($content) || ! str_starts_with($content, '%PDF-')) {
+            return response()->json(['message' => 'That file is not a PDF.'], 422);
+        }
+
+        $response = $this->api->postWithFile("letters/sent/{$id}/pdf", [], ['pdf' => $file]);
+        if ($response->failed()) {
+            return response()->json(['message' => $response->json('message') ?? 'The writing could not be saved.'], $response->status());
+        }
+
+        session()->flash('success', $response->json('message') ?? 'The writing was saved on this letter.');
+
+        return response()->json($response->json() ?? ['message' => 'The writing was saved on this letter.']);
+    }
+
     // Send the letter again, composed from the current details.
     public function resend(Request $request, $id)
     {

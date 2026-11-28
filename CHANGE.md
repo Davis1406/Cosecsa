@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added (2026-11-28) — College letters: write on a sent letter's PDF
+- A **Write on PDF** button on the sent-letter page opens the saved PDF with a pen and a text tool: draw with the mouse, or type words and click where they go; undo, clear a page and move between pages. **Save writing** puts the writing on that letter's PDF.
+- The downloaded PDF then carries the writing; **Download PDF (current details)** is unchanged, and **Original before writing** opens the PDF exactly as it was e-mailed. A note on the page says when writing was saved, and **Send again** uses the written-on PDF. Letters "manage" to write or save, "view" to open the PDF.
+- `letters/sent_view.blade.php`, `letters/_pdf_write_modal.blade.php` (pdf.js + pdf-lib), `LetterController::sentPdfSource/saveSentPdf/downloadOriginalSentPdf`, routes `admin.letters.sent.pdf-source/save-pdf/original`. The data lives in cosecsa-api.
+- Tests: `LetterPdfWriteTest`.
+
 ### Added (2026-12-03) — Progress reports: bullets in the recurring-task template
 - **Default Planned Activities** of a recurring task (Progress Reports > Recurring Tasks, and "My Recurring Tasks" on a report) is now a bullet list like the report's own Planned Activities: the field starts with "❖ ", **Enter** starts a new "❖ " point, and older plain lines show bulleted. The bullets are saved normalised, and a new report period copies them into each task bulleted.
 - `progressive_reports/{_template_row,templates,show}.blade.php`, `ProgressiveReportController` (`templateUpdate`, opening a period).

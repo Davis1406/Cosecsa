@@ -31,6 +31,13 @@
           @endif
         </div>
 
+        @if(!empty($letter['has_annotation']))
+          <div class="alert alert-success py-2" style="font-size:.85rem;">
+            <i class="fas fa-pen mr-1"></i>
+            Writing saved on the PDF{{ !empty($letter['annotated_at']) ? ' on ' . \Carbon\Carbon::parse($letter['annotated_at'])->format('d M Y, H:i') : '' }}. Downloads and <strong>Send again</strong> use that written-on PDF; the original is still available.
+          </div>
+        @endif
+
         <div class="card">
           <div class="card-header d-flex flex-wrap align-items-center" style="gap:.5rem;">
             <ul class="nav nav-pills" id="sentTabs">
@@ -40,9 +47,13 @@
             <div class="ml-auto d-flex flex-wrap" style="gap:.4rem;">
               <a class="btn btn-sm btn-outline-secondary" href="{{ url('admin/letters/sent/' . $id . '/pdf') }}"><i class="fas fa-file-pdf mr-1"></i> Download PDF (current details)</a>
               @if(!empty($letter['has_original']))
-                <a class="btn btn-sm btn-outline-secondary" href="{{ url('admin/letters/sent/' . $id . '/download') }}" title="The PDF exactly as it was e-mailed"><i class="fas fa-download mr-1"></i> Original PDF as sent</a>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ url('admin/letters/sent/' . $id . '/download') }}" title="{{ !empty($letter['has_annotation']) ? 'The PDF with the writing saved on it' : 'The PDF exactly as it was e-mailed' }}"><i class="fas fa-download mr-1"></i> {{ !empty($letter['has_annotation']) ? 'Download PDF with writing' : 'Original PDF as sent' }}</a>
+              @endif
+              @if(!empty($letter['has_annotation']))
+                <a class="btn btn-sm btn-outline-secondary" href="{{ url('admin/letters/sent/' . $id . '/original') }}" title="The PDF exactly as it was e-mailed, before any writing"><i class="fas fa-file mr-1"></i> Original before writing</a>
               @endif
               @if(Auth::user()->hasPermission('letters.manage'))
+                <button type="button" class="btn btn-sm btn-outline-primary" id="btnWritePdf"><i class="fas fa-pen mr-1"></i> Write on PDF</button>
                 <button type="button" class="btn btn-sm btn-cosecsa" id="btnResend"><i class="fas fa-paper-plane mr-1"></i> Send again</button>
               @endif
             </div>
@@ -68,11 +79,17 @@
   </div>
 
   @include('letters._resend_modal')
+  @if(Auth::user()->hasPermission('letters.manage'))
+    @include('letters._pdf_write_modal')
+  @endif
 @endsection
 
 @push('scripts')
 <script>
   var btn = document.getElementById('btnResend');
   if (btn) btn.addEventListener('click', function () { openLetterResend({{ (int) $id }}, @json($letter['recipient']['email'] ?? ''), function () { }); });
+
+  var writeBtn = document.getElementById('btnWritePdf');
+  if (writeBtn) writeBtn.addEventListener('click', function () { openLetterWrite(); });
 </script>
 @endpush
